@@ -1,3 +1,24 @@
+#################################################################################
+# (c) Copyright 2024-2026, Rob Kremer, MIT open source license.                 #
+#                                                                               #
+# Permission is hereby granted, free of charge, to any person obtaining a copy  #
+# of this software and associated documentation files (the "Software"), to deal #
+# in the Software without restriction, including without limitation the rights  #
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     #
+# copies of the Software, and to permit persons to whom the Software is         #
+# furnished to do so, subject to the following conditions:                      #
+#                                                                               #
+# The above copyright notice and this permission notice shall be included in all#
+# copies or substantial portions of the Software.                               #
+#                                                                               #
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    #
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      #
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   #
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        #
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, #
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE #
+# SOFTWARE.                                                                     #
+#################################################################################
 '''
 Created on Aug 18, 2026
 
@@ -16,6 +37,7 @@ from tkinter import ttk
 from sn import snPrefs
 from util.attribute import Attribute, VAR_DEFAULTED
 from util.utils import expandRect
+#from sn.view.textUserInterface import SNTerminalWidget # circular import
 
 logger:sn.SNLogger = sn.getLogger(__name__)
 
@@ -208,9 +230,24 @@ def installGlobalIORouting(registry: TerminalRegistry) -> None:
 
   builtins.input = routedInput
 
+  root = logging.getLogger()
+
+  # util.setupLogger() (called at "sn" package import time) attaches a
+  # DynamicStderrHandler that always writes to whatever sys.stderr currently
+  # is. Now that sys.stderr has just been redirected above, that handler
+  # would ALSO deliver every log record to this terminal — on top of the
+  # TerminalLogHandler we're about to add below — producing a duplicate line
+  # per record. Evict any such plain StreamHandler (but not FileHandler,
+  # which IS a StreamHandler subclass and must keep writing to the log file)
+  # so TerminalLogHandler becomes the single route from logging into the
+  # terminal.
+  for h in list(root.handlers):
+    if isinstance(h, logging.StreamHandler) and not isinstance(h, logging.FileHandler):
+      root.removeHandler(h)
+
   handler = TerminalLogHandler(registry)
   handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
-  logging.getLogger().addHandler(handler)
+  root.addHandler(handler)
 
 
 # Single, app-wide registry. Created here so both AppWindow/AppPanedWidget and

@@ -1,5 +1,5 @@
 #################################################################################
-# (c) Copyright 2024-2025, Rob Kremer, MIT open source license.                 #
+# (c) Copyright 2024-2026, Rob Kremer, MIT open source license.                 #
 #                                                                               #
 # Permission is hereby granted, free of charge, to any person obtaining a copy  #
 # of this software and associated documentation files (the "Software"), to deal #
@@ -47,8 +47,8 @@ import os
 from typing import Any, Callable, cast
 import readline  # noqa: F401 — importing enables input() line editing
 import argparse
-from util.terminal import TerminalWidget2, PlainTextTerminal
 import tkinter as tk
+from util.terminal import TerminalWidget2, PlainTextTerminal
 
 logger:sn.SNLogger = sn.getLogger(__name__)
 
@@ -145,6 +145,34 @@ class UIContext(ModelContext):
       kindMarkerStr = KM if strToBool(kindMarker) else ""
       
     return self._format("GraphObject", format)
+  
+  def print(self, string:str) -> None:
+    '''
+    For debugging.
+    
+    :param string: prints this string to stdout.
+    :type string: str
+    '''    
+    print(string)
+    
+  def log(self, string:str) -> None:
+    '''
+    For debugging.
+    
+    :param string: Sends this string to the logger as a WARNING.
+    :type string: str
+    '''    
+    logger.print(logging.WARNING, string)
+    
+  def throw(self, string:str) -> None:
+    '''
+    For debugging.
+    
+    :param string: raises an exception with this string as the message.
+    :type string: str
+    '''    
+    raise Exception(string)
+    
       
   def format_model(self, format:str|None=None): # @ReservedAssignment
     '''
@@ -251,8 +279,8 @@ class SNAbstractTerminal:
     #context.defaults["model"].isDirty()
 
   def printBanner(self):
-    logger.print(f'{sn.NAME} {sn.VERSION} command line interface under Python {sys.version_info[0]}.{sys.version_info[1]}.{sys.version_info[2]}') #type: ignore[attr-defined]
-    logger.print(f'Using default model "{self.context.defaults["model"]}".') #type: ignore[attr-defined]
+    print(f'{sn.NAME} {sn.VERSION} command line interface under Python {sys.version_info[0]}.{sys.version_info[1]}.{sys.version_info[2]}') #type: ignore[attr-defined]
+    print(f'Using default model "{self.context.defaults["model"]}".') #type: ignore[attr-defined]
 
   def getPrompt(self):
     return f'\n{"" if self.context.defaults["model"] is None else ("@"+self.context.defaults["model"].name)}{CARRET} '
