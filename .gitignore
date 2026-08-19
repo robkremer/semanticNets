@@ -1,0 +1,24 @@
+# --- Python build/cache artifacts ---
+__pycache__/
+*.pyc
+.mypy_cache/
+
+# --- Sphinx generated docs (regenerate from sphinx/source) ---
+sphinx/build/
+src/sn/help/
+
+# --- Logs ---
+*.log
+
+# --- macOS / iCloud Drive sync noise ---
+.DS_Store
+.tmp.drivedownload/
+.tmp.driveupload/
+
+# --- Eclipse workspace-local settings (machine-specific) ---
+.settings/
+
+# --- Ad hoc scratch/test output left in the tree ---
+# (uncomment any of these once you've confirmed they're throwaway, not fixtures)
+*.xml
+*.json

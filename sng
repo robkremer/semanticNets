@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail # fails fast on errors, unset variables, and pipeline failures
+
+# Root directories
+projectRoot="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # this directory
+appPackageRoot="${projectRoot}/src"                 # contains sn/ package
+libPackageRoot="${projectRoot}/../pythonUtils/src"  # contains util/ package
+
+# Extend PYTHONPATH so both packages are importable,
+# without clobbering any PYTHONPATH already set in the environment.
+#  (${PYTHONPATH:+:${PYTHONPATH}} — appends any pre-existing PYTHONPATH from 
+#  the environment rather than overwriting it; if PYTHONPATH was unset, this 
+#  expands to nothing (avoids a stray leading/trailing colon).)
+export PYTHONPATH="${appPackageRoot}:${libPackageRoot}${PYTHONPATH:+:${PYTHONPATH}}"
+
+# Run the textUserInterface module as part of its package (python -m),
+# so relative imports inside sn work correctly. Pass command line args too.
+python3.14 -m sn.view.graphics.guiApp $@

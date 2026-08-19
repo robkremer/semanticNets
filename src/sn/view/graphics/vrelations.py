@@ -1,0 +1,763 @@
+#################################################################################
+# (c) Copyright 2024-2025, Rob Kremer, MIT open source license.                 #
+#                                                                               #
+# Permission is hereby granted, free of charge, to any person obtaining a copy  #
+# of this software and associated documentation files (the "Software"), to deal #
+# in the Software without restriction, including without limitation the rights  #
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     #
+# copies of the Software, and to permit persons to whom the Software is         #
+# furnished to do so, subject to the following conditions:                      #
+#                                                                               #
+# The above copyright notice and this permission notice shall be included in all#
+# copies or substantial portions of the Software.                               #
+#                                                                               #
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    #
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      #
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   #
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        #
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, #
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE #
+# SOFTWARE.                                                                     #
+#################################################################################
+
+"""
+vrelations.py
+
+Implements VRelation and VIsa classes.
+
+  .. inheritance-diagram:: VRelation VIsa
+      :parts: 3
+      :private-bases:
+      :top-classes: util.commandParser.ParsableCommandDef, util.commandParser.ParsableQuery
+
+.. codeauthor:: Rob Kremer <robkremer@me.com>
+
+---------------
+"""
+
+import tkinter as tk
+import xml.etree.ElementTree as et
+from ast import literal_eval
+from typing import Any, Optional, Union, Tuple, List, Dict, Iterable, \
+  override
+from dataclasses import dataclass
+import weakref
+
+import sn
+from util.utils import flattenPairs, midpoint
+from util.attribute import AttributedObject
+from util.persistence.pRef import PRDb, PReference
+from sn.model import GraphObject
+#from sn.model.tgcommands import NewModelRelationCommand
+from sn.model import Relation #, _toFillerAttrName
+from sn.view.graphics.vobjects import VObject
+from sn.view.graphics.attributeEditor import applyEditAttrsBox
+
+import logging
+logger:sn.SNLogger = sn.getLogger(__name__)
+  
+ROLE_VATTRIBUTES = {'lineColor': 'black',
+                    'fillColor': '',
+                    'lineWidth': 1,
+                    'nearEndShape': '',
+                    'farEndShape': '',
+                    }
+
+    
+class VRelation(VObject):
+  '''
+  Implements the visual representation of model *Relation*. The roles are taken
+  for the *Relation* object exclusively.  
+  
+  Adds to self.cache (from VObject):
+  
+    - '._roles': List of role names
+    - '._<rolename>__filler': List of fillers for each role name 
+  '''
+
+  granularity = 1  # the accuracy to which we should calculate endpoints
+  
+  ### CONSTRUCTOR AND HELPERS ##########################################################
+
+  def __init__(self, tgview:PRDb,
+        modelObject:Union[Relation, POReference], 
+        typ:Relation=None,
+        shape:Union[Any, str]="Oval",
+        x:Optional[int]=None, y:Optional[int]=None, x1:Optional[int]=None, y1:Optional[int]=None,
+        floating:Optional[bool]=None,
+        _id:Optional[int]=None, _bb:Optional[list]=None):
+    """  
+    :param tgview: [Required] The TGView object for this object.
+    :param modelObject: [Required if creating a view object only (*_id* is *None*)]
+      The *Relation* object to server as the modelObject for this view object.
+    :param typ: [Required if creating a modelObject object (*_id* is *None* and 
+      *modelObject* is *None*)] A *Relation* used to create an ISA parent relation from
+      the new *Relation*. 
+    :param shape: [Union[tygra.view.shapes.Shape, str], default=...shapes.Rectangle] The basic shape of this object.
+    :param _id: The id of this object. ONLY USED WHEN UNSERIALIZING. This is
+      the marker to specify unserializing.
+    :param x: The upper left corner x coordinate
+    :param y: The upper left corner y coordinate
+    :param x1: The lower right corner x coordinate
+    :param y1: The lower right corner y coordinate
+    :param floating: [Default True] weather or not the relation should be floating.
+      Normally ONLY used when unserializing.
+    
+    This class has to take special measures to avoid an address fault because Relations
+    may reference other relations, so there is no way to ensure that toNode and fromNode
+    idString-to-addresses have already be registered.  To get around that, if there had
+    been an address fault in *self.getArgs()*, it will have put the str isString in place
+    of the pointer.  The pointer(s) will be properly instantiated (etc) on a second 
+    pass when the owner container calls the *self._post__init__()* method.
+    """
+    if isinstance(modelObject, POReference):
+      modelObject = modelObject()
+    assert isinstance(modelObject, Relation), \
+          f"Bad modelObject param in VRelation.__init__(): type {modelObject.__class__.__name__}"
+   
+    # modelClass = Relation
+    if typ is not None:
+      if not isinstance(typ, Relation):
+        raise TypeError(f'VRelation._init_(): "typ" argument a subtyp of Relation object; got object of class {typ(typ).__name__}.')
+      # modelClass = type(typ)
+
+    self.container = tgview
+    self.init = {"typ": typ, "_bb": _bb}  # pass these parameters to self for _post__init__()      
+
+    self.roles:dict[str, list[VRelation.RoleInfo]] = dict()
+    'dict[roleName, list[RoleInfo]'
+    self.unfilledRoles:[str, Tuple[int]] = dict()
+    'a temporary holder for info about unfilled roles to assist in drawing "dangling" roles'
+      
+    # self._modelObject:GraphObject = POReference(modelObject) if isinstance(modelObject, GraphObject) else modelObject
+    
+    self._floatingAnchor = True if floating is None else floating
+    # self._redrawExecuting = False
+    
+    VObject.__init__(self, self.container, x=x, y=y, x1=x1, y1=y1, shape=shape, modelObject=modelObject, _id=_id)
+
+    assert isinstance(self.modelObject , Relation)
+    # self._connectRoles()
+    
+    if _id is None:
+      self.reposition(aggressive=True)
+      self.tgview.freshPaint()
+      self.draw()
+          
+  def _post__init__(self):
+    """
+    If one or more of the terminal nodes' models had been deleted in the model, then
+    we will fail to get the address of the terminal nodes, in which case, we will throw
+    a KeyError exception.
+    """
+    if self.modelObject is not self.modelObject.container.relation:
+      self._connectRoles()
+    super()._post__init__()
+    
+  def _connectRoles(self):
+    '''
+    Establishes all the connectors for the VRelation, both in the view and in the
+    cache, based on it's referent *Relation* in the model by:
+    
+      - makes sure every connected VOjbect is in the view
+      - adds *self* to the relations of those VObjects
+      - instantiates self.cache._roles to the list of roles in the model object
+      - instantiates all self.cache._<roleName>__filler to the list of fillers for each role name
+    '''
+    roles = []
+    for roleName, roleObj in self.modelObject.roles.items():
+      roleFillers = roleObj['filler']
+      roles.append(roleName)
+      nodes = []
+      for roleFiller in roleFillers:
+        mObj = roleFiller()  # POReference -> ModelBbject
+        node = self.tgview.makeViewObjectForGraphObject(mObj)
+        # nodes.append(weakref.ref(node))
+        nodes.append(node)
+        node.addRelation(self)
+      setattr(self.cache, f'_{roleName}__filler', nodes)
+    setattr(self.cache, '_roles', roles)
+    
+  def register(self):
+    self.tgview.relations.append(self)
+
+  # def makeDecorators(self):
+  #   from sn.view.decorators import Text, TypeMarker
+  #   self.decorators["text"] = Text(self, text=self.modelObject.name, fill="blue")
+  #   if self.modelObject.get("type") or self.modelObject.isSystemObject():
+  #     self.decorators["typeMarker"] = TypeMarker(self)
+
+  ### DESTRUCTOR ########################################################################
+
+  def _delete(self):
+    """ Low-level delete that doesn't take care of notifications."""
+    # self.tgview.canvas.delete(self.fromID)
+    # self.tgview.canvas.delete(self.toID)
+    # self.tgview.canvas.delete(self.fromDotID)
+    # self.tgview.canvas.delete(self.toDotID)
+    # if self in self.tgview.relations():
+    #   self.tgview.remove(self._id)
+    for roleinfoList in self.roles.values():
+      for r in roleinfoList:
+        r.eraseView(self.tgview.canvas)
+    super().delete()
+
+  def delete(self):
+    """
+    Removes this Relation:
+      remove it from the display
+      removing it from tgview's list
+      notify the relevant nodes
+    """
+    for node in self._getConnectedVObjects():
+      try:
+        node.notifyRelationDeletion(self)
+      except:
+        pass
+    self._delete()
+    
+  def _getConnectedVObjects(self) -> List[VObject]:
+    ret = []
+    roles = self.cache._roles if hasattr(self.cache, "_roles") else []
+    for roleName in roles:
+      for obj in getattr(self.cache, f'_{roleName}__filler'):
+        ret.append(obj)
+    return ret
+    
+  ### PERSISTENCE ######################################################################
+
+  def serializeXML(self) -> et.Element:
+    """
+    Returns the representation of this object as an Element object.
+    Implementors should call *super().serializeXML()* **first** as this top-level method
+    will construct the Element itself.
+    """
+    elem = super().serializeXML()
+    elem.set('floating', str(self._floatingAnchor))
+    return elem
+
+  @classmethod
+  def getArgs(cls, elem: et.Element) -> Tuple[List[Any], Dict[str, Any]]:
+    """
+    :param elem: The *ElementTree* element from which we are unserializing.
+    :param addrServer: The address server from which we can lookup any
+      addresses by id that occur in *elem*. Note that although *addrServer*
+      may not be used here, it might be necessary for subclasses to use
+      it, so it needs to be in the argument list.
+    :return: An (\\*args, \\*\\*kwargs) tuple for the constructor of the class 
+      found in the element's name.
+    """
+    args, kwargs = super().getArgs(elem)
+    kwargs['floating'] = literal_eval(elem.get('floating'))
+
+    return args, kwargs
+  
+  def unserializeXML(self, elem: et.Element):
+    """
+    :param elem: The *ElementTree* element from which we are unserializing.
+    :param addrServer: The address server from which we can lookup any
+      addresses by id that occur in *elem*. Note that although *addrServer*
+      may not be used here, it might be necessary for subclasses to use
+      it, so it needs to be in the argument list.
+       
+    This object is partially constructed, but we need to restore this class's bits.
+    Implementors should call *super().unserializeXML()* at some point.
+    """
+    super().unserializeXML(elem)
+
+  def validate(self) -> list[str]:
+    """
+    :return: The list of errors or inconsistencies in this *VNode*. 
+    
+    Validate the VNode, print any violations to *self.tgmodel.logger*
+    and return the number of violations.
+    
+    .. note:: Validation can only take place AFTER the
+       GraphObject is fully constructed with all its ISA relations.
+       
+    This method checks:
+    
+    - There exists a model object (*self.model* is not *None*\\ ).
+    - The model is valid (calls *self.modelObject.validate()*\\ ).
+    """
+    self.errors = super().validate()
+    
+    for roleName in (self.cache._roles if hasattr(self.cache, "_roles") else []):
+      fillers = getattr(self.cache, f'_{roleName}__filler')
+      for filler in fillers:
+        if isinstance(filler, POReference):
+          filler = filler()
+        
+        if not isinstance(filler, VObject):
+          self.errors.append(f'{roleName}.filler containers item of type {filler.__class__.__name__}; should be a subtype of VObject.')
+        else:
+          if self.modelObject is not None and not isinstance(self.modelObject, Relation):
+            self.errors.append(f'self.modelObejct is of type "{self.modelObject.__class__.__name__}", but it should be of type Relation.') 
+          elif filler.modelObject not in map(lambda x: x(), self.modelObject[_toFillerAttrName(roleName)]):
+            self.errors.append(f'the filler "{str(filler.modelObject)}" at {id(filler.modelObject)} of role "{roleName}" does not occur in the corresponding model object ({str(self.modelObject[_toFillerAttrName(roleName)])} ({str(list(map(lambda x: id(x()), self.modelObject[_toFillerAttrName(roleName)])))})).') 
+          
+    # if errCount == 0:
+    #   if 'error' in self.decorators:
+    #     self.removeDecorator('error')
+    #     self.draw()
+    # elif 'error' not in self.decorators:
+    #   self.decorators['error'] = ErrorMarker(self)
+    #   self.draw()
+    return self.errors
+  
+  ### ATTRIBUTES #######################################################################
+
+  def notifyAttrChanged(self, attrsObj:AttributedObject, name:str, value:Any):
+    super().notifyAttrChanged(attrsObj, name, value)
+
+  ### DECORATORS #######################################################################
+
+  ### GETTERS AND SETTERS ##############################################################
+  
+  def floating(self, value:Optional[bool]=None):
+    # if self.modelObject['type']: return False # type relations never float
+    if value != None:
+      oldVal = self._floatingAnchor
+      self._floatingAnchor = value
+      if oldVal != self._floatingAnchor:
+        self.reposition()
+    return self._floatingAnchor
+
+  ### DRAWING ##########################################################################
+
+  @dataclass
+  class RoleInfo:
+    vobject:weakref.ref  # VObject
+    nearPt:Optional[Tuple[int, int]] = None
+    farPt:Optional[Tuple[int, int]] = None
+    lineID:Optional[int] = None
+    nearShapeID:Optional[int] = None
+    farShapeID:Optional[int] = None
+    labelID:Optional[int] = None
+    mark:bool = False
+    
+    def eraseView(self, canvas):
+      if self.lineID is not None: 
+        canvas.delete(self.lineID)
+        self.lineID = None
+      if self.nearShapeID is not None: 
+        canvas.delete(self.nearShapeID)
+        self.nearShapeID = None
+      if self.farShapeID  is not None: 
+        canvas.delete(self.farShapeID)
+        self.farShapeID = None
+      if self.labelID  is not None: 
+        canvas.delete(self.labelID)
+        self.labelID = None    
+    
+  def updateRoleRelatedVObjects(self) -> dict[str, list[RoleInfo]]:
+    '''
+    :return: *self.roles*, which is a dict of <rolename> to a list of RoleInfo, which is a VObject with its
+        near- and far- connection points, etc
+        
+    Collects the info from the model object and updates *self.roles*, adding any
+    new roles or objects connected with roles, updates the position of any
+    existing ones, and removeing any deleted roles or objects connected.
+    '''
+    for rilist in self.roles.values():
+      for ri in rilist:
+        ri.mark = False
+    showInheritedRoles = tygra.tygraPrefs.get("view_showInheritedRoles", storeDefault=False)
+    for k, v in   self.modelObject.items() if showInheritedRoles else self.modelObject._attrs.items():
+      if k.endswith(".filler"):  # iterating the rolenames
+        if not showInheritedRoles:
+          v = v.value
+          
+        roleName = k[1:-7]
+        
+        # add the roleName to self.roles if it isn't already there
+        if roleName not in self.roles:
+          self.roles[roleName] = []
+        
+        # get all the referenced VObjects
+        vObjs = []
+        for ref in v:
+          vObjs.append(self.tgview.makeViewObjectForGraphObject(ref()))
+          
+        # mark the objects in self.roles so we don't delete it
+        for o in vObjs:
+          role = [r for r in self.roles[roleName] if r.vobject() is o]
+          if len(role) == 0:  # add the object to the role if necessary
+            role = VRelation.RoleInfo(weakref.ref(o))
+            self.roles[roleName].append(role)
+          else:
+            assert len(role) == 1
+            role = role[0]
+          role.mark = True
+          
+        # delete any outdated items from self.roles (removing the graphics from the canvas) 
+        for r in self.roles[roleName]:
+          if r.mark:
+            r.mark = False
+          else:  # delete from this role's list
+            r.eraseView(self.tgview.canvas)
+            self.roles[roleName].remove(r)
+              
+    self._findPoints(self.roles)
+    return self.roles
+    
+  def _findPoints(self, roles:dict[str, list[RoleInfo]]):
+    '''
+    :param roles: a dict of list of RoleInfo to fill out the RoleInfo points information
+      based on the each RoleInfo's vobject.
+    :return: The parameter with the points info filled out.
+    
+    The points info that this method fills out accounts for multiple roles that 
+    refer to the same *VObject* by shifting the endponts, by 4 in the x or y 
+    direction to avoid overdrawing lines.
+    '''
+    objCounts:dict[int, int] = dict()  # dict[id:count] count the objects we are drawing to so that we can avoid drawing lines over one another
+    for infoList in roles.values():
+      for info in infoList:  # count this object so that we can avoid drawing lines over one another
+        if info.vobject() is None:  # TODO: Need to delete this component...
+          pass
+        if id(info.vobject()) in objCounts:
+          objCounts[id(info.vobject())] += 1
+        else:
+          objCounts[id(info.vobject())] = 1 
+      
+        info.nearPt, info.farPt = self.findEndPoints(self, info.vobject())
+
+        count = objCounts[id(info.vobject())]
+        if count > 0:
+          if abs(info.nearPt[0] - info.farPt[0]) > abs(info.nearPt[1] - info.farPt[1]): 
+            info.nearPt = (info.nearPt[0]        , info.nearPt[1] + 4 * count)
+            info.farPt = (info.farPt [0]        , info.farPt [1] + 4 * count)
+          else:
+            info.nearPt = (info.nearPt[0] + 4 * count, info.nearPt[1])
+            info.farPt = (info.farPt [0] + 4 * count, info.farPt [1])
+  
+  def parseEndShape(self, shape:str) -> Optional[Tuple[str, list]]:
+    '''
+    :param shape: A shape string of the form **{** circle(<diameter>) **|** arrow(<len>,<hypotenuse>,<close>) **}**.
+    :return: *None* or (str, list[int]), where if str is "circle", list is len 1, or if str is "arrow" list is len 3. 
+    '''
+    if shape is None or shape == "":
+      return None
+    sep = len(shape)
+    for i, c in enumerate(shape):
+      if not (c.isalpha() or c == ' '): 
+        sep = i
+        break
+    shapeName = (shape[:sep]).strip().lower() 
+    if shapeName not in ['arrow', 'circle']:
+      logger.warning(f'VRelation.drawEndShape(): Unknown shape name: "{shape}"; assuming no end shape.')
+      return None
+    try:
+      args = literal_eval(shape[sep:])
+      if not isinstance(args, Iterable):
+        args = [args]
+      for a in args:
+        assert isinstance(a, (int, float))
+    except:
+      logger.warning(f'VRelation.drawEndShape(): Malformed end shape arguments: "{shape}"; using defaults.')
+      args = []
+    return shapeName, args
+
+  def drawEndShape(self, shape:str, line:list, ID:int , lineColor:str, fillColor:str) -> Optional[int]:
+    '''
+    :return: the ID of the drawn shape (if any)
+    '''
+    shape = self.parseEndShape(shape)
+    if shape is None:
+      if ID is not None:  # need to delete the old end shape
+        self.tgview.canvas.delete(ID)
+      return None
+    shapeName, args = shape
+    
+    if shapeName == "circle":
+      if ID is not None and self.tgview.canvas.type(ID) != "oval":  # need to delete the old none-oval and draw a new oval
+        self.tgview.canvas.delete(ID)
+        ID = None
+
+      # fill in defaults
+      diam = 5 if len(args) == 0 else args[0]
+      radius = diam / 2.0
+
+      if ID is None:  # new circle
+        ID = self.tgview.canvas.create_oval(
+            self.tgview.viewToWindow([line[2] - radius, line[3] - radius, line[2] + radius, line[3] + radius]),
+            fill=fillColor, outline=lineColor, tags=[self.tag])
+      else:  # repaint existing circle
+        self.tgview.canvas.coords(ID,
+            self.tgview.viewToWindow([line[2] - radius, line[3] - radius, line[2] + radius, line[3] + radius]))
+        self.tgview.canvas.itemconfigure(ID, fill=fillColor, outline=lineColor)
+      
+      # TODO: fill this in
+      
+    elif shapeName == "arrow":
+      if ID is not None and self.tgview.canvas.type(ID) != "line":  # need to delete the old none-oval and draw a new oval
+        self.tgview.canvas.delete(ID)
+        ID = None
+
+      # fill in defaults
+      # defArgs = [8, 10, 3]
+      n = len(args)
+      if n == 0:
+        args = [8, 10, 3]
+      elif n == 1:
+        args = [args[0], args[0] * 1.25, args[0] * 0.375]
+      elif n == 2:
+        args = [args[0], args[1], args[0] * 0.375]
+      elif n > 3:
+        args = args[:3]
+        
+      if ID is None:  # new line
+        ID = self.tgview.canvas.create_line(
+            self.tgview.viewToWindow(line),
+            fill=lineColor, tags=[self.tag], arrow=tk.LAST, arrowshape=tuple(self.tgview.viewToWindow(args)))
+      else:  # repaint existing line
+        self.tgview.canvas.coords(ID,
+            self.tgview.viewToWindow(line))
+        self.tgview.canvas.itemconfigure(ID, fill=lineColor, arrow=tk.LAST, arrowshape=tuple(self.tgview.viewToWindow(args)))
+    
+    return ID
+    
+  def draw(self, fast=False):
+    if self._drawVersion >= self.tgview._drawVersion: return
+    super().draw(fast=fast)
+    # self.reposition(suppressDraw=True)
+    if self.modelObject.isSystemObject() and self.modelObject.name == "relation":
+      return
+    self.updateRoleRelatedVObjects()
+    for role, infoList in self.roles.items():
+      if not fast:
+        color = self.modelObject.get(f"{role}.lineColor"   , "black")
+        width = self.modelObject.get(f"{role}.lineWidth"   , 1)
+        kwargs = {"fill": color, "width": width}
+      else:
+        kwargs = dict()
+      for info in infoList:  # count this object so that we can avoid drawing lines over one another
+        # draw lines
+        if info.lineID is None:  # new line
+          info.lineID = self.tgview.canvas.create_line(
+              self.tgview.viewToWindow(flattenPairs([info.nearPt, info.farPt])),
+              tags=[self.tag], **kwargs)
+        else:  # repaint existing line
+          self.tgview.canvas.coords(info.lineID,
+              self.tgview.viewToWindow(flattenPairs([info.nearPt, info.farPt])))
+          self.tgview.canvas.itemconfigure(info.lineID, **kwargs)
+          
+        # draw role labels
+        if tygra.tygraPrefs.get("view_showRoleLabels", storeDefault=False):
+          anchor:str = ("n" if info.nearPt[1] < info.farPt[1] else "s") + \
+                       ("w" if info.nearPt[0] < info.farPt[0] else "e")
+          if info.labelID is None:
+            info.labelID = self.tgview.canvas.create_text(info.nearPt[0], info.nearPt[1], text=role,
+                fill="gray50", font=('Helvetica', 10, 'italic'), tags=[self.tag],
+                anchor=anchor)
+            assert info.labelID is not None
+          else:
+            self.tgview.canvas.coords(info.labelID,
+                self.tgview.viewToWindow(info.nearPt[0], info.nearPt[1]))
+            self.tgview.canvas.itemconfigure(info.labelID,
+                anchor=anchor)
+        else:
+          if info.labelID is not None:
+            self.tgview.canvas.delete(info.labelID)
+            info.labelID = None
+          
+        # draw end shapes (arrowheads)
+        if not fast:  # if we're fast don't bother with the end shapes
+          fillColor = self.modelObject.get(f"{role}.fillColor"   , "")
+          nearEndShape = self.modelObject.get(f"{role}.nearEndShape", "")
+          farEndShape = self.modelObject.get(f"{role}.farEndShape" , "")
+          info.nearShapeID = self.drawEndShape(nearEndShape, [info.farPt[0], info.farPt[1], info.nearPt[0], info.nearPt[1]],
+                                               info.nearShapeID, color, fillColor)
+          info.farShapeID = self.drawEndShape(farEndShape, [info.nearPt[0], info.nearPt[1], info.farPt[0], info.farPt[1]],
+                                               info.farShapeID, color, fillColor)
+          
+  def drawUnfilledRoles(self):
+    for role, infoList in self.roles.items():
+      relation:Relation = self.modelObject
+      if len(infoList) < relation.roles[role].card[1]:
+        # draw in the "dangling" role as a clickable object
+        self.unfilledRoles[role] = (self.tgview.canvas.create_text(info.nearPt[0], info.nearPt[1], text=role,
+                fill="gray50", font=('Helvetica', 10, 'italic'), tags=[self.tag],
+                anchor=anchor))
+
+  ### GEOMETRIC INFO/CONTROL ###########################################################
+
+  def reposition(self, aggressive:bool=False, suppressDraw:bool=False):
+    connectedObjects = self._getConnectedVObjects()
+    if self.floating() and len(connectedObjects) > 1 and self.modelObject.isIndividual():
+      if len(set(connectedObjects)) <= 1:  # if all the objects are the same 
+        c = connectedObjects[0].centerPt()
+        ctr = (c[0] + self.tgview.model._top.get("minSize", 20) * 1.5, c[1])
+      else:
+        ctr = midpoint(*map(lambda obj: obj.centerPt(), connectedObjects))
+      self.moveToCenterOn(ctr[0], ctr[1])
+    else:
+      self.adjustPos(aggressive=aggressive)
+    if not suppressDraw:
+      self.draw()
+
+  def findEndPoints(self, frm:VObject, to:VObject):
+    return (self.findIntersection(to.centerPt(), frm), self.findIntersection(frm.centerPt(), to))
+
+  def findIntersection(self, p1, node):
+    """p2 is the center of node"""
+    p2 = node.centerPt()
+    while not self.arePtsClose(p1, p2):
+      pc = midpoint(p1, p2)
+      if node.containsPt(pc):
+        p2 = pc
+      else:
+        p1 = pc
+    return p1
+    
+  def arePtsClose(self, p1, p2):
+    """ Return True iff the two points are close to one another. """
+    return abs(p1[0] - p2[0]) < VRelation.granularity and abs(p1[1] - p2[1]) < VRelation.granularity
+
+  ### NODES THIS RELATION CONNECTS TO #################################################
+
+  def notifyNodeMove(self, node):  # , direction):
+    self.reposition()
+    
+  def notifyNodeDeletion(self, node):
+    '''
+    Recieve notice that *node* is deleting, so we delete the whole relation, being
+    careful not to renotify *node*
+    '''
+    for n in self._getConnectedVObjects():
+      if n is not node:
+        n.notifyRelationDeletion(self) 
+    self._delete()
+    
+  def _removeSelfFromConnectedNodes(self):
+    '''
+    Removes the reference to *self* from all objects this relation connects.
+    Useful when making this relation hidden.
+    
+    :note: This should be used with caution as the system depends on exactly
+      one entry in the *VObject.relations list* for each connecting role.
+    '''
+    for n in self._getConnectedVObjects():
+      n.relations.remove(self)
+      n.cache.refresh()
+      
+  def _addSelfToConnectedNodes(self):
+    '''
+    Appends a reference to *self* to all objects this relation connects.
+    Useful when making this relation hidden.
+    
+    :note: This should be used with caution as the system depends on exactly
+      one entry in the *VObject.relations list* for each connecting role.
+    '''
+    for n in self._getConnectedVObjects():
+      n.relations.append(self)
+      n.cache.refresh()
+  
+  @override
+  def setHidden(self, hide:bool=True):
+    '''
+    '''
+    if hide == self._hidden:
+      return
+    super().setHidden(hide)
+    if hide:
+      self._removeSelfFromConnectedNodes()
+    else:
+      self._addSelfToConnectedNodes()
+
+  ### MENUS ############################################################################
+
+  def addViewMenuItems(self, menu:tk.Menu):
+    if self.modelObject.isIndividual():
+      self._menuFloating = tk.BooleanVar()
+      self._menuFloating.set(self.floating())
+      menu.add_checkbutton(label="floating", onvalue=1, offvalue=0, variable=self._menuFloating, command=self._toggleFloatingAnchor)
+
+    super().addViewMenuItems(menu)
+  
+  def _toggleFloatingAnchor(self, event=None):
+    self.floating(self._menuFloating.get())
+    if self.floating():
+      self.draw()
+      
+  # def addModelEditingMenuItems(self, menu:tk.Menu):
+  #   disabled = self.modelObject.isSystemObject() or not self.tgview.isModelEditor
+  #   menu.add_command(label=f"{'show' if disabled else 'edit'} attributes", \
+  #     command=lambda disabled=disabled: self.onEditAttributes(disabled=disabled))    #menu.add_cascade(menu=self.makeMakeRelationMenu(menu), label='make relation')
+  #   if self.modelObject.isType():
+  #     menu.add_command(label='make instance', command=lambda: self._doNewNodeCommand(individual=True))
+  #     menu.add_command(label='make subtype', command=lambda: self._doNewNodeCommand(individual=False))
+  #   menu.add_separator()
+    
+  @override
+  def _doNewNodeCommand(self, individual:bool):
+    from util.command import CommandWrapper
+    cmd = CommandWrapper(
+              NewModelRelationCommand(self.tgview.model, parent=self.modelObject, individual=individual),
+              setup=self._setCatchNewObjects,
+              teardown=self._resetCatchNewObjects)
+    node = self.tgview.doList.do(cmd)
+    applyEditAttrsBox(self.tgview.canvas, node, title=str(node), editKey="name")
+    vnode = self.tgview.findViewObjectForGraphObject(node)
+    vnode.draw()
+
+  ### Event handling ###################################################################
+
+  def onB1_ButtonRelease(self, event):
+    super().onB1_ButtonRelease(event)
+    self.floating(False)
+
+  ### Debugging support ################################################################
+  
+  def __str__(self):
+    if self.modelObject is None:
+      model = '<no model>'
+      label = '<no model>'
+    else: 
+      model = self.modelObject.idString
+      try:
+        label = self.modelObject.name
+      except:
+        label = '<model has no name>'
+    model = '<no model>'    if self.modelObject    is None else str(self.modelObject)
+    try:
+      roleStr = ''
+      for roleName in self.cache._roles:
+        roleStr += roleName + '->['
+        for obj in getattr(self.cache, f'_{roleName}__filler', []):
+          roleStr += f'"{obj.modelObject.name}#{obj.modelObject._id}" (#{obj._id}),'
+        roleStr = roleStr[:-1]
+        roleStr += '], '
+      roleStr = roleStr[:-2]
+      if hasattr(self, "_deleted"):
+        if self._deleted:
+          status = "*DELETED*"
+        else:
+          status = ""
+      else:  # *_deleted* attribute hasn't been constructed yet, so object not yet complete...
+        status = "*UNDER CONSTRUCTION*"
+      return f'<{self.idString}:{type(self).__name__}, "{label}", model={model}, {roleStr}{" "+status}>'
+    except Exception as ex:
+      return f'<{self.idString}:{type(self).__name__}, "{label}" [{str(ex)}]>'
+
+  def __repr__(self):
+    return self.__str__()
+
+
+class VIsa(VRelation):
+
+  def __init__(self, tgview,
+      modelObject=None, typ:Relation=None,
+      shape:Union[Any, str]="Oval",
+      x:Optional[int]=None, y:Optional[int]=None, x1:Optional[int]=None, y1:Optional[int]=None,
+      _id:Optional[int]=None, _bb:Optional[list]=None,
+      floating:Optional[bool]=None):
+    super().__init__(tgview, modelObject=modelObject, typ=typ, shape=shape, _id=_id, _bb=_bb, floating=floating, x=x, y=y, x1=x1, y1=y1)
+  
+  # def _post__init__(self):
+  #   super()._post__init__()
+  
+  def addModelEditingMenuItems(self, menu:tk.Menu):
+    pass  # we don't want to allow user editing of attributes or relations on isa's.
+

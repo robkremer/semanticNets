@@ -1,0 +1,341 @@
+#################################################################################
+# (c) Copyright 2024-2025, Rob Kremer, MIT open source license.                 #
+#                                                                               #
+# Permission is hereby granted, free of charge, to any person obtaining a copy  #
+# of this software and associated documentation files (the "Software"), to deal #
+# in the Software without restriction, including without limitation the rights  #
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     #
+# copies of the Software, and to permit persons to whom the Software is         #
+# furnished to do so, subject to the following conditions:                      #
+#                                                                               #
+# The above copyright notice and this permission notice shall be included in all#
+# copies or substantial portions of the Software.                               #
+#                                                                               #
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    #
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      #
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   #
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        #
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, #
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE #
+# SOFTWARE.                                                                     #
+#################################################################################
+'''
+Classes here will be loaded by the Tygra command parser. Criteria:
+
+  - subclass of commandParser.ParsableCommandDef
+  - class name ends with "Command" (useful it you want to filter some out in debugging)
+
+Created on May 15, 2026
+
+.. codeauthor:: Rob Kremer <robkremer@me.com>
+
+-----------------
+'''
+
+from __future__ import annotations
+import sn
+import atexit
+from sn.view.graphics.guiApp2 import TerminalRegistry
+from util.utils import strToBool, quoteIfNecessary
+import sys
+from time import sleep
+from sn.model.model import Model, GraphObject
+from sn.controller.modelInterface import ModelContext
+import logging
+import __main__
+import os
+from typing import Any, Callable, cast
+import readline  # noqa: F401 — importing enables input() line editing
+import argparse
+from util.terminal import TerminalWidget2, PlainTextTerminal
+import tkinter as tk
+
+logger:sn.SNLogger = sn.getLogger(__name__)
+
+# CARRET      = "\u298A"
+# BACK_CARRET = "\u2989"
+CARRET      = "\u23F5"      
+BACK_CARRET = "\u23F4"
+RIGHT_ARROW = "\u279C"
+
+
+INDIVIDUAL_MARKER = '\u24D8'  # circled i
+"Marks an individual (as opposed to tyoe) in *GraphObject* name string"
+TYPE_MARKER = '\u24C9'        # circled T
+"Marks a type (as opposed to individual) in *GraphObject* name string"
+SYSTEM_MARKER = '\u24C8'      # circled S
+"Marks an object as a system object in *GraphObject* name string"
+RELATION_MARKER = '\u24E1'    # circled r
+NODE_MARKER = '\u24DD'        # circled n
+
+modelFormatter:Callable[[Model],str] = str
+graphObjectFormatter:Callable[[GraphObject],str] = str
+
+KM = TYPE_MARKER
+kindMarkerStr:str = ""
+
+formatters:dict[str,str] = {
+  "Model": "str",
+  "GraphObject": "str"}
+
+formatOptions:dict[str, dict[str,Callable[[GraphObject],str]]] = {
+  "Model": 
+    {
+    "str"    : str,
+    "tostring": lambda m: m.tostring(relativeTo=context.defaults["model"]),
+    "repr"   : repr,
+    "torepr" : lambda m: m.torepr(relativeTo=context.defaults["model"]),
+    "members": lambda m: str(m) + "\n  " + ("\n  ".join([(getKindMarkStr(go)+getFormatter("GraphObject")(go)) for go in m.values()])),
+    },
+  "GraphObject": 
+    {
+    "str"   : str,
+    "tostring": lambda go: go.tostring(relativeTo=context.defaults["model"]),
+    "repr"  : repr,
+    "torepr": lambda go: go.torepr(relativeTo=context.defaults["model"]),
+    "name"  : lambda go: quoteIfNecessary(go.name),
+    "quotedname" : lambda go: f'"{go.name}"',
+    "id"    : lambda go: str(go.id),
+    "simple": lambda go: f'{quoteIfNecessary(go.name)}:{go.id}',
+    }
+  }
+
+def getFormatter(typeName:str) -> Callable:
+  return formatOptions[typeName][formatters[typeName]]
+
+def getKindMarkStr(go:GraphObject):
+  if go.isType():
+    return kindMarkerStr
+  return ""
+  
+class UIContext(ModelContext):
+  
+  commandHelp:dict[str,str] = ModelContext.commandHelp | {
+    "format": "Define the output format when objects are returned from commands."
+    }
+  
+  def _format(self, typeName:str|None=None, format:str|None=None, /) -> str|list[str]|None: # @ReservedAssignment
+    global formatters
+    global formatOptions
+    assert typeName is None or typeName in formatOptions, \
+      f'"{typeName}" is not a known object type. Use one of {list(formatters.keys())}.'
+    if typeName is None:
+      print(f'formats are available for the following types: {list(formatters.keys())}.')
+      return list(formatters.keys())
+
+    assert format is None or format in formatOptions[typeName], \
+      f'"{typeName}" does not have option "{format}". Use one of {list(formatOptions[typeName].keys())}.'
+    if format is None:
+      print(f'The format for {typeName} is set to {formatters[typeName]} and\nhas the following options: {list(formatOptions[typeName].keys())}.')
+      return list(formatOptions[typeName].keys())
+    else:
+      formatters[typeName] = format
+      return format
+    
+  def format_object(self, format:str|None=None, /, kindMarker:str|None=None): # @ReservedAssignment
+    '''
+    Set the output format for graphObjects.
+    
+    :param format: one of str, repr, name, qname, id, simple.
+    :type format: str
+    '''
+    global graphObjectFormatter
+    global kindMarkerStr
+    if kindMarker is not None:
+      kindMarkerStr = KM if strToBool(kindMarker) else ""
+      
+    return self._format("GraphObject", format)
+      
+  def format_model(self, format:str|None=None): # @ReservedAssignment
+    '''
+    Set the output format for Models.
+    
+    :param format: one of str, repr.
+    :type format: str
+    '''      
+    return self._format("Model", format)
+      
+def printLists(obj:Any, nCarrets=1, contextModel=None):
+  buf:str = ""
+  
+  def printx(s:str, end="\n"):
+    nonlocal buf
+    buf += (s + end)
+    
+  if obj is None:
+    return
+  if isinstance(obj, (Model)):
+    printx(f'{BACK_CARRET*nCarrets} {getFormatter("Model")(obj)}')
+  elif isinstance(obj, (GraphObject)):
+    printx(f'{BACK_CARRET*nCarrets} {getKindMarkStr(obj)}{getFormatter("GraphObject")(obj)}')
+  elif isinstance(obj, str):
+    lines = obj.split('\n')
+    if len(lines) == 1:
+      printx(f'{BACK_CARRET*nCarrets} "{lines[0]}"')
+    else:
+      printx(f'{BACK_CARRET*nCarrets} """\n', end="")
+      for i in lines:
+        printx(f'{" "*nCarrets} {i}')
+      printx(f'{" "*nCarrets} """')
+  elif isinstance(obj, list):
+    for i in obj:
+      printx(printLists(i, nCarrets=nCarrets+1, contextModel=contextModel), end="")
+  elif isinstance(obj, dict):
+    for k,v in obj.items():
+      printx(printLists(k, nCarrets=nCarrets+1, contextModel=contextModel), end="")
+      printx(printLists(v, nCarrets=nCarrets+2, contextModel=contextModel), end="")
+  elif isinstance(obj, tuple):
+    printx(f'{BACK_CARRET*nCarrets} (')#{len(obj)}-tuple:')
+    for i in obj:
+      printx(printLists(i, nCarrets=nCarrets+1, contextModel=contextModel), end="")
+    printx(f'{BACK_CARRET*nCarrets} )')#{len(obj)}-tuple:')
+  else: # either an iterable if that works or print the __str__ representation
+    try:
+      for i in obj:
+        printx(printLists(i, nCarrets=nCarrets+1, contextModel=contextModel), end="")
+    except:
+      printx(f'{BACK_CARRET*nCarrets} {str(obj)}')
+  return buf
+  
+
+class SNAbstractTerminal:
+  
+  def __init__(self, model:Model|str):
+    # # interpret the command line
+    # args:dict = {"suggest_on_error":True} if sys.version_info[0]>=3 and sys.version_info[1]>=14 else dict()
+    # commandLineParser = argparse.ArgumentParser(**args, description=\
+    #   '''Command line interface for Semantic Nets. Running this program (without
+    #   the "--" argument to execute a subcommand) runs in interactive command environment.''')
+    # commandLineParser.add_argument("--model", "-m", help=\
+    #   '''Set the default model for all commands. Default is whatever was last 
+    #   used by the program, or if that's not available, "temp.xml" in the 
+    #   current directory if it exists or created in memory if it doesn't exist.''')
+    # commandLineParser.add_argument("--verbose", "-v", action='store_true', 
+    #                                help="Print helpful info to debug the command line.")
+    # commandLineParser.add_argument("command", nargs="*", \
+    #                                help='Execute the command that follows "--" and exit.')
+    # commandLineParser.add_argument("--gui", "-g", action='store_true', 
+    #                                help=\
+    #   'Rather than run directy on the present terminal, run it in it\'s own separate window.')
+    # namespace:argparse.Namespace = commandLineParser.parse_args()
+    #
+    # if namespace.verbose:
+    #   print("Command line:")
+    #   for k,v in vars(namespace).items():
+    #     if k == "command":
+    #       v = " ".join(v)
+    #     print(f'  {k:>10}: {v}')
+    
+    # get *modelName*: the default model from command line or prefs
+    
+    
+    if model is None:
+      model = cast(str, sn.snPrefs.get("defaultModel", storeDefault="temp.xml", storeType=str))
+    if isinstance(model, str):
+      model = Model(model)
+    assert isinstance(model, Model)
+        
+    # initialize the parser
+    self.context:UIContext = UIContext(model)
+  
+    #  if there is an command after "--" on the command line, execute it and exit.
+    # command = namespace.command
+    # if len(command) > 0:
+    #   if namespace.verbose:
+    #     printBanner()
+    #   result = context.parser.parse(command)
+    #   printLists(result, contextModel=context.defaults["model"])
+    #   exit()
+    
+    self.printBanner()
+    #context.defaults["model"].isDirty()
+
+  def printBanner(self):
+    logger.print(f'{sn.NAME} {sn.VERSION} command line interface under Python {sys.version_info[0]}.{sys.version_info[1]}.{sys.version_info[2]}') #type: ignore[attr-defined]
+    logger.print(f'Using default model "{self.context.defaults["model"]}".') #type: ignore[attr-defined]
+
+  def getPrompt(self):
+    return f'\n{"" if self.context.defaults["model"] is None else ("@"+self.context.defaults["model"].name)}{CARRET} '
+
+  
+class SNTerminalWidget(SNAbstractTerminal, TerminalWidget2):
+  def __init__(self, model:Model|str,
+                     master: tk.Widget,
+                     registry:TerminalRegistry,
+                     stderrfg:str="red",
+                     stdoutfg:str="black",
+                     promptfg:str="darkgreen",
+                     queryfg:str="green",
+                     resultfg:str="purple4",
+                     bg="AntiqueWhite1",
+                     fg="darkblue",
+                     **kwargs):
+    SNAbstractTerminal.__init__(self, model)
+    TerminalWidget2.__init__(self, master, self.context.parser.parseLine, self.getPrompt, #type: ignore[arg-type]
+                            registry, resultToStringFun=lambda obj: printLists(obj, contextModel=self.context.defaults["model"]), 
+                            bg=bg, fg=fg, stderrfg=stderrfg, queryfg=queryfg,
+                            stdoutfg=stdoutfg, promptfg=promptfg, resultfg=resultfg, **kwargs) 
+
+
+class SNPlainTextTerminal(SNAbstractTerminal, PlainTextTerminal):
+  def __init__(self, model:Model|str,
+                     stderrfg:str="red",
+                     stdoutfg:str="black",
+                     promptfg:str="yellow",
+                     queryfg:str="green",
+                     resultfg:str="blue",
+                     **kwargs):
+    SNAbstractTerminal.__init__(self, model)
+    PlainTextTerminal.__init__(self, self.context.parser.parseLine, prompt=self.getPrompt, #type: ignore[arg-type]
+                              resultToStringFun=lambda obj: printLists(obj, contextModel=self.context.defaults["model"]), 
+                              stderrfg=stderrfg, queryfg=queryfg,
+                              stdoutfg=stdoutfg, promptfg=promptfg, resultfg=resultfg, **kwargs) 
+  
+if __name__ == '__main__':
+
+  # interpret the command line
+  args:dict = {"suggest_on_error":True} if sys.version_info[0]>=3 and sys.version_info[1]>=14 else dict()
+  commandLineParser = argparse.ArgumentParser(**args, description=\
+    '''Command line interface for Semantic Nets. Running this program (without
+    the "--" argument to execute a subcommand) runs in interactive command environment.''')
+  commandLineParser.add_argument("--model", "-m", help=\
+    '''Set the default model for all commands. Default is whatever was last 
+    used by the program, or if that's not available, "temp.xml" in the 
+    current directory if it exists or created in memory if it doesn't exist.''')
+  commandLineParser.add_argument("--verbose", "-v", action='store_true', 
+                                 help="Print helpful info to debug the command line.")
+  commandLineParser.add_argument("command", nargs="*", \
+                                 help='Execute the command that follows "--" and exit.')
+  commandLineParser.add_argument("--gui", "-g", action='store_true', 
+                                 help=\
+    'Rather than run directy on the present terminal, run it in it\'s own separate window.')
+  namespace:argparse.Namespace = commandLineParser.parse_args()
+  
+  if namespace.verbose:
+    print("Command line:")
+    for k,v in vars(namespace).items():
+      if k == "command":
+        v = " ".join(v)
+      print(f'  {k:>10}: {v}')
+  
+  # if there is an command after "--" on the command line, execute it and exit.
+  command = namespace.command
+  if len(command) > 0:
+    # if namespace.verbose:
+    #   printBanner()
+    result = context.parser.parse(command)
+    printLists(result, contextModel=context.defaults["model"])
+    exit()
+    
+  if namespace.gui:
+    root = tk.Tk()
+    terminal = SNTerminalWidget(getattr(namespace, "model", None), root, 
+                              bg="AntiqueWhite1", fg="darkblue", #insertbackground="purple",
+                              stdoutfg="darkblue", promptfg="darkgreen", resultfg="purple4") 
+    terminal.pack(fill="both", expand=True)
+    root.mainloop()
+  else:
+    SNPlainTextTerminal(getattr(namespace, "model", None))
+
+    
+  logger.print("bye")
