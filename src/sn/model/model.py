@@ -36,7 +36,7 @@ from util.persistence.pRef import PRObject, PRDb, PReference, PRDbContainer
 from util.persistence.serialize import InstantiationInfo, ParamInfo, PropertyInfo, strdict,\
   SerializableType
 from util.utils import removeDuplicates, delOne
-from typing import override, cast, Sequence, Generator, Callable, Optional,\
+from typing import override, cast, Generator, Callable, Optional,\
   Iterable, overload, Iterator
 from util.attribute import AttributedObject, Attribute, VAR, TYPENAME,\
   UNRESTRICTED, VAR_DEFAULTED, NOVALUE
