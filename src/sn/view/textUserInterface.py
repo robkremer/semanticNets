@@ -34,21 +34,18 @@ Created on May 15, 2026
 
 from __future__ import annotations
 import sn
-import atexit
-from sn.view.graphics.guiApp2 import TerminalRegistry
+from sn import snPrefs
+from util.terminal import TerminalRegistry
 from util.utils import strToBool, quoteIfNecessary
 import sys
-from time import sleep
 from sn.model.model import Model, GraphObject
 from sn.controller.modelInterface import ModelContext
 import logging
-import __main__
-import os
 from typing import Any, Callable, cast
 import readline  # noqa: F401 — importing enables input() line editing
 import argparse
 import tkinter as tk
-from util.terminal import TerminalWidget2, PlainTextTerminal
+from util.terminal import TerminalWidget, PlainTextTerminal
 
 logger:sn.SNLogger = sn.getLogger(__name__)
 
@@ -146,14 +143,17 @@ class UIContext(ModelContext):
       
     return self._format("GraphObject", format)
   
-  def print(self, string:str) -> None:
+  def print(self, string:str, stderr:bool=False) -> None:
     '''
     For debugging.
     
     :param string: prints this string to stdout.
     :type string: str
-    '''    
-    print(string)
+    '''
+    if stderr:
+      print(string, file=sys.stderr)
+    else:    
+      print(string)
     
   def log(self, string:str) -> None:
     '''
@@ -173,7 +173,15 @@ class UIContext(ModelContext):
     '''    
     raise Exception(string)
     
-      
+  def input(self, string:str) -> str:
+    '''
+    For debugging.
+    
+    :param string: raises an exception with this string as the message.
+    :type string: str
+    '''    
+    return input(string)
+    
   def format_model(self, format:str|None=None): # @ReservedAssignment
     '''
     Set the output format for Models.
@@ -286,10 +294,10 @@ class SNAbstractTerminal:
     return f'\n{"" if self.context.defaults["model"] is None else ("@"+self.context.defaults["model"].name)}{CARRET} '
 
   
-class SNTerminalWidget(SNAbstractTerminal, TerminalWidget2):
+class SNTerminalWidget(SNAbstractTerminal, TerminalWidget):
   def __init__(self, model:Model|str,
                      master: tk.Widget,
-                     registry:TerminalRegistry,
+                     registry:TerminalRegistry|None=None,
                      stderrfg:str="red",
                      stdoutfg:str="black",
                      promptfg:str="darkgreen",
@@ -299,7 +307,7 @@ class SNTerminalWidget(SNAbstractTerminal, TerminalWidget2):
                      fg="darkblue",
                      **kwargs):
     SNAbstractTerminal.__init__(self, model)
-    TerminalWidget2.__init__(self, master, self.context.parser.parseLine, self.getPrompt, #type: ignore[arg-type]
+    TerminalWidget.__init__(self, master, self.context.parser.parseLine, self.getPrompt, #type: ignore[arg-type]
                             registry, resultToStringFun=lambda obj: printLists(obj, contextModel=self.context.defaults["model"]), 
                             bg=bg, fg=fg, stderrfg=stderrfg, queryfg=queryfg,
                             stdoutfg=stdoutfg, promptfg=promptfg, resultfg=resultfg, **kwargs) 
@@ -347,23 +355,36 @@ if __name__ == '__main__':
       print(f'  {k:>10}: {v}')
   
   # if there is an command after "--" on the command line, execute it and exit.
+  m = getattr(namespace, "model", None)
+  if m is None:
+    m = snPrefs.get("defaultModel", None)
+  if not isinstance(m, (Model,str)):
+    raise ValueError(f'No model found on the command line (--model or -m) and no default model found in preferences.')
+  model:Model|str = m
   command = namespace.command
   if len(command) > 0:
     # if namespace.verbose:
     #   printBanner()
+    if isinstance(model, str):
+      model = Model(model)
+    assert isinstance(model, Model), f'Expected a type Model object, got {type(model)}:{model}.' 
+    context:UIContext = UIContext(model)
     result = context.parser.parse(command)
     printLists(result, contextModel=context.defaults["model"])
     exit()
     
   if namespace.gui:
     root = tk.Tk()
-    terminal = SNTerminalWidget(getattr(namespace, "model", None), root, 
+    # No registry passed — a single-TerminalWidget app like this one doesn't
+    # need to know TerminalRegistry exists; SNTerminalWidget defaults to the
+    # module-level singleton in util.terminal.
+    terminal = SNTerminalWidget(model, root,
                               bg="AntiqueWhite1", fg="darkblue", #insertbackground="purple",
-                              stdoutfg="darkblue", promptfg="darkgreen", resultfg="purple4") 
+                              stdoutfg="darkblue", promptfg="darkgreen", resultfg="purple4")
     terminal.pack(fill="both", expand=True)
     root.mainloop()
   else:
-    SNPlainTextTerminal(getattr(namespace, "model", None))
+    SNPlainTextTerminal(model)
 
     
   logger.print("bye")
