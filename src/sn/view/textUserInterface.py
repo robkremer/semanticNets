@@ -191,15 +191,16 @@ class UIContext(ModelContext):
     '''      
     return self._format("Model", format)
       
-def printLists(obj:Any, nCarrets=1, contextModel=None):
+def printLists(obj:Any, nCarrets=1, contextModel=None) -> str|None:
   buf:str = ""
   
-  def printx(s:str, end="\n"):
-    nonlocal buf
-    buf += (s + end)
+  def printx(s:str|None, end="\n"):
+    if s:
+      nonlocal buf
+      buf += (s + end)
     
   if obj is None:
-    return
+    return None
   if isinstance(obj, (Model)):
     printx(f'{BACK_CARRET*nCarrets} {getFormatter("Model")(obj)}')
   elif isinstance(obj, (GraphObject)):
@@ -291,7 +292,7 @@ class SNAbstractTerminal:
     print(f'Using default model "{self.context.defaults["model"]}".') #type: ignore[attr-defined]
 
   def getPrompt(self):
-    return f'\n{"" if self.context.defaults["model"] is None else ("@"+self.context.defaults["model"].name)}{CARRET} '
+    return f'{"" if self.context.defaults["model"] is None else ("@"+self.context.defaults["model"].name)}{CARRET} '
 
   
 class SNTerminalWidget(SNAbstractTerminal, TerminalWidget):
@@ -301,16 +302,23 @@ class SNTerminalWidget(SNAbstractTerminal, TerminalWidget):
                      stderrfg:str="red",
                      stdoutfg:str="black",
                      promptfg:str="darkgreen",
-                     queryfg:str="green",
+                     queryfg:str="violet red",
                      resultfg:str="purple4",
+                     queryFont: [tuple[str, int, str]]|None = None,
+                     queryFlashColor: str|None = "DeepSkyBlue2",
+                     queryFlashCount: int = 6,
+                     queryFlashIntervalMs: int = 150,
                      bg="AntiqueWhite1",
                      fg="darkblue",
                      **kwargs):
     SNAbstractTerminal.__init__(self, model)
     TerminalWidget.__init__(self, master, self.context.parser.parseLine, self.getPrompt, #type: ignore[arg-type]
-                            registry, resultToStringFun=lambda obj: printLists(obj, contextModel=self.context.defaults["model"]), 
+                            resultToStringFun=lambda obj: printLists(obj, contextModel=self.context.defaults["model"]), 
+                            registry=registry, 
                             bg=bg, fg=fg, stderrfg=stderrfg, queryfg=queryfg,
-                            stdoutfg=stdoutfg, promptfg=promptfg, resultfg=resultfg, **kwargs) 
+                            stdoutfg=stdoutfg, promptfg=promptfg, resultfg=resultfg,
+                            queryFont=queryFont, queryFlashColor=queryFlashColor, queryFlashCount=queryFlashCount, queryFlashIntervalMs=queryFlashIntervalMs,
+                            **kwargs) 
 
 
 class SNPlainTextTerminal(SNAbstractTerminal, PlainTextTerminal):
@@ -339,6 +347,8 @@ if __name__ == '__main__':
     used by the program, or if that's not available, "temp.xml" in the 
     current directory if it exists or created in memory if it doesn't exist.''')
   commandLineParser.add_argument("--verbose", "-v", action='store_true', 
+                                 help="Print helpful environment info.")
+  commandLineParser.add_argument("--debug", "-d", action='store_true', 
                                  help="Print helpful info to debug the command line.")
   commandLineParser.add_argument("command", nargs="*", \
                                  help='Execute the command that follows "--" and exit.')
@@ -347,7 +357,7 @@ if __name__ == '__main__':
     'Rather than run directy on the present terminal, run it in it\'s own separate window.')
   namespace:argparse.Namespace = commandLineParser.parse_args()
   
-  if namespace.verbose:
+  if namespace.debug:
     print("Command line:")
     for k,v in vars(namespace).items():
       if k == "command":
@@ -363,14 +373,17 @@ if __name__ == '__main__':
   model:Model|str = m
   command = namespace.command
   if len(command) > 0:
-    # if namespace.verbose:
-    #   printBanner()
+    if namespace.verbose:
+      print(f'{sn.NAME} {sn.VERSION} command line interface under Python {sys.version_info[0]}.{sys.version_info[1]}.{sys.version_info[2]}') #type: ignore[attr-defined]
+      print(f'Using default model {model}.')
     if isinstance(model, str):
       model = Model(model)
     assert isinstance(model, Model), f'Expected a type Model object, got {type(model)}:{model}.' 
     context:UIContext = UIContext(model)
     result = context.parser.parse(command)
-    printLists(result, contextModel=context.defaults["model"])
+    s = printLists(result, contextModel=context.defaults["model"])
+    if s is not None:
+      print(s)
     exit()
     
   if namespace.gui:
