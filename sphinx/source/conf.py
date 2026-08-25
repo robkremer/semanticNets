@@ -29,7 +29,7 @@ typing.TYPE_CHECKING = False
 
 # -- Project information -----------------------------------------------------
 
-project = 'Python Util'
+project = 'Semantic Nets'
 #copyright = '\u00A9 2023-2025, Rob Kremer'
 copyright = '2023-2026, Rob Kremer'
 author = 'Rob Kremer'
@@ -41,7 +41,7 @@ show_authors = True
 
 # -- General configuration ---------------------------------------------------
 
-html_show_sourcelink = False
+html_show_sourcelink = True
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -58,9 +58,12 @@ graphviz_output_format = 'svg'
 graphviz_dot = '/opt/homebrew/bin/dot'
 
 intersphinx_mapping = {
-    "pythonUtils": ("http://192.168.1.102:8080/dev/pythonUtils", None),
+    "pythonUtils": (
+        "http://192.168.1.102:8080/dev/pythonUtils",           # link target readers actually click through to
+        "../../../pythonUtils/sphinx/build/html/objects.inv",  # read locally at build time -- no server dependency
+    ),
 }
-# ... and use links like ":py:class:`pythonUtils:persistence.persistence.PRef`"
+# ... and use links like ":py:class:`pythonUtils:util.persistence.pRef.PRef`"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -103,7 +106,7 @@ elif html_theme == "alabaster":
       "logo_name": True,
       "sidebar_collapse": True,
       "fixed_sidebar": True,
-      "description": "Various handy utilities for Python programmers.",
+      "description": "Semantic Nets: Typed graphs editor with inferencing.",
       "logo_text_align": "center",
       "show_relbars": True,
       "show_related": True,

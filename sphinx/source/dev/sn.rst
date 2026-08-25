@@ -7,11 +7,12 @@ sn package
    :show-inheritance:
    :undoc-members:
 
-Submodules
-----------
+Subpackages
+-----------
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 3
 
    sn.model
-   sn.x_db
+   sn.view
+   sn.controller

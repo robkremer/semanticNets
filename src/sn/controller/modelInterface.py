@@ -34,6 +34,7 @@ from util.utils import getClass, fixURL, isValidURL, urlExists
 from util.attribute import Attribute, Restriction
 from util.persistence.pRef import PRDb, DuplicateNameError
 from sn import snPrefs
+from util.observer import Subject
 
 
 logger:sn.SNLogger = sn.getLogger(__name__)
@@ -121,7 +122,7 @@ class ModelContext(CommandContext):
         assert isinstance(ret, GraphObject)
         return ret
       except Exception as ex:
-        print(ex)
+        #print(ex)
         raise ex
     super()._defineDecoders()
     #self.decoders["GraphObject"] = lambda s, d=self.defaults, **kwargs: GORef.eval(s, d["model"] if kwargs.get("model") is None else kwargs["model"]) #type: ignore[misc]
@@ -151,8 +152,8 @@ class ModelContext(CommandContext):
       ret = model.validate()
     else:
       ret = object.validate()
-    if not ret:
-      print("OK")
+    # if not ret:
+    #   print("OK")
     return ret
 
 
@@ -740,17 +741,19 @@ class ModelContext(CommandContext):
     @override
     def do(self) -> Node:
       super().do()
-      if self.node is None:
-        self.node = Node(self.model, self.parents, self.individual, self.nodeName)
-      else:
-        self.node._reconnect()
+      with Subject.ChangeMgr(self.model, later=True) as cm:
+        if self.node is None:
+          self.node = Node(self.model, self.parents, self.individual, self.nodeName)
+        else:
+          self.node._reconnect()
       return self.node
   
     @override
     def undo(self):
       assert self.node is not None
       super().undo()
-      self.node._disconnect()
+      with Subject.ChangeMgr(self.model, later=True) as cm:
+        self.node._disconnect()
       return self.node
       
     @override

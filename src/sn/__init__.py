@@ -19,7 +19,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE #
 # SOFTWARE.                                                                     #
 #################################################################################
-#from util.utils import setupLogger
+'''
+The Semantic Nets package is a tool for ... 
+'''
 import atexit
 from typing import override, cast
 import logging

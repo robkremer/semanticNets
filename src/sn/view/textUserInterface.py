@@ -304,7 +304,7 @@ class SNTerminalWidget(SNAbstractTerminal, TerminalWidget):
                      promptfg:str="darkgreen",
                      queryfg:str="violet red",
                      resultfg:str="purple4",
-                     queryFont: [tuple[str, int, str]]|None = None,
+                     queryFont: tuple[str, int, str]|None = None,
                      queryFlashColor: str|None = "DeepSkyBlue2",
                      queryFlashCount: int = 6,
                      queryFlashIntervalMs: int = 150,
@@ -312,6 +312,8 @@ class SNTerminalWidget(SNAbstractTerminal, TerminalWidget):
                      fg="darkblue",
                      **kwargs):
     SNAbstractTerminal.__init__(self, model)
+    if "wrap" not in kwargs:
+      kwargs["wrap"] = tk.WORD if snPrefs.get("text/wrap", storeDefault=False, storeType=bool) else tk.NONE
     TerminalWidget.__init__(self, master, self.context.parser.parseLine, self.getPrompt, #type: ignore[arg-type]
                             resultToStringFun=lambda obj: printLists(obj, contextModel=self.context.defaults["model"]), 
                             registry=registry, 

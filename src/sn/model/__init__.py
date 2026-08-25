@@ -30,6 +30,11 @@ from util.observer import Subject
 
 class TopModel(Model):
   def __init__(self, url:str, mode:str="", _reading:bool=False):
+    '''
+    Builds the base model for the SN application. This is required to always be
+    in the in-memory models under the name "sn" (access as "$sn" in a URL, don't
+    forget to escape it on a command line as "\$sn"
+    '''
     Subject.__init__(self)
     PRDb.__init__(self, url, mode="")
     self._allowParentsCaching:bool = False

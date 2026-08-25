@@ -87,7 +87,7 @@ class VRelation(VObject):
         floating:Optional[bool]=None,
         _id:Optional[int]=None, _bb:Optional[list]=None):
     """  
-    :param tgview: [Required] The TGView object for this object.
+    :param canvas: [Required] The TGView object for this object.
     :param modelObject: [Required if creating a view object only (*_id* is *None*)]
       The *Relation* object to server as the modelObject for this view object.
     :param typ: [Required if creating a modelObject object (*_id* is *None* and 
@@ -141,7 +141,7 @@ class VRelation(VObject):
     
     if _id is None:
       self.reposition(aggressive=True)
-      self.tgview.freshPaint()
+      self.canvas.freshPaint()
       self.draw()
           
   def _post__init__(self):
@@ -171,7 +171,7 @@ class VRelation(VObject):
       nodes = []
       for roleFiller in roleFillers:
         mObj = roleFiller()  # POReference -> ModelBbject
-        node = self.tgview.makeViewObjectForGraphObject(mObj)
+        node = self.canvas.makeViewObjectForGraphObject(mObj)
         # nodes.append(weakref.ref(node))
         nodes.append(node)
         node.addRelation(self)
@@ -179,7 +179,7 @@ class VRelation(VObject):
     setattr(self.cache, '_roles', roles)
     
   def register(self):
-    self.tgview.relations.append(self)
+    self.canvas.relations.append(self)
 
   # def makeDecorators(self):
   #   from sn.view.decorators import Text, TypeMarker
@@ -191,22 +191,22 @@ class VRelation(VObject):
 
   def _delete(self):
     """ Low-level delete that doesn't take care of notifications."""
-    # self.tgview.canvas.delete(self.fromID)
-    # self.tgview.canvas.delete(self.toID)
-    # self.tgview.canvas.delete(self.fromDotID)
-    # self.tgview.canvas.delete(self.toDotID)
-    # if self in self.tgview.relations():
-    #   self.tgview.remove(self._id)
+    # self.canvas.canvas.delete(self.fromID)
+    # self.canvas.canvas.delete(self.toID)
+    # self.canvas.canvas.delete(self.fromDotID)
+    # self.canvas.canvas.delete(self.toDotID)
+    # if self in self.canvas.relations():
+    #   self.canvas.remove(self._id)
     for roleinfoList in self.roles.values():
       for r in roleinfoList:
-        r.eraseView(self.tgview.canvas)
+        r.eraseView(self.canvas.canvas)
     super().delete()
 
   def delete(self):
     """
     Removes this Relation:
       remove it from the display
-      removing it from tgview's list
+      removing it from canvas's list
       notify the relevant nodes
     """
     for node in self._getConnectedVObjects():
@@ -377,7 +377,7 @@ class VRelation(VObject):
         # get all the referenced VObjects
         vObjs = []
         for ref in v:
-          vObjs.append(self.tgview.makeViewObjectForGraphObject(ref()))
+          vObjs.append(self.canvas.makeViewObjectForGraphObject(ref()))
           
         # mark the objects in self.roles so we don't delete it
         for o in vObjs:
@@ -395,7 +395,7 @@ class VRelation(VObject):
           if r.mark:
             r.mark = False
           else:  # delete from this role's list
-            r.eraseView(self.tgview.canvas)
+            r.eraseView(self.canvas.canvas)
             self.roles[roleName].remove(r)
               
     self._findPoints(self.roles)
@@ -466,13 +466,13 @@ class VRelation(VObject):
     shape = self.parseEndShape(shape)
     if shape is None:
       if ID is not None:  # need to delete the old end shape
-        self.tgview.canvas.delete(ID)
+        self.canvas.canvas.delete(ID)
       return None
     shapeName, args = shape
     
     if shapeName == "circle":
-      if ID is not None and self.tgview.canvas.type(ID) != "oval":  # need to delete the old none-oval and draw a new oval
-        self.tgview.canvas.delete(ID)
+      if ID is not None and self.canvas.canvas.type(ID) != "oval":  # need to delete the old none-oval and draw a new oval
+        self.canvas.canvas.delete(ID)
         ID = None
 
       # fill in defaults
@@ -480,19 +480,19 @@ class VRelation(VObject):
       radius = diam / 2.0
 
       if ID is None:  # new circle
-        ID = self.tgview.canvas.create_oval(
-            self.tgview.viewToWindow([line[2] - radius, line[3] - radius, line[2] + radius, line[3] + radius]),
+        ID = self.canvas.canvas.create_oval(
+            self.canvas.viewToWindow([line[2] - radius, line[3] - radius, line[2] + radius, line[3] + radius]),
             fill=fillColor, outline=lineColor, tags=[self.tag])
       else:  # repaint existing circle
-        self.tgview.canvas.coords(ID,
-            self.tgview.viewToWindow([line[2] - radius, line[3] - radius, line[2] + radius, line[3] + radius]))
-        self.tgview.canvas.itemconfigure(ID, fill=fillColor, outline=lineColor)
+        self.canvas.canvas.coords(ID,
+            self.canvas.viewToWindow([line[2] - radius, line[3] - radius, line[2] + radius, line[3] + radius]))
+        self.canvas.canvas.itemconfigure(ID, fill=fillColor, outline=lineColor)
       
       # TODO: fill this in
       
     elif shapeName == "arrow":
-      if ID is not None and self.tgview.canvas.type(ID) != "line":  # need to delete the old none-oval and draw a new oval
-        self.tgview.canvas.delete(ID)
+      if ID is not None and self.canvas.canvas.type(ID) != "line":  # need to delete the old none-oval and draw a new oval
+        self.canvas.canvas.delete(ID)
         ID = None
 
       # fill in defaults
@@ -508,18 +508,18 @@ class VRelation(VObject):
         args = args[:3]
         
       if ID is None:  # new line
-        ID = self.tgview.canvas.create_line(
-            self.tgview.viewToWindow(line),
-            fill=lineColor, tags=[self.tag], arrow=tk.LAST, arrowshape=tuple(self.tgview.viewToWindow(args)))
+        ID = self.canvas.canvas.create_line(
+            self.canvas.viewToWindow(line),
+            fill=lineColor, tags=[self.tag], arrow=tk.LAST, arrowshape=tuple(self.canvas.viewToWindow(args)))
       else:  # repaint existing line
-        self.tgview.canvas.coords(ID,
-            self.tgview.viewToWindow(line))
-        self.tgview.canvas.itemconfigure(ID, fill=lineColor, arrow=tk.LAST, arrowshape=tuple(self.tgview.viewToWindow(args)))
+        self.canvas.canvas.coords(ID,
+            self.canvas.viewToWindow(line))
+        self.canvas.canvas.itemconfigure(ID, fill=lineColor, arrow=tk.LAST, arrowshape=tuple(self.canvas.viewToWindow(args)))
     
     return ID
     
   def draw(self, fast=False):
-    if self._drawVersion >= self.tgview._drawVersion: return
+    if self._drawVersion >= self.canvas._drawVersion: return
     super().draw(fast=fast)
     # self.reposition(suppressDraw=True)
     if self.modelObject.isSystemObject() and self.modelObject.name == "relation":
@@ -535,31 +535,31 @@ class VRelation(VObject):
       for info in infoList:  # count this object so that we can avoid drawing lines over one another
         # draw lines
         if info.lineID is None:  # new line
-          info.lineID = self.tgview.canvas.create_line(
-              self.tgview.viewToWindow(flattenPairs([info.nearPt, info.farPt])),
+          info.lineID = self.canvas.canvas.create_line(
+              self.canvas.viewToWindow(flattenPairs([info.nearPt, info.farPt])),
               tags=[self.tag], **kwargs)
         else:  # repaint existing line
-          self.tgview.canvas.coords(info.lineID,
-              self.tgview.viewToWindow(flattenPairs([info.nearPt, info.farPt])))
-          self.tgview.canvas.itemconfigure(info.lineID, **kwargs)
+          self.canvas.canvas.coords(info.lineID,
+              self.canvas.viewToWindow(flattenPairs([info.nearPt, info.farPt])))
+          self.canvas.canvas.itemconfigure(info.lineID, **kwargs)
           
         # draw role labels
         if tygra.tygraPrefs.get("view_showRoleLabels", storeDefault=False):
           anchor:str = ("n" if info.nearPt[1] < info.farPt[1] else "s") + \
                        ("w" if info.nearPt[0] < info.farPt[0] else "e")
           if info.labelID is None:
-            info.labelID = self.tgview.canvas.create_text(info.nearPt[0], info.nearPt[1], text=role,
+            info.labelID = self.canvas.canvas.create_text(info.nearPt[0], info.nearPt[1], text=role,
                 fill="gray50", font=('Helvetica', 10, 'italic'), tags=[self.tag],
                 anchor=anchor)
             assert info.labelID is not None
           else:
-            self.tgview.canvas.coords(info.labelID,
-                self.tgview.viewToWindow(info.nearPt[0], info.nearPt[1]))
-            self.tgview.canvas.itemconfigure(info.labelID,
+            self.canvas.canvas.coords(info.labelID,
+                self.canvas.viewToWindow(info.nearPt[0], info.nearPt[1]))
+            self.canvas.canvas.itemconfigure(info.labelID,
                 anchor=anchor)
         else:
           if info.labelID is not None:
-            self.tgview.canvas.delete(info.labelID)
+            self.canvas.canvas.delete(info.labelID)
             info.labelID = None
           
         # draw end shapes (arrowheads)
@@ -577,7 +577,7 @@ class VRelation(VObject):
       relation:Relation = self.modelObject
       if len(infoList) < relation.roles[role].card[1]:
         # draw in the "dangling" role as a clickable object
-        self.unfilledRoles[role] = (self.tgview.canvas.create_text(info.nearPt[0], info.nearPt[1], text=role,
+        self.unfilledRoles[role] = (self.canvas.canvas.create_text(info.nearPt[0], info.nearPt[1], text=role,
                 fill="gray50", font=('Helvetica', 10, 'italic'), tags=[self.tag],
                 anchor=anchor))
 
@@ -588,7 +588,7 @@ class VRelation(VObject):
     if self.floating() and len(connectedObjects) > 1 and self.modelObject.isIndividual():
       if len(set(connectedObjects)) <= 1:  # if all the objects are the same 
         c = connectedObjects[0].centerPt()
-        ctr = (c[0] + self.tgview.model._top.get("minSize", 20) * 1.5, c[1])
+        ctr = (c[0] + self.canvas.model._top.get("minSize", 20) * 1.5, c[1])
       else:
         ctr = midpoint(*map(lambda obj: obj.centerPt(), connectedObjects))
       self.moveToCenterOn(ctr[0], ctr[1])
@@ -682,7 +682,7 @@ class VRelation(VObject):
       self.draw()
       
   # def addModelEditingMenuItems(self, menu:tk.Menu):
-  #   disabled = self.modelObject.isSystemObject() or not self.tgview.isModelEditor
+  #   disabled = self.modelObject.isSystemObject() or not self.canvas.isModelEditor
   #   menu.add_command(label=f"{'show' if disabled else 'edit'} attributes", \
   #     command=lambda disabled=disabled: self.onEditAttributes(disabled=disabled))    #menu.add_cascade(menu=self.makeMakeRelationMenu(menu), label='make relation')
   #   if self.modelObject.isType():
@@ -694,12 +694,12 @@ class VRelation(VObject):
   def _doNewNodeCommand(self, individual:bool):
     from util.command import CommandWrapper
     cmd = CommandWrapper(
-              NewModelRelationCommand(self.tgview.model, parent=self.modelObject, individual=individual),
+              NewModelRelationCommand(self.canvas.model, parent=self.modelObject, individual=individual),
               setup=self._setCatchNewObjects,
               teardown=self._resetCatchNewObjects)
-    node = self.tgview.doList.do(cmd)
-    applyEditAttrsBox(self.tgview.canvas, node, title=str(node), editKey="name")
-    vnode = self.tgview.findViewObjectForGraphObject(node)
+    node = self.canvas.doList.do(cmd)
+    applyEditAttrsBox(self.canvas.canvas, node, title=str(node), editKey="name")
+    vnode = self.canvas.findViewObjectForGraphObject(node)
     vnode.draw()
 
   ### Event handling ###################################################################

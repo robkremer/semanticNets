@@ -1,16 +1,14 @@
 
-Developer's Documentation
-=========================
+Semantic Nets: Developer's Documentation
+========================================
 
 Contents
 --------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    
-   dev/sn.model.model
-   dev/sn.controller.modelInterface
-   dev/sn.controller.textUserInterface
+   dev/sn
 
 
 Indices and tables

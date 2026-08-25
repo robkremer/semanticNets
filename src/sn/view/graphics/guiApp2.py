@@ -19,12 +19,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE #
 # SOFTWARE.                                                                     #
 #################################################################################
+from __future__ import annotations
+from sn.controller.modelInterface import ModelContext
+from sn.model.model import Model
+import traceback
+import util
 '''
 Created on Aug 18, 2026
 
 @author: robkremer
 '''
-from __future__ import annotations
 import sys
 import io
 import builtins
@@ -32,15 +36,20 @@ import threading
 import logging
 import sn
 import tkinter as tk
-from typing import Optional, Callable
+from typing import Optional, Callable, cast
 from tkinter import ttk
 from sn import snPrefs
 from util.attribute import Attribute, VAR_DEFAULTED
-from util.utils import expandRect
-from util.terminal import terminalRegistry, installGlobalIORouting
+from util.attributeEditor import HierarchicalAttrEditor, AttrEditor,\
+  editAttrsBox, applyEditAttrsBox
+from util.utils import expandRect, showExceptionDialog
+from util.terminal import terminalRegistry, installGlobalIORouting,\
+  TerminalWidget, TerminalRegistry
 #from sn.view.textUserInterface import SNTerminalWidget # circular import
 
 logger:sn.SNLogger = sn.getLogger(__name__)
+
+ModelSpecType = Model|str|None
 
 class Application(tk.Tk):
   """The invisible root Tk window and manages one or more Toplevel windows.
@@ -72,7 +81,7 @@ class Application(tk.Tk):
     """
     pass
 
-  def openWindow(self, name: str, title: str="") -> tk.Toplevel:
+  def openWindow(self, model:ModelSpecType) -> tk.Toplevel|None:
     """Create and show a new Toplevel window hosted under the invisible root.
 
     :param name: A key to refer to this window by (e.g. for closing it later).
@@ -82,14 +91,32 @@ class Application(tk.Tk):
     :returns: The newly created Toplevel window.
     :rtype: tk.Toplevel
     """
-    if name in self.windows:
-      self.windows[name].lift()
-      return self.windows[name]
+    try:
+      if model is None:
+        model = cast(str, sn.snPrefs.get("defaultModel", storeDefault="temp.xml", storeType=str))
+      if isinstance(model, str):
+        model = Model(model)
+      assert isinstance(model, Model)
+  
+      name = model.url    
+      if name in self.windows:
+        self.windows[name].lift()
+        return self.windows[name]
+  
+      #TODO: passing model as just None is just a temporary thing. 
+      window:AppWindow = AppWindow(self, model, geometry=f'300x400+{self.defaultChildLocation[0]}+{self.defaultChildLocation[1]}')
+      self.defaultChildLocation = (self.defaultChildLocation[0] + 40, self.defaultChildLocation[1] + 40)
+      self.windows[name] = window
+      return window
+    except Exception:
+      logger.error(f'While opening window for model "{model}"', exc_info=True)
+      try:
+        print(traceback.format_exc(), file=sys.__stderr__)
+        showExceptionDialog(self, title=f"Semantic Nets: Failed to open window for Model {model.url if isinstance(model, Model) else model}.")
+      except Exception:
+        logger.error('While displaying exception dialog', exc_info=True)
+      return None
 
-    window:AppWindow = AppWindow(self, name, title, geometry=f'300x400+{self.defaultChildLocation[0]}+{self.defaultChildLocation[1]}')
-    self.defaultChildLocation = (self.defaultChildLocation[0] + 40, self.defaultChildLocation[1] + 40)
-    self.windows[name] = window
-    return window
 
   def _closeWindow(self, name: str) -> None:
     """Close a specific hosted window and check whether the app should exit.
@@ -122,11 +149,23 @@ class Application(tk.Tk):
 
 
 class AppWindow(tk.Toplevel):
+  '''
+  A top-level SN app window that also acts as the holder of the SNContext
+  Model controller.
+  '''
 
-  def __init__(self, tkdottk:tk.Tk, name:str, title:str="", geometry:str="300x400+20+20", **kwargs):
+  def __init__(self, tkdottk:tk.Tk, model:Model, geometry:str="300x400+20+20", **kwargs):
+    from sn.view.graphics.snCanvas import SNGContext
+    # establish we have model and a context
+    assert isinstance(model, Model)
+    self.model:Model = model
+    self.context:SNGContext = SNGContext(model)
+        
+    # initialize the window
     super().__init__(tkdottk, **kwargs)
     self.geometry(geometry)
-    self.title(title or name)
+    name = model.url
+    self.title(name)
     self.protocol("WM_DELETE_WINDOW", lambda name=name: self._root()._closeWindow(name))
     self.appPanedWidget = AppPanedWidget(self)
     self.appPanedWidget.pack(fill=tk.BOTH, side=tk.RIGHT, expand=True, padx=0, pady=0)
@@ -140,6 +179,118 @@ class AppWindow(tk.Toplevel):
     # clicking into the graphics editor also makes its output land here.
     terminal = self.appPanedWidget.textDisplayFrame
     self._bindFocusRouting(self, terminal)
+
+    self._installSettingsMenu()
+
+  def _installSettingsMenu(self) -> None:
+    """Wire up a Settings item under the app item in the menu bar.
+
+    On macOS, Tk always shows an "Application menu" — the one named after
+    the app, to the immediate right of the Apple logo — whether or not the
+    app defines any menu of its own. That's "the app item." Its
+    "Preferences…" entry is present but disabled/inert unless something
+    registers the special Tcl command 'tk::mac::ShowPreferences'; this does
+    that registration, so choosing it (or its standard ⌘, shortcut) opens
+    openSettings() below.
+
+    On Windows/Linux, Tk has no equivalent automatic app menu, so this
+    command is simply never invoked there — harmless, but it means Settings
+    currently has no menu entry point on those platforms. Revisit with a
+    real cross-platform Menu/menu bar if that's ever needed.
+
+    Registered once per Application (root), not once per AppWindow — the
+    command is global (there's only one "app item," however many windows
+    are open) and always opens the dialog on the current root, not
+    whichever window happened to trigger the registration.
+
+    :rtype: None
+    """
+    root = self._root()
+    if getattr(root, "_settingsMenuInstalled", False):
+      return
+    root._settingsMenuInstalled = True
+    root.createcommand("tk::mac::ShowPreferences", self.openSettings)
+
+  def openSettings(self) -> None:
+    """Show the app-wide Settings dialog, editing *sn.snPrefs* in place.
+
+    Builds its form generically from whatever's currently in snPrefs: each
+    key becomes a labelled row, rendered as a dropdown if the Attribute's
+    type is a "choices[...]" constraint (see util.attribute), a checkbox if
+    its current value is a bool, otherwise a plain text entry. Save writes
+    each edited value back via snPrefs[key] = ... (which validates against
+    the Attribute's type/restriction) and persists immediately via
+    snPrefs.save(), rather than relying solely on the atexit hook.
+
+    :rtype: None
+    """
+    # root = self._root()
+    # dialog = tk.Toplevel(root)
+    # dialog.title("Settings")
+    # if root.winfo_viewable():
+    #   dialog.transient(root)
+    #
+    # body = tk.Frame(dialog, padx=12, pady=12)
+    # body.pack(fill=tk.BOTH, expand=True)
+    # body.columnconfigure(1, weight=1)
+    #
+    # editors: dict[str, tuple[tk.Variable, Optional[Attribute]]] = {}
+    # for row, key in enumerate(sorted(snPrefs)):
+    #   attr = snPrefs.getAttr(key)
+    #   value = snPrefs[key]
+    #   typ = attr.type if attr is not None else None
+    #
+    #   tk.Label(body, text=key, anchor="w").grid(row=row, column=0, sticky="w", padx=(0, 8), pady=2)
+    #
+    #   var: tk.Variable
+    #   widget: tk.Widget
+    #   if isinstance(typ, str) and typ.startswith("choices[") and typ.endswith("]"):
+    #     choices = [c.strip() for c in typ[len("choices["):-1].split(",")]
+    #     var = tk.StringVar(value=str(value))
+    #     widget = ttk.Combobox(body, textvariable=var, values=choices, state="readonly")
+    #   elif isinstance(value, bool):
+    #     var = tk.BooleanVar(value=value)
+    #     widget = tk.Checkbutton(body, variable=var)
+    #   else:
+    #     var = tk.StringVar(value=str(value))
+    #     widget = tk.Entry(body, textvariable=var, width=30)
+    #
+    #   widget.grid(row=row, column=1, sticky="ew", pady=2)
+    #   editors[key] = (var, attr)
+    #
+    # def onSave() -> None:
+    #   for key, (var, attr) in editors.items():
+    #     raw = var.get()
+    #     typ = attr.type if attr is not None else None
+    #     try:
+    #       if isinstance(var, tk.BooleanVar):
+    #         newValue: object = bool(raw)
+    #       elif typ == "int":
+    #         newValue = int(cast(str, raw))
+    #       elif typ == "float":
+    #         newValue = float(cast(str, raw))
+    #       else:
+    #         newValue = raw
+    #       snPrefs[key] = newValue
+    #     except (ValueError, TypeError) as ex:
+    #       logger.warning(f'openSettings(): skipped "{key}" — invalid value "{raw}" for type {typ}: {ex}')
+    #   snPrefs.save()
+    #   dialog.destroy()
+    #
+    # buttons = tk.Frame(dialog, padx=12, pady=(0, 12))
+    # buttons.pack(fill=tk.X)
+    # tk.Button(buttons, text="Cancel", command=dialog.destroy).pack(side=tk.RIGHT)
+    # tk.Button(buttons, text="Save", command=onSave).pack(side=tk.RIGHT, padx=(0, 8))
+    #
+    # # See the identical pattern (and the "why") in util.utils.showExceptionDialog.
+    # dialog.update_idletasks()
+    # try:
+    #   dialog.grab_set()
+    # except tk.TclError:
+    #   logger.warning("openSettings(): grab_set() failed; showing non-modally", exc_info=True)
+    # dialog.wait_window()
+
+    applyEditAttrsBox(self, snPrefs, title="Semantic Nets Preferences")
 
   def _bindFocusRouting(self, widget: tk.Widget, terminal: "SNTerminalWidget") -> None:
     """Recursively bind <FocusIn>/<FocusOut> on this widget and all its
@@ -174,8 +325,7 @@ class AppPanedWidget(tk.PanedWindow):
     +-------------------------+
   '''
 
-  def __init__(self, parent,
-               **kwargs):
+  def __init__(self, parent:AppWindow, **kwargs):
     r"""
     :param parent: The parent *AppWindow*.
     :param fixedAppFrame: [bool, default:False] Specifies whether the application *frame*
@@ -193,6 +343,7 @@ class AppPanedWidget(tk.PanedWindow):
         - "borderwidth" default = 0
 
     """
+    assert isinstance(parent, AppWindow)
     from sn.view.textUserInterface import SNTerminalWidget
     # fix up kwargs to contain the necessary defaults and create the PanedWindow (super).
     if "orient" not in kwargs: kwargs["orient"] = tk.VERTICAL
@@ -210,14 +361,14 @@ class AppPanedWidget(tk.PanedWindow):
     # No registry passed explicitly — it defaults to the same module-level
     # singleton this file already imports for its own use (installGlobalIORouting,
     # onFocusIn/onFocusOut below).
-    self.textDisplayFrame = SNTerminalWidget(None, self)
+    self.textDisplayFrame = SNTerminalWidget(self.model, self)
     self.textDisplayFrame.pack(fill=tk.NONE, side=tk.BOTTOM, expand=False)
     stretch = 'always'  # if fixedAppFrame else 'never'
     sticky = 'news'  # if fixedAppFrame else 'new'
     self.add(self.textDisplayFrame, stretch=stretch, sticky=sticky)
     self.paneconfigure(self.textDisplayFrame, stretch=stretch)
 
-    self.appFrame = SNGFrame(self)
+    self.appFrame:SNGViewFrame = SNGViewFrame(self)
     self.appFrame.pack(fill=tk.BOTH,  # if self.fixedAppFrame else tk.BOTH,
                         side=tk.TOP,
                         expand=False)  # if self.fixedAppFrame else True)
@@ -236,14 +387,24 @@ class AppPanedWidget(tk.PanedWindow):
 
     self.pack(fill=tk.BOTH, expand=True)
 
+  @property
+  def model(self) -> Model:
+    return cast(AppWindow, self.master).model
+    
+  @property
+  def context(self) -> ModelContext:
+    return cast(AppWindow, self.master).context
+    
 
-class SNGFrame(tk.Frame):
+class SNGViewFrame(tk.Frame):
 
-  def __init__(self, parent, **kwargs):
+  def __init__(self, parent:AppPanedWidget, **kwargs):
     '''
     :param parent: The master Widget.
     :param kwargs: Passed to *Canvas*.
     '''
+    from sn.view.graphics.snCanvas import SNCanvas, SNGView
+    assert isinstance(parent, AppPanedWidget)
     # self.scrollRegion:list = [0,0,1000,1000]
     tk.Frame.__init__(self, parent)
 
@@ -254,7 +415,7 @@ class SNGFrame(tk.Frame):
     if "bg" not in kwargs: kwargs["bg"] = snPrefs.get('view_backgroundColor', storeDefault="grey95", storeType="color")
 
     # Call the tk.Canvas and PRDb constructors
-    self.canvas = tk.Canvas(self, **kwargs)
+    self.canvas = SNCanvas(self, **kwargs)
 
     self.hScroll['command'] = self.canvas.xview
     self.vScroll['command'] = self.canvas.yview
@@ -264,14 +425,29 @@ class SNGFrame(tk.Frame):
     self.vScroll.grid(column=1, row=0, sticky=tk.N + tk.S)
     self.grid_columnconfigure(0, weight=1)
     self.grid_rowconfigure(0, weight=1)
+    
+    assert isinstance(self.model, Model)
+    self.view = SNGView(None, self.canvas, self.model)
 
     # test code **********************
     self.canvas.create_rectangle(500, 500, 700, 650, outline="black", fill="lightblue", width=2)
     self.canvas.create_rectangle(50, 500, 150, 700, outline="black", fill="purple", width=2)
     self.resetScrollRegion()
-    print("Hello world!")
-    #**********************
+    # **********************
+    
+    self.terminal:TerminalWidget
+    self.registry:TerminalRegistry
 
+  @property
+  def model(self) -> Model:
+    ret = cast(AppPanedWidget, self.master).model
+    assert isinstance(ret, Model)
+    return ret
+    
+  @property
+  def context(self) -> ModelContext:
+    return cast(AppPanedWidget, self.master).context
+    
   def resetScrollRegion(self):
     self.canvas.configure({"scrollregion":expandRect(self.canvas.bbox("all"), 10)})
 
@@ -299,7 +475,10 @@ class SNGFrame(tk.Frame):
 
 
 if __name__ == "__main__":
-  app = Application("MyApp")
-  win1 = app.openWindow("main", title="Main Window")
-  win2 = app.openWindow("settings", title="Settings")
+  app = Application(sn.NAME)
+  # win1 = app.openWindow(Model("temp1"))
+  # win2 = app.openWindow(Model("temp2"))
+  # app.run()
+  app.after(1000, app.openWindow, Model("temp1"))
+  app.after(2000, app.openWindow, Model("temp2"))
   app.run()

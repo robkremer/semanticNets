@@ -119,7 +119,10 @@ class GraphObject(AttributedObject, PRObject):
       for p in parents:
         IsaIndividual(db, self, p)
     if name is not None:
-      self["name"] = name
+      try:
+        self["name"] = name
+      except Exception as ex:
+        logger.warning(f'Cannot update name field ({ex.__class__.__name__}): {ex}')
       
     self.inferred:bool = False
     "Used to mark objects are inferred by the system so they may later be retracted."
@@ -731,7 +734,8 @@ class Model(PRDb[GraphObject], Subject):
         f'Models are restricted to containing only GraphObject subtypes; got a {value.__class__.__name__} type.'
     self.setDirty()
     ret = super()._register(value, _id)
-    self.notify(("add GraphObject", (ret, value)))
+    with Subject.ChangeMgr(self, later=True) as cm:
+      cm.registerTopics(("add GraphObject", (ret, value)))
     return ret
     
   def _unregister(self, _id:int) -> None:

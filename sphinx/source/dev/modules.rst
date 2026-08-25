@@ -1,8 +1,11 @@
-sn.model
-========
+modules
+=======
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 3
 
-   sn.model.model
-   sn.model.modelInterface
+   sn.model
+   sn.controller
+   sn.view
+   
+This is the modules.rst file.

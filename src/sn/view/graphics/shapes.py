@@ -126,7 +126,7 @@ class Shape:
     self._vobject = weakref.ref(vobject)
     'A weakref to the "owner" *VObject*. Should NOT be accessed directly, but through the *vobject* property.'
     self.id = None 
-    'ID int of the tgview tk draw item, NOT the persistence ID'
+    'ID int of the canvas tk draw item, NOT the persistence ID'
     self.kwargs = kwargs
     'The tk arguments to specify the attributes of the shape'
     
@@ -135,7 +135,7 @@ class Shape:
     
   def delete(self):
     # remove the shape
-    self.vobject.tgview.canvas.delete(self.id)
+    self.vobject.canvas.canvas.delete(self.id)
     self._vobject = None
     self.kwargs = None
     
@@ -241,12 +241,12 @@ class Shape:
       self.updateKwargs() 
     self.kwargs.update(kwargs) # then from the parameters
     if self.id is None: # original draw
-      self.id = self.vobject.tgview.canvas.create_polygon(self.points(fast=fast), **self.kwargs)
-      self.vobject.tgview.canvas.itemconfigure(self.id, tags=[self.vobject.tag, "shape"])
+      self.id = self.vobject.canvas.canvas.create_polygon(self.points(fast=fast), **self.kwargs)
+      self.vobject.canvas.canvas.itemconfigure(self.id, tags=[self.vobject.tag, "shape"])
     else: # a redraw
       try:
-        self.vobject.tgview.canvas.coords(self.id, self.vobject.tgview.viewToWindow(self.points(fast=fast)))
-        self.vobject.tgview.canvas.itemconfigure(self.id, **self.kwargs)
+        self.vobject.canvas.canvas.coords(self.id, self.vobject.canvas.viewToWindow(self.points(fast=fast)))
+        self.vobject.canvas.canvas.itemconfigure(self.id, **self.kwargs)
       except Exception as ex:
         raise ex
     return self.id
@@ -396,7 +396,7 @@ class Hexagon(Shape):
 class RoundedShape(Shape):
   def __init__(self, vnode, sharpness=1.5, **kwargs):
     """
-    Based on https://stackoverflow.com/questions/44099594/how-to-make-a-tkinter-tgview-rectangle-with-rounded-corners.
+    Based on https://stackoverflow.com/questions/44099594/how-to-make-a-tkinter-canvas-rectangle-with-rounded-corners.
     """
     self.sharpness = sharpness
     if "smooth" not in kwargs:
@@ -478,11 +478,11 @@ class Oval(Shape):
     bb = self.vobject.boundingBox(fast=fast)
     
     if self.id is None: 
-      self.id = self.vobject.tgview.canvas.create_oval(self.vobject.tgview.viewToWindow(bb), **self.kwargs)
-      self.vobject.tgview.canvas.itemconfigure(self.id, tags=[self.vobject.tag, "shape"])
+      self.id = self.vobject.canvas.canvas.create_oval(self.vobject.canvas.viewToWindow(bb), **self.kwargs)
+      self.vobject.canvas.canvas.itemconfigure(self.id, tags=[self.vobject.tag, "shape"])
     else:
-      self.vobject.tgview.canvas.coords(self.id, self.vobject.tgview.viewToWindow(bb))
-      self.vobject.tgview.canvas.itemconfigure(self.id, **self.kwargs)
+      self.vobject.canvas.canvas.coords(self.id, self.vobject.canvas.viewToWindow(bb))
+      self.vobject.canvas.canvas.itemconfigure(self.id, **self.kwargs)
     return self.id
   
 

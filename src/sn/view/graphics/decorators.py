@@ -86,7 +86,7 @@ class Text(Decorator):
     self.kwargs = kwargs
     if "justify" not in self.kwargs: self.kwargs["justify"] = "center"
     if "anchor"  not in self.kwargs: self.kwargs["anchor"]  = "center"
-    if "font"    not in self.kwargs: self.kwargs["font"]    = (self.owner.tgview._fontFace, int(self.owner.tgview._fontSize*self.owner.tgview._scale))
+    if "font"    not in self.kwargs: self.kwargs["font"]    = (self.owner.canvas._fontFace, int(self.owner.canvas._fontSize*self.owner.canvas._scale))
     if "fill"    not in self.kwargs: self.kwargs["fill"]    = "black"
 
   def updateKwargs(self):
@@ -103,15 +103,15 @@ class Text(Decorator):
     if self.id is None:
       self.kwargs["state"] = "disabled"
       self.kwargs["tags"] = [self.owner.tag, 'text']
-      self.id = self.owner.tgview.canvas.create_text(x, y, **self.kwargs)
+      self.id = self.owner.canvas.canvas.create_text(x, y, **self.kwargs)
     else:
-      self.owner.tgview.canvas.coords(self.id, x, y)
-      self.owner.tgview.canvas.itemconfigure(self.id, **self.kwargs)
+      self.owner.canvas.canvas.coords(self.id, x, y)
+      self.owner.canvas.canvas.itemconfigure(self.id, **self.kwargs)
       
   def getCoords(self) -> (int, int):
     x, y = self.owner.centerPt()
     x += 3
-    return self.owner.tgview.viewToWindow(x,y)
+    return self.owner.canvas.viewToWindow(x,y)
       
   def setText(self, fast=False) -> str:
     name = self.owner.modelObject.name
@@ -123,13 +123,13 @@ class Text(Decorator):
     return text
           
   def setFontToScale(self):
-    self.kwargs["font"] = (self.owner.tgview._fontFace, int(self.owner.tgview._fontSize * self.owner.tgview._scale))
+    self.kwargs["font"] = (self.owner.canvas._fontFace, int(self.owner.canvas._fontSize * self.owner.canvas._scale))
 
   @override
   def delete(self):
     if self.deleted: return
     super().delete()
-    self.owner.tgview.canvas.delete(self.id)
+    self.owner.canvas.canvas.delete(self.id)
     self.kwargs = None
   
 class WrappingText(Text):
@@ -164,13 +164,13 @@ class WrappingText(Text):
       width = sqrt(area/aspectRatio) # area = width * width*aspectRatio
       if width > minSize: # we need to make the Shape bigger
         self.kwargs["width"] = width
-        self.owner.tgview.canvas.itemconfigure(self.id, **self.kwargs)
+        self.owner.canvas.canvas.itemconfigure(self.id, **self.kwargs)
         height = area/width
         bb = self.owner.boundingBox(fast=fast)
         if bb[2]!=width or bb[3]!=height:
           self.owner.boundingBox([bb[0], bb[1], bb[0]+width, bb[1]+height], fast=fast)
 
-    self.owner.tgview.canvas.itemconfigure(self.id, **self.kwargs)
+    self.owner.canvas.canvas.itemconfigure(self.id, **self.kwargs)
           
 class Marker:
   SIZE = [6,6]
@@ -199,48 +199,48 @@ class Marker:
       self.kwargs["tags"] = [self.owner.tag, 'text']
       if "justify" not in self.kwargs: self.kwargs["justify"] = "center"
       if "anchor"   not in self.kwargs: self.kwargs["anchor"]  = "center"
-      if "font"     not in self.kwargs: self.kwargs["font"]    = ("TkSmallCaptionFont", int(self.owner.tgview._fontSize * self.owner.tgview._scale))
+      if "font"     not in self.kwargs: self.kwargs["font"]    = ("TkSmallCaptionFont", int(self.owner.canvas._fontSize * self.owner.canvas._scale))
       self.kwargs["text"] = self.label
       self.kwargs["fill"] = self.fg
       if "fill"     not in self.kwargs2: self.kwargs2["fill"]    = self.bg
       if "outline"  not in self.kwargs2: self.kwargs2["outline"] = ""
       self.kwargs2["tags"] = [self.owner.tag]
-      self.id2 = self.owner.tgview.canvas.create_oval(
-                  self.owner.tgview.viewToWindow(
+      self.id2 = self.owner.canvas.canvas.create_oval(
+                  self.owner.canvas.viewToWindow(
                   [at[0]-Marker.SIZE[0], 
                    at[1]-Marker.SIZE[1], 
                    at[0]+Marker.SIZE[0], 
                    at[1]+Marker.SIZE[1]]),
                    **self.kwargs2)
-      self.id   = self.owner.tgview.canvas.create_text(self.owner.tgview.viewToWindow(at[0])[0], self.owner.tgview.viewToWindow(at[1])[0], **self.kwargs)
-      #self.id   = self.owner.tgview.canvas.create_text(at[0], at[1], **self.kwargs)
+      self.id   = self.owner.canvas.canvas.create_text(self.owner.canvas.viewToWindow(at[0])[0], self.owner.canvas.viewToWindow(at[1])[0], **self.kwargs)
+      #self.id   = self.owner.canvas.canvas.create_text(at[0], at[1], **self.kwargs)
     else:   
       #self.kwargs.update(kwargs)
       if self.id is not None:
-        self.owner.tgview.canvas.coords(self.id2, 
-                  self.owner.tgview.viewToWindow(
+        self.owner.canvas.canvas.coords(self.id2, 
+                  self.owner.canvas.viewToWindow(
                   [at[0]-Marker.SIZE[0], 
                    at[1]-Marker.SIZE[1], 
                    at[0]+Marker.SIZE[0], 
                    at[1]+Marker.SIZE[1]]))
-        self.owner.tgview.canvas.coords(self.id, self.owner.tgview.viewToWindow(at[0], at[1]))
-        self.kwargs["font"] = ("TkSmallCaptionFont", int(self.owner.tgview._fontSize * self.owner.tgview._scale))
-        self.owner.tgview.canvas.itemconfigure(self.id, **self.kwargs)
-        self.owner.tgview.canvas.itemconfigure(self.id2, **self.kwargs2)
+        self.owner.canvas.canvas.coords(self.id, self.owner.canvas.viewToWindow(at[0], at[1]))
+        self.kwargs["font"] = ("TkSmallCaptionFont", int(self.owner.canvas._fontSize * self.owner.canvas._scale))
+        self.owner.canvas.canvas.itemconfigure(self.id, **self.kwargs)
+        self.owner.canvas.canvas.itemconfigure(self.id2, **self.kwargs2)
     return True
     
   def erase(self):
     if self.id is not None:
-      self.owner.tgview.canvas.delete(self.id)
+      self.owner.canvas.canvas.delete(self.id)
       self.id = None
     if self.id2 is not None:
-      self.owner.tgview.canvas.delete(self.id2)
+      self.owner.canvas.canvas.delete(self.id2)
       self.id2 = None
 
   def delete(self):
     if self.deleted: return
-    self.owner.tgview.canvas.delete(self.id)
-    self.owner.tgview.canvas.delete(self.id2)
+    self.owner.canvas.canvas.delete(self.id)
+    self.owner.canvas.canvas.delete(self.id2)
     self.deleted = True
 
     
@@ -260,7 +260,7 @@ class MarkerWithTooltip(Marker):
     if not ret:
       return ret
     if new:
-      self.tooltip = CreateToolTip(self.owner.tgview.canvas, self.tooltipFunc, self.id, 
+      self.tooltip = CreateToolTip(self.owner.canvas.canvas, self.tooltipFunc, self.id, 
                                  waitTime=1000, wrapLength=250, background="#FFFFC0")
     return ret
 
@@ -293,7 +293,7 @@ class MarkerContainer(Decorator):
                lambda owner=self.owner: owner.modelObject.isType() and tygra.tygraPrefs.get("view_showTypeTags", storeDefault=True),
                "Type: object is a Type object (as opposed to an Individual)"),
         MarkerWithTooltip(owner, "R", "cyan", "gray50", 
-               lambda owner=self.owner: owner.tgview.model != owner.modelObject.model and tygra.tygraPrefs.get("view_showRemoteTags", storeDefault=True),
+               lambda owner=self.owner: owner.canvas.model != owner.modelObject.model and tygra.tygraPrefs.get("view_showRemoteTags", storeDefault=True),
                lambda owner=self.owner: f'Remote: Object is from another model: {owner.modelObject.container.url}')
         ]
 
@@ -345,41 +345,41 @@ class MarkerContainer(Decorator):
 #       self.kwargs["tags"] = [self.owner.tag, 'text']
 #       if "justify" not in self.kwargs: self.kwargs["justify"] = "center"
 #       if "anchor"   not in self.kwargs: self.kwargs["anchor"]  = "center"
-#       if "font"     not in self.kwargs: self.kwargs["font"]    = ("TkSmallCaptionFont", int(self.owner.tgview._fontSize * self.owner.tgview._scale))
+#       if "font"     not in self.kwargs: self.kwargs["font"]    = ("TkSmallCaptionFont", int(self.owner.canvas._fontSize * self.owner.canvas._scale))
 #       if "fill"     not in self.kwargs: self.kwargs["fill"]    = "white"
 #       self.setArgs()
 #       x, y, _, _ = self.owner.boundingBox(fast=fast)
 #       offset = self.getOffset()
-#       self.id2 = self.owner.tgview.canvas.create_oval(
-#                   self.owner.tgview.viewToWindow(
+#       self.id2 = self.owner.canvas.canvas.create_oval(
+#                   self.owner.canvas.viewToWindow(
 #                   [x+offset[0]-self.size[0], 
 #                    y+offset[1]-self.size[1], 
 #                    x+offset[0]+self.size[0], 
 #                    y+offset[1]+self.size[1]]),
 #                    **self.kwargs2)
-#       self.id   = self.owner.tgview.canvas.create_text(x+offset[0], y+offset[1], **self.kwargs)
+#       self.id   = self.owner.canvas.canvas.create_text(x+offset[0], y+offset[1], **self.kwargs)
 #     else:   
 #       self.kwargs.update(kwargs)
 #       if self.id is not None:
 #         self.setArgs()
 #         x, y, _, _ = self.owner.boundingBox(fast=fast)
 #         offset = self.getOffset()
-#         self.owner.tgview.canvas.coords(self.id2, 
-#                   self.owner.tgview.viewToWindow(
+#         self.owner.canvas.canvas.coords(self.id2, 
+#                   self.owner.canvas.viewToWindow(
 #                   [x+offset[0]-self.size[0], 
 #                    y+offset[1]-self.size[1], 
 #                    x+offset[0]+self.size[0], 
 #                    y+offset[1]+self.size[1]]))
-#         self.owner.tgview.canvas.coords(self.id, self.owner.tgview.viewToWindow([x+offset[0], y+offset[1]]))
-#         self.kwargs["font"] = ("TkSmallCaptionFont", int(self.owner.tgview._fontSize * self.owner.tgview._scale))
-#         self.owner.tgview.canvas.itemconfigure(self.id, **self.kwargs)
-#         self.owner.tgview.canvas.itemconfigure(self.id2, **self.kwargs2)
+#         self.owner.canvas.canvas.coords(self.id, self.owner.canvas.viewToWindow([x+offset[0], y+offset[1]]))
+#         self.kwargs["font"] = ("TkSmallCaptionFont", int(self.owner.canvas._fontSize * self.owner.canvas._scale))
+#         self.owner.canvas.canvas.itemconfigure(self.id, **self.kwargs)
+#         self.owner.canvas.canvas.itemconfigure(self.id2, **self.kwargs2)
 #
 #   def delete(self):
 #     if self.deleted: return
 #     super().delete()
-#     self.owner.tgview.canvas.delete(self.id)
-#     self.owner.tgview.canvas.delete(self.id2)
+#     self.owner.canvas.canvas.delete(self.id)
+#     self.owner.canvas.canvas.delete(self.id2)
 #     self.kwargs2 = None
 #
 # class TypeMarker(CircleMarker):
@@ -422,17 +422,17 @@ class Selected(Decorator):
     if self.id is None:
       self.kwargs["tags"] = [self.owner.tag, 'selection']
       rect = self.owner.boundingBox(fast=fast)
-      rect = self.owner.tgview.viewToWindow(rect)
-      self.id = self.owner.tgview.canvas.create_rectangle(rect, **self.kwargs)
+      rect = self.owner.canvas.viewToWindow(rect)
+      self.id = self.owner.canvas.canvas.create_rectangle(rect, **self.kwargs)
     else:
       rect = self.owner.boundingBox(fast=fast)
-      rect = self.owner.tgview.viewToWindow(rect)
-      self.owner.tgview.canvas.coords(self.id, rect)
-      self.owner.tgview.canvas.itemconfigure(self.id, **self.kwargs)
+      rect = self.owner.canvas.viewToWindow(rect)
+      self.owner.canvas.canvas.coords(self.id, rect)
+      self.owner.canvas.canvas.itemconfigure(self.id, **self.kwargs)
 
   def delete(self):
     if self.deleted: return
     super().delete()
-    self.owner.tgview.canvas.delete(self.id)
+    self.owner.canvas.canvas.delete(self.id)
     self.kwargs = None
   

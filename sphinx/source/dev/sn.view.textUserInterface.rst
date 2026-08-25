@@ -1,7 +1,7 @@
-sn.controller.textUserInterface
+sn.view.textUserInterface
 ===============================
 
-.. automodule:: sn.controller.textUserInterface
+.. automodule:: sn.view.textUserInterface
    :members:
    :private-members:
    :show-inheritance:

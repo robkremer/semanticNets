@@ -51,11 +51,11 @@ class VNode(VObject):
   ### CONSTRUCTOR AND HELPERS ##########################################################
 
   # dummy __init__() for debugging purposes...
-  # def __init__(self, tgview:PRDb, modelObject:GraphObject, 
+  # def __init__(self, canvas:PRDb, modelObject:GraphObject, 
   #              shape:Union[Any,str]="Rectangle", 
   #              x:Optional[int]=None, y:Optional[int]=None, x1:Optional[int]=None, y1:Optional[int]=None, 
   #              _id:Optional[int]=None):
-  #   super().__init__(tgview, modelObject, shape, x, y, x1, y1, _id)
+  #   super().__init__(canvas, modelObject, shape, x, y, x1, y1, _id)
 
   def _post__init__(self):
     super()._post__init__()
@@ -63,7 +63,7 @@ class VNode(VObject):
   
   
   # def register(self):
-  #   self.tgview.nodes.append(self)
+  #   self.canvas.nodes.append(self)
 
   def validate(self) -> list[str]:
     """
@@ -81,7 +81,7 @@ class VNode(VObject):
     - The model is valid (calls *self.model.validate()*).
     """
     self.errors = super().validate()
-    for n in self.tgview.values(): #nodes + self.tgview.relations:
+    for n in self.canvas.values(): #nodes + self.canvas.relations:
       if n is not self and self.modelObject == n.modelObject:
         self.errors.append(f'View objects {self} and {n} both reference the same model object {self.modelObject}.')
     return self.errors
@@ -114,8 +114,8 @@ class VNode(VObject):
 #     """
 #     args = []
 #     kwargs = dict()
-#     tgview = addrServer.idLookup(elem.get('tgview'))
-#     args.append(tgview)
+#     canvas = addrServer.idLookup(elem.get('canvas'))
+#     args.append(canvas)
 #
 #     x, y, x2, y2 = literal_eval(elem.get('boundingBox'))
 #     args += [x, y, x2, y2]
@@ -131,7 +131,7 @@ class VNode(VObject):
 #
 #     idStr = elem.get('id')
 #     kwargs["_id"] = IDServer.getLocalID(idStr) if idStr else None
-# #    kwargs["idServer"] = tgview
+# #    kwargs["idServer"] = canvas
 #
 #     return args, kwargs
 #
@@ -188,7 +188,7 @@ class VNode(VObject):
   #     if name == 'aspectRatio':
   #       self.aspectRatio(value)
   #   except Exception as ex:
-  #     self.tgview.logger.write(f'got except with "{name}": "{value}". Probably due to partially constructed VNode.', level="warning", exception=ex)
+  #     self.canvas.logger.write(f'got except with "{name}": "{value}". Probably due to partially constructed VNode.', level="warning", exception=ex)
         
   ### DECORATORS #######################################################################
 
@@ -255,7 +255,7 @@ class VNode(VObject):
 #     if c != None:
 #       self._shape.draw(fill=c)
 #     try: # The fill color could be non-existent for a transparent color
-#       return self.tgview.itemconfigure(self._shape.id, "fill")[0]
+#       return self.canvas.itemconfigure(self._shape.id, "fill")[0]
 #     except:
 #       return ""
 #
@@ -263,7 +263,7 @@ class VNode(VObject):
 #     if c != None:
 #       self._shape.draw(outline=c)
 #     try: # The fill color could be non-existent for a transparent color
-#       return self.tgview.itemconfigure(self._shape.id, "outline")[0]
+#       return self.canvas.itemconfigure(self._shape.id, "outline")[0]
 #     except:
 #       return ""
 #
@@ -274,7 +274,7 @@ class VNode(VObject):
 #         if c != None:
 #           d.draw(fill=c)
 #     try: # The fill color could be non-existent for a transparent color
-#       return self.tgview.itemconfigure(d.id, "fill")[0]
+#       return self.canvas.itemconfigure(d.id, "fill")[0]
 #     except:
 #       return ""
 #
@@ -285,24 +285,24 @@ class VNode(VObject):
 #           self.decorators["selected"] = Selected(self)
 #           self.decorators["selected"].draw()
 #           if not _multi:
-#             for s in self.tgview.selected.copy():
+#             for s in self.canvas.selected.copy():
 #               if s is not self: s.selected(False)
-#           self.tgview.selected.add(self)
+#           self.canvas.selected.add(self)
 #       elif self.decorators is not None: # setting not selected
 #         if "selected" in self.decorators:
 #           self.decorators["selected"].delete()
 #           assert "selected" not in self.decorators
 #           self.draw()
-#           self.tgview.selected.discard(self)
+#           self.canvas.selected.discard(self)
 #     return "selected" in self.decorators if self.decorators is not None else None
 #
 # #        if self.selected():
 # #          if (s&0x18) == 0: # the mac <cmd> key is NOT pressed
-# #            for s in self.tgview.selected: 
+# #            for s in self.canvas.selected: 
 # #              if s is not self: s.selected(False)
-# #          self.tgview.selected.add(self)
+# #          self.canvas.selected.add(self)
 # #        else:
-# #          self.tgview.selected.discard(self)
+# #          self.canvas.selected.discard(self)
 #
 #
 #   def shape(self, c=None):
@@ -312,13 +312,13 @@ class VNode(VObject):
 #       try:
 #         newShape = self.strToShape(c, bb)
 #       except Exception as ex:
-#         self.tgview.logger.write(f'Shape "{c}" is not known.', level="warning", exception=ex)
+#         self.canvas.logger.write(f'Shape "{c}" is not known.', level="warning", exception=ex)
 #       if newShape is not None:
 #         self.killBindings()
 #         oldShape = self._shape
 #         self._shape = newShape
 #         self._shape.draw()
-#         self.tgview.lift(newShape.id, oldShape.id)
+#         self.canvas.lift(newShape.id, oldShape.id)
 #         oldShape.delete()
 #         self.updateFromAttrs(["fillColor", "borderColor"])
 #         self.makeBindings()
@@ -376,7 +376,7 @@ class VNode(VObject):
   #   print(f'VNode.moveTo({x}, {y})')
   #   if bb[0] == x and bb[1] == y: # we haven't actually moved, so do nothing.
   #     return
-  #   sr = self.tgview.scrollRegion
+  #   sr = self.canvas.scrollRegion
   #   if x<sr[0]: x = sr[0]
   #   if y<sr[1]: y = sr[1]
   #   if not allowOverScrollRegionSE:
@@ -413,7 +413,7 @@ class VNode(VObject):
   #
   # def adjustPos(self, others=None):
   #
-  #   layout = self.tgview.localLayout
+  #   layout = self.canvas.localLayout
   #   if layout is not None:
   #     for r in self.relations:
   #       layout(r)
@@ -426,7 +426,7 @@ class VNode(VObject):
   #   if bb is None:
   #     bb = self.boundingBox() if spacing is None else expandRect(self.boundingBox(), spacing)
   #   if others is None:
-  #     others = list(self.tgview.values()) #self.tgview.nodes + self.tgview.relations
+  #     others = list(self.canvas.values()) #self.canvas.nodes + self.canvas.relations
   #     others.remove(self)
   #   else:
   #     if self in others:
@@ -458,11 +458,11 @@ class VNode(VObject):
   ### MENUS ############################################################################
   
   # def makeMenu(self) -> tk.Menu:
-  #   m = tk.Menu(self.tgview)
+  #   m = tk.Menu(self.canvas)
   #   if app.DEBUG_MENUS:
   #     m.add_command(label=f'{self.idString} -> {self.model.idString}', state=tk.DISABLED)
   #     m.add_separator()
-  #   editable = self.tgview.isModelEditor
+  #   editable = self.canvas.isModelEditor
   #   if editable:
   #     self.addModelEditingMenuItems(m)
   #   self.addViewMenuItems(m)
@@ -491,7 +491,7 @@ class VNode(VObject):
   #         break
   #
   #     # abort if this relation (r) is in a hidden category
-  #     if self.tgview.categories.isCategory(r, self.tgview.hiddenCategories): continue
+  #     if self.canvas.categories.isCategory(r, self.canvas.hiddenCategories): continue
   #
   #     name = r.attrs["label"]
   #     if name != "IsaIndividual":
@@ -614,13 +614,13 @@ class VNode(VObject):
   
   def addDeletionMenuItems(self, menu:tk.Menu):
     menu.add_command(label="remove from view", command=self.delete)
-    if not self.model.system and self.tgview.isModelEditor:
+    if not self.model.system and self.canvas.isModelEditor:
       menu.add_command(label="delete from model", command=self.model.delete)
   
   def makeMakeRelationMenu(self, menu:tk.Menu):
     m = tk.Menu(menu)
     types = []
-    for t in (t for t in self.tgview.model.relations if t.isType()):
+    for t in (t for t in self.canvas.model.relations if t.isType()):
         types.append(t)
     # TODO: sort menu?
     for t in types:
@@ -631,12 +631,12 @@ class VNode(VObject):
   ### Event handling ###################################################################
 
   def setMakingRelation(self, val=True, typ=None):
-    self.tgview.makeRelationFrom(self, typ=typ)
+    self.canvas.makeRelationFrom(self, typ=typ)
     #self.dragInfo = None
 
   # def onRightMouse(self, event):
   #   """Creates and displays the node specific menu at the clicked location."""
-  #   self.tgview.addEventHandled(event)
+  #   self.canvas.addEventHandled(event)
   #   m = self.makeMenu()
   #   m.post(event.x_root, event.y_root)
   #   return m
@@ -647,13 +647,13 @@ class VNode(VObject):
   #   decide on if it's just a node move or a selection toggle in *self.onB1_Motion()*
   #   and *self.onB1ButtonRelease()*.
   #   """
-  #   self.tgview.addEventHandled(event)
+  #   self.canvas.addEventHandled(event)
   #   print(f'onButton_1() event x={event.x}, y={event.y}, selected={self.selected()}')
-  #   winX = event.x - self.tgview.canvasx(0) # adjust for canvas offset
-  #   winY = event.y - self.tgview.canvasy(0)
+  #   winX = event.x - self.canvas.canvasx(0) # adjust for canvas offset
+  #   winY = event.y - self.canvas.canvasy(0)
   #   self.dragInfo = (winX, winY, False) # x,y,no-drag-motion-event
-  #   self.old_suppressLocalLayout = self.tgview.suppressLocalLayout()
-  #   self.tgview.suppressLocalLayout(True)
+  #   self.old_suppressLocalLayout = self.canvas.suppressLocalLayout()
+  #   self.canvas.suppressLocalLayout(True)
   #   return 'break'
   #
   # def onB1_Motion(self, event):
@@ -663,14 +663,14 @@ class VNode(VObject):
   #   """
   #
   #   if self.dragInfo != None:
-  #     self.tgview.addEventHandled(event)
-  #     winX = event.x - self.tgview.canvasx(0) # adjust for canvas offset
-  #     winY = event.y - self.tgview.canvasy(0)
+  #     self.canvas.addEventHandled(event)
+  #     winX = event.x - self.canvas.canvasx(0) # adjust for canvas offset
+  #     winY = event.y - self.canvas.canvasy(0)
   #     dX = winX - self.dragInfo[0]
   #     dY = winY - self.dragInfo[1]
   #     print(f'onB1_Motion() event({event.x},{event.y}), d=({dX},{dY}), selected={self.selected()}')
   #     if self.selected():
-  #       for n in self.tgview.selected:
+  #       for n in self.canvas.selected:
   #         n.moveBy(dX, dY)
   #     else:
   #       self.moveBy(dX, dY)
@@ -688,9 +688,9 @@ class VNode(VObject):
   #   intervening <B1_Motion> events), toggle the selection state of the node.
   #   """
   #   if self.dragInfo != None:
-  #     self.tgview.addEventHandled(event)
+  #     self.canvas.addEventHandled(event)
   #     if self.dragInfo[2]: # indicated there was a <B1_Motion> event, ie: this was a drag: wrap up a move.
-  #       self.tgview.suppressLocalLayout(self.old_suppressLocalLayout)
+  #       self.canvas.suppressLocalLayout(self.old_suppressLocalLayout)
   #       self.adjustPos()
   #     else: # this was a click, not a drag: toggle the selection state
   #       s = event.state
@@ -701,7 +701,7 @@ class VNode(VObject):
       
   def notifyModelChanged(self, modelObj, modelOperation:str, info:Optional[any]=None):
 #     if modelObj != self.model: # it must be that a IsaIndividual-ancestor of the model changed,
-#       self.tgview.logger.write(f'VNode.notifyModelChanged({modelObj}[NOT self.model], "{modelOperation}", info={info}) [{self}]', level="debug")
+#       self.canvas.logger.write(f'VNode.notifyModelChanged({modelObj}[NOT self.model], "{modelOperation}", info={info}) [{self}]', level="debug")
 #       self.updateFromAttrs([info[0]])
     unhandled = False
     if modelOperation == 'del': 
@@ -736,13 +736,13 @@ class VNode(VObject):
             done = True
             break
         if not done:
-          self.tgview.logger.write(f'Got a "del rel" operation for "{modelObj}" that isn\'t one of my relations {self.relations}.', level='warning')
+          self.canvas.logger.write(f'Got a "del rel" operation for "{modelObj}" that isn\'t one of my relations {self.relations}.', level='warning')
 #       if not hasattr(self, "delrel123"):
 #         unhandled = True
 #         self.delrel123 = True
     else:
       raise NotImplementedError(f'VNode.notifyModelChanged(): operation "{modelOperation}" not implemented.') 
     if unhandled:
-      self.tgview.logger.write(f'operation "{modelOperation}" not implemented.', level='warning') 
+      self.canvas.logger.write(f'operation "{modelOperation}" not implemented.', level='warning') 
 
     
