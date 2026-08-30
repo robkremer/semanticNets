@@ -19,16 +19,39 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE #
 # SOFTWARE.                                                                     #
 #################################################################################
+'''
+.. inheritance-diagram::
+      Application
+      AppWindow
+      AppPanedWidget
+      SNGViewFrame
+      sn.view.graphics.snCanvas.SNGView
+      sn.view.graphics.snCanvas.SNGContext
+      sn.view.graphics.snCanvas.SNCanvas
+      sn.model.model.Model
+    :parts: 2
+    :private-bases:
+    :top-classes: tkinter.PanedWindow, tkinter.Frame, tkinter.Canvas, tkinter.BaseWidget, tkinter.Tk, tkinter.Toplevel
+
+    
+.. figure:: /images/guiApp.png
+   :width: 800px
+   :alt: Relationship diagram for the guiApp classes.
+   :align: center
+   
+   Relationship diagram for the guiApp classes.
+   
+Created on Aug 18, 2026
+
+@author: robkremer
+'''
 from __future__ import annotations
 from sn.controller.modelInterface import ModelContext
 from sn.model.model import Model
 import traceback
 import util
-'''
-Created on Aug 18, 2026
-
-@author: robkremer
-'''
+from util.attributeEditor import applyEditAttrsBox
+#from sn.view.graphics.snCanvas import SNGContext
 import sys
 import io
 import builtins
@@ -40,8 +63,6 @@ from typing import Optional, Callable, cast
 from tkinter import ttk
 from sn import snPrefs
 from util.attribute import Attribute, VAR_DEFAULTED
-from util.attributeEditor import HierarchicalAttrEditor, AttrEditor,\
-  editAttrsBox, applyEditAttrsBox
 from util.utils import expandRect, showExceptionDialog
 from util.terminal import terminalRegistry, installGlobalIORouting,\
   TerminalWidget, TerminalRegistry
@@ -69,6 +90,7 @@ class Application(tk.Tk):
     self.terminalRegistry = terminalRegistry  # shared across all windows
 
     installGlobalIORouting(self.terminalRegistry)  # install exactly once, here
+    self._installSettingsMenu()
 
     # If every hosted window is closed, there's nothing left to interact with —
     # decide here whether that should end the app.
@@ -80,6 +102,47 @@ class Application(tk.Tk):
     :rtype: None
     """
     pass
+
+  def _installSettingsMenu(self) -> None:
+    """Wire up a Settings item under the app item in the menu bar.
+
+    On macOS, Tk always shows an "Application menu" — the one named after
+    the app, to the immediate right of the Apple logo — whether or not the
+    app defines any menu of its own. That's "the app item." Its
+    "Preferences…" entry is present but disabled/inert unless something
+    registers the special Tcl command 'tk::mac::ShowPreferences'; this does
+    that registration, so choosing it (or its standard ⌘, shortcut) opens
+    openSettings() below.
+
+    On Windows/Linux, Tk has no equivalent automatic app menu, so this
+    command is simply never invoked there — harmless, but it means Settings
+    currently has no menu entry point on those platforms. Revisit with a
+    real cross-platform Menu/menu bar if that's ever needed.
+
+    Called once, from __init__: there's exactly one root/"app item" no
+    matter how many AppWindows get opened, so this belongs here rather
+    than being (re-)registered — and guarded against re-registration —
+    from every window.
+
+    :rtype: None
+    """
+    self.createcommand("tk::mac::ShowPreferences", self.openSettings)
+
+  def openSettings(self) -> None:
+    """Show the app-wide Settings dialog, editing *sn.snPrefs* in place.
+
+    Builds its form generically from whatever's currently in snPrefs: each
+    key becomes a labelled row, rendered as a dropdown if the Attribute's
+    type is a "choices[...]" constraint (see util.attribute), a checkbox if
+    its current value is a bool, otherwise a plain text entry. Save writes
+    each edited value back via snPrefs[key] = ... (which validates against
+    the Attribute's type/restriction) and persists immediately via
+    snPrefs.save(), rather than relying solely on the atexit hook.
+
+    :rtype: None
+    """
+    applyEditAttrsBox(self, snPrefs, title="Semantic Nets Preferences")
+
 
   def openWindow(self, model:ModelSpecType) -> tk.Toplevel|None:
     """Create and show a new Toplevel window hosted under the invisible root.
@@ -128,6 +191,7 @@ class Application(tk.Tk):
     window = self.windows.pop(name, None)
     if window is not None:
       self.terminalRegistry.onFocusOut(window.appPanedWidget.textDisplayFrame)
+      self.terminalRegistry.unregisterWindow(window)
       window.destroy()
 
     if not self.windows:
@@ -180,117 +244,11 @@ class AppWindow(tk.Toplevel):
     terminal = self.appPanedWidget.textDisplayFrame
     self._bindFocusRouting(self, terminal)
 
-    self._installSettingsMenu()
-
-  def _installSettingsMenu(self) -> None:
-    """Wire up a Settings item under the app item in the menu bar.
-
-    On macOS, Tk always shows an "Application menu" — the one named after
-    the app, to the immediate right of the Apple logo — whether or not the
-    app defines any menu of its own. That's "the app item." Its
-    "Preferences…" entry is present but disabled/inert unless something
-    registers the special Tcl command 'tk::mac::ShowPreferences'; this does
-    that registration, so choosing it (or its standard ⌘, shortcut) opens
-    openSettings() below.
-
-    On Windows/Linux, Tk has no equivalent automatic app menu, so this
-    command is simply never invoked there — harmless, but it means Settings
-    currently has no menu entry point on those platforms. Revisit with a
-    real cross-platform Menu/menu bar if that's ever needed.
-
-    Registered once per Application (root), not once per AppWindow — the
-    command is global (there's only one "app item," however many windows
-    are open) and always opens the dialog on the current root, not
-    whichever window happened to trigger the registration.
-
-    :rtype: None
-    """
-    root = self._root()
-    if getattr(root, "_settingsMenuInstalled", False):
-      return
-    root._settingsMenuInstalled = True
-    root.createcommand("tk::mac::ShowPreferences", self.openSettings)
-
-  def openSettings(self) -> None:
-    """Show the app-wide Settings dialog, editing *sn.snPrefs* in place.
-
-    Builds its form generically from whatever's currently in snPrefs: each
-    key becomes a labelled row, rendered as a dropdown if the Attribute's
-    type is a "choices[...]" constraint (see util.attribute), a checkbox if
-    its current value is a bool, otherwise a plain text entry. Save writes
-    each edited value back via snPrefs[key] = ... (which validates against
-    the Attribute's type/restriction) and persists immediately via
-    snPrefs.save(), rather than relying solely on the atexit hook.
-
-    :rtype: None
-    """
-    # root = self._root()
-    # dialog = tk.Toplevel(root)
-    # dialog.title("Settings")
-    # if root.winfo_viewable():
-    #   dialog.transient(root)
-    #
-    # body = tk.Frame(dialog, padx=12, pady=12)
-    # body.pack(fill=tk.BOTH, expand=True)
-    # body.columnconfigure(1, weight=1)
-    #
-    # editors: dict[str, tuple[tk.Variable, Optional[Attribute]]] = {}
-    # for row, key in enumerate(sorted(snPrefs)):
-    #   attr = snPrefs.getAttr(key)
-    #   value = snPrefs[key]
-    #   typ = attr.type if attr is not None else None
-    #
-    #   tk.Label(body, text=key, anchor="w").grid(row=row, column=0, sticky="w", padx=(0, 8), pady=2)
-    #
-    #   var: tk.Variable
-    #   widget: tk.Widget
-    #   if isinstance(typ, str) and typ.startswith("choices[") and typ.endswith("]"):
-    #     choices = [c.strip() for c in typ[len("choices["):-1].split(",")]
-    #     var = tk.StringVar(value=str(value))
-    #     widget = ttk.Combobox(body, textvariable=var, values=choices, state="readonly")
-    #   elif isinstance(value, bool):
-    #     var = tk.BooleanVar(value=value)
-    #     widget = tk.Checkbutton(body, variable=var)
-    #   else:
-    #     var = tk.StringVar(value=str(value))
-    #     widget = tk.Entry(body, textvariable=var, width=30)
-    #
-    #   widget.grid(row=row, column=1, sticky="ew", pady=2)
-    #   editors[key] = (var, attr)
-    #
-    # def onSave() -> None:
-    #   for key, (var, attr) in editors.items():
-    #     raw = var.get()
-    #     typ = attr.type if attr is not None else None
-    #     try:
-    #       if isinstance(var, tk.BooleanVar):
-    #         newValue: object = bool(raw)
-    #       elif typ == "int":
-    #         newValue = int(cast(str, raw))
-    #       elif typ == "float":
-    #         newValue = float(cast(str, raw))
-    #       else:
-    #         newValue = raw
-    #       snPrefs[key] = newValue
-    #     except (ValueError, TypeError) as ex:
-    #       logger.warning(f'openSettings(): skipped "{key}" — invalid value "{raw}" for type {typ}: {ex}')
-    #   snPrefs.save()
-    #   dialog.destroy()
-    #
-    # buttons = tk.Frame(dialog, padx=12, pady=(0, 12))
-    # buttons.pack(fill=tk.X)
-    # tk.Button(buttons, text="Cancel", command=dialog.destroy).pack(side=tk.RIGHT)
-    # tk.Button(buttons, text="Save", command=onSave).pack(side=tk.RIGHT, padx=(0, 8))
-    #
-    # # See the identical pattern (and the "why") in util.utils.showExceptionDialog.
-    # dialog.update_idletasks()
-    # try:
-    #   dialog.grab_set()
-    # except tk.TclError:
-    #   logger.warning("openSettings(): grab_set() failed; showing non-modally", exc_info=True)
-    # dialog.wait_window()
-
-    applyEditAttrsBox(self, snPrefs, title="Semantic Nets Preferences")
+    # Also register this window/terminal pair directly, independent of Tk
+    # focus — lets TerminalRegistry's active-window fallback (wm stackorder)
+    # find this terminal even for interactions (e.g. SNCanvas's right-click
+    # popup menu) that never move Tk's logical keyboard focus at all.
+    self._root().terminalRegistry.registerWindow(self, terminal)
 
   def _bindFocusRouting(self, widget: tk.Widget, terminal: "SNTerminalWidget") -> None:
     """Recursively bind <FocusIn>/<FocusOut> on this widget and all its
@@ -361,7 +319,7 @@ class AppPanedWidget(tk.PanedWindow):
     # No registry passed explicitly — it defaults to the same module-level
     # singleton this file already imports for its own use (installGlobalIORouting,
     # onFocusIn/onFocusOut below).
-    self.textDisplayFrame = SNTerminalWidget(self.model, self)
+    self.textDisplayFrame = SNTerminalWidget(self.model, self, context=self.context)
     self.textDisplayFrame.pack(fill=tk.NONE, side=tk.BOTTOM, expand=False)
     stretch = 'always'  # if fixedAppFrame else 'never'
     sticky = 'news'  # if fixedAppFrame else 'new'

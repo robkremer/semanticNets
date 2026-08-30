@@ -48,7 +48,7 @@ Created on Jan 30, 2025
 from typing import Optional, override
 import tkinter as tk
 from abc import abstractmethod, ABC
-from math import sqrt
+from math import sqrt, cos, sin, pi
 
 from util.utils import allConcreteSubclasses, grouped, getClass
 from sn.view.graphics.vobjects import VObject
@@ -135,7 +135,7 @@ class Shape:
     
   def delete(self):
     # remove the shape
-    self.vobject.canvas.canvas.delete(self.id)
+    self.vobject.canvas.delete(self.id)
     self._vobject = None
     self.kwargs = None
     
@@ -241,12 +241,12 @@ class Shape:
       self.updateKwargs() 
     self.kwargs.update(kwargs) # then from the parameters
     if self.id is None: # original draw
-      self.id = self.vobject.canvas.canvas.create_polygon(self.points(fast=fast), **self.kwargs)
-      self.vobject.canvas.canvas.itemconfigure(self.id, tags=[self.vobject.tag, "shape"])
+      self.id = self.vobject.canvas.create_polygon(self.points(fast=fast), **self.kwargs)
+      self.vobject.canvas.itemconfigure(self.id, tags=[self.vobject.tag, "shape"])
     else: # a redraw
       try:
-        self.vobject.canvas.canvas.coords(self.id, self.vobject.canvas.viewToWindow(self.points(fast=fast)))
-        self.vobject.canvas.canvas.itemconfigure(self.id, **self.kwargs)
+        self.vobject.canvas.coords(self.id, self.vobject.canvas.viewToWindow(self.points(fast=fast)))
+        self.vobject.canvas.itemconfigure(self.id, **self.kwargs)
       except Exception as ex:
         raise ex
     return self.id
@@ -464,11 +464,43 @@ class RoundedRectangle(RoundedShape):
   def isPublic(cls): return True
 
 class Oval(Shape):
+
+  vertexCount = 24
+  'Number of polygon vertices used to approximate the ellipse for points()/containsPt().'
+
   def __init__(self, vnode, **kwargs):
-    super().__init__(vnode, **kwargs)    
+    super().__init__(vnode, **kwargs)
 
   @classmethod
   def isPublic(cls): return True
+
+  def template(self):
+    """
+    Approximates the ellipse inscribed in the [0,0,1,1] unit square as a
+    regular polygon, so that Shape.points() (and hence VObject.containsPt(),
+    which calls pointInPoly() on those points) tests against something close
+    to the real oval boundary.
+
+    Without this override, Oval inherited Shape's default template() — the
+    four corners of the unit square — so containsPt() on an Oval-shaped
+    VObject was actually testing against its bounding *rectangle*, not the
+    ellipse: a line aimed at a round node would clip to the corner of its
+    invisible bounding box rather than the visible curve.
+
+    draw() is unaffected — it still renders a true Tk oval via create_oval;
+    this polygon exists only for points()/containsPt() and other
+    polygon-based geometry (e.g. connectors.py's boundary clipping).
+
+    :rtype: list[float]
+    """
+    n = self.vertexCount
+    cx = cy = r = 0.5
+    pts = []
+    for i in range(n):
+      theta = 2 * pi * i / n
+      pts.append(cx + r * cos(theta))
+      pts.append(cy + r * sin(theta))
+    return pts
 
   def draw(self, fast=False, **kwargs) -> int:
     if not fast and self.checkShape(): return None
@@ -478,11 +510,11 @@ class Oval(Shape):
     bb = self.vobject.boundingBox(fast=fast)
     
     if self.id is None: 
-      self.id = self.vobject.canvas.canvas.create_oval(self.vobject.canvas.viewToWindow(bb), **self.kwargs)
-      self.vobject.canvas.canvas.itemconfigure(self.id, tags=[self.vobject.tag, "shape"])
+      self.id = self.vobject.canvas.create_oval(self.vobject.canvas.viewToWindow(bb), **self.kwargs)
+      self.vobject.canvas.itemconfigure(self.id, tags=[self.vobject.tag, "shape"])
     else:
-      self.vobject.canvas.canvas.coords(self.id, self.vobject.canvas.viewToWindow(bb))
-      self.vobject.canvas.canvas.itemconfigure(self.id, **self.kwargs)
+      self.vobject.canvas.coords(self.id, self.vobject.canvas.viewToWindow(bb))
+      self.vobject.canvas.itemconfigure(self.id, **self.kwargs)
     return self.id
   
 

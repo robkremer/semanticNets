@@ -19,8 +19,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE #
 # SOFTWARE.                                                                     #
 #################################################################################
-from sn.view.graphics.snCanvas import SNCanvas, SNGView
-from util.persistence.pRef import PReference
+from util.attribute import Restriction
+from util.persistence.serialize import InstantiationInfo, ParamInfo,\
+  PropertyInfo
+from sn.model.model import UP_ARROW
 '''
 *VObject* is the superclass of VNode, VRelation.
 
@@ -53,7 +55,8 @@ Visual Attributes
 '''
 
 import weakref
-from typing import Any, Optional, Union, Tuple, Iterable, Callable, override
+from typing import Any, Optional, Union, Tuple, Iterable, Callable, override,\
+  cast
 import xml.etree.ElementTree as et
 from ast import literal_eval
 import tkinter as tk
@@ -70,7 +73,10 @@ from sn.model import Relation
 #from sn.model.tgcommands import RmGraphObjectCommand
 from sn.view.graphics.decorators import WrappingText, Selected, MarkerContainer,\
   Decorator
-from util.attributeEditor import getEditedAttrsCommandObj, applyEditAttrsBox
+from util.attributeEditor import getEditedAttrsCommandObj, applyEditAttrsBox,\
+  editAttrsBox
+from sn.view.graphics.snCanvas import SNGView
+from sn import snPrefs
 
 import logging
 logger:sn.SNLogger = sn.getLogger(__name__)
@@ -112,6 +118,8 @@ class Cache:
         
     Update *attr* from the model object.
     '''
+    if self._owner() is None: return
+    
     def refreshAttr(attr:str):
       setattr(self, attr, self._owner().modelObject[attr])
       
@@ -140,12 +148,12 @@ class VObject(PRObject, Observer):
   that decorators may be drawn outside of this bounding box.
   '''
 
-  def __init__(self, view:SNGView, modelObject:GraphObject, 
+  def __init__(self, view:SNGView, modelObject:GraphObject|str, 
                shape:Union[Any,str]="Rectangle", 
-               x:Optional[int]=None, y:Optional[int]=None, x1:Optional[int]=None, y1:Optional[int]=None, 
-               _id:Optional[int]=None):
+               x:Optional[int]=None, y:Optional[int]=None, x1:Optional[int]=None, y1:Optional[int]=None):
     '''
-    :param canvas: The SNCanvas object that "owners" this VObject.
+    :param view: The SNGView object that "owners" this VObject.
+    :type view: SNGView
     :param modelObject: The object in the model that this object represents.
     :param shape: [Union[tygra.view.shapes.Shape, str], default=...shapes.Rectangle] The basic shape of this object.
     :param x: The upper left corner x coordinate
@@ -155,15 +163,20 @@ class VObject(PRObject, Observer):
     '''
     from sn.view.graphics.shapes import Shape
     from sn.view.graphics.vrelations import VRelation
+    from sn.view.graphics.snCanvas import SNCanvas
     
     #check parameters
     assert isinstance(view, SNGView)
-    assert isinstance(modelObject, GraphObject) or isinstance(modelObject, PReference) and isinstance(modelObject(), GraphObject)
+    if isinstance(modelObject, str):
+      obj = PReference[GraphObject](modelObject)()
+      assert isinstance(obj, GraphObject)
+      modelObject = obj
+    assert isinstance(modelObject, GraphObject)
     assert isinstance(shape, (Shape,str)), f'Expected Shape or str, but got "{shape.__class__.__name__}"'
 
     # set up the reference model object and it's cached details
     
-    self._modelObject:PReference = PReference(modelObject) if isinstance(modelObject, GraphObject) else modelObject
+    self._modelObject:GraphObject = modelObject if isinstance(modelObject, GraphObject) else PReference(modelObject)
     m = self.modelObject
     # these act as a cache, as it's relatively expensive to look up these values in the model object.
     self.cache:Cache = Cache(self)
@@ -171,27 +184,24 @@ class VObject(PRObject, Observer):
     for attrName, default in VATTRIBUTES.items():
       setattr(self.cache, attrName, m.get(attrName, default))
 
-    if _id is None: # means we are interactivly creating this VObject (as opposed to reading from a file)
-      if x  is None: x  = 0
-      if y  is None: y  = 0
-      if x1 is None: x1 = 100 #self.cache.minSize
-      if y1 is None: y1 = 60 #self.cache.minSize/self.cache.aspectRatio
-    else: # _id is NOT None. We're assuming x,y,x1,y1 are given in this case
-      assert isinstance(_id, int)
-      assert isinstance(x , (int, float)) and not isinstance(x , bool)
-      assert isinstance(y , (int, float)) and not isinstance(y , bool)
-      assert isinstance(x1, (int, float)) and not isinstance(x1, bool)
-      assert isinstance(y1, (int, float)) and not isinstance(y1, bool)
+    if x  is None: x  = 0
+    if y  is None: y  = 0
+    if x1 is None: x1 = 100 #self.cache.minSize
+    if y1 is None: y1 = 60 #self.cache.minSize/self.cache.aspectRatio
+    assert isinstance(x , (int, float)) and not isinstance(x , bool)
+    assert isinstance(y , (int, float)) and not isinstance(y , bool)
+    assert isinstance(x1, (int, float)) and not isinstance(x1, bool)
+    assert isinstance(y1, (int, float)) and not isinstance(y1, bool)
       
     self._drawVersion:int = -1
     self._boundingBox = [x, y, x1, y1]
           
     #call super constructors
-    PRObject.__init__(self, view, _id=_id)
+    PRObject.__init__(self, view)
     assert self._id is not None
     Observer.__init__(self)
     
-    self.view = view
+    self.view:SNGView = view
     self.canvas:SNCanvas = view.canvas
     self._updatingFromAttrs = False
     self.tooltip = None
@@ -219,18 +229,59 @@ class VObject(PRObject, Observer):
     self.makeDecorators()
     
     self.modelObject.addObserver(self)
-    if _id is None: # being created by the user (not reading from persistent store)
-      self._post__init__()
+    # if _id is None: # being created by the user (not reading from persistent store)
+    #   self._post__init__()
     
-  def _post__init__(self):
-    self.canvas.freshPaint()
-    self.draw()
-    self.makeBindings()
-    #self.adjustPos()
+    self.canvas.after(0, lambda slf=self: [ \
+                                  slf.canvas.freshPaint(), \
+                                  slf.draw(), \
+                                  slf.makeBindings()]) 
+    
+  # def _post__init__(self):
+  #   self.canvas.freshPaint()
+  #   self.draw()
+  #   self.makeBindings()
+  #   #self.adjustPos()
+    
+  @classmethod
+  @override
+  def getInstantiationInfo(cls)->InstantiationInfo:
+    return InstantiationInfo(
+            cls, 
+            conArgs=[ParamInfo("view", SNGView, lambda slf: cast(VObject, slf).view),
+                     ParamInfo("modelObject", str, lambda slf: slf.modelObject.getPRef().tostring(slf.view.model))], #type: ignore[attr-defined]
+            conKWArgs=[ParamInfo("x", int, lambda slf: slf.boundingBox()[0]), #type: ignore[attr-defined]
+                       ParamInfo("y", int, lambda slf: slf.boundingBox()[1]), #type: ignore[attr-defined]
+                       ParamInfo("x1", int, lambda slf: slf.boundingBox()[21]), #type: ignore[attr-defined]
+                       ParamInfo("y1", int, lambda slf: slf.boundingBox()[3])], #type: ignore[attr-defined]
+            postconSetters=[],
+            finalSetters=[]
+            )
+
+  @property
+  @override
+  def name(self)->str:
+    n = self.modelObject["name"]
+    assert n is None or type(n) is str
+    return "" if n is None else n
     
   @property
   def modelObject(self) -> GraphObject:
-    return self._modelObject()
+    '''
+    :returns: The corresponding model object.
+    :rtype: GraphObject
+    :raises ReferenceError: if there is not corresponding model object (deleted?)
+    :
+    '''
+    try:
+      ret:GraphObject|None = self._modelObject
+      assert isinstance(ret, GraphObject)
+    except:
+      logger.exception("Can't access model object.")
+      ret = None
+    if ret is None:
+      raise ReferenceError("model object not found.")
+    return ret
         
   def delete(self):
     """Removes this Node from the display, removing it from canvas's list."""
@@ -271,10 +322,6 @@ class VObject(PRObject, Observer):
     self.cache = None
 #    super().delete()
 
-    
-  # @property
-  # def canvas(self) -> PRDb: # -> Optional[SNCanvas]
-  #   return self.container 
     
   def update(self, subject:Subject, *topics:tuple[str, tuple[Any, ...]]) -> None:
       """
@@ -337,7 +384,7 @@ class VObject(PRObject, Observer):
     will construct the Element itself.
     """
     elem:et.Element = PRObject.serializeXML(self)
-    elem.set('modelObject', self._modelObject.getRelativeStringRefInContext(self.canvas.model))
+    elem.set('modelObject', self._modelObject.getRelativeStringRefInContext(self.view.model))
     elem.set('shape', self._shape.__class__.__name__)
     bb = self.boundingBox()
     elem.set('bb', f'[{int(bb[0])}, {int(bb[1])}, {int(bb[2])}, {int(bb[3])}]')
@@ -438,15 +485,15 @@ class VObject(PRObject, Observer):
           self.decorators["selected"] = Selected(self)
           self.decorators["selected"].draw()
           if not _multi:
-            for s in self.canvas.selected.copy():
+            for s in self.view.selected.copy():
               if s is not self: s.selected(False)
-          self.canvas.selected.add(self)
+          self.view.selected.add(self)
       elif self.decorators is not None: # setting not selected
         if "selected" in self.decorators:
           self.decorators["selected"].delete()
           assert "selected" not in self.decorators
           self.draw()
-          self.canvas.selected.discard(self)
+          self.view.selected.discard(self)
     return "selected" in self.decorators if self.decorators is not None else None
 
   def shape(self, c:str=None):
@@ -470,7 +517,7 @@ class VObject(PRObject, Observer):
         oldShape = self._shape
         self._shape = newShape
         self._shape.draw()
-        self.canvas.canvas.lift(newShape.id, oldShape.id)
+        self.canvas.lift(newShape.id, oldShape.id)
         oldShape.delete()
         #self.updateFromAttrs(["fillColor", "borderColor"])
         self.makeBindings()
@@ -481,27 +528,27 @@ class VObject(PRObject, Observer):
   
   def makeBindings(self):
     bindObj = self.tag #bindObj
-    tag_bindRightMouse(self.canvas.canvas, bindObj, self.onRightMouse)
-    self.canvas.canvas.tag_bind(bindObj, "<Button-1>", self.onButton_1)
-    self.canvas.canvas.tag_bind(bindObj, "<B1-Motion>", self.onB1_Motion)
-    self.canvas.canvas.tag_bind(bindObj, "<B1-ButtonRelease>", self.onB1_ButtonRelease)
-    # self.tooltip = CreateToolTip(self.canvas.canvas, self.tooltipFunc, bindObj, 
+    tag_bindRightMouse(self.canvas, bindObj, self.onRightMouse)
+    self.canvas.tag_bind(bindObj, "<Button-1>", self.onButton_1)
+    self.canvas.tag_bind(bindObj, "<B1-Motion>", self.onB1_Motion)
+    self.canvas.tag_bind(bindObj, "<B1-ButtonRelease>", self.onB1_ButtonRelease)
+    # self.tooltip = CreateToolTip(self.canvas, self.tooltipFunc, bindObj, 
     #                              waitTime=1000, wrapLength=250, background="#FFFFC0")
-    self.tooltip = CreateToolTip(self.canvas.canvas, self.tooltipFunc, self._shape.id, 
+    self.tooltip = CreateToolTip(self.canvas, self.tooltipFunc, self._shape.id, 
                                  waitTime=1000, wrapLength=250, background="#FFFFC0")
     
   def killBindings(self):
     bindObj = self.tag #bindObj
-    tag_unbindRightMouse(self.canvas.canvas, bindObj)
-    self.canvas.canvas.tag_unbind(bindObj, "<Button-1>")
-    self.canvas.canvas.tag_unbind(bindObj, "<B1-Motion>")
-    self.canvas.canvas.tag_unbind(bindObj, "<B1-ButtonRelease>")
+    tag_unbindRightMouse(self.canvas, bindObj)
+    self.canvas.tag_unbind(bindObj, "<Button-1>")
+    self.canvas.tag_unbind(bindObj, "<B1-Motion>")
+    self.canvas.tag_unbind(bindObj, "<B1-ButtonRelease>")
     if self.tooltip is not None:
       self.tooltip.delete()
       
   def onRightMouse(self, event):
     """Creates and displays the node specific menu at the clicked location."""
-    self.canvas.addEventHandled(event)
+    #self.canvas.addEventHandled(event)
     m = self.makeMenu()
     m.post(event.x_root, event.y_root)
     return m
@@ -512,14 +559,14 @@ class VObject(PRObject, Observer):
     decide on if it's just a node move or a selection toggle in *self.onB1_Motion()*
     and *self.onB1ButtonRelease()*.
     """
-    self.canvas.addEventHandled(event)
+    #self.canvas.addEventHandled(event)
     #print(f'onButton_1() event x={event.x}, y={event.y}, selected={self.selected()}')
-    winX = event.x - self.canvas.canvas.canvasx(0) # adjust for canvas offset
-    winY = event.y - self.canvas.canvas.canvasy(0)
+    winX = event.x - self.canvas.canvasx(0) # adjust for canvas offset
+    winY = event.y - self.canvas.canvasy(0)
     r = self.boundingBox()
     self.dragInfo = (r[0], r[1], winX, winY, False) # x,y,no-drag-motion-event
-    self.old_suppressLocalLayout = self.canvas.suppressLocalLayout()
-    self.canvas.suppressLocalLayout(True)
+    self.old_suppressLocalLayout = self.view.suppressLocalLayout()
+    self.view.suppressLocalLayout(True)
     return 'break'
 
   def onB1_Motion(self, event):
@@ -529,15 +576,15 @@ class VObject(PRObject, Observer):
     """
     
     if self.dragInfo != None:
-      self.canvas.addEventHandled(event)
-      winX = event.x - self.canvas.canvas.canvasx(0) # adjust for canvas offset
-      winY = event.y - self.canvas.canvas.canvasy(0)
+      #self.canvas.addEventHandled(event)
+      winX = event.x - self.canvas.canvasx(0) # adjust for canvas offset
+      winY = event.y - self.canvas.canvasy(0)
       dX = winX - self.dragInfo[2]
       dY = winY - self.dragInfo[3]
       #print(f'onB1_Motion() event({event.x},{event.y}), d=({dX},{dY}), selected={self.selected()}')
       self.canvas.freshPaint()
       if self.selected():
-        for n in self.canvas.selected:
+        for n in self.view.selected:
           n.moveBy(dX, dY, adjustPos=False, fast=False)
       else:
         self.moveBy(dX, dY, adjustPos=False, fast=False)
@@ -554,20 +601,22 @@ class VObject(PRObject, Observer):
     we call self.adjustPos() which may resolve overlap conflicts. If it was a click (no
     intervening <B1_Motion> events), toggle the selection state of the node.
     """
-    from sn.view.vcommands import MoveCommand
+    #from sn.view.vcommands import MoveCommand
     if self.dragInfo != None:
-      self.canvas.addEventHandled(event)
+      #self.canvas.addEventHandled(event)
       if self.dragInfo[4]: # indicated there was a <B1_Motion> event, ie: this was a drag: wrap up a move.
-        self.canvas.suppressLocalLayout(self.old_suppressLocalLayout)
-        if False: #self.canvas.fieldsLayoutObj.active:
-          bb = self.boundingBox()
-          x, y, _, _ = bb 
-          if self.overlaps(bb, spacing=[20,10]):
-            self.canvas.fieldsLayoutObj(self)
-        else:
-          x, y = self.adjustPos()
-        #record a move command
-        self.canvas.doList.do(MoveCommand(self, (x, y), (self.dragInfo[0], self.dragInfo[1]), suppressFirst=False))
+        # self.view.suppressLocalLayout(self.old_suppressLocalLayout)
+        # if False: #self.canvas.fieldsLayoutObj.active:
+        #   bb = self.boundingBox()
+        #   x, y, _, _ = bb 
+        #   if self.overlaps(bb, spacing=[20,10]):
+        #     self.canvas.fieldsLayoutObj(self)
+        # else:
+        #   x, y = self.adjustPos()
+        # #record a move command
+        # self.canvas.doList.do(MoveCommand(self, (x, y), (self.dragInfo[0], self.dragInfo[1]), suppressFirst=False))
+        bb = self.boundingBox()
+        self.canvas.context.move(self, bb[0], bb[1])
       else: # this was a click, not a drag: toggle the selection state
         s = event.state
         self.selected(not self.selected(), _multi=s_CMD(s) or s_SHIFT(s)) # toggle selected
@@ -578,11 +627,11 @@ class VObject(PRObject, Observer):
   ## MENUS ####################################################################
   
   def makeMenu(self) -> tk.Menu:
-    m = tk.Menu(self.canvas.canvas)
+    m = tk.Menu(self.canvas)
     if True: #app.DEBUG_MENUS:
       m.add_command(label=f'#{self._id} -> {self.modelObject.name}', state=tk.DISABLED)
       m.add_separator()
-    editable = self.canvas.isModelEditor
+    editable = self.canvas.isModelEditor()
     if editable:
       self.addModelEditingMenuItems(m)
       m.add_separator()
@@ -594,7 +643,7 @@ class VObject(PRObject, Observer):
     # if app.DEBUG_MENUS:
     #   m.add_separator()
     #   m.add_command(label='validate', command=self.validate)
-    if tygra.tygraPrefs.get("debug", False):
+    if snPrefs.get("debug", False):
       m.add_separator()
       m.add_command(label="validate", command=lambda o=self: \
                                                 (n := len(o.validate()), \
@@ -614,9 +663,9 @@ class VObject(PRObject, Observer):
 
   def addModelEditingMenuItems(self, menu:tk.Menu):
     disabled = (self.modelObject.isSystemObject() \
-                and not tygra.tygraPrefs.get("view_allowEditingSystemObjects", storeDefault=False)) \
-               or not self.canvas.isModelEditor
-    remote = self.canvas.model != self.modelObject.model
+                and not snPrefs.get("view_allowEditingSystemObjects", storeDefault=False)) \
+               or not self.canvas.isModelEditor()
+    remote = self.view.model != self.modelObject.model
     menu.add_command(label=f"{'show' if disabled else 'edit'} attributes", \
                      command=lambda disabled=disabled: self.onEditAttributes(disabled=disabled or remote))    
     if self.modelObject.isType():
@@ -625,19 +674,18 @@ class VObject(PRObject, Observer):
       menu.add_separator()
     if not disabled:
       relTypesMenu = tk.Menu()
-      for r in self.canvas.model.relations:
-        if r.isType() and (self.modelObject.isType() or r.qualifiers&VIRTUAL==0):
+      for r in [r for r in self.view.model.values() if isinstance(r, Relation) and r.isType()]:
           relTypesMenu.add_command(label=r.name, command=lambda r=r: self.canvas.makeRelationFrom(self, r))
       menu.add_cascade(label="make relation to...", menu=relTypesMenu)
       menu.add_command(label="delete from model", state=tk.DISABLED if remote else tk.NORMAL, 
                        command=lambda: self.canvas.doList.do(
-                         CommandWrapper(RmGraphObjectCommand(self.canvas.model, self.modelObject),
+                         CommandWrapper(RmGraphObjectCommand(self.view.model, self.modelObject),
                                         setup=self.canvas.setCatchNewObjects, 
                                         teardown=self.canvas.resetCatchNewObjects)))
       menu.add_separator()
     
   def addViewMenuItems(self, menu:tk.Menu):
-    from sn.view.vcommands import ExpandCommand, RemoveFromViewCommand
+    # from sn.view.vcommands import ExpandCommand, RemoveFromViewCommand
     # INSTANCE = "IsaIndividual (instance)"
     # SUBTYPE = "IsaIndividual (subtype)"
     # collect info about the relations
@@ -745,24 +793,25 @@ class VObject(PRObject, Observer):
     self.canvas.dirty = True
     
   def onEditAttributes(self, disabled:bool=False):
-    command = getEditedAttrsCommandObj(self.canvas.canvas, self.modelObject, title=str(self.modelObject), disabled=disabled) #f'{self.modelObject.idString}: "{self.modelObject.name}"')
-    if command is not None:
-      self.canvas.doList.do(command)    
+    if disabled:
+      editAttrsBox(self.canvas, self.modelObject, title=str(self.modelObject), disabled=True)
+    else:
+      applyEditAttrsBox(self.canvas, self.modelObject, title=str(self.modelObject)) #f'{self.modelObject.idString}: "{self.modelObject.name}"')
 
   def tooltipFunc(self) -> str:
     tip = ""
     line = "\u2594"*18
     try:
-      tip = self.modelObject.getUniqueName(relativeTo=self.canvas.model.url, useAlias=True)
-      if tygra.tygraPrefs.get("debug", storeDefault=False):
+      tip = self.modelObject.name
+      if snPrefs.get("debug", storeDefault=False):
         tip += f' ({self._id})'
-      note = self.modelObject._attrs.get("note", None)
+      note = self.modelObject.get("note", None)
       if note is not None:
         #tip += f'\n{line*2}NOTE:{line*13}\n{note.value}'
-        tip += f'\n{line}\nNOTE:\n{note.value}'
-    except DeletedObjectError:
+        tip += f'\n{line}\nNOTE:\n{note}'
+    except ReferenceError:
       return ""
-    if tygra.tygraPrefs.get("debug", storeDefault=False) and tygra.tygraPrefs.get("debug_popupCache", storeDefault=True):
+    if snPrefs.get("debug", storeDefault=False) and snPrefs.get("debug_popupCache", storeDefault=True):
       if len(tip)>0 and tip[-1]!='\n':
         tip += "\n"
       #tip += f'\n{line*2}CACHE:{line*12}'
@@ -792,7 +841,7 @@ class VObject(PRObject, Observer):
     #   self.canvas.logger.write(f"failed to make 'typeMarker': {type(ex).__name__}: {ex}.", level="warning", exception=ex)
 
   def strToShape(self, name):
-    from sn.view.shapes import Shape
+    from sn.view.graphics.shapes import Shape
     cls = Shape.getShapeClass(name)
     if cls is not None:
       return cls(self)
@@ -890,7 +939,7 @@ class VObject(PRObject, Observer):
       return bb[0], bb[1]
     
     # use a regular layout  
-    layout = self.canvas.localLayout
+    layout = self.view.localLayout
     if layout is not None:
       for r in self.relations:
         layout(r, aggressive=aggressive)
@@ -976,13 +1025,11 @@ class VObject(PRObject, Observer):
     if hide:
       if not self.isHidable():
         logger.error("Cannot hid an object that has any non-individual relations.")
-      #self.container.remove(self._id)
-      PRDb.remove(self.container, self._id) # both PRDb and SNCanvas have __setitem__()
-      self.container.canvas.itemconfigure(self.tag, state="hidden")
+      PRDb.remove(self.view, self._id) # both PRDb and SNCanvas have __setitem__()
+      self.canvas.itemconfigure(self.tag, state="hidden")
     else:
-      #self.container[self._id] = self
-      PRDb.__setitem__(self.container, self._id, self) # both PRDb and SNCanvas have __setitem__()
-      self.container.canvas.itemconfigure(self.tag, state="normal")
+      PRDb.__setitem__(self.view, self._id, self) # both PRDb and SNCanvas have __setitem__()
+      self.canvas.itemconfigure(self.tag, state="normal")
     self.dirty()
     
   def isHidden(self):
@@ -999,22 +1046,21 @@ class VObject(PRObject, Observer):
 
   ### Debugging support ################################################################
   
-  def __str__(self):
-    if self.modelObject is None:
-      model = '<no model>'
-      label = '<no model>'
-    else: 
-      model = self.modelObject.idString
-      try:
-        label = self.modelObject.name
-      except:
-        label = '<model has no name>'
-    return f'<{self.idString}:{type(self).__name__}, "{label}", model={model}{" *DELETED*" if self._deleted else ""}>'
-
+  @override
+  def __str__(self) -> str:
+    return self.tostring()
+  
+  @override
+  def tostring(self, relativeTo:SNGView|None=None) -> str:
+    name = self.modelObject.getLocal("name", None)
+    if name is None:
+      name = f'{UP_ARROW}"{self.modelObject.get("name")}"'
+    return f'{self.__class__.__name__}({name}, {self.getPRef().tostring(relativeTo)}, {self.modelObject.tostring(self.view.model)})'
+  
   def __repr__(self):
     return self.__str__()
   
-  def __hash__(self):
-    return hash(self.idString)
+  # def __hash__(self):
+  #   return hash(self.idString)
     
 

@@ -1301,7 +1301,7 @@ class SNView(PRDb, Observer):
   def doNothing(self, *args, **kwargs):
     logger.log(logging.DEBUG, "SNView.doNothing() called.")
 
-  def suppressLocalLayout(self, suppress=None):
+  def suppressLocalLayout(self, suppress:str|bool|None=None):
     if suppress is not None:
       if isinstance(suppress, str):
         self._suppressLocalLayout = suppress.lower() in ['true', 't', 'yes', 'y', 'on']

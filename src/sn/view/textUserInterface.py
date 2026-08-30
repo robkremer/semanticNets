@@ -237,7 +237,7 @@ def printLists(obj:Any, nCarrets=1, contextModel=None) -> str|None:
 
 class SNAbstractTerminal:
   
-  def __init__(self, model:Model|str):
+  def __init__(self, model:Model|str, context:ModelContext|None=None):
     # # interpret the command line
     # args:dict = {"suggest_on_error":True} if sys.version_info[0]>=3 and sys.version_info[1]>=14 else dict()
     # commandLineParser = argparse.ArgumentParser(**args, description=\
@@ -273,7 +273,12 @@ class SNAbstractTerminal:
     assert isinstance(model, Model)
         
     # initialize the parser
-    self.context:UIContext = UIContext(model)
+    if context is None:
+      self.context:UIContext = UIContext(model)
+    else:
+      assert isinstance(context, ModelContext)
+      assert context.defaults["model"] == model
+      self.context = context
   
     #  if there is an command after "--" on the command line, execute it and exit.
     # command = namespace.command
@@ -298,6 +303,7 @@ class SNAbstractTerminal:
 class SNTerminalWidget(SNAbstractTerminal, TerminalWidget):
   def __init__(self, model:Model|str,
                      master: tk.Widget,
+                     context:ModelContext|None=None,
                      registry:TerminalRegistry|None=None,
                      stderrfg:str="red",
                      stdoutfg:str="black",
@@ -311,7 +317,7 @@ class SNTerminalWidget(SNAbstractTerminal, TerminalWidget):
                      bg="AntiqueWhite1",
                      fg="darkblue",
                      **kwargs):
-    SNAbstractTerminal.__init__(self, model)
+    SNAbstractTerminal.__init__(self, model, context)
     if "wrap" not in kwargs:
       kwargs["wrap"] = tk.WORD if snPrefs.get("text/wrap", storeDefault=False, storeType=bool) else tk.NONE
     TerminalWidget.__init__(self, master, self.context.parser.parseLine, self.getPrompt, #type: ignore[arg-type]
@@ -325,13 +331,14 @@ class SNTerminalWidget(SNAbstractTerminal, TerminalWidget):
 
 class SNPlainTextTerminal(SNAbstractTerminal, PlainTextTerminal):
   def __init__(self, model:Model|str,
+                     context:ModelContext|None=None,
                      stderrfg:str="red",
                      stdoutfg:str="black",
                      promptfg:str="yellow",
                      queryfg:str="green",
                      resultfg:str="blue",
                      **kwargs):
-    SNAbstractTerminal.__init__(self, model)
+    SNAbstractTerminal.__init__(self, model, context=context)
     PlainTextTerminal.__init__(self, self.context.parser.parseLine, prompt=self.getPrompt, #type: ignore[arg-type]
                               resultToStringFun=lambda obj: printLists(obj, contextModel=self.context.defaults["model"]), 
                               stderrfg=stderrfg, queryfg=queryfg,

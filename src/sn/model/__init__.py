@@ -22,18 +22,20 @@
 from sn.model.model import Model, GraphObject, Node, Collection, Relation, IsaIndividual
 from util.attribute import Attribute, VAR_DEFAULTED, TYPENAME, VAR
 from util.persistence.pRef import PRDb
-from mypyc.primitives import str_ops
 import sys
 import atexit
 from util.utils import askUser
 from util.observer import Subject
+
+TerminatorType = str
+LineType = "choices[smooth,straight]"
 
 class TopModel(Model):
   def __init__(self, url:str, mode:str="", _reading:bool=False):
     '''
     Builds the base model for the SN application. This is required to always be
     in the in-memory models under the name "sn" (access as "$sn" in a URL, don't
-    forget to escape it on a command line as "\$sn"
+    forget to escape it on a command line as "\\$sn"
     '''
     Subject.__init__(self)
     PRDb.__init__(self, url, mode="")
@@ -83,6 +85,47 @@ class TopModel(Model):
 
     self[0] # causes the "all model" collection to be instantiated.
     self._allowParentsCaching = True
+    
+    # - shape: [``str``]
+    # - minSize: [``int``]
+    # - maxSize: [``int``]
+    # - aspectRatio: [``float``]
+    # - fillColor: [color]
+    # - borderColor: [color]
+    # - borderWidth: [``int``]
+    # - borderSmooth: [``bool``] **not implemented**
+    # - textColor: [color]
+    # - textModifiesBB: [``bool``]
+    self.TOP["shape"]          = Attribute("rectangle", str, VAR_DEFAULTED)
+    self.TOP["minSize"]        = Attribute(20, int, VAR_DEFAULTED)
+    self.TOP["maxSize"]        = Attribute(80, int, VAR_DEFAULTED)
+    self.TOP["aspectRatio"]    = Attribute(0.6, float, VAR_DEFAULTED)
+    self.TOP["fillColor"]      = Attribute("white", "color", VAR_DEFAULTED)
+    self.TOP["borderColor"]    = Attribute("black", "color", VAR_DEFAULTED)
+    self.TOP["borderSmooth"]   = Attribute(False, bool, VAR_DEFAULTED)
+    self.TOP["textColor"]      = Attribute("blue", "color", VAR_DEFAULTED)
+    self.TOP["textModifiesBB"] = Attribute(True, bool, VAR_DEFAULTED)
+    
+    self.ISA["shape"] = "oval"
+    self.ISA["fillColor"] = "turquoise"
+    
+    self.NODE["borderColor"] = "red"
+
+    self.RELATION["terminator1"] = Attribute("", TerminatorType, VAR_DEFAULTED)
+    self.RELATION["terminator2"] = Attribute("", TerminatorType, VAR_DEFAULTED)
+    self.RELATION["terminator3"] = Attribute("", TerminatorType, VAR_DEFAULTED)
+    self.RELATION["terminator4"] = Attribute("arrow", TerminatorType, VAR_DEFAULTED) #(10,15,8)
+    self.RELATION["lineColor"]  = Attribute("black", "color", VAR_DEFAULTED)
+    self.RELATION["lineFillColor"] = Attribute("black", "color", VAR_DEFAULTED)
+    self.RELATION["lineType"]   = Attribute("smooth", LineType, VAR_DEFAULTED)
+    
+    self.ISA["lineColor"]       = "blue"
+    self.ISA["lineFillColor"]   = "blue"
+
+    self.SYMMETRIC["terminator1"] = "arrow"
+    self.REFLEXIVE["terminator1"] = "circle"
+    self.TRANSITIVE["terminator2"] = "circle"
+    self.TRANSITIVE["terminator3"] = "circle"
     
 model = TopModel("sn:///sn", mode="", _reading=False) # creates a model in memory cache
 model._writeLocked = True

@@ -21,16 +21,20 @@
 #################################################################################
 from __future__ import annotations
 import sn
-from sn.model.model import Model, Node, Relation, Collection
+from sn import snPrefs
+from sn.model.model import Model, Node, Relation, Collection, IsaIndividual,\
+  GraphObject, GORef
 from sn.controller.modelInterface import ModelContext
 from sn.view.graphics.guiApp2 import SNGViewFrame
 
-from typing import cast, override, Any
+from typing import cast, override, Any, Iterable, Callable
 from util.utils import bindRightMouse, fixURL
 from util.terminal import inputAsync
 from util.persistence.pRef import PRDb
 from util.observer import Subject, Observer
 from util.attributeEditor import applyEditAttrsBox
+from sn.view.textUserInterface import UIContext
+from util.command import Command
 #from sn.view.graphics.vobjects import VObject
 
 logger:sn.SNLogger = sn.getLogger(__name__)
@@ -45,11 +49,101 @@ Created on Aug 21, 2026
 '''
 import tkinter as tk
 
-class SNGContext(ModelContext):
+class SNGContext(UIContext):
+  #from sn.view.graphics.vobjects import VObject
   @override
   def __init__(self, model:Model):
     super().__init__(model)
-    self.view:SNGView = None
+    self.view:SNGView
+    
+  @override
+  def _defineDecoders(self):
+    def getVObject(s:str, d:dict, **kwargs) -> "VObject": #type: ignore[name-defined]
+      try:
+        ret = GORef.eval(s, d["view"] if kwargs.get("view") is None else kwargs["view"])
+        assert isinstance(ret, GraphObject)
+        return ret
+      except Exception as ex:
+        raise ex
+    super()._defineDecoders()
+    self.decoders["VObject"] = lambda s, d=self.defaults, **kwargs: getVObject(s,d,**kwargs)
+    
+  def _setView(self, view:SNGView):
+    self.view = view
+    self.defaults["view"] = self.view
+    
+  def move(self, obj:"VObject", x:int|float, y:int|float): #type: ignore[name-defined]
+    '''
+    This is a dummy graphic command.
+    '''
+    print ("dummy graphic command")
+    
+  class _Move(Command):
+    def __init__(self, obj:"VObject", x:int|float, y:int|float): #type: ignore[name-defined]
+      super().__init__("move")
+      self.obj = obj
+      self.oldPos:list[int]|None = None
+      self.x, self.y = x, y
+    
+    @override
+    def do(self) -> None:
+      super().do()
+      if self.oldPos is None:
+        self.oldPos = self.obj.boundingBox()
+      self.obj.moveTo(self.x, self.y)
+  
+    @override
+    def undo(self):
+      super().undo()
+      assert self.oldPos is not None
+      self.obj.moveTo(self.oldPos[0], self.oldPos[1])
+      
+    @override
+    def delete(self):
+      super().delete()
+      self.obj = None
+      
+    @override
+    def __str__(self):
+      return f'{super().__str__()} {self.obj.name} {self.x} {self.y}'
+
+  def represent(self, object:GraphObject):
+    '''
+    This is a dummy graphic command.
+    '''
+    print ("dummy graphic command")
+    
+  class _Represent(Command):
+    def __init__(self, object:GraphObject, view:SNGView|None=None):
+      super().__init__("represent")
+      self.modelObject = object
+      self.view:SNGView = view
+      self.viewObject:"VObject"|None = None
+    
+    @override
+    def do(self) -> None:
+      super().do()
+      if self.viewObject is None:
+        self.viewObject = self.view.makeViewObjectForGraphObject(self.modelObject)
+      else:
+        self.viewObject.connect()
+  
+    @override
+    def undo(self):
+      super().undo()
+      assert self.viewObject is not None
+      self.viewObject.disconnect()
+      
+    @override
+    def delete(self):
+      super().delete()
+      self.modelObject = None
+      self.view = None
+      self.viewObject = None
+      
+    @override
+    def __str__(self):
+      return f'{super().__str__()} {self.obj.name} {self.x} {self.y}'
     
 
 class SNGView(PRDb["VObject"], Observer):
@@ -68,9 +162,19 @@ class SNGView(PRDb["VObject"], Observer):
     self.canvas:SNCanvas = canvas
     self.model:Model = model
     model.addObserver(self)
-
+    self.context:SNGContext = canvas.context
+    self.context._setView(self) # make this view the view of the context. #TODO: hackey ...
+    self.selected = set()
+    'The set of currently selected VObjects.'
+    self._suppressLocalLayout = False
+    'Temporarily suppress automatic layout. Necessary during drag operations, etc.'
+    self.localLayout = None
+     
   @override
   def update(self, subject:Subject, *topics:tuple[str, tuple[Any, ...]])->None:
+    from sn.view.graphics.vobjects import VObject
+    from sn.view.graphics.vnodes import VNode
+    from sn.view.graphics.vrelations import VRelation #, VIsa
     logger.info(f'SNGView.update({subject.name}, {len(topics)} topics):')
     for t in topics:
       topicName:str = t[0]
@@ -78,10 +182,105 @@ class SNGView(PRDb["VObject"], Observer):
       if topicName == 'add GraphObject':
         modelID = topicData[0]
         modelObj = topicData[1]
-        logger.info(f'  Creating V{modelObj.__class__.__name__} for model object {modelID}:{modelObj.__class__.__name__}')
-        applyEditAttrsBox(self.canvas, modelObj, title=modelObj.name, editKey="name")
+        logger.info(f'  Creating V{modelObj.__class__.__name__} for model object {modelObj}:{modelObj.__class__.__name__}')
+        if modelObj.isType() or isinstance(modelObj, Node): 
+          applyEditAttrsBox(self.canvas, modelObj, title=modelObj.name, editKey="name")
+        typ:type = type(modelObj)
+        newObj:VObject|None = None
+        if typ is Collection:
+          pass
+        elif typ is Node:
+          newObj = VNode(self, modelObj)
+        elif issubclass(typ, Relation):
+          newObj = VRelation(self, modelObj)
+        # elif typ is IsaIndividual:
+        #   newObj = VIsa(self, modelObj)
+        else:
+          logger.error(f"VObject subtype not implemented for model type {typ.__name__}.")
+
       else:
         logger.warning(f'  Unsupported topic "{topicName}": {topicData}')
+
+  def suppressLocalLayout(self, suppress:str|bool|None=None):
+    if suppress is not None:
+      if isinstance(suppress, str):
+        self._suppressLocalLayout = suppress.lower() in ['true', 't', 'yes', 'y', 'on']
+      else:
+        assert isinstance(suppress, bool)
+        self._suppressLocalLayout = suppress
+    return self._suppressLocalLayout
+
+  ### Operations #######################################################################
+
+  def makeViewObjectForGraphObject(self, mObject:GraphObject,
+                                   atPoint:tuple[float, float]|None=None,
+                                   expand:int=0,
+                                   filter:Callable[[Any, Relation], bool]=lambda vn, mr: True) \
+                                   ->"VObject": 
+    '''
+    :param mObject: A model object.
+    :param atPoint: [Optional, 2-Tuple[float]] The point where the new object
+        should be displayed if it has to be created.
+    :param expand: [Optional[int], default=None] The number of hops to expand.
+    :param filter: Optional[Callable[[Self, Relation], bool]] A function *selfxRelation->bool*
+        where that relation will only be expanded if the function returns *True*
+    :return: If there is a *VObject* currently in the display representing *mObject* then
+        that is returned, otherwise an attempt is make to create such an object referencing
+        *mObject* and that is returned.
+    '''
+    from sn.view.graphics.vrelations import VRelation
+    from sn.view.graphics.vobjects import VObject
+    from sn.view.graphics.vnodes import VNode
+    # make certain we don't make a duplicate    #createdVObjects:set[VObject] = set()
+    ret = self.findViewObjectForGraphObject(mObject)
+    if ret is None:
+      if isinstance(mObject, Relation):
+        ret = VRelation(self, modelObject=mObject)
+      elif isinstance(mObject, Node):
+        sizex = mObject.get("minSize", snPrefs.get("view_NodeMinSize", storeDefault=30))
+        sizey = int(sizex / mObject.get("aspectRatio", snPrefs.get("view_NodeAspectRatio", storeDefault=1.5)))
+        if atPoint is None:
+          # try:
+          #   mParent = mObject.getParents().__next__()
+          #   vParent = self.findViewObjectForGraphObject(mParent)
+          # except StopIteration: # no parent
+          #   vParent = None
+          # if vParent is None:
+          #   x, y = self.newNodeCoords
+          # else:
+          #  bb = vParent.boundingBox()
+          #  x = bb[0]
+          #  y = bb[1] + 120
+          #TODO: Do some reasonable placement.
+          x, y = 0, 0
+        else:
+          x, y = atPoint
+        ret = VNode(self, mObject, x=x, y=y, x1=x + sizex, y1=y + sizey)
+      else:
+        raise AttributeError(f'SNView.makeViewObjectforGraphObject(): unexpected model object type: {mObject.__class__.__name__}.')
+
+    assert isinstance(ret, VObject), f'SNView.makeViewObjectForGraphObject(): Unexpected return type "{ret.__class__.__name__}".'
+    if expand > 0:
+      ret.expand(filter=filter, expand=expand - 1)
+    return ret
+
+  def repaint(self, event=None):
+    self.freshPaint()
+    for obj in self.values():
+      if not obj.isHidden():
+        obj.draw()
+
+  def findViewObjectForGraphObject(self, mObject:GraphObject) -> "VOject"|None: #-> Optional[VObject] 
+    '''
+    :param mObject: A model object.
+    :return: A *VObject* currently in the display representing *mObject*, or *None* if there is not such object.
+    '''
+    if not isinstance(mObject, GraphObject):
+      raise AttributeError(f'Expected a param of type GraphObject, but got type {mObject.__class__.__name__}')
+    for obj in self.values():
+      if obj.modelObject is mObject:  # already displayed?
+        return obj
+    return None
 
 
 class SNCanvas(tk.Canvas):
@@ -103,7 +302,9 @@ class SNCanvas(tk.Canvas):
     self._fontSize:float = 10.0
     
     self.makeBindings()
-    
+    self._drawVersion:int = 0
+    self.scrollRegion:tuple = (0, 0, 4000, 3000)
+        
   @property
   def model(self) -> Model:
     return cast(SNGViewFrame, self.master).model
@@ -194,9 +395,9 @@ class SNCanvas(tk.Canvas):
         types.sort(key=lambda x: x.name) #sort by name alphabetically
         for t in types:
           if ptype is Node:
-            fun = lambda t=t: self.context.new_node(t, name="?", individual=individual)
+            fun = lambda t=t: self.context.new_node(t, name="", individual=individual, type=not individual)
           elif ptype is Relation:
-            fun = lambda t=t: self.context.new_relation(t, name="?", individual=individual)
+            fun = lambda t=t: self.context.new_relation(t, name="", individual=individual, type=not individual)
           # elif ptype is Collection:
           #   fun = lambda t=t: self.context.new_collection(t, name="?", individual=individual)
           menu.add_command(label=t.name, command=fun)
@@ -218,6 +419,7 @@ class SNCanvas(tk.Canvas):
       bgMenu.add_cascade(label="new subtype of Relation", menu=makeSubmenu(individual=False, ptype=Relation))
       # bgMenu.add_cascade(label="new instance of Collection", menu=makeSubmenu(individual=True, ptype=Collection))
       # bgMenu.add_cascade(label="new subtype of Collection", menu=makeSubmenu(individual=False, ptype=Collection))
+      bgMenu.add_separator()
       bgMenu.add_separator()
     
     # bgMenu.add_command(label="validate", command=lambda o=self: o.validate(refresh=True), accelerator=KEY_VALIDATE[1]) #utils.CHAR_CMD
@@ -320,5 +522,43 @@ class SNCanvas(tk.Canvas):
     bb = [0, 0, bb[2] + 800, bb[3] + 600]
     self.configure(scrollregion=bb)
 
+  # ---- Utility ---------------------------------------------------------------
+
+  def viewToWindow(self, *args) -> list[float]:
+    """
+    :param args: Either a single list argument or multiple float parameters. In either case there
+          must be an even number of items, taken as x,y pairs. Since scaling is x:y equal, this "even"
+          limitation is relaxed here.
+    :return: A list converted coordinates where the evens are x coordinates and the odds are y coordinates
+          converted from view to window coordinates.
+    """
+    if len(args) == 1 and isinstance(args[0], Iterable):
+      args = args[0]
+    #assert len(args) % 2 == 0, f'args = {args}'
+    ret = []
+    for n in args:
+      ret.append(n * self._scale)
+    return ret
+
+  def windowToView(self, *args) -> list[float]:
+    """
+    :param args: Either a single list argument or multiple float parameters. In either case there
+          must be an even number of items, taken as x,y pairs. Since scaling is x:y equal, this "even"
+          limitation is relaxed here.
+    :return: A list converted coordinates where the evens are x coordinates and the odds are y coordinates
+          converted from window to view coordinates.
+    """
+    if len(args) == 1 and isinstance(args[0], Iterable):
+      args = args[0]
+    #assert len(args) % 2 == 0, f'args = {args}'
+    ret = []
+    for n in args:
+      ret.append(n / self._scale)
+    return ret
+
+  def freshPaint(self):
+    'Increments self._drawVersion so that graphic options can know whether to update of not.'''
+    self._drawVersion += 1
+    
   
         

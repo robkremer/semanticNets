@@ -568,6 +568,10 @@ class GraphObject(AttributedObject, PRObject):
   @override
   def isIndividual(self)->bool:
     return self._individual
+  
+  def isSystemObject(self) -> bool:
+    from sn.model import TopModel
+    return type(self.model) is TopModel
 
   @property
   @override
@@ -602,8 +606,6 @@ class GraphObject(AttributedObject, PRObject):
     name = self.getLocal("name", None)
     if name is None:
       name = f'{UP_ARROW}"{self.get("name")}"'
-    else:
-      name = f'"{self.get("name")}"'
     return f'{self.__class__.__name__}({name}, {self.getPRef().tostring(relativeTo)}, <{"individual" if self.isIndividual() else "type"}{", <inferred>" if self.inferred else ""}>)'
   
   @override
@@ -1065,6 +1067,18 @@ class Relation(GraphObject):
     assert self._src is obj
     self.setDirty()
       
+  def hasLocalDst(self) -> bool:
+    '''
+    :returns: True iff and only if this Relation has a locally defined destination.
+    '''
+    return self._dst is not None
+    
+  def hasLocalSrc(self) -> bool:
+    '''
+    :returns: True iff and only if this Relation has a locally defined source.
+    '''
+    return self._src is not None
+    
   def retract(self):
     '''
     Retract the inferences about this object.  In this case,
