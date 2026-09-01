@@ -123,7 +123,7 @@ class VNode(VObject):
 #     model = elem.get('model')
 #     model = addrServer.idLookup(model) if model!=None and model!="" else None
 #
-#     shape = model.attrs["shape"] #elem.get('shape')
+#     shape = model.attrs['vis/shape'] #elem.get('vis/shape')
 #     args.append(shape)
 #
 #     args.append(model)
@@ -155,9 +155,9 @@ class VNode(VObject):
       if name in attrs and attrsInfo[name]() != self.model.attrs[name]:
         attrsInfo[name](self.model.attrs[name])
         
-    attrsInfo = {"shape":self.shape, "fillColor":self.fillColor, "borderColor":self.borderColor, \
-        "textColor":self.textColor, "label":self.label, "type":self.typ, \
-        "lineColor":self.lineColor, "minSize":self.minSize, "aspectRatio":self.aspectRatio}
+    attrsInfo = {'vis/shape':self.shape, 'vis/fillColor':self.fillColor, 'vis/borderColor':self.borderColor, \
+        'vis/textColor':self.textColor, "label":self.label, "type":self.typ, \
+        'vis/lineColor':self.lineColor, 'vis/minSize':self.minSize, 'vis/aspectRatio':self.aspectRatio}
     #TODO: get this implemented or get rid of it.
     # if self._updatingFromAttrs: return
     # self._updatingFromAttrs = True
@@ -169,23 +169,23 @@ class VNode(VObject):
 
   # def notifyAttrChanged(self, attrsObj:Attributes, name:str, value:Any):
   #   try:
-  #     if name == 'fillColor':
+  #     if name == 'vis/fillColor':
   #       self.fillColor(value)
-  #     if name == 'borderColor':
+  #     if name == 'vis/borderColor':
   #       self.borderColor(value)
-  #     if name == 'shape':
+  #     if name == 'vis/shape':
   #       self.shape(value)
   #     if name == 'label':
   #       self.label(value)
-  #     if name == 'textColor':
+  #     if name == 'vis/textColor':
   #       self.textColor(value)
   #     if name == 'type':
   #       self.typ(value)
-  #     if name == 'lineColor':
+  #     if name == 'vis/lineColor':
   #       self.lineColor(value)
-  #     if name == 'minSize':
+  #     if name == 'vis/minSize':
   #       self.minSize(value)
-  #     if name == 'aspectRatio':
+  #     if name == 'vis/aspectRatio':
   #       self.aspectRatio(value)
   #   except Exception as ex:
   #     self.canvas.logger.write(f'got except with "{name}": "{value}". Probably due to partially constructed VNode.', level="warning", exception=ex)
@@ -229,26 +229,26 @@ class VNode(VObject):
 #       bb = self.boundingBox()
 #       ar = self.aspectRatio()
 #       self.boundingBox([bb[0], bb[1], bb[0]+s, bb[1]+(s*ar)])
-#       self.model.attrs["minSize"] = s
+#       self.model.attrs['vis/minSize'] = s
 #       self._minSize = s
 # #      self.draw()
 #     try:
 #       return self._minSize 
 #     except:
-#       self._minSize = self.model.attrs["minSize"]
+#       self._minSize = self.model.attrs['vis/minSize']
 #       return self._minSize
 #
 #   def aspectRatio(self, s:Optional[float]=None):
 #     if s != None:
 #       bb = self.boundingBox()
 #       self.boundingBox([bb[0], bb[1], bb[2], bb[1]+((bb[2]-bb[0])*s)])
-#       self.model.attrs["aspectRatio"] = s
+#       self.model.attrs['vis/aspectRatio'] = s
 #       self._aspectRatio = s
 # #       self.draw()
 #     try:
 #       return self._aspectRatio
 #     except:
-#       self._aspectRatio = self.model.attrs["aspectRatio"]
+#       self._aspectRatio = self.model.attrs['vis/aspectRatio']
 #       return self._aspectRatio
 #
 #   def fillColor(self, c=None):
@@ -320,7 +320,7 @@ class VNode(VObject):
 #         self._shape.draw()
 #         self.canvas.lift(newShape.id, oldShape.id)
 #         oldShape.delete()
-#         self.updateFromAttrs(["fillColor", "borderColor"])
+#         self.updateFromAttrs(['vis/fillColor', 'vis/borderColor'])
 #         self.makeBindings()
 #     return type(self._shape).__name__
 #
@@ -345,7 +345,7 @@ class VNode(VObject):
 #     return self.model.attrs["type"]
 #
 #   def lineColor(self, c=None):
-#     return self.model.attrs["lineColor"]
+#     return self.model.attrs['vis/lineColor']
 
   ### DRAWING ##########################################################################
 

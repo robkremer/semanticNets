@@ -167,7 +167,7 @@ class Application(tk.Tk):
         return self.windows[name]
   
       #TODO: passing model as just None is just a temporary thing. 
-      window:AppWindow = AppWindow(self, model, geometry=f'300x400+{self.defaultChildLocation[0]}+{self.defaultChildLocation[1]}')
+      window:AppWindow = AppWindow(self, model, geometry=f'{snPrefs.get("GUIWindowSize", storeDefault="800x600", storeType=str)}+{self.defaultChildLocation[0]}+{self.defaultChildLocation[1]}')
       self.defaultChildLocation = (self.defaultChildLocation[0] + 40, self.defaultChildLocation[1] + 40)
       self.windows[name] = window
       return window
@@ -321,18 +321,15 @@ class AppPanedWidget(tk.PanedWindow):
     # onFocusIn/onFocusOut below).
     self.textDisplayFrame = SNTerminalWidget(self.model, self, context=self.context)
     self.textDisplayFrame.pack(fill=tk.NONE, side=tk.BOTTOM, expand=False)
-    stretch = 'always'  # if fixedAppFrame else 'never'
+    stretch = 'never'  # if fixedAppFrame else 'never'
     sticky = 'news'  # if fixedAppFrame else 'new'
     self.add(self.textDisplayFrame, stretch=stretch, sticky=sticky)
-    self.paneconfigure(self.textDisplayFrame, stretch=stretch)
+    self.paneconfigure(self.textDisplayFrame, stretch=stretch, height=60)
 
     self.appFrame:SNGViewFrame = SNGViewFrame(self)
-    self.appFrame.pack(fill=tk.BOTH,  # if self.fixedAppFrame else tk.BOTH,
-                        side=tk.TOP,
-                        expand=False)  # if self.fixedAppFrame else True)
-
-    stretch = 'never'  # if self.fixedAppFrame else 'always'
-    sticky = 'new'  # if self.fixedAppFrame else 'news'
+    self.appFrame.pack(fill=tk.BOTH, side=tk.TOP, expand=False)
+    stretch = 'always'  # if self.fixedAppFrame else 'always'
+    sticky = 'news'  # if self.fixedAppFrame else 'news'
     self.add(self.appFrame, before=self.textDisplayFrame, stretch=stretch, sticky=sticky)  # 'always', 'first', 'last', 'middle', and 'never'.
     self.paneconfigure(self.appFrame, stretch=stretch)
 
@@ -370,7 +367,10 @@ class SNGViewFrame(tk.Frame):
     self.vScroll = ttk.Scrollbar(self, orient=tk.VERTICAL)
     kwargs["yscrollcommand"] = self.vScroll.set
     kwargs["xscrollcommand"] = self.hScroll.set
-    if "bg" not in kwargs: kwargs["bg"] = snPrefs.get('view_backgroundColor', storeDefault="grey95", storeType="color")
+    if "bg" not in kwargs: 
+      kwargs["bg"] = snPrefs.get('view_backgroundColor', storeDefault="grey95", storeType="color")
+    if kwargs["bg"] == "": # "" (transparent) color isn't allowed here.
+      kwargs["bg"] = "white"
 
     # Call the tk.Canvas and PRDb constructors
     self.canvas = SNCanvas(self, **kwargs)

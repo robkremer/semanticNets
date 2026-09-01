@@ -91,7 +91,7 @@ class Text(Decorator):
     if "fill"    not in self.kwargs: self.kwargs["fill"]    = "black"
 
   def updateKwargs(self):
-    self.kwargs["fill"] = self.owner.cache.textColor
+    self.kwargs["fill"] = self.owner.cache["vis/textColor"]
       
   @override
   def draw(self, fast=False, **kwargs):
@@ -150,17 +150,17 @@ class WrappingText(Text):
     if text != self.text: 
       dirty = True
       self.text = text
-    minSize = self.owner.cache.minSize
+    minSize = self.owner.cache["vis/minSize"]
     if minSize != self.minSize: 
       dirty = True
       self.minSize = minSize
-    aspectRatio = self.owner.cache.aspectRatio
+    aspectRatio = self.owner.cache["vis/aspectRatio"]
     if aspectRatio != self.aspectRatio: 
       dirty = True
       self.aspectRatio = aspectRatio
 
     # We may need to change the size of the Shape
-    if dirty and self.owner.cache.textModifiesBB:
+    if dirty and self.owner.cache["vis/textModifiesBB"]:
       area = len(text)*160
       width = sqrt(area/aspectRatio) # area = width * width*aspectRatio
       if width > minSize: # we need to make the Shape bigger

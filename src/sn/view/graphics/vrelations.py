@@ -61,9 +61,9 @@ from util.attributeEditor import applyEditAttrsBox
 import logging
 logger:sn.SNLogger = sn.getLogger(__name__)
   
-ROLE_VATTRIBUTES = {'lineColor': 'black',
-                    'fillColor': '',
-                    'lineWidth': 1,
+ROLE_VATTRIBUTES = {'vis/lineColor': 'black',
+                    'vis/fillColor': '',
+                    'vis/lineWidth': 1,
                     'nearEndShape': '',
                     'farEndShape': '',
                     }
@@ -296,19 +296,19 @@ class VRelation(VObject):
     """
     self.errors = super().validate()
     
-    for roleName in (self.cache._roles if hasattr(self.cache, "_roles") else []):
-      fillers = getattr(self.cache, f'_{roleName}__filler')
-      for filler in fillers:
-        if isinstance(filler, PReference):
-          filler = filler()
-        
-        if not isinstance(filler, VObject):
-          self.errors.append(f'{roleName}.filler containers item of type {filler.__class__.__name__}; should be a subtype of VObject.')
-        else:
-          if self.modelObject is not None and not isinstance(self.modelObject, Relation):
-            self.errors.append(f'self.modelObejct is of type "{self.modelObject.__class__.__name__}", but it should be of type Relation.') 
-          elif filler.modelObject not in map(lambda x: x(), self.modelObject[_toFillerAttrName(roleName)]):
-            self.errors.append(f'the filler "{str(filler.modelObject)}" at {id(filler.modelObject)} of role "{roleName}" does not occur in the corresponding model object ({str(self.modelObject[_toFillerAttrName(roleName)])} ({str(list(map(lambda x: id(x()), self.modelObject[_toFillerAttrName(roleName)])))})).') 
+    # for roleName in (self.cache._roles if hasattr(self.cache, "_roles") else []):
+    #   fillers = getattr(self.cache, f'_{roleName}__filler')
+    #   for filler in fillers:
+    #     if isinstance(filler, PReference):
+    #       filler = filler()
+    #
+    #     if not isinstance(filler, VObject):
+    #       self.errors.append(f'{roleName}.filler containers item of type {filler.__class__.__name__}; should be a subtype of VObject.')
+    #     else:
+    #       if self.modelObject is not None and not isinstance(self.modelObject, Relation):
+    #         self.errors.append(f'self.modelObejct is of type "{self.modelObject.__class__.__name__}", but it should be of type Relation.') 
+    #       elif filler.modelObject not in map(lambda x: x(), self.modelObject[_toFillerAttrName(roleName)]):
+    #         self.errors.append(f'the filler "{str(filler.modelObject)}" at {id(filler.modelObject)} of role "{roleName}" does not occur in the corresponding model object ({str(self.modelObject[_toFillerAttrName(roleName)])} ({str(list(map(lambda x: id(x()), self.modelObject[_toFillerAttrName(roleName)])))})).') 
           
     # if errCount == 0:
     #   if 'error' in self.decorators:
@@ -587,12 +587,12 @@ class VRelation(VObject):
     #       info.farShapeID = self.drawEndShape(farEndShape, [info.nearPt[0], info.nearPt[1], info.farPt[0], info.farPt[1]],
     #                                            info.farShapeID, color, fillColor)
     mo = self.modelObject
-    terminators = ConnectorTerminators(mo.get("terminator1", None), mo.get("terminator2", None), mo.get("terminator3", None), mo.get("terminator4", None))
-    lineType = mo.get("lineType", "straight")
+    terminators = ConnectorTerminators(mo.get('vis/terminator1', None), mo.get('vis/terminator2', None), mo.get('vis/terminator3', None), mo.get('vis/terminator4', None))
+    lineType = mo.get('vis/lineType', "straight")
     if lineType == "straight":
-      self.connectInfo = drawStraightConnector(self.src, self, self.dst, terminators, self.connectInfo, lineColor=mo.get("lineColor", "black"), fillColor=mo.get("lineFillColor", "black"))
+      self.connectInfo = drawStraightConnector(self.src, self, self.dst, terminators, self.connectInfo, lineColor=mo.get('vis/lineColor', "black"), fillColor=mo.get('vis/lineFillColor', "black"), width=mo.get('vis/lineWidth', 1))
     else:
-      self.connectInfo = drawSmoothConnector(self.src, self, self.dst, terminators, self.connectInfo, lineColor=mo.get("lineColor", "black"), fillColor=mo.get("lineFillColor", "black"))
+      self.connectInfo = drawSmoothConnector(self.src, self, self.dst, terminators, self.connectInfo, lineColor=mo.get('vis/lineColor', "black"), fillColor=mo.get('vis/lineFillColor', "black"), width=mo.get('vis/lineWidth', 1))
           
   # def drawUnfilledRoles(self):
   #   for role, infoList in self.roles.items():
@@ -610,7 +610,7 @@ class VRelation(VObject):
     if self.floating() and len(connectedObjects) > 1 and self.modelObject.isIndividual():
       if len(set(connectedObjects)) <= 1:  # if all the objects are the same 
         c = connectedObjects[0].centerPt()
-        ctr = (c[0] + self.canvas.model._top.get("minSize", 20) * 1.5, c[1])
+        ctr = (c[0] + self.canvas.model._top.get('vis/minSize', 20) * 1.5, c[1])
       else:
         ctr = midpoint(*map(lambda obj: obj.centerPt(), connectedObjects))
       self.moveToCenterOn(ctr[0], ctr[1])

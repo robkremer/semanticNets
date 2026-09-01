@@ -206,17 +206,17 @@ class Shape:
     return newPoints
 
   shapeOptionsMap:dict[str:str] = {
-    "borderColor": "outline",
-    "fillColor": "fill",
+    'vis/borderColor': "outline",
+    'vis/fillColor': "fill",
     "borderWidth": "width",
     }
-    #TODO: "borderSmooth": "smooth", # seems to be am unknown option, contrary to the doc.
+    #TODO: 'vis/borderSmooth': "smooth", # seems to be am unknown option, contrary to the doc.
     
   def updateKwargs(self):
     attrkeys = self.vobject.modelObject.keys()
     for opt in self.shapeOptionsMap.keys():
       if opt in attrkeys:
-        val = getattr(self.vobject.cache, opt)
+        val = self.vobject.cache[opt]
         self.kwargs[self.shapeOptionsMap[opt]] = val
 
   def checkShape(self) -> bool:
@@ -226,8 +226,8 @@ class Shape:
     if this method returns *True*.
     '''      
     try: # The shape attribute may not have been declared yet during initialization
-      if self.vobject.cache.shape != self.__class__.__name__:
-        self.vobject.shape(self.vobject.cache.shape) #TODO: check this
+      if self.vobject.cache["vis/shape"] != self.__class__.__name__:
+        self.vobject.shape(self.vobject.cache["vis/shape"]) #TODO: check this
         return True
     except:
       pass
@@ -242,7 +242,7 @@ class Shape:
     self.kwargs.update(kwargs) # then from the parameters
     if self.id is None: # original draw
       self.id = self.vobject.canvas.create_polygon(self.points(fast=fast), **self.kwargs)
-      self.vobject.canvas.itemconfigure(self.id, tags=[self.vobject.tag, "shape"])
+      self.vobject.canvas.itemconfigure(self.id, tags=[self.vobject.tag, 'vis/shape'])
     else: # a redraw
       try:
         self.vobject.canvas.coords(self.id, self.vobject.canvas.viewToWindow(self.points(fast=fast)))
@@ -511,7 +511,7 @@ class Oval(Shape):
     
     if self.id is None: 
       self.id = self.vobject.canvas.create_oval(self.vobject.canvas.viewToWindow(bb), **self.kwargs)
-      self.vobject.canvas.itemconfigure(self.id, tags=[self.vobject.tag, "shape"])
+      self.vobject.canvas.itemconfigure(self.id, tags=[self.vobject.tag, 'vis/shape'])
     else:
       self.vobject.canvas.coords(self.id, self.vobject.canvas.viewToWindow(bb))
       self.vobject.canvas.itemconfigure(self.id, **self.kwargs)

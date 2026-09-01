@@ -99,10 +99,10 @@ class LayoutHieristic(ABC):
     
   def findOverlapping(self, rect:list[int], exclude:list[int]=[]) -> list[int]:
     '''
-    :return: The (possible zero-length) list of "shape"-tagged tk.Canvas object ids
+    :return: The (possible zero-length) list of 'vis/shape'-tagged tk.Canvas object ids
         that overlap with bounding box of *node*.
     '''
-    overlapping = self.view.intersectTag(self.view.canvas.find_overlapping(*rect), "shape", exclude)
+    overlapping = self.view.intersectTag(self.view.canvas.find_overlapping(*rect), 'vis/shape', exclude)
     return overlapping
     
   def __call__(self, node:Optional[VObject]=None, **kwargs):

@@ -1339,8 +1339,8 @@ class SNView(PRDb, Observer):
       elif isinstance(mObject, Relation):
         ret = VRelation(self, modelObject=mObject)
       elif isinstance(mObject, Node):
-        sizex = mObject.get("minSize", tygraPrefs.get("view_NodeMinSize", storeDefault=30))
-        sizey = int(sizex / mObject.get("aspectRatio", tygraPrefs.get("view_NodeAspectRatio", storeDefault=1.5)))
+        sizex = mObject.get('vis/minSize', tygraPrefs.get("view_NodeMinSize", storeDefault=30))
+        sizey = int(sizex / mObject.get('vis/aspectRatio', tygraPrefs.get("view_NodeAspectRatio", storeDefault=1.5)))
         if atPoint is None:
           try:
             mParent = mObject.getParents().__next__()
@@ -1401,8 +1401,8 @@ class SNView(PRDb, Observer):
   def showAllModel(self):
     x = 10
     y = 10
-    sizex = self.model.top["minSize"]
-    sizey = int(sizex * self.model.top["aspectRatio"])
+    sizex = self.model.top['vis/minSize']
+    sizey = int(sizex * self.model.top['vis/aspectRatio'])
     grid = (sizex * 2, sizey * 2)
     numNodes = len(list(self.model.nodes)) - len(list(self.nodes()))
     gridCount = int(sqrt(numNodes)) if numNodes>0 else 0

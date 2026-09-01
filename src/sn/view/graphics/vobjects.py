@@ -81,16 +81,25 @@ from sn import snPrefs
 import logging
 logger:sn.SNLogger = sn.getLogger(__name__)
 
-VATTRIBUTES =     { 'shape'          : 'Rectangle', 
-                    'minSize'        : 30, 
-                    'maxSize'        : 1000, 
-                    'aspectRatio'    : 0.5, 
-                    'fillColor'      : 'white', 
-                    'borderColor'    : 'black',
+VATTRIBUTES =     { 'vis/shape'          : 'Rectangle', 
+                    'vis/minSize'        : 30, 
+                    'vis/maxSize'        : 1000, 
+                    'vis/aspectRatio'    : 0.5, 
+                    'vis/fillColor'      : 'white', 
+                    'vis/borderColor'    : 'black',
                     'borderWidth'    : 1, 
-                    'borderSmooth'   : False, 
-                    'textColor'      : 'black', 
-                    'textModifiesBB' : False}
+                    'vis/borderSmooth'   : False, 
+                    'vis/textColor'      : 'black', 
+                    'vis/textModifiesBB' : False,
+                    'vis/terminator1'    : "",
+                    'vis/terminator2'    : "",
+                    'vis/terminator3'    : "",
+                    'vis/terminator4'    : "arrow",
+                    'vis/lineColor'      : "black",
+                    'vis/lineFillColor'  : "black",
+                    'vis/lineType'       : "smooth",
+                    'vis/lineWidth'      : 1,
+                    }
                     
 class Cache:
   '''
@@ -135,6 +144,17 @@ class Cache:
         if hasattr(self, a):
           buf += f'{a}: {getattr(self, a)}\n'
       logger.info(buf)
+      
+  def __getitem__(self, key:str) -> Any:
+    if not hasattr(self, key):
+      self.refresh(key)
+    return getattr(self, key, VATTRIBUTES.get(key, None))
+      
+  def __setitem__(self, key:str, val:Any) -> None:
+    setattr(self, key, val)
+    
+  def __contains__(self, key:str):
+    return key in VATTRIBUTES
       
 
 class VObject(PRObject, Observer):
@@ -186,8 +206,8 @@ class VObject(PRObject, Observer):
 
     if x  is None: x  = 0
     if y  is None: y  = 0
-    if x1 is None: x1 = 100 #self.cache.minSize
-    if y1 is None: y1 = 60 #self.cache.minSize/self.cache.aspectRatio
+    if x1 is None: x1 = self.cache["vis/minSize"]
+    if y1 is None: y1 = self.cache["vis/minSize"]/self.cache["vis/aspectRatio"]
     assert isinstance(x , (int, float)) and not isinstance(x , bool)
     assert isinstance(y , (int, float)) and not isinstance(y , bool)
     assert isinstance(x1, (int, float)) and not isinstance(x1, bool)
@@ -342,18 +362,22 @@ class VObject(PRObject, Observer):
       vChanged = False
       for topic in topics:
         topicName = topic[0]
-        if topicName == "setattr" and not rm: # no point in changing an object we're removing!
+        if topicName == "new attribute" or topicName == "mod attribute": # no point in changing an object we're removing!
           attname:str = topic[1][0]
           #attval = topic[2]
           if attname in VATTRIBUTES:
-            #setattr(self.cache, attname, attval)
             self.cache.refresh(attname)
             vChanged = True
-        if topicName == "rm":
+          else:
+            logger.warning(f'{self.name}: Don\'t know what to do with update({self.modelObject.name}, {topic})')
+        elif topicName == "rm":
           #self.canvas.remove(self._id)
           self.delete()
           rm = False
           break
+        else:
+          logger.warning(f'{self.name}: Unknown update({self.modelObject.name}, {topic})')
+        
       
       # if rm: # we had a DeletedObjectError WITHOUT a "rm" topic -- something's wrong
       #   raise rmEx # is only in scope if rm is True
@@ -369,12 +393,12 @@ class VObject(PRObject, Observer):
   def getArgs(cls, elem:et.Element) -> Tuple[list[Any], dict[str, Any]]:
     container = elem.get("_container")
     ID = int(elem.get("id"))
-    shape = elem.get("shape")
+    shape = elem.get('vis/shape')
     bb = literal_eval(elem.get('bb'))
     modelObject = PReference(elem.get("modelObject"), container.model)
     return [container], \
            {"modelObject":modelObject, 
-            "shape":shape, "x":bb[0] , "y":bb[1] , "x1":bb[2] , "y1":bb[3] ,
+            'vis/shape':shape, "x":bb[0] , "y":bb[1] , "x1":bb[2] , "y1":bb[3] ,
             "_id":ID}
   
   def serializeXML(self) -> et.Element:
@@ -385,7 +409,7 @@ class VObject(PRObject, Observer):
     """
     elem:et.Element = PRObject.serializeXML(self)
     elem.set('modelObject', self._modelObject.getRelativeStringRefInContext(self.view.model))
-    elem.set('shape', self._shape.__class__.__name__)
+    elem.set('vis/shape', self._shape.__class__.__name__)
     bb = self.boundingBox()
     elem.set('bb', f'[{int(bb[0])}, {int(bb[1])}, {int(bb[2])}, {int(bb[3])}]')
     return elem
@@ -456,15 +480,15 @@ class VObject(PRObject, Observer):
     
       if not fast:
         bb = self._boundingBox
-        minX = self.cache.minSize
+        minX = self.cache['vis/minSize']
         if bb[2]-bb[0] < minX:
           bb[2] = bb[0]+minX
-        aspectRatio = self.cache.aspectRatio # could aspaectRation be 0???
+        aspectRatio = self.cache['vis/aspectRatio'] # could aspaectRation be 0???
         minY = (bb[2]-bb[0]) * aspectRatio
         if bb[3]-bb[1] < minY:
           bb[3] = bb[1]+minY
           
-        maxX = self.cache.maxSize
+        maxX = self.cache["vis/maxSize"]
         if bb[2]-bb[0] > maxX:
           bb[2] = bb[0]+maxX
         maxY = (bb[2]-bb[0]) * aspectRatio
@@ -519,7 +543,7 @@ class VObject(PRObject, Observer):
         self._shape.draw()
         self.canvas.lift(newShape.id, oldShape.id)
         oldShape.delete()
-        #self.updateFromAttrs(["fillColor", "borderColor"])
+        #self.updateFromAttrs(['vis/fillColor', 'vis/borderColor'])
         self.makeBindings()
       self.dirty()
     return type(self._shape).__name__ if self._shape is not None else None
@@ -548,10 +572,10 @@ class VObject(PRObject, Observer):
       
   def onRightMouse(self, event):
     """Creates and displays the node specific menu at the clicked location."""
-    #self.canvas.addEventHandled(event)
+    self.canvas.addEventHandled(event)
     m = self.makeMenu()
     m.post(event.x_root, event.y_root)
-    return m
+    return 'break'
 
   def onButton_1(self, event): #get initial location of object to be moved
     """
@@ -559,7 +583,7 @@ class VObject(PRObject, Observer):
     decide on if it's just a node move or a selection toggle in *self.onB1_Motion()*
     and *self.onB1ButtonRelease()*.
     """
-    #self.canvas.addEventHandled(event)
+    self.canvas.addEventHandled(event)
     #print(f'onButton_1() event x={event.x}, y={event.y}, selected={self.selected()}')
     winX = event.x - self.canvas.canvasx(0) # adjust for canvas offset
     winY = event.y - self.canvas.canvasy(0)
@@ -576,7 +600,7 @@ class VObject(PRObject, Observer):
     """
     
     if self.dragInfo != None:
-      #self.canvas.addEventHandled(event)
+      self.canvas.addEventHandled(event)
       winX = event.x - self.canvas.canvasx(0) # adjust for canvas offset
       winY = event.y - self.canvas.canvasy(0)
       dX = winX - self.dragInfo[2]
@@ -603,7 +627,7 @@ class VObject(PRObject, Observer):
     """
     #from sn.view.vcommands import MoveCommand
     if self.dragInfo != None:
-      #self.canvas.addEventHandled(event)
+      self.canvas.addEventHandled(event)
       if self.dragInfo[4]: # indicated there was a <B1_Motion> event, ie: this was a drag: wrap up a move.
         # self.view.suppressLocalLayout(self.old_suppressLocalLayout)
         # if False: #self.canvas.fieldsLayoutObj.active:
@@ -664,7 +688,8 @@ class VObject(PRObject, Observer):
   def addModelEditingMenuItems(self, menu:tk.Menu):
     disabled = (self.modelObject.isSystemObject() \
                 and not snPrefs.get("view_allowEditingSystemObjects", storeDefault=False)) \
-               or not self.canvas.isModelEditor()
+               or not self.canvas.isModelEditor() \
+               or self.modelObject.isIndividual() and isinstance(self.modelObject, Relation)
     remote = self.view.model != self.modelObject.model
     menu.add_command(label=f"{'show' if disabled else 'edit'} attributes", \
                      command=lambda disabled=disabled: self.onEditAttributes(disabled=disabled or remote))    
@@ -817,18 +842,18 @@ class VObject(PRObject, Observer):
       #tip += f'\n{line*2}CACHE:{line*12}'
       tip += f'{line}\nCACHE:'
       for name in VATTRIBUTES:
-        if hasattr(self.cache, name):
-          val = getattr(self.cache, name)
+        if name in self.cache:
+          val = self.cache[name]
           tip += f'\n  "{name}": {str(val)} ({type(val).__name__})'
-      if hasattr(self.cache, "_roles"):
-        tip += f'\n  "_roles": {str(self.cache._roles)}'
-        for r in self.cache._roles:
-          tip += f'\n  "_{r}__filler":'
-          if hasattr(self.cache, f'_{r}__filler'):
-            #tip += ": "
-            objs = getattr(self.cache, f'_{r}__filler')
-            for obj in objs:
-              tip += f' {obj.getRelativeStringInContext(self.canvas)},'
+      # if hasattr(self.cache, "_roles"):
+      #   tip += f'\n  "_roles": {str(self.cache._roles)}'
+      #   for r in self.cache._roles:
+      #     tip += f'\n  "_{r}__filler":'
+      #     if hasattr(self.cache, f'_{r}__filler'):
+      #       #tip += ": "
+      #       objs = getattr(self.cache, f'_{r}__filler')
+      #       for obj in objs:
+      #         tip += f' {obj.getRelativeStringInContext(self.canvas)},'
     return tip
   
   def makeDecorators(self):

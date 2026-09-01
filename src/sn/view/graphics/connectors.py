@@ -229,18 +229,18 @@ def _clippedArc(vobj0: VObject, vobj2: VObject, p0: PointType, p1: PointType, p2
   :rtype: Optional[tuple[PointType, PointType, PointType]]
   """
   if not vobj0.containsPt(p0):
-    logger.warning(f'_clippedArc(): {vobj0} does not contain its own center point; skipping clip.')
+    logger.debug(f'_clippedArc(): {vobj0} does not contain its own center point; skipping clip.')
     return None
   if not vobj2.containsPt(p2):
-    logger.warning(f'_clippedArc(): {vobj2} does not contain its own center point; skipping clip.')
+    logger.debug(f'_clippedArc(): {vobj2} does not contain its own center point; skipping clip.')
     return None
   if vobj0.containsPt(p2) or vobj2.containsPt(p0):
-    logger.warning(f'_clippedArc(): {vobj0} and {vobj2} appear to overlap; clip may look wrong.')
+    logger.debug(f'_clippedArc(): {vobj0} and {vobj2} appear to overlap; clip may look wrong.')
 
   t0 = _findBoundaryParam(vobj0, p0, p1, p2, tInside=0.0, tOutside=1.0)
   t2 = _findBoundaryParam(vobj2, p0, p1, p2, tInside=1.0, tOutside=0.0)
   if t0 >= t2:
-    logger.warning(f'_clippedArc(): boundary crossings out of order (t0={t0}, t2={t2}); skipping clip.')
+    logger.debug(f'_clippedArc(): boundary crossings out of order (t0={t0}, t2={t2}); skipping clip.')
     return None
 
   q0 = _bezierPoint(p0, p1, p2, t0)
@@ -396,7 +396,7 @@ def _drawCircleTerminator(canvas, spec: Optional[str], atPt: PointType, existing
   return newID
 
 
-def _upsertLine(canvas, existingID: Optional[int], coords: Sequence[float],
+def _upsertLine(canvas:tk.Canvas, existingID: Optional[int], coords: Sequence[float],
                  tags: Sequence[str], opts: dict) -> int:
   """Create a line item, or update one in place if *existingID* is still a
   live "line" item — coords() to move/reshape it, itemconfigure() to apply

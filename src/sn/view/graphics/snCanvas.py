@@ -27,8 +27,9 @@ from sn.model.model import Model, Node, Relation, Collection, IsaIndividual,\
 from sn.controller.modelInterface import ModelContext
 from sn.view.graphics.guiApp2 import SNGViewFrame
 
-from typing import cast, override, Any, Iterable, Callable
+from typing import cast, override, Any, Iterable, Callable, Optional
 from util.utils import bindRightMouse, fixURL
+from sn.view.graphics.utils import eventEqual
 from util.terminal import inputAsync
 from util.persistence.pRef import PRDb
 from util.observer import Subject, Observer
@@ -237,8 +238,8 @@ class SNGView(PRDb["VObject"], Observer):
       if isinstance(mObject, Relation):
         ret = VRelation(self, modelObject=mObject)
       elif isinstance(mObject, Node):
-        sizex = mObject.get("minSize", snPrefs.get("view_NodeMinSize", storeDefault=30))
-        sizey = int(sizex / mObject.get("aspectRatio", snPrefs.get("view_NodeAspectRatio", storeDefault=1.5)))
+        sizex = mObject.get('vis/minSize', snPrefs.get("view_NodeMinSize", storeDefault=30))
+        sizey = int(sizex / mObject.get('vis/aspectRatio', snPrefs.get("view_NodeAspectRatio", storeDefault=1.5)))
         if atPoint is None:
           # try:
           #   mParent = mObject.getParents().__next__()
@@ -300,7 +301,10 @@ class SNCanvas(tk.Canvas):
     self._scale:float = 1.0
     self._fontFace:str = "Arial"
     self._fontSize:float = 10.0
-    
+
+    self._eventHandled:Optional[tk.Event] = None
+    "Set by a contained VObject/item-level handler (via addEventHandled()) to mark that it already handled a mouse event, so this canvas's own (separately-dispatched) widget-level binding for the same event -- e.g. onRightMouse() -- can skip its generic handling. See isEventHandled()/addEventHandled()/removeEventHandled()."
+
     self.makeBindings()
     self._drawVersion:int = 0
     self.scrollRegion:tuple = (0, 0, 4000, 3000)
@@ -348,6 +352,49 @@ class SNCanvas(tk.Canvas):
     # # fields layout
     # self.canvas.bind(KEY_TOGGLE_FIELDS_LAYOUT[0], lambda _x: self.onToggleFieldsLayout())
 
+  def isEventHandled(self, event:tk.Event) -> bool:
+    """
+    :param event: The event to test.
+    :returns: *True* iff *event* is the same physical event most recently
+      passed to *addEventHandled()* (and not yet cleared by
+      *removeEventHandled()*).
+    :rtype: bool
+
+    A canvas item's ``tag_bind`` callback and this canvas widget's own
+    ``bind`` callback are dispatched independently by Tk, even for the
+    exact same physical click -- returning ``"break"`` from the item's
+    callback only suppresses *other item bindings*, not this canvas's own
+    separate widget-level binding for the same event. This flag is how a
+    contained VObject/item-level handler tells this canvas's own generic
+    handler (e.g. *onRightMouse()*) "I already dealt with this one, skip
+    your default behaviour."
+    """
+    return eventEqual(event, self._eventHandled)
+
+  def addEventHandled(self, event:tk.Event) -> None:
+    """
+    Mark *event* as handled by a contained VObject/item-level callback, so
+    this canvas's own separately-dispatched widget-level binding for the
+    same event can detect that (via *isEventHandled()*) and skip its
+    generic handling.
+
+    :param event: The event that was just handled.
+    :rtype: None
+    """
+    self._eventHandled = event
+
+  def removeEventHandled(self, event:tk.Event) -> None:
+    """
+    Clear the "handled" flag. Call this once *isEventHandled()* has been
+    consulted (whether or not it returned *True*) so a later, distinct
+    event isn't mistaken for an already-handled one.
+
+    :param event: Unused (kept for symmetry with *addEventHandled()* and
+      the analogous methods elsewhere, e.g. *SNView*).
+    :rtype: None
+    """
+    self._eventHandled = None
+
   def onRightMouse(self, event:tk.Event): # -> Optional[tk.Menu]:
     """
     :param event: *event.x* and *event.y* contain the x,y coordinate of the click.
@@ -360,6 +407,9 @@ class SNCanvas(tk.Canvas):
 
     * Put up the popup menu (*self.makeMenu()*).
     """
+    if self.isEventHandled(event):
+      self.removeEventHandled(event)
+      return None
     bgMenu = self.makeMenu(event)
     bgMenu.post(event.x_root, event.y_root)
     return "break"
