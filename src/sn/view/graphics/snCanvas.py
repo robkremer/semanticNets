@@ -36,6 +36,10 @@ from util.observer import Subject, Observer
 from util.attributeEditor import applyEditAttrsBox
 from sn.view.textUserInterface import UIContext
 from util.command import Command
+from sn.view.graphics.vobjects import VObject
+from sn.view.graphics.vrelations import VRelation
+from sn.view.graphics.layout import FindFree
+from math import sqrt
 #from sn.view.graphics.vobjects import VObject
 
 logger:sn.SNLogger = sn.getLogger(__name__)
@@ -50,6 +54,12 @@ Created on Aug 21, 2026
 '''
 import tkinter as tk
 
+KEY_UNDO =                  ('<Command-KeyPress-z>'       , 'cmd+z')
+KEY_REDO =                  ('<Shift-Command-KeyPress-Z>' , 'shift+cmd+Z')
+KEY_REPAINT =               ('<Command-KeyPress-r>'       , 'cmd+r')
+KEY_VALIDATE =              ('<Command-KeyPress-v>'       , 'cmd+v')
+KEY_TOGGLE_FIELDS_LAYOUT =  ('<Command-KeyPress-f>'       , 'cmd+f')
+
 class SNGContext(UIContext):
   #from sn.view.graphics.vobjects import VObject
   @override
@@ -61,8 +71,8 @@ class SNGContext(UIContext):
   def _defineDecoders(self):
     def getVObject(s:str, d:dict, **kwargs) -> "VObject": #type: ignore[name-defined]
       try:
-        ret = GORef.eval(s, d["view"] if kwargs.get("view") is None else kwargs["view"])
-        assert isinstance(ret, GraphObject)
+        ret = self.view.get(s)
+        assert isinstance(ret, VObject)
         return ret
       except Exception as ex:
         raise ex
@@ -147,6 +157,54 @@ class SNGContext(UIContext):
       return f'{super().__str__()} {self.obj.name} {self.x} {self.y}'
     
 
+  def expand(self, object:GraphObject):
+    '''
+    This is a dummy graphic command.
+    '''
+    print ("dummy graphic command")
+    
+  class _Expand(Command):
+    def __init__(self, object:VObject, *, levels:int=0, _filter:Optional[Callable[[Any, Relation], bool]]=lambda _vn, _mr: True):
+      super().__init__("expand")
+      self.obj:VObject = object
+      self.levels = levels
+      self.filter = _filter
+      self.createdObjects:list[VObject] = []
+      self.originalDo = True
+            
+    @override
+    def do(self) -> None:
+      Command.do(self)
+      if self.originalDo:
+        self.originalDo = False
+        self.createdObjects = []
+        view:SNGView =self.obj.view
+        detachCode = view.attachCallback(lambda tup: self.createdObjects.append(tup[1]) if tup[0]=='new' else 0)
+        self.obj.expand(filter=self.filter, expand=self.levels)
+        print(f'ExpandCommand.do() created {len(self.createdObjects)} VObjects')
+        view.detachCallback(detachCode)
+      else:
+        for obj in self.createdObjects:
+          obj.setHidden(False)
+  
+    @override
+    def undo(self):
+      Command.undo(self)
+      for obj in self.createdObjects:
+        obj.setHidden()
+        
+    @override
+    def delete(self):
+      for obj in self.createdObjects:
+        obj.delete()
+      self.createdObjects = None
+  
+    @override
+    def __str__(self):
+      return Command.__str__(self)
+
+    
+
 class SNGView(PRDb["VObject"], Observer):
   '''
   The persistent container of VObjects.
@@ -165,11 +223,11 @@ class SNGView(PRDb["VObject"], Observer):
     model.addObserver(self)
     self.context:SNGContext = canvas.context
     self.context._setView(self) # make this view the view of the context. #TODO: hackey ...
-    self.selected = set()
+    self.selected:set[VObject] = set()
     'The set of currently selected VObjects.'
     self._suppressLocalLayout = False
     'Temporarily suppress automatic layout. Necessary during drag operations, etc.'
-    self.localLayout = None
+    self.localLayout = FindFree(self)
      
   @override
   def update(self, subject:Subject, *topics:tuple[str, tuple[Any, ...]])->None:
@@ -211,6 +269,26 @@ class SNGView(PRDb["VObject"], Observer):
         self._suppressLocalLayout = suppress
     return self._suppressLocalLayout
 
+  def intersectTag(self, ids:Iterable[int], tag:str, exclude:list[int]|int=[]) -> list[int]:
+    '''
+    :param ids: [Iterable[int]] An *Iterable* of *ints* representing *Canvas* ids.
+    :param tag: [str] A *str* *Canvas* tag.
+    :param exclude: [list[int] or int, default=[]] A list of *int* representing *Canvas* ids.
+    :return: A list of all ids in *ids* that have tag *tag* that are not in *exclude*.
+
+    Used by *sn.view.graphics.layout.LayoutHieristic.findOverlapping()* (e.g. FindFree) to
+    filter the results of *self.canvas.find_overlapping()* down to just the shape items
+    it cares about. This was previously only defined on *view.py*'s (unused-at-runtime)
+    *SNView*, not on this, the actual *SNGView* class that *VObject.view* is -- so any
+    local-layout call that hit an overlap raised AttributeError here instead of resolving it.
+    '''
+    if isinstance(exclude, int): exclude = [exclude]
+    ret = []
+    for id in ids:
+      if tag in self.canvas.gettags(id) and id not in exclude:
+        ret.append(id)
+    return ret
+
   ### Operations #######################################################################
 
   def makeViewObjectForGraphObject(self, mObject:GraphObject,
@@ -237,9 +315,9 @@ class SNGView(PRDb["VObject"], Observer):
     if ret is None:
       if isinstance(mObject, Relation):
         ret = VRelation(self, modelObject=mObject)
-      elif isinstance(mObject, Node):
-        sizex = mObject.get('vis/minSize', snPrefs.get("view_NodeMinSize", storeDefault=30))
-        sizey = int(sizex / mObject.get('vis/aspectRatio', snPrefs.get("view_NodeAspectRatio", storeDefault=1.5)))
+      elif isinstance(mObject, (Node,GraphObject)):
+        sizex = mObject.get('vis/minSize', snPrefs.get("gui/NodeMinSize", storeDefault=30))
+        sizey = int(sizex / mObject.get('vis/aspectRatio', snPrefs.get("gui/NodeAspectRatio", storeDefault=1.5)))
         if atPoint is None:
           # try:
           #   mParent = mObject.getParents().__next__()
@@ -265,13 +343,7 @@ class SNGView(PRDb["VObject"], Observer):
       ret.expand(filter=filter, expand=expand - 1)
     return ret
 
-  def repaint(self, event=None):
-    self.freshPaint()
-    for obj in self.values():
-      if not obj.isHidden():
-        obj.draw()
-
-  def findViewObjectForGraphObject(self, mObject:GraphObject) -> "VOject"|None: #-> Optional[VObject] 
+  def findViewObjectForGraphObject(self, mObject:GraphObject) -> "VOject"|None:
     '''
     :param mObject: A model object.
     :return: A *VObject* currently in the display representing *mObject*, or *None* if there is not such object.
@@ -282,6 +354,53 @@ class SNGView(PRDb["VObject"], Observer):
       if obj.modelObject is mObject:  # already displayed?
         return obj
     return None
+
+  def validate(self, refresh:bool=False) -> int:
+    errCount = 0
+    for n in self._db.values():
+      errCount += len(n.validate())
+    if errCount == 0:
+      logger.info("All nodes and relations passed validation.")
+    else:
+      logger.warning(f"Found {errCount} validation faults.")
+    if refresh:
+      self.canvas.freshPaint()
+      self.canvas.repaint()
+    return errCount
+
+  def showAllModel(self):
+    x:int = 10
+    y:int = 10
+    sizex:int = int(snPrefs.get('vis/minSize', storeDefault=30, storeType=int))
+    sizey:int = int(sizex * float(snPrefs.get('vis/aspectRatio', storeDefault=1.5, storeType=float)))
+    grid = (sizex * 2, sizey * 2)
+    numNodes = len(self.model) - len(self)
+    gridCount = int(sqrt(numNodes)) if numNodes>0 else 0
+    blockSize = gridCount * grid[1] + y
+    for mnode in self.model.values():
+      # if self.categories.isCategory(mnode, self.hiddenCategories):
+      #   continue
+      vObj = self.findViewObjectForGraphObject(mnode)
+      if vObj is None:# and not self.categories.isCategory(mnode, self.hiddenCategories):
+        n = self.makeViewObjectForGraphObject(mnode, atPoint=(x, y))
+        if y < blockSize:
+          y += grid[1]
+        else:
+          x += grid[0]
+          y = 10
+        self.localLayout(n)
+    # for mrel in self.model.relations:
+    #   if self.categories.isCategory(mrel, self.hiddenCategories) or \
+    #       all(map(lambda obj: self.categories.isCategory(obj, self.hiddenCategories), 
+    #               map(lambda role: role["filler"], list(chain(mrel.roles.values()))))):
+    #     continue  
+    #   vObj = self.findViewObjectForGraphObject(mrel)
+    #   if vObj is None:
+    #     try:
+    #       r = self.makeViewObjectForGraphObject(mrel)
+    #       self.localLayout(r)
+    #     except Exception as ex:
+    #       logger.write(f'Could not instantiate VObject for {type(mrel).__name__} {mrel.idString} "{mrel["label"]}": {type(ex).__name__}("{ex}")', level='warning', exception=ex)
 
 
 class SNCanvas(tk.Canvas):
@@ -339,19 +458,27 @@ class SNCanvas(tk.Canvas):
     # self.canvas.bind('<MouseWheel>', self.onMouseWheel)
     # self.canvas.bind('<Shift-MouseWheel>', self.onShift_MouseWheel)
     #
-    # # undo/redo
-    # self.canvas.bind(KEY_UNDO[0], lambda _x: self.doList.undo())
-    # self.canvas.bind(KEY_REDO[0], lambda _x: self.doList.redo())
-    #
-    # # repaint
-    # self.canvas.bind(KEY_REPAINT[0], self.repaint)
-    #
+    # undo/redo
+    self.bind(KEY_UNDO[0], self.onUndo)
+    self.bind(KEY_REDO[0], self.onRedo)
+    
+    # repaint
+    self.bind(KEY_REPAINT[0], self.repaint)
+    
     # # validate
     # self.canvas.bind(KEY_VALIDATE[0], lambda _x: self.validate(refresh=True))
     #
     # # fields layout
     # self.canvas.bind(KEY_TOGGLE_FIELDS_LAYOUT[0], lambda _x: self.onToggleFieldsLayout())
 
+  def onUndo(self, event:tk.Event):
+    self.context.undo()
+    self.addEventHandled(event)
+    
+  def onRedo(self, event:tk.Event):
+    self.context.redo()
+    self.addEventHandled(event)
+    
   def isEventHandled(self, event:tk.Event) -> bool:
     """
     :param event: The event to test.
@@ -434,7 +561,6 @@ class SNCanvas(tk.Canvas):
     # blocking builtin input() always raises RuntimeError — inputAsync()
     # returns immediately and delivers the typed line to onResult once the
     # user actually answers.
-    bgMenu.add_command(label="input", command=lambda: inputAsync("What? ", onResult=print))
     # # "new instance" and "new subtype" for nodes menus
     if self.isModelEditor():
       def fillMenu(menu:tk.Menu, model:Model, individual:bool, ptype:type):
@@ -472,9 +598,8 @@ class SNCanvas(tk.Canvas):
       bgMenu.add_separator()
       bgMenu.add_separator()
     
-    # bgMenu.add_command(label="validate", command=lambda o=self: o.validate(refresh=True), accelerator=KEY_VALIDATE[1]) #utils.CHAR_CMD
-    # bgMenu.add_command(label="repaint", command=self.repaint, accelerator=KEY_REPAINT[1]) #utils.CHAR_CMD
-    # bgMenu.add_command(label="show all", command=self.showAllModel)
+    bgMenu.add_command(label="float all", command=lambda: [r.floating(True) for r in self.context.view.values() if isinstance(r, VRelation) and r.modelObject.isIndividual()])
+    bgMenu.add_command(label="show all", command=self.context.view.showAllModel)
     # bgMenu.add_command(label="toggle field layout", command=self.onToggleFieldsLayout, accelerator=KEY_TOGGLE_FIELDS_LAYOUT[1])
     # bgMenu.add_command(label="show animation controls", command=self.onShowAnimationControls)
     # # from sn.view.animatedLayouts import testBones
@@ -542,9 +667,10 @@ class SNCanvas(tk.Canvas):
     zoommenu.add_command(label="25%", command=lambda: self.zoom(0.25))
     bgMenu.add_cascade(label="Zoom", menu=zoommenu)
 
-    # if app.DEBUG_MENUS:
-    #   bgMenu.add_separator()
-    #   bgMenu.add_command(label="validate", command=self.validate)
+    if snPrefs.get("gui/debugMenus", storeDefault=False, storeType=bool):
+      bgMenu.add_separator()
+      bgMenu.add_command(label="validate", command=lambda o=self: o.context.view.validate(refresh=True), accelerator=KEY_VALIDATE[1]) #type: ignore[misc]
+      bgMenu.add_command(label="repaint", command=self.repaint, accelerator=KEY_REPAINT[1])
 
     return bgMenu
 
@@ -610,5 +736,11 @@ class SNCanvas(tk.Canvas):
     'Increments self._drawVersion so that graphic options can know whether to update of not.'''
     self._drawVersion += 1
     
+  def repaint(self, event=None):
+    self.freshPaint()
+    for obj in self.context.view.values():
+      if not obj.isHidden():
+        obj.draw()
+
   
         

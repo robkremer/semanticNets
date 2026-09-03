@@ -629,10 +629,10 @@ class GraphObject(AttributedObject, PRObject):
     super().__setitem__(key, value)
   
   @override
-  def setAttr(self, key:str, attr:Attribute) -> None:
+  def setAttr(self, key:str, attr:Attribute) -> Attribute:
     if self.model.writeLocked():
       raise PermissionError(f'DB "{self.model.name}" is write locked.')
-    super().setAttr(key, attr)
+    return super().setAttr(key, attr)
     
     
 class Model(PRDb[GraphObject], Subject):
@@ -705,7 +705,7 @@ class Model(PRDb[GraphObject], Subject):
   def getInstantiationInfo(cls) -> InstantiationInfo:
     ret:InstantiationInfo = super().getInstantiationInfo()
     ret.class_ = cls
-    ret.finalSetters.append(PropertyInfo("_", bool, setter=lambda slf,_t:cast(Model,slf).setDirty(False)))
+    ret.finalSetters.append(PropertyInfo("_", bool, setter=lambda slf,_t:cast(Model,slf).setDirty(False))) #type: ignore[arg-type]
     return ret
 
   @override

@@ -208,7 +208,7 @@ class Shape:
   shapeOptionsMap:dict[str:str] = {
     'vis/borderColor': "outline",
     'vis/fillColor': "fill",
-    "borderWidth": "width",
+    'vis/borderWidth': "width",
     }
     #TODO: 'vis/borderSmooth': "smooth", # seems to be am unknown option, contrary to the doc.
     

@@ -19,8 +19,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE #
 # SOFTWARE.                                                                     #
 #################################################################################
-from sn.view.graphics.snCanvas import SNGView
-from util.persistence.serialize import InstantiationInfo, ParamInfo
 from sn.view.graphics.connectors import drawSmoothConnector, ConnectorIDs,\
   drawStraightConnector, ConnectorTerminators
 
@@ -134,9 +132,11 @@ class VRelation(VObject):
     self.src:VObject|None = None
     if self.modelObject.src is not None:
       self.src = self.view.makeViewObjectForGraphObject(self.modelObject.src)
+      self.src.relations.append(self)
     self.dst:VObject|None = None
     if self.modelObject.dst is not None:
       self.dst = self.view.makeViewObjectForGraphObject(self.modelObject.dst)
+      self.dst.relations.append(self)
     # self.unfilledRoles:[str, Tuple[int]] = dict()
     # 'a temporary holder for info about unfilled roles to assist in drawing "dangling" roles'
           
@@ -230,13 +230,13 @@ class VRelation(VObject):
         pass
     self._delete()
     
-  def _getConnectedVObjects(self) -> List[VObject]:
-    ret = []
-    roles = self.cache._roles if hasattr(self.cache, "_roles") else []
-    for roleName in roles:
-      for obj in getattr(self.cache, f'_{roleName}__filler'):
-        ret.append(obj)
-    return ret
+  # def _getConnectedVObjects(self) -> List[VObject]:
+  #   ret = []
+  #   roles = self.cache._roles if hasattr(self.cache, "_roles") else []
+  #   for roleName in roles:
+  #     for obj in getattr(self.cache, f'_{roleName}__filler'):
+  #       ret.append(obj)
+  #   return ret
     
   ### PERSISTENCE ######################################################################
 
@@ -376,7 +376,7 @@ class VRelation(VObject):
   #   for rilist in self.roles.values():
   #     for ri in rilist:
   #       ri.mark = False
-  #   showInheritedRoles = snPrefs.get("view_showInheritedRoles", storeDefault=False)
+  #   showInheritedRoles = snPrefs.get("gui/showInheritedRoles", storeDefault=False)
   #   #for k, v in   self.modelObject.items() if showInheritedRoles else self.modelObject._attrs.items():
   #   for k, v in   self.modelObject.items() if showInheritedRoles else self.modelObject.get.items():
   #     if k.endswith(".filler"):  # iterating the rolenames
@@ -533,7 +533,7 @@ class VRelation(VObject):
     
     return ID
     
-  def draw(self, fast=False):
+  def draw(self, fast=False, ):
     if self._drawVersion >= self.canvas._drawVersion: return
     super().draw(fast=fast)
     # self.reposition(suppressDraw=True)
@@ -559,7 +559,7 @@ class VRelation(VObject):
     #       self.canvas.canvas.itemconfigure(info.lineID, **kwargs)
     #
     #     # draw role labels
-    #     if snPrefs.get("view_showRoleLabels", storeDefault=False):
+    #     if snPrefs.get("gui/showRoleLabels", storeDefault=False):
     #       anchor:str = ("n" if info.nearPt[1] < info.farPt[1] else "s") + \
     #                    ("w" if info.nearPt[0] < info.farPt[0] else "e")
     #       if info.labelID is None:
@@ -605,17 +605,44 @@ class VRelation(VObject):
 
   ### GEOMETRIC INFO/CONTROL ###########################################################
 
-  def reposition(self, aggressive:bool=False, suppressDraw:bool=False):
-    connectedObjects = self._getConnectedVObjects()
-    if self.floating() and len(connectedObjects) > 1 and self.modelObject.isIndividual():
-      if len(set(connectedObjects)) <= 1:  # if all the objects are the same 
-        c = connectedObjects[0].centerPt()
-        ctr = (c[0] + self.canvas.model._top.get('vis/minSize', 20) * 1.5, c[1])
-      else:
-        ctr = midpoint(*map(lambda obj: obj.centerPt(), connectedObjects))
-      self.moveToCenterOn(ctr[0], ctr[1])
-    else:
-      self.adjustPos(aggressive=aggressive)
+  def reposition(self, aggressive:bool=False, suppressDraw:bool=False, adjustPos:bool=True):
+    '''
+    :param adjustPos: [default=True] When *True* (the normal case, e.g. called
+      once at the end of a drag), a relation that isn't centred between its
+      *src*/*dst* also gets a full *self.adjustPos()* call, which may invoke
+      the local layout heuristic (FindFree) to resolve overlaps. When *False*
+      (passed down from a live drag via *notifyNodeMove()*), the relation
+      still repositions/redraws to track its connected nodes' current
+      positions, but skips that extra layout-heuristic call, so a relation
+      doesn't jump to a FindFree-computed spot on every single mouse-motion
+      tick while something it's connected to is being dragged.
+    '''
+    # connectedObjects = self._getConnectedVObjects()
+    # if self.floating() and len(connectedObjects) > 1 and self.modelObject.isIndividual():
+    #   if len(set(connectedObjects)) <= 1:  # if all the objects are the same
+    #     c = connectedObjects[0].centerPt()
+    #     ctr = (c[0] + self.canvas.model._top.get('vis/minSize', 20) * 1.5, c[1])
+    #   else:
+    #     ctr = midpoint(*map(lambda obj: obj.centerPt(), connectedObjects))
+    #   self.moveToCenterOn(ctr[0], ctr[1])
+    # else:
+    #   self.adjustPos(aggressive=aggressive)
+    if not self.floating():
+      if not suppressDraw:
+        self.draw()
+      return
+    if self.src is not None and self.dst is not None:
+      self.moveToCenterOn(*midpoint(self.src.centerPt(), self.dst.centerPt()), adjustPos=adjustPos)
+    elif self.src is None and self.dst is None:
+      if adjustPos:
+        self.adjustPos(aggressive=aggressive)
+    elif self.dst is None:
+      ctrPt = self.src.centerPt()
+      self.moveToCenterOn(ctrPt[0]+70, ctrPt[1], adjustPos=adjustPos)
+    elif self.src is None:
+      ctrPt = self.dst.centerPt()
+      self.moveToCenterOn(ctrPt[0]-70, ctrPt[1], adjustPos=adjustPos)
+
     if not suppressDraw:
       self.draw()
 
@@ -639,8 +666,8 @@ class VRelation(VObject):
 
   ### NODES THIS RELATION CONNECTS TO #################################################
 
-  def notifyNodeMove(self, node):  # , direction):
-    self.reposition()
+  def notifyNodeMove(self, node, adjustPos:bool=True):  # , direction):
+    self.reposition(adjustPos=adjustPos)
     
   def notifyNodeDeletion(self, node):
     '''

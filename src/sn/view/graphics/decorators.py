@@ -288,14 +288,14 @@ class MarkerContainer(Decorator):
                lambda owner=self.owner: len(owner.errors)>0,
                lambda owner=self.owner: DOT + ' ' + (f'\n{DOT} '.join(owner.errors))),
         MarkerWithTooltip(owner, "S", "yellow", "gray50", 
-               lambda owner=self.owner: owner.modelObject.isSystemObject() and snPrefs.get("view_showSystemTags", storeDefault=True),
+               lambda owner=self.owner: owner.modelObject.isSystemObject() and snPrefs.get("gui/showSystemTags", storeDefault=True),
                "System: Object is a fixed system object"),
         MarkerWithTooltip(owner, "T", "lawn green", "gray50", 
-               lambda owner=self.owner: owner.modelObject.isType() and snPrefs.get("view_showTypeTags", storeDefault=True),
+               lambda owner=self.owner: owner.modelObject.isType() and snPrefs.get("gui/showTypeTags", storeDefault=True),
                "Type: object is a Type object (as opposed to an Individual)"),
         MarkerWithTooltip(owner, "R", "cyan", "gray50", 
-               lambda owner=self.owner: owner.canvas.model != owner.modelObject.model and snPrefs.get("view_showRemoteTags", storeDefault=True),
-               lambda owner=self.owner: f'Remote: Object is from another model: {owner.modelObject.container.url}')
+               lambda owner=self.owner: owner.canvas.model != owner.modelObject.model and snPrefs.get("gui/showRemoteTags", storeDefault=True),
+               lambda owner=self.owner: f'Remote: Object is from another model: {owner.modelObject.model.url}')
         ]
 
   @override

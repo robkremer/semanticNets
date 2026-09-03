@@ -86,43 +86,46 @@ class TopModel(Model):
     self[0] # causes the "all model" collection to be instantiated.
     self._allowParentsCaching = True
     
-    # - shape: [``str``]
-    # - minSize: [``int``]
-    # - maxSize: [``int``]
-    # - aspectRatio: [``float``]
-    # - fillColor: [color]
-    # - borderColor: [color]
-    # - borderWidth: [``int``]
-    # - borderSmooth: [``bool``] **not implemented**
-    # - textColor: [color]
-    # - textModifiesBB: [``bool``]
-    self.TOP['vis/shape']          = Attribute("rectangle", str, VAR_DEFAULTED, "The shape of the node or relation label in the GUI.")
+    self.TOP['vis/shape']          = Attribute("rectangle", str, VAR_DEFAULTED, \
+      """The shape of the node or relation label in the GUI.
+      Rectangle
+      Oval
+      RightParallelogram
+      LeftParallelogram
+      FileFolder
+      TopPentagon
+      RightPentagon
+      LeftPentagon
+      Hexagon
+      RoundedRectangle
+      """)
     self.TOP['vis/minSize']        = Attribute(20, int, VAR_DEFAULTED, "The minimum width of the shape of a node or relation label in the GUI.")
     self.TOP['vis/maxSize']        = Attribute(80, int, VAR_DEFAULTED, "The maximum width of the shape of the node or relation label in the GUI.")
     self.TOP['vis/aspectRatio']    = Attribute(0.6, float, VAR_DEFAULTED, "The height-to-width ratio of the shape of the node or relation label in the GUI.")
-    self.TOP['vis/fillColor']      = Attribute("white", "color", VAR_DEFAULTED, "The fill color of the node or relation label in the GUI.")
+    self.TOP['vis/fillColor']      = Attribute("", "color", VAR_DEFAULTED, "The fill color of the node or relation label in the GUI.")
     self.TOP['vis/borderColor']    = Attribute("black", "color", VAR_DEFAULTED, "The border color of the node or relation label in the GUI.")
     self.TOP['vis/borderSmooth']   = Attribute(False, bool, VAR_DEFAULTED, "Whether or not the border is smooth for a node or relation label in the GUI.")
-    self.TOP['vis/textColor']      = Attribute("blue", "color", VAR_DEFAULTED, "The text color of the node or relation label in the GUI.")
+    self.TOP['vis/borderWidth']    = Attribute(1, int, VAR_DEFAULTED, "The width of the border for a node or relation label in the GUI.")
+    self.TOP['vis/textColor']      = Attribute("black", "color", VAR_DEFAULTED, "The text color of the node or relation label in the GUI.")
     self.TOP['vis/textModifiesBB'] = Attribute(True, bool, VAR_DEFAULTED, "Set to True to let the text determine the size of the node or relation label in the GUI.")
     
-    self.ISA['vis/shape'] = "oval"
-    self.ISA['vis/fillColor'] = "turquoise"
-    
-    self.NODE['vis/borderColor'] = "red"
 
     self.RELATION['vis/terminator1'] = Attribute("", TerminatorType, VAR_DEFAULTED, "The distal-from side connector of the relation connector in the GUI.\n  circle[(<size>)] | arrow[(<top-to-centre>,<tip-to-intersect>,<width>)]")
     self.RELATION['vis/terminator2'] = Attribute("", TerminatorType, VAR_DEFAULTED, "The proximal-from side connector of the relation connector in the GUI.\n  circle[(<size>)] | arrow[(<top-to-centre>,<tip-to-intersect>,<width>)]")
     self.RELATION['vis/terminator3'] = Attribute("", TerminatorType, VAR_DEFAULTED, "The proximal-to side connector of the relation connector in the GUI.\n  circle[(<size>)] | arrow[(<top-to-centre>,<tip-to-intersect>,<width>)]")
     self.RELATION['vis/terminator4'] = Attribute("arrow", TerminatorType, VAR_DEFAULTED, "The distal-to side connector of the relation connector in the GUI.\n  circle[(<size>)] | arrow[(<top-to-centre>,<tip-to-intersect>,<width>)]")
-    self.RELATION['vis/lineColor']  = Attribute("black", "color", VAR_DEFAULTED, "The line color of the relation connector in the GUI.")
+    self.RELATION['vis/lineColor']   = Attribute("black", "color", VAR_DEFAULTED, "The line color of the relation connector in the GUI.")
     self.RELATION['vis/lineFillColor'] = Attribute("black", "color", VAR_DEFAULTED, "The terminal's fill color of the relation connector in the GUI.")
-    self.RELATION['vis/lineType']   = Attribute("smooth", LineType, VAR_DEFAULTED, "The curve type of the line of the relation connector in the GUI.\n  smooth | straight")
+    self.RELATION['vis/lineType']    = Attribute("smooth", LineType, VAR_DEFAULTED, "The curve type of the line of the relation connector in the GUI.\n  smooth | straight")
     self.RELATION['vis/lineWidth']   = Attribute(1, int, VAR_DEFAULTED, "The line width of the relation connector in the GUI.")
     
+    self.ISA['vis/shape']           = "oval"
+    self.ISA['vis/fillColor']       = ""
     self.ISA['vis/lineColor']       = "blue"
-    self.ISA['vis/lineFillColor']   = "blue"
+    self.ISA['vis/borderColor']     = "blue"
+    self.ISA['vis/lineFillColor']   = ""
     self.ISA['vis/terminator4']     = "arrow(8,8,5)"
+    self.ISA['vis/aspectRatio']     = 1.0
 
     self.SYMMETRIC['vis/terminator1'] = "arrow"
     self.REFLEXIVE['vis/terminator2'] = "circle"

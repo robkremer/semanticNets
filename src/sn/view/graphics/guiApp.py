@@ -214,7 +214,7 @@ class SNGFrame(tk.Frame):
     self.vScroll = ttk.Scrollbar(self, orient=tk.VERTICAL)
     kwargs["yscrollcommand"] = self.vScroll.set
     kwargs["xscrollcommand"] = self.hScroll.set
-    if "bg" not in kwargs: kwargs["bg"] = snPrefs.get('view_backgroundColor', storeDefault="grey95", storeType="color")
+    if "bg" not in kwargs: kwargs["bg"] = snPrefs.get('gui/backgroundColor', storeDefault="grey95", storeType="color")
 
     # Call the tk.Canvas and PRDb constructors
     self.canvas = tk.Canvas(self, **kwargs)

@@ -311,7 +311,7 @@ class SNTerminalWidget(SNAbstractTerminal, TerminalWidget):
                      queryfg:str="violet red",
                      resultfg:str="purple4",
                      queryFont: tuple[str, int, str]|None = None,
-                     queryFlashColor: str|None = "DeepSkyBlue2",
+                     queryFlashColor: str|None = "red", #DeepSkyBlue2",
                      queryFlashCount: int = 6,
                      queryFlashIntervalMs: int = 150,
                      bg="AntiqueWhite1",
@@ -326,6 +326,7 @@ class SNTerminalWidget(SNAbstractTerminal, TerminalWidget):
                             bg=bg, fg=fg, stderrfg=stderrfg, queryfg=queryfg,
                             stdoutfg=stdoutfg, promptfg=promptfg, resultfg=resultfg,
                             queryFont=queryFont, queryFlashColor=queryFlashColor, queryFlashCount=queryFlashCount, queryFlashIntervalMs=queryFlashIntervalMs,
+                            background=snPrefs.get("text/backgroundColor", storeDefault="white", storeType="color"),
                             **kwargs) 
 
 
@@ -376,7 +377,7 @@ if __name__ == '__main__':
   # if there is an command after "--" on the command line, execute it and exit.
   m = getattr(namespace, "model", None)
   if m is None:
-    m = snPrefs.get("defaultModel", None)
+    m = snPrefs.get("model/defaultModel", storeDefault="temp.xml", storeType=str)
   if not isinstance(m, (Model,str)):
     raise ValueError(f'No model found on the command line (--model or -m) and no default model found in preferences.')
   model:Model|str = m

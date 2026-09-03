@@ -283,7 +283,7 @@ class ModelContext(CommandContext):
     
   class _Set_attribute(Command): 
     def __init__(self, object:GraphObject, key:str, value:Any, /, 
-                 model:Optional[Model]=None, type:str|None=None, restriction:str|None=None):
+                 model:Model|None=None, type:str|None=None, restriction:str|None=None):
       '''
       Set the attribute of an object.
       
@@ -320,6 +320,9 @@ class ModelContext(CommandContext):
       self.restrictionStr = restriction
       self.restriction:Restriction|None = Restriction.fromstring(restriction) if restriction is not None else None
 
+      localObj = self.object.getLocalAttr(key)
+      self.oldAttrValue = None if localObj is None else localObj
+
     @override
     def do(self):
       super().do()
@@ -333,7 +336,10 @@ class ModelContext(CommandContext):
     @override
     def undo(self):
       super().undo()
-      del self.object[self.key]
+      if self.oldAttrValue is None:
+        del self.object[self.key]
+      else:
+        self.object.setAttr(self.key, self.oldAttrValue)
       
     @override
     def delete(self):
@@ -344,6 +350,59 @@ class ModelContext(CommandContext):
     @override
     def __str__(self):
       return f'{super().__str__()} {self.object.getPRef().tostring()} {self.key} {self.value}{(" --type="+self.typ.__name__) if self.typ is not None else ""}{(" --restriction="+self.restrictionStr) if self.restrictionStr is not None else ""}'
+
+      
+  def delete_attribute(self, object:GraphObject|None, key:str, /, \
+                    model:Optional[Model]=None) -> Any|None:
+    '''
+    Set the attribute of a *GraphObject*.
+    
+    :param object: The object who's attribute is to be set.
+    :type object: GraphObject
+    :param key: The key in the key/value.
+    :type key: str
+    :param model: The model to look in. Defaults to the default model.
+    :type model: Model
+    '''
+    pass
+    
+  class _Delete_attribute(Command): 
+    def __init__(self, object:GraphObject, key:str, /, 
+                 model:Model|None=None):
+      '''
+      Set the attribute of an object.
+      
+      :param object: The object who's attribute is to be set.
+      :type object: GraphObject
+      :param key: The key in the key/value.
+      :type key: str
+      :param model: The model to look in. Defaults to the default model.
+      :type model: Model
+      '''
+      super().__init__("set attribute")
+      self.object:GraphObject = object
+      self.key:str = key
+      self.localObj = self.object.getLocalAttr(key)
+
+    @override
+    def do(self):
+      super().do()
+      del self.object[self.key]
+  
+    @override
+    def undo(self):
+      super().undo()
+      self.object[self.key] = self.localObj
+      
+    @override
+    def delete(self):
+      super().delete()
+      self.object = None # type: ignore[assignment]
+      self.localObj = None
+
+    @override
+    def __str__(self):
+      return f'{super().__str__()} {self.object.getPRef().tostring()} {self.key}'
 
       
       

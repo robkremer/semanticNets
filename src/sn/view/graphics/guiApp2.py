@@ -156,7 +156,7 @@ class Application(tk.Tk):
     """
     try:
       if model is None:
-        model = cast(str, sn.snPrefs.get("defaultModel", storeDefault="temp.xml", storeType=str))
+        model = cast(str, sn.snPrefs.get("model/defaultModel", storeDefault="temp.xml", storeType=str))
       if isinstance(model, str):
         model = Model(model)
       assert isinstance(model, Model)
@@ -167,7 +167,7 @@ class Application(tk.Tk):
         return self.windows[name]
   
       #TODO: passing model as just None is just a temporary thing. 
-      window:AppWindow = AppWindow(self, model, geometry=f'{snPrefs.get("GUIWindowSize", storeDefault="800x600", storeType=str)}+{self.defaultChildLocation[0]}+{self.defaultChildLocation[1]}')
+      window:AppWindow = AppWindow(self, model, geometry=f'{snPrefs.get("gui/WindowSize", storeDefault="800x600", storeType=str)}+{self.defaultChildLocation[0]}+{self.defaultChildLocation[1]}')
       self.defaultChildLocation = (self.defaultChildLocation[0] + 40, self.defaultChildLocation[1] + 40)
       self.windows[name] = window
       return window
@@ -306,10 +306,11 @@ class AppPanedWidget(tk.PanedWindow):
     # fix up kwargs to contain the necessary defaults and create the PanedWindow (super).
     if "orient" not in kwargs: kwargs["orient"] = tk.VERTICAL
     if "showhandle" not in kwargs: kwargs["showhandle"] = False
+    if "handlesize" not in kwargs: kwargs["handlesize"] = 8
     if "sashwidth" not in kwargs: kwargs["sashwidth"] = 6
     if "sashrelief" not in kwargs: kwargs["sashrelief"] = "ridge"  # "groove"#"sunken"#
-    if "bd" not in kwargs: kwargs["bd"] = 4
-    if "bg" not in kwargs: kwargs["bg"] = "lightgrey"
+    #if "bd" not in kwargs: kwargs["bd"] = 20
+    if "bg" not in kwargs: kwargs["bg"] = "darkgrey" #lightgrey"
     if "borderwidth" not in kwargs: kwargs["borderwidth"] = 0
 
     # super constructor
@@ -324,14 +325,14 @@ class AppPanedWidget(tk.PanedWindow):
     stretch = 'never'  # if fixedAppFrame else 'never'
     sticky = 'news'  # if fixedAppFrame else 'new'
     self.add(self.textDisplayFrame, stretch=stretch, sticky=sticky)
-    self.paneconfigure(self.textDisplayFrame, stretch=stretch, height=60)
+    self.paneconfigure(self.textDisplayFrame, stretch=stretch, height=60, minsize=20)
 
     self.appFrame:SNGViewFrame = SNGViewFrame(self)
     self.appFrame.pack(fill=tk.BOTH, side=tk.TOP, expand=False)
     stretch = 'always'  # if self.fixedAppFrame else 'always'
     sticky = 'news'  # if self.fixedAppFrame else 'news'
     self.add(self.appFrame, before=self.textDisplayFrame, stretch=stretch, sticky=sticky)  # 'always', 'first', 'last', 'middle', and 'never'.
-    self.paneconfigure(self.appFrame, stretch=stretch)
+    self.paneconfigure(self.appFrame, stretch=stretch, minsize=0)
 
     # Give the graphics editor a direct reference to this window's terminal
     # and the shared registry, so it can bind its own background threads
@@ -368,7 +369,7 @@ class SNGViewFrame(tk.Frame):
     kwargs["yscrollcommand"] = self.vScroll.set
     kwargs["xscrollcommand"] = self.hScroll.set
     if "bg" not in kwargs: 
-      kwargs["bg"] = snPrefs.get('view_backgroundColor', storeDefault="grey95", storeType="color")
+      kwargs["bg"] = snPrefs.get('gui/backgroundColor', storeDefault="grey95", storeType="color")
     if kwargs["bg"] == "": # "" (transparent) color isn't allowed here.
       kwargs["bg"] = "white"
 

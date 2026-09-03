@@ -19,7 +19,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE #
 # SOFTWARE.                                                                     #
 #################################################################################
-import sn
 '''
   .. inheritance-diagram::
         Direction
@@ -36,16 +35,16 @@ Created on Feb 15, 2025
 ---------------
 '''
 
+import sn
 import logging
 from abc import ABC, abstractmethod
-from sn.view.graphics.vnodes import VNode
 from enum import Enum
 from typing import Optional, override
+from sn.view.graphics.vnodes import VNode
 from sn.view.graphics.vobjects import VObject
-from sn.view.graphics.vrelations import VIsa
+from sn.view.graphics.vrelations import VRelation
 from util.utils import Point, expandRect
-from sn.model import GraphObject
-from sn.model import Node
+from sn.model import GraphObject, Node
 from util.utils import removeDuplicates
 
 logger:sn.SNLogger = sn.getLogger(__name__)
@@ -82,8 +81,8 @@ class LayoutHieristic(ABC):
     '''
     Constructor
     '''
-    from sn.view.graphics.view import SNView
-    assert isinstance(view, SNView)
+    from sn.view.graphics.snCanvas import SNGView
+    assert isinstance(view, SNGView)
     self.view = view
     
   def _setDirection(self, node:VObject, referenceNode:Optional[VObject], loc:Optional[Point]=None):
@@ -150,11 +149,11 @@ class FindFree(LayoutHieristic):
     if direction == Direction.UNSPECIFIED:
       if loc is not None:
         direction = Direction.NEAREST
-      elif isinstance(node, VIsa):
-        if referenceNode is not None and node.modelObject.to == referenceNode.modelObject:
-          direction = Direction.SUPER
-        else:
-          direction = Direction.SUB
+      # elif isinstance(node, VIsa):
+      #   if referenceNode is not None and node.modelObject.to == referenceNode.modelObject:
+      #     direction = Direction.SUPER
+      #   else:
+      #     direction = Direction.SUB
       elif referenceNode is not None:
         if node.isa(referenceNode):
           direction = Direction.SUB

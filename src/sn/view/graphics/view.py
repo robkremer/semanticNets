@@ -248,7 +248,7 @@ class SNView(PRDb, Observer):
     
     # register *self.repaint()* callbacks for the appropriate keys in *tygraPrefs*.
     repaintCallback = lambda k,v,me=self: me.repaint()
-    for s in ["view_showSystemTags", "view_showTypeTags", "view_showRemoteTags", "view_showRoleLabels"]:
+    for s in ["gui/showSystemTags", "gui/showTypeTags", "gui/showRemoteTags", "gui/showRoleLabels"]:
       self.prefsCallbacks[s] = tygra.tygraPrefs.addCallback(s, repaintCallback)
 
   @property # A weakref property
@@ -325,9 +325,9 @@ class SNView(PRDb, Observer):
     self.vScroll = ttk.Scrollbar(self.frame, orient=tk.VERTICAL)
     kwargs["yscrollcommand"] = self.vScroll.set
     kwargs["xscrollcommand"] = self.hScroll.set
-    if "view_backgroundColor" not in tygra.tygraPrefs:
-      tygra.tygraPrefs["view_backgroundColor"] = Attribute("view_backgroundColor", "color", "grey95")
-    if "bg" not in kwargs: kwargs["bg"] = tygra.tygraPrefs.get('view_backgroundColor', storeDefault="white")
+    if "gui/backgroundColor" not in tygra.tygraPrefs:
+      tygra.tygraPrefs["gui/backgroundColor"] = Attribute("gui/backgroundColor", "color", "grey95")
+    if "bg" not in kwargs: kwargs["bg"] = tygra.tygraPrefs.get("gui/backgroundColor", storeDefault="white")
 
     # Call the tk.Canvas and PRDb constructors
     self.canvas = tk.Canvas(self.frame, **kwargs)
@@ -466,7 +466,7 @@ class SNView(PRDb, Observer):
     self.canvas.bind('<Shift-MouseWheel>', self.onShift_MouseWheel)
 
     # undo/redo
-    self.canvas.bind(KEY_UNDO[0], lambda _x: self.doList.undo())
+    self.canvas.bind(KEY_UNDO[0], lambda _x: self.viewdoList.undo())
     self.canvas.bind(KEY_REDO[0], lambda _x: self.doList.redo())
     
     # repaint
@@ -1339,8 +1339,8 @@ class SNView(PRDb, Observer):
       elif isinstance(mObject, Relation):
         ret = VRelation(self, modelObject=mObject)
       elif isinstance(mObject, Node):
-        sizex = mObject.get('vis/minSize', tygraPrefs.get("view_NodeMinSize", storeDefault=30))
-        sizey = int(sizex / mObject.get('vis/aspectRatio', tygraPrefs.get("view_NodeAspectRatio", storeDefault=1.5)))
+        sizex = mObject.get('vis/minSize', tygraPrefs.get("gui/NodeMinSize", storeDefault=30))
+        sizey = int(sizex / mObject.get('vis/aspectRatio', tygraPrefs.get("gui/NodeAspectRatio", storeDefault=1.5)))
         if atPoint is None:
           try:
             mParent = mObject.getParents().__next__()
@@ -1491,7 +1491,10 @@ class SNView(PRDb, Observer):
     ret = []
     for id in ids:
       if tag in self.canvas.gettags(id) and id not in exclude:
-        ret.append(tag)
+        ret.append(id) # was appending `tag` (the search string) instead of `id` -- the
+                        # length still came out right by luck (one entry per match), but
+                        # any caller that needed the actual matching ids got the literal
+                        # string 'vis/shape' repeated instead.
     return ret
 
 

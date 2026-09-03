@@ -23,6 +23,7 @@ from util.attribute import Restriction
 from util.persistence.serialize import InstantiationInfo, ParamInfo,\
   PropertyInfo
 from sn.model.model import UP_ARROW
+from util.commandParser import CompositeCommandMgr
 '''
 *VObject* is the superclass of VNode, VRelation.
 
@@ -75,19 +76,20 @@ from sn.view.graphics.decorators import WrappingText, Selected, MarkerContainer,
   Decorator
 from util.attributeEditor import getEditedAttrsCommandObj, applyEditAttrsBox,\
   editAttrsBox
-from sn.view.graphics.snCanvas import SNGView
 from sn import snPrefs
 
 import logging
 logger:sn.SNLogger = sn.getLogger(__name__)
 
-VATTRIBUTES =     { 'vis/shape'          : 'Rectangle', 
+VATTRIBUTES =     { 
+                    'name'               : '', 
+                    'vis/shape'          : 'Rectangle', 
                     'vis/minSize'        : 30, 
                     'vis/maxSize'        : 1000, 
                     'vis/aspectRatio'    : 0.5, 
                     'vis/fillColor'      : 'white', 
                     'vis/borderColor'    : 'black',
-                    'borderWidth'    : 1, 
+                    'vis/borderWidth'        : 1, 
                     'vis/borderSmooth'   : False, 
                     'vis/textColor'      : 'black', 
                     'vis/textModifiesBB' : False,
@@ -130,7 +132,9 @@ class Cache:
     if self._owner() is None: return
     
     def refreshAttr(attr:str):
-      setattr(self, attr, self._owner().modelObject[attr])
+      owner = self._owner()
+      assert owner is not None
+      self[attr] = owner.modelObject[attr]
       
     if attr is None:
       for a in VATTRIBUTES:
@@ -183,7 +187,7 @@ class VObject(PRObject, Observer):
     '''
     from sn.view.graphics.shapes import Shape
     from sn.view.graphics.vrelations import VRelation
-    from sn.view.graphics.snCanvas import SNCanvas
+    from sn.view.graphics.snCanvas import SNCanvas, SNGView
     
     #check parameters
     assert isinstance(view, SNGView)
@@ -282,8 +286,9 @@ class VObject(PRObject, Observer):
   @override
   def name(self)->str:
     n = self.modelObject["name"]
-    assert n is None or type(n) is str
-    return "" if n is None else n
+    return str(n)
+    # assert n is None or type(n) is str, f'Expecting type str|None, got {n.__class__.__name__}'
+    # return "" if n is None else n
     
   @property
   def modelObject(self) -> GraphObject:
@@ -356,20 +361,28 @@ class VObject(PRObject, Observer):
       #   rm = True
       #   rmEx = ex
       except Exception as ex:
-        logger.exception(f'VObject.update({topics}): Failed to access subject: ')
+        logger.exception(f'{self.name}.update({subject}, {topics}): Unexpected subject.')
         return
       #logger.info(f"VObject.update({subject}, {topics}): executing.")
       vChanged = False
       for topic in topics:
         topicName = topic[0]
         if topicName == "new attribute" or topicName == "mod attribute": # no point in changing an object we're removing!
-          attname:str = topic[1][0]
-          #attval = topic[2]
+          attname, value = topic[1]
+          if attname in VATTRIBUTES:
+            #self.cache.refresh(attname)
+            self.cache[attname] = value
+            vChanged = True
+          else:
+            logger.warning(f'{self.name}: Don\'t know what to do with update({self.modelObject.name}, {topic})')
+        elif topicName == "del attribute":
+          attname = topic[1][0]
           if attname in VATTRIBUTES:
             self.cache.refresh(attname)
             vChanged = True
           else:
             logger.warning(f'{self.name}: Don\'t know what to do with update({self.modelObject.name}, {topic})')
+          
         elif topicName == "rm":
           #self.canvas.remove(self._id)
           self.delete()
@@ -432,11 +445,14 @@ class VObject(PRObject, Observer):
     Populates (or clears) the *self.errors* list.
     '''
     self.errors = []
-    if self.modelObject is None:
+    if self.modelObject is None: #check model object is there.
       msg = "Model is missing"
       self.errors.append(msg)
     else:
       model:GraphObject = self.modelObject
+      for n in self.view.values(): # check for other objects referencing this one's model object
+        if n is not self and self.modelObject == n.modelObject:
+          self.errors.append(f'View objects {self} and {n} both reference the same model object {self.modelObject}.')
       self.errors += model.validate()
     return self.errors
     
@@ -585,8 +601,8 @@ class VObject(PRObject, Observer):
     """
     self.canvas.addEventHandled(event)
     #print(f'onButton_1() event x={event.x}, y={event.y}, selected={self.selected()}')
-    winX = event.x - self.canvas.canvasx(0) # adjust for canvas offset
-    winY = event.y - self.canvas.canvasy(0)
+    winX = self.canvas.canvasx(event.x) # convert widget-relative coords to canvas coords (accounts for scroll position)
+    winY = self.canvas.canvasy(event.y)
     r = self.boundingBox()
     self.dragInfo = (r[0], r[1], winX, winY, False) # x,y,no-drag-motion-event
     self.old_suppressLocalLayout = self.view.suppressLocalLayout()
@@ -599,10 +615,10 @@ class VObject(PRObject, Observer):
     accepting events, just move the node to track the event, updating *self.dragInfo*.
     """
     
-    if self.dragInfo != None:
+    if self.dragInfo is not None:
       self.canvas.addEventHandled(event)
-      winX = event.x - self.canvas.canvasx(0) # adjust for canvas offset
-      winY = event.y - self.canvas.canvasy(0)
+      winX = self.canvas.canvasx(event.x) # convert widget-relative coords to canvas coords (accounts for scroll position)
+      winY = self.canvas.canvasy(event.y)
       dX = winX - self.dragInfo[2]
       dY = winY - self.dragInfo[3]
       #print(f'onB1_Motion() event({event.x},{event.y}), d=({dX},{dY}), selected={self.selected()}')
@@ -629,7 +645,13 @@ class VObject(PRObject, Observer):
     if self.dragInfo != None:
       self.canvas.addEventHandled(event)
       if self.dragInfo[4]: # indicated there was a <B1_Motion> event, ie: this was a drag: wrap up a move.
-        # self.view.suppressLocalLayout(self.old_suppressLocalLayout)
+        # Restore whatever suppression state was in effect before this drag
+        # started (set in onButton_1()) *before* the final move below, so that
+        # the release-time moveTo() (adjustPos defaults to True) is free to run
+        # FindFree and resolve any overlaps -- that's the "everything is fine
+        # except..." comment below: this is the one point in a drag where we
+        # actually want the full layout resolution to run.
+        self.view.suppressLocalLayout(self.old_suppressLocalLayout)
         # if False: #self.canvas.fieldsLayoutObj.active:
         #   bb = self.boundingBox()
         #   x, y, _, _ = bb 
@@ -687,7 +709,7 @@ class VObject(PRObject, Observer):
 
   def addModelEditingMenuItems(self, menu:tk.Menu):
     disabled = (self.modelObject.isSystemObject() \
-                and not snPrefs.get("view_allowEditingSystemObjects", storeDefault=False)) \
+                and not snPrefs.get("gui/allowEditingSystemObjects", storeDefault=False)) \
                or not self.canvas.isModelEditor() \
                or self.modelObject.isIndividual() and isinstance(self.modelObject, Relation)
     remote = self.view.model != self.modelObject.model
@@ -804,10 +826,10 @@ class VObject(PRObject, Observer):
     #             command = lambda f=filtr: self.canvas.doList.do(ExpandCommand(self, filtr=f)))
     #   expMenu.add_cascade(menu=subMenu, label=f'expand {k} relations ({v[0]+v[1]})')
     expMenu = tk.Menu()
-    expMenu.add_command(label="expand all, 1 level" , command=lambda: self.canvas.doList.do(ExpandCommand(self)))
-    expMenu.add_command(label="expand all, 2 levels", command=lambda: self.canvas.doList.do(ExpandCommand(self, levels=1)))
-    expMenu.add_command(label="expand all, 3 levels", command=lambda: self.canvas.doList.do(ExpandCommand(self, levels=2)))
-    expMenu.add_command(label="expand all, 4 levels", command=lambda: self.canvas.doList.do(ExpandCommand(self, levels=3)))
+    expMenu.add_command(label="expand all, 1 level" , command=lambda: self.view.context.expand(self))
+    expMenu.add_command(label="expand all, 2 levels", command=lambda: self.view.context.expand(self, levels=1))
+    expMenu.add_command(label="expand all, 3 levels", command=lambda: self.view.context.expand(self, levels=2))
+    expMenu.add_command(label="expand all, 4 levels", command=lambda: self.view.context.expand(self, levels=3))
     menu.add_cascade(menu=expMenu, label="expand")
     menu.add_command(label="remove from view", 
                      command=lambda: self.canvas.doList.do(RemoveFromViewCommand(self)),
@@ -818,10 +840,18 @@ class VObject(PRObject, Observer):
     self.canvas.dirty = True
     
   def onEditAttributes(self, disabled:bool=False):
-    if disabled:
-      editAttrsBox(self.canvas, self.modelObject, title=str(self.modelObject), disabled=True)
-    else:
-      applyEditAttrsBox(self.canvas, self.modelObject, title=str(self.modelObject)) #f'{self.modelObject.idString}: "{self.modelObject.name}"')
+    edits = editAttrsBox(self.canvas, self.modelObject, title=str(self.modelObject), disabled=disabled)
+    # if disabled:
+    #   editAttrsBox(self.canvas, self.modelObject, title=str(self.modelObject), disabled=True)
+    # else:
+    #   applyEditAttrsBox(self.canvas, self.modelObject, title=str(self.modelObject)) #f'{self.modelObject.idString}: "{self.modelObject.name}"')
+    if not disabled and edits is not None:
+      with CompositeCommandMgr(self.view.context) as mgr:
+        for key,value in edits.items():
+          if value is None:
+            self.view.context.delete_attribute(self.modelObject, key)
+          else:
+            self.view.context.set_attribute(self.modelObject, key, value)
 
   def tooltipFunc(self) -> str:
     tip = ""
@@ -905,13 +935,21 @@ class VObject(PRObject, Observer):
     for d in self.decorators.values(): # TODO: might need to concern ourselves about draw order here
       d.draw(fast=fast)
 
-  def moveTo(self, x, y, allowOverScrollRegionSE=False, adjustPos=True, fast=False):
+  def moveTo(self, x, y, *, allowOverScrollRegionSE=False, adjustPos=True, fast=False):
     """ 
     Move so that the NW corner is on (x,y), informing all the decorators and 
     relations
     """
     bb = self.boundingBox(fast=fast)
-    if bb[0] == x and bb[1] == y: # we haven't actually moved, so do nothing.
+    if bb[0] == x and bb[1] == y and not adjustPos:
+      # We haven't actually moved and nobody asked for layout resolution, so
+      # there's truly nothing to do. NOTE: this must NOT also skip when
+      # adjustPos is True -- the drag-release call (onB1_ButtonRelease() ->
+      # SNGContext._Move.do()) calls moveTo(x, y) with (x,y) equal to
+      # wherever the drag already left the node, specifically *to* trigger
+      # adjustPos()/FindFree overlap resolution at that spot. Returning here
+      # regardless of adjustPos used to make that call a complete no-op, so
+      # two objects dropped on top of each other would just stay stacked.
       return
     sr = self.canvas.scrollRegion
     if x<sr[0]: x = sr[0]
@@ -928,19 +966,26 @@ class VObject(PRObject, Observer):
       # if hasattr(self.canvas, "fieldsLayoutObj") and self.canvas.fieldsLayoutObj is not None and self.overlaps(spacing=[20, 10]):
       #   self.canvas.fieldsLayoutObj.nextFrame(activeNodes=[self])
       
+    if not fast:
+      for r in self.relations:
+        # Pass adjustPos through: during a live drag (adjustPos=False) relations
+        # should still visually track this node's new position, but shouldn't
+        # each run their own full adjustPos()/FindFree placement on every single
+        # mouse-motion tick -- that's what was producing big visual jumps while
+        # dragging. The full layout resolution now happens once, when moveTo()
+        # is called with the default adjustPos=True (e.g. on button-release).
+        r.notifyNodeMove(self, adjustPos=adjustPos)
+
     self.canvas.freshPaint()
     self.draw()
     self.dirty()
-    if not fast:
-      for r in self.relations:
-        r.notifyNodeMove(self)
     
       
-  def moveBy(self, dx, dy, allowOverScrollRegionSE=False, adjustPos=True, fast=False):
+  def moveBy(self, dx, dy, *, allowOverScrollRegionSE=False, adjustPos=True, fast=False):
     bb = self.boundingBox(fast=fast)
     x = bb[0]+dx
     y = bb[1]+dy
-    self.moveTo(x, y, allowOverScrollRegionSE, adjustPos=adjustPos, fast=fast)
+    self.moveTo(x, y, allowOverScrollRegionSE=allowOverScrollRegionSE, adjustPos=adjustPos, fast=fast)
     
   def moveToCenterOn(self, x, y, adjustPos=True, fast=False):
     bb = self.boundingBox(fast=fast)
@@ -958,7 +1003,7 @@ class VObject(PRObject, Observer):
   def containsPt(self, pt):
     return pointInPoly(pt, self._shape.points())
     
-  def adjustPos(self, aggressive:bool=False, fast=False) -> (int, int):
+  def adjustPos(self, aggressive:bool=False, fast=False) -> tuple[int,int]:
     if fast:
       bb = self.boundingBox(fast=fast)
       return bb[0], bb[1]
@@ -966,9 +1011,9 @@ class VObject(PRObject, Observer):
     # use a regular layout  
     layout = self.view.localLayout
     if layout is not None:
+      layout(self, aggressive=aggressive)
       for r in self.relations:
         layout(r, aggressive=aggressive)
-      layout(self, aggressive=aggressive)
     r = self.boundingBox(fast=fast)
     
     return r[0], r[1]
@@ -992,7 +1037,7 @@ class VObject(PRObject, Observer):
     return ret
 
   def expand(self, 
-             filter:Optional[Callable[[Any, Relation], bool]]=lambda _vn, _mr: True, 
+             filter:Callable[[Any, Relation], bool]=lambda _vn, _mr: True, 
              expand=0):
     """
     :param filter: Optional[Callable[[Self, Relation], bool]] A function *selfxRelation->bool*
@@ -1003,11 +1048,12 @@ class VObject(PRObject, Observer):
     # Iterate all the relations connected to this, collecting all the undisplayed ones in *rels*
     # and also recurse on any displayed ones if *expand* > 0
     rels:list[Relation] = []
-    for mRelr in self.modelObject.referencers:
-      mRel = mRelr()
-      if not self.canvas.categories.isCategory(mRel, self.canvas.hiddenCategories):
-        if filter(self, mRel):
-          vRel = self.canvas.findViewObjectForGraphObject(mRel)
+    for mRelr in list(self.modelObject._getIncoming(filtr=lambda rel, slf=self: filter(slf,rel)))+list(self.modelObject._getOutgoing(filtr=lambda rel, slf=self: filter(slf,rel))):
+      mRel:Relation = mRelr[0]
+      # if not self.canvas.categories.isCategory(mRel, self.canvas.hiddenCategories):
+      #   if filter(self, mRel):
+      if True:
+          vRel = self.view.findViewObjectForGraphObject(mRel)
           if vRel is None:
             rels.append(mRel)
           elif expand > 0:
@@ -1020,7 +1066,7 @@ class VObject(PRObject, Observer):
       x = bb[2] + 50
       y = len(rels) * 25
       for r in rels:
-        self.canvas.makeViewObjectForGraphObject(r, atPoint=[x,y], expand=expand, filter=filter)
+        self.view.makeViewObjectForGraphObject(r, atPoint=(x,y), expand=expand, filter=filter)
         y += 50
 
   ### RELATIONS ########################################################################

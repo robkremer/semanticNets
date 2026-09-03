@@ -65,26 +65,6 @@ class VNode(VObject):
   # def register(self):
   #   self.canvas.nodes.append(self)
 
-  def validate(self) -> list[str]:
-    """
-    :return: The count of errors or inconsistencies in this *VNode*. 
-    
-    Validate the VNode, print any violations to *self.tgmodel.logger*
-    and return the number of violations.
-    
-    .. note:: Validation can only take place AFTER the
-       GraphObject is fully constructed with all its IsaIndividual relations.
-       
-    This method checks:
-    
-    - There exists a model object (*self.model* is not *None*).
-    - The model is valid (calls *self.model.validate()*).
-    """
-    self.errors = super().validate()
-    for n in self.canvas.values(): #nodes + self.canvas.relations:
-      if n is not self and self.modelObject == n.modelObject:
-        self.errors.append(f'View objects {self} and {n} both reference the same model object {self.modelObject}.')
-    return self.errors
     
   ### DESTRUCTOR #######################################################################
 

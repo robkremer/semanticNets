@@ -28,12 +28,15 @@ import logging
 import os
 import sys
 from util import setupLogger
+import util.observer as observer
 
 #setupLogger()
 
 NAME = "Semantic Nets"
 SHORT_NAME = "sn"
 VERSION = "1.0"
+
+observer.alwaysLater = True
 
 class SNLogger(logging.Logger):
   def print(self, *args, **kwargs):
@@ -101,12 +104,17 @@ except:
   snPrefs = SNPrefs()
   SNPrefs.prefsFileName = prefsfilename
 snPrefs.addCallback("loggingLevel", lambda key, level: (logger.setLevel(logging.getLevelNamesMapping()[level.upper()]), # type: ignore[func-returns-value,arg-type]
-                                                           logger.print(f'Updated {key} to {level} ({logging.getLevelName(logger.getEffectiveLevel())}={logger.getEffectiveLevel()})') # type: ignore[attr-defined]
+                                                           logger.info(f'Updated {key} to {level} ({logging.getLevelName(logger.getEffectiveLevel())}={logger.getEffectiveLevel()})') # type: ignore[attr-defined]
                                                           ))
-if "loggingLevel" not in snPrefs:
-  snPrefs['loggingLevel'] = Attribute('INFO',
-              'choices[DEBUG,INFO,WARNING,ERROR,CRITICAL]',
-              VAR_DEFAULTED)
+# if "loggingLevel" not in snPrefs:
+#   snPrefs['loggingLevel'] = Attribute('INFO',
+#               'choices[DEBUG,INFO,WARNING,ERROR,CRITICAL]',
+#               VAR_DEFAULTED)
+  
+logger.setLevel(logging.getLevelNamesMapping()[snPrefs.get("loogingLevel", 
+                                                           storeDefault="INFO", 
+                                                           storeType='choices[DEBUG,INFO,WARNING,ERROR,CRITICAL]').upper()
+                                              ])
 
 # # insure PYTHONPATH includes Tygra's directory (required to resolve classes at runtime, eg: Roles as types in Attributes)
 # thisDir = str(pathlib.Path(__file__).parent.parent.resolve())

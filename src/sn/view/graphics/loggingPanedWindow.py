@@ -543,7 +543,7 @@ class AppWindow(InvisibleAppWindow):#LoggingPanedWindow):
     
     self.title(f'{sn.NAME}, v{sn.VERSION}') # Not really needed since we don't show the window
 
-    # url = snPrefs.get("defaultModel", None)
+    # url = snPrefs.get("model/defaultModel", storeDefault="temp.xml", storeType=str)
     # if url is not None:
     #   try:
     #     model = Model.getStore(url)
