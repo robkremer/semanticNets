@@ -176,19 +176,21 @@ def eventEqual(e1, e2):
 ########## MENUS ########################################################################
 ##########################################################################################
 
-def getSubMenu(menu:tk.Menu, name:str, makeIfNone:Optional[int]=tk.END) -> Optional[tk.Menu]:
+def getSubMenu(menu:tk.Menu, name:str, makeIfNone:int|str|None=tk.END) -> Optional[tk.Menu]:
   """
   Find a submenu in *menu* with label *name* .
-  
+
   :param menu: The menu to search
   :param name: The label of the item we are searching for
-  :param makeIfNone: [default: tk.END (insert at end)] if an *int* and *menu* does not contain any
-      menu items named *name* then insert a new menu named *name* at position 
-      *makeIfNone* .
+  :param makeIfNone: [default: tk.END (insert at end)] if not *None* and *menu* does not
+      contain any menu items named *name* then insert a new menu named *name* at position
+      *makeIfNone* -- either an *int* index or one of Tkinter's symbolic index constants
+      (e.g. *tk.END*, which is itself just the *str* "end"; this is what *insert_cascade()*
+      itself accepts, so we just pass it straight through).
   :return: Return a *tk.Menu* if it is found or created; if it is not found and
       *makeIfNone* is *None*, return *None* .
   """
-  submenu = None      
+  submenu = None
   try:
     index = menu.index(name)
     assert menu.type(index) == "cascade"
@@ -196,7 +198,7 @@ def getSubMenu(menu:tk.Menu, name:str, makeIfNone:Optional[int]=tk.END) -> Optio
     submenu = menu.winfo_toplevel().nametowidget(submenu)
   except Exception as ex:
     if makeIfNone is not None:
-      assert isinstance(makeIfNone, int)
+      assert isinstance(makeIfNone, (int, str))
       submenu = tk.Menu(menu) #TODO: should probably make an effort to put this in the right place
       menu.insert_cascade(makeIfNone, label=name, menu=submenu)
   return submenu
