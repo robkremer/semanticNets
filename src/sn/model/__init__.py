@@ -134,17 +134,4 @@ class TopModel(Model):
 model = TopModel("sn:///sn", mode="", _reading=False) # creates a model in memory cache
 model._writeLocked = True
 
-def saveAtExit():
-  url:str
-  db:PRDb
-  for url, db in Model.AllDBs.items():
-    assert isinstance(db, Model)
-    model:Model = db
-    if not model.writeLocked() and model.isDirty():
-      ans:str|None = askUser(f'Save modified model?\n  {url}\n(Y/N):', "Save modified Model?")
-      if ans is not None and ans.upper() in ["Y", "YES", "T", "TRUE"]:
-        model.save()
-  #print(f'At exit: {askUser("Answer a question:", "A title")}')
-  
-atexit.register(saveAtExit)
     

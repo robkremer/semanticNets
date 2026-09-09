@@ -311,10 +311,10 @@ class LoggingPanedWindow(tk.PanedWindow):
     self.commandEntryWidget = CommandEntryWidget(inputframe, self.loggingWidget, self.commandParser, self.promptLabel)
     self.commandEntryWidget.pack(fill=tk.BOTH, side=tk.RIGHT, expand=True)
 
-    # set up the *appFrame*
+    # set up the *canvasFrame*
     self.fixedAppFrame:bool = fixedAppFrame
-    '[bool] *True* indicates *self.appFrame* is fixed size.'
-    self.appFrame = None
+    '[bool] *True* indicates *self.canvasFrame* is fixed size.'
+    self.canvasFrame = None
     'The application Frame. Usually the "view" or graphics display of the model.'
     self.setAppFrame()
     
@@ -366,19 +366,19 @@ class LoggingPanedWindow(tk.PanedWindow):
     return menubar
 
   def setAppFrame(self):
-    if self.appFrame is not None:
-      self.forget(self.appFrame)
-      self.appFrame.destroy()
+    if self.canvasFrame is not None:
+      self.forget(self.canvasFrame)
+      self.canvasFrame.destroy()
 
-    self.appFrame = tk.Frame(self)
-    self.appFrame.pack(fill=tk.BOTH if self.fixedAppFrame else tk.BOTH,
+    self.canvasFrame = tk.Frame(self)
+    self.canvasFrame.pack(fill=tk.BOTH if self.fixedAppFrame else tk.BOTH,
                         side=tk.TOP,
                         expand=False if self.fixedAppFrame else True)
 
     stretch = 'never' if self.fixedAppFrame else 'always'
     sticky = 'new' if self.fixedAppFrame else 'news'
-    self.add(self.appFrame, before=self.textDisplayFrame, stretch=stretch, sticky=sticky)  # 'always', 'first', 'last', 'middle', and 'never'.
-    self.paneconfigure(self.appFrame, stretch=stretch)
+    self.add(self.canvasFrame, before=self.textDisplayFrame, stretch=stretch, sticky=sticky)  # 'always', 'first', 'last', 'middle', and 'never'.
+    self.paneconfigure(self.canvasFrame, stretch=stretch)
 
   def setPrompt(self, text:str):
     self.promptLabel.config(text=text)
@@ -408,9 +408,9 @@ class LoggingPanedWindow(tk.PanedWindow):
     # else:
     #   self.saveFile()
     # self.destroy()
-    # if isinstance(self.appFrame, PRDb):
-    #   if self.appFrame.dirty:
-    #     self.appFrame.askSaveFile(self.appFrame)
+    # if isinstance(self.canvasFrame, PRDb):
+    #   if self.canvasFrame.dirty:
+    #     self.canvasFrame.askSaveFile(self.canvasFrame)
     #raise NotImplementedError("LoggingPainedWindow.onClosing()")
     # if self.tkRoot is not None:
     #   self.tkRoot.onChildTopWindowClosing(self)
@@ -423,7 +423,7 @@ class LoggingPanedWindow(tk.PanedWindow):
 
 class TGViewWindow(LoggingPanedWindow):
   """
-  A *LoggingPanedWindow* containing a *SNView* in its appFrame. 
+  A *LoggingPanedWindow* containing a *SNView* in its canvasFrame. 
   """
 
   openViews:list = list()

@@ -46,8 +46,7 @@ Created on Aug 18, 2026
 @author: robkremer
 '''
 from __future__ import annotations
-from sn.controller.modelInterface import ModelContext
-from sn.model.model import Model
+#from sn.controller.modelInterface import ModelContext
 import traceback
 import util
 from util.attributeEditor import applyEditAttrsBox
@@ -59,18 +58,24 @@ import threading
 import logging
 import sn
 import tkinter as tk
-from typing import Optional, Callable, cast
+from typing import Optional, Callable, cast, Any
+from types import NoneType
 from tkinter import ttk
 from sn import snPrefs
 from util.attribute import Attribute, VAR_DEFAULTED
-from util.utils import expandRect, showExceptionDialog
+from util.utils import expandRect, showExceptionDialog, fixURL
 from util.terminal import terminalRegistry, installGlobalIORouting,\
   TerminalWidget, TerminalRegistry
+# from sn.model.model import Model
+# from sn.view.graphics.snCanvas import SNGView
 #from sn.view.textUserInterface import SNTerminalWidget # circular import
 
 logger:sn.SNLogger = sn.getLogger(__name__)
 
-ModelSpecType = Model|str|None
+OpenWindowSpecType = Any|None #Model|SNGView|str|None
+
+class UnexpectedObjectInFile(Exception):
+  pass
 
 class Application(tk.Tk):
   """The invisible root Tk window and manages one or more Toplevel windows.
@@ -144,7 +149,7 @@ class Application(tk.Tk):
     applyEditAttrsBox(self, snPrefs, title="Semantic Nets Preferences")
 
 
-  def openWindow(self, model:ModelSpecType) -> tk.Toplevel|None:
+  def openWindow(self, viewSpec:OpenWindowSpecType) -> tk.Toplevel|None:
     """Create and show a new Toplevel window hosted under the invisible root.
 
     :param name: A key to refer to this window by (e.g. for closing it later).
@@ -154,28 +159,56 @@ class Application(tk.Tk):
     :returns: The newly created Toplevel window.
     :rtype: tk.Toplevel
     """
+    from util.persistence.pRef import PRDb
+    from sn.model.model import Model
+    from sn.view.graphics.snCanvas import SNGView
+    assert isinstance(viewSpec, (Model,SNGView,str,NoneType))
     try:
-      if model is None:
-        model = cast(str, sn.snPrefs.get("model/defaultModel", storeDefault="temp.xml", storeType=str))
-      if isinstance(model, str):
-        model = Model(model)
-      assert isinstance(model, Model)
+      model:Model|None = None
+      view:SNGView|None = None
+      
+      # case: we have nothing to go on: use the default model in snPrefs (or temp.snm)
+      if viewSpec is None:
+        model = cast(str, sn.snPrefs.get("model/defaultModel", storeDefault="temp.snm", storeType=str))
+
+      # case: we have a string, so open the file and see what's in it.
+      if isinstance(viewSpec, str):
+        db:PRDb = PRDb(viewSpec)
+        if isinstance(db, Model):
+          model = db
+          logger.debug("got a Model!")
+        elif isinstance(db, SNGView):
+          view = db
+          logger.debug("got a SNGView!")
+        else:
+          raise UnexpectedObjectInFile(f'File "{viewSpec}" contains an object of type {db.__class__.__name__}')
+      # either model or view is not None at this point
+      
+      # case: we have a model: make a new view for it, opening said file if it exists.
+      if view is None:
+        view = SNGView(fixURL(model.url, extension=".snv", replaceExt=True, mode='w')[0], 
+                       canvas=None, model=model)
+      #TODO: we need a canvas here...
+        
+      # case: we have a view (and it was read from a file), but no model: The view will contain the model.
+      else:
+        model = view.model
   
-      name = model.url    
+      name = view.url    
       if name in self.windows:
         self.windows[name].lift()
         return self.windows[name]
   
-      #TODO: passing model as just None is just a temporary thing. 
+      #TODO: passing viewSpec as just None is just a temporary thing. 
       window:AppWindow = AppWindow(self, model, geometry=f'{snPrefs.get("gui/WindowSize", storeDefault="800x600", storeType=str)}+{self.defaultChildLocation[0]}+{self.defaultChildLocation[1]}')
       self.defaultChildLocation = (self.defaultChildLocation[0] + 40, self.defaultChildLocation[1] + 40)
       self.windows[name] = window
       return window
     except Exception:
-      logger.error(f'While opening window for model "{model}"', exc_info=True)
+      logger.error(f'While opening window for viewSpec "{viewSpec}"', exc_info=True)
       try:
         print(traceback.format_exc(), file=sys.__stderr__)
-        showExceptionDialog(self, title=f"Semantic Nets: Failed to open window for Model {model.url if isinstance(model, Model) else model}.")
+        showExceptionDialog(self, title=f"Semantic Nets: Failed to open window for Model {viewSpec.url if isinstance(viewSpec, Model) else viewSpec}.")
       except Exception:
         logger.error('While displaying exception dialog', exc_info=True)
       return None
@@ -327,19 +360,19 @@ class AppPanedWidget(tk.PanedWindow):
     self.add(self.textDisplayFrame, stretch=stretch, sticky=sticky)
     self.paneconfigure(self.textDisplayFrame, stretch=stretch, height=60, minsize=20)
 
-    self.appFrame:SNGViewFrame = SNGViewFrame(self)
-    self.appFrame.pack(fill=tk.BOTH, side=tk.TOP, expand=False)
+    self.canvasFrame:SNGViewFrame = SNGViewFrame(self)
+    self.canvasFrame.pack(fill=tk.BOTH, side=tk.TOP, expand=False)
     stretch = 'always'  # if self.fixedAppFrame else 'always'
     sticky = 'news'  # if self.fixedAppFrame else 'news'
-    self.add(self.appFrame, before=self.textDisplayFrame, stretch=stretch, sticky=sticky)  # 'always', 'first', 'last', 'middle', and 'never'.
-    self.paneconfigure(self.appFrame, stretch=stretch, minsize=0)
+    self.add(self.canvasFrame, before=self.textDisplayFrame, stretch=stretch, sticky=sticky)  # 'always', 'first', 'last', 'middle', and 'never'.
+    self.paneconfigure(self.canvasFrame, stretch=stretch, minsize=0)
 
     # Give the graphics editor a direct reference to this window's terminal
     # and the shared registry, so it can bind its own background threads
     # (runBackgroundWork below) without having to walk back up through
     # winfo_toplevel()/_root() to find them.
-    self.appFrame.terminal = self.textDisplayFrame
-    self.appFrame.registry = terminalRegistry
+    self.canvasFrame.terminal = self.textDisplayFrame
+    self.canvasFrame.registry = terminalRegistry
 
     self.pack(fill=tk.BOTH, expand=True)
 
@@ -435,9 +468,9 @@ class SNGViewFrame(tk.Frame):
 
 if __name__ == "__main__":
   app = Application(sn.NAME)
-  # win1 = app.openWindow(Model("temp1"))
-  # win2 = app.openWindow(Model("temp2"))
-  # app.run()
-  app.after(1000, app.openWindow, Model("temp1"))
-  app.after(2000, app.openWindow, Model("temp2"))
+  #win1 = app.openWindow("temp1.snv")
+  win2 = app.openWindow("temp2.snm")
   app.run()
+  # app.after(1000, app.openWindow, Model("temp1"))
+  # app.after(2000, app.openWindow, Model("temp2"))
+  # app.run()

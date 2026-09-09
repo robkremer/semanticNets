@@ -34,7 +34,7 @@ Implements VNode and all its supporting classes:
 """
 
 import tkinter as tk
-from sn.model import IsaIndividual
+from sn.model.model import IsaIndividual
 from sn.view.graphics.vobjects import VObject
 from typing import Optional
 
@@ -442,7 +442,7 @@ class VNode(VObject):
   #   if app.DEBUG_MENUS:
   #     m.add_command(label=f'{self.idString} -> {self.model.idString}', state=tk.DISABLED)
   #     m.add_separator()
-  #   editable = self.canvas.isModelEditor
+  #   editable = self.view.isModelEditor
   #   if editable:
   #     self.addModelEditingMenuItems(m)
   #   self.addViewMenuItems(m)
@@ -594,13 +594,13 @@ class VNode(VObject):
   
   def addDeletionMenuItems(self, menu:tk.Menu):
     menu.add_command(label="remove from view", command=self.delete)
-    if not self.model.system and self.canvas.isModelEditor:
+    if not self.model.system and self.view.isModelEditor:
       menu.add_command(label="delete from model", command=self.model.delete)
   
   def makeMakeRelationMenu(self, menu:tk.Menu):
     m = tk.Menu(menu)
     types = []
-    for t in (t for t in self.canvas.model.relations if t.isType()):
+    for t in (t for t in self.view.model.relations if t.isType()):
         types.append(t)
     # TODO: sort menu?
     for t in types:

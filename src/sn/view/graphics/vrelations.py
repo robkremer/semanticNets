@@ -21,6 +21,7 @@
 #################################################################################
 from sn.view.graphics.connectors import drawSmoothConnector, ConnectorIDs,\
   drawStraightConnector, ConnectorTerminators
+from util.persistence.serialize import InstantiationInfo, ParamInfo
 
 """
 vrelations.py
@@ -50,11 +51,10 @@ from sn import snPrefs
 from util.utils import flattenPairs, midpoint
 from util.attribute import AttributedObject
 from util.persistence.pRef import PRDb, PReference
-from sn.model import GraphObject
-#from sn.model.tgcommands import NewModelRelationCommand
-from sn.model import Relation #, _toFillerAttrName
+from sn.model.model import GraphObject, Relation
 from sn.view.graphics.vobjects import VObject
-from util.attributeEditor import applyEditAttrsBox
+#TODO: remove the "#@" when attributeEditor get fixed up.
+from util.attributeEditor import applyEditAttrsBox # @UnresolvedImport
 
 import logging
 logger:sn.SNLogger = sn.getLogger(__name__)
@@ -82,8 +82,8 @@ class VRelation(VObject):
   
   ### CONSTRUCTOR AND HELPERS ##########################################################
 
-  def __init__(self, view:SNGView,
-        modelObject:Union[Relation, PReference], 
+  def __init__(self, view:SNGView, # type: ignore[name-defined] # @UndefinedVariable
+        modelObject:Relation|str, 
         typ:Relation|None=None,
         shape:Union[Any, str]="Oval",
         x:Optional[int]=None, y:Optional[int]=None, x1:Optional[int]=None, y1:Optional[int]=None,
@@ -111,8 +111,8 @@ class VRelation(VObject):
     of the pointer.  The pointer(s) will be properly instantiated (etc) on a second 
     pass when the owner container calls the *self._post__init__()* method.
     """
-    if isinstance(modelObject, PReference):
-      obj = modelObject()
+    if isinstance(modelObject, str):
+      obj = PReference[Relation](modelObject)(relativeTo=view.model)
       assert isinstance(obj, Relation)
       modelObject = obj
     assert isinstance(modelObject, Relation), \
@@ -170,33 +170,33 @@ class VRelation(VObject):
             finalSetters=sup.finalSetters
             )
 
-  def _connectRoles(self):
-    '''
-    Establishes all the connectors for the VRelation, both in the view and in the
-    cache, based on it's referent *Relation* in the model by:
-    
-      - makes sure every connected VOjbect is in the view
-      - adds *self* to the relations of those VObjects
-      - instantiates self.cache._roles to the list of roles in the model object
-      - instantiates all self.cache._<roleName>__filler to the list of fillers for each role name
-    '''
-    # roles = []
-    # for roleName, roleObj in self.modelObject.roles.items():
-    #   roleFillers = roleObj['filler']
-    #   roles.append(roleName)
-    #   nodes = []
-    #   for roleFiller in roleFillers:
-    #     mObj = roleFiller()  # PReference -> ModelBbject
-    #     node = self.canvas.makeViewObjectForGraphObject(mObj)
-    #     # nodes.append(weakref.ref(node))
-    #     nodes.append(node)
-    #     node.addRelation(self)
-    #   setattr(self.cache, f'_{roleName}__filler', nodes)
-    snode = self.view.makeViewObjectForGraphObject(self.modelObject.src)
-    self.src = snode
-    snode.dst = self
-    
-    # setattr(self.cache, '_roles', roles)
+  # def _connectRoles(self):
+  #   '''
+  #   Establishes all the connectors for the VRelation, both in the view and in the
+  #   cache, based on it's referent *Relation* in the model by:
+  #
+  #     - makes sure every connected VOjbect is in the view
+  #     - adds *self* to the relations of those VObjects
+  #     - instantiates self.cache._roles to the list of roles in the model object
+  #     - instantiates all self.cache._<roleName>__filler to the list of fillers for each role name
+  #   '''
+  #   # roles = []
+  #   # for roleName, roleObj in self.modelObject.roles.items():
+  #   #   roleFillers = roleObj['filler']
+  #   #   roles.append(roleName)
+  #   #   nodes = []
+  #   #   for roleFiller in roleFillers:
+  #   #     mObj = roleFiller()  # PReference -> ModelBbject
+  #   #     node = self.canvas.makeViewObjectForGraphObject(mObj)
+  #   #     # nodes.append(weakref.ref(node))
+  #   #     nodes.append(node)
+  #   #     node.addRelation(self)
+  #   #   setattr(self.cache, f'_{roleName}__filler', nodes)
+  #   snode = self.view.makeViewObjectForGraphObject(self.modelObject.src)
+  #   self.src = snode
+  #   snode.dst = self
+  #
+  #   # setattr(self.cache, '_roles', roles)
     
   # def register(self):
   #   self.canvas.relations.append(self)
@@ -211,9 +211,11 @@ class VRelation(VObject):
 
   def _delete(self):
     """ Low-level delete that doesn't take care of notifications."""
-    for roleinfoList in self.roles.values():
-      for r in roleinfoList:
-        r.eraseView(self.canvas.canvas)
+    # for roleinfoList in self.roles.values():
+    #   for r in roleinfoList:
+    #     r.eraseView(self.canvas.canvas)
+    if self.connectInfo:
+      self.connectInfo.deleteAll(self.canvas)
     super().delete()
 
   def delete(self):
@@ -223,62 +225,22 @@ class VRelation(VObject):
       removing it from canvas's list
       notify the relevant nodes
     """
-    for node in self._getConnectedVObjects():
+    for node in (self.src, self.dst):
       try:
-        node.notifyRelationDeletion(self)
+        if node is not None:
+          node.notifyRelationDeletion(self)
       except:
         pass
     self._delete()
     
-  # def _getConnectedVObjects(self) -> List[VObject]:
-  #   ret = []
-  #   roles = self.cache._roles if hasattr(self.cache, "_roles") else []
-  #   for roleName in roles:
-  #     for obj in getattr(self.cache, f'_{roleName}__filler'):
-  #       ret.append(obj)
-  #   return ret
+  def _getConnectedVObjects(self) -> List[VObject]:
+    ret = []
+    roles = self.cache._roles if hasattr(self.cache, "_roles") else []
+    for roleName in roles:
+      for obj in getattr(self.cache, f'_{roleName}__filler'):
+        ret.append(obj)
+    return ret
     
-  ### PERSISTENCE ######################################################################
-
-  def serializeXML(self) -> et.Element:
-    """
-    Returns the representation of this object as an Element object.
-    Implementors should call *super().serializeXML()* **first** as this top-level method
-    will construct the Element itself.
-    """
-    elem = super().serializeXML()
-    elem.set('floating', str(self._floatingAnchor))
-    return elem
-
-  @classmethod
-  def getArgs(cls, elem: et.Element) -> Tuple[List[Any], Dict[str, Any]]:
-    """
-    :param elem: The *ElementTree* element from which we are unserializing.
-    :param addrServer: The address server from which we can lookup any
-      addresses by id that occur in *elem*. Note that although *addrServer*
-      may not be used here, it might be necessary for subclasses to use
-      it, so it needs to be in the argument list.
-    :return: An (\\*args, \\*\\*kwargs) tuple for the constructor of the class 
-      found in the element's name.
-    """
-    args, kwargs = super().getArgs(elem)
-    kwargs['floating'] = literal_eval(elem.get('floating'))
-
-    return args, kwargs
-  
-  def unserializeXML(self, elem: et.Element):
-    """
-    :param elem: The *ElementTree* element from which we are unserializing.
-    :param addrServer: The address server from which we can lookup any
-      addresses by id that occur in *elem*. Note that although *addrServer*
-      may not be used here, it might be necessary for subclasses to use
-      it, so it needs to be in the argument list.
-       
-    This object is partially constructed, but we need to restore this class's bits.
-    Implementors should call *super().unserializeXML()* at some point.
-    """
-    super().unserializeXML(elem)
-
   def validate(self) -> list[str]:
     """
     :return: The list of errors or inconsistencies in this *VNode*. 
@@ -319,10 +281,10 @@ class VRelation(VObject):
     #   self.draw()
     return self.errors
   
-  ### ATTRIBUTES #######################################################################
-
-  def notifyAttrChanged(self, attrsObj:AttributedObject, name:str, value:Any):
-    super().notifyAttrChanged(attrsObj, name, value)
+  # ### ATTRIBUTES #######################################################################
+  #
+  # def notifyAttrChanged(self, attrsObj:AttributedObject, name:str, value:Any):
+  #   super().notifyAttrChanged(attrsObj, name, value)
 
   ### DECORATORS #######################################################################
 
@@ -415,37 +377,37 @@ class VRelation(VObject):
   #
   #   self._findPoints(self.roles)
   #   return self.roles
-    
-  def _findPoints(self, roles:dict[str, list[RoleInfo]]):
-    '''
-    :param roles: a dict of list of RoleInfo to fill out the RoleInfo points information
-      based on the each RoleInfo's vobject.
-    :return: The parameter with the points info filled out.
-    
-    The points info that this method fills out accounts for multiple roles that 
-    refer to the same *VObject* by shifting the endponts, by 4 in the x or y 
-    direction to avoid overdrawing lines.
-    '''
-    objCounts:dict[int, int] = dict()  # dict[id:count] count the objects we are drawing to so that we can avoid drawing lines over one another
-    for infoList in roles.values():
-      for info in infoList:  # count this object so that we can avoid drawing lines over one another
-        if info.vobject() is None:  # TODO: Need to delete this component...
-          pass
-        if id(info.vobject()) in objCounts:
-          objCounts[id(info.vobject())] += 1
-        else:
-          objCounts[id(info.vobject())] = 1 
-      
-        info.nearPt, info.farPt = self.findEndPoints(self, info.vobject())
-
-        count = objCounts[id(info.vobject())]
-        if count > 0:
-          if abs(info.nearPt[0] - info.farPt[0]) > abs(info.nearPt[1] - info.farPt[1]): 
-            info.nearPt = (info.nearPt[0]        , info.nearPt[1] + 4 * count)
-            info.farPt = (info.farPt [0]        , info.farPt [1] + 4 * count)
-          else:
-            info.nearPt = (info.nearPt[0] + 4 * count, info.nearPt[1])
-            info.farPt = (info.farPt [0] + 4 * count, info.farPt [1])
+  #
+  # def _findPoints(self, roles:dict[str, list[RoleInfo]]):
+  #   '''
+  #   :param roles: a dict of list of RoleInfo to fill out the RoleInfo points information
+  #     based on the each RoleInfo's vobject.
+  #   :return: The parameter with the points info filled out.
+  #
+  #   The points info that this method fills out accounts for multiple roles that 
+  #   refer to the same *VObject* by shifting the endponts, by 4 in the x or y 
+  #   direction to avoid overdrawing lines.
+  #   '''
+  #   objCounts:dict[int, int] = dict()  # dict[id:count] count the objects we are drawing to so that we can avoid drawing lines over one another
+  #   for infoList in roles.values():
+  #     for info in infoList:  # count this object so that we can avoid drawing lines over one another
+  #       if info.vobject() is None:  # TODO: Need to delete this component...
+  #         pass
+  #       if id(info.vobject()) in objCounts:
+  #         objCounts[id(info.vobject())] += 1
+  #       else:
+  #         objCounts[id(info.vobject())] = 1 
+  #
+  #       info.nearPt, info.farPt = self.findEndPoints(self, info.vobject())
+  #
+  #       count = objCounts[id(info.vobject())]
+  #       if count > 0:
+  #         if abs(info.nearPt[0] - info.farPt[0]) > abs(info.nearPt[1] - info.farPt[1]): 
+  #           info.nearPt = (info.nearPt[0]        , info.nearPt[1] + 4 * count)
+  #           info.farPt = (info.farPt [0]        , info.farPt [1] + 4 * count)
+  #         else:
+  #           info.nearPt = (info.nearPt[0] + 4 * count, info.nearPt[1])
+  #           info.farPt = (info.farPt [0] + 4 * count, info.farPt [1])
   
   def parseEndShape(self, shape:str) -> Optional[Tuple[str, list]]:
     '''
@@ -474,68 +436,69 @@ class VRelation(VObject):
       args = []
     return shapeName, args
 
-  def drawEndShape(self, shape:str, line:list, ID:int , lineColor:str, fillColor:str) -> Optional[int]:
-    '''
-    :return: the ID of the drawn shape (if any)
-    '''
-    shape = self.parseEndShape(shape)
-    if shape is None:
-      if ID is not None:  # need to delete the old end shape
-        self.canvas.canvas.delete(ID)
-      return None
-    shapeName, args = shape
+  # def drawEndShape(self, shape:str, line:list, ID:int , lineColor:str, fillColor:str) -> Optional[int]:
+  #   '''
+  #   :return: the ID of the drawn shape (if any)
+  #   '''
+  #   shape = self.parseEndShape(shape)
+  #   if shape is None:
+  #     if ID is not None:  # need to delete the old end shape
+  #       self.canvas.canvas.delete(ID)
+  #     return None
+  #   shapeName, args = shape
+  #
+  #   if shapeName == "circle":
+  #     if ID is not None and self.canvas.canvas.type(ID) != "oval":  # need to delete the old none-oval and draw a new oval
+  #       self.canvas.canvas.delete(ID)
+  #       ID = None
+  #
+  #     # fill in defaults
+  #     diam = 5 if len(args) == 0 else args[0]
+  #     radius = diam / 2.0
+  #
+  #     if ID is None:  # new circle
+  #       ID = self.canvas.canvas.create_oval(
+  #           self.view.viewToWindow([line[2] - radius, line[3] - radius, line[2] + radius, line[3] + radius]),
+  #           fill=fillColor, outline=lineColor, tags=[self.tag])
+  #     else:  # repaint existing circle
+  #       self.canvas.canvas.coords(ID,
+  #           self.view.viewToWindow([line[2] - radius, line[3] - radius, line[2] + radius, line[3] + radius]))
+  #       self.canvas.canvas.itemconfigure(ID, fill=fillColor, outline=lineColor)
+  #
+  #     # TODO: fill this in
+  #
+  #   elif shapeName == "arrow":
+  #     if ID is not None and self.canvas.canvas.type(ID) != "line":  # need to delete the old none-oval and draw a new oval
+  #       self.canvas.canvas.delete(ID)
+  #       ID = None
+  #
+  #     # fill in defaults
+  #     # defArgs = [8, 10, 3]
+  #     n = len(args)
+  #     if n == 0:
+  #       args = [8, 10, 3]
+  #     elif n == 1:
+  #       args = [args[0], args[0] * 1.25, args[0] * 0.375]
+  #     elif n == 2:
+  #       args = [args[0], args[1], args[0] * 0.375]
+  #     elif n > 3:
+  #       args = args[:3]
+  #
+  #     if ID is None:  # new line
+  #       ID = self.canvas.canvas.create_line(
+  #           self.view.viewToWindow(line),
+  #           fill=lineColor, tags=[self.tag], arrow=tk.LAST, arrowshape=tuple(self.view.viewToWindow(args)))
+  #     else:  # repaint existing line
+  #       self.canvas.canvas.coords(ID,
+  #           self.view.viewToWindow(line))
+  #       self.canvas.canvas.itemconfigure(ID, fill=lineColor, arrow=tk.LAST, arrowshape=tuple(self.view.viewToWindow(args)))
+  #
+  #   return ID
     
-    if shapeName == "circle":
-      if ID is not None and self.canvas.canvas.type(ID) != "oval":  # need to delete the old none-oval and draw a new oval
-        self.canvas.canvas.delete(ID)
-        ID = None
-
-      # fill in defaults
-      diam = 5 if len(args) == 0 else args[0]
-      radius = diam / 2.0
-
-      if ID is None:  # new circle
-        ID = self.canvas.canvas.create_oval(
-            self.canvas.viewToWindow([line[2] - radius, line[3] - radius, line[2] + radius, line[3] + radius]),
-            fill=fillColor, outline=lineColor, tags=[self.tag])
-      else:  # repaint existing circle
-        self.canvas.canvas.coords(ID,
-            self.canvas.viewToWindow([line[2] - radius, line[3] - radius, line[2] + radius, line[3] + radius]))
-        self.canvas.canvas.itemconfigure(ID, fill=fillColor, outline=lineColor)
-      
-      # TODO: fill this in
-      
-    elif shapeName == "arrow":
-      if ID is not None and self.canvas.canvas.type(ID) != "line":  # need to delete the old none-oval and draw a new oval
-        self.canvas.canvas.delete(ID)
-        ID = None
-
-      # fill in defaults
-      # defArgs = [8, 10, 3]
-      n = len(args)
-      if n == 0:
-        args = [8, 10, 3]
-      elif n == 1:
-        args = [args[0], args[0] * 1.25, args[0] * 0.375]
-      elif n == 2:
-        args = [args[0], args[1], args[0] * 0.375]
-      elif n > 3:
-        args = args[:3]
-        
-      if ID is None:  # new line
-        ID = self.canvas.canvas.create_line(
-            self.canvas.viewToWindow(line),
-            fill=lineColor, tags=[self.tag], arrow=tk.LAST, arrowshape=tuple(self.canvas.viewToWindow(args)))
-      else:  # repaint existing line
-        self.canvas.canvas.coords(ID,
-            self.canvas.viewToWindow(line))
-        self.canvas.canvas.itemconfigure(ID, fill=lineColor, arrow=tk.LAST, arrowshape=tuple(self.canvas.viewToWindow(args)))
-    
-    return ID
-    
-  def draw(self, fast=False, ):
-    if self._drawVersion >= self.canvas._drawVersion: return
-    super().draw(fast=fast)
+  def draw(self, fast=False, **kwargs):
+    if self._drawVersion >= self.view._drawVersion: 
+      return
+    super().draw(fast=fast, **kwargs)
     # self.reposition(suppressDraw=True)
     if self.modelObject.isSystemObject() and self.modelObject.name == "relation":
       return
@@ -551,11 +514,11 @@ class VRelation(VObject):
     #     # draw lines
     #     if info.lineID is None:  # new line
     #       info.lineID = self.canvas.canvas.create_line(
-    #           self.canvas.viewToWindow(flattenPairs([info.nearPt, info.farPt])),
+    #           self.view.viewToWindow(flattenPairs([info.nearPt, info.farPt])),
     #           tags=[self.tag], **kwargs)
     #     else:  # repaint existing line
     #       self.canvas.canvas.coords(info.lineID,
-    #           self.canvas.viewToWindow(flattenPairs([info.nearPt, info.farPt])))
+    #           self.view.viewToWindow(flattenPairs([info.nearPt, info.farPt])))
     #       self.canvas.canvas.itemconfigure(info.lineID, **kwargs)
     #
     #     # draw role labels
@@ -569,7 +532,7 @@ class VRelation(VObject):
     #         assert info.labelID is not None
     #       else:
     #         self.canvas.canvas.coords(info.labelID,
-    #             self.canvas.viewToWindow(info.nearPt[0], info.nearPt[1]))
+    #             self.view.viewToWindow(info.nearPt[0], info.nearPt[1]))
     #         self.canvas.canvas.itemconfigure(info.labelID,
     #             anchor=anchor)
     #     else:
@@ -586,13 +549,12 @@ class VRelation(VObject):
     #                                            info.nearShapeID, color, fillColor)
     #       info.farShapeID = self.drawEndShape(farEndShape, [info.nearPt[0], info.nearPt[1], info.farPt[0], info.farPt[1]],
     #                                            info.farShapeID, color, fillColor)
-    mo = self.modelObject
-    terminators = ConnectorTerminators(mo.get('vis/terminator1', None), mo.get('vis/terminator2', None), mo.get('vis/terminator3', None), mo.get('vis/terminator4', None))
-    lineType = mo.get('vis/lineType', "straight")
+    terminators = ConnectorTerminators(self.cache['vis/terminator1'], self.cache['vis/terminator2'], self.cache['vis/terminator3'], self.cache['vis/terminator4'])
+    lineType = self.cache['vis/lineType']
     if lineType == "straight":
-      self.connectInfo = drawStraightConnector(self.src, self, self.dst, terminators, self.connectInfo, lineColor=mo.get('vis/lineColor', "black"), fillColor=mo.get('vis/lineFillColor', "black"), width=mo.get('vis/lineWidth', 1))
+      self.connectInfo = drawStraightConnector(self.src, self, self.dst, terminators, self.connectInfo, lineColor=self.cache['vis/lineColor'], fillColor=self.cache['vis/lineFillColor'], width=self.cache['vis/lineWidth'])
     else:
-      self.connectInfo = drawSmoothConnector(self.src, self, self.dst, terminators, self.connectInfo, lineColor=mo.get('vis/lineColor', "black"), fillColor=mo.get('vis/lineFillColor', "black"), width=mo.get('vis/lineWidth', 1))
+      self.connectInfo = drawSmoothConnector(self.src, self, self.dst, terminators, self.connectInfo, lineColor=self.cache['vis/lineColor'], fillColor=self.cache['vis/lineFillColor'], width=self.cache['vis/lineWidth'])
           
   # def drawUnfilledRoles(self):
   #   for role, infoList in self.roles.items():
@@ -621,7 +583,7 @@ class VRelation(VObject):
     # if self.floating() and len(connectedObjects) > 1 and self.modelObject.isIndividual():
     #   if len(set(connectedObjects)) <= 1:  # if all the objects are the same
     #     c = connectedObjects[0].centerPt()
-    #     ctr = (c[0] + self.canvas.model._top.get('vis/minSize', 20) * 1.5, c[1])
+    #     ctr = (c[0] + self.view.model._top.get('vis/minSize', 20) * 1.5, c[1])
     #   else:
     #     ctr = midpoint(*map(lambda obj: obj.centerPt(), connectedObjects))
     #   self.moveToCenterOn(ctr[0], ctr[1])
@@ -637,7 +599,7 @@ class VRelation(VObject):
       if adjustPos:
         self.adjustPos(aggressive=aggressive)
     elif self.dst is None:
-      ctrPt = self.src.centerPt()
+      ctrPt = self.src.centerPt() # type: ignore[union-attr]
       self.moveToCenterOn(ctrPt[0]+70, ctrPt[1], adjustPos=adjustPos)
     elif self.src is None:
       ctrPt = self.dst.centerPt()
@@ -731,7 +693,7 @@ class VRelation(VObject):
       self.draw()
       
   # def addModelEditingMenuItems(self, menu:tk.Menu):
-  #   disabled = self.modelObject.isSystemObject() or not self.canvas.isModelEditor
+  #   disabled = self.modelObject.isSystemObject() or not self.view.isModelEditor
   #   menu.add_command(label=f"{'show' if disabled else 'edit'} attributes", \
   #     command=lambda disabled=disabled: self.onEditAttributes(disabled=disabled))    #menu.add_cascade(menu=self.makeMakeRelationMenu(menu), label='make relation')
   #   if self.modelObject.isType():
@@ -739,23 +701,24 @@ class VRelation(VObject):
   #     menu.add_command(label='make subtype', command=lambda: self._doNewNodeCommand(individual=False))
   #   menu.add_separator()
     
-  @override
-  def _doNewNodeCommand(self, individual:bool):
-    from util.command import CommandWrapper
-    cmd = CommandWrapper(
-              NewModelRelationCommand(self.canvas.model, parent=self.modelObject, individual=individual),
-              setup=self._setCatchNewObjects,
-              teardown=self._resetCatchNewObjects)
-    node = self.canvas.doList.do(cmd)
-    applyEditAttrsBox(self.canvas.canvas, node, title=str(node), editKey="name")
-    vnode = self.canvas.findViewObjectForGraphObject(node)
-    vnode.draw()
+  # @override
+  # def _doNewNodeCommand(self, individual:bool):
+  #   from util.command import CommandWrapper
+  #   cmd = CommandWrapper(
+  #             NewModelRelationCommand(self.view.model, parent=self.modelObject, individual=individual),
+  #             setup=self._setCatchNewObjects,
+  #             teardown=self._resetCatchNewObjects)
+  #   node = self.canvas.doList.do(cmd)
+  #   applyEditAttrsBox(self.canvas.canvas, node, title=str(node), editKey="name")
+  #   vnode = self.canvas.findViewObjectForGraphObject(node)
+  #   vnode.draw()
 
   ### Event handling ###################################################################
 
   def onB1_ButtonRelease(self, event):
+    if self.dragInfo is not None and self.dragInfo[4]:
+      self.floating(False)
     super().onB1_ButtonRelease(event)
-    self.floating(False)
 
   ### Debugging support ################################################################
   

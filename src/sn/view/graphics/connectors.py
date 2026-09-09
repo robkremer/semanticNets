@@ -29,7 +29,10 @@ Draws a source/label/destination connector: two lines (source-to-label,
 label-to-destination) that terminate at the edges of their respective
 VObjects and, together, trace a single smooth curve from the center of
 source's bounding box through the center of label's, to the center of
-destination's.
+destination's. source and/or destination may be None -- see
+drawSmoothConnector()'s docstring for how a missing endpoint degrades the
+shape (a single straight segment to whichever is present, or a no-op if
+neither is).
 
 Deliberately kept as free functions rather than methods on any class (a
 Strategy/"behaviour" pattern): drawSmoothConnector() and
@@ -420,20 +423,105 @@ def _upsertLine(canvas:tk.Canvas, existingID: Optional[int], coords: Sequence[fl
     arrow, arrowshape, smooth, dash, etc. — re-specified in full every call.
   :rtype: int
   """
+  coords4 = list(coords)
   if existingID is not None and canvas.type(existingID) == 'line':
-    canvas.coords(existingID, coords)
+    canvas.coords(existingID, coords4)
     canvas.itemconfigure(existingID, tags=list(tags) if tags else [], **opts)
     return existingID
   if existingID is not None:
     canvas.delete(existingID)
-  return canvas.create_line(coords, tags=list(tags) if tags else [], **opts)
+  return canvas.create_line(coords4, tags=list(tags) if tags else [], **opts)
+
+
+def _drawSingleSegment(label: VObject, other: VObject, otherIsSource: bool,
+                        terminators: ConnectorTerminators, prior: ConnectorIDs,
+                        lineColor: str, fillColor: str, tagList: list, lineOpts: dict) -> ConnectorIDs:
+  """Draw (or update) the one straight segment from *label* to *other*, with
+  its terminators, for when the connector's other endpoint (source or
+  destination) is missing entirely.
+
+  With only two points there's nothing left to curve, so this single-
+  segment case is the same regardless of whether the caller wanted
+  drawSmoothConnector() or drawStraightConnector() — both delegate here for
+  it rather than duplicating the clip/line/terminator logic.
+
+  The OTHER side of the connector — whichever of source/destination has no
+  VObject at all this call — is left exactly as *prior* had it, the same
+  "leave whatever was there before untouched" convention _clippedArc()'s
+  failure path already uses above, rather than being deleted: a caller
+  that flips back and forth between one- and two-endpoint calls doesn't
+  lose track of ids it may still want.
+
+  :param label: One end of the single line actually drawn (the end both
+    lines of a full connector would otherwise pass through).
+  :param other: The one present endpoint — whichever of source/destination
+    isn't *None*.
+  :param otherIsSource: *True* if *other* is standing in for *source* (so
+    the terminators.source/labelNear slots, and the sourceLineID/
+    sourceTerminatorID/labelNearTerminatorID result fields, apply); *False*
+    if it's standing in for *destination* (labelFar/destination slots and
+    destLineID/labelFarTerminatorID/destTerminatorID fields).
+  :param terminators: Same terminators the caller was given.
+  :param prior: The caller's *ids* (or an empty ConnectorIDs() if *ids*
+    was *None*).
+  :param lineColor: Same as drawSmoothConnector()'s *lineColor*.
+  :param fillColor: Same as drawSmoothConnector()'s *fillColor*.
+  :param tagList: Canvas tags, already coerced to a list by the caller.
+  :param lineOpts: The base {'fill': lineColor, **lineKwargs} dict the
+    caller already built.
+  :rtype: ConnectorIDs
+  """
+  canvas = label.canvas
+  cl, co = label.centerPt(), other.centerPt()
+  labelEdge = _clipToEdgeStraight(label, _farPointAlong(label, _sub(co, cl)))
+  otherEdge = _clipToEdgeStraight(other, _farPointAlong(other, _sub(cl, co)))
+
+  labelTerm = terminators.labelNear if otherIsSource else terminators.labelFar
+  otherTerm = terminators.source if otherIsSource else terminators.destination
+  priorLineID = prior.sourceLineID if otherIsSource else prior.destLineID
+  priorLabelTermID = prior.labelNearTerminatorID if otherIsSource else prior.labelFarTerminatorID
+  priorOtherTermID = prior.sourceTerminatorID if otherIsSource else prior.destTerminatorID
+
+  opts = dict(lineOpts)
+  opts['smooth'] = False
+  if otherIsSource:
+    # [otherEdge, labelEdge] / (source, labelNear) -- matches the ordering
+    # the full two-object case uses for this same (source-to-label) line.
+    opts.update(_mergeArrowOptions(otherTerm, labelTerm))
+    coords = [otherEdge[0], otherEdge[1], labelEdge[0], labelEdge[1]]
+  else:
+    # [labelEdge, otherEdge] / (labelFar, destination) -- matches the
+    # ordering the full two-object case uses for the label-to-destination line.
+    opts.update(_mergeArrowOptions(labelTerm, otherTerm))
+    coords = [labelEdge[0], labelEdge[1], otherEdge[0], otherEdge[1]]
+
+  lineID = _upsertLine(canvas, priorLineID, label.view.viewToWindow(coords), tagList, opts)
+  labelTermID = _drawCircleTerminator(canvas, labelTerm, labelEdge, priorLabelTermID, lineColor, fillColor, tagList)
+  otherTermID = _drawCircleTerminator(canvas, otherTerm, otherEdge, priorOtherTermID, lineColor, fillColor, tagList)
+
+  result = ConnectorIDs()
+  if otherIsSource:
+    result.sourceLineID = lineID
+    result.labelNearTerminatorID = labelTermID
+    result.sourceTerminatorID = otherTermID
+    result.destLineID = prior.destLineID
+    result.labelFarTerminatorID = prior.labelFarTerminatorID
+    result.destTerminatorID = prior.destTerminatorID
+  else:
+    result.destLineID = lineID
+    result.labelFarTerminatorID = labelTermID
+    result.destTerminatorID = otherTermID
+    result.sourceLineID = prior.sourceLineID
+    result.labelNearTerminatorID = prior.labelNearTerminatorID
+    result.sourceTerminatorID = prior.sourceTerminatorID
+  return result
 
 
 # =============================================================================
 # The connector-drawing functions
 # =============================================================================
 
-def drawSmoothConnector(source: VObject, label: VObject, destination: VObject,
+def drawSmoothConnector(source: Optional[VObject], label: VObject, destination: Optional[VObject],
                          terminators: Optional[ConnectorTerminators] = None,
                          ids: Optional[ConnectorIDs] = None, *,
                          lineColor: str = 'black', fillColor: str = '',
@@ -459,9 +547,24 @@ def drawSmoothConnector(source: VObject, label: VObject, destination: VObject,
   Assumes source, label and destination don't overlap each other and share
   the same canvas (source.canvas is used).
 
-  :param source: The VObject the first line starts from.
+  *source* and/or *destination* may be *None*. If exactly one is *None*,
+  only a single straight-line segment is drawn -- from *label* to whichever
+  of the two is actually present, complete with that segment's own
+  terminators -- since a curve needs a third point to bend around; with
+  only two points there's nothing to smooth either way, so
+  drawStraightConnector() behaves identically in this case. The OTHER
+  side's previous canvas items (if any) are left untouched, exactly as
+  when a boundary clip fails elsewhere in this module -- see
+  _drawSingleSegment(). If *both* are *None* there's nothing to connect to
+  at all, so the call is a silent no-op: nothing is drawn or deleted, and
+  *ids* (or an empty ConnectorIDs() if *ids* was also *None*) is returned
+  unchanged.
+
+  :param source: The VObject the first line starts from, or *None* if
+    there is no source object.
   :param label: The VObject both lines connect through.
-  :param destination: The VObject the second line ends at.
+  :param destination: The VObject the second line ends at, or *None* if
+    there is no destination object.
   :param terminators: The four terminator specs (source/labelNear/labelFar/
     destination), or None for no terminators at all.
   :param ids: A previous call's ConnectorIDs, to update those exact items in
@@ -482,8 +585,18 @@ def drawSmoothConnector(source: VObject, label: VObject, destination: VObject,
   if terminators is None:
     terminators = ConnectorTerminators()
   prior = ids if ids is not None else ConnectorIDs()
-  canvas = source.canvas
   tagList = list(tags) if tags else []
+  lineOpts = {'fill': lineColor, **lineKwargs}
+
+  if source is None and destination is None:
+    logger.debug('drawSmoothConnector(): source and destination are both None; nothing to connect -- no-op.')
+    return prior
+  if source is None:
+    return _drawSingleSegment(label, destination, False, terminators, prior, lineColor, fillColor, tagList, lineOpts)
+  if destination is None:
+    return _drawSingleSegment(label, source, True, terminators, prior, lineColor, fillColor, tagList, lineOpts)
+
+  canvas = source.canvas
 
   cs, cl, cd = source.centerPt(), label.centerPt(), destination.centerPt()
   p1 = _labelControlPoint(cs, cl, cd)
@@ -494,7 +607,6 @@ def drawSmoothConnector(source: VObject, label: VObject, destination: VObject,
   arcB = _clippedArc(label, destination, cl, m2, cd)
 
   result = ConnectorIDs()
-  lineOpts = {'fill': lineColor, **lineKwargs}
 
   if arcA is not None:
     q0, q1, q2 = arcA
@@ -503,7 +615,7 @@ def drawSmoothConnector(source: VObject, label: VObject, destination: VObject,
     opts['smooth'] = True
     result.sourceLineID = _upsertLine(
         canvas, prior.sourceLineID,
-        canvas.viewToWindow([q0[0], q0[1], q1[0], q1[1], q2[0], q2[1]]),
+        source.view.viewToWindow([q0[0], q0[1], q1[0], q1[1], q2[0], q2[1]]),
         tagList, opts)
     result.sourceTerminatorID = _drawCircleTerminator(
         canvas, terminators.source, q0, prior.sourceTerminatorID, lineColor, fillColor, tagList)
@@ -523,7 +635,7 @@ def drawSmoothConnector(source: VObject, label: VObject, destination: VObject,
     opts['smooth'] = True
     result.destLineID = _upsertLine(
         canvas, prior.destLineID,
-        canvas.viewToWindow([q0[0], q0[1], q1[0], q1[1], q2[0], q2[1]]),
+        source.view.viewToWindow([q0[0], q0[1], q1[0], q1[1], q2[0], q2[1]]),
         tagList, opts)
     result.labelFarTerminatorID = _drawCircleTerminator(
         canvas, terminators.labelFar, q0, prior.labelFarTerminatorID, lineColor, fillColor, tagList)
@@ -537,7 +649,7 @@ def drawSmoothConnector(source: VObject, label: VObject, destination: VObject,
   return result
 
 
-def drawStraightConnector(source: VObject, label: VObject, destination: VObject,
+def drawStraightConnector(source: Optional[VObject], label: VObject, destination: Optional[VObject],
                            terminators: Optional[ConnectorTerminators] = None,
                            ids: Optional[ConnectorIDs] = None, *,
                            lineColor: str = 'black', fillColor: str = '',
@@ -556,13 +668,29 @@ def drawStraightConnector(source: VObject, label: VObject, destination: VObject,
   drawn by drawSmoothConnector() — the same items just get reshaped from a
   3-point smoothed arc to a 2-point straight segment).
 
+  *source* and/or *destination* may be *None*, with exactly the same
+  behaviour as drawSmoothConnector(): a single terminator-and-all straight
+  segment from *label* to whichever one is present if only one is *None*
+  (see _drawSingleSegment()), or a silent no-op returning *ids* (or a fresh,
+  empty ConnectorIDs()) unchanged if both are.
+
   :rtype: ConnectorIDs
   """
   if terminators is None:
     terminators = ConnectorTerminators()
   prior = ids if ids is not None else ConnectorIDs()
-  canvas = source.canvas
   tagList = list(tags) if tags else []
+  lineOpts = {'fill': lineColor, **lineKwargs}
+
+  if source is None and destination is None:
+    logger.debug('drawStraightConnector(): source and destination are both None; nothing to connect -- no-op.')
+    return prior
+  if source is None:
+    return _drawSingleSegment(label, destination, False, terminators, prior, lineColor, fillColor, tagList, lineOpts)
+  if destination is None:
+    return _drawSingleSegment(label, source, True, terminators, prior, lineColor, fillColor, tagList, lineOpts)
+
+  canvas = source.canvas
 
   cs, cl, cd = source.centerPt(), label.centerPt(), destination.centerPt()
 
@@ -572,14 +700,13 @@ def drawStraightConnector(source: VObject, label: VObject, destination: VObject,
   destEdge = _clipToEdgeStraight(destination, _farPointAlong(destination, _sub(cl, cd)))
 
   result = ConnectorIDs()
-  lineOpts = {'fill': lineColor, **lineKwargs}
 
   opts = dict(lineOpts)
   opts.update(_mergeArrowOptions(terminators.source, terminators.labelNear))
   opts['smooth'] = False
   result.sourceLineID = _upsertLine(
       canvas, prior.sourceLineID,
-      canvas.viewToWindow([sourceEdge[0], sourceEdge[1], labelNearEdge[0], labelNearEdge[1]]),
+      source.view.viewToWindow([sourceEdge[0], sourceEdge[1], labelNearEdge[0], labelNearEdge[1]]),
       tagList, opts)
   result.sourceTerminatorID = _drawCircleTerminator(
       canvas, terminators.source, sourceEdge, prior.sourceTerminatorID, lineColor, fillColor, tagList)
@@ -591,7 +718,7 @@ def drawStraightConnector(source: VObject, label: VObject, destination: VObject,
   opts['smooth'] = False
   result.destLineID = _upsertLine(
       canvas, prior.destLineID,
-      canvas.viewToWindow([labelFarEdge[0], labelFarEdge[1], destEdge[0], destEdge[1]]),
+      source.view.viewToWindow([labelFarEdge[0], labelFarEdge[1], destEdge[0], destEdge[1]]),
       tagList, opts)
   result.labelFarTerminatorID = _drawCircleTerminator(
       canvas, terminators.labelFar, labelFarEdge, prior.labelFarTerminatorID, lineColor, fillColor, tagList)

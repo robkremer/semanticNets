@@ -20,15 +20,15 @@
 # SOFTWARE.                                                                     #
 #################################################################################
 from __future__ import annotations
-import sn
 from sn import snPrefs
+import sn
 from sn.model.model import Model, Node, Relation, Collection, IsaIndividual,\
   GraphObject, GORef
 from sn.controller.modelInterface import ModelContext
 from sn.view.graphics.guiApp2 import SNGViewFrame
 
 from typing import cast, override, Any, Iterable, Callable, Optional
-from util.utils import bindRightMouse, fixURL
+from util.utils import bindRightMouse, fixURL, expandRect
 from sn.view.graphics.utils import eventEqual
 from util.terminal import inputAsync
 from util.persistence.pRef import PRDb
@@ -40,6 +40,7 @@ from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
 from sn.view.graphics.layout import FindFree
 from math import sqrt
+from util.persistence.serialize import InstantiationInfo, PropertyInfo
 #from sn.view.graphics.vobjects import VObject
 
 logger:sn.SNLogger = sn.getLogger(__name__)
@@ -112,49 +113,49 @@ class SNGContext(UIContext):
     @override
     def delete(self):
       super().delete()
-      self.obj = None
+      self.obj = None #type: ignore[assignment]
       
     @override
     def __str__(self):
       return f'{super().__str__()} {self.obj.name} {self.x} {self.y}'
 
-  def represent(self, object:GraphObject):
-    '''
-    This is a dummy graphic command.
-    '''
-    print ("dummy graphic command")
-    
-  class _Represent(Command):
-    def __init__(self, object:GraphObject, view:SNGView|None=None):
-      super().__init__("represent")
-      self.modelObject = object
-      self.view:SNGView = view
-      self.viewObject:"VObject"|None = None
-    
-    @override
-    def do(self) -> None:
-      super().do()
-      if self.viewObject is None:
-        self.viewObject = self.view.makeViewObjectForGraphObject(self.modelObject)
-      else:
-        self.viewObject.connect()
-  
-    @override
-    def undo(self):
-      super().undo()
-      assert self.viewObject is not None
-      self.viewObject.disconnect()
-      
-    @override
-    def delete(self):
-      super().delete()
-      self.modelObject = None
-      self.view = None
-      self.viewObject = None
-      
-    @override
-    def __str__(self):
-      return f'{super().__str__()} {self.obj.name} {self.x} {self.y}'
+  # def represent(self, object:GraphObject):
+  #   '''
+  #   This is a dummy graphic command.
+  #   '''
+  #   print ("dummy graphic command")
+  #
+  # class _Represent(Command):
+  #   def __init__(self, object:GraphObject, view:SNGView|None=None):
+  #     super().__init__("represent")
+  #     self.modelObject = object
+  #     self.view:SNGView = view
+  #     self.viewObject:"VObject"|None = None
+  #
+  #   @override
+  #   def do(self) -> None:
+  #     super().do()
+  #     if self.viewObject is None:
+  #       self.viewObject = self.view.makeViewObjectForGraphObject(self.modelObject)
+  #     else:
+  #       self.viewObject.connect()
+  #
+  #   @override
+  #   def undo(self):
+  #     super().undo()
+  #     assert self.viewObject is not None
+  #     self.viewObject.disconnect()
+  #
+  #   @override
+  #   def delete(self):
+  #     super().delete()
+  #     self.modelObject = None
+  #     self.view = None
+  #     self.viewObject = None
+  #
+  #   @override
+  #   def __str__(self):
+  #     return f'{super().__str__()} {self.obj.name} {self.x} {self.y}'
     
 
   def expand(self, object:GraphObject):
@@ -197,7 +198,7 @@ class SNGContext(UIContext):
     def delete(self):
       for obj in self.createdObjects:
         obj.delete()
-      self.createdObjects = None
+      self.createdObjects = None #type: ignore[assignment]
   
     @override
     def __str__(self):
@@ -209,16 +210,16 @@ class SNGView(PRDb["VObject"], Observer):
   '''
   The persistent container of VObjects.
   '''
-  def __new__(cls, url:str|None, canvas:SNCanvas, model:Model, mode="w", _reading:bool=False):
+  def __new__(cls, url:str|None, canvas:SNCanvas|None, model:Model, mode="w", _reading:bool=False):
     if url is None:
       url = fixURL(model.url, extension=".snv", replaceExt=True, mode="w")[0]
-    return PRDb.__new__(cls, url, mode=mode, _reading=_reading)
+    return PRDb.__new__(cls, url, mode=mode, memoryResident=False, _reading=_reading)
 
   def __init__(self, url:str|None, canvas:SNCanvas, model:Model, mode="w", _reading:bool=False):
     if url is None:
       url = fixURL(model.url, extension=".snv", replaceExt=True, mode="w")[0]
-    PRDb.__init__(self, url)
-    self.canvas:SNCanvas = canvas
+    PRDb.__init__(self, url, memoryResident=False)
+    self.canvas:SNCanvas|None = canvas
     self.model:Model = model
     model.addObserver(self)
     self.context:SNGContext = canvas.context
@@ -228,7 +229,81 @@ class SNGView(PRDb["VObject"], Observer):
     self._suppressLocalLayout = False
     'Temporarily suppress automatic layout. Necessary during drag operations, etc.'
     self.localLayout = FindFree(self)
+    self._dirty = False
      
+  @override
+  @classmethod
+  def getInstantiationInfo(cls) -> InstantiationInfo:
+    ret:InstantiationInfo = super().getInstantiationInfo()
+    ret.class_ = cls
+    ret.finalSetters.append(PropertyInfo("_", bool, setter=lambda slf,_t:cast(Model,slf).setDirty(False))) #type: ignore[arg-type]
+    return ret
+
+  def setDirty(self, value:bool=True) -> bool:
+    '''
+    An object is dirty if it has been modified and should probably be
+    saved on exit.  This should be called from all methods that modify
+    the state of this object.
+    
+    If *value* is False, resets all the contained *Attributes* to False.
+    
+    :param value: (default True) The value to set *dirty* to.
+    :type value: bool
+    '''
+    assert type(value) is bool
+    if not value:
+      obj:VObject
+      for obj in self._db.values():
+        if obj.isDirty():
+          obj.setDirty(False)
+    self._dirty = value
+    return self._dirty
+    
+  def isDirty(self) -> bool:
+    '''
+    Returns True iff the object (or an of it's contained *Attributes*) have 
+    been modified and should probably be saved on exit. 
+    '''
+    if self._dirty:
+      return True
+    obj:VObject
+    for obj in self._db.values():
+      if obj.isDirty():
+        self._dirty = True
+        return True
+    return False
+  
+  @override
+  def save(self, saveas:Optional[str]=None, overwrite=False, format:str="XML") -> None:
+    super().save(saveas=saveas, overwrite=overwrite, format=format)
+    self.setDirty(False)
+
+  @override
+  def _register(self, value: VObject, _id:Optional[int]=None) -> int: # type: ignore[override]
+    '''
+    Overrides the 
+    :py:meth:`parent method <pythonUtils:util.persistence.pRef.PRDb._register>`
+    to restrict contained objects to :py:class:`GraphObject` subtypes. 
+    *This violates subsumption rules, but that's what we want here!* 
+    
+    Also sets the dirty bit and notifies any observers ("add GraphObject" (GraphObject))
+    '''
+    assert isinstance(value, VObject), \
+        f'Models are restricted to containing only GraphObject subtypes; got a {value.__class__.__name__} type.'
+    self.setDirty()
+    ret = super()._register(value, _id)
+    return ret
+    
+  @override
+  def _unregister(self, _id:int) -> None:
+    '''
+    Overrides the 
+    :py:meth:`parent method <pythonUtils:util.persistence.pRef.PRDb._register>`
+    to also set the dirty bit and notify any observers () 
+    '''
+    super()._unregister(_id)
+    self.setDirty()
+    
   @override
   def update(self, subject:Subject, *topics:tuple[str, tuple[Any, ...]])->None:
     from sn.view.graphics.vobjects import VObject
@@ -242,7 +317,7 @@ class SNGView(PRDb["VObject"], Observer):
         modelID = topicData[0]
         modelObj = topicData[1]
         logger.info(f'  Creating V{modelObj.__class__.__name__} for model object {modelObj}:{modelObj.__class__.__name__}')
-        if modelObj.isType() or isinstance(modelObj, Node): 
+        if modelObj.isType() or isinstance(modelObj, Node) and self.canvas: 
           applyEditAttrsBox(self.canvas, modelObj, title=modelObj.name, editKey="name")
         typ:type = type(modelObj)
         newObj:VObject|None = None
@@ -283,11 +358,48 @@ class SNGView(PRDb["VObject"], Observer):
     local-layout call that hit an overlap raised AttributeError here instead of resolving it.
     '''
     if isinstance(exclude, int): exclude = [exclude]
+    if not self.canvas:
+      return []
     ret = []
     for id in ids:
       if tag in self.canvas.gettags(id) and id not in exclude:
         ret.append(id)
     return ret
+
+  @property
+  def scrollRegion(self) -> tuple:
+    '''
+    The *[minX, minY, maxX, maxY]* extent of *self.canvas*'s scrollable area.
+
+    This is just a passthrough to *self.canvas.scrollRegion* -- *SNGView* used
+    to have no *scrollRegion* of its own at all, even though *VObject.moveTo()*
+    and *VObject.boundingBox()* both already reference *self.view.scrollRegion*
+    to clamp positions to it. That's the actual *SNCanvas* widget's tracked
+    region, so read (and, in *resetScrollRegion()* below, write) it there
+    directly rather than keeping a second, easily-desynced copy here.
+
+    :rtype: tuple
+    '''
+    return self.canvas.scrollRegion
+
+  def resetScrollRegion(self) -> None:
+    '''
+    Recompute the canvas's scroll region from the current extent of
+    everything actually drawn on it, and apply it (both to
+    *self.canvas.scrollRegion* and to the canvas widget's own
+    ``scrollregion`` configuration option) if that's grown past what's
+    currently configured.
+
+    Called by *VObject.draw()* whenever a *VObject*'s bounding box no longer
+    fits inside the existing region -- e.g. after it's been dragged past the
+    SE edge -- so the canvas grows to keep the object reachable/visible
+    rather than silently clipping or requiring a manual scroll-region reset.
+
+    :rtype: None
+    '''
+    bb = tuple(expandRect(self.canvas.bbox("all"), 10))
+    self.canvas.scrollRegion = bb
+    self.canvas.configure(scrollregion=bb)
 
   ### Operations #######################################################################
 
@@ -363,7 +475,7 @@ class SNGView(PRDb["VObject"], Observer):
       logger.info("All nodes and relations passed validation.")
     else:
       logger.warning(f"Found {errCount} validation faults.")
-    if refresh:
+    if refresh and self.canvas:
       self.canvas.freshPaint()
       self.canvas.repaint()
     return errCount
@@ -599,6 +711,7 @@ class SNCanvas(tk.Canvas):
       bgMenu.add_separator()
     
     bgMenu.add_command(label="float all", command=lambda: [r.floating(True) for r in self.context.view.values() if isinstance(r, VRelation) and r.modelObject.isIndividual()])
+    bgMenu.add_command(label="refresh all", command=lambda: [o.cache.refresh() for o in self.context.view.values()])
     bgMenu.add_command(label="show all", command=self.context.view.showAllModel)
     # bgMenu.add_command(label="toggle field layout", command=self.onToggleFieldsLayout, accelerator=KEY_TOGGLE_FIELDS_LAYOUT[1])
     # bgMenu.add_command(label="show animation controls", command=self.onShowAnimationControls)

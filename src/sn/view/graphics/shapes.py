@@ -45,17 +45,14 @@ Created on Jan 30, 2025
 -------------
 '''
 
-from typing import Optional, override
+from typing import Optional
 import tkinter as tk
-from abc import abstractmethod, ABC
-from math import sqrt, cos, sin, pi
+from math import cos, sin, pi
 
-from util.utils import allConcreteSubclasses, grouped, getClass
+from util.utils import allConcreteSubclasses
 from sn.view.graphics.vobjects import VObject
-from sn.view.graphics.vnodes import VNode
 
 import logging
-from inspect import isabstract
 import weakref
 logger:sn.SNLogger = sn.getLogger(__name__)
 
@@ -97,7 +94,7 @@ class Shape:
     return None
   
   @classmethod
-  def shapeValidator(cls, name:Optional[str]):
+  def shapeValidator(cls, name:Optional[str]=None) -> str|list[str]:
     '''
     :param name: [Optional[str] The name to to search for or *None* to return a 
       list of all known concrete subclasses of *Shape* .
@@ -125,7 +122,7 @@ class Shape:
     assert isinstance(vobject, VObject)
     self._vobject = weakref.ref(vobject)
     'A weakref to the "owner" *VObject*. Should NOT be accessed directly, but through the *vobject* property.'
-    self.id = None 
+    self.id:int|None = None 
     'ID int of the canvas tk draw item, NOT the persistence ID'
     self.kwargs = kwargs
     'The tk arguments to specify the attributes of the shape'
@@ -135,16 +132,22 @@ class Shape:
     
   def delete(self):
     # remove the shape
-    self.vobject.canvas.delete(self.id)
-    self._vobject = None
-    self.kwargs = None
+    if self.id is not None:
+      self.vobject.canvas.delete(self.id)
+    self._vobject = None # type: ignore[assignment]
+    self.kwargs = None # type: ignore[assignment]
     
   @property
   def vobject(self) -> VObject:
     '''
     The *VNode* that owns this shape. Implemented as a weakref under the covers.
     '''
-    return self._vobject() if self._vobject is not None else None
+    if self._vobject is None:
+      raise LookupError("VObject appears to have been deleted.")
+    ret = self._vobject()
+    if ret is None:
+      raise MemoryError("VObject appears to have been deleted.")
+    return ret
          
   def template(self): 
     """
@@ -170,7 +173,8 @@ class Shape:
       rect = self.vobject.boundingBox(fast=fast)
     return self.transform(rect, fast=fast) # points in WINDOW coordinates
   
-  def transform(self, new:list[int], adj:Optional[list[int]]=[0,0,1,1], pointsVector:Optional[list[float]]=None, fast=False) -> list[int]:
+  def transform(self, new:list[int|float], adj:Optional[list[int]]=[0,0,1,1], 
+                pointsVector:Optional[list[float]]=None, fast=False) -> list[float]:
     """
     :param new: [list[int], len=4] The new boundng box
     :param adj: [Optional[list[int]], len=4, default=[0,0,1,1]] The adjustment factor
@@ -180,7 +184,7 @@ class Shape:
     :return: the transform of the points vector to fit the new bounding box
     """
     assert len(new) == 4
-    if adj is None: adj = self.boundingBox(fast=fast)
+    if adj is None: adj = self.vobject.boundingBox(fast=fast)
     assert len(adj) == 4
     if pointsVector is None: pointsVector = self.template()
     assert len(pointsVector)%2 == 0
@@ -199,13 +203,13 @@ class Shape:
     stretchy = nwy/owy
     newPoints = []
     for i in range(0, len(pointsVector), 2):
-      x = int((pointsVector[i]   - oox) * stretchx + nox)
-      y = int((pointsVector[i+1] - ooy) * stretchy + noy)
+      x = float((pointsVector[i]   - oox) * stretchx + nox)
+      y = float((pointsVector[i+1] - ooy) * stretchy + noy)
       newPoints.append(x)
       newPoints.append(y)
     return newPoints
 
-  shapeOptionsMap:dict[str:str] = {
+  shapeOptionsMap:dict[str,str] = {
     'vis/borderColor': "outline",
     'vis/fillColor': "fill",
     'vis/borderWidth': "width",
@@ -233,7 +237,7 @@ class Shape:
       pass
     return False
     
-  def draw(self, fast=False, **kwargs) -> int:
+  def draw(self, fast=False, **kwargs) -> int|None:
     # if self.vobject is None: #premature update during a shape change?
     #   return None
     if not fast and self.checkShape(): return None
@@ -245,7 +249,7 @@ class Shape:
       self.vobject.canvas.itemconfigure(self.id, tags=[self.vobject.tag, 'vis/shape'])
     else: # a redraw
       try:
-        self.vobject.canvas.coords(self.id, self.vobject.canvas.viewToWindow(self.points(fast=fast)))
+        self.vobject.canvas.coords(self.id, self.vobject.view.viewToWindow(self.points(fast=fast)))
         self.vobject.canvas.itemconfigure(self.id, **self.kwargs)
       except Exception as ex:
         raise ex
@@ -502,7 +506,7 @@ class Oval(Shape):
       pts.append(cy + r * sin(theta))
     return pts
 
-  def draw(self, fast=False, **kwargs) -> int:
+  def draw(self, fast=False, **kwargs) -> int|None:
     if not fast and self.checkShape(): return None
     if not fast: # first update from the GraphObject.
       self.updateKwargs() 
@@ -510,10 +514,10 @@ class Oval(Shape):
     bb = self.vobject.boundingBox(fast=fast)
     
     if self.id is None: 
-      self.id = self.vobject.canvas.create_oval(self.vobject.canvas.viewToWindow(bb), **self.kwargs)
+      self.id = self.vobject.canvas.create_oval(self.vobject.view.viewToWindow(bb), **self.kwargs)
       self.vobject.canvas.itemconfigure(self.id, tags=[self.vobject.tag, 'vis/shape'])
     else:
-      self.vobject.canvas.coords(self.id, self.vobject.canvas.viewToWindow(bb))
+      self.vobject.canvas.coords(self.id, self.vobject.view.viewToWindow(bb))
       self.vobject.canvas.itemconfigure(self.id, **self.kwargs)
     return self.id
   

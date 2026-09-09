@@ -87,7 +87,7 @@ class Text(Decorator):
     self.kwargs = kwargs
     if "justify" not in self.kwargs: self.kwargs["justify"] = "center"
     if "anchor"  not in self.kwargs: self.kwargs["anchor"]  = "center"
-    if "font"    not in self.kwargs: self.kwargs["font"]    = (self.owner.canvas._fontFace, int(self.owner.canvas._fontSize*self.owner.canvas._scale))
+    if "font"    not in self.kwargs: self.kwargs["font"]    = (self.owner.view._fontFace, int(self.owner.view._fontSize*self.owner.view._scale))
     if "fill"    not in self.kwargs: self.kwargs["fill"]    = "black"
 
   def updateKwargs(self):
@@ -112,7 +112,7 @@ class Text(Decorator):
   def getCoords(self) -> tuple[int, int]:
     x, y = self.owner.centerPt()
     x += 3
-    return self.owner.canvas.viewToWindow(x,y)
+    return self.owner.view.viewToWindow(x,y)
       
   def setText(self, fast=False) -> str:
     name = self.owner.modelObject.name
@@ -124,7 +124,7 @@ class Text(Decorator):
     return text
           
   def setFontToScale(self):
-    self.kwargs["font"] = (self.owner.canvas._fontFace, int(self.owner.canvas._fontSize * self.owner.canvas._scale))
+    self.kwargs["font"] = (self.owner.view._fontFace, int(self.owner.view._fontSize * self.owner.view._scale))
 
   @override
   def delete(self):
@@ -200,32 +200,32 @@ class Marker:
       self.kwargs["tags"] = [self.owner.tag, 'text']
       if "justify" not in self.kwargs: self.kwargs["justify"] = "center"
       if "anchor"   not in self.kwargs: self.kwargs["anchor"]  = "center"
-      if "font"     not in self.kwargs: self.kwargs["font"]    = ("TkSmallCaptionFont", int(self.owner.canvas._fontSize * self.owner.canvas._scale))
+      if "font"     not in self.kwargs: self.kwargs["font"]    = ("TkSmallCaptionFont", int(self.owner.view._fontSize * self.owner.view._scale))
       self.kwargs["text"] = self.label
       self.kwargs["fill"] = self.fg
       if "fill"     not in self.kwargs2: self.kwargs2["fill"]    = self.bg
       if "outline"  not in self.kwargs2: self.kwargs2["outline"] = ""
       self.kwargs2["tags"] = [self.owner.tag]
       self.id2 = self.owner.canvas.create_oval(
-                  self.owner.canvas.viewToWindow(
+                  self.owner.view.viewToWindow(
                   [at[0]-Marker.SIZE[0], 
                    at[1]-Marker.SIZE[1], 
                    at[0]+Marker.SIZE[0], 
                    at[1]+Marker.SIZE[1]]),
                    **self.kwargs2)
-      self.id   = self.owner.canvas.create_text(self.owner.canvas.viewToWindow(at[0])[0], self.owner.canvas.viewToWindow(at[1])[0], **self.kwargs)
+      self.id   = self.owner.canvas.create_text(self.owner.view.viewToWindow(at[0])[0], self.owner.view.viewToWindow(at[1])[0], **self.kwargs)
       #self.id   = self.owner.canvas.create_text(at[0], at[1], **self.kwargs)
     else:   
       #self.kwargs.update(kwargs)
       if self.id is not None:
         self.owner.canvas.coords(self.id2, 
-                  self.owner.canvas.viewToWindow(
+                  self.owner.view.viewToWindow(
                   [at[0]-Marker.SIZE[0], 
                    at[1]-Marker.SIZE[1], 
                    at[0]+Marker.SIZE[0], 
                    at[1]+Marker.SIZE[1]]))
-        self.owner.canvas.coords(self.id, self.owner.canvas.viewToWindow(at[0], at[1]))
-        self.kwargs["font"] = ("TkSmallCaptionFont", int(self.owner.canvas._fontSize * self.owner.canvas._scale))
+        self.owner.canvas.coords(self.id, self.owner.view.viewToWindow(at[0], at[1]))
+        self.kwargs["font"] = ("TkSmallCaptionFont", int(self.owner.view._fontSize * self.owner.view._scale))
         self.owner.canvas.itemconfigure(self.id, **self.kwargs)
         self.owner.canvas.itemconfigure(self.id2, **self.kwargs2)
     return True
@@ -294,7 +294,7 @@ class MarkerContainer(Decorator):
                lambda owner=self.owner: owner.modelObject.isType() and snPrefs.get("gui/showTypeTags", storeDefault=True),
                "Type: object is a Type object (as opposed to an Individual)"),
         MarkerWithTooltip(owner, "R", "cyan", "gray50", 
-               lambda owner=self.owner: owner.canvas.model != owner.modelObject.model and snPrefs.get("gui/showRemoteTags", storeDefault=True),
+               lambda owner=self.owner: owner.view.model != owner.modelObject.model and snPrefs.get("gui/showRemoteTags", storeDefault=True),
                lambda owner=self.owner: f'Remote: Object is from another model: {owner.modelObject.model.url}')
         ]
 
@@ -346,13 +346,13 @@ class MarkerContainer(Decorator):
 #       self.kwargs["tags"] = [self.owner.tag, 'text']
 #       if "justify" not in self.kwargs: self.kwargs["justify"] = "center"
 #       if "anchor"   not in self.kwargs: self.kwargs["anchor"]  = "center"
-#       if "font"     not in self.kwargs: self.kwargs["font"]    = ("TkSmallCaptionFont", int(self.owner.canvas._fontSize * self.owner.canvas._scale))
+#       if "font"     not in self.kwargs: self.kwargs["font"]    = ("TkSmallCaptionFont", int(self.owner.view._fontSize * self.owner.view._scale))
 #       if "fill"     not in self.kwargs: self.kwargs["fill"]    = "white"
 #       self.setArgs()
 #       x, y, _, _ = self.owner.boundingBox(fast=fast)
 #       offset = self.getOffset()
 #       self.id2 = self.owner.canvas.create_oval(
-#                   self.owner.canvas.viewToWindow(
+#                   self.owner.view.viewToWindow(
 #                   [x+offset[0]-self.size[0], 
 #                    y+offset[1]-self.size[1], 
 #                    x+offset[0]+self.size[0], 
@@ -366,13 +366,13 @@ class MarkerContainer(Decorator):
 #         x, y, _, _ = self.owner.boundingBox(fast=fast)
 #         offset = self.getOffset()
 #         self.owner.canvas.coords(self.id2, 
-#                   self.owner.canvas.viewToWindow(
+#                   self.owner.view.viewToWindow(
 #                   [x+offset[0]-self.size[0], 
 #                    y+offset[1]-self.size[1], 
 #                    x+offset[0]+self.size[0], 
 #                    y+offset[1]+self.size[1]]))
-#         self.owner.canvas.coords(self.id, self.owner.canvas.viewToWindow([x+offset[0], y+offset[1]]))
-#         self.kwargs["font"] = ("TkSmallCaptionFont", int(self.owner.canvas._fontSize * self.owner.canvas._scale))
+#         self.owner.canvas.coords(self.id, self.owner.view.viewToWindow([x+offset[0], y+offset[1]]))
+#         self.kwargs["font"] = ("TkSmallCaptionFont", int(self.owner.view._fontSize * self.owner.view._scale))
 #         self.owner.canvas.itemconfigure(self.id, **self.kwargs)
 #         self.owner.canvas.itemconfigure(self.id2, **self.kwargs2)
 #
@@ -423,11 +423,11 @@ class Selected(Decorator):
     if self.id is None:
       self.kwargs["tags"] = [self.owner.tag, 'selection']
       rect = self.owner.boundingBox(fast=fast)
-      rect = self.owner.canvas.viewToWindow(rect)
+      rect = self.owner.view.viewToWindow(rect)
       self.id = self.owner.canvas.create_rectangle(rect, **self.kwargs)
     else:
       rect = self.owner.boundingBox(fast=fast)
-      rect = self.owner.canvas.viewToWindow(rect)
+      rect = self.owner.view.viewToWindow(rect)
       self.owner.canvas.coords(self.id, rect)
       self.owner.canvas.itemconfigure(self.id, **self.kwargs)
 

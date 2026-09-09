@@ -44,7 +44,7 @@ from sn.view.graphics.vnodes import VNode
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
 from util.utils import Point, expandRect
-from sn.model import GraphObject, Node
+from sn.model.model import GraphObject, Node
 from util.utils import removeDuplicates
 
 logger:sn.SNLogger = sn.getLogger(__name__)
@@ -81,7 +81,7 @@ class LayoutHieristic(ABC):
     '''
     Constructor
     '''
-    from sn.view.graphics.snCanvas import SNGView
+    from sn.view.graphics.sngView import SNGView
     assert isinstance(view, SNGView)
     self.view = view
     
@@ -91,7 +91,7 @@ class LayoutHieristic(ABC):
     if referenceNode is None: # and loc is None
       return Direction.LATERAL
     else: #referenceNode is not None and loc is None
-      if node.isa(referenceNode):
+      if node.modelObject.isa(referenceNode.modelObject):
         return Direction.SUB
       elif referenceNode:
         return Direction.SUPER
@@ -155,9 +155,9 @@ class FindFree(LayoutHieristic):
       #   else:
       #     direction = Direction.SUB
       elif referenceNode is not None:
-        if node.isa(referenceNode):
+        if node.modelObject.isa(referenceNode.modelObject):
           direction = Direction.SUB
-        elif referenceNode.isa(node):
+        elif referenceNode.modelObject.isa(node.modelObject):
           direction = Direction.SUPER
         else:
           direction = Direction.LATERAL

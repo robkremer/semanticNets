@@ -33,7 +33,7 @@ Created on Jan 18, 2025
 import logging
 import tkinter as tk
 from tkinter import ttk
-from typing import Optional, Iterable
+from typing import Optional, Iterable, Callable
 import subprocess
 
 logger:sn.SNLogger = sn.getLogger(__name__)
@@ -204,8 +204,123 @@ def getSubMenu(menu:tk.Menu, name:str, makeIfNone:int|str|None=tk.END) -> Option
   return submenu
 
 
-def getToplevelWindows(root:tk.Tk): 
+def getToplevelWindows(root:tk.Tk):
   return [x for x in root.winfo_children() if isinstance(x , tk.Toplevel)]
+
+def _getMenuBar() -> Optional[tk.Menu]:
+  """
+  Resolve the app's menu bar -- the configured menu of ``tk._default_root``.
+
+  :return: The resolved *tk.Menu*, or *None* if there's no default root, or
+      it has no menu bar configured.
+  """
+  root = tk._default_root  # type: ignore[attr-defined] # @UndefinedVariable
+  if root is None:
+    return None
+  menuName = root.cget("menu")
+  if not menuName:
+    return None
+  return root.nametowidget(menuName)
+
+def _findEntry(menu:tk.Menu, label:str) -> tuple[Optional[int], Optional[str]]:
+  """
+  :param menu: The menu to search.
+  :param label: The label of the item we are searching for.
+  :return: *(index, type)* of the entry in *menu* labelled *label*, or
+      *(None, None)* if there is no such entry.
+  """
+  try:
+    # Menu.index(label) raises TclError (not "returns None") when no entry
+    # matches -- e.g. on an otherwise-empty menu -- so absence has to be
+    # caught, not tested for. Same gotcha getSubMenu() above works around.
+    index = menu.index(label)
+  except tk.TclError:
+    return None, None
+  if index is None:
+    return None, None
+  return index, menu.type(index)
+
+def addToMenuBar(path:str, command:Optional[Callable]=None, *, menu:Optional[tk.Menu]=None,
+    accelerator:Optional[str]=None) -> None:
+  """
+  Add -- or, if already present, replace -- an entry in the app's menu bar.
+
+  Pass exactly one of *command* or *menu*: *command* adds/replaces a plain
+  command entry that invokes *command* when chosen; *menu* adds/replaces a
+  cascade entry whose submenu is *menu*. The top-level menu bar itself is
+  always the app's own -- resolved from ``tk._default_root``'s configured
+  menu -- there's no need to look it up and pass it in.
+
+  :param path: A ``"|"``-separated path of cascade labels ending in the
+      item's own label, e.g. ``"File|Save view"``. All but the last segment
+      name cascade submenus, created via *getSubMenu()* if they don't
+      already exist; the last segment is the item's own label.
+  :param command: The callable to invoke when the item is chosen. Give this
+      to add/replace a plain command item; mutually exclusive with *menu*.
+  :param menu: The submenu to show as a cascade. Give this to add/replace a
+      cascade item; mutually exclusive with *command*.
+  :param accelerator: Optional accelerator string to display (e.g. "Cmd+S").
+  :note: Safe to call repeatedly with the same *path* -- e.g. every time a
+      window gains focus -- since an existing entry with the same final
+      label is reconfigured in place rather than duplicated (and, if it was
+      previously the other kind of entry -- command vs. cascade -- it's
+      replaced in place, at the same position). This is what makes it safe
+      for callers like *SNGView.onWindowFocusIn()* to call unconditionally.
+  :rtype: None
+  """
+  assert (command is None) != (menu is None), \
+      'addToMenuBar(): pass exactly one of command= (add/replace a command item) or menu= (add/replace a cascade item).'
+  segments = path.split("|")
+  assert len(segments) >= 1, f'addToMenuBar(): empty path.'
+  target = _getMenuBar()
+  assert target is not None, \
+      f'addToMenuBar(): no default menu bar could be resolved (no default root, or it has no menu configured).'
+  for seg in segments[:-1]:
+    target = getSubMenu(target, seg)
+  label = segments[-1]
+  kwargs = {} if accelerator is None else {"accelerator": accelerator}
+  wantType = "command" if command is not None else "cascade"
+  index, existingType = _findEntry(target, label)
+  if index is not None and existingType != wantType:
+    target.delete(index)  # entry exists but as the other kind -- replace it in place
+  elif index is None:
+    index = tk.END
+  if command is not None:
+    if existingType == wantType:
+      target.entryconfig(index, command=command, state=tk.NORMAL, **kwargs)
+    else:
+      target.insert_command(index, label=label, command=command, state=tk.NORMAL, **kwargs)
+  else:
+    if existingType == wantType:
+      target.entryconfig(index, menu=menu, state=tk.NORMAL, **kwargs)
+    else:
+      target.insert_cascade(index, label=label, menu=menu, state=tk.NORMAL, **kwargs)
+
+def removeFromMenuBar(path:str) -> None:
+  """
+  Remove an entry (as added by *addToMenuBar()*) from the app's menu bar.
+
+  Safe to call even when the item (or an intervening cascade) isn't
+  currently present -- this is simply a no-op in that case, so callers
+  like *SNGView.onWindowFocusOut()* don't need to track whether they
+  actually added the item first.
+
+  :param path: Same ``"|"``-separated path as passed to *addToMenuBar()*.
+  :rtype: None
+  """
+  segments = path.split("|")
+  assert len(segments) >= 1, f'removeFromMenuBar(): empty path.'
+  target = _getMenuBar()
+  if target is None:
+    return
+  for seg in segments[:-1]:
+    target = getSubMenu(target, seg, makeIfNone=None)
+    if target is None:
+      return
+  label = segments[-1]
+  index, _ = _findEntry(target, label)
+  if index is not None:
+    target.delete(index)
   
 ##########################################################################################
 ########## SOUNDS ########################################################################

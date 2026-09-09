@@ -317,7 +317,7 @@ class SNView(PRDb, Observer):
       - self.vScroll
       - self.canvas
     '''
-    self.frame = tkparent.appFrame
+    self.frame = tkparent.canvasFrame
 
     if "scrollregion" not in kwargs:
       kwargs["scrollregion"] = self.scrollRegion

@@ -102,19 +102,23 @@ class GraphObject(AttributedObject, PRObject):
     :type name: Optional[str]
     '''
     assert isinstance(db, Model)
-    AttributedObject.__init__(self)
-    PRObject.__init__(self, db)
+  
+    self._parentsCache:list[GraphObject]|None = []
 
-    outgoingCheck = lambda r, slf=self: isinstance(r, Relation) and r.src is slf and not slf is None and not slf.model.writeLocked()
-    self._outgoing:ValidatedList[Relation] = ValidatedList(outgoingCheck)
-    "Should only be assigned by *Relation* objects where self is at the src end and not write-locked."
-    
     incomingCheck = lambda r, slf=self: isinstance(r, Relation) and r.dst is slf
     self._incoming:ValidatedList[Relation] = ValidatedList(incomingCheck)
     "Should only be assigned by *Relation* objects where self is at the dst end."
     
+    outgoingCheck = lambda r, slf=self: isinstance(r, Relation) and r.src is slf and not slf is None and not slf.model.writeLocked()
+    self._outgoing:ValidatedList[Relation] = ValidatedList(outgoingCheck)
+    "Should only be assigned by *Relation* objects where self is at the src end and not write-locked."
+    
     self._individual = individual
-    self._parentsCache:list[GraphObject]|None = []
+
+    # call super init's
+    AttributedObject.__init__(self)
+    PRObject.__init__(self, db)
+
     if parents is not None: # Will be None when reading in from persistent store
       for p in parents:
         IsaIndividual(db, self, p)
@@ -570,7 +574,7 @@ class GraphObject(AttributedObject, PRObject):
     return self._individual
   
   def isSystemObject(self) -> bool:
-    from sn.model import TopModel
+    from sn.model import TopModel  # @UnresolvedImport -- deferred to dodge the sn.model/model.py circular import; see sn/model/__init__.py
     return type(self.model) is TopModel
 
   @property
@@ -666,15 +670,19 @@ class Model(PRDb[GraphObject], Subject):
       Creates a brand new base Model.
     '''
     PRDb._initCache()
-    from sn.model import TopModel
+    from sn.model import TopModel  # @UnresolvedImport -- deferred to dodge the sn.model/model.py circular import; see sn/model/__init__.py
     model = TopModel("sn:///sn", mode="", _reading=False) # creates a model in memory cache
     model._writeLocked = True
     
+  def __new__(cls, url:str, mode:str="w", _reading:bool=False):
+    return PRDb.__new__(cls, url, mode=mode, memoryResident=True, _reading=_reading)
+    
+
   def __init__(self, url:str, mode:str="w", _reading:bool=False):
     '''
     Constructor
     '''
-    PRDb.__init__(self, url, mode=mode, _reading=_reading)
+    PRDb.__init__(self, url, mode=mode, memoryResident=True, _reading=_reading)
     Subject.__init__(self)
     
     self._allowParentsCaching:bool = False
@@ -740,6 +748,7 @@ class Model(PRDb[GraphObject], Subject):
       cm.registerTopics(("add GraphObject", (ret, value)))
     return ret
     
+  @override
   def _unregister(self, _id:int) -> None:
     '''
     Overrides the 
@@ -748,7 +757,9 @@ class Model(PRDb[GraphObject], Subject):
     '''
     super()._unregister(_id)
     self.setDirty()
-    self.notify(("del GraphObject", (_id,)))
+    with Subject.ChangeMgr(self, later=True) as cm:
+      cm.registerTopics(("del GraphObject", (_id,)))
+    #self.notify(("del GraphObject", (_id,)))
     
   def setDirty(self, value:bool=True) -> bool:
     '''

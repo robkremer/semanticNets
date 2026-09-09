@@ -27,8 +27,10 @@ from typing import override, cast
 import logging
 import os
 import sys
+
 from util import setupLogger
 import util.observer as observer
+from util.prefs import Prefs
 
 #setupLogger()
 
@@ -79,13 +81,6 @@ def getLogger(name:str) -> SNLogger:
 
 logger = getLogger(__name__)
 
-from util.prefs import Prefs
-from util.attribute import AttributedObject, Attribute, UNRESTRICTED,\
-  VAR_DEFAULTED
-from util.persistence.serialize import SerializationStrategy
-SerializationStrategy.appName = f'{NAME} ({SHORT_NAME})'
-SerializationStrategy.appVerion = VERSION
-
 # load Prefs
 class SNPrefs(Prefs):
 
@@ -106,13 +101,8 @@ except:
 snPrefs.addCallback("loggingLevel", lambda key, level: (logger.setLevel(logging.getLevelNamesMapping()[level.upper()]), # type: ignore[func-returns-value,arg-type]
                                                            logger.info(f'Updated {key} to {level} ({logging.getLevelName(logger.getEffectiveLevel())}={logger.getEffectiveLevel()})') # type: ignore[attr-defined]
                                                           ))
-# if "loggingLevel" not in snPrefs:
-#   snPrefs['loggingLevel'] = Attribute('INFO',
-#               'choices[DEBUG,INFO,WARNING,ERROR,CRITICAL]',
-#               VAR_DEFAULTED)
-  
-logger.setLevel(logging.getLevelNamesMapping()[snPrefs.get("loogingLevel", 
-                                                           storeDefault="INFO", 
+logger.setLevel(logging.getLevelNamesMapping()[snPrefs.get("loggingLevel", 
+                                                           storeDefault="DEBUG", 
                                                            storeType='choices[DEBUG,INFO,WARNING,ERROR,CRITICAL]').upper()
                                               ])
 
@@ -133,3 +123,29 @@ logger.setLevel(logging.getLevelNamesMapping()[snPrefs.get("loogingLevel",
 # registerAtExit()
 
 atexit.register(snPrefs.save)
+
+def saveAtExit():
+  from sn.view.graphics.sngView import SNGView
+  from sn.model.model import Model
+  from util.utils import askUser
+  from util.persistence.pRef import PRDb
+  
+  url:str
+  db:PRDb
+  for url, db in Model.AllDBs.items():
+    if isinstance(db, Model):
+      model:Model = db
+      if not model.writeLocked() and model.isDirty():
+        ans:str|None = askUser(f'Save modified model?\n  {url}\n(Y/N):', "Save modified Model?")
+        if ans is not None and ans.upper() in ["Y", "YES", "T", "TRUE"]:
+          model.save()
+    elif isinstance(db, SNGView):
+      view:SNGView = db
+      if not view.writeLocked() and view.isDirty():
+        ans = askUser(f'Save modified view?\n  {url}\n(Y/N):', "Save modified Model?")
+        if ans is not None and ans.upper() in ["Y", "YES", "T", "TRUE"]:
+          view.save()
+    else:
+      print(f'Unknown DB type {db.__class__.__name__}: {url}.')
+  
+atexit.register(saveAtExit)
