@@ -40,9 +40,11 @@ from sn.view.graphics.vrelations import VRelation
 from sn.view.graphics.layout import FindFree
 from math import sqrt
 from util.persistence.serialize import InstantiationInfo, PropertyInfo,\
-  ParamInfo
+  ParamInfo, Serializable, SerializableType
 from sn.view.graphics.guiApp import Application, AppWindow
 import threading
+from util.abstractGraph import AbstractGraph
+from util.dirtyable import Dirtyable
 #from sn.view.graphics.vobjects import VObject
 
 logger:sn.SNLogger = sn.getLogger(__name__)
@@ -69,6 +71,7 @@ class SNGContext(UIContext):
   def __init__(self, model:Model, view:SNGView):
     super().__init__(model)
     self.view:SNGView = view
+    self.defaults["view"] = view
     
   @override
   def _defineDecoders(self):
@@ -125,44 +128,69 @@ class SNGContext(UIContext):
     def __str__(self):
       return f'{super().__str__()} {self.obj.name} {self.x} {self.y}'
 
-  # def represent(self, object:GraphObject):
-  #   '''
-  #   This is a dummy graphic command.
-  #   '''
-  #   print ("dummy graphic command")
-  #
-  # class _Represent(Command):
-  #   def __init__(self, object:GraphObject, view:SNGView|None=None):
-  #     super().__init__("represent")
-  #     self.modelObject = object
-  #     self.view:SNGView = view
-  #     self.viewObject:"VObject"|None = None
-  #
-  #   @override
-  #   def do(self) -> None:
-  #     super().do()
-  #     if self.viewObject is None:
-  #       self.viewObject = self.view.makeViewObjectForGraphObject(self.modelObject)
-  #     else:
-  #       self.viewObject.connect()
-  #
-  #   @override
-  #   def undo(self):
-  #     super().undo()
-  #     assert self.viewObject is not None
-  #     self.viewObject.disconnect()
-  #
-  #   @override
-  #   def delete(self):
-  #     super().delete()
-  #     self.modelObject = None
-  #     self.view = None
-  #     self.viewObject = None
-  #
-  #   @override
-  #   def __str__(self):
-  #     return f'{super().__str__()} {self.obj.name} {self.x} {self.y}'
-    
+  def represent(self, object:list[GraphObject]):
+    '''
+    This is a dummy graphic command.
+    '''
+    print ("dummy graphic command")
+  
+  class _Represent(Command):
+    def __init__(self, objects:list[GraphObject|str], view:SNGView|None=None):
+      '''
+      Show the in the GUI, the give model objects.
+      
+      :param object: One or more model objects.
+      :type object: GraphObject
+      :returns: None
+      
+      '''
+      super().__init__("represent")
+      self.view:SNGView = view
+      assert isinstance(self.view, SNGView), f'Expected SNGView, got {type(self.view)}.'
+      self.modelObjects:list[GraphObject] = objects
+      assert isinstance(self.modelObjects, list), f'Expected list[Graphobject], got {type(self.modelObject)}.'
+      for i in range(len(self.modelObjects)): # convert from str to GraphObject if necessary
+        n = self.modelObjects[i]
+        if type(n) is str:
+          self.modelObjects[i] = view.model[n]  
+      for n in self.modelObjects:
+        assert isinstance(n, GraphObject)
+      self.vobjects:list[VObject] = []
+          
+        #assert isinstance(n, GraphObject), f'Expected GraphObject, got {type(n)}.'
+  
+    @override
+    def do(self) -> None:
+      super().do()
+      view = self.view
+      if len(self.vobjects) == 0:
+        detachCode = view.attachCallback(lambda tup: self.vobjects.append(tup[1]) if tup[0]=='new' else 0)
+        for mo in self.modelObjects:
+          self.view.makeViewObjectForGraphObject(self.modelObject) # seems odd, but the callback should add this to self.vobjects
+        view.detachCallback(detachCode)
+      else:
+        n:VObject
+        for n in self.vobjects:
+          n._reconnect()
+  
+    @override
+    def undo(self):
+      super().undo()
+      assert self.viewObject is not None
+      self.viewObject.disconnect()
+  
+    @override
+    def delete(self):
+      super().delete()
+      self.modelObject = None
+      self.view = None
+      self.viewObject = None
+  
+    @override
+    def __str__(self):
+      return f'{super().__str__()} {self.obj.name} {self.x} {self.y}'
+  
+
 
   def expand(self, object:GraphObject):
     '''
@@ -212,7 +240,7 @@ class SNGContext(UIContext):
 
     
 
-class SNGView(PRDb["VObject"], Observer):
+class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   '''
   The persistent container of VObjects.
   '''
@@ -222,6 +250,8 @@ class SNGView(PRDb["VObject"], Observer):
     return PRDb.__new__(cls, url, mode=mode, memoryResident=False, _reading=_reading)
 
   def __init__(self, url:str, model:Model, *, mode="w", geometry:str="300x400+20+20", _reading:bool=False):
+    if hasattr(self, "_initialized"): # This means the __new__ method has returned an existing object, so don't truck over it!
+      return
     if url is None:
       url = fixURL(model.url, extension=".snv", replaceExt=True, mode="w")[0]
 
@@ -230,6 +260,7 @@ class SNGView(PRDb["VObject"], Observer):
     self._fontSize:float = 10.0
 
     PRDb.__init__(self, url, memoryResident=False, _reading=_reading)
+    Dirtyable.__init__(self)
           
     self.model:Model = model
 
@@ -266,7 +297,6 @@ class SNGView(PRDb["VObject"], Observer):
     self._suppressLocalLayout = False
     'Temporarily suppress automatic layout. Necessary during drag operations, etc.'
     self.localLayout = FindFree(self)
-    self._dirty = False
 
     self._eventHandled:Optional[tk.Event] = None
     "Set by a contained VObject/item-level handler (via addEventHandled()) to mark that it already handled a mouse event, so this canvas's own (separately-dispatched) widget-level binding for the same event -- e.g. onRightMouse() -- can skip its generic handling. See isEventHandled()/addEventHandled()/removeEventHandled()."
@@ -279,33 +309,40 @@ class SNGView(PRDb["VObject"], Observer):
   @override
   @classmethod
   def getInstantiationInfo(cls) -> InstantiationInfo:
+    def finalize(slf:Serializable, _:SerializableType):
+      assert isinstance(slf, SNGView), f'Expected SNGView for param 1, got {type(slf)}.'
+      slf.setDirty(False)
+      for rel in slf.values():
+        if isinstance(rel, VRelation):
+          rel._connect()
     ret:InstantiationInfo = super().getInstantiationInfo()
     # ret.class_ = cls
     ret.conArgs.append(ParamInfo("model", str, getter=lambda slf: cast(SNGView,slf).model.url, setter=lambda m: Model(cast(str,m))))
     ret.conKWArgs.append(ParamInfo("geometry", str, getter=lambda slf: cast(SNGView,slf).window.geometry()))
-    ret.finalSetters.append(PropertyInfo("_", bool, setter=lambda slf,_t:cast(SNGView,slf).setDirty(False))) #type: ignore[arg-type]
+    ret.finalSetters.append(PropertyInfo("_", bool, setter=finalize))
     return ret
 
-  def setDirty(self, value:bool=True) -> bool:
+  @override
+  def setDirty(self, dirty:bool=True):
     '''
     An object is dirty if it has been modified and should probably be
     saved on exit.  This should be called from all methods that modify
     the state of this object.
     
-    If *value* is False, resets all the contained *Attributes* to False.
+    If *dirty* is False, resets all the contained *Attributes* to False.
     
-    :param value: (default True) The value to set *dirty* to.
-    :type value: bool
+    :param dirty: (default True) The dirty to set *dirty* to.
+    :type dirty: bool
     '''
-    assert type(value) is bool
-    if not value:
+    assert type(dirty) is bool
+    if not dirty:
       obj:VObject
       for obj in self._db.values():
         if obj.isDirty():
           obj.setDirty(False)
-    self._dirty = value
-    return self._dirty
+    self._dirty = dirty
     
+  @override
   def isDirty(self) -> bool:
     '''
     Returns True iff the object (or an of it's contained *Attributes*) have 
@@ -554,8 +591,8 @@ class SNGView(PRDb["VObject"], Observer):
   def showAllModel(self):
     x:int = 10
     y:int = 10
-    sizex:int = int(snPrefs.get('vis/minSize', storeDefault=30, storeType=int))
-    sizey:int = int(sizex * float(snPrefs.get('vis/aspectRatio', storeDefault=1.5, storeType=float)))
+    sizex:int = int(snPrefs.get('gui/NodeMinSize', storeDefault=30, storeType=int))
+    sizey:int = int(sizex * float(snPrefs.get('gui/NodeAspectRatio', storeDefault=1.5, storeType=float)))
     grid = (sizex * 2, sizey * 2)
     numNodes = len(self.model) - len(self)
     gridCount = int(sqrt(numNodes)) if numNodes>0 else 0

@@ -57,7 +57,22 @@ DOT = '\u23FA'
 ##########################################################################################
 
 class Decorator(ABC):
-  def __init__(self, owner):
+  def __init__(self, owner, priority:int=0):
+    '''
+    :param owner: The *VObject* this decorator is attached to.
+    :param priority: [int, default=0] Where this decorator draws relative to
+      the owner's other decorators, lowest first -- see *VObject.draw()*,
+      which draws *self.decorators.values()* sorted by this. Ties keep
+      insertion order (Python's sort is stable), so existing decorators are
+      unaffected by just leaving this at its default.
+
+      This only orders decorators *within one VObject's own draw() call* --
+      it can't reach across to order against a *different* VObject's items,
+      since canvas stacking is one global list, not per-object (see
+      *ShadowDecorator*, which needs exactly that and uses
+      *canvas.tag_lower()* instead).
+    :type priority: int
+    '''
     from sn.view.graphics.vobjects import VObject
     assert isinstance(owner, VObject)
 
@@ -66,7 +81,8 @@ class Decorator(ABC):
     self._owner = weakref.ref(owner)
     self.kind = type(self).__name__
     self.deleted:bool = False
-    
+    self.priority:int = priority
+
   @property
   def owner(self):
     return self._owner()
@@ -436,4 +452,107 @@ class Selected(Decorator):
     super().delete()
     self.owner.canvas.delete(self.id)
     self.kwargs = None
-  
+
+
+class ShadowDecorator(Decorator):
+  '''
+  Draws a plain "duplicate shape, grey, one z-order lower" drop shadow behind
+  the owner's own shape -- the standard tk drop-shadow technique, rather than
+  anything Pillow/raster-based (too costly to redraw/rescale for this).
+
+  Only drawn for snPrefs["gui/showIndividualShadow"] is True.
+
+  Does NOT yet support "vis/shadowColor" or any other attribute-driven
+  customization -- the constructor *kwargs* are the only knob for now. See
+  *Shape.shapeOptionsMap* / *Shape.updateKwargs()* for the pattern to follow
+  if/when that's added later.
+  '''
+  def __init__(self, owner, offset:tuple[int,int]=(4,4), **kwargs):
+    '''
+    :param owner: The *VObject* this decorator is attached to.
+    :param offset: [tuple[int,int], default=(4,4)] The (dx, dy) the shadow is
+      shifted from the real shape, added directly to the coordinates
+      *Shape.points()* / *Oval.boundingBox()* themselves work in -- see
+      *draw()*, which otherwise mirrors *Shape.draw()* / *Oval.draw()*
+      coordinate handling exactly so the shadow tracks the real shape.
+    :type offset: tuple[int,int]
+    :param kwargs: extra tk canvas item options for the shadow item; "fill"
+      and "outline" default to a plain grey/none if not given.
+    '''
+    # priority=-10 only orders this decorator among the owner's *own*
+    # decorators (see Decorator.priority) -- the actual "always at the very
+    # back of the whole canvas" guarantee comes from tag_lower() in draw(),
+    # below, not from priority.
+    super().__init__(owner, priority=-10)
+    self.id:int|None = None # the id of the canvas item
+    self.offset = offset
+    self.kwargs = kwargs
+    if "fill"    not in self.kwargs: self.kwargs["fill"]    = "gray70"
+    if "outline" not in self.kwargs: self.kwargs["outline"] = ""
+
+  def _offsetPoints(self, points:list[float]) -> list[float]:
+    dx, dy = self.offset
+    return [p + (dx if i%2==0 else dy) for i, p in enumerate(points)]
+
+  def _erase(self):
+    if self.id is not None:
+      self.owner.canvas.delete(self.id)
+      self.id = None
+
+  @override
+  def draw(self, fast=False, **kwargs):
+    '''
+    Shadow visibility isn't a persisted attribute -- like *MarkerContainer*'s
+    marker *condition*\\ s, it's just re-derived every draw: Individuals get
+    a shadow, Types don't. If *self.owner.modelObject.isType()*, any existing
+    shadow item is erased and we return immediately.
+    '''
+    if not snPrefs.get("gui/showIndividualShadow", storeDefault=True, storeType=bool):
+      self._erase()
+      return
+
+    self.kwargs.update(kwargs)
+    shape = self.owner._shape
+
+    # Oval.draw() renders a true ellipse via create_oval() (unlike the other
+    # Shapes, which are all polygons) and applies viewToWindow() consistently
+    # on both create and redraw -- mirror that exactly rather than using
+    # Oval.points(), which is only a 24-vertex polygon *approximation* used
+    # for hit-testing, not what actually gets drawn.
+    from sn.view.graphics.shapes import Oval
+    if isinstance(shape, Oval):
+      bb = self.owner.boundingBox(fast=fast)
+      bb = [bb[0]+self.offset[0], bb[1]+self.offset[1], bb[2]+self.offset[0], bb[3]+self.offset[1]]
+      if self.id is None:
+        self.id = self.owner.canvas.create_oval(self.owner.view.viewToWindow(bb), **self.kwargs)
+        self.owner.canvas.itemconfigure(self.id, tags=[self.owner.tag, 'shadow'])
+      else:
+        self.owner.canvas.coords(self.id, self.owner.view.viewToWindow(bb))
+        self.owner.canvas.itemconfigure(self.id, **self.kwargs)
+    else:
+      # Shape.draw() itself has a create/redraw asymmetry -- create_polygon()
+      # gets raw points() with no viewToWindow(), while the redraw coords()
+      # call applies viewToWindow() -- mirror it exactly so the shadow stays
+      # pixel-aligned with the real shape at any zoom/scroll.
+      if self.id is None:
+        pts = self._offsetPoints(shape.points(fast=fast))
+        self.id = self.owner.canvas.create_polygon(pts, **self.kwargs)
+        self.owner.canvas.itemconfigure(self.id, tags=[self.owner.tag, 'shadow'])
+      else:
+        pts = self._offsetPoints(shape.points(fast=fast))
+        self.owner.canvas.coords(self.id, self.owner.view.viewToWindow(pts))
+        self.owner.canvas.itemconfigure(self.id, **self.kwargs)
+
+    # Always re-assert absolute-bottom stacking: tag_lower() with a single
+    # argument moves this item to the bottom of the *whole* canvas, so this
+    # is enough to keep every shadow behind every real shape and decorator,
+    # with no need to coordinate across VObjects.
+    self.owner.canvas.tag_lower(self.id)
+
+  @override
+  def delete(self):
+    if self.deleted: return
+    super().delete()
+    self._erase()
+    self.kwargs = None
+

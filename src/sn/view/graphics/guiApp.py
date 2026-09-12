@@ -92,7 +92,7 @@ class Application(tk.Tk):
     self.title(sn.NAME)
     self.defaultChildLocation:tuple[int, int] = (20, 60)
 
-    self.windows: dict[str, tk.Toplevel] = {}
+    self.windows: dict[str, AppWindow] = {}
     self.terminalRegistry = terminalRegistry  # shared across all windows
 
     installGlobalIORouting(self.terminalRegistry)  # install exactly once, here
@@ -229,6 +229,19 @@ class Application(tk.Tk):
     
     def makeViewFromModel(model:Model) -> SNGView:
       url = fixURL(model.url, ".snv", replaceExt=True, mode='w')[0]
+      if url in self.windows:
+        # This model's view already has an open window -- hand back its live
+        # SNGView as-is rather than re-decoding the .snv file from disk. This
+        # matters for more than just avoiding wasted work: re-reading here
+        # unconditionally, on every repeat "Open" of an already-loaded model,
+        # is what let a stale/bad persisted "model" reference on disk (e.g. a
+        # .snv pointing at the wrong -- or, worse, a self-referential -- URL)
+        # get re-triggered by a second open of a file that hadn't actually
+        # changed. The one-and-only decode of this .snv already happened when
+        # its window was first opened; trust that live object instead.
+        existingView = self.windows[url].view
+        assert isinstance(existingView, SNGView)
+        return existingView
       if urlExists(url):
         ret = SerializationStrategy.readx(url, replaceExt=None)
         assert isinstance(ret, SNGView)
@@ -247,17 +260,32 @@ class Application(tk.Tk):
           viewSpec = fixURL(viewSpec, None, replaceExt=None, mode='w')[0]
         if isValidURL(viewSpec):
           if urlExists(viewSpec): # we got reference to a file that could be a Model or a SNGView
-            modelOrView = SerializationStrategy.readx(viewSpec, replaceExt=None)
-            if isinstance(modelOrView, SNGView): # we should already have a view displayed
-              view = modelOrView
-            elif isinstance(modelOrView, Model): # we read a model, read or create the corresponding default view
+            # We don't yet know which of the two this file holds, and legally
+            # it could be either -- but SerializationStrategy.readx() finding
+            # out FOR us means fully decoding it, which means constructing
+            # (and registering into PRDb.AllDBs) whatever's in it. Peeking
+            # first tells us the type for free -- no construction, no
+            # PRDb.AllDBs registration, no side effects at all -- so we only
+            # ever construct the one object we actually end up wanting, and
+            # only via the single readx() call below meant for it.
+            peekedType = SerializationStrategy.peekTypex(viewSpec, replaceExt=None)
+            if issubclass(peekedType, SNGView): # it's a view -- if it's already open, we're done.
+              if viewSpec in self.windows:
+                view = cast(SNGView, self.windows[viewSpec].view)
+              else:
+                modelOrView = SerializationStrategy.readx(viewSpec, replaceExt=None)
+                assert isinstance(modelOrView, SNGView)
+                view = modelOrView
+            elif issubclass(peekedType, Model): # it's a model -- read it, then find/create its view.
+              modelOrView = Model(viewSpec)
+              assert isinstance(modelOrView, Model)
               view = makeViewFromModel(modelOrView)
-            else: # we read something we didn't expect
-              raise UnexpectedObjectInFile(f'File "{viewSpec}" contains an object of type {modelOrView.__class__.__name__}. Expected a Model or a SNGView object')
+            else: # it's something we didn't expect
+              raise UnexpectedObjectInFile(f'File "{viewSpec}" contains an object of type {peekedType.__name__}. Expected a Model or a SNGView object')
           else: # A new file
             if viewSpec.endswith(".snm"): # we were given a non-existant model file so create a default model and it's default view.
               viewURL = fixURL(viewSpec, ".snv", replaceExt=True, mode='w')[0]
-              view = SNGView(viewURL, model=Model(viewSpec), move='w')
+              view = SNGView(viewURL, model=Model(viewSpec), mode='w')
             elif viewSpec.endswith(".snv"): # we were given a non-existant view file, need a model
               modelURL = filedialog.askopenfilename(
                 title=f"Open a Model file for the new view {viewSpec}",
@@ -280,9 +308,10 @@ class Application(tk.Tk):
   
       #TODO: passing viewSpec as just None is just a temporary thing. 
 #      window:AppWindow = AppWindow(self, model, geometry=f'{snPrefs.get("gui/WindowSize", storeDefault="800x600", storeType=str)}+{self.defaultChildLocation[0]}+{self.defaultChildLocation[1]}')
-#      self.defaultChildLocation = (self.defaultChildLocation[0] + 40, self.defaultChildLocation[1] + 40)
-#      self.windows[name] = window
-#      return window
+      self.defaultChildLocation = (self.defaultChildLocation[0] + 40, self.defaultChildLocation[1] + 40)
+      self.windows[name] = view.window
+      return view.window
+    
     except Exception:
       logger.error(f'While opening window for viewSpec "{viewSpec}"')#, exc_info=True)
       try:

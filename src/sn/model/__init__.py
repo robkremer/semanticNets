@@ -26,19 +26,22 @@ import sys
 import atexit
 from util.utils import askUser
 from util.observer import Subject
+from util.abstractGraph import AbstractGraph
+from util.dirtyable import Dirtyable
 
 TerminatorType = str
 LineType = "choices[smooth,straight]"
 
 class TopModel(Model):
-  def __init__(self, url:str, mode:str="", _reading:bool=False):
+  def __init__(self, url:str, mode="w", memoryResident:bool=True, _reading:bool=False):
     '''
     Builds the base model for the SN application. This is required to always be
     in the in-memory models under the name "sn" (access as "$sn" in a URL, don't
     forget to escape it on a command line as "\\$sn"
     '''
+    AbstractGraph.__init__(self, url, mode=mode, memoryResident=memoryResident, _reading=_reading)
     Subject.__init__(self)
-    PRDb.__init__(self, url, mode="")
+    Dirtyable.__init__(self)
     self._allowParentsCaching:bool = False
     self.TOP:GraphObject = GraphObject(self, [])
     # these re-assignments from a ValidationList to a list are necessary in 
@@ -77,6 +80,7 @@ class TopModel(Model):
     assert isinstance(isaisa, IsaIndividual)
     isaisa.connect(destination=self.TRANSITIVE)
     IsaIndividual(self, self.ISA, self.REFLEXIVE)
+    IsaIndividual(self, self.RELATION, self.TOP) # relations needs to be fixed too.
 
     self.EQUALITY:Relation = Relation(self, [self.REFLEXIVE, self.SYMMETRIC, self.TRANSITIVE], name="equality")
 
@@ -86,7 +90,7 @@ class TopModel(Model):
     self[0] # causes the "all model" collection to be instantiated.
     self._allowParentsCaching = True
     
-    self.TOP['vis/shape']          = Attribute("rectangle", str, VAR_DEFAULTED, \
+    self.TOP['vis/shape']          = Attribute("Rectangle", str, VAR_DEFAULTED, \
       """The shape of the node or relation label in the GUI.
       Rectangle
       Oval
@@ -118,9 +122,12 @@ class TopModel(Model):
     self.RELATION['vis/lineFillColor'] = Attribute("black", "color", VAR_DEFAULTED, "The terminal's fill color of the relation connector in the GUI.")
     self.RELATION['vis/lineType']    = Attribute("smooth", LineType, VAR_DEFAULTED, "The curve type of the line of the relation connector in the GUI.\n  smooth | straight")
     self.RELATION['vis/lineWidth']   = Attribute(1, int, VAR_DEFAULTED, "The line width of the relation connector in the GUI.")
+    self.RELATION['vis/shape']       = "Oval"
     
-    self.ISA['vis/shape']           = "oval"
-    self.ISA['vis/fillColor']       = ""
+    self.ISA['vis/shape']           = "Rectangle"
+    self.ISA['vis/minSize']         = 4
+    self.ISA['vis/maxSize']         = 4
+    self.ISA['vis/fillColor']       = "blue"
     self.ISA['vis/lineColor']       = "blue"
     self.ISA['vis/borderColor']     = "blue"
     self.ISA['vis/lineFillColor']   = ""

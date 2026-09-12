@@ -64,13 +64,15 @@ from util.tooltip import CreateToolTip
 from util.command import CommandWrapper
 from util.attributeEditor import getEditedAttrsCommandObj, applyEditAttrsBox,\
   editAttrsBox
+from util.abstractGraph import AGObject
+from util.dirtyable import Dirtyable
 
 import sn
 from sn import snPrefs
 from sn.model import GraphObject, Relation
-from sn.model.model import UP_ARROW
+from sn.model.model import UP_ARROW, IsaIndividual
 from sn.view.graphics.decorators import WrappingText, Selected, MarkerContainer,\
-  Decorator
+  Decorator, ShadowDecorator
 
 import logging
 logger:sn.SNLogger = sn.getLogger(__name__)
@@ -168,7 +170,7 @@ class Cache(dict[str,Any]):
     return key in self.allkeys
       
 
-class VObject(PRObject["SNGView"], Observer):
+class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable):
   '''
   An object that visually represents some object in a tygra *Model* that resides
   in a particular *SNCanvas* (which may include VObjects representing objects in
@@ -179,7 +181,7 @@ class VObject(PRObject["SNGView"], Observer):
   that decorators may be drawn outside of this bounding box.
   '''
 
-  def __init__(self, view:SNGView, modelObject:GraphObject|str, 
+  def __init__(self, view:"SNGView", modelObject:GraphObject|str, 
                shape:Union[Any,str]="Rectangle", 
                x:Optional[int]=None, y:Optional[int]=None, x1:Optional[int]=None, y1:Optional[int]=None):
     '''
@@ -195,6 +197,9 @@ class VObject(PRObject["SNGView"], Observer):
     from sn.view.graphics.shapes import Shape
     from sn.view.graphics.vrelations import VRelation
     from sn.view.graphics.sngView import SNGView
+    
+    AGObject.__init__(self, view)
+    Dirtyable.__init__(self)
     
     #check parameters
     assert isinstance(view, SNGView), f'Expecting SNGView type, got {type(SNGView)}'
@@ -360,13 +365,6 @@ class VObject(PRObject["SNGView"], Observer):
     self.cache = None
 #    super().delete()
 
-  def isDirty(self) -> bool:
-    return self._dirty
-    
-  def setDirty(self, dirty:bool=True) -> bool:
-    self._dirty = dirty
-    return self._dirty
-    
   def boundingBox(self, rect:list[int]=None, fast=False) -> list:
     '''
     Returns or sets the bounding box for the *VObject* in [minX, minY, maxX, maxY]
@@ -815,8 +813,12 @@ class VObject(PRObject["SNGView"], Observer):
   # ---- DRAWING ---------------------------------------------------------------
   
   def makeDecorators(self):
-    self.decorators["text"] = WrappingText(self)
+    notIsIsa= type(self.modelObject) is not IsaIndividual
+    if notIsIsa:
+      self.decorators["text"] = WrappingText(self)
     self.decorators["markers"] = MarkerContainer(self)
+    if notIsIsa and self.modelObject.isIndividual(): # shadow individuals only. The actual decorator will display conditionally on "gui/showIndividualShadow"
+      self.decorators["shadow"] = ShadowDecorator(self)
     # try:
     #   if self.modelObject.isType() or self.modelObject.isSystemObject:
     #     self.decorators["typeMarker"] = TypeMarker(self)
@@ -830,7 +832,7 @@ class VObject(PRObject["SNGView"], Observer):
       self._drawVersion = self.view._drawVersion
     self._shape.draw(fast=fast, **kwargs) #self["boundingBox"])#rect)
     self.markerDecoratorOffset=0
-    for d in self.decorators.values(): # TODO: might need to concern ourselves about draw order here
+    for d in sorted(self.decorators.values(), key=lambda d: d.priority):
       d.draw(fast=fast)
 
     # make sure this is reachable by resetting the bounding box if necessary

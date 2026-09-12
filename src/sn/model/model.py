@@ -45,6 +45,8 @@ from util.validatedList import ValidatedList
 import logging
 from util.observer import Subject
 import sn
+from util.dirtyable import Dirtyable
+from util.abstractGraph import AGRelation, AbstractGraph, AGObject
 
 logger:sn.SNLogger = sn.getLogger(__name__)
 
@@ -79,7 +81,7 @@ def makeRelationArrow(rel:Relation) -> str:
 
 GORef = PReference["GraphObject"]
 
-class GraphObject(AttributedObject, PRObject):
+class GraphObject(AGObject["Model", "Relation"], AttributedObject):
   '''
   .. Note::
   
@@ -105,19 +107,19 @@ class GraphObject(AttributedObject, PRObject):
   
     self._parentsCache:list[GraphObject]|None = []
 
-    incomingCheck = lambda r, slf=self: isinstance(r, Relation) and r.dst is slf
-    self._incoming:ValidatedList[Relation] = ValidatedList(incomingCheck)
-    "Should only be assigned by *Relation* objects where self is at the dst end."
-    
-    outgoingCheck = lambda r, slf=self: isinstance(r, Relation) and r.src is slf and not slf is None and not slf.model.writeLocked()
-    self._outgoing:ValidatedList[Relation] = ValidatedList(outgoingCheck)
-    "Should only be assigned by *Relation* objects where self is at the src end and not write-locked."
+    # incomingCheck = lambda r, slf=self: isinstance(r, Relation) and r.dst is slf
+    # self._incoming:ValidatedList[Relation] = ValidatedList(incomingCheck)
+    # "Should only be assigned by *Relation* objects where self is at the dst end."
+    #
+    # outgoingCheck = lambda r, slf=self: isinstance(r, Relation) and r.src is slf and not slf is None and not slf.model.writeLocked()
+    # self._outgoing:ValidatedList[Relation] = ValidatedList(outgoingCheck)
+    # "Should only be assigned by *Relation* objects where self is at the src end and not write-locked."
     
     self._individual = individual
 
     # call super init's
+    AGObject.__init__(self, db)
     AttributedObject.__init__(self)
-    PRObject.__init__(self, db)
 
     if parents is not None: # Will be None when reading in from persistent store
       for p in parents:
@@ -155,7 +157,7 @@ class GraphObject(AttributedObject, PRObject):
   def model(self) -> Model:
     'Simple aliasing for *self.db*.'
     return self.db
-  
+
 # These aren't actually needed because _incoming and _outgoing are really caches for relation connections 
   # @override
   # def setDirty(self, value:bool=True) -> None:
@@ -591,7 +593,7 @@ class GraphObject(AttributedObject, PRObject):
   
   @property
   def db(self) -> Model:
-    return cast(Model, super().db) # this is a purposeful violation of the subsumption principle
+    return super().db
   
   @override
   def __repr__(self):
@@ -639,7 +641,7 @@ class GraphObject(AttributedObject, PRObject):
     return super().setAttr(key, attr)
     
     
-class Model(PRDb[GraphObject], Subject):
+class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
   '''
   .. Note::
   
@@ -684,6 +686,7 @@ class Model(PRDb[GraphObject], Subject):
     '''
     PRDb.__init__(self, url, mode=mode, memoryResident=True, _reading=_reading)
     Subject.__init__(self)
+    Dirtyable.__init__(self)
     
     self._allowParentsCaching:bool = False
 
@@ -706,7 +709,6 @@ class Model(PRDb[GraphObject], Subject):
       return
 
     self.nextID:int = 256
-    self._dirty = False
     
   @override
   @classmethod
@@ -761,26 +763,27 @@ class Model(PRDb[GraphObject], Subject):
       cm.registerTopics(("del GraphObject", (_id,)))
     #self.notify(("del GraphObject", (_id,)))
     
-  def setDirty(self, value:bool=True) -> bool:
+  @override
+  def setDirty(self, dirty:bool=True):
     '''
     An object is dirty if it has been modified and should probably be
     saved on exit.  This should be called from all methods that modify
     the state of this object.
     
-    If *value* is False, resets all the contained *Attributes* to False.
+    If *dirty* is False, resets all the contained *Attributes* to False.
     
-    :param value: (default True) The value to set *dirty* to.
-    :type value: bool
+    :param dirty: (default True) The dirty to set *dirty* to.
+    :type dirty: bool
     '''
-    assert type(value) is bool
-    if not value:
+    assert type(dirty) is bool
+    if not dirty:
       obj:GraphObject
       for obj in self._db.values():
         if obj.isDirty():
           obj.setDirty(False)
-    self._dirty = value
-    return self._dirty
+    self._dirty = dirty
     
+  @override
   def isDirty(self) -> bool:
     '''
     Returns True iff the object (or an of it's contained *Attributes*) have 
@@ -971,7 +974,7 @@ class AllModelCollection(Collection, PRDbContainer):
     
     
   
-class Relation(GraphObject):
+class Relation(GraphObject, AGRelation[Model, GraphObject]):
   def __init__(self, db:Model, 
                parents:Iterable[GraphObject]=[], 
                src:GraphObject|None=None, 
@@ -981,20 +984,21 @@ class Relation(GraphObject):
     if not db.reading:
       for p in parents:
         assert not hasattr(db, "RELATION") or isinstance(p, Relation)
-    super().__init__(db, parents, individual=individual, name=name)
+    GraphObject.__init__(self, db, parents, individual=individual, name=name)
+    AGRelation.__init__(self, db, src, dst)
     
     self._symmetric:bool|None = None
     self._reflexive:bool|None = None
     self._irreflexive:bool|None = None
     self._transitive:bool|None = None
 
-    self._dst:GraphObject|None = None
-    self._src:GraphObject|None = None
-    if db.reading:
-      self._dst = dst
-      self._src = src
-    else:
-      self.connect(source=src, destination=dst)
+    # self._dst:GraphObject|None = None
+    # self._src:GraphObject|None = None
+    # if db.reading:
+    #   self._dst = dst
+    #   self._src = src
+    # else:
+    #   self.connect(source=src, destination=dst)
     
   @classmethod
   @override
@@ -1046,12 +1050,13 @@ class Relation(GraphObject):
     return None
   
   @dst.setter
-  def dst(self, obj:GraphObject):
-    # if self._legalDst(obj):
-    #   self._dst = obj
-    self.connect(destination=obj)
-    assert self._dst is obj
-    self.setDirty()
+  def dst(self, obj:GraphObject|None):
+    AGRelation.dst.fset(self, obj) #type: ignore[attr-defined]
+    # # if self._legalDst(obj):
+    # #   self._dst = obj
+    # self.connect(destination=obj)
+    # assert self._dst is obj
+    # self.setDirty()
     
   @property
   def src(self, localOnly:bool=False) -> GraphObject|None: #GraphObject|None:
@@ -1070,13 +1075,13 @@ class Relation(GraphObject):
           return obj._src
     return None
   
-  @src.setter
-  def src(self, obj:GraphObject):
-    # if self._legalSrc(obj):
-    #   self._src = obj
-    self.connect(source=obj)
-    assert self._src is obj
-    self.setDirty()
+  # @src.setter
+  # def src(self, obj:GraphObject):
+  #   # if self._legalSrc(obj):
+  #   #   self._src = obj
+  #   self.connect(source=obj)
+  #   assert self._src is obj
+  #   self.setDirty()
       
   def hasLocalDst(self) -> bool:
     '''

@@ -21,7 +21,9 @@
 #################################################################################
 from sn.view.graphics.connectors import drawSmoothConnector, ConnectorIDs,\
   drawStraightConnector, ConnectorTerminators
-from util.persistence.serialize import InstantiationInfo, ParamInfo
+from util.persistence.serialize import InstantiationInfo, ParamInfo,\
+  PropertyInfo
+from util.abstractGraph import AGRelation
 
 """
 vrelations.py
@@ -67,7 +69,7 @@ ROLE_VATTRIBUTES = {'vis/lineColor': 'black',
                     }
 
     
-class VRelation(VObject):
+class VRelation(VObject, AGRelation):
   '''
   Implements the visual representation of model *Relation*. The roles are taken
   for the *Relation* object exclusively.  
@@ -126,17 +128,12 @@ class VRelation(VObject):
 
     VObject.__init__(self, view, x=x, y=y, x1=x1, y1=y1, shape=shape, modelObject=modelObject)
     assert isinstance(self.modelObject, Relation)
-
+    AGRelation.__init__(self, view, src=None, dst=None)
+ 
     #self.roles:dict[str, list[VRelation.RoleInfo]] = dict()
     #'dict[roleName, list[RoleInfo]'
-    self.src:VObject|None = None
-    if self.modelObject.src is not None:
-      self.src = self.view.makeViewObjectForGraphObject(self.modelObject.src)
-      self.src.relations.append(self)
-    self.dst:VObject|None = None
-    if self.modelObject.dst is not None:
-      self.dst = self.view.makeViewObjectForGraphObject(self.modelObject.dst)
-      self.dst.relations.append(self)
+    if not self.view.reading: # can't do an expansion while things aren't settled yet...
+      self._connect()
     # self.unfilledRoles:[str, Tuple[int]] = dict()
     # 'a temporary holder for info about unfilled roles to assist in drawing "dangling" roles'
           
@@ -167,9 +164,20 @@ class VRelation(VObject):
             conArgs=sup.conArgs,
             conKWArgs=sup.conKWArgs+[ParamInfo("floating", bool, lambda slf: slf._floatingAnchor)], #type: ignore[attr-defined]
             postconSetters=sup.postconSetters,
-            finalSetters=sup.finalSetters
-            )
+            finalSetters=sup.finalSetters)
 
+  def _connect(self):
+      assert isinstance(self.modelObject, Relation)
+      self.src:VObject|None = None     
+      if self.modelObject.src is not None:
+        self.src = self.view.makeViewObjectForGraphObject(self.modelObject.src)
+        self.src.relations.append(self)
+      self.dst:VObject|None = None
+      if self.modelObject.dst is not None:
+        self.dst = self.view.makeViewObjectForGraphObject(self.modelObject.dst)
+        self.dst.relations.append(self)
+    
+    
   # def _connectRoles(self):
   #   '''
   #   Establishes all the connectors for the VRelation, both in the view and in the
@@ -549,6 +557,8 @@ class VRelation(VObject):
     #                                            info.nearShapeID, color, fillColor)
     #       info.farShapeID = self.drawEndShape(farEndShape, [info.nearPt[0], info.nearPt[1], info.farPt[0], info.farPt[1]],
     #                                            info.farShapeID, color, fillColor)
+    # if self.view.reading: # need to wait until after all are displayed before expanding
+    #   return
     terminators = ConnectorTerminators(self.cache['vis/terminator1'], self.cache['vis/terminator2'], self.cache['vis/terminator3'], self.cache['vis/terminator4'])
     lineType = self.cache['vis/lineType']
     if lineType == "straight":

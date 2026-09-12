@@ -22,3 +22,6 @@ src/sn/help/
 # (uncomment any of these once you've confirmed they're throwaway, not fixtures)
 *.xml
 *.json
+*.snv
+*.snm
+

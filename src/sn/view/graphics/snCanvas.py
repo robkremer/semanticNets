@@ -483,8 +483,8 @@ class SNGView(PRDb["VObject"], Observer):
   def showAllModel(self):
     x:int = 10
     y:int = 10
-    sizex:int = int(snPrefs.get('vis/minSize', storeDefault=30, storeType=int))
-    sizey:int = int(sizex * float(snPrefs.get('vis/aspectRatio', storeDefault=1.5, storeType=float)))
+    sizex:int = int(snPrefs.get('gui/NodeMinSize', storeDefault=30, storeType=int))
+    sizey:int = int(sizex * float(snPrefs.get('gui/NodeAspectRatio', storeDefault=1.5, storeType=float)))
     grid = (sizex * 2, sizey * 2)
     numNodes = len(self.model) - len(self)
     gridCount = int(sqrt(numNodes)) if numNodes>0 else 0
