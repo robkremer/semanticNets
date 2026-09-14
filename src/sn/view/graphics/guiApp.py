@@ -97,6 +97,7 @@ class Application(tk.Tk):
 
     installGlobalIORouting(self.terminalRegistry)  # install exactly once, here
     self._installSettingsMenu()
+    self._installQuitHandler()
     self.menubar = self._installMenubar()
 
     self.protocol("WM_DELETE_WINDOW", self._noOp)  # root itself is never closed by the user
@@ -132,6 +133,47 @@ class Application(tk.Tk):
     :rtype: None
     """
     self.createcommand("tk::mac::ShowPreferences", self.openSettings)
+
+  def _installQuitHandler(self) -> None:
+    """Wire up the "Quit" item under the app item in the menu bar.
+
+    Same macOS mechanism as *_installSettingsMenu()* above, but where
+    "Preferences…" is inert until registered, "Quit \\<AppName\\>" already
+    does something by default: Tk wires it to the Tcl procedure
+    'tk::mac::Quit', whose default implementation calls Tcl's own *exit*
+    command directly. Since Tcl is embedded inside this same Python process
+    (not the reverse), that tears the whole process down at the C level
+    without ever going back through CPython's normal shutdown sequence --
+    which is the only thing that runs the *atexit* callbacks registered in
+    *sn/__init__.py* (*saveAtExit()*, *snPrefs.save*). Registering our own
+    handler here (see *onQuit()*) intercepts that default and runs the same
+    cleanup explicitly before tearing down, instead of silently skipping it.
+
+    Called once, from __init__, alongside _installSettingsMenu() -- see its
+    docstring for why this belongs here rather than being (re-)registered
+    from every window.
+
+    :rtype: None
+    """
+    self.createcommand("tk::mac::Quit", self.onQuit)
+
+  def onQuit(self) -> None:
+    """Handle the "Quit \\<AppName\\>" item in macOS's automatic app menu.
+
+    See *_installQuitHandler()* for why this override is necessary at all:
+    without it, quitting via that menu item (or its Cmd+Q shortcut) bypasses
+    Python's normal interpreter shutdown entirely, so the *atexit*-registered
+    *saveAtExit()*/*snPrefs.save* never run and unsaved models/views are
+    silently lost. Call them explicitly here, then tear down.
+
+    :rtype: None
+    """
+    sn.saveAtExit()
+    snPrefs.save()
+    self.quit()
+    sys.exit(0)  #TODO: shouldn't be necessary -- self.quit()/destroy() should
+                 # have exited the app on its own, but doesn't; mirrors the
+                 # same workaround in loggingPanedWindow.py's AppWindow.onQuit().
 
   def _installMenubar(self) -> tk.Menu:
     """Builds the app menu bar.
@@ -331,6 +373,14 @@ class Application(tk.Tk):
     """
     window = self.windows.pop(name, None)
     if window is not None:
+      # Give the user a chance to save this window's SNGView before it's
+      # gone for good. SNGViews are never memory-resident (see
+      # sn.saveAtExit()'s comment on that), so closing a window individually
+      # -- rather than quitting the whole app -- is the ONLY chance to save
+      # it; nothing else keeps a reference to it once the window is torn
+      # down. Must happen before onWindowFocusOut()/destroy() below.
+      if window.view is not None:
+        sn.checkSaveModified(window.view, window.view.url, "view")
       # If this window's view is currently the one advertising "Save view"
       # in the File menu, make sure it's withdrawn -- closing a window isn't
       # guaranteed to fire a Tk <FocusOut> on its widgets first (unlike

@@ -264,13 +264,13 @@ class SNView(PRDb, Observer):
     '''
     :return: *True* iff the file has been saved.
     
-    Iff *self.dirty* is True, inquire if the file is to be saved. This is the text-only
+    Iff *self.isdirty()* is True, inquire if the file is to be saved. This is the text-only
     version. Graphic subclasses should override this method to use a dialog box.
     
     This version overrides the *Persistent* class behaviour to check that *Model* is 
     saved before saving the view for it.
     '''
-    if PRDb.askSaveFile(self) and self.model.dirty:
+    if PRDb.askSaveFile(self) and self.model.isDirty():
       self.model.write()
       logger.print(f'Also saved model "{self.model.url}"')
     
@@ -527,7 +527,7 @@ class SNView(PRDb, Observer):
   # @override
   # def askSaveFile(self):
   #   '''
-  #   Iff *self.dirty* is True, inquire if the file is to be saved.
+  #   Iff *self.isDirty()* is True, inquire if the file is to be saved.
   #   '''
   #   if self.url is not None:
   #     fn = urlToFile(self.url)
@@ -575,97 +575,6 @@ class SNView(PRDb, Observer):
       if self.url != url:
         self.url = url
     self.write(forceWrite=True)
-
-  def serializeXML(self) -> et.Element:
-    """
-    Returns the representation of this object as an Element object.
-    Implementors should call *super().serializeXML()* **first** as this top-level method
-    will construct the Element itself.
-    """
-    elem = PRDb.serializeXML(self)  # selective "super()"
-    elem.set("model", self.model.idString)
-    elem.set("modelEditor", str(self.isModelEditor))
-    elem.set("hiddenCategories", str(list(self.hiddenCategories)))
-    elem.set("geometry", self.canvas.winfo_toplevel().geometry())
-
-    # # save nodes
-    # nodes = et.Element("nodes")
-    # elem.append(nodes)
-    # for n in self.nodes():
-    #   x = n.serializeXML()
-    #   nodes.append(x)
-    #
-    # # save relations
-    # rels = et.Element("relations")
-    # elem.append(rels)
-    # for r in self.relations():
-    #   x = r.serializeXML()
-    #   rels.append(x)
-    
-    return elem
-
-  @classmethod
-  def getArgs(cls, elem: et.Element) -> Tuple[List[Any], Dict[str, Any]]:
-    r"""
-    :param elem: The *ElementTree* element from which we are unserializing.
-    :param addrServer: The address server from which we can lookup any
-      addresses by id that occur in *elem*. Note that although *addrServer*
-      may not be used here, it might be necessary for subclasses to use
-      it, so it needs to be in the argument list.
-    :return: An (\*args, \*\*kwargs) tuple for the constructor of the class
-      found in the element's name.
-    """
-    args = []
-    kwargs = dict()
-    args.append(None)  # TODO: should we be passing a Window here?
-
-    modelID = elem.get("model")
-    self.model = Model.getStore(modelID)
-    
-    modelEditor = elem.get("modelEditor")
-    self.isModelEditor = modelEditor == True
-    assert isinstance(self.isModelEditor, bool)
-    
-    hiddenCategories = elem.get("hiddenCategories")
-    if hiddenCategories is not None:
-      kwargs["hiddenCategories"] = literal_eval(hiddenCategories)
-
-    geometry = elem.get("geometry")
-    if geometry is not None:
-      kwargs["windowGeometry"] = geometry
-
-    return args, kwargs
-
-  def unserializeXML(self, elem: et.Element):
-    """
-    :param elem: The *ElementTree* element from which we are unserializing.
-    :param addrServer: The address server from which we can lookup any
-      addresses by id that occur in *elem*. Note that although *addrServer*
-      may not be used here, it might be necessary for subclasses to use
-      it, so it needs to be in the argument list.
-
-    This object is partially constructed, but we need to restore this class's bits.
-    Implementors should call *super().unserializeXML()* at some point.
-    """
-    self.readingPRDb = True
-    try:
-      # self.model = Model.getStore(elem.get("model"))
-      # self.isModelEditor = bool(elem.get("modelEditor"))
-      # self.hiddenCategories = literal_eval(elem.get("hiddenCategories"))
-      # self.geometry = elem.get("geometry")
-      self.getHeaderInfo(elem)
-      PRDb.unserializeXML(self, elem)      
-      for o in self.values():
-        try:
-          o._post__init__()
-        except Exception:
-          logger.exception(f'{self.__class__.__name__}.unserializeXML() calling {o}._post_init__():')
-    except Exception:
-      logger.exception(f'{self.__class__.__name__}.unserializeXML():')
-    finally:
-      self.readingPRDb = False
-      self.dirty = False
-      self.repaint()
 
   def validate(self, refresh:bool=False) -> int:
     errCount = 0

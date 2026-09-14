@@ -126,9 +126,16 @@ class VRelation(VObject, AGRelation):
 
     # self.init = {"typ": typ, "_bb": _bb}  # pass these parameters to self for _post__init__()      
 
-    VObject.__init__(self, view, x=x, y=y, x1=x1, y1=y1, shape=shape, modelObject=modelObject)
+    # *VRelation* inherits from both *VObject* and *AGRelation*, which both
+    # in turn share *AGObject* as a common ancestor -- the same diamond shape
+    # as *sn.model.model.Relation* (see its __init__ for the full
+    # explanation). A single cooperative super().__init__() call, instead of
+    # the old separate VObject.__init__()/AGRelation.__init__() calls, lets
+    # the MRO run AGObject.__init__() (and hence PRObject.__init__(), which
+    # registers this object with *view*) exactly once instead of once per
+    # inheritance path.
+    super().__init__(view, x=x, y=y, x1=x1, y1=y1, shape=shape, modelObject=modelObject, src=None, dst=None)
     assert isinstance(self.modelObject, Relation)
-    AGRelation.__init__(self, view, src=None, dst=None)
  
     #self.roles:dict[str, list[VRelation.RoleInfo]] = dict()
     #'dict[roleName, list[RoleInfo]'

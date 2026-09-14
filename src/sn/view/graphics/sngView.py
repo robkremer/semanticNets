@@ -30,7 +30,7 @@ from typing import cast, override, Any, Iterable, Callable, Optional
 from util.utils import bindRightMouse, fixURL, isValidURL, urlExists, expandRect
 from sn.view.graphics.utils import eventEqual, addToMenuBar, removeFromMenuBar
 from util.terminal import inputAsync
-from util.persistence.pRef import PRDb
+from util.persistence.pRef import PRDb, PReference
 from util.observer import Subject, Observer
 from util.attributeEditor import applyEditAttrsBox
 from sn.view.textUserInterface import UIContext, SNTerminalWidget
@@ -98,11 +98,11 @@ class SNGContext(UIContext):
   class _Move(Command):
     def __init__(self, obj:"VObject", x:int|float, y:int|float): #type: ignore[name-defined]
       super().__init__("move")
-      self.obj = obj
+      self.obj:VObject = obj
       self.oldPos:list[int]|None = None
       self.x, self.y = x, y
       if isinstance(self.obj, VRelation):
-        self.floating = self.obj.floating
+        self.floating:bool = self.obj.floating()
     
     @override
     def do(self) -> None:
@@ -117,7 +117,7 @@ class SNGContext(UIContext):
       assert self.oldPos is not None
       self.obj.moveTo(self.oldPos[0], self.oldPos[1])
       if isinstance(self.obj, VRelation):
-        self.obj.floating = self.floating
+        self.obj.floating(self.floating)
       
     @override
     def delete(self):
@@ -130,7 +130,13 @@ class SNGContext(UIContext):
 
   def represent(self, object:list[GraphObject]):
     '''
-    This is a dummy graphic command.
+    Show the in the GUI, the give model objects.
+    
+    :param object: One or more model objects.
+    :type object: list[GraphObject|str]
+    :param view: The view to add to.
+    :type view: SNGView
+    :returns: None
     '''
     print ("dummy graphic command")
   
@@ -140,35 +146,40 @@ class SNGContext(UIContext):
       Show the in the GUI, the give model objects.
       
       :param object: One or more model objects.
-      :type object: GraphObject
+      :type object: list[GraphObject|str]
+      :param view: The view to add to.
+      :type view: SNGView
       :returns: None
-      
       '''
       super().__init__("represent")
+      assert view is not None
       self.view:SNGView = view
       assert isinstance(self.view, SNGView), f'Expected SNGView, got {type(self.view)}.'
-      self.modelObjects:list[GraphObject] = objects
-      assert isinstance(self.modelObjects, list), f'Expected list[Graphobject], got {type(self.modelObject)}.'
-      for i in range(len(self.modelObjects)): # convert from str to GraphObject if necessary
-        n = self.modelObjects[i]
-        if type(n) is str:
-          self.modelObjects[i] = view.model[n]  
-      for n in self.modelObjects:
-        assert isinstance(n, GraphObject)
+      self.modelObjects:list[GraphObject] = []
+      assert isinstance(self.modelObjects, list), f'Expected list, got {type(self.modelObjects)}.'
+      n:GraphObject|str
+      for n in objects: # convert from str to GraphObject if necessary
+        temp:Any = PReference.eval(n) if type(n) is str else n
+        assert isinstance(temp, GraphObject)
+        self.modelObjects.append(temp)
       self.vobjects:list[VObject] = []
           
         #assert isinstance(n, GraphObject), f'Expected GraphObject, got {type(n)}.'
   
     @override
     def do(self) -> None:
+      def callback(verb:str, tup:tuple):
+        if verb == 'new':
+          self.vobjects.append(tup[0])
       super().do()
       view = self.view
-      if len(self.vobjects) == 0:
-        detachCode = view.attachCallback(lambda tup: self.vobjects.append(tup[1]) if tup[0]=='new' else 0)
+      if len(self.vobjects) == 0: # first call
+        # setup a callback to place an newly created VObjects in self.vobjects
+        detachCode = view.attachCallback(callback)
         for mo in self.modelObjects:
-          self.view.makeViewObjectForGraphObject(self.modelObject) # seems odd, but the callback should add this to self.vobjects
-        view.detachCallback(detachCode)
-      else:
+          self.view.makeViewObjectForGraphObject(mo) # seems odd, but the callback should add this to self.vobjects
+        view.detachCallback(detachCode) # kill the callback
+      else: # subsequent call
         n:VObject
         for n in self.vobjects:
           n._reconnect()
@@ -176,20 +187,20 @@ class SNGContext(UIContext):
     @override
     def undo(self):
       super().undo()
-      assert self.viewObject is not None
-      self.viewObject.disconnect()
+      for vo in self.vobjects:
+        vo._disconnect()
   
     @override
     def delete(self):
       super().delete()
-      self.modelObject = None
-      self.view = None
-      self.viewObject = None
+      self.modelObjects = None # type: ignore[assignment]
+      self.view = None # type: ignore[assignment]
+      self.vobjects = None # type: ignore[assignment]
   
     @override
     def __str__(self):
-      return f'{super().__str__()} {self.obj.name} {self.x} {self.y}'
-  
+      params = ' '.join([mo.name for mo in self.modelObjects])
+      return f'{super().__str__()} {" ".join([mo.name for mo in self.modelObjects])} --view {self.view}'
 
 
   def expand(self, object:GraphObject):
@@ -199,13 +210,13 @@ class SNGContext(UIContext):
     print ("dummy graphic command")
     
   class _Expand(Command):
-    def __init__(self, object:VObject, *, levels:int=0, _filter:Optional[Callable[[Any, Relation], bool]]=lambda _vn, _mr: True):
+    def __init__(self, object:VObject, *, levels:int=0, _filter:Callable[[Any, Relation], bool]=lambda _vn, _mr: True):
       super().__init__("expand")
       self.obj:VObject = object
-      self.levels = levels
-      self.filter = _filter
+      self.levels:int = levels
+      self.filter:Callable[[Any, Relation], bool] = _filter
       self.createdObjects:list[VObject] = []
-      self.originalDo = True
+      self.originalDo:bool = True
             
     @override
     def do(self) -> None:
@@ -214,19 +225,21 @@ class SNGContext(UIContext):
         self.originalDo = False
         self.createdObjects = []
         view:SNGView =self.obj.view
-        detachCode = view.attachCallback(lambda tup: self.createdObjects.append(tup[1]) if tup[0]=='new' else 0)
+        detachCode = view.attachCallback(lambda com, tup: self.createdObjects.append(tup[0]) if com=='new' else 0)
         self.obj.expand(filter=self.filter, expand=self.levels)
         print(f'ExpandCommand.do() created {len(self.createdObjects)} VObjects')
         view.detachCallback(detachCode)
       else:
         for obj in self.createdObjects:
-          obj.setHidden(False)
+          #obj.setHidden(False)
+          obj._disconnect()
   
     @override
     def undo(self):
       Command.undo(self)
       for obj in self.createdObjects:
-        obj.setHidden()
+        #obj.setHidden()
+        obj._reconnect()
         
     @override
     def delete(self):
@@ -322,40 +335,6 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     ret.finalSetters.append(PropertyInfo("_", bool, setter=finalize))
     return ret
 
-  @override
-  def setDirty(self, dirty:bool=True):
-    '''
-    An object is dirty if it has been modified and should probably be
-    saved on exit.  This should be called from all methods that modify
-    the state of this object.
-    
-    If *dirty* is False, resets all the contained *Attributes* to False.
-    
-    :param dirty: (default True) The dirty to set *dirty* to.
-    :type dirty: bool
-    '''
-    assert type(dirty) is bool
-    if not dirty:
-      obj:VObject
-      for obj in self._db.values():
-        if obj.isDirty():
-          obj.setDirty(False)
-    self._dirty = dirty
-    
-  @override
-  def isDirty(self) -> bool:
-    '''
-    Returns True iff the object (or an of it's contained *Attributes*) have 
-    been modified and should probably be saved on exit. 
-    '''
-    if self._dirty:
-      return True
-    obj:VObject
-    for obj in self._db.values():
-      if obj.isDirty():
-        self._dirty = True
-        return True
-    return False
   
   @override
   def save(self, saveas:Optional[str]=None, overwrite=False, format:str="XML") -> None:
@@ -440,6 +419,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     from sn.view.graphics.vobjects import VObject
     from sn.view.graphics.vnodes import VNode
     from sn.view.graphics.vrelations import VRelation #, VIsa
+    assert isinstance(subject, Model), f'Expected Model, got {type(subject)}.'
     logger.info(f'SNGView.update({subject.name}, {len(topics)} topics):')
     for t in topics:
       topicName:str = t[0]
@@ -524,8 +504,12 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       if isinstance(mObject, Relation):
         ret = VRelation(self, modelObject=mObject)
       elif isinstance(mObject, (Node,GraphObject)):
-        sizex = mObject.get('vis/minSize', snPrefs.get("gui/NodeMinSize", storeDefault=30))
-        sizey = int(sizex / mObject.get('vis/aspectRatio', snPrefs.get("gui/NodeAspectRatio", storeDefault=1.5)))
+        minSize = mObject.get('vis/minSize', snPrefs.get("gui/NodeMinSize", storeDefault=30))
+        assert isinstance(minSize, (float,int))
+        sizex = float(minSize)
+        aspectRatio = mObject.get('vis/aspectRatio', snPrefs.get("gui/NodeAspectRatio", storeDefault=1.5))
+        assert isinstance(aspectRatio, (float,int))
+        sizey = int(sizex / aspectRatio)
         if atPoint is None:
           # try:
           #   mParent = mObject.getParents().__next__()
@@ -541,8 +525,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
           #TODO: Do some reasonable placement.
           x, y = 0, 0
         else:
-          x, y = atPoint
-        ret = VNode(self, mObject, x=x, y=y, x1=x + sizex, y1=y + sizey)
+          x, y = int(atPoint[0]), int(atPoint[1])
+        ret = VNode(self, mObject, x=x, y=y, x1=int(x + sizex), y1=int(y + sizey))
       else:
         raise AttributeError(f'SNView.makeViewObjectforGraphObject(): unexpected model object type: {mObject.__class__.__name__}.')
 
@@ -551,7 +535,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       ret.expand(filter=filter, expand=expand - 1)
     return ret
 
-  def findViewObjectForGraphObject(self, mObject:GraphObject) -> "VOject"|None:
+  def findViewObjectForGraphObject(self, mObject:GraphObject) -> VObject|None:
     '''
     :param mObject: A model object.
     :return: A *VObject* currently in the display representing *mObject*, or *None* if there is not such object.
@@ -576,14 +560,14 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     length = len(vobjs)
     for vobj in vobjs:
       i += 1
-      count = 0
+      count:list = []
       for j in range(i, length):
         if vobj.modelObject is vobjs[j].modelObject:
-          count += 1
-      if count:
-        logger.warning(f'Found {count} visual objects representing model object {vobj.name}:{vobj.id}.' )
+          count.append(vobjs[j])
+      if len(count) > 0:
+        logger.error(f'Found {len(count)+1} visual objects representing model object {vobj.modelObject.name}#{vobj.modelObject.id}: {[o.id for o in [vobj]+count]}.' )
         errCount += 1
-    if refresh and self.canvas:
+    if errCount and refresh and self.canvas:
       self.freshPaint()
       self.repaint()
     return errCount
@@ -591,8 +575,12 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   def showAllModel(self):
     x:int = 10
     y:int = 10
-    sizex:int = int(snPrefs.get('gui/NodeMinSize', storeDefault=30, storeType=int))
-    sizey:int = int(sizex * float(snPrefs.get('gui/NodeAspectRatio', storeDefault=1.5, storeType=float)))
+    minSize = snPrefs.get('gui/NodeMinSize', storeDefault=30, storeType=int)
+    assert isinstance(minSize, (int,float))
+    sizex:int = int(minSize)
+    aspectRatio = snPrefs.get('gui/NodeAspectRatio', storeDefault=1.5, storeType=float)
+    assert isinstance(aspectRatio, (int,float))
+    sizey:int = int(sizex * float(aspectRatio))
     grid = (sizex * 2, sizey * 2)
     numNodes = len(self.model) - len(self)
     gridCount = int(sqrt(numNodes)) if numNodes>0 else 0
@@ -803,6 +791,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         newMenu = tk.Menu(self.canvas)
         # process nodes in the included models
         for v in [self.model, Model.AllDBs["sn:/sn.xml"]]:
+          assert isinstance(v, Model)
           m = tk.Menu(self.canvas)
           fillMenu(m, v, individual, ptype)
           newMenu.add_cascade(label=v.name, menu=m)
@@ -822,7 +811,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     bgMenu.add_command(label="float all", command=lambda: [r.floating(True) for r in self.context.view.values() if isinstance(r, VRelation) and r.modelObject.isIndividual()])
     bgMenu.add_command(label="refresh all", command=lambda: [o.cache.refresh() for o in self.context.view.values()])
     bgMenu.add_command(label="show all", command=self.context.view.showAllModel)
-    bgMenu.add_command(label="reset scroll region", command=self.resetScrollRegion())
+    bgMenu.add_command(label="reset scroll region", command=self.resetScrollRegion()) # type: ignore[func-returns-value]
     # bgMenu.add_command(label="toggle field layout", command=self.onToggleFieldsLayout, accelerator=KEY_TOGGLE_FIELDS_LAYOUT[1])
     # bgMenu.add_command(label="show animation controls", command=self.onShowAnimationControls)
     # # from sn.view.animatedLayouts import testBones
@@ -911,15 +900,15 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       self._scale *= scale
     else:
       self._scale = scale
-    self.scale("all", 0, 0, self._scale / oldScale, self._scale / oldScale)
-    for child_widget in self.find_withtag("text"):
-      self.itemconfigure(child_widget, font=(self._fontFace, int(self._fontSize * self._scale)))
+    self.canvas.scale("all", 0, 0, self._scale / oldScale, self._scale / oldScale)
+    for child_widget in self.canvas.find_withtag("text"):
+      self.canvas.itemconfigure(child_widget, font=(self._fontFace, int(self._fontSize * self._scale)))
     try:
-      bb = list(self.bbox("all"))
+      bb = list(self.canvas.bbox("all"))
     except:
       bb = [0, 0, 0, 0]
     bb = [0, 0, bb[2] + 800, bb[3] + 600]
-    self.configure(scrollregion=bb)
+    self.canvas.configure(scrollregion=bb)
 
   # ---- Utility ---------------------------------------------------------------
 
@@ -932,7 +921,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
           converted from view to window coordinates.
     """
     if len(args) == 1 and isinstance(args[0], Iterable):
-      args = args[0]
+      args = args[0] # type: ignore[assignment]
     #assert len(args) % 2 == 0, f'args = {args}'
     ret = []
     for n in args:
@@ -948,7 +937,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
           converted from window to view coordinates.
     """
     if len(args) == 1 and isinstance(args[0], Iterable):
-      args = args[0]
+      args = args[0] # type: ignore[assignment]
     #assert len(args) % 2 == 0, f'args = {args}'
     ret = []
     for n in args:
@@ -962,7 +951,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   def repaint(self, event=None):
     self.freshPaint()
     for obj in self.context.view.values():
-      if not obj.isHidden():
+#      if not obj.isHidden():
         obj.draw()
 
   def resetScrollRegion(self) -> None:
@@ -1006,7 +995,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :rtype: None
     """
     terminal = self.terminal  # set by AppPanedWidget after construction
-    registry = self.registry
+    registry = terminal.registry
 
     def wrapped() -> None:
       registry.bindThreadToTerminal(terminal)

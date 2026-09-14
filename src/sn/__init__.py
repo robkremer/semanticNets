@@ -124,28 +124,60 @@ logger.setLevel(logging.getLevelNamesMapping()[snPrefs.get("loggingLevel",
 
 atexit.register(snPrefs.save)
 
-def saveAtExit():
-  from sn.view.graphics.sngView import SNGView
-  from sn.model.model import Model
+def checkSaveModified(obj, url:str, kind:str) -> None:
+  '''
+  Check whether *obj* has unsaved changes and, if so, ask the user whether to
+  save it before it's discarded -- either because its window is being closed
+  (see *sn.view.graphics.guiApp.Application._closeWindow()*) or because the
+  whole app is exiting (see *saveAtExit()* below).
+
+  Pulled out of *saveAtExit()* as a shared helper so both call sites -- the
+  whole-app-exit path and the individual-window-close path -- prompt with
+  exactly the same writeLocked()/isDirty()/save() logic instead of drifting
+  apart.
+
+  :param obj: The database-backed object to check -- a *Model* or *SNGView*
+    (anything exposing *writeLocked()*, *isDirty()* and *save()*).
+  :type obj: util.persistence.pRef.PRDb
+  :param url: *obj*'s URL, used only in the confirmation dialog's message.
+  :type url: str
+  :param kind: A lowercase human-readable noun for the confirmation dialog,
+    e.g. "model" or "view".
+  :type kind: str
+  :rtype: None
+  '''
   from util.utils import askUser
+  if not obj.writeLocked() and obj.isDirty():
+    ans:str|None = askUser(f'Save modified {kind}?\n  {url}\n(Y/N):', f'Save modified {kind.capitalize()}?')
+    if ans is not None and ans.upper() in ["Y", "YES", "T", "TRUE"]:
+      obj.save()
+
+def saveAtExit():
+  from sn.view.graphics.guiApp import Application
+  from sn.model.model import Model
   from util.persistence.pRef import PRDb
-  
+  import tkinter as tk
+
   url:str
   db:PRDb
+  print("saving at exit", file=sys.__stdout__)
   for url, db in Model.AllDBs.items():
+    print(f'Examining {url}', file=sys.__stdout__)
     if isinstance(db, Model):
-      model:Model = db
-      if not model.writeLocked() and model.isDirty():
-        ans:str|None = askUser(f'Save modified model?\n  {url}\n(Y/N):', "Save modified Model?")
-        if ans is not None and ans.upper() in ["Y", "YES", "T", "TRUE"]:
-          model.save()
-    elif isinstance(db, SNGView):
-      view:SNGView = db
-      if not view.writeLocked() and view.isDirty():
-        ans = askUser(f'Save modified view?\n  {url}\n(Y/N):', "Save modified Model?")
-        if ans is not None and ans.upper() in ["Y", "YES", "T", "TRUE"]:
-          view.save()
+      checkSaveModified(db, url, "model")
     else:
       print(f'Unknown DB type {db.__class__.__name__}: {url}.')
-  
+
+  # SNGViews are deliberately constructed with memoryResident=False (see
+  # SNGView.__new__()/__init__() in sn.view.graphics.sngView), so they never
+  # land in PRDb.AllDBs -- the loop above will never see one. The only
+  # reliable way to find the ones currently open is via the live
+  # Application's own window registry (tk._default_root is that Application,
+  # the same lookup SNGView.__init__() itself uses).
+  root = tk._default_root
+  if isinstance(root, Application):
+    for url, window in root.windows.items():
+      if window.view is not None:
+        checkSaveModified(window.view, url, "view")
+
 atexit.register(saveAtExit)

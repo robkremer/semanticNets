@@ -90,7 +90,7 @@ class GraphObject(AGObject["Model", "Relation"], AttributedObject):
     (*PRDb*).
   '''
   
-  def __init__(self, db:Model, parents:Iterable[GraphObject]=[], individual:bool=False, name:Optional[str]=None):
+  def __init__(self, db:Model, parents:Iterable[GraphObject]=[], individual:bool=False, name:Optional[str]=None, **kwargs):
     '''
     :param db: The Model in which to create the object
     :type db: Model
@@ -102,9 +102,20 @@ class GraphObject(AGObject["Model", "Relation"], AttributedObject):
       may lead to ambiguities in searching for it my name, so uniqueness would be good...
       If the name is not given, it will inherit it's name from the first parent.
     :type name: Optional[str]
+    :param kwargs: Passed on to *super().__init__()*. *GraphObject* is normally
+      combined with *AGRelation* via multiple inheritance (see *Relation*),
+      and the two share *AGObject* as a common ancestor -- calling *super()*
+      cooperatively here (instead of naming *AGObject* and *AttributedObject*
+      directly, as this used to) ensures that shared ancestor's *__init__*
+      -- which registers this object with *db* -- runs exactly once no
+      matter which subclass is being constructed, rather than once per
+      inheritance path. *kwargs* is how *AGRelation*'s own *src*/*dst*
+      constructor arguments -- which *GraphObject* has no use for itself --
+      get carried through to it along that same chain.
+    :type kwargs: Any
     '''
     assert isinstance(db, Model)
-  
+
     self._parentsCache:list[GraphObject]|None = []
 
     # incomingCheck = lambda r, slf=self: isinstance(r, Relation) and r.dst is slf
@@ -117,9 +128,7 @@ class GraphObject(AGObject["Model", "Relation"], AttributedObject):
     
     self._individual = individual
 
-    # call super init's
-    AGObject.__init__(self, db)
-    AttributedObject.__init__(self)
+    super().__init__(db=db, **kwargs)
 
     if parents is not None: # Will be None when reading in from persistent store
       for p in parents:
@@ -157,35 +166,6 @@ class GraphObject(AGObject["Model", "Relation"], AttributedObject):
   def model(self) -> Model:
     'Simple aliasing for *self.db*.'
     return self.db
-
-# These aren't actually needed because _incoming and _outgoing are really caches for relation connections 
-  # @override
-  # def setDirty(self, value:bool=True) -> None:
-  #   '''
-  #   An object is dirty if it has been modified and should probably be
-  #   saved on exit.  This should be called from all methods that modify
-  #   the state of this object.
-  #
-  #   If *value* is False, resets all the contained *Attributes* to False.
-  #
-  #   :param value: (default True) The value to set *dirty* to.
-  #   :type value: bool
-  #   '''
-  #   assert type(value) is bool
-  #   super().setDirty(value)
-  #   if not value:
-  #     self._incoming.setDirty(False)
-  #     self._outgoing.setDirty(False)
-  #
-  # @override
-  # def isDirty(self) -> bool:
-  #   '''
-  #   Returns True iff the object (or an of it's contained *Attributes*) have 
-  #   been modified and should probably be saved on exit. 
-  #   '''
-  #   if super().isDirty() or self._incoming.isDirty() or self._outgoing.isDirty():
-  #     return True
-  #   return False
   
   def _getOutgoing(self, 
                    filtr:Callable[[Relation], bool]=lambda _: True, 
@@ -763,40 +743,6 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
       cm.registerTopics(("del GraphObject", (_id,)))
     #self.notify(("del GraphObject", (_id,)))
     
-  @override
-  def setDirty(self, dirty:bool=True):
-    '''
-    An object is dirty if it has been modified and should probably be
-    saved on exit.  This should be called from all methods that modify
-    the state of this object.
-    
-    If *dirty* is False, resets all the contained *Attributes* to False.
-    
-    :param dirty: (default True) The dirty to set *dirty* to.
-    :type dirty: bool
-    '''
-    assert type(dirty) is bool
-    if not dirty:
-      obj:GraphObject
-      for obj in self._db.values():
-        if obj.isDirty():
-          obj.setDirty(False)
-    self._dirty = dirty
-    
-  @override
-  def isDirty(self) -> bool:
-    '''
-    Returns True iff the object (or an of it's contained *Attributes*) have 
-    been modified and should probably be saved on exit. 
-    '''
-    if self._dirty:
-      return True
-    obj:GraphObject
-    for obj in self._db.values():
-      if obj.isDirty():
-        self._dirty = True
-        return True
-    return False
   
   @override
   def save(self, saveas:Optional[str]=None, overwrite=False, format:str="XML") -> None:
@@ -948,8 +894,20 @@ class Collection(Node):
     
 class AllModelCollection(Collection, PRDbContainer):
   def __init__(self, model:Model):
-    Collection.__init__(self, model, [Model.getDB("$sn").COLLECTION], individual=True, name=model.name)
-    PRDbContainer.__init__(self, model)
+    '''
+    :param model: The Model this collection is registered as the "all objects"
+      container for.
+    :type model: Model
+    '''
+    # Same shape of diamond as *Relation* (see its __init__ for the full
+    # explanation): *AllModelCollection* inherits from both *Collection*
+    # (-> ... -> AGObject -> PRObject) and *PRDbContainer* (-> PRContainer ->
+    # PRObject, neither of which override __init__ at all). The old separate
+    # Collection.__init__()/PRDbContainer.__init__() calls each independently
+    # walked down to PRObject.__init__() -- which registers this object with
+    # *model* -- registering it twice. A single cooperative super().__init__()
+    # call lets the MRO run it exactly once instead.
+    super().__init__(model, [Model.getDB("$sn").COLLECTION], individual=True, name=model.name)
   
   @override
   def addMember(self, member:GraphObject):
@@ -975,18 +933,42 @@ class AllModelCollection(Collection, PRDbContainer):
     
   
 class Relation(GraphObject, AGRelation[Model, GraphObject]):
-  def __init__(self, db:Model, 
-               parents:Iterable[GraphObject]=[], 
-               src:GraphObject|None=None, 
-               dst:GraphObject|None=None, 
-               individual:bool=False, 
+  def __init__(self, db:Model,
+               parents:Iterable[GraphObject]=[],
+               src:GraphObject|None=None,
+               dst:GraphObject|None=None,
+               individual:bool=False,
                name:Optional[str]=None):
+    '''
+    :param db: The Model in which to create the relation.
+    :type db: Model
+    :param parents: The direct parents of the object from which they will inherit attributes.
+    :type parents: Iterable[GraphObject]
+    :param src: The source *GraphObject* of this relation, or *None*.
+    :type src: Optional[GraphObject]
+    :param dst: The destination *GraphObject* of this relation, or *None*.
+    :type dst: Optional[GraphObject]
+    :param individual: If True, this will be an individual, otherwise it will be a type. Defaults to False.
+    :type individual: bool
+    :param name: The given name of the object; see *GraphObject.__init__()*.
+    :type name: Optional[str]
+    '''
     if not db.reading:
       for p in parents:
         assert not hasattr(db, "RELATION") or isinstance(p, Relation)
-    GraphObject.__init__(self, db, parents, individual=individual, name=name)
-    AGRelation.__init__(self, db, src, dst)
-    
+
+    # *Relation* inherits from both *GraphObject* and *AGRelation*, which both
+    # in turn inherit from *AGObject* -- a single cooperative super().__init__()
+    # call here (instead of the old separate GraphObject.__init__() /
+    # AGRelation.__init__() calls) lets Python's MRO run *AGObject.__init__()*
+    # (and hence *PRObject.__init__()*, which registers this object with *db*)
+    # exactly once, instead of once per inheritance path -- that double
+    # registration was the actual bug this replaced. All the constructor
+    # arguments for both bases are passed here as keywords; each base
+    # consumes the ones it recognizes and forwards the rest via its own
+    # **kwargs (see *GraphObject.__init__()* and *AGRelation.__init__()*).
+    super().__init__(db=db, parents=parents, individual=individual, name=name, src=src, dst=dst)
+
     self._symmetric:bool|None = None
     self._reflexive:bool|None = None
     self._irreflexive:bool|None = None

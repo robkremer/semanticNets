@@ -181,9 +181,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable):
   that decorators may be drawn outside of this bounding box.
   '''
 
-  def __init__(self, view:"SNGView", modelObject:GraphObject|str, 
-               shape:Union[Any,str]="Rectangle", 
-               x:Optional[int]=None, y:Optional[int]=None, x1:Optional[int]=None, y1:Optional[int]=None):
+  def __init__(self, view:"SNGView", modelObject:GraphObject|str,
+               shape:Union[Any,str]="Rectangle",
+               x:Optional[int]=None, y:Optional[int]=None, x1:Optional[int]=None, y1:Optional[int]=None,
+               **kwargs):
     '''
     :param view: The SNGView object that "owners" this VObject.
     :type view: SNGView
@@ -193,14 +194,36 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable):
     :param y: The upper left corner y coordinate
     :param x1: The lower right corner x coordinate
     :param y1: The lower right corner y coordinate
+    :param kwargs: Passed on to *super().__init__()*. *VObject* is normally
+      combined with *AGRelation* via multiple inheritance (see *VRelation*),
+      and the two share *AGObject* as a common ancestor -- calling *super()*
+      cooperatively here (instead of separately naming *AGObject* and
+      *PRObject*, as this used to) ensures that shared ancestor's *__init__*
+      -- which registers this object with *view* -- runs exactly once no
+      matter which subclass is being constructed, rather than once per
+      inheritance path. *kwargs* is how *AGRelation*'s own *src*/*dst*
+      constructor arguments -- which *VObject* has no use for itself -- get
+      carried through to it along that same chain.
+    :type kwargs: Any
     '''
     from sn.view.graphics.shapes import Shape
     from sn.view.graphics.vrelations import VRelation
     from sn.view.graphics.sngView import SNGView
-    
-    AGObject.__init__(self, view)
-    Dirtyable.__init__(self)
-    
+
+    # *AGObject* is a common ancestor shared with *AGRelation* whenever this
+    # is actually a *VRelation* (see that class's __init__ for the full
+    # explanation of the diamond). This single cooperative super().__init__()
+    # call reaches AGObject.__init__() -- and hence PRObject.__init__(),
+    # which registers this object with *view* -- exactly once, however many
+    # inheritance paths lead here. It used to be followed by a second,
+    # separate PRObject.__init__(self, view) call further down (plus explicit
+    # Dirtyable.__init__(self)/Observer.__init__(self) calls) -- that separate
+    # call was the actual double-registration bug: every VObject was already
+    # affected, not just VRelation, since Dirtyable/Observer are also reached
+    # automatically via this same chain.
+    super().__init__(db=view, **kwargs)
+    assert self._id is not None
+
     #check parameters
     assert isinstance(view, SNGView), f'Expecting SNGView type, got {type(SNGView)}'
     if isinstance(modelObject, str):
@@ -231,12 +254,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable):
       
     self._drawVersion:int = -1
     self._boundingBox = [x, y, x1, y1]
-          
-    #call super constructors
-    PRObject.__init__(self, view)
-    assert self._id is not None
-    Observer.__init__(self)
-    
+
     self.view:SNGView = view
     self.canvas:tk.Canvas = view.canvas
     self._updatingFromAttrs = False
@@ -245,7 +263,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable):
     self.dragInfo = None
     self._deleted = False
     self._hidden = False
-    self._dirty:bool = False
 
     if isinstance(shape, str):
       try:
@@ -1056,34 +1073,44 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable):
           self.decorators.pop(k, None) #should have been popped already by the delete() above...
           return
 
-  def setHidden(self, hide:bool=True):
-    '''
-    "Unhooks" ("rehooks") from the view's list of objects and sets the graphics objects to
-    state="hidden" ("normal"). Note that Nodes' .relations and Relations' arcs are not
-    updated.  
-    '''
-    if hide == self._hidden:
-      return
-    if hide:
-      if not self.isHidable():
-        logger.error("Cannot hid an object that has any non-individual relations.")
-      PRDb.remove(self.view, self._id) # both PRDb and SNCanvas have __setitem__()
-      self.canvas.itemconfigure(self.tag, state="hidden")
-    else:
-      PRDb.__setitem__(self.view, self._id, self) # both PRDb and SNCanvas have __setitem__()
-      self.canvas.itemconfigure(self.tag, state="normal")
-    self.setDirty()
+  @override
+  def _disconnect(self) -> None:
+    super()._disconnect()
+    self.canvas.itemconfigure(self.tag, state="hidden")
     
-  def isHidden(self):
-    return self._hidden
-    
+  @override
+  def _reconnect(self):
+    super()._reconnect()
+    self.canvas.itemconfigure(self.tag, state="normal")
+
+  # def setHidden(self, hide:bool=True):
+  #   '''
+  #   "Unhooks" ("rehooks") from the view's list of objects and sets the graphics objects to
+  #   state="hidden" ("normal"). Note that Nodes' .relations and Relations' arcs are not
+  #   updated.  
+  #   '''
+  #   if hide == self._hidden:
+  #     return
+  #   if hide:
+  #     if not self.isHidable():
+  #       logger.error("Cannot hid an object that has any non-individual relations.")
+  #     PRDb.remove(self.view, self._id) # both PRDb and SNCanvas have __setitem__()
+  #     self.canvas.itemconfigure(self.tag, state="hidden")
+  #   else:
+  #     PRDb.__setitem__(self.view, self._id, self) # both PRDb and SNCanvas have __setitem__()
+  #     self.canvas.itemconfigure(self.tag, state="normal")
+  #   self.setDirty()
+  #
+  # def isHidden(self):
+  #   return self._hidden
+  #
   def isHidable(self) -> bool:
     '''
     An object is "hidable" only if ALL it's relations are instances.
     '''
-    for r in self.relations:
-      if r.modelObject.isType() and not r.isHidden():
-        return False 
+    # for r in self.relations:
+    #   if r.modelObject.isType() and not r.isHidden():
+    #     return False 
     return True
 
   # ---- RELATIONS -------------------------------------------------------------

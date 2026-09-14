@@ -232,18 +232,19 @@ def _clippedArc(vobj0: VObject, vobj2: VObject, p0: PointType, p1: PointType, p2
   :rtype: Optional[tuple[PointType, PointType, PointType]]
   """
   if not vobj0.containsPt(p0):
-    logger.debug(f'_clippedArc(): {vobj0} does not contain its own center point; skipping clip.')
+    # logger.debug(f'_clippedArc(): {vobj0} does not contain its own center point; skipping clip.')
     return None
   if not vobj2.containsPt(p2):
-    logger.debug(f'_clippedArc(): {vobj2} does not contain its own center point; skipping clip.')
+    # logger.debug(f'_clippedArc(): {vobj2} does not contain its own center point; skipping clip.')
     return None
   if vobj0.containsPt(p2) or vobj2.containsPt(p0):
-    logger.debug(f'_clippedArc(): {vobj0} and {vobj2} appear to overlap; clip may look wrong.')
+    # logger.debug(f'_clippedArc(): {vobj0} and {vobj2} appear to overlap; clip may look wrong.')
+    pass
 
   t0 = _findBoundaryParam(vobj0, p0, p1, p2, tInside=0.0, tOutside=1.0)
   t2 = _findBoundaryParam(vobj2, p0, p1, p2, tInside=1.0, tOutside=0.0)
   if t0 >= t2:
-    logger.debug(f'_clippedArc(): boundary crossings out of order (t0={t0}, t2={t2}); skipping clip.')
+    # logger.debug(f'_clippedArc(): boundary crossings out of order (t0={t0}, t2={t2}); skipping clip.')
     return None
 
   q0 = _bezierPoint(p0, p1, p2, t0)
@@ -372,7 +373,7 @@ def _mergeArrowOptions(nearSpec: Optional[str], farSpec: Optional[str]) -> dict:
   return {'arrow': tk.NONE}
 
 
-def _drawCircleTerminator(canvas, spec: Optional[str], atPt: PointType, existingID: Optional[int],
+def _drawCircleTerminator(view, spec: Optional[str], atPt: PointType, existingID: Optional[int],
                            lineColor: str, fillColor: str, tags: Optional[Sequence[str]]) -> Optional[int]:
   """Draw (or update, or remove) a "circle" terminator centered at *atPt*.
   Non-circle specs (arrow, None) are handled by the line itself, so this
@@ -380,6 +381,7 @@ def _drawCircleTerminator(canvas, spec: Optional[str], atPt: PointType, existing
 
   :rtype: Optional[int]
   """
+  canvas = view.canvas
   parsed = parseTerminatorSpec(spec)
   if parsed is None or parsed[0] != 'circle':
     if existingID is not None:
@@ -388,7 +390,7 @@ def _drawCircleTerminator(canvas, spec: Optional[str], atPt: PointType, existing
   args = parsed[1]
   diam = args[0] if len(args) > 0 else 5
   r = diam / 2.0
-  coords = canvas.viewToWindow([atPt[0] - r, atPt[1] - r, atPt[0] + r, atPt[1] + r])
+  coords = view.viewToWindow([atPt[0] - r, atPt[1] - r, atPt[0] + r, atPt[1] + r])
   if existingID is not None and canvas.type(existingID) == 'oval':
     canvas.coords(existingID, coords)
     canvas.itemconfigure(existingID, fill=fillColor, outline=lineColor)
@@ -472,6 +474,7 @@ def _drawSingleSegment(label: VObject, other: VObject, otherIsSource: bool,
   :rtype: ConnectorIDs
   """
   canvas = label.canvas
+  view = label.view
   cl, co = label.centerPt(), other.centerPt()
   labelEdge = _clipToEdgeStraight(label, _farPointAlong(label, _sub(co, cl)))
   otherEdge = _clipToEdgeStraight(other, _farPointAlong(other, _sub(cl, co)))
@@ -496,8 +499,8 @@ def _drawSingleSegment(label: VObject, other: VObject, otherIsSource: bool,
     coords = [labelEdge[0], labelEdge[1], otherEdge[0], otherEdge[1]]
 
   lineID = _upsertLine(canvas, priorLineID, label.view.viewToWindow(coords), tagList, opts)
-  labelTermID = _drawCircleTerminator(canvas, labelTerm, labelEdge, priorLabelTermID, lineColor, fillColor, tagList)
-  otherTermID = _drawCircleTerminator(canvas, otherTerm, otherEdge, priorOtherTermID, lineColor, fillColor, tagList)
+  labelTermID = _drawCircleTerminator(view, labelTerm, labelEdge, priorLabelTermID, lineColor, fillColor, tagList)
+  otherTermID = _drawCircleTerminator(view, otherTerm, otherEdge, priorOtherTermID, lineColor, fillColor, tagList)
 
   result = ConnectorIDs()
   if otherIsSource:
@@ -589,14 +592,16 @@ def drawSmoothConnector(source: Optional[VObject], label: VObject, destination: 
   lineOpts = {'fill': lineColor, **lineKwargs}
 
   if source is None and destination is None:
-    logger.debug('drawSmoothConnector(): source and destination are both None; nothing to connect -- no-op.')
+    # logger.debug('drawSmoothConnector(): source and destination are both None; nothing to connect -- no-op.')
     return prior
   if source is None:
+    assert destination is not None
     return _drawSingleSegment(label, destination, False, terminators, prior, lineColor, fillColor, tagList, lineOpts)
   if destination is None:
     return _drawSingleSegment(label, source, True, terminators, prior, lineColor, fillColor, tagList, lineOpts)
 
   canvas = source.canvas
+  view = source.view
 
   cs, cl, cd = source.centerPt(), label.centerPt(), destination.centerPt()
   p1 = _labelControlPoint(cs, cl, cd)
@@ -618,9 +623,9 @@ def drawSmoothConnector(source: Optional[VObject], label: VObject, destination: 
         source.view.viewToWindow([q0[0], q0[1], q1[0], q1[1], q2[0], q2[1]]),
         tagList, opts)
     result.sourceTerminatorID = _drawCircleTerminator(
-        canvas, terminators.source, q0, prior.sourceTerminatorID, lineColor, fillColor, tagList)
+        view, terminators.source, q0, prior.sourceTerminatorID, lineColor, fillColor, tagList)
     result.labelNearTerminatorID = _drawCircleTerminator(
-        canvas, terminators.labelNear, q2, prior.labelNearTerminatorID, lineColor, fillColor, tagList)
+        view, terminators.labelNear, q2, prior.labelNearTerminatorID, lineColor, fillColor, tagList)
   else:
     # Boundary clip failed (logged already by _clippedArc) — leave whatever
     # was there before untouched rather than losing track of its id.
@@ -638,9 +643,9 @@ def drawSmoothConnector(source: Optional[VObject], label: VObject, destination: 
         source.view.viewToWindow([q0[0], q0[1], q1[0], q1[1], q2[0], q2[1]]),
         tagList, opts)
     result.labelFarTerminatorID = _drawCircleTerminator(
-        canvas, terminators.labelFar, q0, prior.labelFarTerminatorID, lineColor, fillColor, tagList)
+        view, terminators.labelFar, q0, prior.labelFarTerminatorID, lineColor, fillColor, tagList)
     result.destTerminatorID = _drawCircleTerminator(
-        canvas, terminators.destination, q2, prior.destTerminatorID, lineColor, fillColor, tagList)
+        view, terminators.destination, q2, prior.destTerminatorID, lineColor, fillColor, tagList)
   else:
     result.destLineID = prior.destLineID
     result.labelFarTerminatorID = prior.labelFarTerminatorID
@@ -683,14 +688,16 @@ def drawStraightConnector(source: Optional[VObject], label: VObject, destination
   lineOpts = {'fill': lineColor, **lineKwargs}
 
   if source is None and destination is None:
-    logger.debug('drawStraightConnector(): source and destination are both None; nothing to connect -- no-op.')
+    # logger.debug('drawStraightConnector(): source and destination are both None; nothing to connect -- no-op.')
     return prior
   if source is None:
+    assert destination is not None
     return _drawSingleSegment(label, destination, False, terminators, prior, lineColor, fillColor, tagList, lineOpts)
   if destination is None:
     return _drawSingleSegment(label, source, True, terminators, prior, lineColor, fillColor, tagList, lineOpts)
 
   canvas = source.canvas
+  view = source.view
 
   cs, cl, cd = source.centerPt(), label.centerPt(), destination.centerPt()
 
@@ -709,9 +716,9 @@ def drawStraightConnector(source: Optional[VObject], label: VObject, destination
       source.view.viewToWindow([sourceEdge[0], sourceEdge[1], labelNearEdge[0], labelNearEdge[1]]),
       tagList, opts)
   result.sourceTerminatorID = _drawCircleTerminator(
-      canvas, terminators.source, sourceEdge, prior.sourceTerminatorID, lineColor, fillColor, tagList)
+      view, terminators.source, sourceEdge, prior.sourceTerminatorID, lineColor, fillColor, tagList)
   result.labelNearTerminatorID = _drawCircleTerminator(
-      canvas, terminators.labelNear, labelNearEdge, prior.labelNearTerminatorID, lineColor, fillColor, tagList)
+      view, terminators.labelNear, labelNearEdge, prior.labelNearTerminatorID, lineColor, fillColor, tagList)
 
   opts = dict(lineOpts)
   opts.update(_mergeArrowOptions(terminators.labelFar, terminators.destination))
@@ -721,8 +728,8 @@ def drawStraightConnector(source: Optional[VObject], label: VObject, destination
       source.view.viewToWindow([labelFarEdge[0], labelFarEdge[1], destEdge[0], destEdge[1]]),
       tagList, opts)
   result.labelFarTerminatorID = _drawCircleTerminator(
-      canvas, terminators.labelFar, labelFarEdge, prior.labelFarTerminatorID, lineColor, fillColor, tagList)
+      view, terminators.labelFar, labelFarEdge, prior.labelFarTerminatorID, lineColor, fillColor, tagList)
   result.destTerminatorID = _drawCircleTerminator(
-      canvas, terminators.destination, destEdge, prior.destTerminatorID, lineColor, fillColor, tagList)
+      view, terminators.destination, destEdge, prior.destTerminatorID, lineColor, fillColor, tagList)
 
   return result

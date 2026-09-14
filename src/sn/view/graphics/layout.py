@@ -237,8 +237,8 @@ class FindFree(LayoutHieristic):
     finalLimit = [int(i) for i in [leftLimit, topLimit, rightLimit, bottomLimit]]
     pt = place(rect, expandFactor=expandFactor, exclude=exclude, limit=finalLimit)
     
-    if pt[0]!=rect[0] or pt[1]!=rect[1]:
-      logger.debug(f'Node "{node.modelObject.name}:{node.modelObject._id}" moving in direction {direction}, limit={finalLimit} to {pt}, ref={referenceNode}.')
+    # if pt[0]!=rect[0] or pt[1]!=rect[1]:
+    #   logger.debug(f'Node "{node.modelObject.name}:{node.modelObject._id}" moving in direction {direction}, limit={finalLimit} to {pt}, ref={referenceNode}.')
     
     node.moveTo(*pt, adjustPos=False)
     
