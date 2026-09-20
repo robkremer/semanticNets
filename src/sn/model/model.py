@@ -47,6 +47,7 @@ from util.observer import Subject
 import sn
 from util.dirtyable import Dirtyable
 from util.abstractGraph import AGRelation, AbstractGraph, AGObject
+from util.errorReportingObject import ErrorReportingObject
 
 logger:sn.SNLogger = sn.getLogger(__name__)
 
@@ -81,7 +82,7 @@ def makeRelationArrow(rel:Relation) -> str:
 
 GORef = PReference["GraphObject"]
 
-class GraphObject(AGObject["Model", "Relation"], AttributedObject):
+class GraphObject(AGObject["Model", "Relation"], AttributedObject, ErrorReportingObject):
   '''
   .. Note::
   
@@ -141,7 +142,7 @@ class GraphObject(AGObject["Model", "Relation"], AttributedObject):
       
     self.inferred:bool = False
     "Used to mark objects are inferred by the system so they may later be retracted."
-    self._statusReport:list[tuple[str, str]] = []
+    # self._statusReport:list[tuple[str, str, dict[str,Callable[[],None]]]] = []
 
   @classmethod
   @override
@@ -204,83 +205,90 @@ class GraphObject(AGObject["Model", "Relation"], AttributedObject):
       if rel.isSymmetric() and filtr(rel):
         yield rel, rel._dst if localOnly else rel.dst
         
-  def _addToStatusReport(self, cond:bool, msg:str, severity:str='E') -> None:
-    '''
-    Conditionally logs an line in the status report for the object.
-    
-    :param cond: A conditional expression that if False will cause an entry in
-      the status report.
-    :type cond: bool:
-    :param msg: A message to print in the status report if *cond* is False.
-    :type msg: str
-    :param severity: A one-character severity code: F (fatal), E (error), 
-      W (warning), I (informational)
-    :type severity: str
-    :returns: None
-    '''
-    if not cond:
-      self._statusReport.append((severity, msg))
+  # def assertToStatusReport(self, cond:bool, msg:str, severity:str='E', actions:dict[str,Callable[[],None]]=dict()) -> None:
+  #   '''
+  #   Conditionally logs an line in the status report for the object.
+  #
+  #   :param cond: A conditional expression that if False will cause an entry in
+  #     the status report.
+  #   :type cond: bool:
+  #   :param msg: A message to print in the status report if *cond* is False.
+  #   :type msg: str
+  #   :param severity: A one-character severity code: F (fatal), E (error), 
+  #     W (warning), I (informational)
+  #   :type severity: str
+  #   :param actions: A dict of str:Callable indicating actions such as fix:<function>,
+  #     or "delete:<function>" for use in a ActionDialog later.
+  #   :type actions: dict[str:Callable[[],None]]
+  #   :returns: None
+  #   '''
+  #   if not cond:
+  #     self._statusReport.append((severity, msg, actions))
     
   def validate(self) -> list[str]:
     #ret:list[str] = []
-    self._statusReport = []
         
     #check that Python types correspond to SN types.
     if type(self) is GraphObject:
-      self._addToStatusReport(self.id == 1, 
+      self.assertToStatusReport(self.id == 1, 
             'The only GraphObject should be top', 'E')
     elif type(self) is Node:
       # can't use .isa() for this as getParents() will create an isa to NODE.
-      self._addToStatusReport(self is self.model.NODE or self.model.NODE in self.getSupers(), 
+      self.assertToStatusReport(self is self.model.NODE or self.model.NODE in self.getSupers(), 
             'All Node objects should be explicit isa-children of "node"', 'W')
-      self._addToStatusReport(not self.isa(self.model.RELATION),
+      self.assertToStatusReport(not self.isa(self.model.RELATION),
             'Node object isa relation')
     elif type(self) is Relation:
-      self._addToStatusReport(self is self.model.RELATION or self.model.RELATION in self.getSupers(),
+      self.assertToStatusReport(self is self.model.RELATION or self.model.RELATION in self.getSupers(),
             'All Relation objects should be explicit isa-children of "relation".', 'W')
-      self._addToStatusReport(not self.isa(self.model.NODE),
+      self.assertToStatusReport(not self.isa(self.model.NODE),
             'Relation object isa node')
     elif type(self) is Collection:
-      self._addToStatusReport(self is self.model.COLLECTION or self.model.COLLECTION in self.getSupers(),
+      self.assertToStatusReport(self is self.model.COLLECTION or self.model.COLLECTION in self.getSupers(),
             'All Collection objects should be explicit isa-children of "collection".', 'W')
-      self._addToStatusReport(not self.isa(self.model.RELATION),
+      self.assertToStatusReport(not self.isa(self.model.RELATION),
             'Collection object isa relation')
+    # elif type(self) is AllModelCollection:
+    #   self.assertToStatusReport(self.model.COLLECTION in self.getSupers(),
+    #         'All Collection objects should be explicit isa-children of "collection".', 'W')
+    #   self.assertToStatusReport(not self.isa(self.model.RELATION),
+    #         'AllModelCollection object isa relation')
     elif type(self) is IsaIndividual:
       pass
     else:
-      self._addToStatusReport(False,
-            f'Unexpected type {self.__class__.__name__}')
+      self.assertToStatusReport(False,
+            f'Unknown subtype of GraphObject: {self.__class__.__name__}', 'W')
     return self.statusReport()
   
-  def statusReport(self) -> list[str]:
-    ret:list[str] = []
-    for sev, text in self._statusReport:
-      ret.append(f'{sev}: {text}')
-    return ret
-  
-  def status(self) -> str:
-    stats:list[tuple[str,str]] = self._statusReport
-    priority = 'IWEF'
-    pos:int = -1
-    if not stats:
-      return ''
-    for s,_ in stats:
-      p = priority.find(s) 
-      if p > pos:
-        pos = p
-    assert pos>=0
-    return priority[pos]
-  
-  _STATUS:dict[str,int] = {
-    '':0,
-    'E':-1,
-    'F':-2,
-    'I':1,
-    'W':2
-    }
-  
-  def statsInt(self):
-    return self._STATUS[self.status()]    
+  # def statusReport(self) -> list[str]:
+  #   ret:list[str] = []
+  #   for sev, text, _actions in self._statusReport:
+  #     ret.append(f'{sev}: {text}')
+  #   return ret
+  #
+  # def status(self) -> str:
+  #   stats:list[tuple[str,str,dict[str,Callable[[],None],]]] = self._statusReport
+  #   priority = 'IWEF'
+  #   pos:int = -1
+  #   if not stats:
+  #     return ''
+  #   for s,_,_ in stats:
+  #     p = priority.find(s) 
+  #     if p > pos:
+  #       pos = p
+  #   assert pos>=0
+  #   return priority[pos]
+  #
+  # _STATUS:dict[str,int] = {
+  #   '':0,
+  #   'E':-1,
+  #   'F':-2,
+  #   'I':1,
+  #   'W':2
+  #   }
+  #
+  # def statsInt(self):
+  #   return self._STATUS[self.status()]    
     
   def _isConnected(self):
     return self.id in self.db
@@ -821,6 +829,9 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
           
 class Node(GraphObject):
   
+  def __init__(self, db:Model, parents:Iterable[GraphObject]=[], individual:bool=False, name:Optional[str]=None, **kwargs):
+    super().__init__(db, parents, individual=individual, name=name, **kwargs)
+
   def getParents(self)->list[GraphObject]:
     '''
     :returns: The immediate parents of this object by iterating the *IsaIndividuals*
@@ -893,7 +904,7 @@ class Collection(Node):
     return ret
     
 class AllModelCollection(Collection, PRDbContainer):
-  def __init__(self, model:Model):
+  def __init__(self, model:Model, **kwargs):
     '''
     :param model: The Model this collection is registered as the "all objects"
       container for.
@@ -1033,7 +1044,7 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
   
   @dst.setter
   def dst(self, obj:GraphObject|None):
-    AGRelation.dst.fset(self, obj) #type: ignore[attr-defined]
+    AGRelation.dst.fset(self, obj) #type: ignore[attr-defined] # @undefinedvariable
     # # if self._legalDst(obj):
     # #   self._dst = obj
     # self.connect(destination=obj)
@@ -1057,13 +1068,14 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
           return obj._src
     return None
   
-  # @src.setter
-  # def src(self, obj:GraphObject):
-  #   # if self._legalSrc(obj):
-  #   #   self._src = obj
-  #   self.connect(source=obj)
-  #   assert self._src is obj
-  #   self.setDirty()
+  @src.setter
+  def src(self, obj:GraphObject|None):
+    AGRelation.src.fset(self, obj) #type: ignore[attr-defined] # @undefinedvariable
+    # # if self._legalSrc(obj):
+    # #   self._src = obj
+    # self.connect(source=obj)
+    # assert self._src is obj
+    # self.setDirty()
       
   def hasLocalDst(self) -> bool:
     '''
@@ -1098,9 +1110,9 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
   @override
   def validate(self) -> list[str]:
     if self._src is not None:
-      self._addToStatusReport(self in self._src._outgoing, f'src end is not registered with src object, {self._src}', 'E')
+      self.assertToStatusReport(self in self._src._outgoing, f'src end is not registered with src object, {self._src}', 'E')
     if self._dst is not None:
-      self._addToStatusReport(self in self._dst._incoming, f'dst end is not registered with dst object, {self._dst}', 'E')
+      self.assertToStatusReport(self in self._dst._incoming, f'dst end is not registered with dst object, {self._dst}', 'E')
     return self.statusReport()
     
   def isReflexive(self):

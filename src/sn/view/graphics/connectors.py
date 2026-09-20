@@ -150,6 +150,60 @@ def _sub(a: PointType, b: PointType) -> PointType:
   return (a[0] - b[0], a[1] - b[1])
 
 
+def _add(a: PointType, b: PointType) -> PointType:
+  return (a[0] + b[0], a[1] + b[1])
+
+
+_SELF_LOOP_GAP: float = 3.0
+'''Target visual gap (in view units) between the two lines of a self-loop
+connector (see _selfLoopOffset()) -- deliberately a rough constant ("about 3
+units", per Rob) rather than anything derived, so it's the one knob to turn
+if the drawn separation looks too tight or too wide.'''
+
+
+def _selfLoopOffset(cs: PointType, cl: PointType, lineWidth: float) -> PointType:
+  """The offset to push *source*'s and *destination*'s shared center apart by
+  when *source is destination* (a self-loop) -- see the "source is
+  destination" handling in drawSmoothConnector()/drawStraightConnector().
+
+  Without this, source's and destination's centers (and therefore every
+  point derived from them) are identical, so the source→label and
+  label→destination lines retrace exactly the same path instead of forming
+  a visible loop. Add the returned offset to *cs* for the source side and
+  subtract it for the destination side (or vice versa -- only the fact that
+  they're opposite matters) before doing anything else with those points, so
+  every downstream boundary-clip/curve calculation sees two distinct
+  "centers" a small distance apart instead of one.
+
+  Offsetting along a true perpendicular to the source/dest→label line would
+  need a normalize + rotate-90° (a sqrt and a couple of multiplies) for
+  every self-loop redraw. Since this only needs to look reasonable, not be
+  exact, picking a single axis -- y for a line closer to horizontal, x for
+  one closer to vertical -- gets a visually-parallel-enough offset for a
+  couple of comparisons instead, which matters here since redraws can
+  happen every frame of a drag/animation (see drawStraightConnector()'s
+  docstring).
+
+  :param cs: source's (== destination's) true center point.
+  :param cl: label's center point -- only its direction from *cs* matters,
+    to decide which axis to offset along.
+  :param lineWidth: The line's stroke width (create_line()'s "width" option,
+    or its default of 1 if not given), so thicker lines still end up
+    visibly separated rather than just touching edge-to-edge.
+  :returns: An (x, y) offset with exactly one non-zero component, sized so
+    that adding it to one side and subtracting it from the other leaves
+    about :py:data:`_SELF_LOOP_GAP` view units of daylight between the two
+    lines.
+  :rtype: PointType
+  """
+  dx, dy = cl[0] - cs[0], cl[1] - cs[1]
+  halfGap = (_SELF_LOOP_GAP + lineWidth) / 2.0
+  if abs(dx) >= abs(dy):
+    return (0.0, halfGap)  # near-horizontal line -- separate vertically
+  else:
+    return (halfGap, 0.0)  # near-vertical line -- separate horizontally
+
+
 def _labelControlPoint(cs: PointType, cl: PointType, cd: PointType) -> PointType:
   """The middle control point P1 of the quadratic Bezier [cs, P1, cd] that
   passes through *cl* exactly at t=0.5.
@@ -550,6 +604,12 @@ def drawSmoothConnector(source: Optional[VObject], label: VObject, destination: 
   Assumes source, label and destination don't overlap each other and share
   the same canvas (source.canvas is used).
 
+  If *source is destination* (a self-loop -- the same VObject on both ends),
+  their centers are pushed a small distance apart first (see
+  _selfLoopOffset()) so the source→label and label→destination arcs come out
+  as two distinct, roughly parallel loops instead of retracing the exact
+  same curve on top of each other.
+
   *source* and/or *destination* may be *None*. If exactly one is *None*,
   only a single straight-line segment is drawn -- from *label* to whichever
   of the two is actually present, complete with that segment's own
@@ -604,6 +664,15 @@ def drawSmoothConnector(source: Optional[VObject], label: VObject, destination: 
   view = source.view
 
   cs, cl, cd = source.centerPt(), label.centerPt(), destination.centerPt()
+  if source is destination:
+    # A self-loop: cs and cd are the same point, so source→label and
+    # label→destination would otherwise retrace the exact same curve on top
+    # of each other. Push their "centers" a small distance apart (see
+    # _selfLoopOffset()) before any of the curve/boundary-clip math below,
+    # so the two arcs come out looking like two parallel loops instead.
+    off = _selfLoopOffset(cs, cl, lineKwargs.get('width', 1))
+    cs = _add(cs, off)
+    cd = _sub(cd, off)
   p1 = _labelControlPoint(cs, cl, cd)
   m1 = midpoint(cs, p1)  # control point of the source→label half-arc
   m2 = midpoint(p1, cd)  # control point of the label→destination half-arc
@@ -673,6 +742,11 @@ def drawStraightConnector(source: Optional[VObject], label: VObject, destination
   drawn by drawSmoothConnector() — the same items just get reshaped from a
   3-point smoothed arc to a 2-point straight segment).
 
+  Also like drawSmoothConnector(), *source is destination* (a self-loop) is
+  special-cased -- see its docstring and _selfLoopOffset() -- so the two
+  segments end up offset and roughly parallel instead of drawn one on top of
+  the other.
+
   *source* and/or *destination* may be *None*, with exactly the same
   behaviour as drawSmoothConnector(): a single terminator-and-all straight
   segment from *label* to whichever one is present if only one is *None*
@@ -700,6 +774,15 @@ def drawStraightConnector(source: Optional[VObject], label: VObject, destination
   view = source.view
 
   cs, cl, cd = source.centerPt(), label.centerPt(), destination.centerPt()
+  if source is destination:
+    # See the identical "source is destination" handling in
+    # drawSmoothConnector() -- without it, cs and cd are the same point and
+    # the source→label/label→destination segments would be drawn directly
+    # on top of each other instead of as two separate, roughly parallel
+    # lines.
+    off = _selfLoopOffset(cs, cl, lineKwargs.get('width', 1))
+    cs = _add(cs, off)
+    cd = _sub(cd, off)
 
   sourceEdge = _clipToEdgeStraight(source, _farPointAlong(source, _sub(cl, cs)))
   labelNearEdge = _clipToEdgeStraight(label, _farPointAlong(label, _sub(cs, cl)))

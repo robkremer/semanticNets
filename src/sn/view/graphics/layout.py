@@ -143,7 +143,7 @@ class FindFree(LayoutHieristic):
                 **kwargs) -> Point:
     from sn.view.graphics.vrelations import VRelation
     expandFactor = self.expandFactor_relations \
-          if node.modelObject.isIndividual() and isinstance(node, VRelation) \
+          if node.modelObject is not None and node.modelObject.isIndividual() and isinstance(node, VRelation) \
           else self.expandFactor_nodes
     
     if direction == Direction.UNSPECIFIED:
@@ -231,7 +231,7 @@ class FindFree(LayoutHieristic):
       else:
         leftLimit = max(self.leftMargin, rect[0])
         
-    if (node.modelObject.isType() or isinstance(node, Node)) and aggressive:
+    if node.modelObject is not None and (node.modelObject.isType() or isinstance(node, Node)) and aggressive:
       topLimit = max(topLimit, self.isaLevelSpacing*depth(node.modelObject)+self.topMargin)
       
     finalLimit = [int(i) for i in [leftLimit, topLimit, rightLimit, bottomLimit]]

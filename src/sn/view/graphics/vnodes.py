@@ -34,9 +34,9 @@ Implements VNode and all its supporting classes:
 """
 
 import tkinter as tk
-from sn.model.model import IsaIndividual
+from sn.model.model import IsaIndividual, GraphObject
 from sn.view.graphics.vobjects import VObject
-from typing import Optional
+from typing import Optional, Any, override
 
 class VNode(VObject):
   '''
@@ -56,18 +56,15 @@ class VNode(VObject):
   #              x:Optional[int]=None, y:Optional[int]=None, x1:Optional[int]=None, y1:Optional[int]=None, 
   #              _id:Optional[int]=None):
   #   super().__init__(canvas, modelObject, shape, x, y, x1, y1, _id)
-
-  def _post__init__(self):
-    super()._post__init__()
-    self.adjustPos(aggressive=True)
-  
-  
-  # def register(self):
-  #   self.canvas.nodes.append(self)
-
-    
-  ### DESTRUCTOR #######################################################################
-
+  def __init__(self, view:"SNGView", modelObject:GraphObject|str,
+               shape:Any|str="Rectangle",
+               x:Optional[int]=None, y:Optional[int]=None, x1:Optional[int]=None, y1:Optional[int]=None,
+               **kwargs):
+    super().__init__(view, modelObject, shape, x, y, x1, y1)
+ 
+  @override
+  def makeModelObjectSubtype(self, individual:bool) -> None:
+    self.view.context.new_node(self.modelObject, name="", individual=individual, model=self.view.model) # type: ignore[arg-type]
 
 #   ### PERSISTENCE ######################################################################
 #

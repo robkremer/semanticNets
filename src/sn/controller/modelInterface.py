@@ -940,8 +940,11 @@ class ModelContext(CommandContext):
       parents:list[GraphObject] = [parent] if not isinstance(parent, list) else parent
       self.parents:list[Relation] = []
       for p in parents:
-        assert isinstance(p, Relation)
+        assert isinstance(p, Relation), f'Expected Relation, got type {p.__class__.__name__}.'
         self.parents.append(p)
+      if len(self.parents) > 1 and self.model.ISA in self.parents:
+        raise TypeError("Multiple parents cannot include the ISA relation.")
+        
         
       super().__init__("new relation")
       assert model is not None
@@ -956,7 +959,10 @@ class ModelContext(CommandContext):
     def do(self) -> Relation:
       super().do()
       if self.relation is None:
-        self.relation = Relation(self.model, self.parents, self.source, self.destination, self.individual, self.nodeName)
+        if len(self.parents) ==1 and self.parents[0] is self.model.ISA:
+          self.relation = IsaIndividual(self.model, self.source, self.destination)
+        else:
+          self.relation = Relation(self.model, self.parents, self.source, self.destination, self.individual, self.nodeName)
       else:
         self.relation._reconnect()
       return self.relation

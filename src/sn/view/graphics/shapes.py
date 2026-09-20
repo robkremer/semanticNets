@@ -217,6 +217,8 @@ class Shape:
     #TODO: 'vis/borderSmooth': "smooth", # seems to be am unknown option, contrary to the doc.
     
   def updateKwargs(self):
+    if self.vobject.modelObject is None:
+      return
     attrkeys = self.vobject.modelObject.keys()
     for opt in self.shapeOptionsMap.keys():
       if opt in attrkeys:

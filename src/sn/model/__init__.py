@@ -43,19 +43,19 @@ class TopModel(Model):
     Subject.__init__(self)
     Dirtyable.__init__(self)
     self._allowParentsCaching:bool = False
-    self.TOP:GraphObject = GraphObject(self, [])
+    self.TOP:GraphObject = GraphObject(self, []) #1
     # these re-assignments from a ValidationList to a list are necessary in 
     # these top types as they will violate the ValidationList constraints. 
     self.TOP._outgoing.checking(False) 
     self.TOP._incoming.checking(False)
-    self.RELATION:Relation = Relation(self, [], self.TOP, self.TOP)
+    self.RELATION:Relation = Relation(self, [], self.TOP, self.TOP) #2
     self.RELATION._outgoing.checking(False)
     self.RELATION._incoming.checking(False)
-    self.ISA:Relation = Relation(self, [], self.TOP, self.TOP)
+    self.ISA:Relation = Relation(self, [], self.TOP, self.TOP) #3
     self.ISA._outgoing.checking(False)
     self.ISA._incoming.checking(False)
-    IsaIndividual(self, self.RELATION, self.TOP) # can't do this until after ISA exists
-    isaisa:IsaIndividual = IsaIndividual(self, self.ISA, self.RELATION)
+    IsaIndividual(self, self.RELATION, self.TOP) #4 can't do this until after ISA exists
+    isaisa:IsaIndividual = IsaIndividual(self, self.ISA, self.RELATION) #5
 
     # now that we have the isa defined, fix up the name attribute (as it involves inheritance) 
     self.TOP.setAttr("name", Attribute("top", str, VAR_DEFAULTED, "The name of the object. Can be used to access the object in the model."))
@@ -63,29 +63,29 @@ class TopModel(Model):
       raise Exception("TopModel.__init__() called twice.")
     self.RELATION.setAttr("name", Attribute("relation", None, TYPENAME)) # can't do this until AFTER ISA exists.
     self.ISA["name"] = "isa"
-    self.NODE:Node = Node(self, [self.TOP])
+    self.NODE:Node = Node(self, [self.TOP]) #6,7
     self.NODE.setAttr("name", Attribute("node", None, VAR)) # can't do this until AFTER ISA exists.
 
     # add it the basic relation types
-    self.REFLEXIVE:Relation         = Relation(self, [self.RELATION], individual=False, name="reflexive")
+    self.REFLEXIVE:Relation         = Relation(self, [self.RELATION], individual=False, name="reflexive") #8,9
     self.REFLEXIVE["reflexive"]     = Attribute(True, bool, CONST, "Object is a reflexive relation")
-    self.IRREFLEXIVE:Relation       = Relation(self, [self.RELATION], individual=False, name="irreflexive")
+    self.IRREFLEXIVE:Relation       = Relation(self, [self.RELATION], individual=False, name="irreflexive") #10,11
     self.IRREFLEXIVE["irreflexive"] = Attribute(True, bool, CONST, "Object is a irreflexive relation")
-    self.SYMMETRIC:Relation         = Relation(self, [self.RELATION], individual=False, name="symmetric") 
+    self.SYMMETRIC:Relation         = Relation(self, [self.RELATION], individual=False, name="symmetric") #12,13
     self.SYMMETRIC["symmetric"]     = Attribute(True, bool, CONST, "Object is a symmetric relation")
-    self.TRANSITIVE:Relation        = Relation(self, [self.RELATION], individual=False, name="transitive") 
+    self.TRANSITIVE:Relation        = Relation(self, [self.RELATION], individual=False, name="transitive") #14,15
     self.TRANSITIVE["transitive"]   = Attribute(True, bool, CONST, "Object is a transitive relation")
 
     # fix up the ISA relation type so it inherits from REFLEXIVE and TRANSITIVE
     assert isinstance(isaisa, IsaIndividual)
     isaisa.connect(destination=self.TRANSITIVE)
-    IsaIndividual(self, self.ISA, self.REFLEXIVE)
-    IsaIndividual(self, self.RELATION, self.TOP) # relations needs to be fixed too.
+    IsaIndividual(self, self.ISA, self.REFLEXIVE) #16
+    #IsaIndividual(self, self.RELATION, self.TOP) #17 relations needs to be fixed too.
 
-    self.EQUALITY:Relation = Relation(self, [self.REFLEXIVE, self.SYMMETRIC, self.TRANSITIVE], name="equality")
+    self.EQUALITY:Relation = Relation(self, [self.REFLEXIVE, self.SYMMETRIC, self.TRANSITIVE], name="equality") #17,18,19,20
 
     # add in a base context node
-    self.COLLECTION:Collection = Collection(self, [self.NODE], [], individual=False, name="collection")
+    self.COLLECTION:Collection = Collection(self, [self.NODE], [], individual=False, name="collection") #21,22
 
     self[0] # causes the "all model" collection to be instantiated.
     self._allowParentsCaching = True
@@ -122,7 +122,11 @@ class TopModel(Model):
     self.RELATION['vis/lineFillColor'] = Attribute("black", "color", VAR_DEFAULTED, "The terminal's fill color of the relation connector in the GUI.")
     self.RELATION['vis/lineType']    = Attribute("smooth", LineType, VAR_DEFAULTED, "The curve type of the line of the relation connector in the GUI.\n  smooth | straight")
     self.RELATION['vis/lineWidth']   = Attribute(1, int, VAR_DEFAULTED, "The line width of the relation connector in the GUI.")
-    self.RELATION['vis/shape']       = "Oval"
+    self.RELATION['vis/shape']       = "Rectangle"
+    self.RELATION['vis/borderColor'] = ""
+    self.RELATION['vis/minSize']     = 10 
+    self.RELATION['vis/maxSize']     = 40
+    self.RELATION['vis/aspectRatio'] = 0.4
     
     self.ISA['vis/shape']           = "Rectangle"
     self.ISA['vis/minSize']         = 4

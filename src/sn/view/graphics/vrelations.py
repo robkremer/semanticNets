@@ -19,12 +19,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE #
 # SOFTWARE.                                                                     #
 #################################################################################
-from sn.view.graphics.connectors import drawSmoothConnector, ConnectorIDs,\
-  drawStraightConnector, ConnectorTerminators
-from util.persistence.serialize import InstantiationInfo, ParamInfo,\
-  PropertyInfo
-from util.abstractGraph import AGRelation
-
 """
 vrelations.py
 
@@ -45,6 +39,8 @@ import xml.etree.ElementTree as et
 from ast import literal_eval
 from typing import Any, Optional, Union, Tuple, List, Dict, Iterable, \
   override
+from types import NoneType
+
 from dataclasses import dataclass
 import weakref
 
@@ -53,10 +49,15 @@ from sn import snPrefs
 from util.utils import flattenPairs, midpoint
 from util.attribute import AttributedObject
 from util.persistence.pRef import PRDb, PReference
+from util.persistence.serialize import InstantiationInfo, ParamInfo,\
+  PropertyInfo
+from util.attributeEditor import applyEditAttrsBox # @UnresolvedImport
+from util.abstractGraph import AGRelation
 from sn.model.model import GraphObject, Relation
 from sn.view.graphics.vobjects import VObject
+from sn.view.graphics.connectors import drawSmoothConnector, ConnectorIDs,\
+  drawStraightConnector, ConnectorTerminators
 #TODO: remove the "#@" when attributeEditor get fixed up.
-from util.attributeEditor import applyEditAttrsBox # @UnresolvedImport
 
 import logging
 logger:sn.SNLogger = sn.getLogger(__name__)
@@ -114,10 +115,12 @@ class VRelation(VObject, AGRelation):
     pass when the owner container calls the *self._post__init__()* method.
     """
     if isinstance(modelObject, str):
-      obj = PReference[Relation](modelObject)(relativeTo=view.model)
-      assert isinstance(obj, Relation)
-      modelObject = obj
-    assert isinstance(modelObject, Relation), \
+      try:
+        obj = PReference[GraphObject](modelObject)(relativeTo=view.model)
+      except KeyError:
+        obj = None
+      modelObject = obj # type: ignore[assignment]
+    assert isinstance(modelObject, (Relation,NoneType)), \
           f"Bad modelObject param in VRelation.__init__(): type {modelObject.__class__.__name__}"
    
     if typ is not None:
@@ -135,14 +138,11 @@ class VRelation(VObject, AGRelation):
     # registers this object with *view*) exactly once instead of once per
     # inheritance path.
     super().__init__(view, x=x, y=y, x1=x1, y1=y1, shape=shape, modelObject=modelObject, src=None, dst=None)
-    assert isinstance(self.modelObject, Relation)
+    assert isinstance(self.modelObject, (Relation,NoneType))
  
-    #self.roles:dict[str, list[VRelation.RoleInfo]] = dict()
-    #'dict[roleName, list[RoleInfo]'
-    if not self.view.reading: # can't do an expansion while things aren't settled yet...
-      self._connect()
-    # self.unfilledRoles:[str, Tuple[int]] = dict()
-    # 'a temporary holder for info about unfilled roles to assist in drawing "dangling" roles'
+    # Done by AbstractGraph
+    # if not self.view.reading: # can't do an expansion while things aren't settled yet...
+    #   self._connect()
           
     self._floatingAnchor = True if floating is None else floating
     # self._redrawExecuting = False
@@ -173,16 +173,23 @@ class VRelation(VObject, AGRelation):
             postconSetters=sup.postconSetters,
             finalSetters=sup.finalSetters)
 
-  def _connect(self):
-      assert isinstance(self.modelObject, Relation)
-      self.src:VObject|None = None     
-      if self.modelObject.src is not None:
-        self.src = self.view.makeViewObjectForGraphObject(self.modelObject.src)
-        self.src.relations.append(self)
-      self.dst:VObject|None = None
-      if self.modelObject.dst is not None:
-        self.dst = self.view.makeViewObjectForGraphObject(self.modelObject.dst)
-        self.dst.relations.append(self)
+  @override
+  def makeModelObjectSubtype(self, individual:bool) -> None:
+    self.view.context.new_relation(self.modelObject, name="", individual=individual, model=self.view.model) # type: ignore[arg-type]
+
+  def connect(self, source:VObject|None=None, destination:VObject|None=None):
+    '''
+    Determine the connecting objects from self.modelObject, and invoke the super version
+    with from that.
+    '''
+    if self.view.reading or self.modelObject is None:
+      return
+    assert isinstance(self.modelObject, Relation)
+    if source is None and self.modelObject.src is not None:
+      source = self.view.makeViewObjectForGraphObject(self.modelObject.src)
+    if destination is None and self.modelObject.dst is not None:
+      destination = self.view.makeViewObjectForGraphObject(self.modelObject.dst)
+    super().connect(source, destination)
     
     
   # def _connectRoles(self):
@@ -514,6 +521,8 @@ class VRelation(VObject, AGRelation):
     if self._drawVersion >= self.view._drawVersion: 
       return
     super().draw(fast=fast, **kwargs)
+    if self.modelObject is None:
+      return
     # self.reposition(suppressDraw=True)
     if self.modelObject.isSystemObject() and self.modelObject.name == "relation":
       return
@@ -697,7 +706,7 @@ class VRelation(VObject, AGRelation):
   ### MENUS ############################################################################
 
   def addViewMenuItems(self, menu:tk.Menu):
-    if self.modelObject.isIndividual():
+    if self.modelObject is not None and self.modelObject.isIndividual():
       self._menuFloating = tk.BooleanVar()
       self._menuFloating.set(self.floating())
       menu.add_checkbutton(label="floating", onvalue=1, offvalue=0, variable=self._menuFloating, command=self._toggleFloatingAnchor)

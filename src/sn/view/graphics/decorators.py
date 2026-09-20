@@ -131,7 +131,7 @@ class Text(Decorator):
     return self.owner.view.viewToWindow(x,y)
       
   def setText(self, fast=False) -> str:
-    name = self.owner.modelObject.name
+    name = self.owner.modelObject.name if self.owner.modelObject is not None else "?"
     if name is None:
       text = ""
     else:
@@ -217,7 +217,7 @@ class Marker:
       if "justify" not in self.kwargs: self.kwargs["justify"] = "center"
       if "anchor"   not in self.kwargs: self.kwargs["anchor"]  = "center"
       if "font"     not in self.kwargs: self.kwargs["font"]    = ("TkSmallCaptionFont", int(self.owner.view._fontSize * self.owner.view._scale))
-      self.kwargs["text"] = self.label
+      self.kwargs["text"] = self.label if self.label != 'E' else str(len(self.owner.statusReport()))
       self.kwargs["fill"] = self.fg
       if "fill"     not in self.kwargs2: self.kwargs2["fill"]    = self.bg
       if "outline"  not in self.kwargs2: self.kwargs2["outline"] = ""
@@ -301,16 +301,16 @@ class MarkerContainer(Decorator):
     Decorator.__init__(self, owner)
     self.markers = [
         MarkerWithTooltip(owner, "E", "white", "red", 
-               lambda owner=self.owner: len(owner.errors)>0,
-               lambda owner=self.owner: DOT + ' ' + (f'\n{DOT} '.join(owner.errors))),
+               lambda owner=self.owner: len(owner._statusReport)>0,
+               lambda owner=self.owner: DOT + ' ' + (f'\n{DOT} '.join(owner.statusReport()))),
         MarkerWithTooltip(owner, "S", "yellow", "gray50", 
-               lambda owner=self.owner: owner.modelObject.isSystemObject() and snPrefs.get("gui/showSystemTags", storeDefault=True),
+               lambda owner=self.owner: owner.modelObject is not None and owner.modelObject.isSystemObject() and snPrefs.get("gui/showSystemTags", storeDefault=True),
                "System: Object is a fixed system object"),
         MarkerWithTooltip(owner, "T", "lawn green", "gray50", 
-               lambda owner=self.owner: owner.modelObject.isType() and snPrefs.get("gui/showTypeTags", storeDefault=True),
+               lambda owner=self.owner: owner.modelObject is not None and owner.modelObject.isType() and snPrefs.get("gui/showTypeTags", storeDefault=True),
                "Type: object is a Type object (as opposed to an Individual)"),
         MarkerWithTooltip(owner, "R", "cyan", "gray50", 
-               lambda owner=self.owner: owner.view.model != owner.modelObject.model and snPrefs.get("gui/showRemoteTags", storeDefault=True),
+               lambda owner=self.owner: owner.modelObject is not None and owner.view.model != owner.modelObject.model and snPrefs.get("gui/showRemoteTags", storeDefault=True),
                lambda owner=self.owner: f'Remote: Object is from another model: {owner.modelObject.model.url}')
         ]
 
@@ -487,8 +487,9 @@ class ShadowDecorator(Decorator):
     self.id:int|None = None # the id of the canvas item
     self.offset = offset
     self.kwargs = kwargs
-    if "fill"    not in self.kwargs: self.kwargs["fill"]    = "gray70"
-    if "outline" not in self.kwargs: self.kwargs["outline"] = ""
+    
+    if "fill"    not in self.kwargs: self.kwargs["fill"]    = "" if owner.cache['vis/fillColor'] == "" else "gray70"
+    if "outline" not in self.kwargs: self.kwargs["outline"] = "" if owner.cache['vis/borderColor'] == "" else "gray70"
 
   def _offsetPoints(self, points:list[float]) -> list[float]:
     dx, dy = self.offset

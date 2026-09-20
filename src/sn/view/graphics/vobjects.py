@@ -50,22 +50,27 @@ Visual Attributes
 ----------
 '''
 from __future__ import annotations
-from typing import Any, Optional, Union, Iterable, Callable, override, cast
+from typing import Any, Optional, Union, Iterable, Callable, override, cast,\
+  Iterator
+from types import NoneType
 import tkinter as tk
 import weakref
+import traceback
+from abc import abstractmethod
 
 from util.persistence.serialize import InstantiationInfo, ParamInfo
 from util.commandParser import CompositeCommandMgr
 from util.persistence.pRef import PRObject, PRDb, PReference #, DeletedObjectError
 from util.observer import Observer, Subject
 from util.utils import tag_bindRightMouse, tag_unbindRightMouse, s_CMD, s_SHIFT,\
-  expandRect, overlaps, pointInPoly
+  expandRect, overlaps, pointInPoly, showExceptionDialog
 from util.tooltip import CreateToolTip
 from util.command import CommandWrapper
 from util.attributeEditor import getEditedAttrsCommandObj, applyEditAttrsBox,\
   editAttrsBox
 from util.abstractGraph import AGObject
 from util.dirtyable import Dirtyable
+from util.errorReportingObject import ErrorReportingObject
 
 import sn
 from sn import snPrefs
@@ -133,9 +138,10 @@ class Cache(dict[str,Any]):
     Update *attr* from the model object.
     '''
     if self._owner() is None: return
+    owner:VObject = self._owner()
+    if owner.modelObject is None: return
     
     def refreshAttr(attr:str):
-      owner = self._owner()
       assert owner is not None
       self[attr] = owner.modelObject[attr]
       
@@ -170,7 +176,7 @@ class Cache(dict[str,Any]):
     return key in self.allkeys
       
 
-class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable):
+class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReportingObject):
   '''
   An object that visually represents some object in a tygra *Model* that resides
   in a particular *SNCanvas* (which may include VObjects representing objects in
@@ -210,6 +216,34 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable):
     from sn.view.graphics.vrelations import VRelation
     from sn.view.graphics.sngView import SNGView
 
+    #check parameters
+    assert isinstance(view, SNGView), f'Expecting SNGView type, got {type(SNGView)}'
+    if isinstance(modelObject, str):
+      self.readModelObjectRef:str = modelObject
+      try:
+        obj = PReference[GraphObject](modelObject)(relativeTo=view.model)
+      except KeyError:
+        obj = None
+      modelObject = obj # type: ignore[assignment]
+    assert isinstance(modelObject, (GraphObject,NoneType))
+    assert isinstance(shape, (Shape,str)), f'Expected Shape or str, but got "{shape.__class__.__name__}"'
+
+    # Set up the reference model object and it's cached details.
+    # This needs to be done BEFORE super constructors are called in the case
+    # of VRelations to prevent recursively calling this constructor.
+    self._modelObject:GraphObject|None = modelObject
+
+    self.cache:Cache = Cache(self)
+    
+    m = self._modelObject
+    if m is not None:
+      # these act as a cache, as it's relatively expensive to look up these values in the model object.
+      self.cache['name'] = m.name
+      for attrName, default in VATTRIBUTES.items():
+        setattr(self.cache, attrName, m.get(attrName, default))      
+
+    self.view:SNGView = view
+
     # *AGObject* is a common ancestor shared with *AGRelation* whenever this
     # is actually a *VRelation* (see that class's __init__ for the full
     # explanation of the diamond). This single cooperative super().__init__()
@@ -223,26 +257,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable):
     # automatically via this same chain.
     super().__init__(db=view, **kwargs)
     assert self._id is not None
-
-    #check parameters
-    assert isinstance(view, SNGView), f'Expecting SNGView type, got {type(SNGView)}'
-    if isinstance(modelObject, str):
-      obj = PReference[GraphObject](modelObject)(relativeTo=view.model)
-      assert isinstance(obj, GraphObject)
-      modelObject = obj
-    assert isinstance(modelObject, GraphObject)
-    assert isinstance(shape, (Shape,str)), f'Expected Shape or str, but got "{shape.__class__.__name__}"'
-
-    # set up the reference model object and it's cached details
     
-    self._modelObject:GraphObject = modelObject if isinstance(modelObject, GraphObject) else PReference(modelObject)
-    m = self.modelObject
-    # these act as a cache, as it's relatively expensive to look up these values in the model object.
-    self.cache:Cache = Cache(self)
-    self.cache['name'] = m.name
-    for attrName, default in VATTRIBUTES.items():
-      setattr(self.cache, attrName, m.get(attrName, default))
-
     if x  is None: x  = 0
     if y  is None: y  = 0
     if x1 is None: x1 = int(self.cache["vis/minSize"])
@@ -255,7 +270,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable):
     self._drawVersion:int = -1
     self._boundingBox = [x, y, x1, y1]
 
-    self.view:SNGView = view
     self.canvas:tk.Canvas = view.canvas
     self._updatingFromAttrs = False
     self.tooltip = None
@@ -274,17 +288,18 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable):
     self._shape = shape
     self.tag = "ID"+str(self._id)
     
-    self.relations:list[VRelation] = []
-    'CAUTION: This list of referenced relations MUST have exactly a one-to-one relation with every connecting role of every connecting relation.'
-    
-    self.errors:list = []
+    # self.relations:list[VRelation] = []
+    # 'CAUTION: This list of referenced relations MUST have exactly a one-to-one relation with every connecting role of every connecting relation.'
     
     self.decorators:dict[str, Decorator] = dict()
     self.makeDecorators()
     
-    self.modelObject.addObserver(self)
+    if self.modelObject is not None:
+      self.modelObject.addObserver(self)
     # if _id is None: # being created by the user (not reading from persistent store)
     #   self._post__init__()
+    
+    self.validate()
     
     self.canvas.after(0, lambda slf=self: [ \
                                   slf.view.freshPaint(), \
@@ -320,28 +335,34 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable):
   @property
   @override
   def name(self)->str:
-    n = self.modelObject["name"]
+    n = "?" if self.modelObject is None else self.modelObject["name"]
     return str(n)
     # assert n is None or type(n) is str, f'Expecting type str|None, got {n.__class__.__name__}'
     # return "" if n is None else n
     
   @property
-  def modelObject(self) -> GraphObject:
+  def modelObject(self) -> GraphObject|None:
     '''
     :returns: The corresponding model object.
     :rtype: GraphObject
     :raises ReferenceError: if there is not corresponding model object (deleted?)
     :
     '''
-    try:
-      ret:GraphObject|None = self._modelObject
-      assert isinstance(ret, GraphObject)
-    except:
-      logger.exception("Can't access model object.")
-      ret = None
-    if ret is None:
-      raise ReferenceError("model object not found.")
-    return ret
+    # try:
+    #   ret:GraphObject|None = self._modelObject
+    #   assert isinstance(ret, GraphObject)
+    # except:
+    #   logger.exception("Can't access model object.")
+    #   ret = None
+    # if ret is None:
+    #   raise ReferenceError("model object not found.")
+    # return ret
+    return self._modelObject
+  
+  @property
+  def relations(self) -> Iterator[VObject]:
+    for vo in self._incoming + self._outgoing:
+      yield vo
         
   def delete(self):
     """Removes this Node from the display, removing it from canvas's list."""
@@ -525,17 +546,24 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable):
     '''
     Populates (or clears) the *self.errors* list.
     '''
-    self.errors = []
-    if self.modelObject is None: #check model object is there.
-      msg = "Model is missing"
-      self.errors.append(msg)
-    else:
-      model:GraphObject = self.modelObject
-      for n in self.view.values(): # check for other objects referencing this one's model object
-        if n is not self and self.modelObject == n.modelObject:
-          self.errors.append(f'View objects {self} and {n} both reference the same model object {self.modelObject}.')
-      self.errors += model.validate()
-    return self.errors
+    try:
+      self.assertToStatusReport(self.modelObject is not None, 
+        f'Model object is missing from Model: {self.readModelObjectRef if hasattr(self, "readModelObjectRef") else ""}', "E", 
+        actions={"erase view object": lambda: [self._disconnect(), self.delete(), self.setDirty(), None][-1]}) #check model object is there.
+      if self.modelObject is not None:
+        model:GraphObject = self.modelObject
+        for n in self.view.values(): # check for other objects referencing this one's model object
+          self.assertToStatusReport(n is self or self.modelObject is not n.modelObject,
+            f'View objects {self} and {n} both reference the same model object {self.modelObject}.', 'E', dict())
+        model.clearStatusReport()
+        model.validate()
+        self._statusReport += model._statusReport
+    except Exception as ex:
+      trace = traceback.format_exc()
+      self.assertToStatusReport(False, 
+          f'Unexpected exception during valication: {ex.__class__.__name__}: {ex}', 'E',
+          {"view trace": lambda trace=trace: showExceptionDialog(self.canvas.winfo_toplevel(), name=ex.__class__.__name__, text=trace)})
+    return self.statusReport()
     
   # ---- BINDINGS --------------------------------------------------------------
   
@@ -545,7 +573,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable):
     self.canvas.tag_bind(bindObj, "<Button-1>", self.onButton_1)
     self.canvas.tag_bind(bindObj, "<B1-Motion>", self.onB1_Motion)
     self.canvas.tag_bind(bindObj, "<B1-ButtonRelease>", self.onB1_ButtonRelease)
-    # self.tooltip = CreateToolTip(self.canvas, self.tooltipFunc, bindObj, 
+    self.canvas.tag_bind(bindObj, "<Enter>", lambda event: self.canvas.configure(cursor="hand"))
+    self.canvas.tag_bind(bindObj, "<Leave>", lambda event: self.canvas.configure(cursor="arrow"))
+  # self.tooltip = CreateToolTip(self.canvas, self.tooltipFunc, bindObj, 
     #                              waitTime=1000, wrapLength=250, background="#FFFFC0")
     self.tooltip = CreateToolTip(self.canvas, self.tooltipFunc, self._shape.id, 
                                  waitTime=1000, wrapLength=250, background="#FFFFC0")
@@ -578,6 +608,17 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable):
     winY = self.canvas.canvasy(event.y)
     r = self.boundingBox()
     self.dragInfo = (r[0], r[1], winX, winY, False) # x,y,no-drag-motion-event
+    # Record each object this drag might move's TRUE starting position, right
+    # now before any <B1-Motion> tick has touched anything. onB1_Motion()
+    # moves every object in self.view.selected (or just self) via direct
+    # moveBy() calls that bypass the Command system entirely, so by the time
+    # onB1_ButtonRelease() commits a _Move (on release), boundingBox() already
+    # reflects where the drag ENDED, not where it started -- see _Move's own
+    # oldPos docstring in sngView.py. Capturing it here and threading it
+    # through to _Move(oldPos=...) is what lets undo() restore the whole
+    # move, not just its last FindFree-driven leg.
+    movedSet = self.view.selected if self.selected() else [self]
+    self.dragStartPositions:dict["VObject", list[int]] = {n: n.boundingBox() for n in movedSet}
     self.old_suppressLocalLayout = self.view.suppressLocalLayout()
     self.view.suppressLocalLayout(True)
     return 'break'
@@ -632,15 +673,37 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable):
         self.view.suppressLocalLayout(self.old_suppressLocalLayout)
         # if False: #self.canvas.fieldsLayoutObj.active:
         #   bb = self.boundingBox()
-        #   x, y, _, _ = bb 
+        #   x, y, _, _ = bb
         #   if self.overlaps(bb, spacing=[20,10]):
         #     self.canvas.fieldsLayoutObj(self)
         # else:
         #   x, y = self.adjustPos()
         # #record a move command
         # self.canvas.doList.do(MoveCommand(self, (x, y), (self.dragInfo[0], self.dragInfo[1]), suppressFirst=False))
-        bb = self.boundingBox()
-        self.view.context.move(self, bb[0], bb[1])
+        # If this was a multi-selection drag, onB1_Motion() moved every object
+        # in self.view.selected (not just self) via its own dX/dY loop. Only
+        # ever committing self's final position here left the other selected
+        # objects' moves un-recorded: they stayed visually moved with no
+        # Command on the queue, so a single undo() only restored self while
+        # everything else dragged along with it stayed put. Committing a
+        # context.move() for every selected object -- wrapped in a
+        # CompositeCommandMgr, the same mechanism this class already uses for
+        # multi-attribute edits (see onEditAttributes() above) -- bundles them
+        # into one CompositeCommand, so one undo()/redo() moves the whole
+        # group together, matching what the drag itself did.
+        #
+        # oldPos=... : pass each object's TRUE pre-drag position (captured in
+        # onButton_1(), before any <B1-Motion> tick moved anything) explicitly
+        # to _Move, rather than letting it fall back to capturing
+        # boundingBox() at do()-time -- which, for a live-dragged object,
+        # already reflects where the drag ENDED, not where it started. See
+        # _Move's oldPos docstring in sngView.py for the full explanation.
+        movedObjects = self.view.selected if self.selected() else [self]
+        with CompositeCommandMgr(self.view.context):
+          for n in movedObjects:
+            bb = n.boundingBox()
+            startPos = self.dragStartPositions.get(n, bb)
+            self.view.context.move(n, bb[0], bb[1], oldPos=startPos)
       else: # this was a click, not a drag: toggle the selection state
         s = event.state
         self.selected(not self.selected(), _multi=s_CMD(s) or s_SHIFT(s)) # toggle selected
@@ -653,7 +716,11 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable):
   def makeMenu(self) -> tk.Menu:
     m = tk.Menu(self.canvas)
     if True: #app.DEBUG_MENUS:
-      m.add_command(label=f'#{self._id} -> #{self.modelObject.id}?name="{self.modelObject.name}"', state=tk.DISABLED)
+      if self.modelObject is None:
+        mtitle = "None"
+      else:
+        mtitle = f'#{self.modelObject.id}?name="{self.modelObject.name}"'
+      m.add_command(label=f'#{self._id} -> {mtitle}', state=tk.DISABLED)
       m.add_separator()
     editable = self.view.isModelEditor()
     if editable:
@@ -667,11 +734,15 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable):
     # if app.DEBUG_MENUS:
     #   m.add_separator()
     #   m.add_command(label='validate', command=self.validate)
+    if len(self._statusReport)>0:
+      def show(slf):
+        pass
+      m.add_command(label='show error report', command=lambda slf=self: [slf.clearStatusReport(), self.validate(), slf.showErrorActionDialog(slf.canvas.winfo_toplevel())])
     if snPrefs.get("debug", False):
       m.add_separator()
       m.add_command(label="validate", command=lambda o=self: \
                                                 (n := len(o.validate()), \
-                                                 logger.info(f'"{o.modelObject.name}": No errors detected.') if n==0 else logger.warning(f'"{o.modelObject.name}": detected {n} errors.'), \
+                                                 logger.info(f'"{o.name}": No errors detected.') if n==0 else logger.warning(f'"{o.modelObject.name}": detected {n} errors.'), \
                                                  o.view.freshPaint(), 
                                                  o.draw()))
       m.add_command(label="refresh cache", command=lambda: self.cache.refresh(verbose=True))
@@ -686,6 +757,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable):
   #
 
   def addModelEditingMenuItems(self, menu:tk.Menu):
+    if self.modelObject is None:
+      return
     disabled = (self.modelObject.isSystemObject() \
                 and not snPrefs.get("gui/allowEditingSystemObjects", storeDefault=False)) \
                or not self.view.isModelEditor() \
@@ -694,20 +767,24 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable):
     menu.add_command(label=f"{'show' if disabled else 'edit'} attributes", \
                      command=lambda disabled=disabled: self.onEditAttributes(disabled=disabled or remote))    
     if self.modelObject.isType():
-      menu.add_command(label='make new instance', command=lambda: self.canvas.doNewNodeCommand(parent=self.modelObject, individual=True))
-      menu.add_command(label='make new subtype', command=lambda: self.canvas.doNewNodeCommand(parent=self.modelObject, individual=False))
+      menu.add_command(label='make new instance', command=lambda: self.makeModelObjectSubtype(True))
+      menu.add_command(label='make new subtype', command=lambda: self.makeModelObjectSubtype(False))
       menu.add_separator()
     if not disabled:
       relTypesMenu = tk.Menu()
       for r in [r for r in self.view.model.values() if isinstance(r, Relation) and r.isType()]:
-          relTypesMenu.add_command(label=r.name, command=lambda r=r: self.canvas.makeRelationFrom(self, r))
+          relTypesMenu.add_command(label=r.name, command=lambda r=r: self.view.makeRelationFrom(self, r))
       menu.add_cascade(label="make relation to...", menu=relTypesMenu)
-      menu.add_command(label="delete from model", state=tk.DISABLED if remote else tk.NORMAL, 
+      menu.add_command(label="remove from model", state=tk.DISABLED if remote else tk.NORMAL, 
                        command=lambda: self.canvas.doList.do(
                          CommandWrapper(RmGraphObjectCommand(self.view.model, self.modelObject),
                                         setup=self.canvas.setCatchNewObjects, 
                                         teardown=self.canvas.resetCatchNewObjects)))
       menu.add_separator()
+      
+  @abstractmethod
+  def makeModelObjectSubtype(self, individual:bool) -> None:
+    raise NotImplementedError("Must implement VObject.makeSubtypeMenuItemFun().")
     
   def addViewMenuItems(self, menu:tk.Menu):
     # from sn.view.vcommands import ExpandCommand, RemoveFromViewCommand
@@ -830,11 +907,13 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable):
   # ---- DRAWING ---------------------------------------------------------------
   
   def makeDecorators(self):
-    notIsIsa= type(self.modelObject) is not IsaIndividual
+    notIsIsa = type(self.modelObject) is not IsaIndividual if self.modelObject is not None else True
     if notIsIsa:
       self.decorators["text"] = WrappingText(self)
     self.decorators["markers"] = MarkerContainer(self)
-    if notIsIsa and self.modelObject.isIndividual(): # shadow individuals only. The actual decorator will display conditionally on "gui/showIndividualShadow"
+    # shadow types only. The actual decorator will display conditionally on "gui/showIndividualShadow"
+    if notIsIsa and self.modelObject is not None and self.modelObject.isType() and \
+        snPrefs.get("gui/shadowTypes", storeDefault=True, storeType=bool, note="Draw a shadow around all Type objects (as opposed to Individual objects)."): 
       self.decorators["shadow"] = ShadowDecorator(self)
     # try:
     #   if self.modelObject.isType() or self.modelObject.isSystemObject:
@@ -1021,10 +1100,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable):
     tip = ""
     line = "\u2594"*18
     try:
-      tip = self.modelObject.name
+      tip = self.name
       if snPrefs.get("debug", storeDefault=False):
         tip += f' ({self._id})'
-      note = self.modelObject.get("note", None)
+      note = self.modelObject.get("note", None) if self.modelObject is not None else None
       if note is not None:
         #tip += f'\n{line*2}NOTE:{line*13}\n{note.value}'
         tip += f'\n{line}\nNOTE:\n{note}'
@@ -1115,12 +1194,12 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable):
 
   # ---- RELATIONS -------------------------------------------------------------
 
-  def addRelation(self, relation): #, direction):
-    from sn.view.graphics.vrelations import VRelation
-    if not isinstance(relation, VRelation):
-      raise TypeError("VNode.addRelation(): first argument must be of type VRelation.")
-    self.relations.append(relation) #(relation, direction))
-#     relation.model.addObserver(self) # observer the relation MODEL
+  # def addRelation(self, relation): #, direction):
+  #   from sn.view.graphics.vrelations import VRelation
+  #   if not isinstance(relation, VRelation):
+  #     raise TypeError("VNode.addRelation(): first argument must be of type VRelation.")
+  #   self.relations.append(relation) #(relation, direction))
+  #   #  relation.model.addObserver(self) # observer the relation MODEL
 
   def notifyRelationDeletion(self, relation):
     """ This is the notification from removal of a relation VIEW. """ 
@@ -1137,6 +1216,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable):
   
   @override
   def tostring(self, relativeTo:SNGView|None=None) -> str:
+    if self.modelObject is None:
+      return f'{self.__class__.__name__}(?, {PReference.formatForURL(self, relativeTo, includeName=False)}, {self.readModelObjectRef if hasattr(self,"readModelObjectRef") else "?"})'
+     
     name = self.modelObject.getLocal("name", None)
     if name is None:
       name = f'{UP_ARROW}"{self.modelObject.get("name")}"'
