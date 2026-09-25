@@ -960,9 +960,9 @@ class ModelContext(CommandContext):
       super().do()
       if self.relation is None:
         if len(self.parents) ==1 and self.parents[0] is self.model.ISA:
-          self.relation = IsaIndividual(self.model, self.source, self.destination)
+          self.relation = IsaIndividual(db=self.model, src=self.source, dst=self.destination)
         else:
-          self.relation = Relation(self.model, self.parents, self.source, self.destination, self.individual, self.nodeName)
+          self.relation = Relation(db=self.model, parents=self.parents, src=self.source, dst=self.destination, individual=self.individual, name=self.nodeName)
       else:
         self.relation._reconnect()
       return self.relation

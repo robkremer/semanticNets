@@ -239,6 +239,52 @@ class SNGContext(UIContext):
       return f'{super().__str__()} {" ".join([mo.name for mo in self.modelObjects])} --view {self.view}'
 
 
+  # This is just a signature -- the behaviour is in class _New_node.
+  def erase(self, object:VObject): # pylint: disable=redefined-builtin
+    '''
+    Delete a *GraphObject*.
+    
+    :param object: The *VObject* to delete from the view.
+    :type object: VObject
+    '''
+    pass
+    
+  class _Erase(Command):
+    def __init__(self, object:VObject): # pylint: disable=redefined-builtin
+      '''
+      Delete a object from it's model.
+      
+      :param object: The object to delete from the view.
+      :type object: VObject
+      '''
+      # param checking...
+      super().__init__("remove")
+      self.objects:list[VObject] = list(object.view.selected) if object.selected() else [object]
+    
+    @override
+    def do(self):
+      super().do()
+      for obj in self.objects:
+        if obj._isConnected():
+          obj._disconnect()
+  
+    @override
+    def undo(self):
+      super().undo()
+      for obj in self.objects:
+        if not obj._isConnected():
+          obj._reconnect()
+      
+    @override
+    def delete(self):
+      super().delete()
+      self.objects = []
+      
+    @override
+    def __str__(self):
+      return f'{super().__str__()} {self.objects[0].getPRef().tostring()}'
+
+
   def expand(self, object:GraphObject):
     '''
     This is a dummy graphic command.

@@ -64,7 +64,7 @@ class VNode(VObject):
  
   @override
   def makeModelObjectSubtype(self, individual:bool) -> None:
-    self.view.context.new_node(self.modelObject, name="", individual=individual, model=self.view.model) # type: ignore[arg-type]
+    self.view.context.new_node(self.modelObject, name="", individual=individual, type=not individual, model=self.view.model) # type: ignore[arg-type]
 
 #   ### PERSISTENCE ######################################################################
 #

@@ -767,8 +767,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     menu.add_command(label=f"{'show' if disabled else 'edit'} attributes", \
                      command=lambda disabled=disabled: self.onEditAttributes(disabled=disabled or remote))    
     if self.modelObject.isType():
-      menu.add_command(label='make new instance', command=lambda: self.makeModelObjectSubtype(True))
-      menu.add_command(label='make new subtype', command=lambda: self.makeModelObjectSubtype(False))
+      menu.add_command(label='make new instance', command=lambda: self.makeModelObjectSubtype(individual=True))
+      menu.add_command(label='make new subtype', command=lambda: self.makeModelObjectSubtype(individual=False))
       menu.add_separator()
     if not disabled:
       relTypesMenu = tk.Menu()
@@ -776,10 +776,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
           relTypesMenu.add_command(label=r.name, command=lambda r=r: self.view.makeRelationFrom(self, r))
       menu.add_cascade(label="make relation to...", menu=relTypesMenu)
       menu.add_command(label="remove from model", state=tk.DISABLED if remote else tk.NORMAL, 
-                       command=lambda: self.canvas.doList.do(
-                         CommandWrapper(RmGraphObjectCommand(self.view.model, self.modelObject),
-                                        setup=self.canvas.setCatchNewObjects, 
-                                        teardown=self.canvas.resetCatchNewObjects)))
+                       command=lambda: self.view.context.remove(self.modelObject))
       menu.add_separator()
       
   @abstractmethod
@@ -886,9 +883,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     expMenu.add_command(label="expand all, 3 levels", command=lambda: self.view.context.expand(self, levels=2))
     expMenu.add_command(label="expand all, 4 levels", command=lambda: self.view.context.expand(self, levels=3))
     menu.add_cascade(menu=expMenu, label="expand")
-    menu.add_command(label="remove from view", 
-                     command=lambda: self.canvas.doList.do(RemoveFromViewCommand(self)),
-                     state="normal" if self.isHidable() else "disabled")
+    menu.add_command(label="erase from view", 
+                     command=lambda slf=self: slf.view.context.erase(slf))
          
   def onEditAttributes(self, disabled:bool=False):
     edits = editAttrsBox(self.canvas, self.modelObject, title=str(self.modelObject), disabled=disabled)
@@ -1153,13 +1149,13 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
           return
 
   @override
-  def _disconnect(self) -> None:
-    super()._disconnect()
+  def _disconnect(self, **kwargs) -> None:
+    super()._disconnect(**kwargs)
     self.canvas.itemconfigure(self.tag, state="hidden")
     
   @override
-  def _reconnect(self):
-    super()._reconnect()
+  def _reconnect(self, **kwargs):
+    super()._reconnect(**kwargs)
     self.canvas.itemconfigure(self.tag, state="normal")
 
   # def setHidden(self, hide:bool=True):

@@ -293,7 +293,7 @@ class GraphObject(AGObject["Model", "Relation"], AttributedObject, ErrorReportin
   def _isConnected(self):
     return self.id in self.db
 
-  def _disconnect(self) -> None:
+  def _disconnect(self, **kwargs) -> None:
     '''
     Disconnect this object from it's *Model* by:
     
@@ -308,24 +308,25 @@ class GraphObject(AGObject["Model", "Relation"], AttributedObject, ErrorReportin
       deletion.  Keep a pointer to the object and undo the deletion by calling
       its _reconnect() method.
     '''
-    #TODO: This is a potential problem for chains of transitive relations.
-    assert self._isConnected()
-    
-    children = self.getChildren()
-    
-    # unregister from the model
-    self.db._unregister(self._id)
-
-    # disconnect from related-to objects
-    for r,_ in self._getIncoming():
-      r._disconnect(keep=self)
-    for r,_ in self._getOutgoing():
-      r._disconnect(keep=self)
+    # #TODO: This is a potential problem for chains of transitive relations.
+    # assert self._isConnected()
+    #
+    # children = self.getChildren()
+    #
+    # # unregister from the model
+    # self.db._unregister(self._id)
+    #
+    # # disconnect from related-to objects
+    # for r,_ in self._getIncoming():
+    #   r._disconnect(keep=self)
+    # for r,_ in self._getOutgoing():
+    #   r._disconnect(keep=self)
+    super._disconnect()
       
-    for child in children: #TODO: could be more efficient by just fixing the parentCache's.
+    for child in self.getChildren(): #TODO: could be more efficient by just fixing the parentCache's.
       child.retract()
     
-  def _reconnect(self):
+  def _reconnect(self, **kwargs):
     '''
     Reconnect this disconnected object to it's *Model* by:
     
@@ -338,16 +339,17 @@ class GraphObject(AGObject["Model", "Relation"], AttributedObject, ErrorReportin
       This method should only be used to undo a _disconnect() operation.
       
     '''
-    assert not self._isConnected()
-    
-    # unregister from the model
-    self.db._register(self, self._id)
-
-    # disconnect from related-to objects
-    for r,_ in self._getIncoming():
-      r._reconnect(kept=self)
-    for r,_ in self._getOutgoing():
-      r._reconnect(kept=self)
+    # assert not self._isConnected()
+    #
+    # # unregister from the model
+    # self.db._register(self, self._id)
+    #
+    # # disconnect from related-to objects
+    # for r,_ in self._getIncoming():
+    #   r._reconnect(kept=self)
+    # for r,_ in self._getOutgoing():
+    #   r._reconnect(kept=self)
+    super()._reconnect()
 
     for child in self.getChildren(): #TODO: could be more efficient by just fixing the parentCache's.
       child.retract()
@@ -604,7 +606,7 @@ class GraphObject(AGObject["Model", "Relation"], AttributedObject, ErrorReportin
   
   @override
   def __eq__(self, other:object):
-    return PRObject.__eq__(self, object)
+    return PRObject.__eq__(self, other)
   
   @override
   def __hash__(self): #type: ignore[override]
@@ -1098,6 +1100,7 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
     self._symmetric = None
     self._reflexive = None
     self._transitive = None
+    self._irreflexive = None
     
   def _legalDst(self, obj:GraphObject) -> bool:
     #TODO: need to fill out _legalDst
@@ -1208,16 +1211,16 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
         self.setDirty()
     
   @override
-  def _reconnect(self, kept:GraphObject|None=None):
+  def _reconnect(self, kept:GraphObject|None=None, **kwargs):
     if self._src is not None and self._src is not kept:
       self._src._outgoing.append(self) 
     if self._dst is not None and self._dst is not kept:
       self._dst._incoming.append(self)
-    super()._reconnect()
+    super()._reconnect(**kwargs)
     self.setDirty()
    
   @override
-  def _disconnect(self, keep:GraphObject|None=None) -> None: #type: ignore[override]
+  def _disconnect(self, keep:GraphObject|None=None, **kwargs) -> None: #type: ignore[override]
     '''
     Disconnects this relation from it's src and dst by removing the pointers
     from the src and dst objects. The pointers **to** these object (in this
@@ -1238,7 +1241,7 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
       delOne(self._src._outgoing, self) 
     if self._dst is not None and self._dst is not keep:
       delOne(self._dst._incoming, self) 
-    super()._disconnect()
+    super()._disconnect(**kwargs)
     self.setDirty()
     
 class IsaIndividual(Relation):

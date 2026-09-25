@@ -175,7 +175,7 @@ class VRelation(VObject, AGRelation):
 
   @override
   def makeModelObjectSubtype(self, individual:bool) -> None:
-    self.view.context.new_relation(self.modelObject, name="", individual=individual, model=self.view.model) # type: ignore[arg-type]
+    self.view.context.new_relation(self.modelObject, name="", individual=individual, type=not individual, model=self.view.model) # type: ignore[arg-type]
 
   def connect(self, source:VObject|None=None, destination:VObject|None=None):
     '''
@@ -187,10 +187,14 @@ class VRelation(VObject, AGRelation):
     assert isinstance(self.modelObject, Relation)
     if source is None and self.modelObject.src is not None:
       source = self.view.makeViewObjectForGraphObject(self.modelObject.src)
+      if self in source._outgoing:
+        raise RuntimeError(f'Reinserting self ({self}) into {source}.')
     if destination is None and self.modelObject.dst is not None:
       destination = self.view.makeViewObjectForGraphObject(self.modelObject.dst)
+      if self in destination._incoming:
+        raise RuntimeError(f'Reinserting self ({self}) into {destination}.')
     super().connect(source, destination)
-    
+   
     
   # def _connectRoles(self):
   #   '''
@@ -578,9 +582,19 @@ class VRelation(VObject, AGRelation):
     terminators = ConnectorTerminators(self.cache['vis/terminator1'], self.cache['vis/terminator2'], self.cache['vis/terminator3'], self.cache['vis/terminator4'])
     lineType = self.cache['vis/lineType']
     if lineType == "straight":
-      self.connectInfo = drawStraightConnector(self.src, self, self.dst, terminators, self.connectInfo, lineColor=self.cache['vis/lineColor'], fillColor=self.cache['vis/lineFillColor'], width=self.cache['vis/lineWidth'])
+      self.connectInfo = drawStraightConnector(self.src, self, self.dst, 
+            terminators, self.connectInfo, 
+            lineColor=self.cache['vis/lineColor'], 
+            fillColor=self.cache['vis/lineFillColor'], 
+            width=self.cache['vis/lineWidth'],
+            tags=[self.tag])
     else:
-      self.connectInfo = drawSmoothConnector(self.src, self, self.dst, terminators, self.connectInfo, lineColor=self.cache['vis/lineColor'], fillColor=self.cache['vis/lineFillColor'], width=self.cache['vis/lineWidth'])
+      self.connectInfo = drawSmoothConnector(self.src, self, self.dst, 
+            terminators, self.connectInfo, 
+            lineColor=self.cache['vis/lineColor'], 
+            fillColor=self.cache['vis/lineFillColor'], 
+            width=self.cache['vis/lineWidth'],
+            tags=[self.tag])
           
   # def drawUnfilledRoles(self):
   #   for role, infoList in self.roles.items():
