@@ -37,7 +37,7 @@ from util.persistence.serialize import InstantiationInfo, ParamInfo, PropertyInf
   SerializableType
 from util.utils import removeDuplicates, delOne
 from typing import override, cast, Generator, Callable, Optional,\
-  Iterable, overload, Iterator
+  Iterable, overload, Iterator, Any
 from util.attribute import AttributedObject, Attribute, VAR, TYPENAME,\
   UNRESTRICTED, VAR_DEFAULTED, NOVALUE
 from util.validatedList import ValidatedList
@@ -48,6 +48,7 @@ import sn
 from util.dirtyable import Dirtyable
 from util.abstractGraph import AGRelation, AbstractGraph, AGObject
 from util.errorReportingObject import ErrorReportingObject
+from sn.model.snAttribute import SNAttributedObject
 
 logger:sn.SNLogger = sn.getLogger(__name__)
 
@@ -82,7 +83,7 @@ def makeRelationArrow(rel:Relation) -> str:
 
 GORef = PReference["GraphObject"]
 
-class GraphObject(AGObject["Model", "Relation"], AttributedObject, ErrorReportingObject):
+class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReportingObject):
   '''
   .. Note::
   
@@ -189,7 +190,7 @@ class GraphObject(AGObject["Model", "Relation"], AttributedObject, ErrorReportin
       if filtr(rel):
         yield rel, rel._dst if localOnly else rel.dst
     for rel in self._incoming:
-      if rel.isSymmetric() and filtr(rel):
+      if filtr(rel) and rel.isSymmetric():
         yield rel, rel._src if localOnly else rel.src
 
   def _getIncoming(self, filtr:Callable[[Relation], bool]=lambda _: True, 
@@ -202,7 +203,7 @@ class GraphObject(AGObject["Model", "Relation"], AttributedObject, ErrorReportin
       if filtr(rel):
         yield rel, rel._src if localOnly else rel.src
     for rel in self._outgoing:
-      if rel.isSymmetric() and filtr(rel):
+      if filtr(rel) and rel.isSymmetric():
         yield rel, rel._dst if localOnly else rel.dst
         
   # def assertToStatusReport(self, cond:bool, msg:str, severity:str='E', actions:dict[str,Callable[[],None]]=dict()) -> None:
@@ -248,11 +249,11 @@ class GraphObject(AGObject["Model", "Relation"], AttributedObject, ErrorReportin
             'All Collection objects should be explicit isa-children of "collection".', 'W')
       self.assertToStatusReport(not self.isa(self.model.RELATION),
             'Collection object isa relation')
-    # elif type(self) is AllModelCollection:
-    #   self.assertToStatusReport(self.model.COLLECTION in self.getSupers(),
-    #         'All Collection objects should be explicit isa-children of "collection".', 'W')
-    #   self.assertToStatusReport(not self.isa(self.model.RELATION),
-    #         'AllModelCollection object isa relation')
+    elif type(self) is AllModelCollection:
+      self.assertToStatusReport(self.model.COLLECTION in self.getSupers(),
+            'All Collection objects should be explicit isa-children of "collection".', 'W')
+      self.assertToStatusReport(not self.isa(self.model.RELATION),
+            'AllModelCollection object isa relation')
     elif type(self) is IsaIndividual:
       pass
     else:
@@ -321,7 +322,7 @@ class GraphObject(AGObject["Model", "Relation"], AttributedObject, ErrorReportin
     #   r._disconnect(keep=self)
     # for r,_ in self._getOutgoing():
     #   r._disconnect(keep=self)
-    super._disconnect()
+    super()._disconnect(**kwargs)
       
     for child in self.getChildren(): #TODO: could be more efficient by just fixing the parentCache's.
       child.retract()
@@ -349,7 +350,7 @@ class GraphObject(AGObject["Model", "Relation"], AttributedObject, ErrorReportin
     #   r._reconnect(kept=self)
     # for r,_ in self._getOutgoing():
     #   r._reconnect(kept=self)
-    super()._reconnect()
+    super()._reconnect(**kwargs)
 
     for child in self.getChildren(): #TODO: could be more efficient by just fixing the parentCache's.
       child.retract()
@@ -688,11 +689,11 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     self.RELATION:Relation = GORef.eval("$sn#relation") #type: ignore[assignment]
     self.ISA:Relation = GORef.eval("$sn#3") #type: ignore[assignment]
     self.NODE:Node = GORef.eval("$sn#node") #type: ignore[assignment]
-    self.REFLEXIVE:Relation = GORef.eval("$sn#reflexive") #type: ignore[assignment]
-    self.IRREFLEXIVE:Relation = GORef.eval("$sn#irreflexive") #type: ignore[assignment]
-    self.SYMMETRIC:Relation = GORef.eval("$sn#symmetric") #type: ignore[assignment]
-    self.TRANSITIVE:Relation = GORef.eval("$sn#transitive") #type: ignore[assignment] 
-    self.EQUALITY:Relation = GORef.eval("$sn#equality") #type: ignore[assignment]
+    # self.REFLEXIVE:Relation = GORef.eval("$sn#reflexive") #type: ignore[assignment]
+    # self.IRREFLEXIVE:Relation = GORef.eval("$sn#irreflexive") #type: ignore[assignment]
+    # self.SYMMETRIC:Relation = GORef.eval("$sn#symmetric") #type: ignore[assignment]
+    # self.TRANSITIVE:Relation = GORef.eval("$sn#transitive") #type: ignore[assignment] 
+    # self.EQUALITY:Relation = GORef.eval("$sn#equality") #type: ignore[assignment]
     self.COLLECTION:Collection = GORef.eval("$sn#collection") #type: ignore[assignment]
 
     if hasattr(self, "_initialized") or _reading: # This means the __new__ method has returned an existing object, so don't truck over it!
@@ -982,11 +983,6 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
     # **kwargs (see *GraphObject.__init__()* and *AGRelation.__init__()*).
     super().__init__(db=db, parents=parents, individual=individual, name=name, src=src, dst=dst)
 
-    self._symmetric:bool|None = None
-    self._reflexive:bool|None = None
-    self._irreflexive:bool|None = None
-    self._transitive:bool|None = None
-
     # self._dst:GraphObject|None = None
     # self._src:GraphObject|None = None
     # if db.reading:
@@ -1003,6 +999,27 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
     param are all left empty here as they will be restored by the relevant 
     :py:class:`Relation` objects.
     '''
+    def connectSrc(slf:Relation, source:str, isSource:bool):
+      if source is not None and source!="None":
+        sideText = "src" if isSource else "dst"
+        try:
+          obj:Any = GORef.eval(source, slf.db)
+          assert isinstance(obj, GraphObject)
+          if isSource:
+            slf.connect(source=obj)
+          else:
+            slf.connect(destination=obj) 
+        except KeyError:
+          actions = {"remove relation from model": lambda: [slf.model.setDirty(), slf._disconnect(), slf.model.setDirty(), None][-1]}
+          slf.assertToStatusReport(False, f'Unexpected read fault on {sideText} for Relation {slf}: "{source}"', "E", 
+                                   actions=actions)
+        except AssertionError:
+          slf.assertToStatusReport(False, f'Unexpected type for read on {sideText} for Relation {slf}: {type(obj)}', "E",
+                                   actions=actions)
+        except Exception as ex:
+          slf.assertToStatusReport(False, f'Unexpected error on reading {sideText} for Relation {slf}: {ex.__class__.__name__}: {ex}', "E", 
+                                   actions=actions)
+        
     ret = GraphObject.getInstantiationInfo()
     return InstantiationInfo(
             cls, 
@@ -1012,12 +1029,10 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
             finalSetters=ret.finalSetters+
                           [PropertyInfo("src", str, 
                                         lambda slf: GORef.formatForURL(slf._src, slf.db), #type: ignore[attr-defined]
-                                        lambda slf, source: slf.connect(source=GORef.eval(source, slf.db)) if source is not None and source!="None" else None), #type: ignore[attr-defined, arg-type]
+                                        lambda slf, source: connectSrc(slf, source, isSource=True)),
                            PropertyInfo("dst", str, 
                                         lambda slf: GORef.formatForURL(slf._dst, slf.db), #type: ignore[attr-defined]
-                                        lambda slf, dest  : slf.connect(destination=GORef.eval(dest, slf.db)) if dest is not None and dest!="None" else None)] #type: ignore[attr-defined, arg-type]
-                          # [PropertyInfo("src_", GraphObject, lambda slf: PReference(slf._src), lambda slf, source: slf.connect(source=source)),
-                          #  PropertyInfo("dst_", GraphObject, lambda slf: slf.dst, lambda slf, dest  : slf.connect(destination=dest))]
+                                        lambda slf, source: connectSrc(slf, source, isSource=False))]
             )
     # return InstantiationInfo(
     #         cls, 
@@ -1039,7 +1054,10 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
       obj:GraphObject
       supers = self.getSupers()
       for obj in supers:
-        assert isinstance(obj, Relation)
+        if not isinstance(obj, Relation):#, f'Expected type Relation, got type {type(obj)}.'
+          self.assertToStatusReport(False, f'Expected type Relation for supertype, got type {type(obj)}. Probably a changed parent model.', 'E', 
+            actions={"delete this relation": lambda: [self._disconnect(), self.view.setDirty(), None][-1]})
+          return None
         if obj._dst is not None:
           return obj._dst
     return None
@@ -1065,7 +1083,10 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
       obj:GraphObject
       supers = self.getSupers()
       for obj in supers:
-        assert isinstance(obj, Relation)
+        if not isinstance(obj, Relation):#, f'Expected type Relation, got type {type(obj)}.'
+          self.assertToStatusReport(False, f'Expected type Relation for supertype, got type {type(obj)}. Probably a changed parent model.', 'E', 
+            actions={"delete this relation": lambda: [self._disconnect(), self.view.setDirty(), None][-1]})
+          return None
         if obj._src is not None:
           return obj._src
     return None
@@ -1091,17 +1112,6 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
     '''
     return self._src is not None
     
-  def retract(self):
-    '''
-    Retract the inferences about this object.  In this case,
-    retract settings for isSymmetric(), isReflexive(), isTransitive(). They 
-    will automatically be recalculated next time they are used.
-    '''
-    self._symmetric = None
-    self._reflexive = None
-    self._transitive = None
-    self._irreflexive = None
-    
   def _legalDst(self, obj:GraphObject) -> bool:
     #TODO: need to fill out _legalDst
     return True
@@ -1118,28 +1128,36 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
       self.assertToStatusReport(self in self._dst._incoming, f'dst end is not registered with dst object, {self._dst}', 'E')
     return self.statusReport()
     
-  def isReflexive(self):
-    if self._reflexive is None:
-      self._reflexive = bool(self.get("reflexive", False))
-    return self._reflexive
+  def _hasRelationalProperty(self, prop:str) -> bool:
+    '''
+    The relational properties (see *sn.model.snAttribute.RELATIONAL_ATTRS*)
+    are LOCAL tags on relation *types*: the key's presence is the tag (its value
+    is ignored) and they are never inherited -- brother isa sibling, but only
+    sibling is symmetric. An individual relation has the property iff one of
+    its immediate types does.
+    '''
+    if self.isType():
+      return dict.__contains__(self, prop)
+    try:
+      parents = self.getParents()
+    except (LookupError, AttributeError): # eg: during initialization
+      return False
+    return any(dict.__contains__(p, prop) for p in parents)
+
+  def isReflexive(self) -> bool:
+    return self._hasRelationalProperty("reflexive")
   
-  def isIrreflexive(self):
-    if self._irreflexive is None:
-      self._irreflexive = bool(self.get("irreflexive", False))
-    return self._irreflexive
+  def isIrreflexive(self) -> bool:
+    return self._hasRelationalProperty("irreflexive")
   
-  def isSymmetric(self):
-    if self._symmetric is None:
-      try: # fails during in itialization
-        self._symmetric = bool(self.get("symmetric", False))
-      except:
-        self._symmetric = False
-    return self._symmetric
+  def isSymmetric(self) -> bool:
+    return self._hasRelationalProperty("symmetric")
   
-  def isTransitive(self):
-    if self._transitive is None:
-      self._transitive = bool(self.get("transitive", False))
-    return self._transitive
+  def isAsymmetric(self) -> bool:
+    return self._hasRelationalProperty("asymmetric")
+  
+  def isTransitive(self) -> bool:
+    return self._hasRelationalProperty("transitive")
     
   def getParents(self)->list[GraphObject]:
     '''
@@ -1210,40 +1228,8 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
         assert self in destination._incoming
         self.setDirty()
     
-  @override
-  def _reconnect(self, kept:GraphObject|None=None, **kwargs):
-    if self._src is not None and self._src is not kept:
-      self._src._outgoing.append(self) 
-    if self._dst is not None and self._dst is not kept:
-      self._dst._incoming.append(self)
-    super()._reconnect(**kwargs)
-    self.setDirty()
-   
-  @override
-  def _disconnect(self, keep:GraphObject|None=None, **kwargs) -> None: #type: ignore[override]
-    '''
-    Disconnects this relation from it's src and dst by removing the pointers
-    from the src and dst objects. The pointers **to** these object (in this
-    relation) are kept intact. This relation is also removed from it's
-    containing *Model* object (it is removed from the Model's list, but
-    it's *db* pointer remains intact.
-    
-    This is typically useful for undo operations where, for example, a delete
-    operation on an object can be undone by disconnecting the object, saving
-    it, and if it on deletion and then re-connecting it if the delete is undone.
-    
-    :param source: [default: *False*] Iff True the *src* side is disconnected.
-    :type source: bool  
-    :param destination: [default: *False*] Iff True the *dst* side is disconnected.
-    :type destination: bool  
-    '''
-    if self._src is not None and self._src is not keep:
-      delOne(self._src._outgoing, self) 
-    if self._dst is not None and self._dst is not keep:
-      delOne(self._dst._incoming, self) 
-    super()._disconnect(**kwargs)
-    self.setDirty()
-    
+  # _disconnect()/_reconnect() of the src/dst ends are inherited from AGRelation.
+
 class IsaIndividual(Relation):
   def __init__(self, db:Model, src:GraphObject|None=None, dst:GraphObject|None=None):
     if not db.reading:

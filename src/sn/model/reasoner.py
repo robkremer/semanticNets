@@ -1,16 +1,43 @@
 '''
-A back-end reasoner for :py:class:`~sn.model.model.Model` objects, built on
-`clingo <https://potassco.org/clingo/>`_ (answer set programming).
+The engine-independent interface to back-end reasoners for
+:py:class:`~sn.model.model.Model` objects.
 
-The model is exported as a set of ground facts (see the header of
-*reasoner.lp* for the vocabulary), the rule base in *reasoner.lp* is applied,
-and the resulting atoms are mapped back onto the model's *GraphObjects*.
-Every *GraphObject* -- including relation types and isa links -- is reified
-as a term ``o(N)``, which is what lets relation types take part in the isa
-hierarchy (and relations relate relations) while staying first-order.
+A reasoner engine subclasses :py:class:`Reasoner` (see
+:py:class:`sn.model.clingoReasoner.ClingoReasoner`). What is shared here:
 
-The *Model* remains the single source of truth: the reasoner never modifies
-it. Callers (typically the controller) decide what to do with the results.
+- :py:meth:`Reasoner.facts` exports the model as engine-neutral facts. Their
+  vocabulary is the contract every engine reasons over:
+
+  ==========================  ================================================
+  ``obj(O)``                  every GraphObject (including those of super-models)
+  ``individual(O)``           GraphObject.isIndividual()
+  ``kind(O,K)``               K in top, node, relation, isa
+  ``collection(O)``           O is a Collection (also of kind node)
+  ``name(O,S)``               GraphObject.name
+  ``const(K,O)``              well-known objects: top, relation, isa, node, ...
+  ``parent(X,P)``             GraphObject.getParents() (incl. implicit defaults)
+  ``lsrc(R,C)``, ``ldst``     locally set relation endpoints (Relation._src/_dst)
+  ``src(R,S)``, ``dst``       effective endpoints (Relation.src/.dst, inherited)
+  ``link(R,S,D)``             individual, non-isa relation R with both endpoints
+  ``prop(T,P)``               relation type T is tagged with P (reflexive,
+                              irreflexive, symmetric, asymmetric, transitive)
+  ``member(C,M)``             Collection membership
+  ``attr(O,K,V)``             effective non-"vis/" scalar attributes
+  ``lattr(O,K)``              O has attribute K locally
+  ==========================  ================================================
+
+- :py:class:`Inferences` and :py:class:`Violation` are what every engine
+  returns, and the violation codes (see *_MESSAGES*) are shared.
+
+- The typed queries (:py:meth:`Reasoner.related`, :py:meth:`Reasoner.isa`, ...)
+  work with any engine. :py:meth:`Reasoner.query` is the engine's *native*
+  query language (see :py:attr:`Reasoner.language`), and so is not portable.
+
+The semantics every engine must implement are pinned down by
+*test/test_model/test_reasoner.py*: an engine is conforming if it passes
+*ReasonerSpec*.
+
+The *Model* remains the single source of truth: reasoners never modify it.
 
 Created on Sep 24, 2026
 
@@ -39,17 +66,17 @@ Created on Sep 24, 2026
 # SOFTWARE.                                                                     #
 #################################################################################
 from __future__ import annotations
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Any
-import clingo
+from importlib import import_module
+from typing import Any, ClassVar
 import sn
 from sn.model.model import Model, GraphObject, Node, Collection, Relation, IsaIndividual
 
 logger:sn.SNLogger = sn.getLogger(__name__)
 
-RULES = Path(__file__).with_name("reasoner.lp")
-"The default rule base."
+PROPERTIES = ("reflexive", "irreflexive", "symmetric", "asymmetric", "transitive")
+"The relational properties, which are tags on specific relations."
 
 _MESSAGES:dict[str,str] = {
   "domain":                "source {2} of {0} is not a {3} (required by {1})",
@@ -60,10 +87,22 @@ _MESSAGES:dict[str,str] = {
   "node_isa_relation":     "node {0} isa {1}",
   "relation_isa_node":     "relation {0} isa {1}",
   "irreflexive":           "irreflexive {0} relates {1} to itself",
+  "asymmetric":            "asymmetric {0} relates {1} and {2} both ways",
   "property_conflict":     "{0} is both {1} and {2}",
   "unset_endpoint":        "{0} has no local {1}; it inherits its type's",
   }
 "Message templates for violation codes: {0} is the subject, {1}... are the args."
+
+class Sym(str):
+  '''
+  A symbolic constant in a fact (eg: the *node* in ``kind(O,node)``), as
+  opposed to a plain *str*, which is string data (eg: a name).
+  '''
+  def __repr__(self) -> str:
+    return f'Sym({str.__repr__(self)})'
+
+Fact = tuple[str, tuple[Any, ...]]
+"(predicate, args); args are GraphObjects, Syms, strs, ints, floats or bools."
 
 @dataclass
 class Violation:
@@ -105,43 +144,87 @@ class Inferences:
   def related(self, src:GraphObject, relType:Relation) -> list[GraphObject]:
     return [d for t,s,d in self.holds if s is src and t is relType]
 
-class Reasoner:
+class Reasoner(ABC):
   '''
-  Usage::
+  The abstract base class of all reasoner engines. Usage::
 
-    r = Reasoner(model)
+    r = Reasoner.create(model)              # or eg: ClingoReasoner(model)
     result = r.run()
     for v in result.violations:
       print(v)
-    r.query('ans(X) :- holds(T,F,X), name(T,"owns"), name(F,"fred").')
+    r.related(fred, owns)                   # portable
+    r.query('ans(X) :- ...')                # native to the engine
+
+  Engines register themselves by name when subclassing::
+
+    class MyReasoner(Reasoner, engine="mine"): ...
+
+  :py:meth:`create` imports *sn.model.<engine>Reasoner* on demand, so an engine
+  that lives there needs no other registration.
   '''
 
-  def __init__(self, model:Model, rules:Path|str=RULES):
+  engines:ClassVar[dict[str, type[Reasoner]]] = {}
+  "Registered engines by name."
+
+  language:ClassVar[str|None] = None
+  "The name of the language :py:meth:`query` accepts, or None if it has none."
+
+  def __init_subclass__(cls, engine:str|None=None, **kwargs):
+    super().__init_subclass__(**kwargs)
+    if engine is not None:
+      Reasoner.engines[engine] = cls
+
+  @classmethod
+  def create(cls, model:Model, engine:str="clingo", **kwargs) -> Reasoner:
+    if engine not in cls.engines:
+      import_module(f'sn.model.{engine}Reasoner')
+    return cls.engines[engine](model, **kwargs)
+
+  def __init__(self, model:Model):
     self.model = model
-    self.rules = Path(rules)
-    self._ids:dict[int, int] = {}
-    "id(GraphObject) -> term number"
-    self._objs:list[GraphObject] = []
-    "term number -> GraphObject"
 
-  # ── Export ───────────────────────────────────────────────────────────────
+  # ── Engine interface ─────────────────────────────────────────────────────
 
-  def _term(self, obj:GraphObject) -> str:
-    n = self._ids.get(id(obj))
-    if n is None:
-      n = len(self._objs)
-      self._ids[id(obj)] = n
-      self._objs.append(obj)
-    return f'o({n})'
+  @abstractmethod
+  def run(self) -> Inferences:
+    'Reason over the current state of the model.'
 
-  def _facts(self) -> str:
+  def query(self, query:str) -> list[tuple[Any, ...]]:
     '''
-    :returns: The model (and its super-models) as clingo facts.
-    '''
-    self._ids.clear()
-    self._objs.clear()
+    Run a query in the engine's native language (see :py:attr:`language`).
 
-    # this model and (transitively) its super-models, eg: the TopModel
+    :returns: Answer tuples, with the engine's object references mapped back
+      to *GraphObjects*.
+    '''
+    raise NotImplementedError(f'{type(self).__name__} has no native query language.')
+
+  # ── Portable queries ─────────────────────────────────────────────────────
+  # These default to filtering a full run(); engines may override them with
+  # something cheaper.
+
+  def related(self, src:GraphObject, relType:Relation) -> list[GraphObject]:
+    ':returns: Everything *src* is related to under *relType*, asserted or inferred.'
+    return self.run().related(src, relType)
+
+  def relatedFrom(self, dst:GraphObject, relType:Relation) -> list[GraphObject]:
+    ':returns: Everything related to *dst* under *relType*, asserted or inferred.'
+    return [s for t,s,d in self.run().holds if d is dst and t is relType]
+
+  def isa(self, obj:GraphObject, typ:GraphObject) -> bool:
+    return any(x is obj and t is typ for x,t in self.run().isa)
+
+  def instances(self, typ:GraphObject, individualsOnly:bool=True) -> list[GraphObject]:
+    ':returns: Every (individual) object that isa *typ*, other than *typ* itself.'
+    return [x for x,t in self.run().isa if t is typ and x is not typ
+            and (x.isIndividual() or not individualsOnly)]
+
+  def violations(self, subject:GraphObject|None=None) -> list[Violation]:
+    return [v for v in self.run().violations if subject is None or v.subject is subject]
+
+  # ── Model export ─────────────────────────────────────────────────────────
+
+  def objects(self) -> list[GraphObject]:
+    ':returns: The objects of the model and (transitively) its super-models.'
     models:list[Model] = []
     pending = [self.model]
     while pending:
@@ -149,134 +232,83 @@ class Reasoner:
       if m not in models:
         models.append(m)
         pending.extend(m.superDBs) #type: ignore[arg-type]
-    for m in models:
-      for obj in list(m.values()):
-        self._term(obj)
+    return [obj for m in models for obj in list(m.values())]
 
-    out:list[str] = []
-    for key in ("top", "relation", "isa", "node", "collection",
-                "reflexive", "irreflexive", "symmetric", "transitive", "equality"):
-      out.append(f'const({key},{self._term(getattr(self.model, key.upper()))}).')
+  def facts(self) -> list[Fact]:
+    '''
+    :returns: The model (and its super-models) as engine-neutral facts; see
+      the module documentation for the vocabulary.
+    '''
+    out:list[Fact] = []
+    for key in ("top", "relation", "isa", "node", "collection"):
+      out.append(("const", (Sym(key), getattr(self.model, key.upper()))))
 
-    # self._objs grows as we go if an object refers to one we haven't seen.
+    # Work through a queue that grows if an object refers to one we haven't seen.
+    queue = self.objects()
+    seen = {id(o) for o in queue}
+    def ref(obj:GraphObject) -> GraphObject:
+      if id(obj) not in seen:
+        seen.add(id(obj))
+        queue.append(obj)
+      return obj
+
     i = 0
-    while i < len(self._objs):
-      obj = self._objs[i]
+    while i < len(queue):
+      obj = queue[i]
       i += 1
-      t = self._term(obj)
-      out.append(f'obj({t}).')
+      out.append(("obj", (obj,)))
       if obj.isIndividual():
-        out.append(f'individual({t}).')
-      out.append(f'kind({t},{_kind(obj)}).')
-      out.append(f'name({t},{_str(obj.name)}).')
+        out.append(("individual", (obj,)))
+      out.append(("kind", (obj, Sym(_kind(obj)))))
+      out.append(("name", (obj, obj.name)))
       try:
         for p in obj.getParents():
-          out.append(f'parent({t},{self._term(p)}).')
+          out.append(("parent", (obj, ref(p))))
       except RecursionError:
-        out.append(f'parent({t},{t}).') # getParents() refuses self-parenting; let the rules report it
+        out.append(("parent", (obj, obj))) # getParents() refuses self-parenting; let the rules report it
       except LookupError:
         pass
       if isinstance(obj, Collection):
-        out.append(f'collection({t}).')
+        out.append(("collection", (obj,)))
         if type(obj) is Collection: # AllModelCollection would just list the model
-          out += [f'member({t},{self._term(m)}).' for m in obj.getMembers()]
+          out += [("member", (obj, ref(m))) for m in obj.getMembers()]
       if isinstance(obj, Relation):
-        out += self._relationFacts(obj, t)
+        out += self._relationFacts(obj, ref)
       for key in obj: # local and inherited keys
         if key == "name" or key.startswith("vis/"):
           continue
         if dict.__contains__(obj, key):
-          out.append(f'lattr({t},{_str(key)}).')
+          out.append(("lattr", (obj, key)))
         try:
           value = obj.get(key, None) # effective value, per the Restriction rules
         except Exception:
           continue
-        if isinstance(value, bool):
-          out.append(f'attr({t},{_str(key)},{"true" if value else "false"}).')
-        elif isinstance(value, int) and abs(value) < 2**30:
-          out.append(f'attr({t},{_str(key)},{value}).')
-        elif isinstance(value, (str, float)):
-          out.append(f'attr({t},{_str(key)},{_str(str(value))}).')
-    return "\n".join(out)
-
-  def _relationFacts(self, rel:Relation, t:str) -> list[str]:
-    out:list[str] = []
-    if rel._src is not None:
-      out.append(f'lsrc({t},{self._term(rel._src)}).')
-    if rel._dst is not None:
-      out.append(f'ldst({t},{self._term(rel._dst)}).')
-    src, dst = rel.src, rel.dst
-    if src is not None:
-      out.append(f'src({t},{self._term(src)}).')
-    if dst is not None:
-      out.append(f'dst({t},{self._term(dst)}).')
-    if rel.isIndividual() and not isinstance(rel, IsaIndividual) \
-        and src is not None and dst is not None:
-      out.append(f'link({t},{self._term(src)},{self._term(dst)}).')
-    # Relational properties are tags on specific relations and do not inherit
-    # (brother isa sibling, but brother isn't symmetric), so only local values
-    # count. The rules also count a direct isa to an sn property type as a tag.
-    for prop in ("reflexive", "irreflexive", "symmetric", "transitive"):
-      if rel.getLocal(prop, False) is True:
-        out.append(f'prop({t},{prop}).')
+        if isinstance(value, (bool, int, float, str)):
+          out.append(("attr", (obj, key, value)))
     return out
 
-  # ── Solving ──────────────────────────────────────────────────────────────
-
-  def _solve(self, program:str="") -> list[clingo.Symbol]:
-    ctl = clingo.Control(["--warn=none"])
-    ctl.load(str(self.rules))
-    ctl.add("base", [], self._facts())
-    if program:
-      ctl.add("base", [], program)
-    ctl.ground([("base", [])])
-    symbols:list[clingo.Symbol] = []
-    with ctl.solve(yield_=True) as handle:
-      for m in handle: # the rule base is stratified, so exactly one model
-        symbols = list(m.symbols(shown=True))
-    return symbols
-
-  def _value(self, sym:clingo.Symbol) -> Any:
-    'Map a clingo symbol back to a GraphObject (for o(N)) or a Python value.'
-    if sym.type == clingo.SymbolType.Function:
-      if sym.name == "o" and len(sym.arguments) == 1:
-        return self._objs[sym.arguments[0].number]
-      if sym.name == "" : # tuple
-        return tuple(self._value(a) for a in sym.arguments)
-      if not sym.arguments:
-        return sym.name
-    if sym.type == clingo.SymbolType.Number:
-      return sym.number
-    if sym.type == clingo.SymbolType.String:
-      return sym.string
-    return str(sym)
-
-  def run(self) -> Inferences:
-    ret = Inferences()
-    for sym in self._solve():
-      args = [self._value(a) for a in sym.arguments]
-      match sym.name:
-        case "holds":     ret.holds.append(tuple(args)) #type: ignore[arg-type]
-        case "inferred":  ret.inferred.append(tuple(args)) #type: ignore[arg-type]
-        case "inherited": ret.inherited.append(tuple(args)) #type: ignore[arg-type]
-        case "classify":  ret.classify.append(tuple(args)) #type: ignore[arg-type]
-        case "isa_star":  ret.isa.add(tuple(args)) #type: ignore[arg-type]
-        case "violation": ret.violations.append(Violation(*args))
-    return ret
-
-  def query(self, program:str, answer:str="ans") -> list[tuple[Any, ...]]:
-    '''
-    Run an ad-hoc query. *program* is extra clingo rules defining the predicate
-    *answer*; objects can be named with ``name(O,"...")``. Eg::
-
-      r.query('ans(X) :- holds(T,F,X), name(T,"owns"), name(F,"fred").')
-
-    :returns: The argument tuples of every *answer* atom, with ``o(N)`` terms
-      mapped back to *GraphObjects*.
-    '''
-    program += f'\n#show {answer}/{_arity(program, answer)}.'
-    return [tuple(self._value(a) for a in sym.arguments)
-            for sym in self._solve(program) if sym.name == answer]
+  def _relationFacts(self, rel:Relation, ref) -> list[Fact]:
+    out:list[Fact] = []
+    if rel._src is not None:
+      out.append(("lsrc", (rel, ref(rel._src))))
+    if rel._dst is not None:
+      out.append(("ldst", (rel, ref(rel._dst))))
+    src, dst = rel.src, rel.dst
+    if src is not None:
+      out.append(("src", (rel, ref(src))))
+    if dst is not None:
+      out.append(("dst", (rel, ref(dst))))
+    if rel.isIndividual() and not isinstance(rel, IsaIndividual) \
+        and src is not None and dst is not None:
+      out.append(("link", (rel, src, dst)))
+    # Relational properties are LOCAL tags on relation types -- the key's
+    # presence is the tag -- and are never inherited (brother isa sibling, but
+    # brother isn't symmetric). See Relation._hasRelationalProperty().
+    if rel.isType():
+      for prop in PROPERTIES:
+        if dict.__contains__(rel, prop):
+          out.append(("prop", (rel, Sym(prop))))
+    return out
 
 def _kind(obj:GraphObject) -> str:
   if isinstance(obj, IsaIndividual):
@@ -286,27 +318,6 @@ def _kind(obj:GraphObject) -> str:
   if isinstance(obj, Node):
     return "node"
   return "top"
-
-def _str(s:str) -> str:
-  'A clingo string literal.'
-  return '"' + s.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n') + '"'
-
-def _arity(program:str, pred:str) -> int:
-  'The arity of the first head occurrence of *pred* in *program*.'
-  start = program.find(pred + "(")
-  if start < 0:
-    return 0
-  depth, arity = 0, 1
-  for c in program[start + len(pred):]:
-    if c == "(":
-      depth += 1
-    elif c == ")":
-      depth -= 1
-      if depth == 0:
-        return arity
-    elif c == "," and depth == 1:
-      arity += 1
-  return arity
 
 def _label(x:Any) -> str:
   if isinstance(x, GraphObject):

@@ -340,7 +340,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   The persistent container of VObjects.
   '''
 
-  makingRelationData = namedtuple('makeRelationData', 'node typ lineID')
+  makingRelationData = namedtuple('makingRelationData', 'originNode typ lineID')
+  #makingRelationData:tuple[GraphObject, GraphObject, int, Callable[[GraphObject, GraphObject], Any]] = namedtuple('makingRelationData', 'originNode typ lineID callback')
 
   def __new__(cls, url:str, model:Model, *, mode="w", geometry:str="300x400+20+20", _reading:bool=False):
     if url is None:
@@ -659,7 +660,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     if not isinstance(mObject, GraphObject):
       raise AttributeError(f'Expected a param of type GraphObject, but got type {mObject.__class__.__name__}')
     for obj in self.values():
-      if obj.modelObject is mObject:  # already displayed?
+      if obj is not None and obj.modelObject is mObject:  # already displayed?
         return obj
     return None
 
@@ -1362,7 +1363,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   def repaint(self, event=None):
     self.freshPaint()
     for obj in self.context.view.values():
-#      if not obj.isHidden():
+      if obj is not None:
         obj.draw()
 
   def resetScrollRegion(self) -> None:

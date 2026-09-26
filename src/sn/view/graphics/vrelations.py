@@ -755,6 +755,10 @@ class VRelation(VObject, AGRelation):
 
   ### Event handling ###################################################################
 
+  @override
+  def onEnter(self, event):
+    self.canvas.configure(cursor="sb_h_double_arrow")
+    
   def onB1_ButtonRelease(self, event):
     if self.dragInfo is not None and self.dragInfo[4]:
       self.floating(False)

@@ -29,9 +29,15 @@ import sn
 from pathlib import Path
 from sn.model.model import Model, Node, Relation
 from sn.model.reasoner import Reasoner
+from sn.model.clingoReasoner import ClingoReasoner
 
 
-class Test(unittest.TestCase):
+class ReasonerSpec:
+  '''
+  The engine-independent specification of reasoner semantics. Every engine
+  gets a subclass that also inherits *unittest.TestCase* and sets *ENGINE*.
+  '''
+  ENGINE:type[Reasoner]
 
   @classmethod
   def setUpClass(cls):
@@ -51,7 +57,9 @@ class Test(unittest.TestCase):
     # relation types form their own hierarchy: owns isa has
     cls.has  = Relation(m, [m.RELATION], cls.thing, cls.thing, name="has")
     cls.owns = Relation(m, [cls.has], cls.person, cls.thing, name="owns")
-    cls.ancestor = Relation(m, [m.TRANSITIVE], cls.person, cls.person, name="ancestorOf")
+    cls.ancestor = Relation(m, [m.RELATION], cls.person, cls.person, name="ancestorOf")
+    cls.ancestor["transitive"] = True
+    cls.ancestor["asymmetric"] = True
 
     Relation(m, [cls.owns], cls.fred, cls.car1, individual=True)
     Relation(m, [cls.owns], cls.rex, cls.car1, individual=True)   # domain violation
@@ -71,7 +79,8 @@ class Test(unittest.TestCase):
     cls.tail12 = Node(m, [cls.tail], individual=True, name="tail12")
     Relation(m, [cls.has], cls.dog, cls.tail, individual=True)
     Relation(m, [cls.has], cls.spot, cls.tail12, individual=True)
-    cls.result = Reasoner(m).run()
+    cls.reasoner = cls.ENGINE(m)
+    cls.result = cls.reasoner.run()
 
   def test0100relationHierarchy(self):
     r = self.result
@@ -96,6 +105,20 @@ class Test(unittest.TestCase):
     self.assertTrue(any(x is self.rex and c is self.person for x,c in r.classify))
     self.assertFalse(any(v.args[1] is self.fred for v in domain))
 
+  def test0240asymmetric(self):
+    self.assertFalse([v for v in self.result.violations if v.code == "asymmetric"])
+    m = Model("temp_reasoner_asym.xml") # a separate model, so the cycle doesn't disturb the others
+    person = Node(m, [m.NODE], name="person")
+    a, b, c = (Node(m, [person], individual=True, name=n) for n in "abc")
+    anc = Relation(m, [m.RELATION], person, person, name="ancestorOf")
+    anc["transitive"] = True
+    anc["asymmetric"] = True
+    for s_, d in ((a,b), (b,c), (c,a)):
+      Relation(m, [anc], s_, d, individual=True)
+    bad = [v for v in self.ENGINE(m).violations() if v.code == "asymmetric"]
+    self.assertTrue(bad)
+    self.assertTrue(all(v.subject is anc for v in bad))
+
   def test0250propertiesDontInherit(self):
     r = self.result
     self.assertIn(self.fred, r.related(self.ann, self.sibling))    # sibling is symmetric
@@ -109,9 +132,26 @@ class Test(unittest.TestCase):
     # spot's tail12 (isa tail) refines the inherited has -> tail
     self.assertEqual(r.related(self.spot, self.has), [self.tail12])
 
-  def test0500query(self):
-    ans = Reasoner(self.m).query('ans(X) :- holds(T,F,X), name(T,"has"), name(F,"fred").')
-    self.assertEqual([a[0].name for a in ans], ["car1"])
+  def test0500portableQueries(self):
+    r = self.reasoner
+    self.assertEqual(r.related(self.fred, self.has), [self.car1])
+    self.assertEqual(r.relatedFrom(self.car1, self.owns), [self.fred, self.rex])
+    self.assertTrue(r.isa(self.spot, self.dog))
+    self.assertFalse(r.isa(self.rex, self.person))
+    self.assertEqual(set(r.instances(self.dog)), {self.rex, self.spot})
+    self.assertTrue(r.violations(self.fred) == [])
+
+
+class TestClingo(ReasonerSpec, unittest.TestCase):
+  ENGINE = ClingoReasoner
+
+  def test0600nativeQuery(self):
+    self.assertEqual(ClingoReasoner.language, "asp")
+    ans = self.reasoner.query('ans(X) :- holds(T,F,X), name(T,"has"), name(F,"fred").')
+    self.assertEqual([a[0] for a in ans], [self.car1])
+
+  def test0700registry(self):
+    self.assertIsInstance(Reasoner.create(self.m, "clingo"), ClingoReasoner)
 
 
 if __name__ == "__main__":

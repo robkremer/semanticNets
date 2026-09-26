@@ -143,7 +143,10 @@ class Cache(dict[str,Any]):
     
     def refreshAttr(attr:str):
       assert owner is not None
-      self[attr] = owner.modelObject[attr]
+      try:
+        self[attr] = owner.modelObject[attr]
+      except:
+        self[attr] = self.allkeys[attr]
       
     if attr is None:
       for a in self:
@@ -549,7 +552,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     try:
       self.assertToStatusReport(self.modelObject is not None, 
         f'Model object is missing from Model: {self.readModelObjectRef if hasattr(self, "readModelObjectRef") else ""}', "E", 
-        actions={"erase view object": lambda: [self._disconnect(), self.delete(), self.setDirty(), None][-1]}) #check model object is there.
+        actions={"erase view object": lambda: [self._disconnect(), self.view.setDirty(), self.delete(), None][-1]}) #check model object is there.
       if self.modelObject is not None:
         model:GraphObject = self.modelObject
         for n in self.view.values(): # check for other objects referencing this one's model object
@@ -573,8 +576,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     self.canvas.tag_bind(bindObj, "<Button-1>", self.onButton_1)
     self.canvas.tag_bind(bindObj, "<B1-Motion>", self.onB1_Motion)
     self.canvas.tag_bind(bindObj, "<B1-ButtonRelease>", self.onB1_ButtonRelease)
-    self.canvas.tag_bind(bindObj, "<Enter>", lambda event: self.canvas.configure(cursor="hand"))
-    self.canvas.tag_bind(bindObj, "<Leave>", lambda event: self.canvas.configure(cursor="arrow"))
+    self.canvas.tag_bind(bindObj, "<Enter>", self.onEnter)
+    self.canvas.tag_bind(bindObj, "<Leave>", self.onLeave)
   # self.tooltip = CreateToolTip(self.canvas, self.tooltipFunc, bindObj, 
     #                              waitTime=1000, wrapLength=250, background="#FFFFC0")
     self.tooltip = CreateToolTip(self.canvas, self.tooltipFunc, self._shape.id, 
@@ -589,6 +592,12 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     if self.tooltip is not None:
       self.tooltip.delete()
       
+  def onEnter(self, event):
+    self.canvas.configure(cursor="hand")
+    
+  def onLeave(self, event):
+    self.canvas.configure(cursor="arrow")
+    
   def onRightMouse(self, event):
     """Creates and displays the node specific menu at the clicked location."""
     self.view.addEventHandled(event)

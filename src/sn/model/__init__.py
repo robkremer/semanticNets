@@ -20,7 +20,7 @@
 # SOFTWARE.                                                                     #
 #################################################################################
 from sn.model.model import Model, GraphObject, Node, Collection, Relation, IsaIndividual
-from util.attribute import Attribute, VAR_DEFAULTED, TYPENAME, VAR, CONST
+from util.attribute import Attribute, VAR_DEFAULTED, TYPENAME, VAR, CONST, LOCAL
 from util.persistence.pRef import PRDb
 import sys
 import atexit
@@ -54,6 +54,8 @@ class TopModel(Model):
     self.ISA:Relation = Relation(self, [], self.TOP, self.TOP) #3
     self.ISA._outgoing.checking(False)
     self.ISA._incoming.checking(False)
+    self.ISA["reflexive"]  = Attribute(True, bool, LOCAL, "Object is a reflexive relation")
+    self.ISA["transitive"] = Attribute(True, bool, LOCAL, "Object is a transitive relation")
     IsaIndividual(self, self.RELATION, self.TOP) #4 can't do this until after ISA exists
     isaisa:IsaIndividual = IsaIndividual(self, self.ISA, self.RELATION) #5
 
@@ -67,22 +69,21 @@ class TopModel(Model):
     self.NODE.setAttr("name", Attribute("node", None, VAR)) # can't do this until AFTER ISA exists.
 
     # add it the basic relation types
-    self.REFLEXIVE:Relation         = Relation(self, [self.RELATION], individual=False, name="reflexive") #8,9
-    self.REFLEXIVE["reflexive"]     = Attribute(True, bool, CONST, "Object is a reflexive relation")
-    self.IRREFLEXIVE:Relation       = Relation(self, [self.RELATION], individual=False, name="irreflexive") #10,11
-    self.IRREFLEXIVE["irreflexive"] = Attribute(True, bool, CONST, "Object is a irreflexive relation")
-    self.SYMMETRIC:Relation         = Relation(self, [self.RELATION], individual=False, name="symmetric") #12,13
-    self.SYMMETRIC["symmetric"]     = Attribute(True, bool, CONST, "Object is a symmetric relation")
-    self.TRANSITIVE:Relation        = Relation(self, [self.RELATION], individual=False, name="transitive") #14,15
-    self.TRANSITIVE["transitive"]   = Attribute(True, bool, CONST, "Object is a transitive relation")
+    # self.REFLEXIVE:Relation         = Relation(self, [self.RELATION], individual=False, name="reflexive") #8,9
+    # self.REFLEXIVE["reflexive"]     = Attribute(True, bool, CONST, "Object is a reflexive relation")
+    # self.IRREFLEXIVE:Relation       = Relation(self, [self.RELATION], individual=False, name="irreflexive") #10,11
+    # self.IRREFLEXIVE["irreflexive"] = Attribute(True, bool, CONST, "Object is a irreflexive relation")
+    # self.SYMMETRIC:Relation         = Relation(self, [self.RELATION], individual=False, name="symmetric") #12,13
+    # self.SYMMETRIC["symmetric"]     = Attribute(True, bool, CONST, "Object is a symmetric relation")
+    # self.TRANSITIVE:Relation        = Relation(self, [self.RELATION], individual=False, name="transitive") #14,15
+    # self.TRANSITIVE["transitive"]   = Attribute(True, bool, CONST, "Object is a transitive relation")
 
-    # fix up the ISA relation type so it inherits from REFLEXIVE and TRANSITIVE
-    assert isinstance(isaisa, IsaIndividual)
-    isaisa.connect(destination=self.TRANSITIVE)
-    IsaIndividual(self, self.ISA, self.REFLEXIVE) #16
-    #IsaIndividual(self, self.RELATION, self.TOP) #17 relations needs to be fixed too.
+    # # fix up the ISA relation type so it inherits from REFLEXIVE and TRANSITIVE
+    # assert isinstance(isaisa, IsaIndividual)
+    # isaisa.connect(destination=self.TRANSITIVE)
+    # IsaIndividual(self, self.ISA, self.REFLEXIVE) #16
 
-    self.EQUALITY:Relation = Relation(self, [self.REFLEXIVE, self.SYMMETRIC, self.TRANSITIVE], name="equality") #17,18,19,20
+    # self.EQUALITY:Relation = Relation(self, [self.REFLEXIVE, self.SYMMETRIC, self.TRANSITIVE], name="equality") #17,18,19,20
 
     # add in a base context node
     self.COLLECTION:Collection = Collection(self, [self.NODE], [], individual=False, name="collection") #21,22
@@ -138,9 +139,9 @@ class TopModel(Model):
     self.ISA['vis/terminator4']     = "arrow(8,8,5)"
     self.ISA['vis/aspectRatio']     = 1.0
 
-    self.SYMMETRIC['vis/terminator1'] = "arrow"
-    self.REFLEXIVE['vis/terminator2'] = "circle"
-    self.TRANSITIVE['vis/terminator4'] = "arrow(11,14,3)"
+    # self.SYMMETRIC['vis/terminator1'] = "arrow"
+    # self.REFLEXIVE['vis/terminator2'] = "circle"
+    # self.TRANSITIVE['vis/terminator4'] = "arrow(11,14,3)"
     
 model = TopModel("sn:///sn", mode="", _reading=False) # creates a model in memory cache
 model._writeLocked = True
