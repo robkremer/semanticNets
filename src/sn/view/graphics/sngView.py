@@ -340,8 +340,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   The persistent container of VObjects.
   '''
 
-  makingRelationData = namedtuple('makingRelationData', 'originNode typ lineID')
-  #makingRelationData:tuple[GraphObject, GraphObject, int, Callable[[GraphObject, GraphObject], Any]] = namedtuple('makingRelationData', 'originNode typ lineID callback')
+  # makingRelationData = namedtuple('makingRelationData', 'originNode typ lineID')
+  ElasticLineChoiceData:tuple[VObject, int, Callable[[VObject],bool], Callable[[VObject,VObject],Any]] \
+            = namedtuple('ElasticLineChoiceData', 'originNode lineID filter callback')
 
   def __new__(cls, url:str, model:Model, *, mode="w", geometry:str="300x400+20+20", _reading:bool=False):
     if url is None:
@@ -405,7 +406,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
     self.makeBindings()
      
-    self._makingRelationFrom:SNGView.makingRelationData|None = None
+    # self._makingRelationFrom:SNGView.makingRelationData|None = None
+    self._elasticLineChoiceData:SNGView.ElasticLineChoiceData|None = None
     self._scrolling:bool = False
     
 
@@ -515,50 +517,54 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     for t in topics:
       topicName:str = t[0]
       topicData:tuple[Any, ...] = t[1]
-      if topicName == 'add GraphObject':
-        modelID = topicData[0]
-        modelObj = topicData[1]
-        logger.info(f'  Creating V{modelObj.__class__.__name__} for model object {modelObj}:{modelObj.__class__.__name__}')
-        if (modelObj.isType() or isinstance(modelObj, Node)) and self.canvas: 
-          applyEditAttrsBox(self.canvas, modelObj, title=modelObj.name, editKey="name")
-        typ:type = type(modelObj)
-        newObj:VObject|None = None
-        if typ is Collection:
-          pass
-        elif typ is Node:
-          # findViewObjectForGraphObject() first: a VObject for modelObj may
-          # already exist even though this is the FIRST time this method is
-          # hearing about it. A Relation's endpoints get resolved eagerly
-          # during its own VRelation's construction (VRelation.connect() ->
-          # makeViewObjectForGraphObject()), so if some other, already-
-          # -processed 'add GraphObject' topic's VRelation happened to
-          # reference this Node as its src/dst before this topic got here,
-          # that resolution already created (and registered) this Node's
-          # VObject -- constructing another one here would silently produce
-          # a second, orphaned VObject for the same model object.
-          newObj = self.findViewObjectForGraphObject(modelObj) or VNode(self, modelObj)
-        elif issubclass(typ, Relation):
-          # Same reasoning as the Node case above, but this is where it
-          # actually bites: GraphObject.__init__() creates an IsaIndividual
-          # parent-link whose src is the very Relation being constructed, so
-          # that IsaIndividual's own VRelation -- if ITS 'add GraphObject'
-          # topic happens to be processed before this one -- resolves (and
-          # so creates) a VRelation for THIS modelObj via
-          # makeViewObjectForGraphObject() before we ever get here. Without
-          # this check, this branch would then unconditionally build a
-          # SECOND, redundant VRelation for the same Relation.
-          newObj = self.findViewObjectForGraphObject(modelObj) or VRelation(self, modelObj)
-        # elif typ is IsaIndividual:
-        #   newObj = VIsa(self, modelObj)
-        else:
-          logger.error(f"VObject subtype not implemented for model type {typ.__name__}.")
-
-      elif topicName == 'del GraphObject':
-        modelID == topicData[0]
-        
-        
-      else:
-        logger.warning(f'  Unsupported topic "{topicName}": {topicData}')
+      match t:
+      #  if topicName == 'add GraphObject':
+        # case ['add GraphObject', topicData]:
+        case ['new', topicData]:
+          modelID = topicData[0]
+          modelObj = topicData[1]
+          logger.info(f'  Creating V{modelObj.__class__.__name__} for model object {modelObj}:{modelObj.__class__.__name__}')
+          if (modelObj.isType() or isinstance(modelObj, Node)) and self.canvas: 
+            applyEditAttrsBox(self.canvas, modelObj, title=modelObj.name, editKey="name")
+          typ:type = type(modelObj)
+          newObj:VObject|None = None
+          if typ is Collection:
+            pass
+          elif typ is Node:
+            # findViewObjectForGraphObject() first: a VObject for modelObj may
+            # already exist even though this is the FIRST time this method is
+            # hearing about it. A Relation's endpoints get resolved eagerly
+            # during its own VRelation's construction (VRelation.connect() ->
+            # makeViewObjectForGraphObject()), so if some other, already-
+            # -processed 'add GraphObject' topic's VRelation happened to
+            # reference this Node as its src/dst before this topic got here,
+            # that resolution already created (and registered) this Node's
+            # VObject -- constructing another one here would silently produce
+            # a second, orphaned VObject for the same model object.
+            newObj = self.findViewObjectForGraphObject(modelObj) or VNode(self, modelObj)
+          elif issubclass(typ, Relation):
+            # Same reasoning as the Node case above, but this is where it
+            # actually bites: GraphObject.__init__() creates an IsaIndividual
+            # parent-link whose src is the very Relation being constructed, so
+            # that IsaIndividual's own VRelation -- if ITS 'add GraphObject'
+            # topic happens to be processed before this one -- resolves (and
+            # so creates) a VRelation for THIS modelObj via
+            # makeViewObjectForGraphObject() before we ever get here. Without
+            # this check, this branch would then unconditionally build a
+            # SECOND, redundant VRelation for the same Relation.
+            newObj = self.findViewObjectForGraphObject(modelObj) or VRelation(self, modelObj)
+          # elif typ is IsaIndividual:
+          #   newObj = VIsa(self, modelObj)
+          else:
+            logger.error(f"VObject subtype not implemented for model type {typ.__name__}.")
+  
+        # elif topicName == 'del GraphObject':
+        case ["del GraphObject", topicData]:
+          modelID == topicData[0]
+          
+          
+        case [topicName, topicData]:
+          logger.warning(f'Unsupported topic "{topicName}": {topicData}')
 
   def suppressLocalLayout(self, suppress:str|bool|None=None):
     if suppress is not None:
@@ -832,7 +838,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :param event: *event.x* and *event.y* contain the x,y coordinate of the click.
     :return: None
     
-    If there's a _makingRelationFrom going on (elastic line), then continue the
+    If there's a _elasticLineChoiceData going on (elastic line), then continue the
     animation. 
 
     Called on the *<Motion>* event (when the mouse moves with no buttons pressed).
@@ -847,9 +853,13 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     if self.isEventHandled(event):
       self.removeEventHandled(event)
       return None
-    if self._makingRelationFrom is not None:
-      self.canvas.coords(self._makingRelationFrom.lineID,
-            flattenPairs([self.viewToWindow(self._makingRelationFrom.node.centerPt()),
+    # if self._makingRelationFrom is not None:
+    #   self.canvas.coords(self._makingRelationFrom.lineID,
+    #         flattenPairs([self.viewToWindow(self._makingRelationFrom.node.centerPt()),
+    #                   (self.canvas.canvasx(event.x), self.canvas.canvasy(event.y))]))
+    if self._elasticLineChoiceData is not None:
+      self.canvas.coords(self._elasticLineChoiceData.lineID,
+            flattenPairs([self.viewToWindow(self._elasticLineChoiceData.originNode.centerPt()),
                       (self.canvas.canvasx(event.x), self.canvas.canvasy(event.y))]))
       return
 
@@ -876,7 +886,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
     """
     # ignore if making a relation
-    if self._makingRelationFrom is not None: return
+    # if self._makingRelationFrom is not None: return
+    if self._elasticLineChoiceData is not None: return
 
     # check of a widget has handled the event
     if self.isEventHandled(event):
@@ -941,6 +952,39 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     except:
       logger.exception("SNView.onB1_Motion()")
 
+  def elasticLineChoice(self, originNode:VObject, 
+                        callback:Callable[[VObject, VObject], Any],
+                        filter:Callable[[VObject],bool]=lambda x: True, 
+                        arrowHeads:int=2, color:str="cyan"):
+    '''
+    Animate an elastic line from the *originNode* to the cursor to select an
+    object for which *filter* returns True, then call *callback* with the *originNode*
+    and the selected object.
+    
+    :param originNode: The object to root the elastic line one (and used as the first
+      parameter to *callback*.
+    :type originNode: VObject
+    :param callback: The method to call after a selected selection.
+    :type callback: Callable[[VObject, VObject], Any]
+    :param filter: Objects are only selected if *filter(<obj>)* returns True. 
+      [Optional, default=always True]
+    :type filter: Callable[[VObject],bool]
+    :param arrowHeads: 0=no arrowheads, 1=arrowhead at the origin, 2=arrowhead
+      at the cursor, 3=arrowhead at both ends. For anything larger, just he lowest
+      2 bits will be used. [Optional, default=2]
+    '''
+    assert isinstance(originNode, VObject)
+    arrowHeads %= 4 # strip any high bits
+    match arrowHeads:
+      case 1: arrow = tk.FIRST
+      case 2: arrow = tk.LAST
+      case 3: arrow = tk.BOTH
+      case _: arrow = tk.NONE
+    lineID = self.canvas.create_line(
+      self.viewToWindow(flattenPairs([originNode.centerPt(), originNode.centerPt()])),
+      fill=color, width=3, arrow=arrow)
+    self._elasticLineChoiceData = SNGView.ElasticLineChoiceData(originNode, lineID, filter, callback)
+
   def onB1_ButtonRelease(self, event:tk.Event) -> None:
     """
     :param event: *event.x* and *event.y* contain the x,y coordinate of the click.
@@ -959,7 +1003,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       * Create a link according to the data in the *makeRelationData* structure
         and the *event*'s x,y coordinates
 
-      * set *self._makingRelationFrom* to *None*.
+      * set *self._elasticLineChoiceData* to *None*.
 
     * If *self._selectionBoxInfo* is not *None*: This means we have finished
       drawing a selection box, so
@@ -977,18 +1021,43 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       self.removeEventHandled(event)
       return None
     
+    # # Handle elastic line object selection for making a Relation
+    # if self._makingRelationFrom is not None:
+    #   self.canvas.delete(self._makingRelationFrom.lineID)
+    #   ids = self.canvas.find("closest", self.canvas.canvasx(event.x), self.canvas.canvasy(event.y))  # find selected objects
+    #   typeList:list[VObject]
+    #   if isinstance(self._makingRelationFrom.node, VRelation):
+    #     typeList = [r for r in self._db.values() if isinstance(r,VRelation)]
+    #   elif isinstance(self._makingRelationFrom.node, VNode):
+    #     typeList = [r for r in self._db.values() if isinstance(r,VNode)]
+    #   else:
+    #     typeList = []
+    #   item = None
+    #   for n in typeList:
+    #     for _id in ids:
+    #       tags = self.canvas.gettags(_id)
+    #       if n.tag in tags:
+    #         item = n  # this object is selected
+    #         break
+    #     else:
+    #       continue  # only executed if the inner loop did NOT break
+    #     break  # only executed if the inner loop DID break
+    #   if item is not None:
+    #     logger.debug(f"making relation from {self._makingRelationFrom.node} to {item} of type {self._makingRelationFrom.typ}.")
+    #     self.makeRelation(self._makingRelationFrom.node, item, self._makingRelationFrom.typ)
+    #   else:
+    #     logger.debug("Relation's toNode must match the being a node/relation with the from Node.")
+    #   self._makingRelationFrom = None
+    #   return
+      
     # Handle elastic line object selection for making a Relation
-    if self._makingRelationFrom is not None:
-      self.canvas.delete(self._makingRelationFrom.lineID)
+    if self._elasticLineChoiceData is not None:
+      self.canvas.delete(self._elasticLineChoiceData.lineID)
       ids = self.canvas.find("closest", self.canvas.canvasx(event.x), self.canvas.canvasy(event.y))  # find selected objects
-#     logger.write(f"graphs making relation for {ids}", level='info')
-      typeList:list[VObject]
-      if isinstance(self._makingRelationFrom.node, VRelation):
-        typeList = [r for r in self._db.values() if isinstance(r,VRelation)]
-      elif isinstance(self._makingRelationFrom.node, VNode):
-        typeList = [r for r in self._db.values() if isinstance(r,VNode)]
-      else:
-        typeList = []
+      typeList:list[VObject] = [n for n in self._db.values() \
+                                if (self._elasticLineChoiceData.filter(n) \
+                                    if self._elasticLineChoiceData.filter is not None \
+                                    else True)] 
       item = None
       for n in typeList:
         for _id in ids:
@@ -999,12 +1068,12 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         else:
           continue  # only executed if the inner loop did NOT break
         break  # only executed if the inner loop DID break
+      self.canvas.delete(self._elasticLineChoiceData.lineID)
       if item is not None:
-        logger.debug(f"making relation from {self._makingRelationFrom.node} to {item} of type {self._makingRelationFrom.typ}.")
-        self.makeRelation(self._makingRelationFrom.node, item, self._makingRelationFrom.typ)
+        self._elasticLineChoiceData.callback(self._elasticLineChoiceData.originNode, item)
       else:
-        logger.debug("Relation's toNode must match the being a node/relation with the from Node.")
-      self._makingRelationFrom = None
+        logger.debug("Elastic line choice: No object matching the filter found under the cursor.")
+      self._elasticLineChoiceData = None
       return
       
     # Handle a multi-selection box
@@ -1062,13 +1131,24 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     '''
     :param node: [VObject]
     '''
-    from sn.view.graphics.vobjects import VObject
     assert isinstance(node, VObject)
+    
+    def callback(originNode:VObject, selNode:VObject, typ):
+      if selNode is not None:
+        logger.debug(f"making relation from {originNode} to {selNode} of type {typ}.")
+        self.makeRelation(originNode, selNode, typ)
+      else:
+        logger.debug("Relation's toNode must match the being a node/relation with the from Node.")
+      
+    
     if typ is None or (isinstance(typ, Relation) and typ.isType()):
-      lineID = self.canvas.create_line(
-        self.viewToWindow(flattenPairs([node.centerPt(), node.centerPt()])),
-        fill="cyan", width=3, arrow=tk.LAST)
-      self._makingRelationFrom = SNGView.makingRelationData(node, typ, lineID)
+      # lineID = self.canvas.create_line(
+      #   self.viewToWindow(flattenPairs([node.centerPt(), node.centerPt()])),
+      #   fill="cyan", width=3, arrow=tk.LAST)
+      # self._makingRelationFrom = SNGView.makingRelationData(node, typ, lineID)
+      self.elasticLineChoice(node, 
+                             callback=lambda orig, sel, typ=typ: callback(orig, sel, typ), 
+                             arrowHeads=2, color="blue")
     else:
       if not isinstance(typ, Relation):
         raise TypeError(f'SNView.makeRelationFrom(): "typ" argument must be a model Relation; got object of class {type(typ).__name__}.')
@@ -1392,9 +1472,15 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     bb = self.canvas.bbox("all")
     if bb is None:  # nothing drawn yet -- nothing to size the region to
       return
-    bb = tuple(expandRect(bb, 100))
-    self.scrollRegion = bb
-    self.canvas.configure(scrollregion=bb)
+    bb = expandRect(bb, 100)
+    # Only ever grow: shrinking the region can pull it out from under the
+    # current view, and Tk then shifts the view to fit -- which makes the
+    # whole drawing appear to jump (eg: mid-drag).
+    sr = self.scrollRegion
+    bb = (min(bb[0], sr[0]), min(bb[1], sr[1]), max(bb[2], sr[2]), max(bb[3], sr[3]))
+    if bb != tuple(sr):
+      self.scrollRegion = bb
+      self.canvas.configure(scrollregion=bb)
 
   def runBackgroundWork(self, fn: Callable[[], None]) -> None:
     """Launch background work (e.g. a long model computation triggered by the

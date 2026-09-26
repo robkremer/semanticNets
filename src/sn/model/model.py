@@ -606,10 +606,6 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     return f'{self.__class__.__name__}({name}, {self.getPRef().tostring(relativeTo)}, <{"individual" if self.isIndividual() else "type"}{", <inferred>" if self.inferred else ""}>)'
   
   @override
-  def __eq__(self, other:object):
-    return PRObject.__eq__(self, other)
-  
-  @override
   def __hash__(self): #type: ignore[override]
     return PRObject.__hash__(self)
   
@@ -735,10 +731,10 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     '''
     assert isinstance(value, GraphObject), \
         f'Models are restricted to containing only GraphObject subtypes; got a {value.__class__.__name__} type.'
-    self.setDirty()
+    # self.setDirty()
     ret = super()._register(value, _id)
-    with Subject.ChangeMgr(self, later=True) as cm:
-      cm.registerTopics(("add GraphObject", (ret, value)))
+    # with Subject.ChangeMgr(self, later=True) as cm:
+    #   cm.registerTopics(("add GraphObject", (ret, value)))
     return ret
     
   @override

@@ -409,7 +409,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
   def boundingBox(self, rect:list[int]=None, fast=False) -> list:
     '''
     Returns or sets the bounding box for the *VObject* in [minX, minY, maxX, maxY]
-    form.  Checks *rect* for sanity and shifts it to be within *self.canvas.scrollRegion*.
+    form.  Checks *rect* for sanity and shifts it to be right of and below the origin.
     
     The bounding box is strictly tracked by the *self.shape()* object. Thus, if 
     you change the boundingBox, this method assures that shape object tracks it
@@ -433,12 +433,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       if rect[1] < 0: # make sure it's below origin
         rect[3] = rect[3]-rect[1]
         rect[1] = 0 
-      if rect[2] > self.view.scrollRegion[2]:
-        rect[0] = rect[2] - rect[0]
-        rect[2] = self.view.scrollRegion[2]
-      if rect[3] > self.view.scrollRegion[3]:
-        rect[1] = rect[3] - rect[1]
-        rect[3] = self.view.scrollRegion[3]
+      # No clamp at the SE edge of the scroll region: objects may be moved (eg:
+      # dragged) past it, and draw() then grows the region to include them
+      # (see SNGView.resetScrollRegion()).
       self._boundingBox = rect.copy()
     
       if not fast:
@@ -958,12 +955,12 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       # regardless of adjustPos used to make that call a complete no-op, so
       # two objects dropped on top of each other would just stay stacked.
       return
-    sr = self.view.scrollRegion
-    if x<sr[0]: x = sr[0]
-    if y<sr[1]: y = sr[1]
-    if not allowOverScrollRegionSE:
-      if x+bb[2]-bb[0]>sr[2]: x = sr[2]-(bb[2]-bb[0])
-      if y+bb[3]-bb[1]>sr[3]: y = sr[3]-(bb[3]-bb[1])
+    # sr = self.view.scrollRegion
+    # if x<sr[0]: x = sr[0]
+    # if y<sr[1]: y = sr[1]
+    # if not allowOverScrollRegionSE:
+    #   if x+bb[2]-bb[0]>sr[2]: x = sr[2]-(bb[2]-bb[0])
+    #   if y+bb[3]-bb[1]>sr[3]: y = sr[3]-(bb[3]-bb[1])
     self.boundingBox([x, y, x+bb[2]-bb[0], y+bb[3]-bb[1]])
     if adjustPos:
       #The traditional way 

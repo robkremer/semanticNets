@@ -39,9 +39,11 @@ class TopModel(Model):
     in the in-memory models under the name "sn" (access as "$sn" in a URL, don't
     forget to escape it on a command line as "\\$sn"
     '''
+    # explicitly DON'T call Model's constructor
     AbstractGraph.__init__(self, url, mode=mode, memoryResident=memoryResident, _reading=_reading)
     Subject.__init__(self)
     Dirtyable.__init__(self)
+    
     self._allowParentsCaching:bool = False
     self.TOP:GraphObject = GraphObject(self, []) #1
     # these re-assignments from a ValidationList to a list are necessary in 
