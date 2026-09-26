@@ -304,6 +304,8 @@ class ModelContext(CommandContext):
       :type restriction: str
       '''
       super().__init__("set attribute")
+      self.attr:Attribute|None = value if isinstance(value, Attribute) else None
+      "A complete (or value-only) Attribute record, eg: from the attribute editor, is set as is."
       if type is not None: # check the type string to make sure it represents an actual type
         typ = getClass(type) if type is not None else None
         assert typ is not None
@@ -313,7 +315,7 @@ class ModelContext(CommandContext):
       self.object:GraphObject = object
       self.key:str = key
       self.value:Any = value
-      if typ is not None and isinstance(value, str):
+      if typ is not None and isinstance(value, str) and self.attr is None:
         self.value = typ(value)
       if self.object._getSuperAttr(self.key) is None and restriction is None:
         restriction = "VAR"
@@ -326,7 +328,10 @@ class ModelContext(CommandContext):
     @override
     def do(self):
       super().do()
-      if self.object._getSuperAttr(self.key) is None:
+      if self.attr is not None:
+        self.object.setAttr(self.key, self.attr)
+        self.created = self.oldAttrValue is None
+      elif self.object._getSuperAttr(self.key) is None:
         self.object.setAttr(self.key, Attribute(self.value, self.typ, restriction=self.restriction))
         self.created = True
       else:
