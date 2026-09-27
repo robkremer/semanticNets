@@ -250,3 +250,106 @@ class FindFree(LayoutHieristic):
   @override
   def placeAll(self):
     pass
+
+
+# ---- Gathering outliers ------------------------------------------------------
+
+def _median(values:list[float]) -> float:
+  if not values:
+    return 0.0
+  s = sorted(values)
+  n = len(s)
+  return s[n//2] if n % 2 else (s[n//2 - 1] + s[n//2]) / 2
+
+def gatherAxisShifts(intervals:list[tuple[float, float]], *,
+                     gapFactor:float=6.0, minGap:float=300.0) -> list[float]:
+  '''
+  One axis of :py:func:`gatherShifts`: how far to shift each interval so that
+  no group of intervals is stranded far from the main pack.
+
+  The intervals are swept in order of their low ends, keeping track of the
+  furthest high end so far; wherever the next interval starts more than
+  *maxGap* beyond that, a new *run* begins. The run with the most intervals
+  is the pack and stays put. Every oversized gap is shrunk to *targetGap*,
+  and everything beyond it (away from the pack) shifts toward the pack by the
+  amount removed -- so a stranded group keeps its internal arrangement.
+
+  The thresholds come from the drawing itself: with *S* the median interval
+  length and *G* the typical gap between consecutive runs of overlapping
+  intervals, ``maxGap = max(gapFactor * max(G, S), minGap)`` and
+  ``targetGap = max(G, S/2)``. *G* is the median of the *smaller half* of the
+  gaps, so that it isn't dominated by the very outliers it's meant to find
+  (in a small drawing, one or two huge gaps can be most of the gaps).
+
+  It's O(n log n) (one sort) and uses no distances -- just comparisons and
+  differences.
+
+  :param intervals: (low, high) extents along one axis.
+  :param gapFactor: How many times the typical spacing a gap must exceed to
+    count as stranding what lies beyond it.
+  :param minGap: No gap smaller than this counts as stranding, however
+    tightly packed the rest of the drawing is -- so a normal (if loose)
+    layout is left alone.
+  :returns: The shift for each interval, in the same order.
+  '''
+  n = len(intervals)
+  shifts = [0.0] * n
+  if n < 3:
+    return shifts
+  order = sorted(range(n), key=lambda i: intervals[i][0])
+
+  # the gaps between consecutive runs of overlapping intervals
+  gaps:list[float] = []
+  reach = intervals[order[0]][1]
+  for i in order[1:]:
+    lo, hi = intervals[i]
+    if lo > reach:
+      gaps.append(lo - reach)
+    reach = max(reach, hi)
+  S = _median([hi - lo for lo, hi in intervals])
+  G = _median(sorted(gaps)[:max(1, len(gaps)//2)])
+  maxGap = max(gapFactor * max(G, S), minGap)
+  targetGap = max(G, S / 2)
+  if maxGap <= 0:
+    return shifts
+
+  # split into runs at the oversized gaps
+  runs:list[list[int]] = [[order[0]]]
+  gapAfter:list[float] = []  # gapAfter[k] is the gap between runs k and k+1
+  reach = intervals[order[0]][1]
+  for i in order[1:]:
+    lo, hi = intervals[i]
+    if lo - reach > maxGap:
+      gapAfter.append(lo - reach)
+      runs.append([i])
+    else:
+      runs[-1].append(i)
+    reach = max(reach, hi)
+  if len(runs) == 1:
+    return shifts
+
+  pack = max(range(len(runs)), key=lambda k: len(runs[k]))
+  removed = 0.0
+  for k in range(pack + 1, len(runs)):  # beyond the pack's high end: shift down
+    removed += gapAfter[k - 1] - targetGap
+    for i in runs[k]:
+      shifts[i] = -removed
+  removed = 0.0
+  for k in range(pack - 1, -1, -1):     # beyond its low end: shift up
+    removed += gapAfter[k] - targetGap
+    for i in runs[k]:
+      shifts[i] = removed
+  return shifts
+
+def gatherShifts(boxes:list[list[float]], *, gapFactor:float=6.0, minGap:float=300.0) -> list[tuple[float, float]]:
+  '''
+  Herd outlying boxes back toward the main pack, treating the x and y axes
+  independently (see :py:func:`gatherAxisShifts`): something flung far away on
+  only one axis is only pulled back on that axis.
+
+  :param boxes: [x1, y1, x2, y2] bounding boxes.
+  :returns: The (dx, dy) to move each box by, in the same order.
+  '''
+  dxs = gatherAxisShifts([(b[0], b[2]) for b in boxes], gapFactor=gapFactor, minGap=minGap)
+  dys = gatherAxisShifts([(b[1], b[3]) for b in boxes], gapFactor=gapFactor, minGap=minGap)
+  return list(zip(dxs, dys))
