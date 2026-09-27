@@ -53,7 +53,7 @@ from util.persistence.serialize import InstantiationInfo, ParamInfo,\
   PropertyInfo
 from util.attributeEditor import applyEditAttrsBox # @UnresolvedImport
 from util.abstractGraph import AGRelation
-from sn.model.model import GraphObject, Relation
+from sn.model.model import GraphObject, Relation, IsaIndividual
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.connectors import drawSmoothConnector, ConnectorIDs,\
   drawStraightConnector, ConnectorTerminators
@@ -727,6 +727,63 @@ class VRelation(VObject, AGRelation):
 
     super().addViewMenuItems(menu)
   
+  @override
+  def addModelEditingMenuItems(self, menu:tk.Menu):
+    super().addModelEditingMenuItems(menu)
+    # Never offered for isa links (re-pointing one silently re-parents an
+    # object) or for system relations (those in the always-in-memory sn model).
+    if self.modelObject is None or isinstance(self.modelObject, IsaIndividual) \
+        or self.modelObject.isSystemObject():
+      return
+    editable = self.view.isModelEditor() and self.view.model is self.modelObject.model
+    state = tk.NORMAL if editable else tk.DISABLED
+    menu.add_command(label="reset src", state=state, command=lambda: self.chooseNewEndpoint("src"))
+    menu.add_command(label="reset dst", state=state, command=lambda: self.chooseNewEndpoint("dst"))
+
+  def chooseNewEndpoint(self, end:str) -> None:
+    '''
+    Let the user pick a new *end* ("src" or "dst") for this relation with an
+    elastic line, then change it in the model (as one undoable command).
+
+    Only objects of the same kind as the other end are offered: relations
+    connect either two nodes or two relations.
+    '''
+    assert end in ("src", "dst")
+    other = self.dst if end == "src" else self.src
+    def acceptable(n:VObject) -> bool:
+      return n is not self and (other is None or isinstance(n, VRelation) == isinstance(other, VRelation))
+    def chosen(_origin:VObject, sel:VObject) -> None:
+      if end == "src":
+        self.view.context.reconnect(self.modelObject, source=sel.modelObject)
+      else:
+        self.view.context.reconnect(self.modelObject, destination=sel.modelObject)
+    color = self.cache['vis/lineColor'] or "green"
+    self.view.elasticLineChoice(self, chosen, filter=acceptable,
+                                arrowHeads=1 if end == "src" else 2, color=color)
+
+  @override
+  def update(self, subject, *topics:tuple[str, tuple[Any, ...]]) -> None:
+    '''
+    Follow changes to the model relation's endpoints ("mod src"/"mod dst"
+    topics -- see *Relation._endpointChanged()*); anything else is handled
+    by *VObject.update()*.
+    '''
+    rest = []
+    for topic in topics:
+      if topic[0] in ("mod src", "mod dst"):
+        _old, new = topic[1]
+        vo = None if new is None else self.view.makeViewObjectForGraphObject(new)
+        if topic[0] == "mod src":
+          self.src = vo  # AGRelation's setter moves us between the nodes' relation lists
+        else:
+          self.dst = vo
+        self.view.freshPaint()
+        self.reposition()
+      else:
+        rest.append(topic)
+    if rest:
+      super().update(subject, *rest)
+
   def _toggleFloatingAnchor(self, event=None):
     self.floating(self._menuFloating.get())
     if self.floating():

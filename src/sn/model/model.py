@@ -719,37 +719,35 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
       raise TypeError(f'Database "{url}" is of type {ret.__class__.__name__}; expected type Model."')
     return ret
       
-  @override
-  def _register(self, value: GraphObject, _id:Optional[int]=None) -> int: # type: ignore[override]
-    '''
-    Overrides the 
-    :py:meth:`parent method <pythonUtils:util.persistence.pRef.PRDb._register>`
-    to restrict contained objects to :py:class:`GraphObject` subtypes. 
-    *This violates subsumption rules, but that's what we want here!* 
-    
-    Also sets the dirty bit and notifies any observers ("add GraphObject" (GraphObject))
-    '''
-    assert isinstance(value, GraphObject), \
-        f'Models are restricted to containing only GraphObject subtypes; got a {value.__class__.__name__} type.'
-    # self.setDirty()
-    ret = super()._register(value, _id)
-    # with Subject.ChangeMgr(self, later=True) as cm:
-    #   cm.registerTopics(("add GraphObject", (ret, value)))
-    return ret
-    
-  @override
-  def _unregister(self, _id:int) -> None:
-    '''
-    Overrides the 
-    :py:meth:`parent method <pythonUtils:util.persistence.pRef.PRDb._register>`
-    to also set the dirty bit and notify any observers () 
-    '''
-    super()._unregister(_id)
-    self.setDirty()
-    with Subject.ChangeMgr(self, later=True) as cm:
-      cm.registerTopics(("del GraphObject", (_id,)))
-    #self.notify(("del GraphObject", (_id,)))
-    
+  # @override
+  # def _register(self, value: GraphObject, _id:Optional[int]=None) -> int: # type: ignore[override]
+  #   '''
+  #   Overrides the 
+  #   :py:meth:`parent method <pythonUtils:util.persistence.pRef.PRDb._register>`
+  #   to restrict contained objects to :py:class:`GraphObject` subtypes. 
+  #   *This violates subsumption rules, but that's what we want here!* 
+  #
+  #   Also sets the dirty bit and notifies any observers ("add GraphObject" (GraphObject))
+  #   '''
+  #   assert isinstance(value, GraphObject), \
+  #       f'Models are restricted to containing only GraphObject subtypes; got a {value.__class__.__name__} type.'
+  #   # self.setDirty()
+  #   ret = super()._register(value, _id)
+  #   # with Subject.ChangeMgr(self, later=True) as cm:
+  #   #   cm.registerTopics(("add GraphObject", (ret, value)))
+  #   return ret
+  #
+  # @override
+  # def _unregister(self, _id:int) -> None:
+  #   '''
+  #   Overrides the 
+  #   :py:meth:`parent method <pythonUtils:util.persistence.pRef.PRDb._register>`
+  #   to also set the dirty bit and notify any observers () 
+  #   '''
+  #   super()._unregister(_id)
+  #   # self.setDirty()
+  #   # with Subject.ChangeMgr(self, later=True) as cm:
+  #   #   cm.registerTopics(("del GraphObject", (_id,)))    
   
   @override
   def save(self, saveas:Optional[str]=None, overwrite=False, format:str="XML") -> None:
@@ -1006,15 +1004,15 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
           else:
             slf.connect(destination=obj) 
         except KeyError:
-          actions = {"remove relation from model": lambda: [slf.model.setDirty(), slf._disconnect(), slf.model.setDirty(), None][-1]}
+          #actions = {"remove relation from model": lambda: [slf.model.setDirty(), slf._disconnect(), slf.model.setDirty(), None][-1]}
           slf.assertToStatusReport(False, f'Unexpected read fault on {sideText} for Relation {slf}: "{source}"', "E", 
-                                   actions=actions)
+                                   actions={"remove relation from model": lambda: [slf.model.setDirty(), slf._disconnect(), slf.model.setDirty(), None][-1]})
         except AssertionError:
           slf.assertToStatusReport(False, f'Unexpected type for read on {sideText} for Relation {slf}: {type(obj)}', "E",
-                                   actions=actions)
+                                   actions={"remove relation from model": lambda: [slf.model.setDirty(), slf._disconnect(), slf.model.setDirty(), None][-1]})
         except Exception as ex:
           slf.assertToStatusReport(False, f'Unexpected error on reading {sideText} for Relation {slf}: {ex.__class__.__name__}: {ex}', "E", 
-                                   actions=actions)
+                                   actions={"remove relation from model": lambda: [slf.model.setDirty(), slf._disconnect(), slf.model.setDirty(), None][-1]})
         
     ret = GraphObject.getInstantiationInfo()
     return InstantiationInfo(
@@ -1060,7 +1058,10 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
   
   @dst.setter
   def dst(self, obj:GraphObject|None):
+    old = self._dst
     AGRelation.dst.fset(self, obj) #type: ignore[attr-defined] # @undefinedvariable
+    if old is not obj:
+      self._endpointChanged("dst", old, obj)
     # # if self._legalDst(obj):
     # #   self._dst = obj
     # self.connect(destination=obj)
@@ -1089,13 +1090,24 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
   
   @src.setter
   def src(self, obj:GraphObject|None):
+    old = self._src
     AGRelation.src.fset(self, obj) #type: ignore[attr-defined] # @undefinedvariable
+    if old is not obj:
+      self._endpointChanged("src", old, obj)
     # # if self._legalSrc(obj):
     # #   self._src = obj
     # self.connect(source=obj)
     # assert self._src is obj
     # self.setDirty()
       
+  def _endpointChanged(self, end:str, old:GraphObject|None, new:GraphObject|None) -> None:
+    '''
+    Called when the *src* or *dst* (per *end*) setter changes the local
+    endpoint from *old* to *new*: tells observers (eg: the VRelations
+    showing this relation) with a "mod src" or "mod dst" topic.
+    '''
+    self.notify((f"mod {end}", (old, new)))
+
   def hasLocalDst(self) -> bool:
     '''
     :returns: True iff and only if this Relation has a locally defined destination.
@@ -1286,6 +1298,14 @@ class IsaIndividual(Relation):
   #
 
   
+  @override
+  def _endpointChanged(self, end:str, old:GraphObject|None, new:GraphObject|None) -> None:
+    # the parents of our src (old and new, if it's the src that moved) have changed
+    for obj in ((old, new) if end == "src" else (self._src,)):
+      if obj is not None:
+        obj.retract()
+    super()._endpointChanged(end, old, new)
+
   @override
   def connect(self, source:Optional[GraphObject]=None, destination:Optional[GraphObject]=None):
     retract = source      is not None and source      is not self._src or \

@@ -38,7 +38,8 @@ from sn.view.textUserInterface import UIContext, SNTerminalWidget
 from util.command import Command
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
-from sn.view.graphics.layout import FindFree
+from sn.view.graphics.layout import FindFree, gatherShifts
+from util.commandParser import CompositeCommandMgr
 from math import sqrt
 from util.persistence.serialize import InstantiationInfo, PropertyInfo,\
   ParamInfo, Serializable, SerializableType
@@ -99,8 +100,12 @@ class SNGContext(UIContext):
     print ("dummy graphic command")
     
   class _Move(Command):
-    def __init__(self, obj:"VObject", x:int|float, y:int|float, oldPos:list[int]|None=None): #type: ignore[name-defined]
+    def __init__(self, obj:"VObject", x:int|float, y:int|float, oldPos:list[int]|None=None, adjustPos:bool=True): #type: ignore[name-defined]
       '''
+      :param adjustPos: [default=True] Passed to *obj.moveTo()*: whether to let
+        the local layout heuristic (FindFree) nudge *obj* off anything it
+        lands on. Moves that must land exactly where computed (eg: gathering
+        outliers) pass False.
       :param oldPos: [Optional] The object's true position *before the drag
         that produced (x,y) began* -- eg: *self.dragInfo[0], self.dragInfo[1]*,
         captured in *VObject.onButton_1()* at mouse-down, before any
@@ -121,6 +126,7 @@ class SNGContext(UIContext):
       self.obj:VObject = obj
       self.oldPos:list[int]|None = list(oldPos) if oldPos is not None else None
       self.x, self.y = x, y
+      self.adjustPos = adjustPos
       if isinstance(self.obj, VRelation):
         self.floating:bool = self.obj.floating()
 
@@ -129,7 +135,7 @@ class SNGContext(UIContext):
       super().do()
       if self.oldPos is None:
         self.oldPos = self.obj.boundingBox()
-      self.obj.moveTo(self.x, self.y)
+      self.obj.moveTo(self.x, self.y, adjustPos=self.adjustPos)
       self.obj.view.freshPaint()
       self.obj.view.repaint()
   
@@ -401,6 +407,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     self._eventHandled:Optional[tk.Event] = None
     "Set by a contained VObject/item-level handler (via addEventHandled()) to mark that it already handled a mouse event, so this canvas's own (separately-dispatched) widget-level binding for the same event -- e.g. onRightMouse() -- can skip its generic handling. See isEventHandled()/addEventHandled()/removeEventHandled()."
 
+    self._deletedGraphObjectsCache:dict[int,VObject] = dict[int,VObject]()
+    "Used by update to store deleted VObjects matching deleted GraphObjects in case they are restored."
+    
     self._drawVersion:int = 0
     self.scrollRegion:tuple = (0, 0, 4000, 3000)
 
@@ -522,6 +531,13 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         # case ['add GraphObject', topicData]:
         case ['new', topicData]:
           modelID = topicData[0]
+          
+          # if this is one we've seen before, just restore it
+          if modelID in self._deletedGraphObjectsCache:
+            vObject:VObject = self._deletedGraphObjectsCache[modelID]
+            vObject._reconnect()
+            return
+          
           modelObj = topicData[1]
           logger.info(f'  Creating V{modelObj.__class__.__name__} for model object {modelObj}:{modelObj.__class__.__name__}')
           if (modelObj.isType() or isinstance(modelObj, Node)) and self.canvas: 
@@ -559,9 +575,12 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
             logger.error(f"VObject subtype not implemented for model type {typ.__name__}.")
   
         # elif topicName == 'del GraphObject':
-        case ["del GraphObject", topicData]:
-          modelID == topicData[0]
-          
+        case ["del", topicData]:
+          modelID = topicData[0]
+          obj:VObject|None = self.findViewObjectForGraphObject(lambda vo: vo.modelObject is not None and vo.modelObject.id==modelID)
+          if obj is not None:
+            obj._disconnect()
+            self._deletedGraphObjectsCache[modelID] = obj
           
         case [topicName, topicData]:
           logger.warning(f'Unsupported topic "{topicName}": {topicData}')
@@ -660,14 +679,19 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
   def findViewObjectForGraphObject(self, mObject:GraphObject|Callable[[VObject],bool]) -> VObject|None:
     '''
-    :param mObject: A model object.
+    :param mObject: A model object or a boolean function taking a VObject
+    :type mObject: GraphObject|Callable[[VObject],bool]
     :return: A *VObject* currently in the display representing *mObject*, or *None* if there is not such object.
     '''
-    if not isinstance(mObject, GraphObject):
-      raise AttributeError(f'Expected a param of type GraphObject, but got type {mObject.__class__.__name__}')
-    for obj in self.values():
-      if obj is not None and obj.modelObject is mObject:  # already displayed?
-        return obj
+    if isinstance(mObject, GraphObject):
+      for obj in self.values():
+        if obj is not None and obj.modelObject is mObject:  # already displayed?
+          return obj
+    else:
+      for obj in self.values():
+        if obj is not None and mObject(obj):  # already displayed?
+          return obj
+    # raise AttributeError(f'Expected a param of type GraphObject, but got type {mObject.__class__.__name__}')
     return None
 
   def validate(self, refresh:bool=False) -> int:
@@ -1303,7 +1327,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     bgMenu.add_command(label="float all", command=lambda: [r.floating(True) for r in self.context.view.values() if isinstance(r, VRelation) and r.modelObject.isIndividual()])
     bgMenu.add_command(label="refresh all", command=lambda: [o.cache.refresh() for o in self.context.view.values()])
     bgMenu.add_command(label="show all", command=self.context.view.showAllModel)
-    bgMenu.add_command(label="reset scroll region", command=self.resetScrollRegion)
+    bgMenu.add_command(label="reset scroll region", command=lambda: self.resetScrollRegion(shrink=True))
+    bgMenu.add_command(label="gather nodes", command=self.gatherNodes)
     # bgMenu.add_command(label="toggle field layout", command=self.onToggleFieldsLayout, accelerator=KEY_TOGGLE_FIELDS_LAYOUT[1])
     # bgMenu.add_command(label="show animation controls", command=self.onShowAnimationControls)
     # # from sn.view.animatedLayouts import testBones
@@ -1446,8 +1471,11 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       if obj is not None:
         obj.draw()
 
-  def resetScrollRegion(self) -> None:
+  def resetScrollRegion(self, shrink:bool=False) -> None:
     '''
+    :param shrink: [default=False] Normally the region only grows (see below);
+      True fits it to the drawing even if that makes it smaller -- for an
+      explicit user request, when the view jumping to fit is expected.
     Recompute the canvas's scroll region from the current extent of
     everything actually drawn on it, and apply it -- to *self.scrollRegion*
     itself (what *VObject.moveTo()*/*boundingBox()* clamp positions
@@ -1477,10 +1505,36 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     # current view, and Tk then shifts the view to fit -- which makes the
     # whole drawing appear to jump (eg: mid-drag).
     sr = self.scrollRegion
-    bb = (min(bb[0], sr[0]), min(bb[1], sr[1]), max(bb[2], sr[2]), max(bb[3], sr[3]))
+    if shrink:
+      bb = tuple(bb)
+    else:
+      bb = (min(bb[0], sr[0]), min(bb[1], sr[1]), max(bb[2], sr[2]), max(bb[3], sr[3]))
     if bb != tuple(sr):
       self.scrollRegion = bb
       self.canvas.configure(scrollregion=bb)
+
+  def gatherNodes(self) -> None:
+    '''
+    Herd outlying objects -- eg: ones some layout bug has flung far from
+    their companions -- back toward the main pack, as a single undoable
+    command. See *layout.gatherShifts()* for the (per-axis) heuristic.
+
+    Floating relations aren't moved directly: they re-centre themselves on
+    their (moved) nodes.
+    '''
+    objs = [o for o in self.context.view.values()
+            if o is not None and not (isinstance(o, VRelation) and o.floating())]
+    boxes = [o.boundingBox() for o in objs]
+    moves = [(o, bb, dx, dy) for o, bb, (dx, dy) in zip(objs, boxes, gatherShifts(boxes))
+             if dx or dy]
+    if not moves:
+      logger.info("gatherNodes(): nothing to gather.")
+      return
+    with CompositeCommandMgr(self.context):
+      for o, bb, dx, dy in moves:
+        self.context.move(o, bb[0] + dx, bb[1] + dy, oldPos=bb, adjustPos=False)
+    self.resetScrollRegion(shrink=True)
+    logger.info(f"gatherNodes(): moved {len(moves)} of {len(objs)} objects.")
 
   def runBackgroundWork(self, fn: Callable[[], None]) -> None:
     """Launch background work (e.g. a long model computation triggered by the

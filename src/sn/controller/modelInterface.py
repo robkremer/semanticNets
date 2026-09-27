@@ -422,7 +422,7 @@ class ModelContext(CommandContext):
   
   def query(self, objects:list[str|GraphObject], /, model:Optional[Model]=None, astree:bool=False, keepdups:bool=False):
     '''
-    Query a model in one <fetch>, <type>, or <relation> expression forms.
+    Query a model in one of <fetch>, <type>, or <relation> expression forms.
     
       - <obj>                     # "echos" the referenced object (str->GraphObject)
       - <type> <obj>              # <obj> isa <type>
@@ -872,6 +872,57 @@ class ModelContext(CommandContext):
     @override
     def __str__(self):
       return f'{super().__str__()} {self.object.getPRef().tostring()}'
+
+  def reconnect(self, relation:Relation, /, source:GraphObject|None=None, destination:GraphObject|None=None):
+    '''
+    Change the source and/or destination of an existing *Relation*.
+
+    :param relation: The *Relation* to change.
+    :type relation: Relation
+    :param source: The new source, or None to leave it as it is.
+    :type source: GraphObject
+    :param destination: The new destination, or None to leave it as it is.
+    :type destination: GraphObject
+    '''
+    pass
+
+  class _Reconnect(Command):
+    def __init__(self, relation:Relation, /, source:GraphObject|None=None, destination:GraphObject|None=None):
+      super().__init__("reconnect")
+      if not isinstance(relation, Relation):
+        raise TypeError(f'reconnect: expected a Relation, got {type(relation).__name__}.')
+      self.relation:Relation = relation
+      self.source = source
+      self.destination = destination
+      # the LOCAL endpoints (None if inherited), so undo() restores exactly those
+      self.oldSource:GraphObject|None = relation._src
+      self.oldDestination:GraphObject|None = relation._dst
+
+    @override
+    def do(self):
+      super().do()
+      if self.source is not None:
+        self.relation.src = self.source
+      if self.destination is not None:
+        self.relation.dst = self.destination
+
+    @override
+    def undo(self):
+      super().undo()
+      if self.source is not None:
+        self.relation.src = self.oldSource
+      if self.destination is not None:
+        self.relation.dst = self.oldDestination
+
+    @override
+    def delete(self):
+      super().delete()
+      self.relation = self.source = self.destination = self.oldSource = self.oldDestination = None #type: ignore[assignment]
+
+    @override
+    def __str__(self):
+      ends = [f'{k}={v.getPRef().tostring()}' for k, v in (("source", self.source), ("destination", self.destination)) if v is not None]
+      return f'{super().__str__()} {self.relation.getPRef().tostring()} {" ".join(ends)}'
 
   # This is just a signature -- the behaviour is in class _New_node.
   def new_relation(self, parent:GraphObject|list[GraphObject], /, 
