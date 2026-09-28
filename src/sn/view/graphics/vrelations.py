@@ -754,7 +754,8 @@ class VRelation(VObject, AGRelation):
     :param x: Canvas (window) coordinates, eg: from *canvasx(event.x)*.
     :param y: See *x*.
     :returns: "src" or "dst" if (x, y) is within *TERMINAL_HIT_RADIUS* of that
-      end of the drawn connector, otherwise None.
+      end of the drawn connector -- but not over either connected shape --
+      otherwise None.
     '''
     info = getattr(self, "connectInfo", None)
     if info is None:
@@ -771,6 +772,11 @@ class VRelation(VObject, AGRelation):
     r = self.TERMINAL_HIT_RADIUS
     for end, ex, ey in ends:
       if abs(x - ex) <= r and abs(y - ey) <= r:
+        # The connected shapes always win: a point over the src or dst shape
+        # is never a terminal, so even a small node stays clickable.
+        pt = self.view.windowToView(x, y)
+        if any(n is not None and n.containsPt(pt) for n in (self.src, self.dst)):
+          return None
         return end
     return None
 

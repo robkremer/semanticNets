@@ -39,6 +39,7 @@ from util.command import Command
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
 from sn.view.graphics.layout import FindFree, gatherShifts
+from sn.view.graphics.decorators import NOMINAL_ASPECT
 from util.commandParser import CompositeCommandMgr
 from math import sqrt
 from util.persistence.serialize import InstantiationInfo, PropertyInfo,\
@@ -169,6 +170,59 @@ class SNGContext(UIContext):
     @override
     def __str__(self):
       return f'{super().__str__()} {self.obj.name} {self.x} {self.y}'
+
+  def resize(self, obj:"VObject", x1:int, y1:int, x2:int, y2:int): #type: ignore[name-defined]
+    '''
+    Set the bounding box of a view object (its position and size).
+    '''
+    print ("dummy graphic command")
+
+  class _Resize(Command):
+    def __init__(self, obj:"VObject", x1:int, y1:int, x2:int, y2:int, #type: ignore[name-defined]
+                 userSized:bool=True, oldBB:list[int]|None=None, oldUserSized:bool|None=None):
+      '''
+      :param userSized: [default=True] Whether the result counts as sized by
+        the user (so it's no longer fitted to its text) -- False for "fit to text".
+      :param oldBB: [Optional] The bounding box before -- for a resize that
+        was already applied live (eg: a handle drag), since by *do()*-time
+        the object already has its new box. Captured at *do()* if omitted.
+      :param oldUserSized: [Optional] *obj.userSized* before; likewise.
+      '''
+      super().__init__("resize")
+      self.obj:VObject = obj
+      self.bb:list[int] = [int(x1), int(y1), int(x2), int(y2)]
+      self.userSized:bool = userSized
+      self.oldBB:list[int]|None = list(oldBB) if oldBB is not None else None
+      self.oldUserSized:bool|None = oldUserSized
+
+    @override
+    def do(self) -> None:
+      super().do()
+      if self.oldBB is None:
+        self.oldBB = list(self.obj.boundingBox())
+      if self.oldUserSized is None:
+        self.oldUserSized = self.obj.userSized
+      self.obj.userSized = self.userSized
+      text = self.obj.decorators.get("text")
+      if not self.userSized and hasattr(text, "_fitted"):
+        text._fitted = None # fitted to its text from now on
+      self.obj.reshape(self.bb)
+
+    @override
+    def undo(self):
+      super().undo()
+      assert self.oldBB is not None and self.oldUserSized is not None
+      self.obj.userSized = self.oldUserSized
+      self.obj.reshape(self.oldBB)
+
+    @override
+    def delete(self):
+      super().delete()
+      self.obj = None #type: ignore[assignment]
+
+    @override
+    def __str__(self):
+      return f'{super().__str__()} {self.obj.name} {" ".join(str(v) for v in self.bb)}'
 
   def represent(self, object:list[GraphObject]):
     '''
@@ -661,7 +715,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         sizex = float(minSize)
         aspectRatio = mObject.get('vis/aspectRatio', snPrefs.get("gui/NodeAspectRatio", storeDefault=1.5))
         assert isinstance(aspectRatio, (float,int))
-        sizey = int(sizex / aspectRatio)
+        sizey = int(sizex * (aspectRatio or NOMINAL_ASPECT)) # vis/aspectRatio is height/width; 0 means free
         if atPoint is None:
           x, y = self.findAGoodLocation(mObject)
         else:
@@ -949,19 +1003,44 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         return rel
     return None
 
+  HANDLE_CURSORS = {"nw": "top_left_corner", "ne": "top_right_corner",
+                    "se": "bottom_right_corner", "sw": "bottom_left_corner"}
+  "The cursors shown over a selected object's corner (resize) handles."
+
+  def _handleNear(self, x:float, y:float) -> str|None:
+    'The corner of the selected object\'s resize handle at canvas (x, y), or None.'
+    from sn.view.graphics.decorators import Selected
+    for obj in self.selected:
+      sel = obj.decorators.get("selected") if obj.decorators else None
+      if isinstance(sel, Selected):
+        corner = sel.handleAt(x, y)
+        if corner is not None:
+          return corner
+    return None
+
   def _updateTerminalCursor(self, event:tk.Event) -> None:
     '''
-    Show *TERMINAL_CURSOR* while the pointer is over a draggable relation
-    terminal, restoring whatever cursor was there before (eg: the "hand" a
-    node's *onEnter()* set) when it moves off.
+    Show a corner cursor (*HANDLE_CURSORS*) over a resize handle, or
+    *TERMINAL_CURSOR* over a draggable relation terminal, restoring whatever
+    cursor was there before (eg: the "hand" a node's *onEnter()* set) when the
+    pointer moves off.
     '''
-    over = self._relationTerminalNear(self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)) is not None
+    x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
+    corner = self._handleNear(x, y)
+    if corner is not None:
+      want:str|None = self.HANDLE_CURSORS[corner]
+    elif self._relationTerminalNear(x, y) is not None:
+      want = self.TERMINAL_CURSOR
+    else:
+      want = None
+    ours = {self.TERMINAL_CURSOR, *self.HANDLE_CURSORS.values()}
     current = str(self.canvas.cget("cursor"))
-    if over:
-      if current != self.TERMINAL_CURSOR:
-        self._cursorBeforeTerminal = current # (an item's <Enter>/<Leave> may have changed it meanwhile)
-        self.canvas.configure(cursor=self.TERMINAL_CURSOR)
-    elif current == self.TERMINAL_CURSOR:
+    if want is not None:
+      if current != want:
+        if current not in ours:
+          self._cursorBeforeTerminal = current # (an item's <Enter>/<Leave> may have changed it meanwhile)
+        self.canvas.configure(cursor=want)
+    elif current in ours:
       self.canvas.configure(cursor=self._cursorBeforeTerminal or "arrow")
 
   def _trackElasticLine(self, event:tk.Event) -> None:

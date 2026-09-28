@@ -45,7 +45,7 @@ Created on Jan 30, 2025
 -------------
 '''
 
-from typing import Optional
+from typing import override, Optional
 import tkinter as tk
 from math import cos, sin, pi
 
@@ -159,6 +159,16 @@ class Shape:
             1.0, 1.0, 
             0.0, 1.0] # bounding box rectangle
   
+  def textInset(self) -> tuple[float, float]:
+    """
+    :returns: The fractions (of the bounding box's width and height) of the
+      centred rectangle that text can safely occupy inside this shape. The
+      default is the whole box; shapes with cut-in sides or corners, or curved
+      outlines, override this (or set *cutIn*) to keep text inside the outline.
+    """
+    cutIn = getattr(self, "cutIn", 0.0)
+    return (1.0 - 2*cutIn, 1.0 - 2*cutIn)
+
   def points(self, rect:Optional[list[float]]=None, fast=False) -> list[float]:
     """
     :param rect: a rectangle taken as the bounding box for this Shape's points
@@ -461,6 +471,10 @@ class RoundedShape(Shape):
       rect = self.vobject.boundingBox(fast=fast)
     return self.transform(rect, pointsVector=points, fast=fast) # points in WINDOW coordinates
 
+  @override
+  def textInset(self) -> tuple[float, float]:
+    return (0.94, 0.88) # clear of the rounded corners
+
 class RoundedRectangle(RoundedShape):
   def __init__(self, vnode, sharpness=2, **kwargs):
     assert isinstance(sharpness, (float,int))
@@ -473,6 +487,10 @@ class Oval(Shape):
 
   vertexCount = 24
   'Number of polygon vertices used to approximate the ellipse for points()/containsPt().'
+
+  @override
+  def textInset(self) -> tuple[float, float]:
+    return (0.72, 0.72) # ~ the rectangle inscribed in an ellipse (1/sqrt(2) of each axis)
 
   def __init__(self, vnode, **kwargs):
     super().__init__(vnode, **kwargs)

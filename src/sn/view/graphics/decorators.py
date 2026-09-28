@@ -41,7 +41,8 @@ Created on Feb 3, 2025
 import logging
 import weakref
 from abc import ABC, abstractmethod
-from math import sqrt
+from math import sqrt, log
+import tkinter.font as tkfont
 from typing import override, Callable, Optional, Union, Any
 import sn
 from sn import snPrefs
@@ -126,8 +127,7 @@ class Text(Decorator):
       self.owner.canvas.itemconfigure(self.id, **self.kwargs)
       
   def getCoords(self) -> tuple[int, int]:
-    x, y = self.owner.centerPt()
-    x += 3
+    x, y = self.owner.centerPt() # centred exactly (with anchor and justify "center")
     return self.owner.view.viewToWindow(x,y)
       
   def setText(self, fast=False) -> str:
@@ -149,46 +149,222 @@ class Text(Decorator):
     self.owner.canvas.delete(self.id)
     self.kwargs = None #type: ignore[assignment]
   
+NOMINAL_ASPECT = 0.6
+"The height/width used where vis/aspectRatio is 0 (ie: free): a box's starting shape, and its minimum height (see *VObject.minHeight()*)."
+
+BREAK_AFTER = frozenset(" -_./\\,;:|+&)]}>")
+"Characters a line of *WrappingText* may break after (spaces at a break are dropped)."
+
+_fonts:dict[tuple, tkfont.Font] = {}
+_layoutCache:dict[tuple, tuple[list[str], int, int]] = {}
+
+def _font(canvas, font:tuple) -> tkfont.Font:
+  f = _fonts.get(font)
+  if f is None:
+    f = _fonts[font] = tkfont.Font(root=canvas, family=font[0], size=font[1])
+  return f
+
+def textPieces(text:str) -> list[str]:
+  'Split *text* after each character in *BREAK_AFTER*: the units a line is built from.'
+  pieces:list[str] = []
+  cur = ""
+  for ch in text:
+    cur += ch
+    if ch in BREAK_AFTER:
+      pieces.append(cur)
+      cur = ""
+  if cur:
+    pieces.append(cur)
+  return pieces
+
+def layoutText(canvas, text:str, font:tuple, wrap:float=0) -> tuple[list[str], int, int]:
+  '''
+  Break *text* into lines no wider than *wrap* pixels (0: only at newlines),
+  breaking only after spaces and the punctuation in *BREAK_AFTER* -- never
+  inside a piece, so a piece wider than *wrap* gets a line to itself and
+  overflows. Cached.
+
+  :returns: (lines, width, height) in pixels of *font*.
+  '''
+  key = (text, font, int(wrap))
+  ret = _layoutCache.get(key)
+  if ret is None:
+    f = _font(canvas, font)
+    lines:list[str] = []
+    for para in text.split("\n"):
+      line = ""
+      for piece in textPieces(para):
+        if line and wrap > 0 and f.measure((line + piece).rstrip()) > wrap:
+          lines.append(line.rstrip())
+          line = piece.lstrip()
+        else:
+          line += piece
+      lines.append(line.rstrip())
+    width = max((f.measure(l) for l in lines), default=0)
+    ret = (lines, width, len(lines) * f.metrics("linespace"))
+    if len(_layoutCache) > 5000:
+      _layoutCache.clear()
+    _layoutCache[key] = ret
+  return ret
+
 class WrappingText(Text):
+  '''
+  The owner's name, centred in its bounding box and wrapped to the usable
+  width of its shape (see *Shape.textInset()*).
+
+  If the owner's "vis/textModifiesBB" is set, *fitOwner()* also sizes the
+  owner's bounding box to the text (see *preferredSize()*), within
+  "vis/minSize"/"vis/maxSize" (box width) and close to "vis/aspectRatio"
+  (height/width).
+  '''
+
+  PAD = 3
+  "Space (view units) between the text and the edge of the shape's usable area."
 
   def __init__(self, owner, **kwargs):
     super().__init__(owner, **kwargs)
-    self.text = None
-    self.minSize = -1
-    self.aspectRatio = 0
+    self._fitted:tuple|None = None
+    "What the box was last sized for (see *fitOwner()*); refit when it changes."
+    self._wrap:float|None = None
+    "The text wrap width chosen when the box was last sized automatically (see *preferredLayout()*)."
+
+  def baseFont(self) -> tuple:
+    'The font at zoom 1.0 -- ie: in view units, which is what boxes are measured in.'
+    return (self.owner.view._fontFace, int(self.owner.view._fontSize))
+
+  def textInset(self) -> tuple[float, float]:
+    fx, fy = self.owner._shape.textInset() if self.owner._shape is not None else (1.0, 1.0)
+    return max(fx, 0.1), max(fy, 0.1)
+
+  def innerWidth(self) -> float:
+    'The usable width (view units) for text in the current box.'
+    bb = self.owner.boundingBox()
+    return max(1.0, (bb[2] - bb[0]) * self.textInset()[0] - 2 * self.PAD)
+
+  def wrapWidth(self, text:str) -> float:
+    '''
+    The width (view units) the text is wrapped to: for an automatically sized
+    box, the width chosen with it (see *preferredLayout()*), which may be
+    wider than the box; otherwise (eg: sized by the user) the box's usable
+    width. Text that doesn't fit overflows the shape, centred.
+    '''
+    owner = self.owner
+    if self._wrap is not None and not owner.userSized and owner.cache["vis/textModifiesBB"]:
+      return self._wrap
+    return self.innerWidth()
+
+  def longestWord(self, text:str, font:tuple) -> int:
+    'The width of the widest unbreakable piece of *text* (see *textPieces()*), 0 if none.'
+    f = _font(self.owner.canvas, font)
+    return max((f.measure(p.strip()) for p in textPieces(text.replace("\n", " "))), default=0)
+
+  def preferredLayout(self, text:str) -> tuple[int, int, float]:
+    '''
+    :returns: (box width, box height, text wrap width), in view units, for
+      *text* when the box is sized automatically:
+
+      1. The text is broken into lines (see *layoutText()*) so that the text
+         block's own shape is as close as possible to "vis/aspectRatio"
+         (height/width) -- ties going to the smaller block.
+      2. The box is sized to that block, but its width is kept within
+         "vis/minSize".."vis/maxSize", and its height is width *
+         "vis/aspectRatio". Text too big for a "vis/maxSize" box overflows the
+         shape, evenly on all sides.
+      3. If "vis/aspectRatio" is 0 (free), the block is shaped to
+         *NOMINAL_ASPECT*, and the box height is whatever the text needs (at
+         least width * *NOMINAL_ASPECT*), capped at "vis/maxSize".
+      4. If "vis/minSize" == "vis/maxSize" the box is a fixed size.
+    '''
+    cache = self.owner.cache
+    minW = float(cache["vis/minSize"])
+    maxW = max(float(cache["vis/maxSize"]), minW)
+    free = not cache["vis/aspectRatio"]
+    aspect = float(cache["vis/aspectRatio"]) or NOMINAL_ASPECT
+    fx, fy = self.textInset()
+    font = self.baseFont()
+    canvas = self.owner.canvas
+    if not text:
+      return int(minW), int(round(minW * aspect)), max(1.0, minW * fx - 2 * self.PAD)
+
+    # 1: the line breaks that best give the text block the aspect ratio
+    _, naturalW, _ = layoutText(canvas, text, font)
+    longest = max(1, min(self.longestWord(text, font), naturalW))
+    def trial(wrap:int) -> tuple[float, float, int, float, float]: # (badness, area, wrap, block w, block h)
+      _, tw, th = layoutText(canvas, text, font, 0 if wrap >= naturalW else wrap)
+      bw, bh = (tw + 2 * self.PAD) / fx, (th + 2 * self.PAD) / fy
+      return (round(abs(log((bh / bw) / aspect)), 3), bw * bh, wrap, bw, bh)
+    # wrap widths spaced geometrically from the longest piece to one line (so
+    # long texts are sampled as finely as short ones), then refined around the best
+    steps = 16
+    ratio = naturalW / longest
+    wraps = {naturalW} | {int(longest * ratio ** (k / steps)) for k in range(steps + 1)}
+    best = min(trial(w) for w in wraps if 0 < w <= naturalW)
+    lo, hi = int(best[2] / ratio ** (1 / steps)), int(best[2] * ratio ** (1 / steps))
+    best = min([best] + [trial(lo + (hi - lo) * k // 8) for k in range(9) if 0 < lo + (hi - lo) * k // 8 <= naturalW])
+    _, _, wrap, bw, bh = best
+
+    # 2-4: the box
+    w = min(max(bw, minW), maxW)
+    h = min(max(bh, w * aspect), maxW) if free else w * aspect
+    if maxW == minW:
+      w, h = minW, minW * aspect
+    return int(round(w)), int(round(h)), float(wrap)
+
+  def preferredSize(self, text:str) -> tuple[int, int]:
+    'The (width, height) of the automatically sized box for *text* (see *preferredLayout()*).'
+    w, h, _ = self.preferredLayout(text)
+    return w, h
+
+  def lineHeight(self) -> float:
+    'The height (view units) of a box holding one line of text: the smallest useful box.'
+    return (_font(self.owner.canvas, self.baseFont()).metrics("linespace") + 2 * self.PAD) / self.textInset()[1]
+
+  def preferredBoundingBox(self) -> list[int]:
+    'The owner\'s bounding box resized, about its centre, to *preferredSize()*.'
+    w, h, _ = self.preferredLayout(super().setText())
+    bb = self.owner.boundingBox()
+    cx, cy = (bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2
+    x, y = int(cx - w / 2), int(cy - h / 2)
+    return [x, y, x + w, y + h]
+
+  def fitOwner(self) -> None:
+    '''
+    Resize the owner's bounding box, about its centre, to *preferredSize()* --
+    but only if "vis/textModifiesBB" is set, the user hasn't sized the box by
+    hand (*owner.userSized*), and something the size depends on (the text, the
+    size attributes, the shape or the font) has changed since last time, so a
+    box isn't refitted on every redraw.
+    '''
+    owner = self.owner
+    if owner.modelObject is None or owner.userSized or not owner.cache["vis/textModifiesBB"]:
+      return
+    text = super().setText()
+    sig = (text, owner.cache["vis/minSize"], owner.cache["vis/maxSize"], owner.cache["vis/aspectRatio"],
+           type(owner._shape).__name__, self.baseFont())
+    if sig == self._fitted:
+      return
+    self._fitted = sig
+    w, h, self._wrap = self.preferredLayout(text)
+    bb = owner.boundingBox()
+    cx, cy = (bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2
+    x, y = int(cx - w / 2), int(cy - h / 2)
+    new = [x, y, x + w, y + h]
+    if new != bb:
+      owner.boundingBox(new)
+      # relations connect to the edge of the (new) shape
+      for r in owner.relations:
+        r.notifyNodeMove(owner, adjustPos=False)
 
   @override
   def setText(self, fast=False):
-    super().setText
-    dirty = False
     text = super().setText(fast=fast)
-    self.kwargs['text'] = text
-    if text != self.text: 
-      dirty = True
-      self.text = text
-    minSize = self.owner.cache["vis/minSize"]
-    if minSize != self.minSize: 
-      dirty = True
-      self.minSize = minSize
-    aspectRatio = self.owner.cache["vis/aspectRatio"]
-    if aspectRatio != self.aspectRatio: 
-      dirty = True
-      self.aspectRatio = aspectRatio
+    # Our own line breaks (Tk would only break at spaces), laid out at the base
+    # font so they're the same at every zoom; Tk's own wrapping is turned off.
+    lines, _, _ = layoutText(self.owner.canvas, text, self.baseFont(), self.wrapWidth(text))
+    self.kwargs["text"] = "\n".join(lines)
+    self.kwargs["width"] = 0
+    return text
 
-    # We may need to change the size of the Shape
-    if dirty and self.owner.cache["vis/textModifiesBB"]:
-      area = len(text)*160
-      width = sqrt(area/aspectRatio) # area = width * width*aspectRatio
-      if width > minSize: # we need to make the Shape bigger
-        self.kwargs["width"] = width
-        self.owner.canvas.itemconfigure(self.id, **self.kwargs)
-        height = area/width
-        bb = self.owner.boundingBox(fast=fast)
-        if bb[2]!=width or bb[3]!=height:
-          self.owner.boundingBox([bb[0], bb[1], bb[0]+width, bb[1]+height], fast=fast)
-
-    self.owner.canvas.itemconfigure(self.id, **self.kwargs)
-          
 class Marker:
   SIZE = [6,6]
   def __init__(self, owner, label:str, fg:str, bg:str, condition:Callable):
@@ -425,32 +601,70 @@ class MarkerContainer(Decorator):
 #     self.kwargs2["fill"] = "red"
     
 class Selected(Decorator):
+  '''
+  Marks the owner as selected with a small square handle at each corner of
+  its bounding box. Dragging a handle resizes the owner (see
+  *VObject.onButton_1()*); the handles stay the same size on screen at any zoom.
+  An owner that can't be resized (see *VObject.isResizable()*) gets hollow
+  handles that can't be grabbed.
+  '''
+  HALF = 4
+  "Half the handle size, in screen pixels."
+  GRAB = 2
+  "Extra screen pixels around a handle that still count as grabbing it."
+  CORNERS = ("nw", "ne", "se", "sw")
+
   def __init__(self, owner, **kwargs):
     super().__init__(owner)
-    self.id = None
+    self.ids:dict[str, int] = {}
     self.kwargs = kwargs
-    if "fill"    not in self.kwargs: self.kwargs["fill"]    = ""
-    if "width"   not in self.kwargs: self.kwargs["width"]   = 3
-    if "outline" not in self.kwargs: self.kwargs["outline"] = "blue"
-    if "dash"    not in self.kwargs: self.kwargs["dash"]    = (1,6)
+    if "fill"    not in self.kwargs: self.kwargs["fill"]    = "blue"
+    if "outline" not in self.kwargs: self.kwargs["outline"] = "white"
+    if "width"   not in self.kwargs: self.kwargs["width"]   = 1
+
+  def cornerPoints(self) -> dict[str, tuple[float, float]]:
+    'The corners of the owner\'s bounding box, in window (canvas) coordinates.'
+    x1, y1, x2, y2 = self.owner.view.viewToWindow(self.owner.boundingBox())
+    return {"nw": (x1, y1), "ne": (x2, y1), "se": (x2, y2), "sw": (x1, y2)}
+
+  def handleAt(self, x:float, y:float) -> str|None:
+    '''
+    :param x: Canvas (window) coordinates.
+    :param y: See *x*.
+    :returns: The corner ("nw", "ne", "se" or "sw") whose handle is at (x, y),
+      or None -- always None if the owner can't be resized.
+    '''
+    if not self.owner.isResizable():
+      return None
+    r = self.HALF + self.GRAB
+    for corner, (cx, cy) in self.cornerPoints().items():
+      if abs(x - cx) <= r and abs(y - cy) <= r:
+        return corner
+    return None
 
   def draw(self, fast=False, **kwargs):
     self.kwargs.update(kwargs)
-    if self.id is None:
-      self.kwargs["tags"] = [self.owner.tag, 'selection']
-      rect = self.owner.boundingBox(fast=fast)
-      rect = self.owner.view.viewToWindow(rect)
-      self.id = self.owner.canvas.create_rectangle(rect, **self.kwargs)
-    else:
-      rect = self.owner.boundingBox(fast=fast)
-      rect = self.owner.view.viewToWindow(rect)
-      self.owner.canvas.coords(self.id, rect)
-      self.owner.canvas.itemconfigure(self.id, **self.kwargs)
+    style = dict(self.kwargs)
+    if not self.owner.isResizable(): # hollow: selected, but not resizable
+      style["outline"] = style.get("fill") or "blue"
+      style["fill"] = ""
+    canvas = self.owner.canvas
+    h = self.HALF
+    for corner, (cx, cy) in self.cornerPoints().items():
+      rect = [cx - h, cy - h, cx + h, cy + h]
+      if corner not in self.ids:
+        self.ids[corner] = canvas.create_rectangle(rect, tags=[self.owner.tag, 'selection', 'handle'], **style)
+      else:
+        canvas.coords(self.ids[corner], rect)
+        canvas.itemconfigure(self.ids[corner], **style)
+      canvas.tag_raise(self.ids[corner])
 
   def delete(self):
     if self.deleted: return
     super().delete()
-    self.owner.canvas.delete(self.id)
+    for i in self.ids.values():
+      self.owner.canvas.delete(i)
+    self.ids = {}
     self.kwargs = None
 
 
