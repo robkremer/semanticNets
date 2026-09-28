@@ -730,15 +730,78 @@ class VRelation(VObject, AGRelation):
   @override
   def addModelEditingMenuItems(self, menu:tk.Menu):
     super().addModelEditingMenuItems(menu)
-    # Never offered for isa links (re-pointing one silently re-parents an
-    # object) or for system relations (those in the always-in-memory sn model).
-    if self.modelObject is None or isinstance(self.modelObject, IsaIndividual) \
-        or self.modelObject.isSystemObject():
+    # Never offered for system relations (those in the always-in-memory sn model).
+    if self.modelObject is None or self.modelObject.isSystemObject():
       return
-    editable = self.view.isModelEditor() and self.view.model is self.modelObject.model
-    state = tk.NORMAL if editable else tk.DISABLED
+    state = tk.NORMAL if self._endpointsEditable() else tk.DISABLED
     menu.add_command(label="reset src", state=state, command=lambda: self.chooseNewEndpoint("src"))
     menu.add_command(label="reset dst", state=state, command=lambda: self.chooseNewEndpoint("dst"))
+
+  TERMINAL_HIT_RADIUS = 10
+  "How close (in screen pixels, on each axis) a click must be to a terminal to grab it."
+
+  def _endpointsEditable(self) -> bool:
+    '''
+    :returns: True iff the user may change this relation's src/dst here: not
+      a system relation, and in an editor view of the relation's own model.
+    '''
+    mo = self.modelObject
+    return mo is not None and not mo.isSystemObject() \
+           and self.view.isModelEditor() and self.view.model is mo.model
+
+  def _terminalAt(self, x:float, y:float) -> str|None:
+    '''
+    :param x: Canvas (window) coordinates, eg: from *canvasx(event.x)*.
+    :param y: See *x*.
+    :returns: "src" or "dst" if (x, y) is within *TERMINAL_HIT_RADIUS* of that
+      end of the drawn connector, otherwise None.
+    '''
+    info = getattr(self, "connectInfo", None)
+    if info is None:
+      return None
+    ends:list[tuple[str, float, float]] = []
+    if info.sourceLineID is not None:
+      c = self.view.canvas.coords(info.sourceLineID)   # drawn from the src end...
+      if len(c) >= 2:
+        ends.append(("src", c[0], c[1]))
+    if info.destLineID is not None:
+      c = self.view.canvas.coords(info.destLineID)     # ...and to the dst end
+      if len(c) >= 2:
+        ends.append(("dst", c[-2], c[-1]))
+    r = self.TERMINAL_HIT_RADIUS
+    for end, ex, ey in ends:
+      if abs(x - ex) <= r and abs(y - ey) <= r:
+        return end
+    return None
+
+  def grabTerminal(self, event) -> bool:
+    '''
+    If *event* (a button-1 press) is near either terminal, start choosing a new
+    src/dst there (the same elastic line as the "reset src"/"reset dst" menu
+    items), to be completed where the drag is released -- see
+    *SNGView.onB1_ButtonRelease()*.
+
+    :returns: True iff it did (so the caller shouldn't start its own drag).
+    '''
+    if not self._endpointsEditable():
+      return False
+    end = self._terminalAt(self.view.canvas.canvasx(event.x), self.view.canvas.canvasy(event.y))
+    if end is None:
+      return False
+    self.view.addEventHandled(event)
+    self.dragInfo = None
+    self.chooseNewEndpoint(end)
+    return True
+
+  @override
+  def onButton_1(self, event):
+    '''
+    A press near either terminal grabs it (see *grabTerminal()*); anywhere
+    else it's the usual drag (moving and anchoring the label).
+    '''
+    if self.grabTerminal(event):
+      return 'break'
+    return super().onButton_1(event)
 
   def chooseNewEndpoint(self, end:str) -> None:
     '''
@@ -746,12 +809,16 @@ class VRelation(VObject, AGRelation):
     elastic line, then change it in the model (as one undoable command).
 
     Only objects of the same kind as the other end are offered: relations
-    connect either two nodes or two relations.
+    connect either two nodes or two relations. For an isa link, the new
+    parent (dst) must also be a type, since individuals can't have children.
     '''
     assert end in ("src", "dst")
     other = self.dst if end == "src" else self.src
+    isaParent = end == "dst" and isinstance(self.modelObject, IsaIndividual)
     def acceptable(n:VObject) -> bool:
-      return n is not self and (other is None or isinstance(n, VRelation) == isinstance(other, VRelation))
+      return n is not self \
+             and (other is None or isinstance(n, VRelation) == isinstance(other, VRelation)) \
+             and not (isaParent and (n.modelObject is None or n.modelObject.isIndividual()))
     def chosen(_origin:VObject, sel:VObject) -> None:
       if end == "src":
         self.view.context.reconnect(self.modelObject, source=sel.modelObject)
