@@ -93,20 +93,20 @@ class SNGContext(UIContext):
     self.view = view
     self.defaults["view"] = self.view
     
-  def move(self, obj:"VObject", x:int|float, y:int|float): #type: ignore[name-defined]
+  def move(self, obj:"VObject", x:int|float, y:int|float, _oldPos:list[int]|None=None, adjustPos:bool=True): #type: ignore[name-defined]
     '''
     This is a dummy graphic command.
     '''
     print ("dummy graphic command")
     
   class _Move(Command):
-    def __init__(self, obj:"VObject", x:int|float, y:int|float, oldPos:list[int]|None=None, adjustPos:bool=True): #type: ignore[name-defined]
+    def __init__(self, obj:"VObject", x:int|float, y:int|float, _oldPos:list[int]|None=None, adjustPos:bool=True): #type: ignore[name-defined]
       '''
       :param adjustPos: [default=True] Passed to *obj.moveTo()*: whether to let
         the local layout heuristic (FindFree) nudge *obj* off anything it
         lands on. Moves that must land exactly where computed (eg: gathering
         outliers) pass False.
-      :param oldPos: [Optional] The object's true position *before the drag
+      :param _oldPos: [Optional] The object's true position *before the drag
         that produced (x,y) began* -- eg: *self.dragInfo[0], self.dragInfo[1]*,
         captured in *VObject.onButton_1()* at mouse-down, before any
         *<B1-Motion>* tick has moved anything. If omitted, *do()* falls back
@@ -120,11 +120,11 @@ class SNGContext(UIContext):
         before the user picked it up. Passing the true pre-drag position
         explicitly is what lets a single *undo()* restore the whole move
         rather than just its last FindFree-driven leg.
-      :type oldPos: Optional[list[int]]
+      :type _oldPos: Optional[list[int]]
       '''
       super().__init__("move")
       self.obj:VObject = obj
-      self.oldPos:list[int]|None = list(oldPos) if oldPos is not None else None
+      self.oldPos:list[int]|None = list(_oldPos) if _oldPos is not None else None
       self.x, self.y = x, y
       self.adjustPos = adjustPos
       if isinstance(self.obj, VRelation):
@@ -211,8 +211,8 @@ class SNGContext(UIContext):
     @override
     def do(self) -> None:
       def callback(verb:str, tup:tuple):
-        if verb == 'new':
-          self.vobjects.append(tup[0])
+        if verb == 'new': # tup is (id, VObject)
+          self.vobjects.append(tup[1])
       super().do()
       view = self.view
       if len(self.vobjects) == 0: # first call
@@ -221,16 +221,24 @@ class SNGContext(UIContext):
         for mo in self.modelObjects:
           self.view.makeViewObjectForGraphObject(mo) # seems odd, but the callback should add this to self.vobjects
         view.detachCallback(detachCode) # kill the callback
-      else: # subsequent call
+      else: # subsequent call (redo)
+        # Nodes first: a node's _reconnect() also restores the relations it
+        # kept a reference to (see AGObject._disconnect()/_reconnect()), from
+        # the kept end. Reconnecting such a relation first would append it to
+        # that kept end a second time.
         n:VObject
-        for n in self.vobjects:
-          n._reconnect()
+        for n in sorted(self.vobjects, key=lambda vo: isinstance(vo, VRelation)):
+          if not n._isConnected():
+            n._reconnect()
   
     @override
     def undo(self):
       super().undo()
-      for vo in self.vobjects:
-        vo._disconnect()
+      # Newest first; disconnecting a node also disconnects its relations, so
+      # some of these may already be gone.
+      for vo in reversed(self.vobjects):
+        if vo._isConnected():
+          vo._disconnect()
   
     @override
     def delete(self):
@@ -384,6 +392,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     # set up the terminal
     self.terminal = SNTerminalWidget(self.model, self.terminalFrame, context=self.context)
     self.terminal.pack(fill=tk.BOTH, expand=True)
+    self.window.appPanedWidget.canvasFrame.terminal = self.terminal
     # This window's terminal is the single routing target for BOTH the
     # SNTerminalWidget itself and the graphics editor (SNGFrame) — bind
     # focus on every widget in the window (not just the terminal) so that
@@ -417,6 +426,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
      
     # self._makingRelationFrom:SNGView.makingRelationData|None = None
     self._elasticLineChoiceData:SNGView.ElasticLineChoiceData|None = None
+    self._cursorBeforeTerminal:str = "arrow"
+    "The cursor to restore when the pointer moves off a relation terminal (see *_updateTerminalCursor()*)."
     self._scrolling:bool = False
     
 
@@ -425,11 +436,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   def getInstantiationInfo(cls) -> InstantiationInfo:
     def finalize(slf:Serializable, _:SerializableType):
       assert isinstance(slf, SNGView), f'Expected SNGView for param 1, got {type(slf)}.'
-      slf.setDirty(False)
       for rel in list(slf.values()):
         if isinstance(rel, VRelation):
           rel.connect()
-      slf.canvas.after_idle(slf.resetScrollRegion)
+      slf.canvas.after_idle(lambda slf=slf: [slf.resetScrollRegion(), slf.setDirty(False)]) # type: ignore[misc]
     ret:InstantiationInfo = super().getInstantiationInfo()
     # ret.class_ = cls
     ret.conArgs.append(ParamInfo("model", str, getter=lambda slf: cast(SNGView,slf).model.url, setter=lambda m: Model(cast(str,m))))
@@ -557,7 +567,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
             # that resolution already created (and registered) this Node's
             # VObject -- constructing another one here would silently produce
             # a second, orphaned VObject for the same model object.
-            newObj = self.findViewObjectForGraphObject(modelObj) or VNode(self, modelObj)
+            newObj = self.makeViewObjectForGraphObject(modelObj) or VNode(self, modelObj)
           elif issubclass(typ, Relation):
             # Same reasoning as the Node case above, but this is where it
             # actually bites: GraphObject.__init__() creates an IsaIndividual
@@ -568,7 +578,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
             # makeViewObjectForGraphObject() before we ever get here. Without
             # this check, this branch would then unconditionally build a
             # SECOND, redundant VRelation for the same Relation.
-            newObj = self.findViewObjectForGraphObject(modelObj) or VRelation(self, modelObj)
+            newObj = self.makeViewObjectForGraphObject(modelObj) or VRelation(self, modelObj)
           # elif typ is IsaIndividual:
           #   newObj = VIsa(self, modelObj)
           else:
@@ -653,19 +663,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         assert isinstance(aspectRatio, (float,int))
         sizey = int(sizex / aspectRatio)
         if atPoint is None:
-          # try:
-          #   mParent = mObject.getParents().__next__()
-          #   vParent = self.findViewObjectForGraphObject(mParent)
-          # except StopIteration: # no parent
-          #   vParent = None
-          # if vParent is None:
-          #   x, y = self.newNodeCoords
-          # else:
-          #  bb = vParent.boundingBox()
-          #  x = bb[0]
-          #  y = bb[1] + 120
-          #TODO: Do some reasonable placement.
-          x, y = 0, 0
+          x, y = self.findAGoodLocation(mObject)
         else:
           x, y = int(atPoint[0]), int(atPoint[1])
         ret = VNode(self, mObject, x=x, y=y, x1=int(x + sizex), y1=int(y + sizey))
@@ -676,6 +674,37 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     if expand > 0:
       ret.expand(filter=filter, expand=expand - 1)
     return ret
+  
+  def findAGoodLocation(self, mObject:GraphObject) -> tuple[int,int]:
+    mParents = mObject.getParents()
+    mParent = mParents[0] if len(mParents) > 0 else None
+    vParent = self.findViewObjectForGraphObject(mParent) if mParent is not None else None
+    if vParent is None:
+      x, y = self.cursorViewPoint()
+    else:
+      bb = vParent.boundingBox()
+      x = bb[0]
+      y = bb[1] + 120
+    return x, y
+
+  def cursorViewPoint(self) -> tuple[int, int]:
+    '''
+    :returns: The graphics cursor's position in view coordinates (ie: allowing
+      for the canvas's scroll position and the zoom). If the cursor isn't over
+      the canvas (eg: the command came from the text terminal), the top-left
+      of the visible part of the canvas instead, so the result is on screen.
+      (0, 0) if there's no canvas.
+    '''
+    if not self.canvas:
+      return 0, 0
+    c = self.canvas
+    # pointer position relative to the canvas widget
+    wx = c.winfo_pointerx() - c.winfo_rootx()
+    wy = c.winfo_pointery() - c.winfo_rooty()
+    if not (0 <= wx < c.winfo_width() and 0 <= wy < c.winfo_height()):
+      wx, wy = 20, 20
+    x, y = self.windowToView(c.canvasx(wx), c.canvasy(wy))
+    return int(x), int(y)
 
   def findViewObjectForGraphObject(self, mObject:GraphObject|Callable[[VObject],bool]) -> VObject|None:
     '''
@@ -712,7 +741,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         if vobj.modelObject is vobjs[j].modelObject:
           count.append(vobjs[j])
       if len(count) > 0:
-        logger.error(f'Found {len(count)+1} visual objects representing model object {vobj.modelObject.name}#{vobj.modelObject.id}: {[o.id for o in [vobj]+count]}.' )
+        logger.error(f'Found {len(count)+1} visual objects representing model object {vobj.modelObject.name if vobj.modelObject is not None else "<None>"}#{vobj.modelObject.id if vobj.modelObject is not None else "<None>"}: {[o.id for o in [vobj]+count]}.' )
         errCount += 1
     if errCount and refresh and self.canvas:
       self.freshPaint()
@@ -882,10 +911,65 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     #         flattenPairs([self.viewToWindow(self._makingRelationFrom.node.centerPt()),
     #                   (self.canvas.canvasx(event.x), self.canvas.canvasy(event.y))]))
     if self._elasticLineChoiceData is not None:
-      self.canvas.coords(self._elasticLineChoiceData.lineID,
-            flattenPairs([self.viewToWindow(self._elasticLineChoiceData.originNode.centerPt()),
-                      (self.canvas.canvasx(event.x), self.canvas.canvasy(event.y))]))
+      self._trackElasticLine(event)
       return
+    self._updateTerminalCursor(event)
+
+  TERMINAL_CURSOR = "center_ptr"
+  "The cursor shown while the pointer is over a relation terminal that can be dragged to a new src/dst."
+
+  def _relationTerminalNear(self, x:float, y:float) -> VRelation|None:
+    '''
+    :param x: Canvas (window) coordinates.
+    :param y: See *x*.
+    :returns: An editable relation with a terminal within reach of (x, y) --
+      ie: one that a press there would grab (see *VRelation.grabTerminal()*)
+      -- or None. Only objects drawn near (x, y) are examined.
+    '''
+    r = VRelation.TERMINAL_HIT_RADIUS
+    items = self.canvas.find_overlapping(x - r, y - r, x + r, y + r)
+    if not items:
+      return None
+    # Match on each object's own *tag* rather than parsing an id out of it: a
+    # tag is fixed when the object is created, and loading a view from a file
+    # can give the object a different id afterwards.
+    byTag = {vo.tag: vo for vo in self._db.values() if vo is not None}
+    candidates:dict[int, VRelation] = {}
+    for item in items:
+      for tag in self.canvas.gettags(item):
+        vo = byTag.get(tag)
+        if vo is not None:
+          if isinstance(vo, VRelation):
+            candidates[id(vo)] = vo
+          else: # a node: a terminal of its relations may be on its edge
+            for rel in vo.relations:
+              candidates[id(rel)] = rel
+    for rel in candidates.values():
+      if rel._endpointsEditable() and rel._terminalAt(x, y) is not None:
+        return rel
+    return None
+
+  def _updateTerminalCursor(self, event:tk.Event) -> None:
+    '''
+    Show *TERMINAL_CURSOR* while the pointer is over a draggable relation
+    terminal, restoring whatever cursor was there before (eg: the "hand" a
+    node's *onEnter()* set) when it moves off.
+    '''
+    over = self._relationTerminalNear(self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)) is not None
+    current = str(self.canvas.cget("cursor"))
+    if over:
+      if current != self.TERMINAL_CURSOR:
+        self._cursorBeforeTerminal = current # (an item's <Enter>/<Leave> may have changed it meanwhile)
+        self.canvas.configure(cursor=self.TERMINAL_CURSOR)
+    elif current == self.TERMINAL_CURSOR:
+      self.canvas.configure(cursor=self._cursorBeforeTerminal or "arrow")
+
+  def _trackElasticLine(self, event:tk.Event) -> None:
+    'Stretch the elastic line (see *elasticLineChoice()*) to the cursor.'
+    assert self._elasticLineChoiceData is not None
+    self.canvas.coords(self._elasticLineChoiceData.lineID,
+          flattenPairs([self.viewToWindow(self._elasticLineChoiceData.originNode.centerPt()),
+                    (self.canvas.canvasx(event.x), self.canvas.canvasy(event.y))]))
 
   def onButton_1(self, event):
     """
@@ -963,6 +1047,12 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         self.removeEventHandled(event)
         return None
   
+      # an elastic line started by a press-and-drag (eg: grabbing a relation's
+      # terminal -- see VRelation.onButton_1()) follows the drag
+      if self._elasticLineChoiceData is not None:
+        self._trackElasticLine(event)
+        return
+
       # continue scrolling
       if self._scrolling:
         self.canvas.scan_dragto(event.x, event.y, gain=1)
@@ -1004,7 +1094,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       case 2: arrow = tk.LAST
       case 3: arrow = tk.BOTH
       case _: arrow = tk.NONE
-    lineID = self.canvas.create_line(
+    lineID = self.canvas.create_line( #type: ignore[call-overload]
       self.viewToWindow(flattenPairs([originNode.centerPt(), originNode.centerPt()])),
       fill=color, width=3, arrow=arrow)
     self._elasticLineChoiceData = SNGView.ElasticLineChoiceData(originNode, lineID, filter, callback)
@@ -1077,7 +1167,11 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     # Handle elastic line object selection for making a Relation
     if self._elasticLineChoiceData is not None:
       self.canvas.delete(self._elasticLineChoiceData.lineID)
-      ids = self.canvas.find("closest", self.canvas.canvasx(event.x), self.canvas.canvasy(event.y))  # find selected objects
+      # what's actually under the cursor (a small halo, not find("closest"),
+      # which always returns *something*, however far away: dropping on empty
+      # space must choose nothing)
+      cx, cy = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
+      ids = self.canvas.find_overlapping(cx - 2, cy - 2, cx + 2, cy + 2)
       typeList:list[VObject] = [n for n in self._db.values() \
                                 if (self._elasticLineChoiceData.filter(n) \
                                     if self._elasticLineChoiceData.filter is not None \
@@ -1096,7 +1190,12 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       if item is not None:
         self._elasticLineChoiceData.callback(self._elasticLineChoiceData.originNode, item)
       else:
-        logger.debug("Elastic line choice: No object matching the filter found under the cursor.")
+        under = [n for n in self._db.values() if n is not None
+                 and any(n.tag in self.canvas.gettags(_id) for _id in ids)]
+        if under:
+          logger.warning(f'"{under[0].name}" can\'t be chosen here.')
+        else:
+          logger.debug("Elastic line choice: nothing under the cursor; cancelled.")
       self._elasticLineChoiceData = None
       return
       
@@ -1171,7 +1270,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       #   fill="cyan", width=3, arrow=tk.LAST)
       # self._makingRelationFrom = SNGView.makingRelationData(node, typ, lineID)
       self.elasticLineChoice(node, 
-                             callback=lambda orig, sel, typ=typ: callback(orig, sel, typ), 
+                             callback=lambda orig, sel, typ=typ: callback(orig, sel, typ), #type: ignore[misc]
                              arrowHeads=2, color="blue")
     else:
       if not isinstance(typ, Relation):
@@ -1180,8 +1279,6 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         raise TypeError(f'SNView.makeRelationFrom(): "typ" argument "{typ.name}" must be type, not an individual;.')
 
   def makeRelation(self, fromNode:VObject, toNode:VObject, typ:Relation):
-    from sn.view.graphics.vobjects import VObject
-    from sn.view.graphics.vrelations import VRelation
     assert isinstance(fromNode, VObject)
     assert isinstance(toNode, VObject)
     if      isinstance(fromNode, VRelation) and not isinstance(toNode, VRelation) or \
@@ -1324,7 +1421,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       bgMenu.add_separator()
       bgMenu.add_separator()
     
-    bgMenu.add_command(label="float all", command=lambda: [r.floating(True) for r in self.context.view.values() if isinstance(r, VRelation) and r.modelObject.isIndividual()])
+    bgMenu.add_command(label="float all", command=lambda: [r.floating(True) for r in self.context.view.values() if isinstance(r, VRelation) and r.modelObject is not None and r.modelObject.isIndividual()])
     bgMenu.add_command(label="refresh all", command=lambda: [o.cache.refresh() for o in self.context.view.values()])
     bgMenu.add_command(label="show all", command=self.context.view.showAllModel)
     bgMenu.add_command(label="reset scroll region", command=lambda: self.resetScrollRegion(shrink=True))
@@ -1346,7 +1443,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       nodeNames = sorted(nodeNames)
       # make a menu item for each
       for nn in nodeNames:
-        newMenu.add_command(label=nodes[nn].name, command=lambda mo=nodes[nn]: self.makeViewObjectForGraphObject(mo))
+        newMenu.add_command(label=nodes[nn].name, command=lambda mo=nodes[nn]: self.makeViewObjectForGraphObject(mo)) #type: ignore[misc]
       return newMenu
     bgMenu.add_cascade(label="show", menu=makeShowMenu())
     
@@ -1425,7 +1522,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     except:
       bb = [0, 0, 0, 0]
     bb = [0, 0, bb[2] + 800, bb[3] + 600]
-    self.canvas.configure(scrollregion=bb)
+    self.canvas.configure(scrollregion=bb) #type: ignore[call-overload]
 
   # ---- Utility ---------------------------------------------------------------
 
@@ -1500,13 +1597,13 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     bb = self.canvas.bbox("all")
     if bb is None:  # nothing drawn yet -- nothing to size the region to
       return
-    bb = expandRect(bb, 100)
+    bb = tuple(expandRect(bb, 100)) #type: ignore[assignment] #mypy is fussy!
     # Only ever grow: shrinking the region can pull it out from under the
     # current view, and Tk then shifts the view to fit -- which makes the
     # whole drawing appear to jump (eg: mid-drag).
     sr = self.scrollRegion
     if shrink:
-      bb = tuple(bb)
+      bb = tuple(bb) #type: ignore[assignment] #mypy is fussy!
     else:
       bb = (min(bb[0], sr[0]), min(bb[1], sr[1]), max(bb[2], sr[2]), max(bb[3], sr[3]))
     if bb != tuple(sr):
@@ -1532,7 +1629,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       return
     with CompositeCommandMgr(self.context):
       for o, bb, dx, dy in moves:
-        self.context.move(o, bb[0] + dx, bb[1] + dy, oldPos=bb, adjustPos=False)
+        self.context.move(o, bb[0] + dx, bb[1] + dy, _oldPos=bb, adjustPos=False)
     self.resetScrollRegion(shrink=True)
     logger.info(f"gatherNodes(): moved {len(moves)} of {len(objs)} objects.")
 

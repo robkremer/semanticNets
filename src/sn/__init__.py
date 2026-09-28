@@ -152,7 +152,20 @@ def checkSaveModified(obj, url:str, kind:str) -> None:
     if ans is not None and ans.upper() in ["Y", "YES", "T", "TRUE"]:
       obj.save()
 
+_savedAtExit = False
+"Set once saveAtExit() has run, so the atexit call after an explicit one doesn't ask again."
+
 def saveAtExit():
+  '''
+  Offer to save every modified model and any still-open view. Runs at most
+  once per process: eg: the Quit handler calls it explicitly and then exits,
+  which would otherwise run it again (via atexit) and repeat every question
+  the user already answered "no" to.
+  '''
+  global _savedAtExit
+  if _savedAtExit:
+    return
+  _savedAtExit = True
   from sn.view.graphics.guiApp import Application
   from sn.model.model import Model
   from util.persistence.pRef import PRDb
@@ -162,7 +175,6 @@ def saveAtExit():
   db:PRDb
   print("saving at exit", file=sys.__stdout__)
   for url, db in Model.AllDBs.items():
-    print(f'Examining {url}', file=sys.__stdout__)
     if isinstance(db, Model):
       checkSaveModified(db, url, "model")
     else:

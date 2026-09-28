@@ -56,6 +56,7 @@ from types import NoneType
 import tkinter as tk
 import weakref
 import traceback
+import itertools
 from abc import abstractmethod
 
 from util.persistence.serialize import InstantiationInfo, ParamInfo
@@ -190,6 +191,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
   that decorators may be drawn outside of this bounding box.
   '''
 
+  _tagCounter = itertools.count(1)
+  "Source of unique canvas tags (see *self.tag*)."
+
   def __init__(self, view:"SNGView", modelObject:GraphObject|str,
                shape:Union[Any,str]="Rectangle",
                x:Optional[int]=None, y:Optional[int]=None, x1:Optional[int]=None, y1:Optional[int]=None,
@@ -289,7 +293,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         shape = self.strToShape("RoundedRectangle")
     assert isinstance(shape, Shape)
     self._shape = shape
-    self.tag = "ID"+str(self._id)
+    self.tag = f"VO{next(VObject._tagCounter)}"
+    "This object's canvas tag: every canvas item drawn for it carries it. Deliberately NOT derived from *self._id*, which loading a view from a file may change after construction."
     
     # self.relations:list[VRelation] = []
     # 'CAUTION: This list of referenced relations MUST have exactly a one-to-one relation with every connecting role of every connecting relation.'
@@ -608,6 +613,13 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     decide on if it's just a node move or a selection toggle in *self.onB1_Motion()*
     and *self.onB1ButtonRelease()*.
     """
+    # A relation's terminal sits right on the edge of the object it connects,
+    # so a press meant for the terminal usually lands on this object instead:
+    # let a nearby terminal of one of our relations take it (VRelation's own
+    # onButton_1() does the same check first).
+    for r in list(self.relations):
+      if r is not self and r.grabTerminal(event):
+        return 'break'
     self.view.addEventHandled(event)
     #print(f'onButton_1() event x={event.x}, y={event.y}, selected={self.selected()}')
     winX = self.canvas.canvasx(event.x) # convert widget-relative coords to canvas coords (accounts for scroll position)
@@ -709,7 +721,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
           for n in movedObjects:
             bb = n.boundingBox()
             startPos = self.dragStartPositions.get(n, bb)
-            self.view.context.move(n, bb[0], bb[1], oldPos=startPos)
+            self.view.context.move(n, bb[0], bb[1], _oldPos=startPos)
       else: # this was a click, not a drag: toggle the selection state
         s = event.state
         self.selected(not self.selected(), _multi=s_CMD(s) or s_SHIFT(s)) # toggle selected

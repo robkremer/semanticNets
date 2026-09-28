@@ -45,33 +45,22 @@ Created on Aug 18, 2026
 @author: robkremer
 '''
 from __future__ import annotations
-#from sn.controller.modelInterface import ModelContext
 import traceback
-import util
 from util.persistence.serialize import SerializationStrategy
 from util.attributeEditor import applyEditAttrsBox
-#from sn.view.graphics.snCanvas import SNGContext
 import sys
-import io
-import builtins
-import threading
-import logging
 import sn
 import tkinter as tk
 import tkinter.filedialog as filedialog
-from typing import Optional, Callable, cast, Any
+from typing import cast
 from types import NoneType
 from tkinter import ttk
 from sn import snPrefs
-from util.attribute import Attribute, VAR_DEFAULTED, isValidType
-from util.utils import expandRect, showExceptionDialog, fixURL, urlExists,\
+from util.utils import showExceptionDialog, fixURL, urlExists,\
   isValidURL
 from util.terminal import terminalRegistry, installGlobalIORouting,\
   TerminalWidget, TerminalRegistry
-from sn.view.graphics.utils import getSubMenu
 from sn.model.model import Model
-# from sn.view.graphics.snCanvas import SNGView
-#from sn.view.textUserInterface import SNTerminalWidget # circular import
 
 logger:sn.SNLogger = sn.getLogger(__name__)
 
@@ -168,12 +157,13 @@ class Application(tk.Tk):
 
     :rtype: None
     """
+    self.closeAllWindows() # each gets the same save check as closing it by hand
     sn.saveAtExit()
     snPrefs.save()
     self.quit()
     sys.exit(0)  #TODO: shouldn't be necessary -- self.quit()/destroy() should
-                 # have exited the app on its own, but doesn't; mirrors the
-                 # same workaround in loggingPanedWindow.py's AppWindow.onQuit().
+    #             have exited the app on its own, but doesn't; mirrors the
+    #             same workaround in loggingPanedWindow.py's AppWindow.onQuit().
 
   def _installMenubar(self) -> tk.Menu:
     """Builds the app menu bar.
@@ -239,20 +229,6 @@ class Application(tk.Tk):
                 filetypes=[("View files", "*.snv *.snm"), ("xml files", "*.xml"), ("All Files", "*.*")])
     if filename:
       self.openWindow(filename)
-      # if filename.endswith(".snm"): # a model
-      #   model = SerializationStrategy.readx(filename, replaceExt=None)
-      #   if isinstance(model, Model): # verified to be a model.
-      #     viewURL = fixURL(model.utl, ".snv", replaceExt=True, mode='w')[0]
-      #     SNGView(viewURL, model=model, mode='w')
-      #     return
-      #   raise UnexpectedObjectInFile(f'File "{filename}" contains an object of type {model.__class__.__name__}. Expected a Model or a SNGView object')
-      # modelURL = filedialog.askopenfilename(
-      #   title=f"Select a Model file for the new view {filename}",
-      #   filetypes=[("Model files", "*.snm"), ("xml files", "*.xml"), ("All Files", "*.*")])
-      # if modelURL is None:
-      #   return None 
-      # model = SerializationStrategy.readx(modelURL, replaceExt=None)
-      # view = SNGView(viewSpec, model=model)
   
   def openWindow(self, viewSpec:Model|str) -> tk.Toplevel|None:
     """Create and show a new Toplevel window hosted under the invisible root.
@@ -264,8 +240,6 @@ class Application(tk.Tk):
     :returns: The newly created Toplevel window.
     :rtype: tk.Toplevel
     """
-    from util.persistence.pRef import PRDb
-    from sn.model.model import Model
     from sn.view.graphics.sngView import SNGView
     assert isinstance(viewSpec, (Model,SNGView,str,NoneType))
     
@@ -315,9 +289,10 @@ class Application(tk.Tk):
               if viewSpec in self.windows:
                 view = cast(SNGView, self.windows[viewSpec].view)
               else:
-                modelOrView = SerializationStrategy.readx(viewSpec, replaceExt=None)
-                assert isinstance(modelOrView, SNGView)
-                view = modelOrView
+                obj = SerializationStrategy.readx(viewSpec, replaceExt=None)
+                if not isinstance(obj, SNGView):
+                  raise TypeError(f'Expected type Model in "{viewSpec}", but got type {type(obj)}.')
+                view = obj
             elif issubclass(peekedType, Model): # it's a model -- read it, then find/create its view.
               modelOrView = Model(viewSpec)
               assert isinstance(modelOrView, Model)
@@ -334,7 +309,10 @@ class Application(tk.Tk):
                 filetypes=[("Model files", "*.snm"), ("xml files", "*.xml"), ("All Files", "*.*")])
               if modelURL is None:
                 return None 
-              model = SerializationStrategy.readx(modelURL, replaceExt=None, mode='r')
+              obj = SerializationStrategy.readx(modelURL, replaceExt=None, mode='r')
+              if not isinstance(obj, Model):
+                raise TypeError(f'Expected type Model in "{modelURL}", but got type {type(obj)}.')
+              model = obj
               view = SNGView(viewSpec, model=model)
             else:
               splt = viewSpec.rsplit(".", 1)
@@ -348,8 +326,6 @@ class Application(tk.Tk):
         self.windows[name].lift()
         return self.windows[name]
   
-      #TODO: passing viewSpec as just None is just a temporary thing. 
-#      window:AppWindow = AppWindow(self, model, geometry=f'{snPrefs.get("gui/WindowSize", storeDefault="800x600", storeType=str)}+{self.defaultChildLocation[0]}+{self.defaultChildLocation[1]}')
       self.defaultChildLocation = (self.defaultChildLocation[0] + 40, self.defaultChildLocation[1] + 40)
       self.windows[name] = view.window
       return view.window
@@ -364,11 +340,24 @@ class Application(tk.Tk):
       return None
 
 
-  def _closeWindow(self, name: str) -> None:
+  def closeAllWindows(self) -> None:
+    """Close every hosted window via *_closeWindow()*, so each view gets
+    exactly the same save check (and clean-up) on quitting as it would if
+    the user closed its window individually.
+
+    :rtype: None
+    """
+    for name in list(self.windows):
+      self._closeWindow(name, quitIfLast=False)
+
+  def _closeWindow(self, name: str, quitIfLast: bool = True) -> None:
     """Close a specific hosted window and check whether the app should exit.
 
     :param name: The window's key, as passed to openWindow.
     :type name: str
+    :param quitIfLast: Quit the application if this was the last window.
+      False when the caller is already quitting (see *closeAllWindows()*).
+    :type quitIfLast: bool
     :rtype: None
     """
     window = self.windows.pop(name, None)
@@ -388,11 +377,11 @@ class Application(tk.Tk):
       # ordinary defocus-without-closing case).
       if window.view is not None:
         window.view.onWindowFocusOut()
-      self.terminalRegistry.onFocusOut(window.appPanedWidget.textDisplayFrame)
+      self.terminalRegistry.onFocusOut(window.appPanedWidget.canvasFrame.terminal)
       self.terminalRegistry.unregisterWindow(window)
       window.destroy()
 
-    if not self.windows:
+    if quitIfLast and not self.windows:
       self.quit()  # or: leave the (invisible) root running headless, your choice
 
   def quit(self) -> None:
@@ -417,20 +406,16 @@ class AppWindow(tk.Toplevel):
   '''
 
   def __init__(self, tkdottk:tk.Tk, viewURL:str, geometry:str="300x400+20+20", **kwargs):
-    from sn.view.graphics.sngView import SNGContext
-    # establish we have model and a context
-    # assert isinstance(model, Model)
-    # self.model:Model = model
-    # self.context:SNGContext = SNGContext(model)
-        
+    from sn.view.graphics.sngView import SNGView
+    
     # initialize the window
     super().__init__(tkdottk, **kwargs)
     self.geometry(geometry)
     name = viewURL
     self.title(name)
-    self.protocol("WM_DELETE_WINDOW", lambda name=name: self._root()._closeWindow(name))
+    self.protocol("WM_DELETE_WINDOW", lambda name=name: self._root()._closeWindow(name)) #type: ignore[misc, attr-defined]
 
-    self.view: "SNGView|None" = None
+    self.view: SNGView|None = None
     'The SNGView that owns this window -- set by SNGView.__init__() right after it constructs this AppWindow, so this window\'s FocusIn/FocusOut handling (see _onWindowFocusIn()/_onWindowFocusOut()) can dispatch straight to the SNGView that should react to it.'
 
     # create content
@@ -455,7 +440,7 @@ class AppWindow(tk.Toplevel):
 
     self._bindFocusTracking(self)
 
-  def _bindFocusTracking(self, widget: tk.Widget) -> None:
+  def _bindFocusTracking(self, widget: tk.Misc) -> None:
     """Recursively bind <FocusIn>/<FocusOut> on this widget and all its
     descendants so this *AppWindow* notices when the user's focus enters or
     genuinely leaves it, wherever within it that focus lands.
@@ -506,13 +491,13 @@ class AppWindow(tk.Toplevel):
 
     :rtype: None
     """
-    app = self._root()
+    app = self._root() #type: ignore[attr-defined]
     current = app.focus_get()
     stillActive = current is not None and current.winfo_toplevel() is self
     if not stillActive and self.view is not None:
       self.view.onWindowFocusOut()
 
-  def _bindFocusRouting(self, widget: tk.Widget, terminal: "SNTerminalWidget") -> None:
+  def _bindFocusRouting(self, widget: tk.Misc, terminal: "SNTerminalWidget") -> None: #type: ignore[name-defined]
     """Recursively bind <FocusIn>/<FocusOut> on this widget and all its
     descendants so that focusing ANY widget in the window (terminal or
     graphics editor) sets this window's terminal as the default stdio/input()
@@ -524,8 +509,9 @@ class AppWindow(tk.Toplevel):
     :type terminal: SNTerminalWidget
     :rtype: None
     """
-    widget.bind("<FocusIn>", lambda e, t=terminal: self._root().terminalRegistry.onFocusIn(t), add="+")
-    widget.bind("<FocusOut>", lambda e, t=terminal: self._root().terminalRegistry.onFocusOut(t), add="+")
+    e:tk.Event
+    widget.bind("<FocusIn>", lambda e, t=terminal: self._root().terminalRegistry.onFocusIn(t), add="+") #type: ignore[attr-defined,call-overload]
+    widget.bind("<FocusOut>", lambda e, t=terminal: self._root().terminalRegistry.onFocusOut(t), add="+") #type: ignore[attr-defined,call-overload]
     for child in widget.winfo_children():
       self._bindFocusRouting(child, terminal)
 
@@ -564,7 +550,6 @@ class AppPanedWidget(tk.PanedWindow):
 
     """
     assert isinstance(parent, AppWindow)
-    from sn.view.textUserInterface import SNTerminalWidget
     # fix up kwargs to contain the necessary defaults and create the PanedWindow (super).
     if "orient" not in kwargs: kwargs["orient"] = tk.VERTICAL
     if "showhandle" not in kwargs: kwargs["showhandle"] = False
@@ -600,19 +585,11 @@ class AppPanedWidget(tk.PanedWindow):
     # and the shared registry, so it can bind its own background threads
     # (runBackgroundWork below) without having to walk back up through
     # winfo_toplevel()/_root() to find them.
-    self.canvasFrame.terminal = self.textDisplayFrame
     self.canvasFrame.registry = terminalRegistry
+    # self.canvasFrame.terminal = self.canvasFrame.terminal
 
     self.pack(fill=tk.BOTH, expand=True)
 
-  # @property
-  # def model(self) -> Model:
-  #   return cast(AppWindow, self.master).model
-  #
-  # @property
-  # def context(self) -> ModelContext:
-  #   return cast(AppWindow, self.master).context
-    
 
 class SNGViewFrame(tk.Frame):
 
@@ -621,7 +598,6 @@ class SNGViewFrame(tk.Frame):
     :param parent: The master Widget.
     :param kwargs: Passed to *Canvas*.
     '''
-    from sn.view.graphics.sngView import SNGView
     assert isinstance(parent, AppPanedWidget)
     # self.scrollRegion:list = [0,0,1000,1000]
     tk.Frame.__init__(self, parent)
@@ -647,51 +623,8 @@ class SNGViewFrame(tk.Frame):
     self.grid_columnconfigure(0, weight=1)
     self.grid_rowconfigure(0, weight=1)
     
-#    self.view = SNGView(None, self.canvas, self.model)
-
-    # test code **********************
-    # self.canvas.create_rectangle(500, 500, 700, 650, outline="black", fill="lightblue", width=2)
-    # self.canvas.create_rectangle(50, 500, 150, 700, outline="black", fill="purple", width=2)
-    # self.resetScrollRegion()
-    # **********************
-    
     self.terminal:TerminalWidget
     self.registry:TerminalRegistry
-
-  # @property
-  # def model(self) -> Model:
-  #   ret = cast(AppPanedWidget, self.master).model
-  #   assert isinstance(ret, Model)
-  #   return ret
-  #
-  # @property
-  # def context(self) -> ModelContext:
-  #   return cast(AppPanedWidget, self.master).context
-    
-  # def resetScrollRegion(self):
-  #   self.canvas.configure({"scrollregion":expandRect(self.canvas.bbox("all"), 10)})
-  #
-  # def runBackgroundWork(self, fn: Callable[[], None]) -> None:
-  #   """Launch background work (e.g. a long model computation triggered by the
-  #   graphics editor) bound to THIS window's terminal, so its stdout/stderr/
-  #   logging/input() output lands there regardless of what has focus by the
-  #   time the work actually produces output.
-  #
-  #   :param fn: The work to run.
-  #   :type fn: Callable[[], None]
-  #   :rtype: None
-  #   """
-  #   terminal = self.terminal  # set by AppPanedWidget after construction
-  #   registry = self.registry
-  #
-  #   def wrapped() -> None:
-  #     registry.bindThreadToTerminal(terminal)
-  #     try:
-  #       fn()
-  #     finally:
-  #       registry.unbindThread()
-  #
-  #   threading.Thread(target=wrapped, daemon=True).start()
 
 
 if __name__ == "__main__":
