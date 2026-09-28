@@ -59,7 +59,7 @@ import traceback
 import itertools
 from abc import abstractmethod
 
-from util.persistence.serialize import InstantiationInfo, ParamInfo
+from util.persistence.serialize import InstantiationInfo, ParamInfo, PropertyInfo
 from util.commandParser import CompositeCommandMgr
 from util.persistence.pRef import PRObject, PRDb, PReference #, DeletedObjectError
 from util.observer import Observer, Subject
@@ -77,7 +77,7 @@ import sn
 from sn import snPrefs
 from sn.model import GraphObject, Relation
 from sn.model.model import UP_ARROW, IsaIndividual
-from sn.view.graphics.decorators import WrappingText, Selected, MarkerContainer,\
+from sn.view.graphics.decorators import WrappingText, Selected, MarkerContainer, NOMINAL_ASPECT,\
   Decorator, ShadowDecorator
 
 import logging
@@ -268,7 +268,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     if x  is None: x  = 0
     if y  is None: y  = 0
     if x1 is None: x1 = int(self.cache["vis/minSize"])
-    if y1 is None: y1 = int(self.cache["vis/minSize"]/self.cache["vis/aspectRatio"])
+    if y1 is None: y1 = int(self.cache["vis/minSize"] * (self.cache["vis/aspectRatio"] or NOMINAL_ASPECT)) # aspectRatio is height/width
     assert isinstance(x , int) and not isinstance(x , bool)
     assert isinstance(y , int) and not isinstance(y , bool)
     assert isinstance(x1, int) and not isinstance(x1, bool)
@@ -284,6 +284,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     self.dragInfo = None
     self._deleted = False
     self._hidden = False
+    self.userSized:bool = False
+    "True once the user has sized the box by hand: it's then no longer fitted to its text (see *WrappingText.fitOwner()*) until \"fit to text\"."
+    self.resizeInfo:tuple|None = None
+    "While a corner handle is being dragged: (fixed opposite corner (view coords), bounding box before, userSized before)."
 
     if isinstance(shape, str):
       try:
@@ -334,7 +338,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
                        ParamInfo("y", int, lambda slf: int(slf.boundingBox()[1])), #type: ignore[attr-defined]
                        ParamInfo("x1", int, lambda slf: int(slf.boundingBox()[2])), #type: ignore[attr-defined]
                        ParamInfo("y1", int, lambda slf: int(slf.boundingBox()[3]))], #type: ignore[attr-defined]
-            postconSetters=[],
+            postconSetters=[PropertyInfo("userSized", bool,
+                                         lambda slf: bool(getattr(slf, "userSized", False)),
+                                         lambda slf, v: setattr(slf, "userSized", bool(v)),
+                                         optional=True)], # optional: views saved before it existed still load
             finalSetters=[]
             )
 
@@ -444,27 +451,39 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       self._boundingBox = rect.copy()
     
       if not fast:
+        # Only minimums are enforced here: fitting the box to its text within
+        # vis/maxSize and near vis/aspectRatio is WrappingText.fitOwner()'s job,
+        # and a box deliberately sized otherwise (eg: resized by the user) must
+        # be allowed to keep its shape.
         bb = self._boundingBox
         minX = self.cache['vis/minSize']
         if bb[2]-bb[0] < minX:
           bb[2] = bb[0]+minX
-        aspectRatio = self.cache['vis/aspectRatio'] # could aspaectRation be 0???
-        minY = (bb[2]-bb[0]) * aspectRatio
+        minY = self.minHeight()
         if bb[3]-bb[1] < minY:
           bb[3] = bb[1]+minY
-          
-        maxX = self.cache["vis/maxSize"]
-        if bb[2]-bb[0] > maxX:
-          bb[2] = bb[0]+maxX
-        maxY = (bb[2]-bb[0]) * aspectRatio
-        if bb[3]-bb[1] > maxY:
-          bb[3] = bb[1]+maxY
       
       # self.view.freshPaint()
       # self.draw()
       self.setDirty()
 
     return self._boundingBox
+
+  def isResizable(self) -> bool:
+    'False iff "vis/minSize" == "vis/maxSize": the size is fixed, so it can\'t be resized by hand.'
+    return self.cache['vis/minSize'] != self.cache['vis/maxSize']
+
+  def minHeight(self) -> float:
+    '''
+    The smallest height (view units) the bounding box may have: "vis/minSize" *
+    "vis/aspectRatio" (*NOMINAL_ASPECT* if that's 0), but never less than one
+    line of text.
+    '''
+    ret = self.cache['vis/minSize'] * (self.cache['vis/aspectRatio'] or NOMINAL_ASPECT)
+    text = self.decorators.get("text") if getattr(self, "decorators", None) else None
+    if isinstance(text, WrappingText) and self.modelObject is not None:
+      ret = max(ret, text.lineHeight())
+    return ret
 
   def shape(self, c:str=None):
     '''
@@ -613,6 +632,15 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     decide on if it's just a node move or a selection toggle in *self.onB1_Motion()*
     and *self.onB1ButtonRelease()*.
     """
+    # A corner handle of a selected object: resize just this object.
+    sel = self.decorators.get("selected")
+    if isinstance(sel, Selected):
+      corner = sel.handleAt(self.canvas.canvasx(event.x), self.canvas.canvasy(event.y))
+      if corner is not None:
+        self.view.addEventHandled(event)
+        self.dragInfo = None
+        self._startResize(corner)
+        return 'break'
     # A relation's terminal sits right on the edge of the object it connects,
     # so a press meant for the terminal usually lands on this object instead:
     # let a nearby terminal of one of our relations take it (VRelation's own
@@ -647,6 +675,11 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     accepting events, just move the node to track the event, updating *self.dragInfo*.
     """
     
+    if self.resizeInfo is not None:
+      self.view.addEventHandled(event)
+      x, y = self.view.windowToView(self.canvas.canvasx(event.x), self.canvas.canvasy(event.y))
+      self._resizeTo(x, y)
+      return 'break'
     if self.dragInfo is not None:
       self.view.addEventHandled(event)
       winX = self.canvas.canvasx(event.x) # convert widget-relative coords to canvas coords (accounts for scroll position)
@@ -679,6 +712,16 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     intervening <B1_Motion> events), toggle the selection state of the node.
     """
     #from sn.view.vcommands import MoveCommand
+    if self.resizeInfo is not None:
+      self.view.addEventHandled(event)
+      _anchor, oldBB, oldUserSized = self.resizeInfo
+      self.resizeInfo = None
+      bb = self.boundingBox()
+      if bb != oldBB: # commit the whole drag as one undoable command
+        self.view.context.resize(self, bb[0], bb[1], bb[2], bb[3], oldBB=oldBB, oldUserSized=oldUserSized)
+      else:           # just a click on a handle
+        self.userSized = oldUserSized
+      return 'break'
     if self.dragInfo is not None:
       self.view.addEventHandled(event)
       if self.dragInfo[4]: # indicated there was a <B1_Motion> event, ie: this was a drag: wrap up a move.
@@ -728,6 +771,57 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       self.dragInfo = None
       return 'break'
       # TODO: add updating the boundingBox.
+
+  def _startResize(self, corner:str) -> None:
+    '''
+    Begin dragging the *corner* ("nw", "ne", "se" or "sw") handle: the
+    opposite corner stays fixed (see *_resizeTo()*).
+    '''
+    bb = self.boundingBox()
+    x1, y1, x2, y2 = bb
+    anchor = {"nw": (x2, y2), "ne": (x1, y2), "se": (x1, y1), "sw": (x2, y1)}[corner]
+    self.resizeInfo = (anchor, list(bb), self.userSized)
+    self.userSized = True # so the box isn't refitted to its text mid-drag
+
+  def _resizeTo(self, x:float, y:float) -> None:
+    '''
+    Resize so the dragged corner is at (x, y) (view coords), keeping the
+    opposite corner fixed. The width is at least "vis/minSize" (but may exceed
+    "vis/maxSize"); if "vis/aspectRatio" is non-zero the height follows the
+    width, otherwise it follows the pointer, but not below *minHeight()*.
+    Dragging past the fixed corner just flips to the normalized rectangle.
+    '''
+    assert self.resizeInfo is not None
+    (ax, ay), _, _ = self.resizeInfo
+    aspect = self.cache['vis/aspectRatio']
+    w = max(abs(x - ax), self.cache['vis/minSize'])
+    h = max(w * aspect if aspect else abs(y - ay), self.minHeight())
+    x1 = ax if x >= ax else ax - w
+    y1 = ay if y >= ay else ay - h
+    self.reshape([x1, y1, x1 + w, y1 + h], adjustPos=False)
+
+  def reshape(self, bb:list[float], adjustPos:bool=False) -> None:
+    '''
+    Set the bounding box to *bb* (position and size), letting relations follow
+    and redrawing.
+    '''
+    self.boundingBox([int(v) for v in bb])
+    for r in self.relations:
+      r.notifyNodeMove(self, adjustPos=adjustPos)
+    self.view.freshPaint()
+    self.draw()
+    self.setDirty()
+
+  def fitToText(self) -> None:
+    '''
+    Undo any manual sizing: size the box to its text again (about its centre),
+    and keep it fitted from now on. Undoable.
+    '''
+    text = self.decorators.get("text")
+    if not isinstance(text, WrappingText):
+      return
+    bb = text.preferredBoundingBox()
+    self.view.context.resize(self, bb[0], bb[1], bb[2], bb[3], userSized=False)
 
   # ---- MENUS -----------------------------------------------------------------
   
@@ -903,6 +997,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     menu.add_cascade(menu=expMenu, label="expand")
     menu.add_command(label="erase from view", 
                      command=lambda slf=self: slf.view.context.erase(slf))
+    if isinstance(self.decorators.get("text"), WrappingText):
+      menu.add_command(label="fit to text", command=self.fitToText,
+                       state=tk.NORMAL if self.userSized else tk.DISABLED)
          
   def onEditAttributes(self, disabled:bool=False):
     edits = editAttrsBox(self.canvas, self.modelObject, title=str(self.modelObject), disabled=disabled)
@@ -940,6 +1037,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       return
     else: 
       self._drawVersion = self.view._drawVersion
+    # size the box to its text first, so the shape is drawn at the new size
+    text = self.decorators.get("text")
+    if not fast and isinstance(text, WrappingText):
+      text.fitOwner()
     self._shape.draw(fast=fast, **kwargs) #self["boundingBox"])#rect)
     self.markerDecoratorOffset=0
     for d in sorted(self.decorators.values(), key=lambda d: d.priority):
