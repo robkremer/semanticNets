@@ -91,6 +91,23 @@ class TopModel(Model):
     self.COLLECTION:Collection = Collection(self, [self.NODE], [], individual=False, name="collection") #21,22
 
     self[0] # causes the "all model" collection to be instantiated.
+
+    # Contexts (rules, and later definitions and queries): what a context
+    # "contains" is quoted -- a pattern, not a statement about the world (see
+    # GraphObject.isPatternElement()). Added after everything above so existing
+    # ids don't change.
+    self.CONTEXT:Node = Node(self, [self.NODE], individual=False, name="context")
+    self.CONTAINS:Relation = Relation(self, [self.RELATION], self.CONTEXT, self.TOP, individual=False, name="contains")
+    self.RULE:Node = Node(self, [self.CONTEXT], individual=False, name="rule")
+    self.ANTECEDENT:Relation = Relation(self, [self.CONTAINS], self.RULE, self.TOP, individual=False, name="antecedent")
+    self.CONSEQUENT:Relation = Relation(self, [self.CONTAINS], self.RULE, self.TOP, individual=False, name="consequent")
+    self.QUERY:Node = Node(self, [self.CONTEXT], individual=False, name="query") # contains its pattern with plain "contains"
+    # x <-distinct-> y: x and y are different objects. In a pattern, a
+    # constraint on its variables (?x != ?y) rather than a relation that must hold.
+    self.DISTINCT:Relation = Relation(self, [self.RELATION], self.TOP, self.TOP, individual=False, name="distinct")
+    self.DISTINCT["symmetric"] = True
+    self.DISTINCT["irreflexive"] = True
+
     self._allowParentsCaching = True
     
     self.TOP['vis/shape']          = Attribute("Rectangle", str, VAR_DEFAULTED, \

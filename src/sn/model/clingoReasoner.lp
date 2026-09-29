@@ -24,12 +24,13 @@
 %   prop(T,P).                relation type T is tagged with P (reflexive,
 %                             irreflexive, symmetric, asymmetric, transitive)
 %   member(C,M).              Collection membership
+%   pattern(X).               X is a pattern element (see GraphObject.isPatternElement())
 %   attr(O,K,V).              effective (local or inherited, per the model's
 %                             Restriction rules) non-"vis/" scalar attributes
 %   lattr(O,K).               O has K locally
 %
 % ---- Output ------------------------------------------------------------------
-%   isa_star(X,T).            X isa T (reflexive-transitive)
+%   isa_data(X,T).            X isa T (reflexive-transitive), X not a pattern element
 %   holds(T,S,D).             S is related to D under relation type T
 %   inferred(T,S,D).          holds, but neither asserted nor implied by a
 %                             more specific relation type
@@ -39,6 +40,13 @@
 
 type(O) :- obj(O), not individual(O).
 rel_type(T) :- kind(T,relation), type(T).
+
+% Pattern elements -- the variables (?x) and relations inside a context (a rule,
+% definition or query), and relations involving them -- describe patterns, not
+% the world: they're exported marked pattern(X), their relations aren't links,
+% and nothing is inferred, classified or reported about them. See
+% GraphObject.isPatternElement().
+data(X) :- obj(X), not pattern(X).
 
 %%% Type hierarchy ------------------------------------------------------------
 
@@ -56,7 +64,7 @@ asserted(T,S,D) :- link(R,S,D), parent(R,T), rel_type(T).
 % hasPart isa has and stubbyTail isa tail) refines -- and so blocks -- the
 % inherited one, for the object and everything below it.
 link_holds(T,S,D) :- asserted(T,S,D).
-link_holds(T,X,D) :- link_holds(T,S,D), parent(X,S), not refined(T,X,D).
+link_holds(T,X,D) :- link_holds(T,S,D), parent(X,S), data(X), not refined(T,X,D).
 refined(T,X,D) :- asserted(T,_,D), asserted(T2,X,D2), isa_star(T2,T), isa_star(D2,D),
                   (T2,D2) != (T,D).
 inherited(T,X,D) :- link_holds(T,X,D), not asserted(T,X,D).
@@ -94,43 +102,48 @@ inferred(T,S,D) :- holds(T,S,D), not asserted(T,S,D), not sub_holds(T,S,D).
 needs_src(R,T,C) :- src(R,S), isa_star(R,T), R != T, domain(T,C), not isa_star(S,C).
 needs_dst(R,T,C) :- dst(R,D), isa_star(R,T), R != T, range(T,C), not isa_star(D,C).
 
-need(S,C) :- needs_src(R,_,C), src(R,S).
-need(D,C) :- needs_dst(R,_,C), dst(R,D).
+need(S,C) :- needs_src(R,_,C), src(R,S), data(R), data(S).
+need(D,C) :- needs_dst(R,_,C), dst(R,D), data(R), data(D).
 % Suggest only the most specific type (satisfying it satisfies the others).
 classify(X,C) :- need(X,C), not need_more_specific(X,C).
 need_more_specific(X,C) :- need(X,C), need(X,C2), C2 != C, isa_star(C2,C).
 
 %%% Violations ----------------------------------------------------------------
 
-violation(domain, error, R, (T,S,C)) :- needs_src(R,T,C), src(R,S).
-violation(range,  error, R, (T,D,C)) :- needs_dst(R,T,C), dst(R,D).
+violation0(domain, error, R, (T,S,C)) :- needs_src(R,T,C), src(R,S).
+violation0(range,  error, R, (T,D,C)) :- needs_dst(R,T,C), dst(R,D).
 
-violation(isa_cycle, error, X, (P,)) :- parent(X,P), isa_star(P,X).
-violation(isa_individual_parent, error, X, (P,)) :- parent(X,P), individual(P).
-violation(redundant_parent, warning, X, (P1,P2)) :-
+violation0(isa_cycle, error, X, (P,)) :- parent(X,P), isa_star(P,X).
+violation0(isa_individual_parent, error, X, (P,)) :- parent(X,P), individual(P).
+violation0(redundant_parent, warning, X, (P1,P2)) :-
     parent(X,P1), parent(X,P2), P1 != P2, isa_star(P1,P2), not isa_star(P2,P1).
 
-violation(node_isa_relation, error, X, (R,)) :-
+violation0(node_isa_relation, error, X, (R,)) :-
     kind(X,node), const(relation,R), isa_star(X,R).
-violation(relation_isa_node, error, X, (N,)) :-
+violation0(relation_isa_node, error, X, (N,)) :-
     kind(X,relation), const(node,N), isa_star(X,N).
 
-violation(irreflexive, error, T, (X,)) :- holds(T,X,X), prop(T,irreflexive).
-violation(asymmetric, error, T, (X,Y)) :- holds(T,X,Y), holds(T,Y,X), X < Y, prop(T,asymmetric).
-violation(asymmetric, error, T, (X,X)) :- holds(T,X,X), prop(T,asymmetric). % asymmetric implies irreflexive
+violation0(irreflexive, error, T, (X,)) :- holds(T,X,X), prop(T,irreflexive).
+violation0(asymmetric, error, T, (X,Y)) :- holds(T,X,Y), holds(T,Y,X), X < Y, prop(T,asymmetric).
+violation0(asymmetric, error, T, (X,X)) :- holds(T,X,X), prop(T,asymmetric). % asymmetric implies irreflexive
 conflicting(reflexive,irreflexive). conflicting(symmetric,asymmetric). conflicting(reflexive,asymmetric).
-violation(property_conflict, error, T, (P,Q)) :- prop(T,P), prop(T,Q), conflicting(P,Q).
+violation0(property_conflict, error, T, (P,Q)) :- prop(T,P), prop(T,Q), conflicting(P,Q).
 
 % An individual relation without a local endpoint silently takes its type's
 % endpoint (ultimately top, from relation) -- almost certainly unintended.
 has_lsrc(R) :- lsrc(R,_).
 has_ldst(R) :- ldst(R,_).
-violation(unset_endpoint, warning, R, (src,)) :-
+violation0(unset_endpoint, warning, R, (src,)) :-
     kind(R,relation), individual(R), not has_lsrc(R).
-violation(unset_endpoint, warning, R, (dst,)) :-
+violation0(unset_endpoint, warning, R, (dst,)) :-
     kind(R,relation), individual(R), not has_ldst(R).
 
-#show isa_star/2.
+% Report only violations about the data (not about pattern elements).
+violation(C,S,X,A) :- violation0(C,S,X,A), data(X).
+
+% The isa closure, as reported: data only (a variable isn't an instance of anything).
+isa_data(X,T) :- isa_star(X,T), data(X).
+#show isa_data/2.
 #show holds/3.
 #show inferred/3.
 #show inherited/3.

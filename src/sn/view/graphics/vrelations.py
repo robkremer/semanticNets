@@ -713,17 +713,21 @@ class VRelation(VObject, AGRelation):
             width=self.cache['vis/lineWidth'],
             tags=[self.tag])
     self._styleEnds()
-          
-  # def drawUnfilledRoles(self):
-  #   for role, infoList in self.roles.items():
-  #     relation:Relation = self.modelObject
-  #     if len(infoList) < relation.roles[role].card[1]:
-  #       # draw in the "dangling" role as a clickable object
-  #       self.unfilledRoles[role] = (self.canvas.canvas.create_text(info.nearPt[0], info.nearPt[1], text=role,
-  #               fill="gray50", font=('Helvetica', 10, 'italic'), tags=[self.tag],
-  #               anchor=anchor))
+    self._applyHidden()
 
-  ### GEOMETRIC INFO/CONTROL ###########################################################
+  def inWindow(self) -> bool:
+    '''
+    True iff this is a context's containment of something drawn inside the
+    context's window -- which says it already, so the arc isn't drawn. (Its
+    arc shows when the contained thing is elsewhere: out in the "real world",
+    or in another context's window.)
+    '''
+    mo = self.modelObject
+    if mo is None or not mo.isIndividual() or not mo.isa(mo.model.CONTAINS):
+      return False
+    src, dst = self.src, self.dst
+    return (isinstance(src, VObject) and isinstance(dst, VObject) and src is not dst
+            and src.isContextWindow() and src.paneAt(dst.centerPt()) is not None)
 
   def reposition(self, aggressive:bool=False, suppressDraw:bool=False, adjustPos:bool=True):
     '''
@@ -752,19 +756,33 @@ class VRelation(VObject, AGRelation):
         self.draw()
       return
     if self.src is not None and self.dst is not None:
-      self.moveToCenterOn(*midpoint(self.src.centerPt(), self.dst.centerPt()), adjustPos=adjustPos)
+      self.moveToCenterOn(*self.gapMidpoint(self.src, self.dst), adjustPos=adjustPos)
     elif self.src is None and self.dst is None:
       if adjustPos:
         self.adjustPos(aggressive=aggressive)
-    elif self.dst is None:
-      ctrPt = self.src.centerPt() # type: ignore[union-attr]
-      self.moveToCenterOn(ctrPt[0]+70, ctrPt[1], adjustPos=adjustPos)
+    elif self.dst is None: # (off its right edge, not its centre: it may be a big window)
+      bb = self.src.boundingBox() # type: ignore[union-attr]
+      self.moveToCenterOn(bb[2]+50, (bb[1]+bb[3])/2, adjustPos=adjustPos)
     elif self.src is None:
-      ctrPt = self.dst.centerPt()
-      self.moveToCenterOn(ctrPt[0]-70, ctrPt[1], adjustPos=adjustPos)
+      bb = self.dst.boundingBox()
+      self.moveToCenterOn(bb[0]-50, (bb[1]+bb[3])/2, adjustPos=adjustPos)
 
     if not suppressDraw:
       self.draw()
+
+  def gapMidpoint(self, a:VObject, b:VObject) -> list[float]:
+    '''
+    Where a floating label between *a* and *b* goes: midway along the visible
+    part of the line between their centres -- from where it leaves *a*'s edge
+    to where it meets *b*'s -- so a big shape (eg: a context window) doesn't
+    swallow the label of a relation to something close by. If they overlap
+    (either's centre is inside the other), or it's a self-loop, midway between
+    the centres.
+    '''
+    ca, cb = a.centerPt(), b.centerPt()
+    if a is b or ca == cb or a.containsPt(cb) or b.containsPt(ca):
+      return midpoint(ca, cb)
+    return midpoint(self.findIntersection(cb, a), self.findIntersection(ca, b))
 
   def findEndPoints(self, frm:VObject, to:VObject):
     return (self.findIntersection(to.centerPt(), frm), self.findIntersection(frm.centerPt(), to))
@@ -823,18 +841,6 @@ class VRelation(VObject, AGRelation):
       n.relations.append(self)
       n.cache.refresh()
   
-  @override
-  def setHidden(self, hide:bool=True):
-    '''
-    '''
-    if hide == self._hidden:
-      return
-    super().setHidden(hide)
-    if hide:
-      self._removeSelfFromConnectedNodes()
-    else:
-      self._addSelfToConnectedNodes()
-
   ### MENUS ############################################################################
 
   def addViewMenuItems(self, menu:tk.Menu):
@@ -939,18 +945,20 @@ class VRelation(VObject, AGRelation):
     Let the user pick a new *end* ("src" or "dst") for this relation with an
     elastic line, then change it in the model (as one undoable command).
 
-    Only objects of the same kind as the other end are offered: relations
-    connect either two nodes or two relations. For an isa link, the new
-    parent (dst) must also be a type, since individuals can't have children.
+    Any object may be chosen -- relations connect nodes and relations in any
+    combination (eg: a rule's antecedent can contain a relation) -- except
+    that an isa link must connect two nodes or two relations, and its new
+    parent (dst) must be a type, since individuals can't have children.
     Dropping the line on empty space clears the end instead (the relation then
     inherits its type's), except for an isa link, which needs both ends.
     '''
     assert end in ("src", "dst")
     other = self.dst if end == "src" else self.src
-    isaParent = end == "dst" and isinstance(self.modelObject, IsaIndividual)
+    isa = isinstance(self.modelObject, IsaIndividual)
+    isaParent = end == "dst" and isa
     def acceptable(n:VObject) -> bool:
       return n is not self \
-             and (other is None or isinstance(n, VRelation) == isinstance(other, VRelation)) \
+             and (not isa or other is None or isinstance(n, VRelation) == isinstance(other, VRelation)) \
              and not (isaParent and (n.modelObject is None or n.modelObject.isIndividual()))
     def chosen(_origin:VObject, sel:VObject) -> None:
       if end == "src":

@@ -88,10 +88,15 @@ class ClingoReasoner(Reasoner, engine="clingo"):
 
   # ── Solving ──────────────────────────────────────────────────────────────
 
-  def _solve(self, program:str="") -> list[clingo.Symbol]:
+  def _solve(self, program:str="", facts:str|None=None) -> list[clingo.Symbol]:
+    '''
+    :param facts: The model's facts, already rendered (see *_program()*) -- for
+      a *program* that refers to objects by their o(N) terms, which must come
+      from the same rendering. Rendered afresh if None.
+    '''
     ctl = clingo.Control(["--warn=none"])
     ctl.load(str(self.rules))
-    ctl.add("base", [], self._program(self.facts()))
+    ctl.add("base", [], self._program(self.facts()) if facts is None else facts)
     if program:
       ctl.add("base", [], program)
     ctl.ground([("base", [])])
@@ -126,9 +131,45 @@ class ClingoReasoner(Reasoner, engine="clingo"):
         case "inferred":  ret.inferred.append(tuple(args)) #type: ignore[arg-type]
         case "inherited": ret.inherited.append(tuple(args)) #type: ignore[arg-type]
         case "classify":  ret.classify.append(tuple(args)) #type: ignore[arg-type]
-        case "isa_star":  ret.isa.add(tuple(args)) #type: ignore[arg-type]
+        case "isa_data":  ret.isa.add(tuple(args)) #type: ignore[arg-type]
         case "violation": ret.violations.append(Violation(*args))
     return ret
+
+  @override
+  def answer(self, context:GraphObject) -> list[dict[GraphObject, GraphObject]]:
+    '''
+    Translates the context's *Pattern* into one rule,
+    ``ans(V0,...) :- <a holds/3 literal per relation, isa_star/2 per type>``,
+    over the reasoner's results -- so matches include inferred relations.
+    Variables range over data only (see *GraphObject.isPatternElement()*):
+    over individuals if the variable is an individual, over types if it's a
+    type, and over relation types if it's used as a relation's type.
+    '''
+    from sn.model.reasoner import patternOf
+    pat = patternOf(context)
+    facts = self._program(self.facts()) # (numbers the objects the rule refers to)
+    var = {id(v): f"V{i}" for i, v in enumerate(pat.variables)}
+    def term(x:GraphObject|None) -> str:
+      return "_" if x is None else var.get(id(x)) or self._term(x)
+    # a variable ranges over individuals if it's an individual, over types if
+    # it's a type -- and over relation types if it's used as one
+    relTypeVars = {id(t) for t, _, _ in pat.triples if id(t) in var}
+    body = [f"data({var[id(v)]})" + ("" if id(v) in relTypeVars else
+                                    f", individual({var[id(v)]})" if v.isIndividual() else f", type({var[id(v)]})")
+            for v in pat.variables]
+    for t, s, d in pat.triples:
+      body.append(f"holds({term(t)},{term(s)},{term(d)})")
+      if id(t) in var:
+        body.append(f"rel_type({term(t)})")
+    body += [f"isa_star({term(x)},{term(t)})" for x, t in pat.types]
+    body += [f"{term(x)} != {term(y)}" for x, y in pat.distinct]
+    if not body:
+      return []
+    args = ",".join(var[id(v)] for v in pat.variables)
+    head = f"ans({args})" if args else "ans"
+    rows = [sym for sym in self._solve(f"{head} :- {', '.join(body)}.\n#show ans/{len(pat.variables)}.", facts)
+            if sym.name == "ans"]
+    return [dict(zip(pat.variables, (self._value(a) for a in sym.arguments))) for sym in rows]
 
   @override
   def query(self, query:str, answer:str="ans") -> list[tuple[Any, ...]]:

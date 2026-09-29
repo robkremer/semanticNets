@@ -25,6 +25,8 @@ A reasoner engine subclasses :py:class:`Reasoner` (see
   ``member(C,M)``             Collection membership
   ``attr(O,K,V)``             effective non-"vis/" scalar attributes
   ``lattr(O,K)``              O has attribute K locally
+  ``pattern(X)``              X describes a pattern (in a rule etc.), not the world
+                              (see GraphObject.isPatternElement())
   ==========================  ================================================
 
 - :py:class:`Inferences` and :py:class:`Violation` are what every engine
@@ -211,6 +213,70 @@ class Inferences:
     lines += [f'  {_label(x, model)} -isa-> {_label(c, model)}' for x, c in cls]
     return "\n".join(lines)
 
+@dataclass
+class Pattern:
+  '''
+  The pattern a context (eg: a query, or a rule's antecedent) describes, in an
+  engine-neutral form: engines translate it (see *Reasoner.answer()*). Any
+  object below may be a variable (see *GraphObject.isVariable()*); None as a
+  relation end means "something" (an unterminated relation).
+  '''
+  context:GraphObject
+  variables:list[GraphObject] = field(default_factory=list)
+  "The variables, in answer order (by name)."
+  triples:list[tuple[GraphObject, GraphObject|None, GraphObject|None]] = field(default_factory=list)
+  "(relation type, src, dst): the relation must hold."
+  types:list[tuple[GraphObject, GraphObject]] = field(default_factory=list)
+  "(x, type): x isa type."
+  distinct:list[tuple[GraphObject, GraphObject]] = field(default_factory=list)
+  "(x, y): x and y are different objects (a contained \"distinct\" relation)."
+
+def patternOf(context:GraphObject) -> Pattern:
+  '''
+  :returns: The *Pattern* of *context*: everything it contains through a
+    "contains"-family relation other than "consequent" (so for a rule, its
+    antecedent).
+
+    - A contained relation must hold, between its (local) ends, for each of its
+      types; an end it doesn't have is "something".
+    - A contained isa link is a type constraint; so are a variable's own isa
+      parents (other than the base node/relation types, which say nothing).
+    - A relation whose type is a variable ranges over relation types.
+    - A contained "distinct" relation says its two ends are different objects
+      (the usual "for all x, y: x != y, ..."), rather than a relation to find.
+  '''
+  m = context.model
+  ret = Pattern(context)
+  variables:dict[int, GraphObject] = {}
+  def note(x:GraphObject|None) -> None:
+    if x is not None and x.isVariable() and id(x) not in variables:
+      variables[id(x)] = x
+      for p in x.getParents():
+        if p not in (m.NODE, m.RELATION, m.TOP) and not isinstance(x, IsaIndividual):
+          ret.types.append((x, p))
+  contained = [r.localDst for r, _ in context._getOutgoing(
+                 lambda r: r.isIndividual() and r.isa(m.CONTAINS) and not r.isa(m.CONSEQUENT))
+               if r.localDst is not None]
+  for e in contained:
+    if isinstance(e, IsaIndividual):
+      if e.localSrc is not None and e.localDst is not None:
+        ret.types.append((e.localSrc, e.localDst))
+        note(e.localSrc); note(e.localDst)
+    elif isinstance(e, Relation) and e.isIndividual() and e.isa(m.DISTINCT):
+      if e.localSrc is not None and e.localDst is not None: # a constraint, not a relation that must hold
+        ret.distinct.append((e.localSrc, e.localDst))
+      note(e.localSrc); note(e.localDst)
+    elif isinstance(e, Relation) and e.isIndividual():
+      for t in e.getParents():
+        ret.triples.append((t, e.localSrc, e.localDst))
+        note(t)
+      note(e.localSrc); note(e.localDst)
+    else:
+      note(e)
+  ret.types = list({(id(x), id(t)): (x, t) for x, t in ret.types}.values()) # once each
+  ret.variables = sorted(variables.values(), key=lambda v: v.name)
+  return ret
+
 class Reasoner(ABC):
   '''
   The abstract base class of all reasoner engines. Usage::
@@ -255,6 +321,18 @@ class Reasoner(ABC):
   @abstractmethod
   def run(self) -> Inferences:
     'Reason over the current state of the model.'
+
+  def answer(self, context:GraphObject) -> list[dict[GraphObject, GraphObject]]:
+    '''
+    Answer the query a context describes (see *patternOf()*) against the
+    model, including what the reasoner infers.
+
+    :returns: One dict per match, mapping each of the pattern's variables to
+      the object it matched. A pattern without variables gives [{}] if it
+      holds, [] if not. An individual variable matches individuals, a type
+      variable types, and a variable used as a relation's type relation types.
+    '''
+    raise NotImplementedError(f'{type(self).__name__} can\'t answer queries.')
 
   def query(self, query:str) -> list[tuple[Any, ...]]:
     '''
@@ -324,6 +402,8 @@ class Reasoner(ABC):
       obj = queue[i]
       i += 1
       out.append(("obj", (obj,)))
+      if obj.isPatternElement():
+        out.append(("pattern", (obj,)))
       if obj.isIndividual():
         out.append(("individual", (obj,)))
       out.append(("kind", (obj, Sym(_kind(obj)))))
@@ -366,7 +446,7 @@ class Reasoner(ABC):
     if dst is not None:
       out.append(("dst", (rel, ref(dst))))
     if rel.isIndividual() and not isinstance(rel, IsaIndividual) \
-        and src is not None and dst is not None:
+        and src is not None and dst is not None and not rel.isPatternElement(): # a pattern relation isn't a fact
       out.append(("link", (rel, src, dst)))
     if rel.isType(): # its signature
       if rel.domain is not None:

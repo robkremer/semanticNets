@@ -473,6 +473,49 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
       return []
     return [other for _rel,other in self._getIncoming(lambda r: isinstance(r, IsaIndividual)) if other is not None]    
 
+  def isVariable(self) -> bool:
+    '''
+    :returns: True iff this is a variable -- its name starts with "?" -- which
+      stands for "something" in a pattern (a rule, definition or query).
+    '''
+    try:
+      return self.name.startswith("?")
+    except Exception: # eg: during construction, before it has a name
+      return False
+
+  def isPatternElement(self, _seen:set[int]|None=None) -> bool:
+    '''
+    :returns: True iff this object describes a pattern rather than the world --
+      it's then not data: the reasoner doesn't take it as a fact, and
+      *getRelatedTo()* etc. leave it out. That is:
+
+      - a variable (see *isVariable()*), or
+      - a relation contained by a context -- the target of a relation that isa
+        "contains" (eg: a rule's antecedent or consequent) -- or
+      - a relation with a pattern element at either end (eg: ?x -parent-> ?y,
+        or ?x's isa link).
+
+      The "contains" relations themselves are real ("this rule contains that"),
+      unless contained in turn. Constants in a pattern (eg: fred) are real too:
+      they're just what its relations connect.
+    '''
+    if self.isVariable():
+      return True
+    if not isinstance(self, Relation):
+      return False
+    seen = set() if _seen is None else _seen
+    if id(self) in seen:
+      return False
+    seen.add(id(self))
+    contains = getattr(self.model, "CONTAINS", None)
+    if contains is not None:
+      for r in self._incoming:
+        if r.dst is self and r.isIndividual() and r.isa(contains): # contained by a context
+          return True
+      if self.isa(contains): # a containment relation itself is real
+        return False
+    return any(end is not None and end.isPatternElement(seen) for end in (self.localSrc, self.localDst))
+
   def _inferredRelated(self, rel:Relation|None, outgoing:bool) -> list[tuple[Relation,GraphObject]]:
     '''
     What the model's last "reason" (see *sn.model.reasoner.reasoningFor()*)
@@ -532,7 +575,10 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
       seen.add(self.id)
     ret:list[tuple[Relation,GraphObject]] = []
     r: Relation
-    filtr:Callable[[Relation], bool] = (lambda r: True) if rel is None else (cast(Callable[[Relation], bool], lambda r, typ=rel: r.isa(typ)))
+    typeOk:Callable[[Relation], bool] = (lambda r: True) if rel is None else (cast(Callable[[Relation], bool], lambda r, typ=rel: r.isa(typ)))
+    # pattern relations (inside rules etc.) aren't about the world -- unless we're a pattern element ourselves
+    patternOk:Callable[[Relation], bool] = (lambda r: True) if self.isPatternElement() else (lambda r: not r.isPatternElement())
+    filtr:Callable[[Relation], bool] = lambda r: typeOk(r) and patternOk(r)
     for r,other in self._getOutgoing(filtr):
       if other is not None:
         ret.append((r, other))
@@ -584,7 +630,10 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     #   return [(rel,other) for rel,other in self._getIncoming() if other is not None]    
     ret:list[tuple[Relation,GraphObject]] = []
     r: Relation
-    filtr:Callable[[Relation], bool] = (lambda r: True) if rel is None else (cast(Callable[[Relation], bool], lambda r, typ=rel: r.isa(typ)))
+    typeOk:Callable[[Relation], bool] = (lambda r: True) if rel is None else (cast(Callable[[Relation], bool], lambda r, typ=rel: r.isa(typ)))
+    # pattern relations (inside rules etc.) aren't about the world -- unless we're a pattern element ourselves
+    patternOk:Callable[[Relation], bool] = (lambda r: True) if self.isPatternElement() else (lambda r: not r.isPatternElement())
+    filtr:Callable[[Relation], bool] = lambda r: typeOk(r) and patternOk(r)
     for r,other in self._getIncoming(filtr):
       if other is not None:
         ret.append((r, other))
@@ -761,6 +810,13 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     # self.TRANSITIVE:Relation = GORef.eval("$sn#transitive") #type: ignore[assignment] 
     # self.EQUALITY:Relation = GORef.eval("$sn#equality") #type: ignore[assignment]
     self.COLLECTION:Collection = GORef.eval("$sn#collection") #type: ignore[assignment]
+    self.CONTEXT:Node = GORef.eval("$sn#context") #type: ignore[assignment]
+    self.CONTAINS:Relation = GORef.eval("$sn#contains") #type: ignore[assignment]
+    self.RULE:Node = GORef.eval("$sn#rule") #type: ignore[assignment]
+    self.ANTECEDENT:Relation = GORef.eval("$sn#antecedent") #type: ignore[assignment]
+    self.CONSEQUENT:Relation = GORef.eval("$sn#consequent") #type: ignore[assignment]
+    self.QUERY:Node = GORef.eval("$sn#query") #type: ignore[assignment]
+    self.DISTINCT:Relation = GORef.eval("$sn#distinct") #type: ignore[assignment]
 
     if hasattr(self, "_initialized") or _reading: # This means the __new__ method has returned an existing object, so don't truck over it!
       return

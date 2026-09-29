@@ -77,7 +77,7 @@ import sn
 from sn import snPrefs
 from sn.model import GraphObject, Relation
 from sn.model.model import UP_ARROW, IsaIndividual
-from sn.view.graphics.decorators import WrappingText, Selected, MarkerContainer, NOMINAL_ASPECT,\
+from sn.view.graphics.decorators import WrappingText, Selected, Highlight, ContextFrame, MarkerContainer, NOMINAL_ASPECT,\
   Decorator, ShadowDecorator
 
 import logging
@@ -469,9 +469,132 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
 
     return self._boundingBox
 
+  def isHidden(self) -> bool:
+    '''
+    True iff this isn't drawn just now: it's in a hidden category (see
+    *SNGView.visibility()*), or depends on something that is, or goes without
+    saying (eg: a containment drawn as being inside a window). See
+    *SNGView.shouldHide()*.
+    '''
+    return self._hidden
+
+  def _applyHidden(self) -> None:
+    '''
+    Show or hide all of this one's canvas items according to
+    *SNGView.shouldHide()*; if that changes, the relations to and from it (and
+    a window's contents) follow suit.
+    '''
+    if not self._isConnected() or self.canvas is None:
+      return
+    hide = self.view.shouldHide(self)
+    c = self.canvas
+    if hide:
+      self._hideItems()
+    else:
+      self._showItems()
+    if hide != self._hidden:
+      self._hidden = hide
+      if hide and self.selected():
+        self.selected(False)
+      dependents = [r for r in self.relations if r is not self]
+      if self.isContextWindow():
+        dependents += self.windowContents()
+      c.after_idle(lambda: [d._applyHidden() for d in dependents if d._isConnected()])
+      if getattr(self.view, "_inferences", None):
+        self.view.updateInferencesFor(self)
+
+  def _hideItems(self) -> None:
+    '''
+    Hide all this one's canvas items, noting each one's state first (some are
+    deliberately "disabled"), for *_showItems()*. The note is kept here, not
+    as canvas tags: redraws reset items' tags (eg: connectors.\\_upsertLine()).
+    '''
+    c = self.canvas
+    prior:dict[int, str] = self.__dict__.setdefault("_priorStates", {})
+    for i in c.find_withtag(self.tag):
+      state = c.itemcget(i, "state")
+      if state != "hidden":
+        prior[i] = state
+        c.itemconfigure(i, state="hidden")
+
+  def _showItems(self) -> None:
+    '''
+    Undo *_hideItems()*: every hidden item of this one's goes back to its noted
+    state (items made while hidden were noted when they were hidden). Nothing
+    else hides a VObject's items, so all of them are shown.
+    '''
+    c = self.canvas
+    prior:dict[int, str] = self.__dict__.get("_priorStates", {})
+    for i in c.find_withtag(self.tag):
+      if c.itemcget(i, "state") == "hidden":
+        c.itemconfigure(i, state=prior.get(i, ""))
+    prior.clear()
+
+  WINDOW_MIN = (320, 200)
+  "The smallest a context window may be (view units), and its size when first drawn."
+  BANNER = 18
+  "The height (view units) of a context window's title banner."
+
+  def isContextWindow(self) -> bool:
+    '''
+    True iff this is drawn as a window: an individual context -- a rule,
+    query, ... (not the context/rule/query types themselves). See
+    *decorators.ContextFrame*.
+    '''
+    mo = self.modelObject
+    try:
+      return mo is not None and mo.isIndividual() and mo.isa(mo.model.CONTEXT)
+    except Exception: # (eg: during construction)
+      return False
+
+  def bannerHeight(self) -> float:
+    return self.BANNER
+
+  def panes(self) -> dict[str, list[float]]:
+    '''
+    A context window's content areas (view coords), below its banner, by the
+    containment relation they stand for: a rule's "antecedent" (left) and
+    "consequent" (right); any other context's single "contains" area.
+    '''
+    x1, y1, x2, y2 = self.boundingBox()
+    top = y1 + self.bannerHeight()
+    mo = self.modelObject
+    if mo is not None and mo.isa(mo.model.RULE):
+      mid = (x1 + x2) / 2
+      return {"antecedent": [x1, top, mid, y2], "consequent": [mid, top, x2, y2]}
+    return {"contains": [x1, top, x2, y2]}
+
+  def paneAt(self, pt) -> str|None:
+    '''The pane (see *panes()*) that the point *pt* (view coords) is in, or None.'''
+    for name, (x1, y1, x2, y2) in self.panes().items():
+      if x1 <= pt[0] <= x2 and y1 <= pt[1] <= y2:
+        return name
+    return None
+
+  def containmentOf(self, obj) -> list:
+    '''The model relations by which this context contains *obj* (a model object).'''
+    mo = self.modelObject
+    if mo is None or obj is None:
+      return []
+    contains = mo.model.CONTAINS
+    return [r for r, _ in mo._getOutgoing(lambda r: r.isIndividual() and r.isa(contains) and r.localDst is obj)]
+
+  def windowContents(self) -> list[VObject]:
+    '''The view objects this context contains that sit inside its window.'''
+    mo = self.modelObject
+    if mo is None or not self.isContextWindow():
+      return []
+    contains = mo.model.CONTAINS
+    ret:list[VObject] = []
+    for r, _ in mo._getOutgoing(lambda r: r.isIndividual() and r.isa(contains)):
+      vo = self.view.findViewObjectForGraphObject(r.localDst) if r.localDst is not None else None
+      if vo is not None and vo is not self and vo not in ret and vo._isConnected() and self.paneAt(vo.centerPt()) is not None:
+        ret.append(vo)
+    return ret
+
   def isResizable(self) -> bool:
-    'False iff "vis/minSize" == "vis/maxSize": the size is fixed, so it can\'t be resized by hand.'
-    return self.cache['vis/minSize'] != self.cache['vis/maxSize']
+    'False iff "vis/minSize" == "vis/maxSize": the size is fixed, so it can\'t be resized by hand. (Windows always can be.)'
+    return self.isContextWindow() or self.cache['vis/minSize'] != self.cache['vis/maxSize']
 
   def minHeight(self) -> float:
     '''
@@ -685,6 +808,13 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     # move, not just its last FindFree-driven leg.
     movedSet = self.view.selected if self.selected() else [self]
     self.dragStartPositions:dict["VObject", list[int]] = {n: n.boundingBox() for n in movedSet}
+    # where the moved objects, and the relations they drag along, were -- to
+    # tell what's been dropped into or dragged out of a context window (see
+    # SNGView._updateContainment())
+    self.dragStartCenters:dict["VObject", tuple] = {}
+    for n in movedSet:
+      for vo in [n, *([] if n.isContextWindow() else n.relations)]:
+        self.dragStartCenters.setdefault(vo, vo.centerPt())
     self.old_suppressLocalLayout = self.view.suppressLocalLayout()
     self.view.suppressLocalLayout(True)
     return 'break'
@@ -785,6 +915,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
             bb = n.boundingBox()
             startPos = self.dragStartPositions.get(n, bb)
             self.view.context.move(n, bb[0], bb[1], _oldPos=startPos)
+          self.view._updateContainment(self.dragStartCenters)
       else: # this was a click, not a drag: toggle the selection state
         s = event.state
         self.selected(not self.selected(), _multi=s_CMD(s) or s_SHIFT(s)) # toggle selected
@@ -813,9 +944,13 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     '''
     assert self.resizeInfo is not None
     (ax, ay), _, _ = self.resizeInfo
-    aspect = self.cache['vis/aspectRatio']
-    w = max(abs(x - ax), self.cache['vis/minSize'])
-    h = max(w * aspect if aspect else abs(y - ay), self.minHeight())
+    if self.isContextWindow(): # free aspect, window-sized minimums
+      w = max(abs(x - ax), self.WINDOW_MIN[0])
+      h = max(abs(y - ay), self.WINDOW_MIN[1])
+    else:
+      aspect = self.cache['vis/aspectRatio']
+      w = max(abs(x - ax), self.cache['vis/minSize'])
+      h = max(w * aspect if aspect else abs(y - ay), self.minHeight())
     x1 = ax if x >= ax else ax - w
     y1 = ay if y >= ay else ay - h
     self.reshape([x1, y1, x1 + w, y1 + h], adjustPos=False)
@@ -903,14 +1038,78 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       menu.add_command(label='make new subtype', command=lambda: self.makeModelObjectSubtype(individual=False))
       menu.add_separator()
     if not disabled:
-      relTypesMenu = tk.Menu()
-      for r in [r for r in self.view.model.values() if isinstance(r, Relation) and r.isType()]:
-          relTypesMenu.add_command(label=r.name, command=lambda r=r: self.view.makeRelationFrom(self, r))
-      menu.add_cascade(label="make relation to...", menu=relTypesMenu)
+      menu.add_cascade(label="make relation to...", menu=self._relationTypesMenu(menu))
       menu.add_command(label="remove from model", state=tk.DISABLED if remote else tk.NORMAL, 
                        command=lambda: self.view.context.remove(self.modelObject))
       menu.add_separator()
       
+  def highlight(self, on:bool|None=None) -> bool:
+    '''
+    :param on: True to give this object a glow (see *decorators.Highlight*),
+      False to remove it, None to just ask.
+    :returns: Whether it's highlighted.
+    '''
+    if on is True and "highlight" not in self.decorators:
+      self.decorators["highlight"] = Highlight(self)
+      self.decorators["highlight"].draw()
+    elif on is False and "highlight" in self.decorators:
+      self.decorators["highlight"].delete()
+    return "highlight" in self.decorators
+
+  def answerQuery(self) -> None:
+    '''
+    Answer the query this context (eg: a query, or a rule's antecedent)
+    describes: print the answers to the terminal, and highlight every object
+    the variables matched (in this view), replacing any earlier highlights.
+    '''
+    from sn.model.reasoner import Reasoner
+    try:
+      rows = Reasoner.create(self.view.model).answer(self.modelObject)
+    except Exception as ex:
+      logger.error(f'Can\'t answer "{self.name}": {ex}')
+      return
+    print(f'{self.name}:')
+    print(self.view.context._formatAnswers(rows, self.view.model))
+    self.view.clearHighlights()
+    for row in rows:
+      for x in row.values():
+        vo = self.view.findViewObjectForGraphObject(x) if isinstance(x, GraphObject) else None
+        if vo is not None:
+          vo.highlight(True)
+
+  def _relationTypesMenu(self, parent:tk.Menu) -> tk.Menu:
+    '''
+    The "make relation to..." submenu: a submenu of relation types for each
+    ancestor model (the view model's super-models, nearest first) at the top,
+    then the view model's own relation types. Each list is sorted by name.
+    '''
+    def relTypes(model) -> list[Relation]:
+      return sorted((r for r in model.values() if isinstance(r, Relation) and r.isType()), key=lambda r: r.name.lower())
+    def add(menu:tk.Menu, r:Relation) -> None:
+      menu.add_command(label=r.name, command=lambda r=r: self.view.makeRelationFrom(self, r))
+    model = self.view.model
+    ancestors:list = []
+    pending = list(model.superDBs)
+    while pending:
+      m = pending.pop(0)
+      if m is not model and m not in ancestors:
+        ancestors.append(m)
+        pending += list(m.superDBs)
+    ret = tk.Menu(parent)
+    for anc in ancestors:
+      types = relTypes(anc)
+      if types:
+        sub = tk.Menu(ret)
+        for r in types:
+          add(sub, r)
+        ret.add_cascade(label=anc.name, menu=sub)
+    own = relTypes(model)
+    if ancestors and own:
+      ret.add_separator()
+    for r in own:
+      add(ret, r)
+    return ret
+
   @abstractmethod
   def makeModelObjectSubtype(self, individual:bool) -> None:
     raise NotImplementedError("Must implement VObject.makeSubtypeMenuItemFun().")
@@ -1017,6 +1216,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     menu.add_cascade(menu=expMenu, label="expand")
     menu.add_command(label="erase from view", 
                      command=lambda slf=self: slf.view.context.erase(slf))
+    mo = self.modelObject
+    if mo is not None and mo.isa(mo.model.CONTEXT) and mo is not mo.model.CONTEXT:
+      menu.add_command(label="answer query", command=self.answerQuery)
     if isinstance(self.decorators.get("text"), WrappingText):
       menu.add_command(label="fit to text", command=self.fitToText,
                        state=tk.NORMAL if self.userSized else tk.DISABLED)
@@ -1039,7 +1241,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
   
   def makeDecorators(self):
     notIsIsa = type(self.modelObject) is not IsaIndividual if self.modelObject is not None else True
-    if notIsIsa:
+    if self.isContextWindow():
+      self.decorators["frame"] = ContextFrame(self) # a window, titled in its banner
+    elif notIsIsa:
       self.decorators["text"] = WrappingText(self)
     self.decorators["markers"] = MarkerContainer(self)
     # shadow types only. The actual decorator will display conditionally on "gui/showIndividualShadow"
@@ -1057,6 +1261,11 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       return
     else: 
       self._drawVersion = self.view._drawVersion
+    # a window is at least WINDOW_MIN (eg: when first drawn, or from an older view)
+    if not fast and self.isContextWindow():
+      x1, y1, x2, y2 = self.boundingBox()
+      if x2 - x1 < self.WINDOW_MIN[0] or y2 - y1 < self.WINDOW_MIN[1]:
+        self.boundingBox([x1, y1, x1 + max(x2 - x1, self.WINDOW_MIN[0]), y1 + max(y2 - y1, self.WINDOW_MIN[1])])
     # size the box to its text first, so the shape is drawn at the new size
     text = self.decorators.get("text")
     if not fast and isinstance(text, WrappingText):
@@ -1066,6 +1275,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     for d in sorted(self.decorators.values(), key=lambda d: d.priority):
       d.draw(fast=fast)
 
+    self._applyHidden()
     # inferred-relation lines attached to this object follow it (see SNGView.drawInferences())
     if getattr(self.view, "_inferences", None):
       self.view.updateInferencesFor(self)
@@ -1079,9 +1289,18 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
   def moveTo(self, x, y, *, allowOverScrollRegionSE=False, adjustPos=True, fast=False):
     """ 
     Move so that the NW corner is on (x,y), informing all the decorators and 
-    relations
+    relations. A context window carries what's inside it along, and isn't
+    subject to overlap avoidance (it's meant to have things on it).
     """
     bb = self.boundingBox(fast=fast)
+    if self.isContextWindow():
+      adjustPos = False
+      dx, dy = x - bb[0], y - bb[1]
+      if dx or dy:
+        # (not objects that are themselves being moved -- eg: also selected)
+        carried = [vo for vo in self.windowContents() if not (self.selected() and vo.selected())]
+        for vo in carried:
+          vo.moveBy(dx, dy, adjustPos=False, fast=fast)
     if bb[0] == x and bb[1] == y and not adjustPos:
       # We haven't actually moved and nobody asked for layout resolution, so
       # there's truly nothing to do. NOTE: this must NOT also skip when
@@ -1189,6 +1408,14 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     # Iterate all the relations connected to this, collecting all the undisplayed ones in *rels*
     # and also recurse on any displayed ones if *expand* > 0
     rels:list[Relation] = []
+    # nothing in a hidden or erased category (see SNGView.visibility()): not
+    # the relation, nor what it leads to
+    userFilter = filter
+    def filter(vn, rel:Relation, mo=self.modelObject) -> bool: # pylint: disable=redefined-builtin
+      if self.view.isFiltered(rel):
+        return False
+      other = rel.localDst if rel.localSrc is mo else rel.localSrc
+      return not (other is not None and self.view.isFiltered(other)) and userFilter(vn, rel)
     for mRelr in list(self.modelObject._getIncoming(filtr=lambda rel, slf=self: filter(slf,rel)))+list(self.modelObject._getOutgoing(filtr=lambda rel, slf=self: filter(slf,rel))):
       mRel:Relation = mRelr[0]
       # if not self.canvas.categories.isCategory(mRel, self.canvas.hiddenCategories):
@@ -1309,7 +1536,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
             detached.append((r, end))
     self._detachedTypeEnds = detached
     super()._disconnect(**kwargs)
-    self.canvas.itemconfigure(self.tag, state="hidden")
+    self._hideItems()
     for r, _ in detached:
       r.view.freshPaint()
       r.draw()
@@ -1317,7 +1544,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
   @override
   def _reconnect(self, **kwargs):
     super()._reconnect(**kwargs)
-    self.canvas.itemconfigure(self.tag, state="normal")
+    self._showItems() # (a redraw hides it again if it should be -- see _applyHidden())
+    self._hidden = False
     for r, end in getattr(self, "_detachedTypeEnds", []): # re-attach the relation types' ends
       if r._isConnected() and getattr(r, end) is None:
         setattr(r, end, self)

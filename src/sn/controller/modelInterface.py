@@ -189,6 +189,33 @@ class ModelContext(CommandContext):
     clearReasoning(model)
     return f'Cleared the reasoning results for {model.name}.'
 
+  def answer_query(self, query:GraphObject, /, model:Model|None=None, engine:str="clingo") -> str:
+    '''
+    Answer a query: a context (eg: a query node, or a rule -- its antecedent)
+    whose contents are a pattern with ?variables. Each line is one match.
+
+    :param query: The query (or other context).
+    :type query: GraphObject
+    :param model: Ignored: a query is answered from its own model.
+    :type model: Model
+    :param engine: The reasoner engine (see *sn.model.reasoner.Reasoner.create()*).
+    :type engine: str
+    '''
+    from sn.model.reasoner import Reasoner
+    if type(query) is str: # the environment failed to interpret the object
+      raise KeyError(f'Query "{query}" not found.')
+    model = query.model # (the framework always fills *model* in, so the query's own model it is)
+    return self._formatAnswers(Reasoner.create(model, engine).answer(query), model)
+
+  def _formatAnswers(self, rows:list, model:Model) -> str:
+    '''Answers from *Reasoner.answer()* as text: one line per match, "?var = value, ...".'''
+    if not rows:
+      return "no"
+    if rows == [{}]:
+      return "yes"
+    name = lambda o: o.tostring(relativeTo=model, format="friendly") if isinstance(o, GraphObject) else str(o)
+    return "\n".join(", ".join(f"{v.name} = {name(x)}" for v, x in row.items()) for row in rows)
+
   def ask_reasoner(self, query:str, /, model:Model|None=None, engine:str="clingo") -> str:
     '''
     Ask the reasoner a question in its own query language -- for the clingo

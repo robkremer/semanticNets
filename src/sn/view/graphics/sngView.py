@@ -41,6 +41,7 @@ from sn.view.graphics.vrelations import VRelation
 from sn.view.graphics.layout import FindFree, gatherShifts
 from sn.view.graphics.decorators import NOMINAL_ASPECT
 from util.commandParser import CompositeCommandMgr
+from util.utils import Categories
 from math import sqrt
 from util.persistence.serialize import InstantiationInfo, PropertyInfo,\
   ParamInfo, Serializable, SerializableType
@@ -67,6 +68,7 @@ import tkinter as tk
 KEY_UNDO =                  ('<Command-KeyPress-z>'       , 'cmd+z')
 KEY_REDO =                  ('<Shift-Command-KeyPress-Z>' , 'shift+cmd+Z')
 KEY_REPAINT =               ('<Command-KeyPress-r>'       , 'cmd+r')
+KEY_CLEAR_HIGHLIGHTS =      ('<Escape>'                   , 'esc')
 KEY_VALIDATE =              ('<Command-KeyPress-v>'       , 'cmd+v')
 KEY_TOGGLE_FIELDS_LAYOUT =  ('<Command-KeyPress-f>'       , 'cmd+f')
 
@@ -353,6 +355,83 @@ class SNGContext(UIContext):
       return f'{super().__str__()} {self.objects[0].getPRef().tostring()}'
 
 
+  def visibility(self, category:str, mode:str="hide"):
+    '''
+    Show, hide or erase a category of objects in the view (see
+    *SNGView.categories*). Hidden objects stay in the view, just not drawn;
+    erased ones are taken out of the view (not the model). Either way, *expand*
+    won't bring in more of them.
+
+    :param category: The category's name, eg: "types", "isa individuals".
+    :param mode: "show", "hide" or "erase".
+    '''
+    print ("dummy graphic command")
+
+  class _Visibility(Command):
+    def __init__(self, category:str, mode:str="hide", view:SNGView|None=None):
+      '''
+      Show, hide or erase a category of objects in the view.
+
+      :param category: The category's name, eg: "types", "isa individuals".
+      :param mode: "show", "hide" or "erase".
+      '''
+      super().__init__("visibility")
+      assert view is not None
+      if category not in view.categories.keys():
+        raise ValueError(f'Unknown category "{category}": expected one of {", ".join(view.categories.keys())}.')
+      if mode not in ("show", "hide", "erase"):
+        raise ValueError(f'Unknown mode "{mode}": expected show, hide or erase.')
+      self.view:SNGView = view
+      self.category, self.mode = category, mode
+      self.oldMode:str = view.hides.get(category, "show")
+      self.erased:list[VObject] = []
+
+    @override
+    def do(self) -> None:
+      super().do()
+      v = self.view
+      if self.mode == "show":
+        v.hides.pop(self.category, None)
+      else:
+        v.hides[self.category] = self.mode
+      if self.mode == "erase":
+        if not self.erased: # (first time: what to erase)
+          victims = [vo for vo in v.values() if vo is not None and vo._isConnected() and vo.modelObject is not None
+                     and v.categories.isCategory(vo.modelObject, [self.category])]
+          for w in [vo for vo in victims if not isinstance(vo, VRelation) and vo.isContextWindow()]:
+            victims += [c for c in w.windowContents() if c not in victims] # (not left floating)
+          # nodes first: that takes their relations too
+          self.erased = sorted(victims, key=lambda vo: isinstance(vo, VRelation))
+        for vo in self.erased:
+          if vo._isConnected():
+            vo._disconnect()
+      v.setDirty()
+      v.applyVisibility()
+
+    @override
+    def undo(self):
+      super().undo()
+      v = self.view
+      if self.oldMode == "show":
+        v.hides.pop(self.category, None)
+      else:
+        v.hides[self.category] = self.oldMode
+      for vo in self.erased: # (nodes first, as in _Represent)
+        if not vo._isConnected():
+          vo._reconnect()
+      v.setDirty()
+      v.applyVisibility()
+
+    @override
+    def delete(self):
+      super().delete()
+      self.view = None # type: ignore[assignment]
+      self.erased = []
+
+    @override
+    def __str__(self):
+      return f'{super().__str__()} {self.category} {self.mode}'
+
   def expand(self, object:GraphObject):
     '''
     This is a dummy graphic command.
@@ -375,21 +454,20 @@ class SNGContext(UIContext):
         self.originalDo = False
         self.createdObjects = []
         view:SNGView =self.obj.view
-        detachCode = view.attachCallback(lambda com, tup: self.createdObjects.append(tup[0]) if com=='new' else 0)
+        detachCode = view.attachCallback(lambda com, tup: self.createdObjects.append(tup[1]) if com=='new' else 0) # (tup is (id, VObject))
         self.obj.expand(filter=self.filter, expand=self.levels)
-        print(f'ExpandCommand.do() created {len(self.createdObjects)} VObjects')
         view.detachCallback(detachCode)
-      else:
-        for obj in self.createdObjects:
-          #obj.setHidden(False)
-          obj._disconnect()
+      else: # redo: nodes first (see _Represent.do())
+        for obj in sorted(self.createdObjects, key=lambda vo: isinstance(vo, VRelation)):
+          if not obj._isConnected():
+            obj._reconnect()
   
     @override
     def undo(self):
       Command.undo(self)
-      for obj in self.createdObjects:
-        #obj.setHidden()
-        obj._reconnect()
+      for obj in reversed(self.createdObjects):
+        if obj._isConnected():
+          obj._disconnect()
         
     @override
     def delete(self):
@@ -402,6 +480,36 @@ class SNGContext(UIContext):
       return Command.__str__(self)
 
     
+
+class _ContainCreated(Command):
+  '''
+  Contains, in *context*, the relation that the command *creator* creates --
+  *creator* being queued earlier in the same composite command, so the relation
+  doesn't exist yet when this is made. See *SNGView._containNewRelation()*.
+  '''
+  def __init__(self, model:Model, typ:Relation, context:GraphObject, creator:Command):
+    super().__init__("contain")
+    self.model, self.typ, self.context, self.creator = model, typ, context, creator
+    self.relation:Relation|None = None
+
+  @override
+  def do(self) -> Relation|None:
+    super().do()
+    if self.relation is None:
+      created = getattr(self.creator, "relation", None)
+      if created is None:
+        return None
+      self.relation = Relation(db=self.model, parents=[self.typ], src=self.context, dst=created, individual=True)
+    else:
+      self.relation._reconnect()
+    return self.relation
+
+  @override
+  def undo(self):
+    super().undo()
+    if self.relation is not None:
+      self.relation._disconnect()
+    return self.relation
 
 class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   '''
@@ -485,6 +593,18 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     "The inferred/inherited relations drawn as dashed lines (see *drawInferences()*)."
     "The cursor to restore when the pointer moves off a relation terminal (see *_updateTerminalCursor()*)."
     self._scrolling:bool = False
+
+    self.categories:Categories[GraphObject] = Categories[GraphObject]()
+    "Named categories of model objects, for hiding or erasing from the view (see *visibility()*)."
+    m = self.model
+    self.categories.addCategory("system objects",  lambda mo: mo.isSystemObject())
+    self.categories.addCategory("isa individuals", lambda mo: isinstance(mo, IsaIndividual))
+    self.categories.addCategory("types",           lambda mo: mo.isType())
+    self.categories.addCategory("non-local",       lambda mo: mo.model is not self.model)
+    self.categories.addCategory("rules",           lambda mo: mo.isIndividual() and mo.isa(m.RULE))
+    self.categories.addCategory("queries",         lambda mo: mo.isIndividual() and mo.isa(m.QUERY))
+    self.hides:dict[str, str] = {}
+    "The categories currently hidden or erased: category name -> \"hide\" or \"erase\". Saved with the view."
     
 
   @override
@@ -495,11 +615,15 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       for rel in list(slf.values()):
         if isinstance(rel, VRelation):
           rel.connect()
-      slf.canvas.after_idle(lambda slf=slf: [slf.resetScrollRegion(), slf.setDirty(False)]) # type: ignore[misc]
+      slf.canvas.after_idle(lambda slf=slf: [slf.applyVisibility(), slf.resetScrollRegion(), slf.setDirty(False)]) # type: ignore[misc]
     ret:InstantiationInfo = super().getInstantiationInfo()
     # ret.class_ = cls
     ret.conArgs.append(ParamInfo("model", str, getter=lambda slf: cast(SNGView,slf).model.url, setter=lambda m: Model(cast(str,m))))
     ret.conKWArgs.append(ParamInfo("geometry", str, getter=lambda slf: cast(SNGView,slf).window.geometry()))
+    ret.postconSetters.append(PropertyInfo("hides", str,
+        lambda slf: ",".join(f"{k}={v}" for k, v in cast(SNGView, slf).hides.items()),
+        lambda slf, v: setattr(slf, "hides", dict(kv.split("=", 1) for kv in str(v).split(",") if "=" in kv)),
+        optional=True)) # optional: views saved before it existed still load
     ret.finalSetters.append(PropertyInfo("_", bool, setter=finalize))
     return ret
 
@@ -624,6 +748,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
             # VObject -- constructing another one here would silently produce
             # a second, orphaned VObject for the same model object.
             newObj = self.makeViewObjectForGraphObject(modelObj) or VNode(self, modelObj)
+          elif issubclass(typ, Relation) and self._erasedRelation(modelObj):
+            pass # (see visibility())
           elif issubclass(typ, Relation):
             # Same reasoning as the Node case above, but this is where it
             # actually bites: GraphObject.__init__() creates an IsaIndividual
@@ -732,7 +858,12 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
     assert isinstance(ret, VObject), f'SNView.makeViewObjectForGraphObject(): Unexpected return type "{ret.__class__.__name__}".'
     if created:
-      self._attachDanglingEnds(ret)
+      # Not now: we may be inside another object's construction (eg: a relation
+      # resolving its ends), and that object isn't finished yet.
+      if self.canvas:
+        self.canvas.after_idle(lambda vo=ret: self._attachDanglingEnds(vo))
+      else:
+        self._attachDanglingEnds(ret)
     if expand > 0:
       ret.expand(filter=filter, expand=expand - 1)
     return ret
@@ -776,8 +907,15 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     object), attach to it.
     '''
     from sn.view.graphics.vrelations import VRelation
+    if not vo._isConnected() or vo.modelObject is None: # (gone again meanwhile)
+      return
     for r in list(self._db.values()):
-      if isinstance(r, VRelation) and r is not vo and r.modelObject is not None and r._isConnected():
+      # skip anything not fully constructed (a relation that's still being made
+      # resolves its own ends)
+      if not isinstance(r, VRelation) or r is vo or r.modelObject is None or not r._isConnected() \
+         or not hasattr(r, "_floatingAnchor") or not hasattr(r, "_drawVersion"):
+        continue
+      try:
         changed = False
         for end in ("src", "dst"):
           own = r.modelObject.localSrc if end == "src" else r.modelObject.localDst
@@ -787,6 +925,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         if changed:
           self.freshPaint()
           r.draw()
+      except Exception:
+        logger.exception(f"_attachDanglingEnds(): attaching {r} to {vo}:")
 
   def findViewObjectForGraphObject(self, mObject:GraphObject|Callable[[VObject],bool]) -> VObject|None:
     '''
@@ -846,8 +986,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     for mnode in self.model.values():
       # if self.categories.isCategory(mnode, self.hiddenCategories):
       #   continue
+      if self.isFiltered(mnode):
+        continue
       vObj = self.findViewObjectForGraphObject(mnode)
-      if vObj is None:# and not self.categories.isCategory(mnode, self.hiddenCategories):
+      if vObj is None:
         n = self.makeViewObjectForGraphObject(mnode, atPoint=(x, y))
         if y < blockSize:
           y += grid[1]
@@ -932,8 +1074,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     # repaint
     self.canvas.bind(KEY_REPAINT[0], self.repaint)
 
-    # abandon an elastic-line choice
-    self.canvas.bind("<Escape>", self.cancelElasticLine)
+    # abandon an elastic-line choice (or, if there's none, clear the highlights)
+    self.canvas.bind(KEY_CLEAR_HIGHLIGHTS[0], self.cancelElasticLine)
     
     # # validate
     # self.canvas.bind(KEY_VALIDATE[0], lambda _x: self.validate(refresh=True))
@@ -1215,10 +1357,18 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     self.canvas.focus_set() # so Escape reaches us (see cancelElasticLine())
 
   def cancelElasticLine(self, event:tk.Event|None=None) -> None:
-    'Abandon an elastic-line choice in progress (bound to Escape).'
+    'Abandon an elastic-line choice in progress (bound to Escape) -- or, if there is none, clear the highlights.'
     if self._elasticLineChoiceData is not None:
       self.canvas.delete(self._elasticLineChoiceData.lineID)
       self._elasticLineChoiceData = None
+    else:
+      self.clearHighlights()
+
+  def clearHighlights(self) -> None:
+    'Remove every object\'s highlight glow (see *VObject.highlight()*).'
+    for vo in list(self._db.values()):
+      if vo is not None and getattr(vo, "decorators", None) is not None:
+        vo.highlight(False)
 
   def onB1_ButtonRelease(self, event:tk.Event) -> None:
     """
@@ -1414,10 +1564,11 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     '''
     assert isinstance(fromNode, VObject)
     assert toNode is None or isinstance(toNode, VObject)
-    if toNode is not None and \
-       (    isinstance(fromNode, VRelation) and not isinstance(toNode, VRelation) or \
-        not isinstance(fromNode, VRelation) and     isinstance(toNode, VRelation)):
-      logger.error("Relations must be either between nodes or between relations only.")
+    # Relations may connect nodes and relations in any combination (eg: a rule
+    # -antecedent-> a relation) -- except isa links: a node isa a relation (or
+    # vice versa) is an error.
+    if toNode is not None and typ is self.model.ISA and isinstance(fromNode, VRelation) != isinstance(toNode, VRelation):
+      logger.error("An isa link must be between two nodes or two relations.")
       return
     if typ and not isinstance(typ, Relation):
       logger.error(f'Relation typ {typ["label"]} must be a relation.', level='error')
@@ -1431,11 +1582,182 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       #                  src=fromNode.modelObject, dst=toNode.modelObject, 
       #                  individual=True)
       # self.makeViewObjectForGraphObject(rel)
-      self.context.new_relation([typ], individual=True, destination=None if toNode is None else toNode.modelObject,
-                                source=fromNode.modelObject, model=self.model)
+      with CompositeCommandMgr(self.context) as mgr: # (one undo, with any containment it lands in)
+        self.context.new_relation([typ], individual=True, destination=None if toNode is None else toNode.modelObject,
+                                  source=fromNode.modelObject, model=self.model)
+        if toNode is not None and mgr.commands:
+          self._containNewRelation(mgr, mgr.commands[-1], typ, fromNode, toNode)
     except Exception as ex:
       logger.exception("SNView.makeRelation():")
 #       raise ex
+
+  def isFiltered(self, mo:GraphObject, modes:Iterable[str]=("hide", "erase")) -> bool:
+    'True iff *mo* is in a category currently in one of *modes* (see *hides*).'
+    active = [c for c, mode in self.hides.items() if mode in modes and c in self.categories.keys()]
+    try:
+      return bool(active) and self.categories.isCategory(mo, active)
+    except Exception: # (eg: a half-built object)
+      return False
+
+  def _erasedRelation(self, rel:Relation) -> bool:
+    '''
+    Whether a new relation shouldn't be shown: it's in an erased category, or
+    it would bring an end in an erased category back into the view.
+    '''
+    if self.isFiltered(rel, ("erase",)):
+      return True
+    return any(e is not None and self.findViewObjectForGraphObject(e) is None and self.isFiltered(e, ("erase",))
+               for e in (rel.localSrc, rel.localDst))
+
+  def shouldHide(self, vo:VObject) -> bool:
+    '''
+    Whether *vo* shouldn't be drawn just now: it's in a hidden category; or
+    it's a relation to or from something hidden (it would lead nowhere), or a
+    containment drawn as being inside its window (see *VRelation.inWindow()*);
+    or it's inside a hidden context's window.
+    '''
+    mo = vo.modelObject
+    if mo is None:
+      return False
+    if self.isFiltered(mo, ("hide",)):
+      return True
+    if isinstance(vo, VRelation):
+      if vo.inWindow():
+        return True
+      if any(isinstance(e, VObject) and e is not vo and e._isConnected() and e.isHidden() for e in (vo.src, vo.dst)):
+        return True
+    if self.hides: # (windows are only hidden by a category)
+      for w in self.contextWindows():
+        if w is not vo and w.isHidden() and w.paneAt(vo.centerPt()) is not None and w.containmentOf(mo):
+          return True
+    return False
+
+  def applyVisibility(self) -> None:
+    'Bring every object into line with the current *hides* (see *VObject._applyHidden()*).'
+    vos = [vo for vo in self.values() if vo is not None and vo._isConnected()]
+    for vo in sorted(vos, key=lambda vo: isinstance(vo, VRelation)): # (nodes first: relations follow their ends)
+      vo._applyHidden()
+    self.drawInferences()
+
+  def _visibilityMenu(self, mode:str) -> tk.Menu:
+    '''
+    A checkbox per category for *mode* ("hide" or "erase"): checking it sets
+    that category to *mode* (so unchecks it in the other menu); unchecking it
+    shows the category again.
+    '''
+    menu = tk.Menu(self.canvas)
+    self._visibilityVars = getattr(self, "_visibilityVars", {}) # (keep the variables alive)
+    for name in self.categories.keys():
+      var = tk.BooleanVar(value=self.hides.get(name) == mode)
+      self._visibilityVars[(mode, name)] = var
+      menu.add_checkbutton(label=name, variable=var, onvalue=True, offvalue=False,
+                           command=lambda n=name, v=var: self.context.visibility(n, mode if v.get() else "show"))
+    return menu
+
+  def contextWindows(self) -> list[VObject]:
+    'The view objects drawn as context windows (see *VObject.isContextWindow()*).'
+    return [w for w in self.values() if w is not None and not isinstance(w, VRelation) and w._isConnected() and w.isContextWindow()]
+
+  def _containable(self, vo:VObject) -> bool:
+    '''
+    Whether *vo* takes part in containment-by-position: not containment
+    relations themselves, nor relations to or from a window.
+    '''
+    mo = vo.modelObject
+    if mo is None:
+      return False
+    if isinstance(vo, VRelation):
+      if mo.isa(self.model.CONTAINS):
+        return False
+      for end in (vo.src, vo.dst):
+        if isinstance(end, VObject) and not isinstance(end, VRelation) and end.isContextWindow():
+          return False
+    return True
+
+  def _windowAt(self, pt, exclude:Iterable[VObject]=()) -> VObject|None:
+    'The innermost context window with a pane at *pt* (view coords), other than those in *exclude*.'
+    def area(w:VObject) -> float:
+      x1, y1, x2, y2 = w.boundingBox()
+      return (x2 - x1) * (y2 - y1)
+    return min((w for w in self.contextWindows() if w not in exclude and w.paneAt(pt) is not None), key=area, default=None)
+
+  def _paneType(self, pane:str) -> Relation:
+    m = self.model
+    return {"contains": m.CONTAINS, "antecedent": m.ANTECEDENT, "consequent": m.CONSEQUENT}[pane]
+
+  def _containNewRelation(self, mgr:CompositeCommandMgr, creator:Command, typ:Relation, fromNode:VObject, toNode:VObject) -> None:
+    '''
+    A relation being made (by the queued command *creator*) from *fromNode* to
+    *toNode* whose label will sit (midway between them) in a context window's
+    pane is contained by it -- eg: one drawn between two things in a rule's
+    antecedent is part of the antecedent.
+    '''
+    if typ.isa(self.model.CONTAINS) or any(e.isContextWindow() for e in (fromNode, toNode) if not isinstance(e, VRelation)):
+      return
+    # where its label will go (see VRelation.gapMidpoint())
+    from sn.view.graphics.connectors import _clipToEdgeStraight, _farPointAlong, _sub
+    cs, cd = fromNode.centerPt(), toNode.centerPt()
+    if fromNode is toNode or cs == cd or fromNode.containsPt(cd) or toNode.containsPt(cs):
+      a, b = cs, cd
+    else:
+      a = _clipToEdgeStraight(fromNode, _farPointAlong(fromNode, _sub(cd, cs)))
+      b = _clipToEdgeStraight(toNode, _farPointAlong(toNode, _sub(cs, cd)))
+    pt = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+    w = self._windowAt(pt)
+    if w is not None:
+      mgr._addCommand(_ContainCreated(self.model, self._paneType(w.paneAt(pt)), w.modelObject, creator)) #type: ignore[arg-type]
+
+  def _updateContainment(self, oldCenters:dict[VObject, tuple[float,float]|None]) -> None:
+    '''
+    Bring the contexts' containment into line with where the objects in
+    *oldCenters* now sit. Positions are centres (a relation's is its label's);
+    *oldCenters* maps each object to where it was, or None if it's new. For
+    each object:
+
+    - Landing in a window's pane (the innermost window, if they're nested)
+      makes it contained by that pane's relation type (contains, or a rule's
+      antecedent/consequent). Switching a rule's panes swaps the type -- unless
+      it's in both, which only an explicit relation can say.
+    - Leaving a window it was in removes that window's containment of it.
+    - Containment of an object sitting outside the window (eg: out in the "real
+      world", with its contains arc showing) is left alone.
+
+    Call inside a *CompositeCommandMgr*, so it's undone with the move.
+    '''
+    m = self.model
+    windows = self.contextWindows()
+    def nestedIn(w:VObject, outer:VObject) -> bool: # w is on outer's window (at any depth)?
+      inner = outer.windowContents() if outer.isContextWindow() else []
+      return w in inner or any(nestedIn(w, i) for i in inner if i.isContextWindow())
+    for vo, old in oldCenters.items():
+      mo = vo.modelObject
+      if mo is None or not vo._isConnected() or not self._containable(vo):
+        continue
+      new = vo.centerPt()
+      target = self._windowAt(new, exclude=[w for w in windows if w is vo or nestedIn(w, vo)])
+      for w in windows:
+        if w is vo:
+          continue
+        rels = w.containmentOf(mo)
+        if w is target:
+          want = self._paneType(w.paneAt(new)) #type: ignore[arg-type]
+          if any(r.isa(want) for r in rels):
+            continue
+          others = [r for r in rels if r.isa(m.ANTECEDENT) or r.isa(m.CONSEQUENT)]
+          if len(others) > 1: # in both panes: leave it be
+            continue
+          for r in others:    # switched panes
+            self.context.remove(r)
+          self.context.new_relation([want], individual=True, source=w.modelObject, destination=mo, model=self.model)
+        elif rels and old is not None:
+          # was it in w's window? (compare with where w was, if w moved too)
+          wOld = oldCenters.get(w)
+          if wOld is not None:
+            wNew = w.centerPt()
+            old = (old[0] + wNew[0] - wOld[0], old[1] + wNew[1] - wOld[1])
+          if w.paneAt(old) is not None:
+            for r in rels:
+              self.context.remove(r)
 
   def isEventHandled(self, event:tk.Event) -> bool:
     """
@@ -1561,6 +1883,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     bgMenu.add_command(label="show all", command=self.context.view.showAllModel)
     bgMenu.add_command(label="reset scroll region", command=lambda: self.resetScrollRegion(shrink=True))
     bgMenu.add_command(label="gather nodes", command=self.gatherNodes)
+    bgMenu.add_command(label="clear highlights", command=self.clearHighlights, accelerator=KEY_CLEAR_HIGHLIGHTS[1])
     bgMenu.add_command(label="reason", command=self.reason)
     bgMenu.add_command(label="clear reasoning", command=self.clearReasoning,
                        state=tk.NORMAL if self.reasoning is not None else tk.DISABLED)
@@ -1584,6 +1907,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         newMenu.add_command(label=nodes[nn].name, command=lambda mo=nodes[nn]: self.makeViewObjectForGraphObject(mo)) #type: ignore[misc]
       return newMenu
     bgMenu.add_cascade(label="show", menu=makeShowMenu())
+    bgMenu.add_cascade(label="hide", menu=self._visibilityMenu("hide"))
+    bgMenu.add_cascade(label="erase", menu=self._visibilityMenu("erase"))
     
     # "hide/enable" menu
     # hideEnableMenu = tk.Menu(self)
@@ -1837,6 +2162,12 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     '''
     from sn.view.graphics.connectors import _clipToEdgeStraight, _farPointAlong, _sub
     vs, vd = rec["src"], rec["dst"]
+    hide = vs.isHidden() or vd.isHidden() # (see visibility())
+    for k in ("line", "label", "patch"):
+      if rec.get(k) is not None:
+        self.canvas.itemconfigure(rec[k], state="hidden" if hide else "disabled")
+    if hide:
+      return
     cs, cd = vs.centerPt(), vd.centerPt()
     if cs == cd:
       return
@@ -1929,7 +2260,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     their (moved) nodes.
     '''
     objs = [o for o in self.context.view.values()
-            if o is not None and not (isinstance(o, VRelation) and o.floating())]
+            if o is not None and not o.isHidden() and not (isinstance(o, VRelation) and o.floating())]
     boxes = [o.boundingBox() for o in objs]
     moves = [(o, bb, dx, dy) for o, bb, (dx, dy) in zip(objs, boxes, gatherShifts(boxes))
              if dx or dy]

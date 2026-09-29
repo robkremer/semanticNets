@@ -668,6 +668,130 @@ class Selected(Decorator):
     self.kwargs = None
 
 
+class ContextFrame(Decorator):
+  '''
+  Draws a context (a rule, query, ...) as a window: a title banner with its
+  name and, for a rule, a divider between its antecedent (left) and
+  consequent (right) panes, each labelled. The owner's shape is the window
+  body. The window is kept beneath everything else, so what it contains sits
+  on top of it, and its body is left out of overlap avoidance (it's retagged
+  from "vis/shape" to "context-frame"), so objects can be placed inside it.
+  See *VObject.isContextWindow()*.
+  '''
+
+  def __init__(self, owner):
+    super().__init__(owner, priority=-5)
+    self.ids:dict[str, int] = {}
+
+  def _item(self, key:str, create, coords, **opts) -> int:
+    canvas = self.owner.canvas
+    if key not in self.ids:
+      self.ids[key] = create(coords, state="disabled", tags=[self.owner.tag, "context-frame"], **opts)
+    else:
+      canvas.coords(self.ids[key], coords)
+      canvas.itemconfigure(self.ids[key], **opts)
+    return self.ids[key]
+
+  def _drop(self, key:str) -> None:
+    if key in self.ids:
+      self.owner.canvas.delete(self.ids.pop(key))
+
+  @override
+  def draw(self, fast=False, **kwargs):
+    o = self.owner
+    canvas, view = o.canvas, o.view
+    x1, y1, x2, y2 = o.boundingBox(fast=fast)
+    bh = o.bannerHeight()
+    border = o.cache['vis/borderColor'] or "black"
+    scale = view._scale
+    # the banner, and the title in it
+    self._item("banner", canvas.create_rectangle, view.viewToWindow([x1, y1, x2, y1 + bh]),
+               fill=_blend(canvas, border, 0.18), outline=border)
+    self._item("title", lambda c, **k: canvas.create_text(*c, **k), view.viewToWindow([x1 + 6, y1 + bh / 2]),
+               text=o.name, anchor="w", fill=o.cache["vis/textColor"] or "black",
+               font=(view._fontFace, max(6, int(view._fontSize * scale)), "bold"))
+    # a rule's two panes
+    panes = o.panes()
+    if "consequent" in panes:
+      mid = panes["consequent"][0]
+      self._item("divider", canvas.create_line, view.viewToWindow([mid, y1 + bh, mid, y2]), fill=border, dash=(4, 3))
+      font = (view._fontFace, max(5, int(view._fontSize * 0.8 * scale)), "italic")
+      for key, pane in (("anteLabel", "antecedent"), ("consLabel", "consequent")):
+        px, py = panes[pane][0], panes[pane][1]
+        self._item(key, lambda c, **k: canvas.create_text(*c, **k), view.viewToWindow([px + 4, py + 2]),
+                   text=pane, anchor="nw", fill="gray50", font=font)
+    else:
+      for key in ("divider", "anteLabel", "consLabel"):
+        self._drop(key)
+    # the body isn't an obstacle for overlap avoidance, and the whole window is beneath everything
+    if o._shape is not None and o._shape.id is not None:
+      canvas.dtag(o._shape.id, "vis/shape")
+      canvas.addtag_withtag("context-frame", o._shape.id)
+    canvas.tag_lower(o.tag)
+
+  def delete(self):
+    if self.deleted: return
+    super().delete()
+    for key in list(self.ids):
+      self._drop(key)
+
+
+def _blend(canvas, color:str, amount:float) -> str:
+  '''*color* mixed *amount* of the way from white (0: white, 1: *color*).'''
+  try:
+    r, g, b = canvas.winfo_rgb(color)
+  except Exception:
+    return color
+  mix = lambda c: int((c / 257) * amount + 255 * (1 - amount))
+  return f'#{mix(r):02x}{mix(g):02x}{mix(b):02x}'
+
+
+class Highlight(Decorator):
+  '''
+  A "glow": a filled shape a little larger than the owner, drawn beneath
+  everything -- eg: to mark a query's matches (see *VObject.highlight()*). An
+  oval for an Oval-shaped owner, a rectangle otherwise. The colour is the
+  "gui/highlightColor" preference.
+  '''
+  PAD = 6
+  "How far (screen pixels) the glow extends beyond the owner."
+
+  def __init__(self, owner):
+    super().__init__(owner, priority=-20)
+    self.id:int|None = None
+    self._oval:bool|None = None
+
+  @override
+  def draw(self, fast=False, **kwargs):
+    from sn.view.graphics.shapes import Oval
+    canvas = self.owner.canvas
+    color = snPrefs.get("gui/highlightColor", storeDefault="#ffd966", storeType="color",
+                        note="The colour of the glow marking highlighted objects (eg: a query's answers).")
+    x1, y1, x2, y2 = self.owner.view.viewToWindow(self.owner.boundingBox(fast=fast))
+    p = self.PAD
+    rect = [x1 - p, y1 - p, x2 + p, y2 + p]
+    oval = isinstance(self.owner._shape, Oval)
+    if self.id is not None and oval != self._oval: # the owner's shape changed kind
+      canvas.delete(self.id)
+      self.id = None
+    opts = dict(fill=color, outline=color)
+    if self.id is None:
+      create = canvas.create_oval if oval else canvas.create_rectangle
+      self.id = create(rect, state="disabled", tags=[self.owner.tag, "highlight"], **opts)
+      self._oval = oval
+    else:
+      canvas.coords(self.id, rect)
+      canvas.itemconfigure(self.id, **opts)
+    canvas.tag_lower(self.id) # beneath everything
+
+  def delete(self):
+    if self.deleted: return
+    super().delete()
+    if self.id is not None:
+      self.owner.canvas.delete(self.id)
+      self.id = None
+
+
 class ShadowDecorator(Decorator):
   '''
   Draws a plain "duplicate shape, grey, one z-order lower" drop shadow behind
