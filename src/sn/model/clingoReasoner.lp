@@ -17,7 +17,8 @@
 %   const(K,O).               well-known objects: top, relation, isa, node, ...
 %   parent(X,P).              GraphObject.getParents() (includes the implicit
 %                             defaults to node/relation)
-%   lsrc(R,C). ldst(R,C).     locally set relation endpoints (Relation._src/_dst)
+%   lsrc(R,C). ldst(R,C).     locally set relation endpoints (Relation.localSrc/.localDst)
+%   domain(T,C). range(T,C).  the signature of relation type T (Relation.domain/.range)
 %   src(R,S). dst(R,D).       effective endpoints (Relation.src/.dst, inherited)
 %   link(R,S,D).              individual, non-isa relation R with both endpoints
 %   prop(T,P).                relation type T is tagged with P (reflexive,
@@ -69,7 +70,15 @@ holds(T2,S,D) :- holds(T,S,D), parent(T,T2), rel_type(T2).
 % inherited (brother isa sibling, but only sibling is symmetric); brother pairs
 % still count as sibling pairs, and so get sibling's symmetric closure.
 holds(T,D,S) :- holds(T,S,D), prop(T,symmetric).
-holds(T,X,Z) :- holds(T,X,Y), holds(T,Y,Z), prop(T,transitive).
+holds(T,X,Z) :- holds(T,X,Y), holds(T,Y,Z), prop(T,transitive), not equiv_minus_id(T).
+% Symmetric + transitive + irreflexive (eg: full-sibling) means "an equivalence
+% minus identity": plain transitivity would force x -T-> x for anything related
+% at all (x->y, y->x, so x->x), making the three tags contradictory. So such a
+% type's transitivity skips the diagonal. (A transitive, irreflexive type that
+% ISN'T symmetric keeps the plain rule: there a self-pair can only come from a
+% cycle -- a real error the irreflexive violation should catch.)
+equiv_minus_id(T) :- prop(T,symmetric), prop(T,transitive), prop(T,irreflexive).
+holds(T,X,Z) :- holds(T,X,Y), holds(T,Y,Z), X != Z, equiv_minus_id(T).
 holds(T,X,X) :- holds(T,X,_), prop(T,reflexive).
 holds(T,X,X) :- holds(T,_,X), prop(T,reflexive).
 
@@ -79,10 +88,11 @@ inferred(T,S,D) :- holds(T,S,D), not asserted(T,S,D), not sub_holds(T,S,D).
 
 %%% Signatures (domain/range) and classification ------------------------------
 
-% A relation's local endpoints on a relation *type* act as its signature: every
-% relation or sub-type below it must have endpoints that isa the signature.
-needs_src(R,T,C) :- src(R,S), isa_star(R,T), R != T, lsrc(T,C), not isa_star(S,C).
-needs_dst(R,T,C) :- dst(R,D), isa_star(R,T), R != T, ldst(T,C), not isa_star(D,C).
+% A relation type's domain and range are its signature: every relation or
+% sub-type below it must have a src that isa the domain, and a dst that isa
+% the range.
+needs_src(R,T,C) :- src(R,S), isa_star(R,T), R != T, domain(T,C), not isa_star(S,C).
+needs_dst(R,T,C) :- dst(R,D), isa_star(R,T), R != T, range(T,C), not isa_star(D,C).
 
 need(S,C) :- needs_src(R,_,C), src(R,S).
 need(D,C) :- needs_dst(R,_,C), dst(R,D).

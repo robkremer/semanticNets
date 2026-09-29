@@ -582,6 +582,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         model.clearStatusReport()
         model.validate()
         self._statusReport += model._statusReport
+        self._addReasonerFindings()
     except Exception as ex:
       trace = traceback.format_exc()
       self.assertToStatusReport(False, 
@@ -589,6 +590,25 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
           {"view trace": lambda trace=trace: showExceptionDialog(self.canvas.winfo_toplevel(), name=ex.__class__.__name__, text=trace)})
     return self.statusReport()
     
+  def _addReasonerFindings(self) -> None:
+    '''
+    Add the violations the view's last "reason" found for this object's model
+    object (see *SNGView.reason()*) to the status report, with a one-click fix
+    where there's an obvious one.
+    '''
+    reasoning = getattr(self.view, "reasoning", None)
+    if reasoning is None or self.modelObject is None:
+      return
+    for v in reasoning.violationsFor(self.modelObject):
+      actions:dict[str, Callable[[], None]] = {}
+      if v.code in ("domain", "range"): # args: (relation type, endpoint, required type)
+        _t, obj, required = v.args
+        if obj.isIndividual() or not obj.isa(required):
+          actions[f'make "{obj.name}" a "{required.name}"'] = \
+            lambda o=obj, c=required: self.view.context.new_relation([self.view.model.ISA], individual=True,
+                                                                      source=o, destination=c, model=self.view.model)
+      self.assertToStatusReport(False, f'reasoner: {v.message}', "E" if v.severity == "error" else "W", actions)
+
   # ---- BINDINGS --------------------------------------------------------------
   
   def makeBindings(self):
@@ -1046,6 +1066,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     for d in sorted(self.decorators.values(), key=lambda d: d.priority):
       d.draw(fast=fast)
 
+    # inferred-relation lines attached to this object follow it (see SNGView.drawInferences())
+    if getattr(self.view, "_inferences", None):
+      self.view.updateInferencesFor(self)
+
     # make sure this is reachable by resetting the bounding box if necessary
     bb = self.boundingBox()
     sr = self.view.scrollRegion
@@ -1269,13 +1293,37 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
 
   @override
   def _disconnect(self, **kwargs) -> None:
+    '''
+    Remove this object from the view (eg: "erase from view"), keeping enough to
+    put it back (see *_reconnect()*). Individual relations attached to it go
+    with it; relation *types* attached to it stay, with that end left
+    dangling -- a type is still meaningful without this object in view.
+    '''
+    from sn.view.graphics.vrelations import VRelation
+    detached:list[tuple[VRelation, str]] = []
+    for r in list(self._incoming) + list(self._outgoing):
+      if isinstance(r, VRelation) and r._isConnected() and r.modelObject is not None and r.modelObject.isType():
+        for end in ("src", "dst"):
+          if getattr(r, end) is self:
+            setattr(r, end, None) # (AGRelation's setter takes it off our lists too)
+            detached.append((r, end))
+    self._detachedTypeEnds = detached
     super()._disconnect(**kwargs)
     self.canvas.itemconfigure(self.tag, state="hidden")
+    for r, _ in detached:
+      r.view.freshPaint()
+      r.draw()
     
   @override
   def _reconnect(self, **kwargs):
     super()._reconnect(**kwargs)
     self.canvas.itemconfigure(self.tag, state="normal")
+    for r, end in getattr(self, "_detachedTypeEnds", []): # re-attach the relation types' ends
+      if r._isConnected() and getattr(r, end) is None:
+        setattr(r, end, self)
+        r.view.freshPaint()
+        r.draw()
+    self._detachedTypeEnds = []
 
   # def setHidden(self, hide:bool=True):
   #   '''
@@ -1330,7 +1378,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     return self.tostring()
   
   @override
-  def tostring(self, relativeTo:SNGView|None=None) -> str:
+  def tostring(self, relativeTo:"SNGView"|None=None) -> str:
     if self.modelObject is None:
       return f'{self.__class__.__name__}(?, {PReference.formatForURL(self, relativeTo, includeName=False)}, {self.readModelObjectRef if hasattr(self,"readModelObjectRef") else "?"})'
      

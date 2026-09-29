@@ -35,31 +35,22 @@ Implements VRelation and VIsa classes.
 """
 
 import tkinter as tk
-import xml.etree.ElementTree as et
 from ast import literal_eval
-from typing import Any, Optional, Union, Tuple, List, Dict, Iterable, \
+from typing import Any, Optional, Union, Tuple, List, Iterable, \
   override
 from types import NoneType
 
-from dataclasses import dataclass
-import weakref
 
 import sn
-from sn import snPrefs
-from util.utils import flattenPairs, midpoint
-from util.attribute import AttributedObject
-from util.persistence.pRef import PRDb, PReference
-from util.persistence.serialize import InstantiationInfo, ParamInfo,\
-  PropertyInfo
-from util.attributeEditor import applyEditAttrsBox # @UnresolvedImport
+from util.utils import midpoint
+from util.persistence.pRef import PReference
+from util.persistence.serialize import InstantiationInfo, ParamInfo
 from util.abstractGraph import AGRelation
 from sn.model.model import GraphObject, Relation, IsaIndividual
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.connectors import drawSmoothConnector, ConnectorIDs,\
   drawStraightConnector, ConnectorTerminators
-#TODO: remove the "#@" when attributeEditor get fixed up.
 
-import logging
 logger:sn.SNLogger = sn.getLogger(__name__)
   
 ROLE_VATTRIBUTES = {'vis/lineColor': 'black',
@@ -185,15 +176,141 @@ class VRelation(VObject, AGRelation):
     if self.view.reading or self.modelObject is None:
       return
     assert isinstance(self.modelObject, Relation)
-    if source is None and self.modelObject.src is not None:
-      source = self.view.makeViewObjectForGraphObject(self.modelObject.src)
-      if self in source._outgoing:
+    if source is None:
+      source = self._resolveEnd("src")
+      if source is not None and self in source._outgoing:
         raise RuntimeError(f'Reinserting self ({self}) into {source}.')
-    if destination is None and self.modelObject.dst is not None:
-      destination = self.view.makeViewObjectForGraphObject(self.modelObject.dst)
-      if self in destination._incoming:
+    if destination is None:
+      destination = self._resolveEnd("dst")
+      if destination is not None and self in destination._incoming:
         raise RuntimeError(f'Reinserting self ({self}) into {destination}.')
     super().connect(source, destination)
+
+  INHERITED_FADE = 0.4
+  "How much of the relation's own line colour an inherited end keeps (the rest is the canvas background)."
+  STUB_LENGTH = 25
+  "Length (view units) of the short line drawn for a dangling end."
+
+  def _resolveEnd(self, end:str) -> VObject|None:
+    '''
+    The view object *end* ("src" or "dst") of this relation should be drawn to,
+    recording whether it's inherited (see *self.inheritedEnds*):
+
+      - the relation's own (local) endpoint, if it has one;
+      - otherwise the one it inherits from its type (drawn faded -- see
+        *_styleEnds()*);
+      - or None -- a dangling end -- if there's none, or it would be *top*:
+        a line to top says nothing, and would drag top into the view. (A
+        relation whose *own* end is top -- eg: the relation and isa types --
+        is drawn to top if top is already shown, but never adds it.)
+    '''
+    mo = self.modelObject
+    local = mo.localSrc if end == "src" else mo.localDst
+    self.inheritedEnds[end] = local is None
+    if local is not None:
+      if local is mo.model.TOP: # drawn to top only if it's already shown: never pull top into the view
+        return self.view.findViewObjectForGraphObject(local)
+      return self.view.makeViewObjectForGraphObject(local)
+    inherited = mo.src if end == "src" else mo.dst
+    if inherited is None or inherited is mo.model.TOP:
+      return None
+    return self.view.makeViewObjectForGraphObject(inherited)
+
+  @property
+  def inheritedEnds(self) -> dict[str, bool]:
+    '''{"src": bool, "dst": bool}: which ends aren't the relation's own (see *_resolveEnd()*).'''
+    d = self.__dict__.get("_inheritedEnds")
+    if d is None:
+      d = self.__dict__["_inheritedEnds"] = {"src": False, "dst": False}
+    return d
+
+  def _faded(self, color:str) -> str:
+    '''*color* blended toward the canvas background (see *INHERITED_FADE*); "" stays "".'''
+    if not color:
+      return color
+    try:
+      r, g, b = self.canvas.winfo_rgb(color)
+      br, bgg, bb = self.canvas.winfo_rgb(self.canvas.cget("background"))
+    except Exception:
+      return color
+    k = self.INHERITED_FADE
+    mix = lambda c, back: int((c * k + back * (1 - k)) / 257)
+    return f'#{mix(r, br):02x}{mix(g, bgg):02x}{mix(b, bb):02x}'
+
+  def _styleEnds(self) -> None:
+    '''
+    After the connector is drawn: an inherited end's half of it (line and
+    terminators) is drawn in a faded version of the relation's colours; a
+    dangling end gets a short stub instead -- faded if the end isn't set (see
+    *_resolveEnd()*), in the relation's own colour if it's set but its object
+    isn't in the view -- and any line left over from when it had an endpoint
+    is removed.
+    '''
+    info = self.connectInfo
+    if info is None or not self.canvas:
+      return
+    from sn.view.graphics.connectors import _clipToEdgeStraight, _farPointAlong, _mergeArrowOptions, \
+      _drawCircleTerminator, ConnectorTerminators
+    canvas = self.canvas
+    line, fill = self.cache['vis/lineColor'], self.cache['vis/lineFillColor']
+    terms = ConnectorTerminators(self.cache['vis/terminator1'], self.cache['vis/terminator2'],
+                                 self.cache['vis/terminator3'], self.cache['vis/terminator4'])
+    stubs = self.__dict__.setdefault("_stubIds", {})
+    for end in ("src", "dst"):
+      fields = ("sourceLineID", "sourceTerminatorID", "labelNearTerminatorID") if end == "src" \
+               else ("destLineID", "labelFarTerminatorID", "destTerminatorID")
+      other = self.src if end == "src" else self.dst
+      if other is None: # dangling: remove the old side, draw a stub
+        for f in fields:
+          if getattr(info, f) is not None:
+            canvas.delete(getattr(info, f))
+            setattr(info, f, None)
+        present = self.dst if end == "src" else self.src
+        cx, cy = self.centerPt()
+        if present is not None:
+          px, py = present.centerPt()
+          dx, dy = cx - px, cy - py
+          n = max(1e-6, (dx * dx + dy * dy) ** 0.5)
+          dx, dy = dx / n, dy / n
+        else:
+          dx, dy = (-1.0, 0.0) if end == "src" else (1.0, 0.0)
+        a = _clipToEdgeStraight(self, _farPointAlong(self, (dx, dy)))
+        b = (a[0] + dx * self.STUB_LENGTH, a[1] + dy * self.STUB_LENGTH)
+        # faded if the end isn't set; in the relation's own colour if it is set,
+        # but its object isn't shown (eg: erased from the view)
+        ownEnd = (self.modelObject.localSrc if end == "src" else self.modelObject.localDst) if self.modelObject is not None else None
+        lineColor = line if ownEnd is not None else self._faded(line)
+        fillColor = fill if ownEnd is not None else self._faded(fill)
+        # the same terminators this side of the connector would have, at the same ends
+        if end == "dst":
+          pts, nearSpec, farSpec = (a, b), terms.labelFar, terms.destination
+        else:
+          pts, nearSpec, farSpec = (b, a), terms.source, terms.labelNear
+        coords = self.view.viewToWindow([pts[0][0], pts[0][1], pts[1][0], pts[1][1]])
+        opts = dict(fill=lineColor, width=self.cache['vis/lineWidth'])
+        opts.update(_mergeArrowOptions(nearSpec, farSpec))
+        if stubs.get(end) is None:
+          stubs[end] = canvas.create_line(coords, tags=[self.tag, "stub"], **opts)
+        else:
+          canvas.coords(stubs[end], coords)
+          canvas.itemconfigure(stubs[end], **opts)
+        for key, spec, pt in ((end + "-near", nearSpec, pts[0]), (end + "-far", farSpec, pts[1])):
+          stubs[key] = _drawCircleTerminator(self.view, spec, pt, stubs.get(key), lineColor, fillColor, [self.tag, "stub"])
+      else:
+        for key in (end, end + "-near", end + "-far"):
+          if stubs.get(key) is not None:
+            canvas.delete(stubs.pop(key))
+        faded = self.inheritedEnds[end]
+        lineColor = self._faded(line) if faded else line
+        fillColor = self._faded(fill) if faded else fill
+        for f in fields:
+          i = getattr(info, f)
+          if i is None:
+            continue
+          if canvas.type(i) == "line":
+            canvas.itemconfigure(i, fill=lineColor)
+          else: # a circle terminator
+            canvas.itemconfigure(i, outline=lineColor, fill=fillColor)
    
     
   # def _connectRoles(self):
@@ -327,30 +444,30 @@ class VRelation(VObject, AGRelation):
 
   ### DRAWING ##########################################################################
 
-  @dataclass
-  class RoleInfo:
-    vobject:weakref.ref  # VObject
-    nearPt:Optional[Tuple[int, int]] = None
-    farPt:Optional[Tuple[int, int]] = None
-    lineID:Optional[int] = None
-    nearShapeID:Optional[int] = None
-    farShapeID:Optional[int] = None
-    labelID:Optional[int] = None
-    mark:bool = False
-    
-    def eraseView(self, canvas):
-      if self.lineID is not None: 
-        canvas.delete(self.lineID)
-        self.lineID = None
-      if self.nearShapeID is not None: 
-        canvas.delete(self.nearShapeID)
-        self.nearShapeID = None
-      if self.farShapeID  is not None: 
-        canvas.delete(self.farShapeID)
-        self.farShapeID = None
-      if self.labelID  is not None: 
-        canvas.delete(self.labelID)
-        self.labelID = None    
+  # @dataclass
+  # class RoleInfo:
+  #   vobject:weakref.ref  # VObject
+  #   nearPt:Optional[Tuple[int, int]] = None
+  #   farPt:Optional[Tuple[int, int]] = None
+  #   lineID:Optional[int] = None
+  #   nearShapeID:Optional[int] = None
+  #   farShapeID:Optional[int] = None
+  #   labelID:Optional[int] = None
+  #   mark:bool = False
+  #
+  #   def eraseView(self, canvas):
+  #     if self.lineID is not None: 
+  #       canvas.delete(self.lineID)
+  #       self.lineID = None
+  #     if self.nearShapeID is not None: 
+  #       canvas.delete(self.nearShapeID)
+  #       self.nearShapeID = None
+  #     if self.farShapeID  is not None: 
+  #       canvas.delete(self.farShapeID)
+  #       self.farShapeID = None
+  #     if self.labelID  is not None: 
+  #       canvas.delete(self.labelID)
+  #       self.labelID = None    
     
   # def updateRoleRelatedVObjects(self) -> dict[str, list[RoleInfo]]:
   #   '''
@@ -595,6 +712,7 @@ class VRelation(VObject, AGRelation):
             fillColor=self.cache['vis/lineFillColor'], 
             width=self.cache['vis/lineWidth'],
             tags=[self.tag])
+    self._styleEnds()
           
   # def drawUnfilledRoles(self):
   #   for role, infoList in self.roles.items():
@@ -769,6 +887,13 @@ class VRelation(VObject, AGRelation):
       c = self.view.canvas.coords(info.destLineID)     # ...and to the dst end
       if len(c) >= 2:
         ends.append(("dst", c[-2], c[-1]))
+    # a dangling end's stub: its outer end (the src stub is drawn from it, the dst stub to it)
+    stubs = self.__dict__.get("_stubIds", {})
+    for end, first in (("src", True), ("dst", False)):
+      if stubs.get(end) is not None:
+        c = self.view.canvas.coords(stubs[end])
+        if len(c) >= 4:
+          ends.append((end, c[0], c[1]) if first else (end, c[-2], c[-1]))
     r = self.TERMINAL_HIT_RADIUS
     for end, ex, ey in ends:
       if abs(x - ex) <= r and abs(y - ey) <= r:
@@ -817,6 +942,8 @@ class VRelation(VObject, AGRelation):
     Only objects of the same kind as the other end are offered: relations
     connect either two nodes or two relations. For an isa link, the new
     parent (dst) must also be a type, since individuals can't have children.
+    Dropping the line on empty space clears the end instead (the relation then
+    inherits its type's), except for an isa link, which needs both ends.
     '''
     assert end in ("src", "dst")
     other = self.dst if end == "src" else self.src
@@ -830,9 +957,15 @@ class VRelation(VObject, AGRelation):
         self.view.context.reconnect(self.modelObject, source=sel.modelObject)
       else:
         self.view.context.reconnect(self.modelObject, destination=sel.modelObject)
+    def cleared(_origin:VObject) -> None: # dropped on empty space: the relation no longer has this end of its own
+      if end == "src":
+        self.view.context.reconnect(self.modelObject, clear_source=True)
+      else:
+        self.view.context.reconnect(self.modelObject, clear_destination=True)
     color = self.cache['vis/lineColor'] or "green"
     self.view.elasticLineChoice(self, chosen, filter=acceptable,
-                                arrowHeads=1 if end == "src" else 2, color=color)
+                                arrowHeads=1 if end == "src" else 2, color=color,
+                                onEmpty=None if isinstance(self.modelObject, IsaIndividual) else cleared) # isa links need both ends
 
   @override
   def update(self, subject, *topics:tuple[str, tuple[Any, ...]]) -> None:
@@ -843,10 +976,10 @@ class VRelation(VObject, AGRelation):
     '''
     rest = []
     for topic in topics:
-      if topic[0] in ("mod src", "mod dst"):
-        _old, new = topic[1]
-        vo = None if new is None else self.view.makeViewObjectForGraphObject(new)
-        if topic[0] == "mod src":
+      if topic[0] in ("mod src", "mod dst", "mod inherited src", "mod inherited dst"):
+        end = "src" if topic[0].endswith("src") else "dst"
+        vo = self._resolveEnd(end) # (its own end, or inherited, or dangling)
+        if end == "src":
           self.src = vo  # AGRelation's setter moves us between the nodes' relation lists
         else:
           self.dst = vo

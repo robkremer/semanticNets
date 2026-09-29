@@ -188,10 +188,10 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     '''
     for rel in self._outgoing:
       if filtr(rel):
-        yield rel, rel._dst if localOnly else rel.dst
+        yield rel, rel.localDst if localOnly else rel.dst
     for rel in self._incoming:
       if filtr(rel) and rel.isSymmetric():
-        yield rel, rel._src if localOnly else rel.src
+        yield rel, rel.localSrc if localOnly else rel.src
 
   def _getIncoming(self, filtr:Callable[[Relation], bool]=lambda _: True, 
                    localOnly:bool=False) -> Generator[tuple[Relation, GraphObject|None]]:
@@ -201,10 +201,10 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     '''
     for rel in self._incoming:
       if filtr(rel):
-        yield rel, rel._src if localOnly else rel.src
+        yield rel, rel.localSrc if localOnly else rel.src
     for rel in self._outgoing:
       if filtr(rel) and rel.isSymmetric():
-        yield rel, rel._dst if localOnly else rel.dst
+        yield rel, rel.localDst if localOnly else rel.dst
         
   # def assertToStatusReport(self, cond:bool, msg:str, severity:str='E', actions:dict[str,Callable[[],None]]=dict()) -> None:
   #   '''
@@ -473,11 +473,54 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
       return []
     return [other for _rel,other in self._getIncoming(lambda r: isinstance(r, IsaIndividual)) if other is not None]    
 
+  def _inferredRelated(self, rel:Relation|None, outgoing:bool) -> list[tuple[Relation,GraphObject]]:
+    '''
+    What the model's last "reason" (see *sn.model.reasoner.reasoningFor()*)
+    says this object is related to (*outgoing*) or from, as (relation, other)
+    pairs:
+
+      - with *rel* (a relation type): (rel, other) for everything related
+        under it, asserted or inferred;
+      - without: (relation type, other) for each relation that was inferred or
+        inherited -- ie: not asserted -- since there's no individual Relation
+        for it.
+
+    [] if there are no reasoning results, or *rel* isn't a relation type.
+    '''
+    from sn.model.reasoner import reasoningFor
+    reasoning = reasoningFor(self.model)
+    if reasoning is None:
+      return []
+    if rel is not None:
+      if not rel.isType():
+        return []
+      others = reasoning.related(self, rel) if outgoing else reasoning.relatedFrom(self, rel)
+      return [(rel, o) for o in others]
+    if outgoing:
+      return [(t, d) for t, s, d in reasoning.newFacts() if s is self]
+    return [(t, s) for t, s, d in reasoning.newFacts() if d is self]
+
+  @staticmethod
+  def _addNew(pairs:list[tuple[Relation,GraphObject]], more:list[tuple[Relation,GraphObject]], byObjectOnly:bool) -> None:
+    'Append the pairs in *more* not already in *pairs* (by identity: of the object, or of both).'
+    have = {id(o) for _, o in pairs} if byObjectOnly else {(id(r), id(o)) for r, o in pairs}
+    for r, o in more:
+      key = id(o) if byObjectOnly else (id(r), id(o))
+      if key not in have:
+        have.add(key)
+        pairs.append((r, o))
+
   @overload
-  def getRelatedTo(self, *, _seen:set[int]|None=None)                         -> list[tuple[Relation,GraphObject]]: ...
+  def getRelatedTo(self, *, _seen:set[int]|None=None, inferred:bool=True)                         -> list[tuple[Relation,GraphObject]]: ...
   @overload
-  def getRelatedTo(self, rel:Relation|None=None, *, _seen:set[int]|None=None) -> list[GraphObject]: ...
-  def getRelatedTo(self, rel:Relation|None=None, *, _seen:set[int]|None=None) -> list[GraphObject]|list[tuple[Relation,GraphObject]]:
+  def getRelatedTo(self, rel:Relation|None=None, *, _seen:set[int]|None=None, inferred:bool=True) -> list[GraphObject]: ...
+  def getRelatedTo(self, rel:Relation|None=None, *, _seen:set[int]|None=None, inferred:bool=True) -> list[GraphObject]|list[tuple[Relation,GraphObject]]:
+    '''
+    :param rel: If given, only relations that isa *rel*, and just the related
+      objects are returned; otherwise (relation, object) pairs.
+    :param inferred: [default=True] Also include what the model's last "reason"
+      inferred (see *_inferredRelated()*).
+    '''
     # def isSeen(obj):
     #   if obj in seen:
     #     return True
@@ -496,9 +539,11 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
         #seen.add(other.id)
         if r.isTransitive() and other is not self:
           # add in any transitives, filtering out anything we already refer to
-          ret += [ret2 for ret2 in other.getRelatedTo(_seen=seen) if filtr(r)]
+          ret += [ret2 for ret2 in other.getRelatedTo(_seen=seen, inferred=False) if filtr(r)]
         if r.isReflexive() and other is not self and self not in seen:
           ret.append((r, self))
+    if inferred and _seen is None: # the outermost call only
+      self._addNew(ret, self._inferredRelated(rel, outgoing=True), byObjectOnly=rel is not None)
     if len(ret) == 0:
       return []
       
@@ -520,13 +565,19 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     if obj is None:
       return self.getRelatedTo(rel)
     else:
-      return obj in self.getRelatedTo(rel, _seen=set())
+      return obj in self.getRelatedTo(rel)
     
   @overload
-  def getRelatedFrom(self)                         -> list[tuple[Relation,GraphObject]]: ...
+  def getRelatedFrom(self, *, inferred:bool=True)                         -> list[tuple[Relation,GraphObject]]: ...
   @overload
-  def getRelatedFrom(self, rel:Relation|None=None) -> list[GraphObject]: ...
-  def getRelatedFrom(self, rel:Relation|None=None) -> list[GraphObject]|list[tuple[Relation,GraphObject]]:
+  def getRelatedFrom(self, rel:Relation|None=None, *, inferred:bool=True) -> list[GraphObject]: ...
+  def getRelatedFrom(self, rel:Relation|None=None, *, inferred:bool=True) -> list[GraphObject]|list[tuple[Relation,GraphObject]]:
+    '''
+    :param rel: If given, only relations that isa *rel*, and just the related
+      objects are returned; otherwise (relation, object) pairs.
+    :param inferred: [default=True] Also include what the model's last "reason"
+      inferred (see *_inferredRelated()*).
+    '''
     # if rel is not None:
     #   return [other for _rel,other in self._getIncoming(lambda r, typ=rel: r.isa(typ)) if other is not None] #type: ignore[misc]
     # else:
@@ -540,13 +591,15 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
         seen = [] if ret == [] else list(list(zip(*ret))[1])
         if r.isTransitive() and other is not self:
           # add in any transitives, filtering out anything we already refer to
-          ret += [ret2 for ret2 in other.getRelatedFrom() if ret2[1] not in seen and filtr(r)]
+          ret += [ret2 for ret2 in other.getRelatedFrom(inferred=False) if ret2[1] not in seen and filtr(r)]
         # if r.isReflexive() and other is not self and self not in seen:
         #   ret.append((r, self))
         # if r.isSymmetric():
         #   pass
+    if inferred:
+      self._addNew(ret, self._inferredRelated(rel, outgoing=False), byObjectOnly=rel is not None)
     if rel is not None: # and not _returnPairs:
-      return list(list(zip(*ret))[1]) # return only the objects
+      return [o for _, o in ret] # return only the objects
     return ret # return the rel/object pairs
 
 
@@ -599,11 +652,28 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     return self.tostring()
   
   @override
-  def tostring(self, relativeTo:Model|None=None) -> str:
-    name = self.getLocal("name", None)
-    if name is None:
-      name = f'{UP_ARROW}"{self.get("name")}"'
-    return f'{self.__class__.__name__}({name}, {self.getPRef().tostring(relativeTo)}, <{"individual" if self.isIndividual() else "type"}{", <inferred>" if self.inferred else ""}>)'
+  def tostring(self, relativeTo:Model|None=None, format="type", inheritMark:str|None=UP_ARROW) -> str:
+    localname = self.getLocal("name", None)
+    inhMark:str = inheritMark if (inheritMark is not None and localname is None) else ""
+
+    # add quotes to the name if necessary
+    name:str = str(self.get("name") if localname is None else localname)
+    if name == "":
+      name = '""'
+    elif not name.replace("-","_").isidentifier():
+      name = f'"{name}"'
+    
+    match format:
+      case "minURLnamed":
+        return f'{self.getPRef().tostring(relativeTo)}?name={name}'
+      case "friendly":
+        other = self.getPRef().tostring(relativeTo)
+        if other.startswith("#"):
+          return f'{name}{other}'
+        else:
+          return f'{name}#{other}'
+      case _:
+        return f'{self.__class__.__name__}({inhMark}{name}, {self.getPRef().tostring(relativeTo)}, <{"individual" if self.isIndividual() else "type"}{", <inferred>" if self.inferred else ""}>)'
   
   @override
   def __hash__(self): #type: ignore[override]
@@ -890,8 +960,11 @@ class Collection(Node):
       return [self.model.COLLECTION]
     
   @override
-  def tostring(self, relativeTo:Model | None=None) -> str:
-    return f'{super().tostring(relativeTo)[:-1]}, {self.countMembers()} members)'
+  def tostring(self, relativeTo:Model | None=None, format="type", inheritMark:str|None=UP_ARROW) -> str:
+    ret = super().tostring(relativeTo, format, inheritMark)
+    if format in ("friendly", "minURLnamed"): # names only
+      return ret
+    return f'{ret[:-1]}, {self.countMembers()} members)'
   
   @override
   def torepr(self, relativeTo:Model | None=None) -> str:
@@ -1022,10 +1095,10 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
             postconSetters=ret.postconSetters,
             finalSetters=ret.finalSetters+
                           [PropertyInfo("src", str, 
-                                        lambda slf: GORef.formatForURL(slf._src, slf.db), #type: ignore[attr-defined]
+                                        lambda slf: GORef.formatForURL(slf.localSrc, slf.db), #type: ignore[attr-defined]
                                         lambda slf, source: connectSrc(slf, source, isSource=True)),
                            PropertyInfo("dst", str, 
-                                        lambda slf: GORef.formatForURL(slf._dst, slf.db), #type: ignore[attr-defined]
+                                        lambda slf: GORef.formatForURL(slf.localDst, slf.db), #type: ignore[attr-defined]
                                         lambda slf, source: connectSrc(slf, source, isSource=False))]
             )
     # return InstantiationInfo(
@@ -1042,8 +1115,8 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
     :return: The **calculated* destination of this relation; ie: if this relation
       does not have a specific destination, look it up in the ISA hierarchy.
     '''
-    if localOnly or self._dst is not None:
-      return self._dst
+    if localOnly or self.localDst is not None:
+      return self.localDst
     else:
       obj:GraphObject
       supers = self.getSupers()
@@ -1052,13 +1125,13 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
           self.assertToStatusReport(False, f'Expected type Relation for supertype, got type {type(obj)}. Probably a changed parent model.', 'E', 
             actions={"delete this relation": lambda: [self._disconnect(), self.view.setDirty(), None][-1]})
           return None
-        if obj._dst is not None:
-          return obj._dst
+        if obj.localDst is not None:
+          return obj.localDst
     return None
   
   @dst.setter
   def dst(self, obj:GraphObject|None):
-    old = self._dst
+    old = self.localDst
     AGRelation.dst.fset(self, obj) #type: ignore[attr-defined] # @undefinedvariable
     if old is not obj:
       self._endpointChanged("dst", old, obj)
@@ -1074,8 +1147,8 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
     :return: The **calculated* source of this relation; ie: if this relation
       does not have a specific source, look it up in the ISA hierarchy.
     '''
-    if localOnly or self._src is not None:
-      return self._src
+    if localOnly or self.localSrc is not None:
+      return self.localSrc
     else:
       obj:GraphObject
       supers = self.getSupers()
@@ -1084,13 +1157,13 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
           self.assertToStatusReport(False, f'Expected type Relation for supertype, got type {type(obj)}. Probably a changed parent model.', 'E', 
             actions={"delete this relation": lambda: [self._disconnect(), self.view.setDirty(), None][-1]})
           return None
-        if obj._src is not None:
-          return obj._src
+        if obj.localSrc is not None:
+          return obj.localSrc
     return None
   
   @src.setter
   def src(self, obj:GraphObject|None):
-    old = self._src
+    old = self.localSrc
     AGRelation.src.fset(self, obj) #type: ignore[attr-defined] # @undefinedvariable
     if old is not obj:
       self._endpointChanged("src", old, obj)
@@ -1104,21 +1177,97 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
     '''
     Called when the *src* or *dst* (per *end*) setter changes the local
     endpoint from *old* to *new*: tells observers (eg: the VRelations
-    showing this relation) with a "mod src" or "mod dst" topic.
+    showing this relation) with a "mod src" or "mod dst" topic -- and, for a
+    relation type, tells the relations below it that inherit that end (see
+    *_inheritedEndpointChanged()*).
     '''
     self.notify((f"mod {end}", (old, new)))
+    if self.isType():
+      self._notifyInheritors(end)
+
+  def _notifyInheritors(self, end:str) -> None:
+    '''
+    Tell each relation directly below this one (subtype or individual) that
+    has no *end* of its own -- so inherits it -- that it changed, and so on
+    down. One with its own *end* stops the chain: nothing below it inherits
+    from here.
+    '''
+    for child in self.getChildren():
+      if isinstance(child, Relation) and (child.localSrc if end == "src" else child.localDst) is None:
+        child._inheritedEndpointChanged(end)
+
+  def _inheritedEndpointChanged(self, end:str) -> None:
+    '''
+    The *end* ("src" or "dst") this relation inherits changed: observers are
+    told with a "mod inherited src" or "mod inherited dst" topic.
+    '''
+    self.notify((f"mod inherited {end}", ()))
+    self._notifyInheritors(end)
+
+  def _requireType(self, name:str) -> None:
+    if self.isIndividual():
+      raise TypeError(f'{name} applies to relation types; use src/dst on individual relations ({self.tostring(format="friendly")}).')
+
+  @property
+  def domain(self) -> GraphObject|None:
+    '''
+    The domain (signature) of a relation type: what the src of its relations
+    must be (isa). Sugar for *src* -- so it's the effective value, inherited
+    from a supertype if not set locally. Relation types only: raises
+    *TypeError* for an individual relation.
+    '''
+    self._requireType("domain")
+    return self.src
+
+  @domain.setter
+  def domain(self, obj:GraphObject|None) -> None:
+    self._requireType("domain")
+    self.src = obj # (through the setter, so observers are told)
+
+  @property
+  def range(self) -> GraphObject|None:
+    '''
+    The range (signature) of a relation type: what the dst of its relations
+    must be (isa). Sugar for *dst* -- see *domain*. Relation types only:
+    raises *TypeError* for an individual relation.
+    '''
+    self._requireType("range")
+    return self.dst
+
+  @range.setter
+  def range(self, obj:GraphObject|None) -> None:
+    self._requireType("range")
+    self.dst = obj # (through the setter, so observers are told)
+
+  @property
+  def localSrc(self) -> GraphObject|None:
+    '''
+    The source set on this relation itself, or None -- unlike *src*, never
+    inherited from a supertype. Read-only: set it through *src* (so observers
+    are told).
+    '''
+    return self._src
+
+  @property
+  def localDst(self) -> GraphObject|None:
+    '''
+    The destination set on this relation itself, or None -- unlike *dst*, never
+    inherited from a supertype. Read-only: set it through *dst* (so observers
+    are told).
+    '''
+    return self._dst
 
   def hasLocalDst(self) -> bool:
     '''
     :returns: True iff and only if this Relation has a locally defined destination.
     '''
-    return self._dst is not None
+    return self.localDst is not None
     
   def hasLocalSrc(self) -> bool:
     '''
     :returns: True iff and only if this Relation has a locally defined source.
     '''
-    return self._src is not None
+    return self.localSrc is not None
     
   def _legalDst(self, obj:GraphObject) -> bool:
     #TODO: need to fill out _legalDst
@@ -1130,10 +1279,10 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
   
   @override
   def validate(self) -> list[str]:
-    if self._src is not None:
-      self.assertToStatusReport(self in self._src._outgoing, f'src end is not registered with src object, {self._src}', 'E')
-    if self._dst is not None:
-      self.assertToStatusReport(self in self._dst._incoming, f'dst end is not registered with dst object, {self._dst}', 'E')
+    if self.localSrc is not None:
+      self.assertToStatusReport(self in self.localSrc._outgoing, f'src end is not registered with src object, {self.localSrc}', 'E')
+    if self.localDst is not None:
+      self.assertToStatusReport(self in self.localDst._incoming, f'dst end is not registered with dst object, {self.localDst}', 'E')
     return self.statusReport()
     
   def _hasRelationalProperty(self, prop:str) -> bool:
@@ -1188,14 +1337,16 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
         return []
 
   @override
-  def tostring(self, relativeTo:Model|None=None) -> str:
+  def tostring(self, relativeTo:Model|None=None, format="type", inheritMark:str|None=UP_ARROW) -> str:
     def makeStr(o:GraphObject|None, inherited:bool) -> str:
       if o is None:
         return 'None'
       return f'{UP_ARROW if inherited else ""}{o.getPRef().tostring(self.db if relativeTo is None else relativeTo)}'
-    ret = super().tostring(relativeTo=relativeTo)
+    ret = super().tostring(relativeTo=relativeTo, format=format, inheritMark=inheritMark)
+    if format in ("friendly", "minURLnamed"): # names only
+      return ret
     # return f'{ret[:-1]}, {makeStr(self.src, self._src is None)} {RIGHT_ARROW} {makeStr(self.dst, self._src is None)}{ret[-1]}'
-    return f'{ret[:-1]}, {makeStr(self.src, self._src is None)} {makeRelationArrow(self)} {makeStr(self.dst, self._dst is None)}{ret[-1]}'
+    return f'{ret[:-1]}, {makeStr(self.src, self.localSrc is None)} {makeRelationArrow(self)} {makeStr(self.dst, self.localDst is None)}{ret[-1]}'
     #return f'{ret[:-1]}, {UP_ARROW if self._src is None else self._src._id} {"makeRelationArrow(self)"} {UP_ARROW if self._dst is None else self._dst._id}{ret[-1]}'
   
   def __hash__(self): #type: ignore[override]
@@ -1220,17 +1371,17 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
     :type destination: GraphObject
     '''
     if source is not None:
-      if self._src is not source: # don't do anything if it's already done.
-        if self._src is not None:
-          delOne(self._src._outgoing, self)
+      if self.localSrc is not source: # don't do anything if it's already done.
+        if self.localSrc is not None:
+          delOne(self.localSrc._outgoing, self)
         self._src = source
         source._outgoing.append(self)
         assert self in source._outgoing
         self.setDirty()
     if destination is not None:
-      if self._dst is not destination: # don't do anything if it's already done.
-        if self._dst is not None:
-          delOne(self._dst._incoming, self)
+      if self.localDst is not destination: # don't do anything if it's already done.
+        if self.localDst is not None:
+          delOne(self.localDst._incoming, self)
         self._dst = destination
         destination._incoming.append(self)
         assert self in destination._incoming
@@ -1301,15 +1452,15 @@ class IsaIndividual(Relation):
   @override
   def _endpointChanged(self, end:str, old:GraphObject|None, new:GraphObject|None) -> None:
     # the parents of our src (old and new, if it's the src that moved) have changed
-    for obj in ((old, new) if end == "src" else (self._src,)):
+    for obj in ((old, new) if end == "src" else (self.localSrc,)):
       if obj is not None:
         obj.retract()
     super()._endpointChanged(end, old, new)
 
   @override
   def connect(self, source:Optional[GraphObject]=None, destination:Optional[GraphObject]=None):
-    retract = source      is not None and source      is not self._src or \
-              destination is not None and destination is not self._dst  
+    retract = source      is not None and source      is not self.localSrc or \
+              destination is not None and destination is not self.localDst  
     super().connect(source, destination)
     if retract: #TODO: could be a lot more efficient by just fixing the parentCache's.
       self.retract()

@@ -16,7 +16,8 @@ A reasoner engine subclasses :py:class:`Reasoner` (see
   ``name(O,S)``               GraphObject.name
   ``const(K,O)``              well-known objects: top, relation, isa, node, ...
   ``parent(X,P)``             GraphObject.getParents() (incl. implicit defaults)
-  ``lsrc(R,C)``, ``ldst``     locally set relation endpoints (Relation._src/_dst)
+  ``lsrc(R,C)``, ``ldst``     locally set relation endpoints (Relation.localSrc/.localDst)
+  ``domain(T,C)``, ``range``  the signature of relation type T (Relation.domain/.range)
   ``src(R,S)``, ``dst``       effective endpoints (Relation.src/.dst, inherited)
   ``link(R,S,D)``             individual, non-isa relation R with both endpoints
   ``prop(T,P)``               relation type T is tagged with P (reflexive,
@@ -79,8 +80,8 @@ PROPERTIES = ("reflexive", "irreflexive", "symmetric", "asymmetric", "transitive
 "The relational properties, which are tags on specific relations."
 
 _MESSAGES:dict[str,str] = {
-  "domain":                "source {2} of {0} is not a {3} (required by {1})",
-  "range":                 "destination {2} of {0} is not a {3} (required by {1})",
+  "domain":                "{2}, the source of {0}, is not in the domain of {1} ({3})",
+  "range":                 "{2}, the destination of {0}, is not in the range of {1} ({3})",
   "isa_cycle":             "{0} is in an isa cycle through {1}",
   "isa_individual_parent": "{0} isa individual {1}",
   "redundant_parent":      "{0} has redundant parent {1} (already implied by {2})",
@@ -117,8 +118,13 @@ class Violation:
 
   @property
   def message(self) -> str:
+    'The message, with objects named relative to the subject\'s model.'
+    return self.messageIn(self.subject.model)
+
+  def messageIn(self, relativeTo:Model|None) -> str:
+    'The message, with objects named relative to *relativeTo* (see *GraphObject.tostring()*).'
     template = _MESSAGES.get(self.code, "{0}: " + self.code + " {1}")
-    return template.format(*(_label(x) for x in (self.subject,) + self.args))
+    return template.format(*(_label(x, relativeTo) for x in (self.subject,) + self.args))
 
   def __str__(self) -> str:
     return f'{self.severity[0].upper()}: {self.message}'
@@ -141,8 +147,69 @@ class Inferences:
   isa:set[tuple[GraphObject, GraphObject]] = field(default_factory=set)
   "The reflexive-transitive isa closure."
 
+  def _index(self) -> tuple[dict, dict]:
+    '''
+    ({(id(src), id(type)): [dst...]}, {(id(dst), id(type)): [src...]}) over
+    *holds*, built on first use: results don't change once made.
+    '''
+    idx = self.__dict__.get("_idx")
+    if idx is None:
+      fwd:dict[tuple[int, int], list[GraphObject]] = {}
+      back:dict[tuple[int, int], list[GraphObject]] = {}
+      for t, s, d in self.holds:
+        fwd.setdefault((id(s), id(t)), []).append(d)
+        back.setdefault((id(d), id(t)), []).append(s)
+      idx = self.__dict__["_idx"] = (fwd, back)
+    return idx
+
   def related(self, src:GraphObject, relType:Relation) -> list[GraphObject]:
-    return [d for t,s,d in self.holds if s is src and t is relType]
+    'Everything *src* is related to under *relType* (asserted or inferred).'
+    return list(self._index()[0].get((id(src), id(relType)), []))
+
+  def relatedFrom(self, dst:GraphObject, relType:Relation) -> list[GraphObject]:
+    'Everything related to *dst* under *relType* (asserted or inferred).'
+    return list(self._index()[1].get((id(dst), id(relType)), []))
+
+  def newFacts(self) -> list[tuple[Relation, GraphObject, GraphObject]]:
+    'The inferred and inherited relation triples (each once) -- ie: not asserted.'
+    seen:set[tuple[int, int, int]] = set()
+    ret = []
+    for t, s, d in self.inferred + self.inherited:
+      if (id(t), id(s), id(d)) not in seen:
+        seen.add((id(t), id(s), id(d)))
+        ret.append((t, s, d))
+    return ret
+
+  def violationsFor(self, subject:GraphObject) -> list[Violation]:
+    return [v for v in self.violations if v.subject is subject]
+
+  def report(self, model:Model|None=None) -> str:
+    '''
+    :param model: If given, leave out findings that only involve system
+      objects (those of the always-in-memory "sn" model) -- noise to a user.
+    :returns: A readable summary: violations, new relations (inferred and
+      inherited) and suggested classifications.
+    '''
+    def relevant(*objs:Any) -> bool:
+      return model is None or any(isinstance(o, GraphObject) and not o.isSystemObject() for o in objs)
+    def triple(t:Relation, s:GraphObject, d:GraphObject) -> str:
+      return f'  {_label(s, model)} {relationArrow(t)} {_label(d, model)}'
+    lines:list[str] = []
+    violations = [v for v in self.violations if relevant(v.subject, *v.args)]
+    errors = sum(v.severity == "error" for v in violations)
+    lines.append(f'Violations: {errors} error(s), {len(violations) - errors} warning(s)')
+    lines += [f'  {v.severity[0].upper()}: {v.messageIn(model)}' for v in sorted(violations, key=lambda v: (v.severity != "error", v.code))]
+    inherited = {(id(t), id(s), id(d)) for t, s, d in self.inherited}
+    inferred = [(t, s, d) for t, s, d in self.inferred if relevant(s, d) and (id(t), id(s), id(d)) not in inherited]
+    lines.append(f'Inferred relations: {len(inferred)}')
+    lines += [triple(*x) for x in inferred]
+    inh = [(t, s, d) for t, s, d in self.inherited if relevant(s, d)]
+    lines.append(f'Inherited relations: {len(inh)}')
+    lines += [triple(*x) for x in inh]
+    cls = [(x, c) for x, c in self.classify if relevant(x)]
+    lines.append(f'Suggested classifications: {len(cls)}')
+    lines += [f'  {_label(x, model)} -isa-> {_label(c, model)}' for x, c in cls]
+    return "\n".join(lines)
 
 class Reasoner(ABC):
   '''
@@ -289,10 +356,10 @@ class Reasoner(ABC):
 
   def _relationFacts(self, rel:Relation, ref) -> list[Fact]:
     out:list[Fact] = []
-    if rel._src is not None:
-      out.append(("lsrc", (rel, ref(rel._src))))
-    if rel._dst is not None:
-      out.append(("ldst", (rel, ref(rel._dst))))
+    if rel.localSrc is not None:
+      out.append(("lsrc", (rel, ref(rel.localSrc))))
+    if rel.localDst is not None:
+      out.append(("ldst", (rel, ref(rel.localDst))))
     src, dst = rel.src, rel.dst
     if src is not None:
       out.append(("src", (rel, ref(src))))
@@ -301,6 +368,11 @@ class Reasoner(ABC):
     if rel.isIndividual() and not isinstance(rel, IsaIndividual) \
         and src is not None and dst is not None:
       out.append(("link", (rel, src, dst)))
+    if rel.isType(): # its signature
+      if rel.domain is not None:
+        out.append(("domain", (rel, ref(rel.domain))))
+      if rel.range is not None:
+        out.append(("range", (rel, ref(rel.range))))
     # Relational properties are LOCAL tags on relation types -- the key's
     # presence is the tag -- and are never inherited (brother isa sibling, but
     # brother isn't symmetric). See Relation._hasRelationalProperty().
@@ -309,6 +381,31 @@ class Reasoner(ABC):
         if dict.__contains__(rel, prop):
           out.append(("prop", (rel, Sym(prop))))
     return out
+
+# ── Shared results ────────────────────────────────────────────────────────
+
+def reason(model:Model, engine:str="clingo") -> Inferences:
+  '''
+  Run the reasoner over *model* and keep the results on the model (see
+  *reasoningFor()*), where everything using the model -- the command line,
+  every view -- finds the same ones. Observers of the model are told with a
+  ("reasoned", (inferences,)) topic. The results aren't saved with the model,
+  and aren't updated as it's edited: they're a snapshot until the next
+  *reason()* or *clearReasoning()*.
+  '''
+  ret = Reasoner.create(model, engine).run()
+  model.reasoning = ret #type: ignore[attr-defined]
+  model.notify(("reasoned", (ret,)))
+  return ret
+
+def clearReasoning(model:Model) -> None:
+  'Forget *model*\'s reasoning results; observers are told with a ("reasoning cleared", ()) topic.'
+  model.reasoning = None #type: ignore[attr-defined]
+  model.notify(("reasoning cleared", ()))
+
+def reasoningFor(model:Model|None) -> Inferences|None:
+  'The results of the last *reason()* over *model*, or None.'
+  return getattr(model, "reasoning", None)
 
 def _kind(obj:GraphObject) -> str:
   if isinstance(obj, IsaIndividual):
@@ -319,7 +416,12 @@ def _kind(obj:GraphObject) -> str:
     return "node"
   return "top"
 
-def _label(x:Any) -> str:
+def _label(x:Any, relativeTo:Model|None=None) -> str:
+  'How an object is named in messages: see *GraphObject.tostring()*\'s "friendly" format.'
   if isinstance(x, GraphObject):
-    return f'"{x.name}"({x.id})'
+    return x.tostring(relativeTo=relativeTo, format="friendly")
   return str(x)
+
+def relationArrow(relType:Relation) -> str:
+  'A relation type as an arrow, as in the conceptual graphs literature: -name->'
+  return f'-{relType.name}->'
