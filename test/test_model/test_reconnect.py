@@ -84,6 +84,22 @@ class Test(unittest.TestCase):
     cmd.undo()
     self.assertEqual(x.getParents(), [t1])
 
+  def test0500clearAnEnd(self):
+    owns = Relation(self.m, [self.m.RELATION], self.a, self.c, name="ownsX")   # a type: range c
+    rel = Relation(self.m, [owns], self.a, self.b, individual=True)
+    cmd = ModelContext._Reconnect(rel, clear_destination=True)
+    cmd.do()
+    self.assertIsNone(rel.localDst)
+    self.assertIs(rel.dst, self.c)                     # now inherited from its type
+    self.assertNotIn(rel, self.b._incoming)
+    cmd.undo()
+    self.assertIs(rel.localDst, self.b)
+    with self.assertRaises(ValueError):                # set and clear the same end
+      ModelContext._Reconnect(rel, destination=self.c, clear_destination=True)
+    link = next(r for r, _ in self.a._getOutgoing(lambda r: isinstance(r, IsaIndividual)))
+    with self.assertRaises(ValueError):                # isa links need both ends
+      ModelContext._Reconnect(link, clear_destination=True)
+
   def test0400notARelation(self):
     with self.assertRaises(TypeError):
       ModelContext._Reconnect(self.a, destination=self.b)

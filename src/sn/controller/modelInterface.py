@@ -157,6 +157,60 @@ class ModelContext(CommandContext):
     return ret
 
 
+  def reason(self, /, model:Model|None=None, engine:str="clingo") -> str:
+    '''
+    Run the reasoner over a model: report rule violations, relations inferred
+    or inherited down the isa hierarchy, and suggested classifications. The
+    results are kept with the model (not saved), so views of it show them
+    too, until the next "reason" or "clear reasoning".
+
+    :param model: The model to reason over. By default, the default model.
+    :type model: Model
+    :param engine: The reasoner engine (see *sn.model.reasoner.Reasoner.create()*).
+    :type engine: str
+    '''
+    from sn.model.reasoner import reason
+    if model is None:
+      model = self.defaults["model"]
+    assert model is not None
+    return reason(model, engine).report(model) # kept on the model: views show them too
+
+  def clear_reasoning(self, /, model:Model|None=None) -> str:
+    '''
+    Forget the results of the last "reason" over a model (in every view of it, too).
+
+    :param model: The model. By default, the default model.
+    :type model: Model
+    '''
+    from sn.model.reasoner import clearReasoning
+    if model is None:
+      model = self.defaults["model"]
+    assert model is not None
+    clearReasoning(model)
+    return f'Cleared the reasoning results for {model.name}.'
+
+  def ask_reasoner(self, query:str, /, model:Model|None=None, engine:str="clingo") -> str:
+    '''
+    Ask the reasoner a question in its own query language -- for the clingo
+    engine, ASP rules defining an "ans" predicate over the reasoner's facts
+    and results, eg: ans(X) :- holds(T,F,X), name(T,"owns"), name(F,"fred").
+
+    :param query: The query.
+    :type query: str
+    :param model: The model to reason over. By default, the default model.
+    :type model: Model
+    :param engine: The reasoner engine (see *sn.model.reasoner.Reasoner.create()*).
+    :type engine: str
+    '''
+    from sn.model.reasoner import Reasoner
+    if model is None:
+      model = self.defaults["model"]
+    assert model is not None
+    rows = Reasoner.create(model, engine).query(query)
+    def cell(v:Any) -> str:
+      return v.tostring(relativeTo=model, format="friendly") if isinstance(v, GraphObject) else str(v)
+    return "\n".join(", ".join(cell(v) for v in row) for row in rows) if rows else "(no answers)"
+
   def show(self, object:GraphObject|Model|None=None, /, model:Model|None=None, detail:bool=False, format:str|None=None) -> str:
     '''
     Prints the string representation of the object to the logger.
@@ -204,10 +258,26 @@ class ModelContext(CommandContext):
         raise ValueError(f'show(): unexpected format "{format}". Choose between "repr", "str", "XML" or "JSON".', )
         
     if detail:
-      return object.torepr(relativeTo=model)
+      return object.torepr(relativeTo=model) + self._inferredDetail(object, model)
     else:
       return object.tostring(relativeTo=model)
-    
+
+  def _inferredDetail(self, object:GraphObject|Model, model:Model) -> str:
+    '''
+    For "show --detail": the relations the last "reason" over the model inferred
+    or found inherited (see *sn.model.reasoner.reason()*) -- all of them for a
+    model, or those *object* takes part in -- or "" if there are no results.
+    '''
+    from sn.model.reasoner import reasoningFor, relationArrow
+    reasoning = reasoningFor(model if isinstance(object, GraphObject) else object)
+    if reasoning is None:
+      return ""
+    facts = [(t, s, d) for t, s, d in reasoning.newFacts()
+             if isinstance(object, Model) or s is object or d is object]
+    name = lambda o: o.tostring(relativeTo=model, format="friendly")
+    lines = [f'  {name(s)} {relationArrow(t)} {name(d)}' for t, s, d in facts]
+    return f'\nInferred by the last "reason" (not saved): {len(facts)}' + "".join("\n" + l for l in lines)
+
   def save(self, /, model:Optional[Model]=None, url:Optional[str]=None, overwrite:bool=False, format:str="XML"):
     '''
     Save a model to a file or url.
@@ -679,7 +749,7 @@ class ModelContext(CommandContext):
         assert self.obj2
         if self.obj1.isType(): # modify the relations type's src and dst
           if self.obj2.isType():
-            self.oldSrcDst = (self.rel._src, self.rel._dst)
+            self.oldSrcDst = (self.rel.localSrc, self.rel.localDst)
             self.artifact = self.rel
             self.rel.connect(self.obj1, self.obj2)
             return self.artifact
@@ -873,7 +943,8 @@ class ModelContext(CommandContext):
     def __str__(self):
       return f'{super().__str__()} {self.object.getPRef().tostring()}'
 
-  def reconnect(self, relation:Relation, /, source:GraphObject|None=None, destination:GraphObject|None=None):
+  def reconnect(self, relation:Relation, /, source:GraphObject|None=None, destination:GraphObject|None=None,
+                clear_source:bool=False, clear_destination:bool=False):
     '''
     Change the source and/or destination of an existing *Relation*.
 
@@ -883,35 +954,47 @@ class ModelContext(CommandContext):
     :type source: GraphObject
     :param destination: The new destination, or None to leave it as it is.
     :type destination: GraphObject
+    :param clear_source: Remove the relation's own source, so it inherits its
+      type's (an unterminated relation). Not with *source*.
+    :type clear_source: bool
+    :param clear_destination: Likewise for the destination. Not with *destination*.
+    :type clear_destination: bool
     '''
     pass
 
   class _Reconnect(Command):
-    def __init__(self, relation:Relation, /, source:GraphObject|None=None, destination:GraphObject|None=None):
+    def __init__(self, relation:Relation, /, source:GraphObject|None=None, destination:GraphObject|None=None,
+                 clear_source:bool=False, clear_destination:bool=False):
       super().__init__("reconnect")
       if not isinstance(relation, Relation):
         raise TypeError(f'reconnect: expected a Relation, got {type(relation).__name__}.')
+      if clear_source and source is not None or clear_destination and destination is not None:
+        raise ValueError('reconnect: an end can be set or cleared, not both.')
+      if (clear_source or clear_destination) and isinstance(relation, IsaIndividual):
+        raise ValueError('reconnect: an isa link needs both ends; they can be changed but not cleared.')
       self.relation:Relation = relation
       self.source = source
       self.destination = destination
+      self.clearSource:bool = clear_source
+      self.clearDestination:bool = clear_destination
       # the LOCAL endpoints (None if inherited), so undo() restores exactly those
-      self.oldSource:GraphObject|None = relation._src
-      self.oldDestination:GraphObject|None = relation._dst
+      self.oldSource:GraphObject|None = relation.localSrc
+      self.oldDestination:GraphObject|None = relation.localDst
 
     @override
     def do(self):
       super().do()
-      if self.source is not None:
+      if self.source is not None or self.clearSource:
         self.relation.src = self.source
-      if self.destination is not None:
+      if self.destination is not None or self.clearDestination:
         self.relation.dst = self.destination
 
     @override
     def undo(self):
       super().undo()
-      if self.source is not None:
+      if self.source is not None or self.clearSource:
         self.relation.src = self.oldSource
-      if self.destination is not None:
+      if self.destination is not None or self.clearDestination:
         self.relation.dst = self.oldDestination
 
     @override

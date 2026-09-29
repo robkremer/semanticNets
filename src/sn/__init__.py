@@ -145,8 +145,14 @@ def checkSaveModified(obj, url:str, kind:str) -> None:
     e.g. "model" or "view".
   :type kind: str
   :rtype: None
+
+  If the environment variable SN_NO_SAVE_PROMPT is set (to anything), nothing
+  is asked and nothing is saved -- for automated runs, such as tests, which
+  would otherwise put a dialog on the screen for every modified model.
   '''
   from util.utils import askUser
+  if os.environ.get("SN_NO_SAVE_PROMPT"): # eg: automated test runs -- don't ask, don't save
+    return
   if not obj.writeLocked() and obj.isDirty():
     ans:str|None = askUser(f'Save modified {kind}?\n  {url}\n(Y/N):', f'Save modified {kind.capitalize()}?')
     if ans is not None and ans.upper() in ["Y", "YES", "T", "TRUE"]:

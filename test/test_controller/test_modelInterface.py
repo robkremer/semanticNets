@@ -90,7 +90,7 @@ class Test(unittest.TestCase):
     #print("-------")
     #printx('context.show("#1")')
     x = context.parser.parseLine("show 1 --d")
-    self.assertIn('GraphObject("top", sn:/sn.xml#1, <type>)', x)
+    self.assertIn('GraphObject(top, sn:/sn.xml#1, <type>)', x) # names that are identifiers aren't quoted
     
     # this are in /sn now.
     # self.assertIn(f"/{FILE2}#1", x)
@@ -155,8 +155,11 @@ class Test(unittest.TestCase):
     go:GraphObject = m["person"]
     assert isinstance(go, Node)
     person:Node = go
-    sibling = context.new_relation([m.TRANSITIVE, m.SYMMETRIC, m.IRREFLEXIVE], "sibling", individual=False, type=True, destination=m["person"], source=m["person"])
+    sibling = context.new_relation([m.RELATION], "sibling", individual=False, type=True, destination=m["person"], source=m["person"])
     self.assertIsInstance(sibling, Relation, f'Expected a type Node, got {type(sibling)}: "{sibling}".')
+    for tag in ("transitive", "symmetric", "irreflexive"): # relational properties are LOCAL tags on the type
+      context.set_attribute(sibling, tag, True, type="bool")
+    self.assertTrue(sibling.isSymmetric() and sibling.isTransitive() and sibling.isIrreflexive())
     alice = context.new_node(person, "alice", individual=True)
     self.assertIsInstance(alice, Node, f'Expected a type Node, got {type(alice)}: "{alice}".')
     bob = context.new_node(person, "bob", individual=True)
@@ -181,10 +184,9 @@ class Test(unittest.TestCase):
       
     person2 = check([m.NODE, "person2"], type=True)
     self.assertIs(context.query(["person2"]), person2)
-    sibling2 = check([m.SYMMETRIC, "sibling2"], type=True)
-    sibling2a = check([m.TRANSITIVE, sibling2])
-    check([m.IRREFLEXIVE, sibling2])
-    self.assertIs(sibling2, sibling2a)
+    sibling2 = check([m.RELATION, "sibling2"], type=True)
+    for tag in ("symmetric", "transitive", "irreflexive"): # relational properties are LOCAL tags on the type
+      context.set_attribute(sibling2, tag, True, type="bool")
     sibling2b = context.assert_([person2, sibling2, person2])
     self.assertIs(sibling2, sibling2b)
     alice2 = check([person2, "alice2"])
@@ -208,10 +210,10 @@ class Test(unittest.TestCase):
       
     person3 = check("node person3 --type")
     self.assertIs(context.parser.parseLine("? person3"), person3)
-    sibling3 = check("symmetric sibling3 --type")
-    sibling3a = check("transitive sibling3")
-    check("irreflexive sibling3")
-    self.assertIs(context.parser.parseLine("? sibling3"), sibling3a)
+    sibling3 = check("relation sibling3 --type")
+    for tag in ("symmetric", "transitive", "irreflexive"): # relational properties are LOCAL tags on the type
+      context.parser.parseLine(f"set attribute sibling3 {tag} true --type bool")
+    self.assertIs(context.parser.parseLine("? sibling3"), sibling3)
     sibling3b = context.assert_([person3, sibling3, person3])
     self.assertIs(sibling3, sibling3b)
     alice3 = check("person3 alice3")

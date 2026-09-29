@@ -89,6 +89,61 @@ class Test(unittest.TestCase):
     cmd.undo()
     self.assertNotIn("note", rel)
 
+  def test0600domainAndRange(self):
+    from sn.model.model import IsaIndividual
+    from util.observer import Observer
+    self.assertIs(self.sibling.domain, self.person)
+    self.assertIs(self.sibling.range, self.person)
+    self.assertIs(self.brother.domain, self.person)   # set locally on brother too
+    sub = Relation(self.m, [self.sibling], name="halfSibling")
+    self.assertIs(sub.domain, self.person)           # inherited from sibling
+    class Recorder(Observer):
+      topics:list = []
+      def update(self, subject, *topics): self.topics += [t[0] for t in topics]
+    rec = Recorder(); sub.attach(rec)
+    sub.range = self.ann                             # through the dst setter: observers told
+    self.assertIs(sub.dst, self.ann)
+    self.assertIn("mod dst", rec.topics)
+    for individual in (self.sib1, next(r for r, _ in self.ann._getOutgoing() if isinstance(r, IsaIndividual))):
+      with self.assertRaises(TypeError):
+        individual.domain
+      with self.assertRaises(TypeError):
+        individual.range = self.bob
+
+  def test0700localEndpoints(self):
+    sub = Relation(self.m, [self.sibling], name="stepSibling") # no endpoints of its own
+    self.assertIsNone(sub.localSrc)
+    self.assertIs(sub.src, self.person)                        # inherited from sibling
+    self.assertFalse(sub.hasLocalSrc())
+    self.assertIs(self.sib1.localSrc, self.ann)
+    self.assertIs(self.sib1.localDst, self.bob)
+    self.assertTrue(self.sib1.hasLocalDst())
+    with self.assertRaises(AttributeError):                    # read-only: set src/dst instead
+      sub.localSrc = self.ann
+
+  def test0800inheritorsNotified(self):
+    from util.observer import Observer
+    thing = Node(self.m, [self.m.NODE], name="thing2"); car = Node(self.m, [thing], name="car2")
+    t   = Relation(self.m, [self.m.RELATION], self.person, thing, name="uses")
+    sub = Relation(self.m, [t], name="usesDaily")                          # inherits both ends
+    own = Relation(self.m, [t], self.person, car, name="drives")         # has its own ends
+    below = Relation(self.m, [own], name="drivesFast")                   # inherits from own, not t
+    r1 = Relation(self.m, [sub], self.ann, None, individual=True)        # inherits dst (via sub)
+    r2 = Relation(self.m, [t], self.ann, thing, individual=True)         # own dst
+    class Recorder(Observer):
+      def __init__(self): self.topics = []
+      def update(self, subject, *topics): self.topics += [x[0] for x in topics]
+    recs = {o: Recorder() for o in (sub, own, below, r1, r2)}
+    for o, r in recs.items(): o.attach(r)
+    t.range = car
+    got = lambda o: [x for x in recs[o].topics if "inherited" in x]
+    self.assertEqual(got(sub), ["mod inherited dst"])
+    self.assertEqual(got(r1), ["mod inherited dst"])     # two levels down
+    self.assertEqual(got(r2), [])                        # its own dst
+    self.assertEqual(got(own), [])                       # its own dst ...
+    self.assertEqual(got(below), [])                     # ... so nothing below it inherits t's
+    self.assertIs(r1.dst, car)
+
 
 if __name__ == "__main__":
   unittest.main()

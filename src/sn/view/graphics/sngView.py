@@ -410,7 +410,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
   # makingRelationData = namedtuple('makingRelationData', 'originNode typ lineID')
   ElasticLineChoiceData:tuple[VObject, int, Callable[[VObject],bool], Callable[[VObject,VObject],Any]] \
-            = namedtuple('ElasticLineChoiceData', 'originNode lineID filter callback')
+            = namedtuple('ElasticLineChoiceData', 'originNode lineID filter callback onEmpty', defaults=(None,))
 
   def __new__(cls, url:str, model:Model, *, mode="w", geometry:str="300x400+20+20", _reading:bool=False):
     if url is None:
@@ -481,6 +481,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     # self._makingRelationFrom:SNGView.makingRelationData|None = None
     self._elasticLineChoiceData:SNGView.ElasticLineChoiceData|None = None
     self._cursorBeforeTerminal:str = "arrow"
+    self._inferences:list[dict[str, Any]] = []
+    "The inferred/inherited relations drawn as dashed lines (see *drawInferences()*)."
     "The cursor to restore when the pointer moves off a relation terminal (see *_updateTerminalCursor()*)."
     self._scrolling:bool = False
     
@@ -639,6 +641,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
             logger.error(f"VObject subtype not implemented for model type {typ.__name__}.")
   
         # elif topicName == 'del GraphObject':
+        case ["reasoned", _] | ["reasoning cleared", _]:
+          self._showReasoning()
+
         case ["del", topicData]:
           modelID = topicData[0]
           obj:VObject|None = self.findViewObjectForGraphObject(lambda vo: vo.modelObject is not None and vo.modelObject.id==modelID)
@@ -706,6 +711,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     from sn.view.graphics.vnodes import VNode
     # make certain we don't make a duplicate    #createdVObjects:set[VObject] = set()
     ret = self.findViewObjectForGraphObject(mObject)
+    created = ret is None
     if ret is None:
       if isinstance(mObject, Relation):
         ret = VRelation(self, modelObject=mObject)
@@ -725,6 +731,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         raise AttributeError(f'SNView.makeViewObjectforGraphObject(): unexpected model object type: {mObject.__class__.__name__}.')
 
     assert isinstance(ret, VObject), f'SNView.makeViewObjectForGraphObject(): Unexpected return type "{ret.__class__.__name__}".'
+    if created:
+      self._attachDanglingEnds(ret)
     if expand > 0:
       ret.expand(filter=filter, expand=expand - 1)
     return ret
@@ -759,6 +767,26 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       wx, wy = 20, 20
     x, y = self.windowToView(c.canvasx(wx), c.canvasy(wy))
     return int(x), int(y)
+
+  def _attachDanglingEnds(self, vo:VObject) -> None:
+    '''
+    *vo* has just been added to the view: relations already here whose own
+    endpoint is *vo*'s model object, but which were left dangling because it
+    wasn't shown (eg: top -- see *VRelation._resolveEnd()* -- or an erased
+    object), attach to it.
+    '''
+    from sn.view.graphics.vrelations import VRelation
+    for r in list(self._db.values()):
+      if isinstance(r, VRelation) and r is not vo and r.modelObject is not None and r._isConnected():
+        changed = False
+        for end in ("src", "dst"):
+          own = r.modelObject.localSrc if end == "src" else r.modelObject.localDst
+          if own is vo.modelObject and getattr(r, end) is None:
+            setattr(r, end, vo)
+            changed = True
+        if changed:
+          self.freshPaint()
+          r.draw()
 
   def findViewObjectForGraphObject(self, mObject:GraphObject|Callable[[VObject],bool]) -> VObject|None:
     '''
@@ -903,6 +931,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     
     # repaint
     self.canvas.bind(KEY_REPAINT[0], self.repaint)
+
+    # abandon an elastic-line choice
+    self.canvas.bind("<Escape>", self.cancelElasticLine)
     
     # # validate
     # self.canvas.bind(KEY_VALIDATE[0], lambda _x: self.validate(refresh=True))
@@ -1148,7 +1179,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   def elasticLineChoice(self, originNode:VObject, 
                         callback:Callable[[VObject, VObject], Any],
                         filter:Callable[[VObject],bool]=lambda x: True, 
-                        arrowHeads:int=2, color:str="cyan"):
+                        arrowHeads:int=2, color:str="cyan",
+                        onEmpty:Callable[[VObject], Any]|None=None):
     '''
     Animate an elastic line from the *originNode* to the cursor to select an
     object for which *filter* returns True, then call *callback* with the *originNode*
@@ -1165,6 +1197,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :param arrowHeads: 0=no arrowheads, 1=arrowhead at the origin, 2=arrowhead
       at the cursor, 3=arrowhead at both ends. For anything larger, just he lowest
       2 bits will be used. [Optional, default=2]
+    :param onEmpty: If given, called with *originNode* when the line is dropped
+      on empty space (no object at all under the cursor); otherwise that
+      abandons the choice, as Escape always does (see *cancelElasticLine()*).
     '''
     assert isinstance(originNode, VObject)
     arrowHeads %= 4 # strip any high bits
@@ -1176,7 +1211,14 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     lineID = self.canvas.create_line( #type: ignore[call-overload]
       self.viewToWindow(flattenPairs([originNode.centerPt(), originNode.centerPt()])),
       fill=color, width=3, arrow=arrow)
-    self._elasticLineChoiceData = SNGView.ElasticLineChoiceData(originNode, lineID, filter, callback)
+    self._elasticLineChoiceData = SNGView.ElasticLineChoiceData(originNode, lineID, filter, callback, onEmpty)
+    self.canvas.focus_set() # so Escape reaches us (see cancelElasticLine())
+
+  def cancelElasticLine(self, event:tk.Event|None=None) -> None:
+    'Abandon an elastic-line choice in progress (bound to Escape).'
+    if self._elasticLineChoiceData is not None:
+      self.canvas.delete(self._elasticLineChoiceData.lineID)
+      self._elasticLineChoiceData = None
 
   def onB1_ButtonRelease(self, event:tk.Event) -> None:
     """
@@ -1273,6 +1315,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
                  and any(n.tag in self.canvas.gettags(_id) for _id in ids)]
         if under:
           logger.warning(f'"{under[0].name}" can\'t be chosen here.')
+        elif self._elasticLineChoiceData.onEmpty is not None:
+          self._elasticLineChoiceData.onEmpty(self._elasticLineChoiceData.originNode)
         else:
           logger.debug("Elastic line choice: nothing under the cursor; cancelled.")
       self._elasticLineChoiceData = None
@@ -1348,20 +1392,31 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       #   self.viewToWindow(flattenPairs([node.centerPt(), node.centerPt()])),
       #   fill="cyan", width=3, arrow=tk.LAST)
       # self._makingRelationFrom = SNGView.makingRelationData(node, typ, lineID)
+      # Dropped on empty space: a relation with no destination of its own -- it
+      # inherits its type's range ("John -has-> <some phone>"). Not for isa:
+      # an isa link needs both ends.
+      onEmpty = None if typ is None or typ is self.model.ISA else \
+        (lambda orig, typ=typ: self.makeRelation(orig, None, typ))
       self.elasticLineChoice(node, 
                              callback=lambda orig, sel, typ=typ: callback(orig, sel, typ), #type: ignore[misc]
-                             arrowHeads=2, color="blue")
+                             arrowHeads=2, color="blue", onEmpty=onEmpty)
     else:
       if not isinstance(typ, Relation):
         raise TypeError(f'SNView.makeRelationFrom(): "typ" argument must be a model Relation; got object of class {type(typ).__name__}.')
       else:
         raise TypeError(f'SNView.makeRelationFrom(): "typ" argument "{typ.name}" must be type, not an individual;.')
 
-  def makeRelation(self, fromNode:VObject, toNode:VObject, typ:Relation):
+  def makeRelation(self, fromNode:VObject, toNode:VObject|None, typ:Relation):
+    '''
+    Make an individual relation of type *typ* from *fromNode* to *toNode* --
+    or, if *toNode* is None, with no destination of its own (so it inherits
+    *typ*'s range: it's drawn to that, faded, or dangling if that's top).
+    '''
     assert isinstance(fromNode, VObject)
-    assert isinstance(toNode, VObject)
-    if      isinstance(fromNode, VRelation) and not isinstance(toNode, VRelation) or \
-        not isinstance(fromNode, VRelation) and     isinstance(toNode, VRelation):
+    assert toNode is None or isinstance(toNode, VObject)
+    if toNode is not None and \
+       (    isinstance(fromNode, VRelation) and not isinstance(toNode, VRelation) or \
+        not isinstance(fromNode, VRelation) and     isinstance(toNode, VRelation)):
       logger.error("Relations must be either between nodes or between relations only.")
       return
     if typ and not isinstance(typ, Relation):
@@ -1376,7 +1431,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       #                  src=fromNode.modelObject, dst=toNode.modelObject, 
       #                  individual=True)
       # self.makeViewObjectForGraphObject(rel)
-      self.context.new_relation([typ], individual=True, destination=toNode.modelObject, source=fromNode.modelObject, model=self.model)
+      self.context.new_relation([typ], individual=True, destination=None if toNode is None else toNode.modelObject,
+                                source=fromNode.modelObject, model=self.model)
     except Exception as ex:
       logger.exception("SNView.makeRelation():")
 #       raise ex
@@ -1505,6 +1561,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     bgMenu.add_command(label="show all", command=self.context.view.showAllModel)
     bgMenu.add_command(label="reset scroll region", command=lambda: self.resetScrollRegion(shrink=True))
     bgMenu.add_command(label="gather nodes", command=self.gatherNodes)
+    bgMenu.add_command(label="reason", command=self.reason)
+    bgMenu.add_command(label="clear reasoning", command=self.clearReasoning,
+                       state=tk.NORMAL if self.reasoning is not None else tk.DISABLED)
     # bgMenu.add_command(label="toggle field layout", command=self.onToggleFieldsLayout, accelerator=KEY_TOGGLE_FIELDS_LAYOUT[1])
     # bgMenu.add_command(label="show animation controls", command=self.onShowAnimationControls)
     # # from sn.view.animatedLayouts import testBones
@@ -1596,6 +1655,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     self.canvas.scale("all", 0, 0, self._scale / oldScale, self._scale / oldScale)
     for child_widget in self.canvas.find_withtag("text"):
       self.canvas.itemconfigure(child_widget, font=(self._fontFace, int(self._fontSize * self._scale)))
+    for rec in self._inferences: # their label fonts (and label placement) too
+      self._drawInference(rec)
     try:
       bb = list(self.canvas.bbox("all"))
     except:
@@ -1688,6 +1749,175 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     if bb != tuple(sr):
       self.scrollRegion = bb
       self.canvas.configure(scrollregion=bb)
+
+  @property
+  def reasoning(self) -> Any:
+    '''
+    The *sn.model.reasoner.Inferences* from the last "reason" over this view's
+    model -- whether run from this view's menu, another view of the same model,
+    or the command line (see *sn.model.reasoner.reason()*) -- or None.
+    '''
+    from sn.model.reasoner import reasoningFor
+    return reasoningFor(self.model)
+
+  def reason(self, engine:str="clingo") -> None:
+    '''
+    Run the reasoner over this view's model and print the report to this
+    window's terminal. The results are kept with the model, so this and every
+    other view of it show them (see *_showReasoning()*), as they do when
+    "reason" is typed at the command line.
+    '''
+    from sn.model.reasoner import reason
+    try:
+      result = reason(self.model, engine)
+    except ImportError as ex:
+      logger.error(f'The "{engine}" reasoner isn\'t available: {ex}')
+      return
+    print(f'Reasoning over {self.model.name}:')
+    print(result.report(self.model))
+
+  def clearReasoning(self) -> None:
+    'Forget the last "reason" results for this view\'s model (in every view of it).'
+    from sn.model.reasoner import clearReasoning
+    clearReasoning(self.model)
+
+  def _showReasoning(self) -> None:
+    '''
+    Show the model's current reasoning results (or their absence): violations
+    in the objects' status reports (their error markers and "show error
+    report"), and inferred and inherited relations as dashed lines.
+    Called when the model reports a "reasoned" or "reasoning cleared" topic.
+    '''
+    self.clearInferences()
+    self._refreshStatusReports()
+    self.drawInferences()
+
+  INFERENCE_COLOR = "gray45"
+  INFERENCE_DASH = {"inferred": (6, 4), "inherited": (2, 3)}
+  "Dash patterns: inferred relations are dashed, those inherited down the isa hierarchy dotted."
+
+  def drawInferences(self) -> None:
+    '''
+    Draw the relations the last "reason" inferred (dashed) or found inherited
+    down the isa hierarchy (dotted) as grey arrows with their relation type's
+    name -- for those whose two ends are both shown in this view. A relation
+    inferred in both directions gets one double-headed arrow. The lines follow
+    their ends as they're moved or resized (see *updateInferencesFor()*), and
+    never take mouse clicks.
+    '''
+    self.clearInferences()
+    if self.reasoning is None or not self.canvas:
+      return
+    inherited = [(t, s, d) for t, s, d in self.reasoning.inherited]
+    inheritedIds = {(id(t), id(s), id(d)) for t, s, d in inherited}
+    inferred = [(t, s, d) for t, s, d in self.reasoning.inferred if (id(t), id(s), id(d)) not in inheritedIds]
+    byKey:dict[tuple, dict[str, Any]] = {}
+    for kind, triples in (("inferred", inferred), ("inherited", inherited)):
+      for t, s, d in triples:
+        vs, vd = self.findViewObjectForGraphObject(s), self.findViewObjectForGraphObject(d)
+        if vs is None or vd is None or vs is vd:
+          continue
+        reverse = byKey.get((id(t), id(vd), id(vs)))
+        if reverse is not None: # the same relation both ways: one double-headed arrow
+          reverse["both"] = True
+          continue
+        byKey[(id(t), id(vs), id(vd))] = {"type": t, "src": vs, "dst": vd, "kind": kind, "both": False,
+                                          "line": None, "label": None, "patch": None}
+    self._inferences = list(byKey.values())
+    for rec in self._inferences:
+      self._drawInference(rec)
+
+  def _drawInference(self, rec:dict[str, Any]) -> None:
+    '''
+    Draw (or redraw) one inference: its label goes in a free spot near the
+    middle of the straight line between the two objects (see
+    *_freeLabelSpot()*), and the line is drawn as a smooth curve from the
+    source's edge, through the label, to the destination's edge -- the way
+    relations are drawn through their labels.
+    '''
+    from sn.view.graphics.connectors import _clipToEdgeStraight, _farPointAlong, _sub
+    vs, vd = rec["src"], rec["dst"]
+    cs, cd = vs.centerPt(), vd.centerPt()
+    if cs == cd:
+      return
+    font = (self._fontFace, max(6, int(self._fontSize * 0.8 * self._scale)), "italic")
+    if rec["label"] is None:
+      rec["label"] = self.canvas.create_text(0, 0, text=rec["type"].name, fill=self.INFERENCE_COLOR, font=font,
+                                             state="disabled", tags=["inference", "inference-label"])
+    else:
+      self.canvas.itemconfigure(rec["label"], font=font)
+
+    # the label: a free spot near the middle of the straight line between the objects
+    a = _clipToEdgeStraight(vs, _farPointAlong(vs, _sub(cd, cs)))
+    b = _clipToEdgeStraight(vd, _farPointAlong(vd, _sub(cs, cd)))
+    spot = self._freeLabelSpot(rec["label"], self.viewToWindow([a[0], a[1], b[0], b[1]]))
+    self.canvas.coords(rec["label"], spot)
+
+    # the line: through the label, clipped to each object's edge toward it
+    lp = tuple(self.windowToView(spot))
+    a = _clipToEdgeStraight(vs, _farPointAlong(vs, _sub(lp, cs)))
+    b = _clipToEdgeStraight(vd, _farPointAlong(vd, _sub(lp, cd)))
+    coords = self.viewToWindow([a[0], a[1], lp[0], lp[1], b[0], b[1]])
+    lineOpts = dict(fill=self.INFERENCE_COLOR, dash=self.INFERENCE_DASH[rec["kind"]],
+                    arrow=tk.BOTH if rec["both"] else tk.LAST, width=1, smooth=True)
+    if rec["line"] is None:
+      rec["line"] = self.canvas.create_line(coords, state="disabled", tags=["inference"], **lineOpts)
+    else:
+      self.canvas.coords(rec["line"], coords)
+      self.canvas.itemconfigure(rec["line"], **lineOpts)
+
+    # a patch of background behind the label, so the line doesn't run through the text
+    bb = self.canvas.bbox(rec["label"])
+    patch = [bb[0] - 1, bb[1], bb[2] + 1, bb[3]] if bb else [0, 0, 0, 0]
+    if rec.get("patch") is None:
+      rec["patch"] = self.canvas.create_rectangle(patch, fill=self.canvas.cget("background"), outline="",
+                                                  state="disabled", tags=["inference"])
+    else:
+      self.canvas.coords(rec["patch"], patch)
+    self.canvas.tag_lower(rec["line"])               # the line under everything,
+    self.canvas.tag_raise(rec["patch"], rec["line"]) # the patch over the line,
+    self.canvas.tag_raise(rec["label"], rec["patch"]) # and the label over the patch
+
+  def _freeLabelSpot(self, label:int, line:list[float]) -> tuple[float, float]:
+    '''
+    Where to centre an inference *label* on the straight *line* (window
+    coords) so it doesn't sit on an object's shape or text, or on another
+    inference label: the midpoint if that's free, otherwise the first free
+    spot from positions further along the line and a little either side of
+    it. If none is free, the midpoint.
+    '''
+    x1, y1, x2, y2 = line
+    bb = self.canvas.bbox(label)
+    w, h = (bb[2] - bb[0], bb[3] - bb[1]) if bb else (0, 0)
+    length = max(1.0, sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2))
+    nx, ny = -(y2 - y1) / length, (x2 - x1) / length # unit normal to the line
+    blocking = ("vis/shape", "text", "inference-label")
+    for f in (0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8):
+      for side in (0, 1, -1, 2, -2):
+        cx = x1 + (x2 - x1) * f + nx * side * (h + 2)
+        cy = y1 + (y2 - y1) * f + ny * side * (h + 2)
+        hits = self.canvas.find_overlapping(cx - w / 2 - 2, cy - h / 2 - 2, cx + w / 2 + 2, cy + h / 2 + 2)
+        if not any(i != label and any(t in blocking for t in self.canvas.gettags(i)) for i in hits):
+          return cx, cy
+    return (x1 + x2) / 2, (y1 + y2) / 2
+
+  def updateInferencesFor(self, vo:VObject) -> None:
+    'Redraw the inference lines attached to *vo* (eg: after it moved or was resized).'
+    for rec in self._inferences:
+      if rec["src"] is vo or rec["dst"] is vo:
+        self._drawInference(rec)
+
+  def clearInferences(self) -> None:
+    if self.canvas:
+      self.canvas.delete("inference")
+    self._inferences = []
+
+  def _refreshStatusReports(self) -> None:
+    for vo in list(self._db.values()):
+      if vo is not None:
+        vo.clearStatusReport()
+    self.validate(refresh=True)
+    self.repaint()
 
   def gatherNodes(self) -> None:
     '''

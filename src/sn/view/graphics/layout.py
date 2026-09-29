@@ -128,7 +128,8 @@ class FindFree(LayoutHieristic):
     self.quanta = 10
     'Used when searching for non-overlapping space'
     self.expandFactor_relations = 5
-    self.expandFactor_nodes = 30
+    self.expandFactor_nodes = 15
+    'Clear space (view units) a node wants around it (relation labels: *expandFactor_relations*).'
     self.leftMargin = 30
     self.topMargin = 30
     self.limit = [self.leftMargin, self.topMargin, 10000, 10000]
@@ -198,7 +199,9 @@ class FindFree(LayoutHieristic):
     rect = node.boundingBox()
     if loc is not None:
       rect = [loc.x, loc.y, loc.x+rect[2]-rect[0], loc.y+rect[3]-rect[1]]
-    exclude = [node._shape.id] + [rel._id for rel in node.relations]
+    # ignore our own shape and our own relations' label shapes (canvas item ids --
+    # not rel._id, the view object's id, a different numbering altogether)
+    exclude = [node._shape.id] + [rel._shape.id for rel in node.relations if rel._shape is not None and rel._shape.id is not None]
     
     topLimit = self.topMargin
     bottomLimit = 10000

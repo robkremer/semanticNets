@@ -107,6 +107,7 @@ class ReasonerSpec:
 
   def test0240asymmetric(self):
     self.assertFalse([v for v in self.result.violations if v.code == "asymmetric"])
+    Path("temp_reasoner_asym.xml").unlink(missing_ok=True) # (saved at exit by an earlier run)
     m = Model("temp_reasoner_asym.xml") # a separate model, so the cycle doesn't disturb the others
     person = Node(m, [m.NODE], name="person")
     a, b, c = (Node(m, [person], individual=True, name=n) for n in "abc")
@@ -118,6 +119,29 @@ class ReasonerSpec:
     bad = [v for v in self.ENGINE(m).violations() if v.code == "asymmetric"]
     self.assertTrue(bad)
     self.assertTrue(all(v.subject is anc for v in bad))
+
+  def test0245equivalenceMinusIdentity(self):
+    Path("temp_reasoner_sib.xml").unlink(missing_ok=True) # (saved at exit by an earlier run)
+    m = Model("temp_reasoner_sib.xml")
+    person = Node(m, [m.NODE], name="person")
+    a, b, c, d = (Node(m, [person], individual=True, name=n) for n in "abcd")
+    sib = Relation(m, [m.RELATION], person, person, name="fullSibling")
+    for tag in ("symmetric", "transitive", "irreflexive"):
+      sib[tag] = True
+    Relation(m, [sib], a, b, individual=True)
+    Relation(m, [sib], b, c, individual=True)
+    r = self.ENGINE(m).run()
+    rel = lambda x: set(r.related(x, sib))
+    self.assertEqual(rel(a), {b, c})                     # symmetric + transitive ...
+    self.assertEqual(rel(c), {a, b})
+    self.assertFalse(any(v.code == "irreflexive" for v in r.violations), [str(v) for v in r.violations])  # ... but no x -> x
+    Relation(m, [sib], d, d, individual=True)            # an ASSERTED self-sibling is still an error
+    self.assertTrue(any(v.code == "irreflexive" and v.args[0] is d for v in self.ENGINE(m).run().violations))
+    # a transitive, irreflexive relation that isn't symmetric keeps the plain rule: a cycle is an error
+    before = Relation(m, [m.RELATION], person, person, name="before")
+    before["transitive"] = True; before["irreflexive"] = True
+    Relation(m, [before], a, b, individual=True); Relation(m, [before], b, a, individual=True)
+    self.assertTrue(any(v.code == "irreflexive" and v.subject is before for v in self.ENGINE(m).run().violations))
 
   def test0250propertiesDontInherit(self):
     r = self.result
@@ -144,6 +168,37 @@ class ReasonerSpec:
 
 class TestClingo(ReasonerSpec, unittest.TestCase):
   ENGINE = ClingoReasoner
+
+  def test0900getRelatedToUsesReasoning(self):
+    from sn.model.reasoner import reason, clearReasoning
+    clearReasoning(self.m)
+    self.assertNotIn(self.tail, self.rex.getRelatedTo(self.has))     # inherited from dog: the model alone can't see it
+    self.assertEqual(self.car1.getRelatedFrom(self.ancestor), [])    # nothing matches: [] (not IndexError)
+    try:
+      reason(self.m, "clingo")
+      self.assertIn(self.tail, self.rex.getRelatedTo(self.has))
+      self.assertTrue(self.rex.isRelatedTo(self.has, self.tail))
+      self.assertIn(self.rex, self.tail.getRelatedFrom(self.has))
+      self.assertIn((self.has, self.tail), [(r, o) for r, o in self.rex.getRelatedTo() if r is self.has])
+      self.assertNotIn(self.tail, self.rex.getRelatedTo(self.has, inferred=False))
+      self.assertEqual(self.fred.getRelatedTo(self.owns).count(self.car1), 1) # asserted: not duplicated
+    finally:
+      clearReasoning(self.m)
+    self.assertNotIn(self.tail, self.rex.getRelatedTo(self.has))
+
+  def test0800reportAndCommands(self):
+    from sn.controller.modelInterface import ModelContext
+    name = lambda o: o.tostring(relativeTo=self.m, format="friendly")
+    report = self.result.report(self.m)
+    self.assertIn(f'{name(self.rex)}, the source of', report)                     # the domain violation
+    self.assertIn(f'is not in the domain of {name(self.owns)} ({name(self.person)})', report)
+    self.assertIn(f'{name(self.ann)} -ancestorOf-> {name(self.fred)}', report)     # inferred
+    self.assertIn(f'{name(self.rex)} -has-> {name(self.tail)}', report)            # inherited
+    self.assertIn(f'{name(self.rex)} -isa-> {name(self.person)}', report)          # suggested classification
+    ctx = ModelContext(self.m)
+    self.assertEqual(ctx.parser.parseLine("reason"), report)
+    ans = ctx.parser.parseLine('ask reasoner \'ans(X) :- holds(T,F,X), name(T,"has"), name(F,"fred").\'')
+    self.assertEqual(ans, name(self.car1))
 
   def test0600nativeQuery(self):
     self.assertEqual(ClingoReasoner.language, "asp")
