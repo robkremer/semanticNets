@@ -20,6 +20,7 @@
 # SOFTWARE.                                                                     #
 #################################################################################
 from __future__ import annotations
+import builtins
 import sn
 from sn.model.model import GraphObject, Model, Node, Relation, GORef,\
   Collection, IsaIndividual
@@ -30,6 +31,7 @@ from types import NoneType
 from typing import override, Any, Optional, Iterable, Callable, cast
 from util.commandParser import TopCommandParser, CommandContext, Command
 from util.persistence.serialize import SerializationStrategy
+from util.persistence.serialize import DEFAULT_STRATEGY
 from util.utils import getClass, fixURL, isValidURL, urlExists
 from util.attribute import Attribute, Restriction
 from util.persistence.pRef import PRDb, DuplicateNameError
@@ -274,7 +276,7 @@ class ModelContext(CommandContext):
         return object.torepr(relativeTo=model)
       if format == "STR":
         return object.tostring(relativeTo=model)
-      elif format in ("XML", "JSON"):
+      elif format in ("XML2", "XML", "JSON"):
         if model is object:
           return SerializationStrategy.tostringx(format, object, assume=[])
         else:
@@ -305,7 +307,7 @@ class ModelContext(CommandContext):
     lines = [f'  {name(s)} {relationArrow(t)} {name(d)}' for t, s, d in facts]
     return f'\nInferred by the last "reason" (not saved): {len(facts)}' + "".join("\n" + l for l in lines)
 
-  def save(self, /, model:Optional[Model]=None, url:Optional[str]=None, overwrite:bool=False, format:str="XML"):
+  def save(self, /, model:Optional[Model]=None, url:Optional[str]=None, overwrite:bool=False, format:str=DEFAULT_STRATEGY):
     '''
     Save a model to a file or url.
     
@@ -313,7 +315,7 @@ class ModelContext(CommandContext):
     :type model: Model
     :param url: The url or file name to save the model to.
     :type url: str
-    :param format: The format to save the file or url in. (Currently "XML" or "JSON".)
+    :param format: The format to save the file or url in: a serialization strategy's name, eg: "XML2" (the default), "XML" or "JSON".
     :type format: str
     '''
     assert model is not None
@@ -406,8 +408,8 @@ class ModelContext(CommandContext):
       if type is not None: # check the type string to make sure it represents an actual type
         typ = getClass(type) if type is not None else None
         assert typ is not None
-      else:
-        typ = str
+      else: # (from the command line, values are str)
+        typ = builtins.type(value) if isinstance(value, (bool, int, float)) else str
       self.typ = typ 
       self.object:GraphObject = object
       self.key:str = key

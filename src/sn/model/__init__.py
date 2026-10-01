@@ -32,6 +32,14 @@ from util.dirtyable import Dirtyable
 TerminatorType = str
 LineType = "choices[smooth,straight]"
 
+
+NAME_NOTE = '''The name of the object. Can be used to access the object in the model.
+
+A name starting with "?" is a variable: in a pattern (a rule, query or definition) it stands for whatever matches. Its constraints -- what what it matches must be like -- are in its "constraints" attribute (see that attribute's note). They can also be typed here, after the name and ":where:", eg:
+  ?p :where: alive, age: 30
+and are then moved into that attribute.'''
+"The note on the name attribute: shown as its tooltip in the attribute editor."
+
 class TopModel(Model):
   def __init__(self, url:str, mode="w", memoryResident:bool=True, _reading:bool=False):
     '''
@@ -62,13 +70,13 @@ class TopModel(Model):
     isaisa:IsaIndividual = IsaIndividual(self, self.ISA, self.RELATION) #5
 
     # now that we have the isa defined, fix up the name attribute (as it involves inheritance) 
-    self.TOP.setAttr("name", Attribute("top", str, VAR_DEFAULTED, "The name of the object. Can be used to access the object in the model."))
+    self.TOP.setAttr("name", Attribute("top", str, VAR_DEFAULTED, NAME_NOTE))
     if self.TOP._id != 1:
       raise Exception("TopModel.__init__() called twice.")
-    self.RELATION.setAttr("name", Attribute("relation", None, TYPENAME)) # can't do this until AFTER ISA exists.
+    self.RELATION.setAttr("name", Attribute("relation", None, TYPENAME, NAME_NOTE)) # can't do this until AFTER ISA exists.
     self.ISA["name"] = "isa"
     self.NODE:Node = Node(self, [self.TOP]) #6,7
-    self.NODE.setAttr("name", Attribute("node", None, VAR)) # can't do this until AFTER ISA exists.
+    self.NODE.setAttr("name", Attribute("node", None, VAR, NAME_NOTE)) # can't do this until AFTER ISA exists.
 
     # add it the basic relation types
     # self.REFLEXIVE:Relation         = Relation(self, [self.RELATION], individual=False, name="reflexive") #8,9
@@ -107,6 +115,12 @@ class TopModel(Model):
     self.DISTINCT:Relation = Relation(self, [self.RELATION], self.TOP, self.TOP, individual=False, name="distinct")
     self.DISTINCT["symmetric"] = True
     self.DISTINCT["irreflexive"] = True
+    # A definition: its definiendum (the term defined) holds iff its definiens
+    # (the meaning) does -- a rule both ways (see sn.model.reasoner.definitionSpecs()).
+    # Added last, so existing ids don't change.
+    self.DEFINITION:Node = Node(self, [self.CONTEXT], individual=False, name="definition")
+    self.DEFINIENDUM:Relation = Relation(self, [self.CONTAINS], self.DEFINITION, self.TOP, individual=False, name="definiendum")
+    self.DEFINIENS:Relation = Relation(self, [self.CONTAINS], self.DEFINITION, self.TOP, individual=False, name="definiens")
 
     self._allowParentsCaching = True
     

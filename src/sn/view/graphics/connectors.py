@@ -70,7 +70,7 @@ from util.utils import midpoint
 
 logger: sn.SNLogger = sn.getLogger(__name__)
 
-PointType = tuple[float, float]
+PointType = tuple[float|int, float|int]
 
 
 # =============================================================================

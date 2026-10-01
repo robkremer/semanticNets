@@ -77,6 +77,8 @@ import sn
 from sn import snPrefs
 from sn.model import GraphObject, Relation
 from sn.model.model import UP_ARROW, IsaIndividual
+from sn.model.constraints import WHERE, CONSTRAINTS, CONSTRAINTS_NOTE, splitWhere, mergeConstraints, ConstraintError
+from util.attribute import Attribute, VAR
 from sn.view.graphics.decorators import WrappingText, Selected, Highlight, ContextFrame, MarkerContainer, NOMINAL_ASPECT,\
   Decorator, ShadowDecorator
 
@@ -341,7 +343,15 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
             postconSetters=[PropertyInfo("userSized", bool,
                                          lambda slf: bool(getattr(slf, "userSized", False)),
                                          lambda slf, v: setattr(slf, "userSized", bool(v)),
-                                         optional=True)], # optional: views saved before it existed still load
+                                         optional=True), # optional: views saved before it existed still load
+                            PropertyInfo("collapsed", bool,
+                                         lambda slf: bool(getattr(slf, "collapsed", False)),
+                                         lambda slf, v: setattr(slf, "collapsed", bool(v)),
+                                         optional=True),
+                            PropertyInfo("expandedHeight", int,
+                                         lambda slf: int(getattr(slf, "expandedHeight", None) or 0),
+                                         lambda slf, v: setattr(slf, "expandedHeight", int(v) or None),
+                                         optional=True)],
             finalSetters=[]
             )
 
@@ -530,8 +540,72 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         c.itemconfigure(i, state=prior.get(i, ""))
     prior.clear()
 
-  WINDOW_MIN = (320, 200)
-  "The smallest a context window may be (view units), and its size when first drawn."
+  def labelText(self) -> str:
+    '''
+    What this one's label says: its label template (see *labels*) expanded --
+    its "vis/label" attribute if it has one, else the "gui/label" preference
+    ("gui/relationLabel" for relations). A template that can't be expanded
+    gives the name, with a warning.
+    '''
+    from sn.view.graphics.labels import expand, labelLookup, DEFAULT_LABEL, LABEL_NOTE, TemplateError
+    mo = self.modelObject
+    if mo is None:
+      return "?"
+    template = mo.get("vis/label", None)
+    if not isinstance(template, str) or not template:
+      pref = "gui/relationLabel" if isinstance(mo, Relation) else "gui/label"
+      template = snPrefs.get(pref, storeDefault=DEFAULT_LABEL, storeType=str, note=LABEL_NOTE)
+    try:
+      return expand(str(template), labelLookup(mo)).strip()
+    except TemplateError as ex:
+      logger.warning(f'{mo.name}: bad label template: {ex}')
+      return (mo.name or "").strip()
+
+  collapsed:bool = False
+  "A context window shown as just its title bar (see *setCollapsed()*)."
+  expandedHeight:int|None = None
+  "A collapsed context window's height when it's expanded again."
+  TOGGLE_WIDTH = 18
+  "The width of a context window's collapse/expand triangle, at the left of its title bar."
+
+  def fullBoundingBox(self) -> list:
+    'The bounding box -- as it is when expanded, for a collapsed context window (see *setCollapsed()*).'
+    bb = list(self.boundingBox())
+    if self.collapsed:
+      bb[3] = bb[1] + (self.expandedHeight or self.WINDOW_DEFAULT[1])
+    return bb
+
+  def toggleAt(self, x:float, y:float) -> bool:
+    'Whether (x, y) (view coords) is on a context window\'s collapse/expand triangle.'
+    if not self.isContextWindow():
+      return False
+    x1, y1, _, _ = self.boundingBox()
+    return x1 <= x <= x1 + self.TOGGLE_WIDTH and y1 <= y <= y1 + self.bannerHeight()
+
+  def setCollapsed(self, collapsed:bool) -> None:
+    '''
+    Show a context window as just its title bar (*collapsed*), or in full. What
+    it contains that's drawn inside it is hidden while it's collapsed (and moves
+    with it); what it contains that's outside it stays, with its arcs to the
+    title bar -- eg: a query's subject, out in the world. See
+    *SNGContext.collapse()* for the undoable command.
+    '''
+    if collapsed == self.collapsed or not self.isContextWindow():
+      return
+    x1, y1, x2, y2 = self.boundingBox()
+    if collapsed:
+      self.expandedHeight = int(y2 - y1)
+      self.collapsed = True
+      self.reshape([x1, y1, x2, y1 + self.bannerHeight()])
+    else:
+      self.collapsed = False
+      self.reshape([x1, y1, x2, y1 + (self.expandedHeight or self.WINDOW_DEFAULT[1])])
+    self.view.applyVisibility()
+
+  WINDOW_MIN = (160, 100)
+  "The smallest a context window may be (view units)."
+  WINDOW_DEFAULT = (320, 200)
+  "A context window's size when it's first drawn (as a window)."
   BANNER = 18
   "The height (view units) of a context window's title banner."
 
@@ -554,14 +628,17 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     '''
     A context window's content areas (view coords), below its banner, by the
     containment relation they stand for: a rule's "antecedent" (left) and
-    "consequent" (right); any other context's single "contains" area.
+    "consequent" (right); a definition's "definiendum" (left: the term
+    defined) and "definiens" (right: its meaning); any other context's single
+    "contains" area.
     '''
-    x1, y1, x2, y2 = self.boundingBox()
+    x1, y1, x2, y2 = self.fullBoundingBox() # (a collapsed window's contents are still in it)
     top = y1 + self.bannerHeight()
     mo = self.modelObject
-    if mo is not None and mo.isa(mo.model.RULE):
-      mid = (x1 + x2) / 2
-      return {"antecedent": [x1, top, mid, y2], "consequent": [mid, top, x2, y2]}
+    for kind, (left, right) in (("RULE", ("antecedent", "consequent")), ("DEFINITION", ("definiendum", "definiens"))):
+      if mo is not None and mo.isa(getattr(mo.model, kind)):
+        mid = (x1 + x2) / 2
+        return {left: [x1, top, mid, y2], right: [mid, top, x2, y2]}
     return {"contains": [x1, top, x2, y2]}
 
   def paneAt(self, pt) -> str|None:
@@ -663,15 +740,13 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
             #self.cache.refresh(attname)
             self.cache[attname] = value
             vChanged = True
-          else:
-            logger.warning(f'{self.name}: Don\'t know what to do with update({self.modelObject.name}, {topic})')
+          else: # (the label may show any attribute: see labelText())
+            vChanged = True
         elif topicName == "del attribute":
           attname = topic[1][0]
           if attname in VATTRIBUTES:
             self.cache.refresh(attname)
-            vChanged = True
-          else:
-            logger.warning(f'{self.name}: Don\'t know what to do with update({self.modelObject.name}, {topic})')
+          vChanged = True # (the label may show any attribute: see labelText())
           
         elif topicName == "rm":
           #self.canvas.remove(self._id)
@@ -775,6 +850,12 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     decide on if it's just a node move or a selection toggle in *self.onB1_Motion()*
     and *self.onB1ButtonRelease()*.
     """
+    # A context window's collapse/expand triangle
+    if self.toggleAt(self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)):
+      self.view.addEventHandled(event)
+      self.dragInfo = None
+      self.view.context.collapse(self, not self.collapsed)
+      return 'break'
     # A corner handle of a selected object: resize just this object.
     sel = self.decorators.get("selected")
     if isinstance(sel, Selected):
@@ -812,9 +893,13 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     # tell what's been dropped into or dragged out of a context window (see
     # SNGView._updateContainment())
     self.dragStartCenters:dict["VObject", tuple] = {}
+    self.dragAlong:set["VObject"] = set()
+    "The relations that only move because their ends do."
     for n in movedSet:
       for vo in [n, *([] if n.isContextWindow() else n.relations)]:
         self.dragStartCenters.setdefault(vo, vo.centerPt())
+        if vo is not n and vo not in movedSet:
+          self.dragAlong.add(vo)
     self.old_suppressLocalLayout = self.view.suppressLocalLayout()
     self.view.suppressLocalLayout(True)
     return 'break'
@@ -915,7 +1000,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
             bb = n.boundingBox()
             startPos = self.dragStartPositions.get(n, bb)
             self.view.context.move(n, bb[0], bb[1], _oldPos=startPos)
-          self.view._updateContainment(self.dragStartCenters)
+          self.view._updateContainment(self.dragStartCenters, draggedAlong=self.dragAlong)
       else: # this was a click, not a drag: toggle the selection state
         s = event.state
         self.selected(not self.selected(), _multi=s_CMD(s) or s_SHIFT(s)) # toggle selected
@@ -946,7 +1031,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     (ax, ay), _, _ = self.resizeInfo
     if self.isContextWindow(): # free aspect, window-sized minimums
       w = max(abs(x - ax), self.WINDOW_MIN[0])
-      h = max(abs(y - ay), self.WINDOW_MIN[1])
+      h = self.bannerHeight() if self.collapsed else max(abs(y - ay), self.WINDOW_MIN[1])
     else:
       aspect = self.cache['vis/aspectRatio']
       w = max(abs(x - ax), self.cache['vis/minSize'])
@@ -955,13 +1040,15 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     y1 = ay if y >= ay else ay - h
     self.reshape([x1, y1, x1 + w, y1 + h], adjustPos=False)
 
-  def reshape(self, bb:list[float], adjustPos:bool=False) -> None:
+  def reshape(self, bb:list[float]|list[int], adjustPos:bool=False) -> None:
     '''
     Set the bounding box to *bb* (position and size), letting relations follow
     and redrawing.
     '''
+    from sn.view.graphics.vrelations import VRelation
     self.boundingBox([int(v) for v in bb])
     for r in self.relations:
+      assert isinstance(r, VRelation)
       r.notifyNodeMove(self, adjustPos=adjustPos)
     self.view.freshPaint()
     self.draw()
@@ -1076,6 +1163,29 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         vo = self.view.findViewObjectForGraphObject(x) if isinstance(x, GraphObject) else None
         if vo is not None:
           vo.highlight(True)
+
+  def showConclusions(self) -> None:
+    '''
+    Show what this rule concluded in the last "reason" (reasoning first if
+    there are no results): print its conclusions to the terminal, and
+    highlight every object (in this view) it concluded something about,
+    replacing any earlier highlights.
+    '''
+    if self.view.reasoning is None:
+      self.view.reason()
+    reasoning = self.view.reasoning
+    if reasoning is None:
+      return
+    lines = reasoning.ruleConclusions(self.modelObject, model=self.view.model)
+    print(f'{self.name}: {len(lines)} conclusion(s)' + "".join("\n  " + l for l in lines))
+    problems = [v for v in reasoning.violationsFor(self.modelObject) if v.code.startswith("rule")]
+    for v in problems:
+      print(f'  {v}')
+    self.view.clearHighlights()
+    for x in reasoning.ruleObjects(self.modelObject):
+      vo = self.view.findViewObjectForGraphObject(x)
+      if vo is not None:
+        vo.highlight(True)
 
   def _relationTypesMenu(self, parent:tk.Menu) -> tk.Menu:
     '''
@@ -1219,23 +1329,59 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     mo = self.modelObject
     if mo is not None and mo.isa(mo.model.CONTEXT) and mo is not mo.model.CONTEXT:
       menu.add_command(label="answer query", command=self.answerQuery)
+    if mo is not None and mo.isIndividual() and (mo.isa(mo.model.RULE) or mo.isa(mo.model.DEFINITION)):
+      menu.add_command(label="show conclusions", command=self.showConclusions)
     if isinstance(self.decorators.get("text"), WrappingText):
       menu.add_command(label="fit to text", command=self.fitToText,
                        state=tk.NORMAL if self.userSized else tk.DISABLED)
          
   def onEditAttributes(self, disabled:bool=False):
-    edits = editAttrsBox(self.canvas, self.modelObject, title=str(self.modelObject), disabled=disabled)
-    # if disabled:
-    #   editAttrsBox(self.canvas, self.modelObject, title=str(self.modelObject), disabled=True)
-    # else:
-    #   applyEditAttrsBox(self.canvas, self.modelObject, title=str(self.modelObject)) #f'{self.modelObject.idString}: "{self.modelObject.name}"')
+    mo = self.modelObject
+    edits = editAttrsBox(self.canvas, mo, title=str(mo), disabled=disabled)
     if not disabled and edits is not None:
+      nameEdit = edits.get("name") # (the editor returns Attributes)
+      typed = nameEdit.value if isinstance(nameEdit, Attribute) else nameEdit
+      if isinstance(typed, str) and WHERE in typed:
+        edits = self._whereEdits(edits, nameEdit, typed)
+      if not edits:
+        return
       with CompositeCommandMgr(self.view.context) as mgr:
         for key,value in edits.items():
           if value is None:
-            self.view.context.delete_attribute(self.modelObject, key)
+            self.view.context.delete_attribute(mo, key)
           else:
-            self.view.context.set_attribute(self.modelObject, key, value)
+            self.view.context.set_attribute(mo, key, value)
+
+  def _whereEdits(self, edits:dict, nameEdit:Any, typed:str) -> dict:
+    '''
+    A variable's name typed with constraints, eg: "?p :where: alive, age: 30":
+    the edits for its name ("?p") and its "constraints" attribute (the typed
+    constraints added to any it has; see *sn.model.constraints*). For anything
+    but a variable, or constraints that can't be read, the name isn't changed
+    (and a message says why).
+    '''
+    mo = self.modelObject
+    name, text = splitWhere(typed)
+    ret = {k: v for k, v in edits.items() if k != "name"}
+    if not name.startswith("?"):
+      logger.error(f'"{typed}": only variables (names starting with "?") have constraints. The name wasn\'t changed.')
+      return ret
+    base = edits.get(CONSTRAINTS)
+    base = (base.value if isinstance(base, Attribute) else base) if CONSTRAINTS in edits else mo.getLocal(CONSTRAINTS, None)
+    try:
+      merged = mergeConstraints(base, text or "")
+    except ConstraintError as ex:
+      logger.error(f'"{typed}": the constraints can\'t be read ({ex}). The name wasn\'t changed.')
+      return ret
+    if name != mo.name:
+      if isinstance(nameEdit, Attribute):
+        nameEdit.value = name
+      else:
+        nameEdit = name
+      ret["name"] = nameEdit
+    if merged != (base or ""):
+      ret[CONSTRAINTS] = Attribute(merged, str, VAR, CONSTRAINTS_NOTE)
+    return ret
 
   # ---- DRAWING ---------------------------------------------------------------
   
@@ -1264,7 +1410,12 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     # a window is at least WINDOW_MIN (eg: when first drawn, or from an older view)
     if not fast and self.isContextWindow():
       x1, y1, x2, y2 = self.boundingBox()
-      if x2 - x1 < self.WINDOW_MIN[0] or y2 - y1 < self.WINDOW_MIN[1]:
+      if self.collapsed: # (just the title bar -- eg: as saved)
+        if y2 - y1 != self.bannerHeight() or x2 - x1 < self.WINDOW_MIN[0]:
+          self.boundingBox([x1, y1, x1 + max(x2 - x1, self.WINDOW_MIN[0]), y1 + self.bannerHeight()])
+      elif x2 - x1 < self.WINDOW_MIN[0] and y2 - y1 < self.WINDOW_MIN[1]: # (never been a window: eg: new)
+        self.boundingBox([x1, y1, x1 + self.WINDOW_DEFAULT[0], y1 + self.WINDOW_DEFAULT[1]])
+      elif x2 - x1 < self.WINDOW_MIN[0] or y2 - y1 < self.WINDOW_MIN[1]:
         self.boundingBox([x1, y1, x1 + max(x2 - x1, self.WINDOW_MIN[0]), y1 + max(y2 - y1, self.WINDOW_MIN[1])])
     # size the box to its text first, so the shape is drawn at the new size
     text = self.decorators.get("text")

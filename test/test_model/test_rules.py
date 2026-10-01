@@ -1,0 +1,286 @@
+#################################################################################
+# (c) Copyright 2026, Rob Kremer, MIT open source license.                      #
+#                                                                               #
+# Permission is hereby granted, free of charge, to any person obtaining a copy  #
+# of this software and associated documentation files (the "Software"), to deal #
+# in the Software without restriction, including without limitation the rights  #
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     #
+# copies of the Software, and to permit persons to whom the Software is         #
+# furnished to do so, subject to the following conditions:                      #
+#                                                                               #
+# The above copyright notice and this permission notice shall be included in all#
+# copies or substantial portions of the Software.                               #
+#                                                                               #
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    #
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      #
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   #
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        #
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, #
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE #
+# SOFTWARE.                                                                     #
+#################################################################################
+'''
+Created on Sep 28, 2026
+
+@author: robkremer
+'''
+import unittest
+from pathlib import Path
+from sn.model.model import Model, Node, Relation, IsaIndividual
+from sn.model.clingoReasoner import ClingoReasoner
+from sn.model.reasoner import ruleOf
+
+class TestRules(unittest.TestCase):
+  '''
+  User rules (a rule's antecedent => its consequent), compiled into the
+  reasoner. The examples are symmetry and transitivity: first with tags only
+  the rules know about ("mirrored", "chained"), so the rules alone give the
+  results; then with the built-in tags, where they must agree with the
+  built-in reasoning.
+  '''
+
+  def setUp(self):
+    Path("temp_rules.xml").unlink(missing_ok=True) # (saved at exit by an earlier run)
+    Model._initCache()
+    m = self.m = Model("temp_rules.xml")
+    self.person = Node(m, [m.NODE], name="person")
+    self.likes = Relation(m, [m.RELATION], self.person, self.person, name="likes")
+    self.anc = Relation(m, [m.RELATION], self.person, self.person, name="ancestor")
+    self.sib = Relation(m, [m.RELATION], self.person, self.person, name="fullSibling")
+    for tag in ("symmetric", "transitive", "irreflexive"):
+      self.sib[tag] = True
+    self.parent = Relation(m, [m.RELATION], self.person, self.person, name="parent")
+    self.p = {n: Node(m, [self.person], individual=True, name=n) for n in ("alice", "bob", "carol", "dave", "fred")}
+
+  # ---- helpers ---------------------------------------------------------------
+
+  def rel(self, typ, src, dst):
+    return Relation(self.m, [typ], src, dst, individual=True)
+
+  def var(self, name, typ=None):
+    return Node(self.m, [typ or self.m.NODE], individual=True, name=name)
+
+  def relVar(self, name, **constraints):
+    R = Relation(self.m, [self.m.RELATION], name=name)
+    if constraints:
+      R["constraints"] = ", ".join(k if v is True else f"{k}: {v}" for k, v in constraints.items())
+    return R
+
+  def rule(self, name, antecedent, consequent):
+    r = Node(self.m, [self.m.RULE], individual=True, name=name)
+    for x in antecedent:
+      self.rel(self.m.ANTECEDENT, r, x)
+    for x in consequent:
+      self.rel(self.m.CONSEQUENT, r, x)
+    return r
+
+  def symmetryRule(self, tag, copies=False):
+    'B -R-> A :- A -R-> B, R {tag}  (with *copies*: the consequent has its own ?A, ?B, ?R)'
+    A, B, R = self.var("?A"), self.var("?B"), self.relVar("?R", **{tag: True})
+    if copies:
+      A2, B2, R2 = self.var("?A"), self.var("?B"), self.relVar("?R")
+    else:
+      A2, B2, R2 = A, B, R
+    return self.rule(f"{tag} symmetry", [self.rel(R, A, B)], [self.rel(R2, B2, A2)])
+
+  def transitivityRule(self, tag, distinct=False):
+    'A -R-> C :- A -R-> B, B -R-> C, R {tag} [, A distinct C]'
+    A, B, C, R = self.var("?A"), self.var("?B"), self.var("?C"), self.relVar("?R", **{tag: True})
+    ante = [self.rel(R, A, B), self.rel(R, B, C)]
+    if distinct:
+      ante.append(self.rel(self.m.DISTINCT, A, C))
+    return self.rule(f"{tag} transitivity", ante, [self.rel(R, A, C)])
+
+  def reason(self):
+    return ClingoReasoner(self.m).run()
+
+  def pairs(self, triples, typ):
+    return {(s.name, d.name) for t, s, d in triples if t is typ}
+
+  # ---- tests -----------------------------------------------------------------
+
+  def test0100symmetry(self):
+    self.likes["mirrored"] = True
+    self.rel(self.likes, self.p["alice"], self.p["bob"])
+    r = self.symmetryRule("mirrored")
+    res = self.reason()
+    self.assertIn((r.name, "likes", "bob", "alice"), {(x.name, t.name, s.name, d.name) for x, t, s, d in res.fired})
+    self.assertIn(("bob", "alice"), self.pairs(res.inferred, self.likes)) # (drawn as an inferred relation)
+    self.assertEqual([v for v in res.violations if v.code.startswith("rule")], [])
+
+  def test0110symmetryNeedsTheTag(self):
+    self.rel(self.likes, self.p["alice"], self.p["bob"]) # likes isn't "mirrored"
+    self.symmetryRule("mirrored")
+    self.assertEqual(self.reason().fired, [])
+
+  def test0120consequentCopies(self):
+    'Variables are the same variable by name: the consequent may have its own ?A, ?B, ?R.'
+    self.likes["mirrored"] = True
+    self.rel(self.likes, self.p["alice"], self.p["bob"])
+    self.symmetryRule("mirrored", copies=True)
+    res = self.reason()
+    self.assertIn(("bob", "alice"), self.pairs([(t, s, d) for _, t, s, d in res.fired], self.likes))
+    self.assertIn(("bob", "alice"), self.pairs(res.inferred, self.likes))
+
+  def test0200transitivity(self):
+    self.anc["chained"] = True
+    a, b, c, d = (self.p[n] for n in ("alice", "bob", "carol", "dave"))
+    self.rel(self.anc, a, b); self.rel(self.anc, b, c); self.rel(self.anc, c, d)
+    self.transitivityRule("chained")
+    res = self.reason()
+    self.assertEqual(self.pairs(res.holds, self.anc),
+                     {("alice", "bob"), ("bob", "carol"), ("carol", "dave"),                  # asserted
+                      ("alice", "carol"), ("bob", "dave"), ("alice", "dave")})                # concluded (recursively)
+
+  def test0300agreesWithBuiltinSymmetry(self):
+    s = self.sib
+    self.rel(s, self.p["alice"], self.p["bob"]); self.rel(s, self.p["bob"], self.p["carol"])
+    before = self.pairs(self.reason().holds, s)
+    self.symmetryRule("symmetric")
+    res = self.reason()
+    self.assertEqual(self.pairs(res.holds, s), before)                         # nothing the built-in didn't already know
+    self.assertEqual(self.pairs([(t, x, y) for _, t, x, y in res.fired], s),   # and the rule concluded each mirror image
+                     {(y, x) for x, y in before})                               # (of everything, including its own conclusions)
+
+  def test0310agreesWithBuiltinTransitivity(self):
+    'Symmetric + transitive + irreflexive needs "distinct" in the rule, as the built-in has its special case.'
+    s = self.sib
+    self.rel(s, self.p["alice"], self.p["bob"]); self.rel(s, self.p["bob"], self.p["carol"])
+    before = self.pairs(self.reason().holds, s)
+    self.transitivityRule("transitive", distinct=True)
+    res = self.reason()
+    self.assertEqual(self.pairs(res.holds, s), before)
+    self.assertTrue(all(x != y for x, y in self.pairs([(t, a, b) for _, t, a, b in res.fired], s)))
+    self.assertEqual([v for v in res.violations if v.code == "irreflexive"], [])
+
+  def test0400assertsAttributes(self):
+    'A consequent variable\'s constraints are conclusions; queries see them.'
+    fred, mary = self.p["fred"], self.p["alice"]
+    self.rel(self.parent, fred, mary)
+    P, C = self.var("?p"), self.var("?c")
+    P2 = self.var("?p"); P2["constraints"] = "isParent"
+    r = self.rule("parents", [self.rel(self.parent, P, C)], [P2])
+    res = self.reason()
+    self.assertEqual({(x.name, k, v) for _, x, k, v in res.ruleAttrs}, {("fred", "isParent", True)})
+    q = Node(self.m, [self.m.QUERY], individual=True, name="parents?")
+    X = self.var("?x"); X["constraints"] = "isParent"
+    self.rel(self.m.CONTAINS, q, X)
+    self.assertEqual([row[X] for row in ClingoReasoner(self.m).answer(q)], [fred])
+
+  def test0500problems(self):
+    'A rule that concludes something its antecedent doesn\'t bind (other than a new object) is reported, and not used.'
+    self.likes["mirrored"] = True
+    self.rel(self.likes, self.p["alice"], self.p["bob"])
+    A, B = self.var("?A"), self.var("?B")
+    Q = self.relVar("?Q")                                                        # a relation type can't be new
+    r = self.rule("bad", [self.rel(self.likes, A, B)], [self.rel(Q, B, A)])
+    self.assertEqual([c for c, _ in ruleOf(r).problems], ["rule_unbound"])
+    res = self.reason()
+    self.assertEqual(res.fired, [])
+    self.assertEqual([(v.code, v.subject.name) for v in res.violations if v.code.startswith("rule")], [("rule_unbound", "bad")])
+    B2 = self.var("?B"); B2["constraints"] = "age: ?a"                                         # nor a value variable
+    self.assertIn("rule_unbound", [c for c, _ in ruleOf(self.rule("bad2", [self.rel(self.likes, A, B)], [B2])).problems])
+    open_ = self.rule("open", [self.rel(self.likes, A, B)], [Relation(self.m, [self.likes], B, None, individual=True)])
+    self.assertIn("rule_open_end", [c for c, _ in ruleOf(open_).problems])
+
+  def test0600concludesIsa(self):
+    'An isa link in the consequent: classification, with inheritance and queries following it.'
+    m = self.m
+    child = Node(m, [m.NODE], name="child"); candy = Node(m, [m.NODE], individual=True, name="candy")
+    self.rel(self.likes, child, candy)                               # children like candy (inherited by each child)
+    mary = Node(m, [m.NODE], individual=True, name="mary")          # (not a child -- yet)
+    self.rel(self.parent, self.p["fred"], mary)
+    P, C, C2 = self.var("?p"), self.var("?c"), self.var("?c")
+    r = self.rule("children", [self.rel(self.parent, P, C)], [C2, IsaIndividual(m, C2, child)])
+    self.assertEqual(ruleOf(r).problems, [])
+    res = self.reason()
+    self.assertEqual({(x.name, t.name) for _, x, t in res.ruleIsa}, {("mary", "child")})
+    self.assertIn((mary, child), res.isa)
+    self.assertIn(("mary", "candy"), self.pairs(res.inherited, self.likes))   # inherited through the concluded isa
+    q = Node(m, [m.QUERY], individual=True, name="children?"); K = self.var("?k", child)
+    self.rel(m.CONTAINS, q, K)
+    self.assertEqual([row[K] for row in ClingoReasoner(m).answer(q)], [mary])
+
+  def test0700newObjects(self):
+    'A consequent variable the antecedent doesn\'t bind is a new object, one per match -- and rules don\'t chain on them.'
+    m = self.m
+    mother = Relation(m, [m.RELATION], self.person, self.person, name="mother")
+    P, P2, M = self.var("?p", self.person), self.var("?p"), self.var("?m", self.person)
+    M["constraints"] = "alive"
+    r = self.rule("everyone has a mother", [P], [self.rel(mother, P2, M)])
+    self.assertEqual([x.name for x in ruleOf(r).new], ["?m"])
+    res = self.reason()                                   # (terminates: a new mother isn't matched as a ?p)
+    self.assertEqual(len(res.newObjects), 5)
+    self.assertEqual({dict(n.bindings)["?p"].name for n in res.newObjects}, set(self.p))
+    self.assertEqual({s.name for _, t, s, d in res.fired}, set(self.p))
+    self.assertTrue(all(any(x == n and t is self.person for _, x, t in res.ruleIsa) for n in res.newObjects))
+    self.assertEqual(len([1 for _, x, k, v in res.ruleAttrs if k == "alive"]), 5)
+    self.assertFalse(any(not hasattr(s, "tostring") or not hasattr(d, "tostring") for _, s, d in res.holds)) # (model objects only)
+    self.assertTrue(any("(new ?m for ?p=alice" in line for line in res.ruleConclusions(r)))
+    q = Node(m, [m.QUERY], individual=True, name="alive?"); X = self.var("?x", self.person); X["constraints"] = "alive"
+    self.rel(m.CONTAINS, q, X)
+    self.assertEqual(len(ClingoReasoner(m).answer(q)), 5)  # queries do see them
+
+  # ---- definitions (rules both ways) ------------------------------------------
+
+  def definition(self, name, definiendum, definiens):
+    d = Node(self.m, [self.m.DEFINITION], individual=True, name=name)
+    for x in definiendum:
+      self.rel(self.m.DEFINIENDUM, d, x)
+    for x in definiens:
+      self.rel(self.m.DEFINIENS, d, x)
+    return d
+
+  def concluded(self, res, d):
+    return {(t.name, s.name, x.name) for r, t, s, x in res.fired if r is d and hasattr(s, "name") and hasattr(x, "name")}
+
+  def test0800brother(self):
+    'X -brother-> Y  <=>  X -full-sibling-> Y, Y {gender: male}: brothers from siblings, and siblings (and maleness) from brothers.'
+    m, p = self.m, self.p
+    brother = Relation(m, [m.RELATION], self.person, self.person, name="brother")
+    X, Y = self.var("?X"), self.var("?Y")
+    X2, Y2 = self.var("?X"), self.var("?Y"); Y2["constraints"] = "gender: male"
+    d = self.definition("brother", [self.rel(brother, X, Y)], [self.rel(self.sib, X2, Y2), Y2])
+    self.rel(self.sib, p["alice"], p["bob"]); p["bob"]["gender"] = "male"   # a male sibling...
+    self.rel(brother, p["carol"], p["dave"])                                 # ... and an asserted brother
+    res = self.reason()
+    self.assertEqual([v for v in res.violations if v.code.startswith(("rule", "bad"))], [])
+    got = self.concluded(res, d)
+    self.assertIn(("brother", "alice", "bob"), got)                           # forward
+    self.assertNotIn(("brother", "bob", "alice"), got)                        # (alice isn't male)
+    self.assertIn(("fullSibling", "carol", "dave"), got)                      # backward: the relation...
+    self.assertIn(("dave", "gender", "male"), {(x.name, k, v) for r, x, k, v in res.ruleAttrs if r is d}) # ... and the constraint
+    self.assertIn(("carol", "dave"), self.pairs(res.holds, self.sib))
+
+  def test0810typeDefinition(self):
+    'x isa bachelor  <=>  x isa man, x {married: false}: classification both ways.'
+    m = self.m
+    man = Node(m, [self.person], name="man"); bachelor = Node(m, [self.person], name="bachelor")
+    tom = Node(m, [man], individual=True, name="tom"); tom["married"] = False
+    ben = Node(m, [bachelor], individual=True, name="ben")
+    X = self.var("?x"); X2 = self.var("?x", man); X2["constraints"] = "married: false"
+    d = self.definition("bachelor", [X, IsaIndividual(m, X, bachelor)], [X2])
+    res = self.reason()
+    isas = {(x.name, t.name) for r, x, t in res.ruleIsa if r is d and hasattr(x, "name")}
+    self.assertIn(("tom", "bachelor"), isas)                                  # forward
+    self.assertIn(("ben", "man"), isas)                                       # backward: its type...
+    self.assertIn(("ben", "married", False), {(x.name, k, v) for r, x, k, v in res.ruleAttrs if r is d}) # ... and constraint
+    self.assertFalse(any(l.startswith("ben") and "bachelor" in l for l in res.ruleConclusions(d)))  # (asserted: not news)
+
+  def test0820grandparent(self):
+    'X -grandparent-> Z  <=>  X -parent-> Y, Y -parent-> Z: an asserted grandparent implies some (new) parent in between.'
+    m, p = self.m, self.p
+    gp = Relation(m, [m.RELATION], self.person, self.person, name="grandparent")
+    X, Z, X2, Y2, Z2 = (self.var(n) for n in ("?X", "?Z", "?X", "?Y", "?Z"))
+    d = self.definition("grandparent", [self.rel(gp, X, Z)], [self.rel(self.parent, X2, Y2), self.rel(self.parent, Y2, Z2)])
+    self.rel(self.parent, p["fred"], p["dave"]); self.rel(self.parent, p["dave"], p["bob"])
+    self.rel(gp, p["alice"], p["carol"])
+    res = self.reason()
+    self.assertIn(("grandparent", "fred", "bob"), self.concluded(res, d))    # forward
+    new = [n for n in res.newObjects if n.rule is d]
+    self.assertEqual([(dict(n.bindings)["?X"].name, dict(n.bindings)["?Z"].name) for n in new], [("alice", "carol")])
+    links = {(getattr(s, "name", "new"), getattr(x, "name", "new")) for r, t, s, x in res.fired if r is d and t is self.parent}
+    self.assertEqual(links, {("alice", "new"), ("new", "carol")})            # backward, through the new parent
+
+if __name__ == "__main__":
+  unittest.main()

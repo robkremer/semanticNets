@@ -47,6 +47,7 @@ Created on Aug 18, 2026
 from __future__ import annotations
 import traceback
 from util.persistence.serialize import SerializationStrategy
+from util.persistence.pRef import PRDb
 from util.attributeEditor import applyEditAttrsBox
 import sys
 import sn
@@ -259,7 +260,7 @@ class Application(tk.Tk):
         assert isinstance(existingView, SNGView)
         return existingView
       if urlExists(url):
-        ret = SerializationStrategy.readx(url, replaceExt=None)
+        ret = PRDb.readFile(url)
         assert isinstance(ret, SNGView)
       else:
         ret = SNGView(url, model=model, mode="w")
@@ -289,7 +290,7 @@ class Application(tk.Tk):
               if viewSpec in self.windows:
                 view = cast(SNGView, self.windows[viewSpec].view)
               else:
-                obj = SerializationStrategy.readx(viewSpec, replaceExt=None)
+                obj = PRDb.readFile(viewSpec)
                 if not isinstance(obj, SNGView):
                   raise TypeError(f'Expected type Model in "{viewSpec}", but got type {type(obj)}.')
                 view = obj
@@ -309,7 +310,7 @@ class Application(tk.Tk):
                 filetypes=[("Model files", "*.snm"), ("xml files", "*.xml"), ("All Files", "*.*")])
               if modelURL is None:
                 return None 
-              obj = SerializationStrategy.readx(modelURL, replaceExt=None, mode='r')
+              obj = PRDb.readFile(modelURL, mode='r')
               if not isinstance(obj, Model):
                 raise TypeError(f'Expected type Model in "{modelURL}", but got type {type(obj)}.')
               model = obj

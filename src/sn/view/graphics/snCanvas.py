@@ -41,6 +41,7 @@ from sn.view.graphics.vrelations import VRelation
 from sn.view.graphics.layout import FindFree
 from math import sqrt
 from util.persistence.serialize import InstantiationInfo, PropertyInfo
+from util.persistence.serialize import DEFAULT_STRATEGY
 #from sn.view.graphics.vobjects import VObject
 
 logger:sn.SNLogger = sn.getLogger(__name__)
@@ -274,7 +275,7 @@ class SNGView(PRDb["VObject"], Observer):
     return False
   
   @override
-  def save(self, saveas:Optional[str]=None, overwrite=False, format:str="XML") -> None:
+  def save(self, saveas:Optional[str]=None, overwrite=False, format:str=DEFAULT_STRATEGY) -> None:
     super().save(saveas=saveas, overwrite=overwrite, format=format)
     self.setDirty(False)
 
@@ -675,7 +676,7 @@ class SNCanvas(tk.Canvas):
     # user actually answers.
     # # "new instance" and "new subtype" for nodes menus
     if self.isModelEditor():
-      def fillMenu(menu:tk.Menu, model:Model, individual:bool, ptype:type):
+      def fillModelSubmenu(menu:tk.Menu, model:Model, individual:bool, ptype:type):
         # types = []
         types = [v for v in model.values() if isinstance(v, ptype) and v.isType()]
         # for t in (t for t in (model.relations if makeRelations else model.nodes) if t.isType()):
@@ -690,23 +691,23 @@ class SNCanvas(tk.Canvas):
           #   fun = lambda t=t: self.context.new_collection(t, name="?", individual=individual)
           menu.add_command(label=t.name, command=fun)
     
-      def makeSubmenu(individual:bool, ptype:type):
+      def makeModelSubmenu(individual:bool, ptype:type):
         newMenu = tk.Menu(self)
         # process nodes in the included models
         for v in [self.model, Model.AllDBs["sn:/sn.xml"]]:
           m = tk.Menu(self)
-          fillMenu(m, v, individual, ptype)
+          fillModelSubmenu(m, v, individual, ptype)
           newMenu.add_cascade(label=v.name, menu=m)
         # process own nodes
-        #fillMenu(newMenu, self.model, individual, ptype)
+        #fillModelSubmenu(newMenu, self.model, individual, ptype)
         return newMenu
     
-      bgMenu.add_cascade(label="new instance of Node"   , menu=makeSubmenu(individual=True, ptype=Node))
-      bgMenu.add_cascade(label="new subtype of Node"    , menu=makeSubmenu(individual=False, ptype=Node))
-      bgMenu.add_cascade(label="new instance of Relation", menu=makeSubmenu(individual=True, ptype=Relation))
-      bgMenu.add_cascade(label="new subtype of Relation", menu=makeSubmenu(individual=False, ptype=Relation))
-      # bgMenu.add_cascade(label="new instance of Collection", menu=makeSubmenu(individual=True, ptype=Collection))
-      # bgMenu.add_cascade(label="new subtype of Collection", menu=makeSubmenu(individual=False, ptype=Collection))
+      bgMenu.add_cascade(label="new instance of Node"   , menu=makeModelSubmenu(individual=True, ptype=Node))
+      bgMenu.add_cascade(label="new subtype of Node"    , menu=makeModelSubmenu(individual=False, ptype=Node))
+      bgMenu.add_cascade(label="new instance of Relation", menu=makeModelSubmenu(individual=True, ptype=Relation))
+      bgMenu.add_cascade(label="new subtype of Relation", menu=makeModelSubmenu(individual=False, ptype=Relation))
+      # bgMenu.add_cascade(label="new instance of Collection", menu=makeModelSubmenu(individual=True, ptype=Collection))
+      # bgMenu.add_cascade(label="new subtype of Collection", menu=makeModelSubmenu(individual=False, ptype=Collection))
       bgMenu.add_separator()
       bgMenu.add_separator()
     

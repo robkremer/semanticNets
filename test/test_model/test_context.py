@@ -204,5 +204,56 @@ class TestQueries(unittest.TestCase):
     self.assertEqual(twoChildren("A", False), {(a, b) for a in (self.mary, tom) for b in (self.mary, tom)})
     self.assertEqual(twoChildren("B", True), {(self.mary, tom), (tom, self.mary)})
 
+  def test1000constraints(self):
+    '''A variable's constraints (its "constraints" attribute) constrain what it matches: ?x {key}, ?x {key: value}, ?x {key: ?v}.'''
+    m = self.m
+    self.alice["age"] = 30; self.bob["age"] = 30; self.carol["age"] = 5
+    R = Relation(m, [m.RELATION], name="?R"); R["constraints"] = "symmetric"
+    self.assertEqual(R.formatConstraints(), "{symmetric}")
+    self.assertEqual({r["?R"] for r in self.rows(self.query("symmetric types", R))}, {self.sib, m.DISTINCT})
+    notSym = Relation(m, [m.RELATION], name="?S"); notSym["constraints"] = "symmetric: false, transitive: false"
+    self.assertNotIn(self.sib, {r["?S"] for r in self.rows(self.query("not symmetric", notSym))})
+    p = self.var("?p", self.person); p["constraints"] = "age"
+    self.assertEqual({r["?p"] for r in self.rows(self.query("has an age", p))}, {self.alice, self.bob, self.carol})
+    p30 = self.var("?p30", self.person); p30["constraints"] = "age:30"
+    self.assertEqual(p30.formatConstraints(), "{age: 30}")
+    self.assertEqual({r["?p30"] for r in self.rows(self.query("aged 30", p30))}, {self.alice, self.bob})
+    x, y = self.var("?x", self.person), self.var("?y", self.person)
+    x["constraints"] = "age: ?a"; y["constraints"] = "age: ?a"
+    rows = self.rows(self.query("same age", x, y, Relation(m, [m.DISTINCT], x, y, individual=True)))
+    self.assertEqual({(r["?x"], r["?y"]) for r in rows}, {(self.alice, self.bob), (self.bob, self.alice)})
+    self.alice["constraints"] = "age: 99"
+    self.assertEqual(self.alice.constraints(), {}) # (only variables have constraints)
+    bad = self.var("?bad", self.person); bad["constraints"] = "age: 'unterminated"
+    self.assertIsNotNone(bad.constraintsError())
+    with self.assertRaises(ValueError):
+      self.reasoner.answer(self.query("bad", bad))
+
+  def test1100constraintSyntax(self):
+    from sn.model.constraints import parseConstraints, formatConstraints, splitWhere, mergeConstraints, PRESENT, ValueVar, ConstraintError
+    c = parseConstraints("alive, age: 30, owner: ?o, nick: 'Big, Al', ok: false, ratio: 1.5, colour: dark red, code: '42'")
+    self.assertEqual(c, {"alive": PRESENT, "age": 30, "owner": "?o", "nick": "Big, Al", "ok": False, "ratio": 1.5,
+                         "colour": "dark red", "code": "42"})
+    self.assertIsInstance(c["owner"], ValueVar)
+    self.assertNotIsInstance(parseConstraints("x: '?o'")["x"], ValueVar)       # (quoted: text)
+    self.assertEqual(parseConstraints(formatConstraints(c)), c)                # (round trip)
+    self.assertEqual(formatConstraints(c), "alive, age: 30, owner: ?o, nick: 'Big, Al', ok: false, ratio: 1.5, colour: dark red, code: '42'")
+    self.assertEqual(splitWhere("?p :where: alive, age: 30"), ("?p", "alive, age: 30"))
+    self.assertEqual(splitWhere("?p"), ("?p", None))
+    self.assertEqual(mergeConstraints("alive, age: 30", "age: 31, tall"), "alive, age: 31, tall")
+    for bad in ("age:", "age: 'x", ": 3", "a b", "a: 1, a: 2", "a: b: c"):
+      with self.assertRaises(ConstraintError, msg=bad):
+        parseConstraints(bad)
+
+  def test1200migration(self):
+    '''Constraints stored the old way (as a variable's own attributes) are moved into its "constraints" attribute.'''
+    from sn.model.constraints import migrateConstraints
+    m = self.m
+    old = self.var("?old", self.person); old["alive"] = True; old["age"] = 30; old["same"] = "?a"
+    msgs = migrateConstraints(m)
+    self.assertEqual(len([x for x in msgs if x.startswith("?old")]), 1)
+    self.assertEqual(old.getLocal("constraints"), "alive, age: 30, same: ?a")
+    self.assertNotIn("age", dict.keys(old))
+
 if __name__ == "__main__":
   unittest.main()

@@ -36,10 +36,12 @@ Created on Sep 24, 2026
 #################################################################################
 from __future__ import annotations
 from pathlib import Path
+import re
 from typing import Any, override
 import clingo
 from sn.model.model import Model, GraphObject
-from sn.model.reasoner import Reasoner, Inferences, Violation, Sym, Fact
+from sn.model.reasoner import Reasoner, Inferences, Violation, Sym, Fact, PROPERTIES, Pattern, patternOf, ruleOf, rules, ruleSpecs, NewObject
+from sn.model.constraints import PRESENT, ValueVar
 
 RULES = Path(__file__).with_name("clingoReasoner.lp")
 "The default rule base."
@@ -111,10 +113,13 @@ class ClingoReasoner(Reasoner, engine="clingo"):
     if sym.type == clingo.SymbolType.Function:
       if sym.name == "o" and len(sym.arguments) == 1:
         return self._objs[sym.arguments[0].number]
+      if sym.name == "new" and len(sym.arguments) == 3: # see _newTerm()
+        rule, var, bindings = (self._value(a) for a in sym.arguments)
+        return NewObject(rule, var, tuple(bindings))
       if sym.name == "" : # tuple
         return tuple(self._value(a) for a in sym.arguments)
       if not sym.arguments:
-        return sym.name
+        return {"true": True, "false": False}.get(sym.name, sym.name) # (see _term())
     if sym.type == clingo.SymbolType.Number:
       return sym.number
     if sym.type == clingo.SymbolType.String:
@@ -124,52 +129,169 @@ class ClingoReasoner(Reasoner, engine="clingo"):
   @override
   def run(self) -> Inferences:
     ret = Inferences()
-    for sym in self._solve():
+    facts = self._program(self.facts()) # (numbers the objects the rules refer to)
+    for sym in self._solve(self._rulesProgram(), facts):
       args = [self._value(a) for a in sym.arguments]
+      if sym.name not in ("fired", "rule_attr", "rule_isa", "rule_new") and any(isinstance(a, NewObject) for a in args):
+        continue # (the general results are about the model's objects: see Inferences.newObjects)
       match sym.name:
         case "holds":     ret.holds.append(tuple(args)) #type: ignore[arg-type]
         case "inferred":  ret.inferred.append(tuple(args)) #type: ignore[arg-type]
         case "inherited": ret.inherited.append(tuple(args)) #type: ignore[arg-type]
         case "classify":  ret.classify.append(tuple(args)) #type: ignore[arg-type]
         case "isa_data":  ret.isa.add(tuple(args)) #type: ignore[arg-type]
+        case "fired":     ret.fired.append(tuple(args)) #type: ignore[arg-type]
+        case "rule_attr": ret.ruleAttrs.append(tuple(args)) #type: ignore[arg-type]
+        case "rule_isa":  ret.ruleIsa.append(tuple(args)) #type: ignore[arg-type]
+        case "rule_new":  ret.newObjects.append(args[0])
         case "violation": ret.violations.append(Violation(*args))
     return ret
+
+  def _patternBody(self, pat:Pattern, var:dict[str, str], forRule:bool=False) -> list[str]:
+    '''
+    The clingo body literals for *pat*. *var* maps each variable's name to its
+    clingo variable (variables with the same name are the same variable), and
+    gets value variables ("?a") added.
+
+    Variables range over data only (see *GraphObject.isPatternElement()*):
+    over individuals if the variable is an individual, over types if it's a
+    type, and over relation types if it's used as one. A query's variables
+    also range over the objects rules create; a rule's (*forRule*) don't --
+    or a rule could go on creating objects forever.
+    '''
+    dom, ind = ("base", "individual") if forRule else ("data", "any_individual")
+    def term(x:GraphObject|None) -> str:
+      return "_" if x is None else var.get(x.name, "") if x.isVariable() else self._term(x)
+    relTypeVars = {t.name for t, _, _ in pat.triples if t.isVariable()}
+    body:list[str] = []
+    for v in {v.name: v for v in pat.variables}.values():
+      body.append(f"{dom}({var[v.name]})" + ("" if v.name in relTypeVars else
+                  f", {ind}({var[v.name]})" if v.isIndividual() else f", type({var[v.name]})"))
+    for t, s, d in pat.triples:
+      body.append(f"holds({term(t)},{term(s)},{term(d)})")
+      if t.isVariable():
+        body.append(f"rel_type({term(t)})")
+    body += [f"isa_star({term(x)},{term(t)})" for x, t in pat.types]
+    body += [f"{term(x)} != {term(y)}" for x, y in pat.distinct]
+    for v, key, value in pat.constraints:
+      if key in PROPERTIES:           # a relational property: a tag on a relation type
+        body.append(f"{'not ' if value is False else ''}prop({term(v)},{key})")
+      elif value is PRESENT:
+        body.append(f"attr({term(v)},{_str(key)},_)")
+      elif isinstance(value, ValueVar):
+        body.append(f"attr({term(v)},{_str(key)},{var.setdefault(value, f'A{len(var)}')})")
+      else:
+        body.append(f"attr({term(v)},{_str(key)},{self._term(value)})")
+    return body
+
+  @staticmethod
+  def _varNames(pat:Pattern) -> dict[str, str]:
+    'A clingo variable for each of *pat*\'s variable names, in answer order.'
+    return {name: f"V{i}" for i, name in enumerate(dict.fromkeys(v.name for v in pat.variables))}
 
   @override
   def answer(self, context:GraphObject) -> list[dict[GraphObject, GraphObject]]:
     '''
     Translates the context's *Pattern* into one rule,
-    ``ans(V0,...) :- <a holds/3 literal per relation, isa_star/2 per type>``,
-    over the reasoner's results -- so matches include inferred relations.
-    Variables range over data only (see *GraphObject.isPatternElement()*):
-    over individuals if the variable is an individual, over types if it's a
-    type, and over relation types if it's used as a relation's type.
+    ``ans(V0,...) :- <a holds/3 literal per relation, isa_star/2 per type, ...>``,
+    over the reasoner's results (including what the model's rules conclude) --
+    so matches include inferred relations. See *_patternBody()*.
     '''
-    from sn.model.reasoner import patternOf
     pat = patternOf(context)
+    if pat.errors:
+      raise ValueError("; ".join(f"the constraints of {x.name} can't be read: {err}" for x, err in pat.errors))
     facts = self._program(self.facts()) # (numbers the objects the rule refers to)
-    var = {id(v): f"V{i}" for i, v in enumerate(pat.variables)}
-    def term(x:GraphObject|None) -> str:
-      return "_" if x is None else var.get(id(x)) or self._term(x)
-    # a variable ranges over individuals if it's an individual, over types if
-    # it's a type -- and over relation types if it's used as one
-    relTypeVars = {id(t) for t, _, _ in pat.triples if id(t) in var}
-    body = [f"data({var[id(v)]})" + ("" if id(v) in relTypeVars else
-                                    f", individual({var[id(v)]})" if v.isIndividual() else f", type({var[id(v)]})")
-            for v in pat.variables]
-    for t, s, d in pat.triples:
-      body.append(f"holds({term(t)},{term(s)},{term(d)})")
-      if id(t) in var:
-        body.append(f"rel_type({term(t)})")
-    body += [f"isa_star({term(x)},{term(t)})" for x, t in pat.types]
-    body += [f"{term(x)} != {term(y)}" for x, y in pat.distinct]
+    var = self._varNames(pat)
+    names = list(var)
+    body = self._patternBody(pat, var)
     if not body:
       return []
-    args = ",".join(var[id(v)] for v in pat.variables)
+    args = ",".join(var[n] for n in names)
     head = f"ans({args})" if args else "ans"
-    rows = [sym for sym in self._solve(f"{head} :- {', '.join(body)}.\n#show ans/{len(pat.variables)}.", facts)
-            if sym.name == "ans"]
-    return [dict(zip(pat.variables, (self._value(a) for a in sym.arguments))) for sym in rows]
+    program = self._rulesProgram() + f"\n{head} :- {', '.join(body)}.\n#show ans/{len(names)}."
+    rows = [sym for sym in self._solve(program, facts) if sym.name == "ans"]
+    ret = []
+    for sym in rows:
+      byName = dict(zip(names, (self._value(a) for a in sym.arguments)))
+      ret.append({v: byName[v.name] for v in pat.variables})
+    return ret
+
+  def _newTerm(self, rule:GraphObject, name:str, matched:list[str], var:dict[str, str]) -> str:
+    '''
+    The term for the object *rule* creates for its consequent variable *name*
+    in each match: new(Rule,Name,((Var,Value),...)) -- a function of the match,
+    so one object per match (see *NewObject*).
+    '''
+    pairs = "".join(f"({_str(n)},{var[n]})," for n in matched)
+    return f"new({self._term(rule)},{_str(name)},({pairs}))"
+
+  def _satisfied(self, spec, var:dict[str, str], n:int) -> tuple[str, str]:
+    '''
+    For a rule that creates objects (see *NewObject*): a clingo rule saying
+    that, for a match, the data already has objects in their place -- related
+    as the conclusions say, and of the types they say (asserted relations and
+    types only, so that the program stays stratified) -- and the literal to
+    test it with. ("", "") if there's nothing to test.
+    '''
+    new = {x.name for x in spec.new}
+    exist = {name: f"E{i}" for i, name in enumerate(sorted(new))}
+    def term(x) -> str:
+      if x.isVariable():
+        return exist.get(x.name) or var[x.name]
+      return self._term(x)
+    lits = [f"asserted({term(t)},{term(s)},{term(d)})" for t, s, d in spec.heads
+            if any(x is not None and x.isVariable() and x.name in new for x in (s, d)) and s is not None and d is not None]
+    lits += [f"isa_base({term(x)},{term(t)})" for x, t in spec.isas if x.isVariable() and x.name in new]
+    if not lits:
+      return "", ""
+    used = [v for v in var.values() if any(re.search(rf"\b{v}\b", l) for l in lits)] # the match's variables the test uses
+    head = f"sat_{n}({','.join(used)})" if used else f"sat_{n}"
+    return f"{head} :- {', '.join(lits)}.", head
+
+  def _rulesProgram(self) -> str:
+    '''
+    The model's rules (see *reasoner.ruleOf()*) as clingo rules, one per
+    conclusion: ``fired(Rule,T,S,D) :- <antecedent>.`` for a relation, and
+    ``rule_attr(Rule,X,Key,Value) :- <antecedent>.`` for an attribute. (The
+    rule base takes these as holds/3 and attr/3.) A rule with problems isn't
+    used: its problems are reported as violations. Call after rendering the
+    facts (see *_program()*).
+    '''
+    out:list[str] = []
+    for spec in ruleSpecs(self.objects()):
+      r = spec.rule
+      if spec.problems:
+        for code, args in spec.problems:
+          out.append(f'violation0({code},warning,{self._term(r)},({"".join(self._term(a) + "," for a in args)})).')
+        continue
+      if not (spec.heads or spec.assertions or spec.isas or spec.new):
+        continue
+      var = self._varNames(spec.pattern)
+      body = self._patternBody(spec.pattern, var, forRule=True)
+      matched = [n for n in var if not n.startswith("?") or n in {v.name for v in spec.pattern.variables}]
+      newTerms = {x.name: self._newTerm(r, x.name, matched, var) for x in spec.new}
+      def term(x:GraphObject|None) -> str:
+        if x is not None and x.isVariable():
+          return newTerms.get(x.name) or var[x.name]
+        return self._term(x)
+      tail = f" :- {', '.join(body)}." if body else "."
+      newTail = tail # (for conclusions about new objects: only if the data doesn't already have them)
+      if newTerms:
+        sat, satLit = self._satisfied(spec, var, len(out))
+        if sat:
+          out.append(sat)
+          newTail = f" :- {', '.join(body + [f'not {satLit}'])}."
+      isNew = lambda *xs: any(x is not None and x.isVariable() and x.name in newTerms for x in xs)
+      for n in newTerms.values():
+        out.append(f"rule_new({n}){newTail}")
+      for x, t in spec.isas:
+        out.append(f"rule_isa({self._term(r)},{term(x)},{term(t)}){newTail if isNew(x) else tail}")
+      for t, s, d in spec.heads:
+        out.append(f"fired({self._term(r)},{term(t)},{term(s)},{term(d)}){newTail if isNew(s, d) else tail}")
+      for x, key, value in spec.assertions:
+        v = "true" if value is PRESENT else var[value] if isinstance(value, ValueVar) else self._term(value)
+        out.append(f"rule_attr({self._term(r)},{term(x)},{_str(key)},{v}){newTail if isNew(x) else tail}")
+    return "\n".join(out)
 
   @override
   def query(self, query:str, answer:str="ans") -> list[tuple[Any, ...]]:

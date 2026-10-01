@@ -755,7 +755,13 @@ class VRelation(VObject, AGRelation):
       if not suppressDraw:
         self.draw()
       return
-    if self.src is not None and self.dst is not None:
+    if self.src is not None and self.dst is not None and self.src is self.dst: # (to itself: beside it, not on it -- stacked)
+      bb = self.src.boundingBox()
+      loops = [r for r in self.src._outgoing if isinstance(r, VRelation) and r.dst is self.src]
+      k = loops.index(self) if self in loops else 0
+      w = self.boundingBox()[2] - self.boundingBox()[0]
+      self.moveToCenterOn(bb[2] + 30 + w / 2, (bb[1] + bb[3]) / 2 + 22 * k, adjustPos=adjustPos)
+    elif self.src is not None and self.dst is not None:
       self.moveToCenterOn(*self.gapMidpoint(self.src, self.dst), adjustPos=adjustPos)
     elif self.src is None and self.dst is None:
       if adjustPos:

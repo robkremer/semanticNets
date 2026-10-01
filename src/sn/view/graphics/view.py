@@ -1068,7 +1068,7 @@ class SNView(PRDb, Observer):
 
     # "new instance" and "new subtype" for nodes menus
     if self.isModelEditor:
-      def fillMenu(menu:tk.Menu, model:Model, individual:bool, makeRelations:bool):
+      def fillModelSubmenu(menu:tk.Menu, model:Model, individual:bool, makeRelations:bool):
         types = []
         for t in (t for t in (model.relations if makeRelations else model.nodes) if t.isType()):
           types.append(t)
@@ -1077,20 +1077,20 @@ class SNView(PRDb, Observer):
           menu.add_command(label=t.name, \
             command=lambda x=x, y=y, t=t: self.doNewNodeCommand(parent=t, individual=individual, atPoint=(x,y)))
         
-      def makeSubmenu(individual:bool, makeRelations:bool):
+      def makeModelSubmenu(individual:bool, makeRelations:bool):
         newMenu = tk.Menu(self.canvas)
         # process nodes in the included models
         for k,v in self.model.includes.items():
           m = tk.Menu(self.canvas)
-          fillMenu(m, Model.getStore(v), individual, makeRelations)
+          fillModelSubmenu(m, Model.getStore(v), individual, makeRelations)
           newMenu.add_cascade(label=k, menu=m)
         # process own nodes
-        fillMenu(newMenu, self.model, individual, makeRelations)
+        fillModelSubmenu(newMenu, self.model, individual, makeRelations)
         return newMenu
         
-      bgMenu.add_cascade(label="new instance of Node"   , menu=makeSubmenu(individual=True, makeRelations=False))
-      bgMenu.add_cascade(label="new subtype of Node"    , menu=makeSubmenu(individual=False, makeRelations=False))
-      bgMenu.add_cascade(label="new subtype of Relation", menu=makeSubmenu(individual=False, makeRelations=True))
+      bgMenu.add_cascade(label="new instance of Node"   , menu=makeModelSubmenu(individual=True, makeRelations=False))
+      bgMenu.add_cascade(label="new subtype of Node"    , menu=makeModelSubmenu(individual=False, makeRelations=False))
+      bgMenu.add_cascade(label="new subtype of Relation", menu=makeModelSubmenu(individual=False, makeRelations=True))
       bgMenu.add_separator()
 
     bgMenu.add_command(label="validate", command=lambda o=self: o.validate(refresh=True), accelerator=KEY_VALIDATE[1]) #utils.CHAR_CMD

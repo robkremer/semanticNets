@@ -38,10 +38,9 @@ Created on Feb 3, 2025
 ------------------
 '''
 
-import logging
 import weakref
 from abc import ABC, abstractmethod
-from math import sqrt, log
+from math import log
 import tkinter.font as tkfont
 from typing import override, Callable, Optional, Union, Any
 import sn
@@ -131,11 +130,7 @@ class Text(Decorator):
     return self.owner.view.viewToWindow(x,y)
       
   def setText(self, fast=False) -> str:
-    name = self.owner.modelObject.name if self.owner.modelObject is not None else "?"
-    if name is None:
-      text = ""
-    else:
-      text = name.strip()
+    text = self.owner.labelText()
     self.kwargs['text'] = text
     return text
           
@@ -165,12 +160,16 @@ def _font(canvas, font:tuple) -> tkfont.Font:
   return f
 
 def textPieces(text:str) -> list[str]:
-  'Split *text* after each character in *BREAK_AFTER*: the units a line is built from.'
+  '''
+  Split *text* after each character in *BREAK_AFTER* -- but not just before a
+  non-breaking space (eg: "age:\u00a030" stays together): the units a line is
+  built from.
+  '''
   pieces:list[str] = []
   cur = ""
-  for ch in text:
+  for i, ch in enumerate(text):
     cur += ch
-    if ch in BREAK_AFTER:
+    if ch in BREAK_AFTER and text[i+1:i+2] != "\u00a0":
       pieces.append(cur)
       cur = ""
   if cur:
@@ -471,6 +470,40 @@ class MarkerWithTooltip(Marker):
     super().delete()
 
 
+class ConstraintMarker(MarkerWithTooltip):
+  '''
+  "{}": a variable's constraints live here (see *sn.model.constraints*) --
+  shown in red, "{!}", if they can't be read. The tooltip says what they are
+  (or what's wrong). Shown if "gui/showConstraintMarker" is set.
+  '''
+  OK = ("{}", "white", "dark orchid")
+  BAD = ("{!}", "white", "red")
+
+  def __init__(self, owner):
+    super().__init__(owner, *self.OK, condition=self.shown, tooltipFunc=self.tip)
+
+  @staticmethod
+  def shown(owner) -> bool:
+    mo = owner.modelObject
+    return mo is not None and mo.isVariable() and bool(mo.constraintsText()) \
+           and bool(snPrefs.get("gui/showConstraintMarker", storeDefault=True, storeType=bool,
+                           note="Mark each variable that has constraints with a \"{}\" marker."))
+
+  def tip(self) -> str:
+    mo = self.owner.modelObject
+    err = mo.constraintsError()
+    return f'Constraints that can\'t be read: {err}\n{mo.constraintsText()}' if err else f'Constraints: {mo.constraintsText()}'
+
+  @override
+  def draw(self, at:list[int]) -> bool:
+    mo = self.owner.modelObject
+    look = self.BAD if mo is not None and mo.constraintsError() else self.OK
+    if (self.label, self.fg, self.bg) != look: # (the text and colours are set when the items are made)
+      self.erase()
+      self.label, self.fg, self.bg = look
+      self.kwargs2.pop("fill", None)
+    return super().draw(at)
+
 class MarkerContainer(Decorator):
 
   def __init__(self, owner):
@@ -487,7 +520,8 @@ class MarkerContainer(Decorator):
                "Type: object is a Type object (as opposed to an Individual)"),
         MarkerWithTooltip(owner, "R", "cyan", "gray50", 
                lambda owner=self.owner: owner.modelObject is not None and owner.view.model != owner.modelObject.model and snPrefs.get("gui/showRemoteTags", storeDefault=True),
-               lambda owner=self.owner: f'Remote: Object is from another model: {owner.modelObject.model.url}')
+               lambda owner=self.owner: f'Remote: Object is from another model: {owner.modelObject.model.url}'),
+        ConstraintMarker(owner),
         ]
 
   @override
@@ -665,7 +699,7 @@ class Selected(Decorator):
     for i in self.ids.values():
       self.owner.canvas.delete(i)
     self.ids = {}
-    self.kwargs = None
+    self.kwargs = None #type: ignore[assignment]
 
 
 class ContextFrame(Decorator):
@@ -707,16 +741,26 @@ class ContextFrame(Decorator):
     # the banner, and the title in it
     self._item("banner", canvas.create_rectangle, view.viewToWindow([x1, y1, x2, y1 + bh]),
                fill=_blend(canvas, border, 0.18), outline=border)
-    self._item("title", lambda c, **k: canvas.create_text(*c, **k), view.viewToWindow([x1 + 6, y1 + bh / 2]),
+    # the collapse/expand triangle (see VObject.setCollapsed()), the title, and
+    # (right-aligned, in italics) what kind of context it is: rule, query, ...
+    fontSize = max(6, int(view._fontSize * scale))
+    self._item("toggle", lambda c, **k: canvas.create_text(*c, **k), view.viewToWindow([x1 + o.TOGGLE_WIDTH / 2, y1 + bh / 2]),
+               text="\u25b6" if o.collapsed else "\u25bc", anchor="center", fill=o.cache["vis/textColor"] or "black",
+               font=(view._fontFace, max(5, int(fontSize * 0.8))))
+    self._item("title", lambda c, **k: canvas.create_text(*c, **k), view.viewToWindow([x1 + o.TOGGLE_WIDTH + 2, y1 + bh / 2]),
                text=o.name, anchor="w", fill=o.cache["vis/textColor"] or "black",
-               font=(view._fontFace, max(6, int(view._fontSize * scale)), "bold"))
-    # a rule's two panes
+               font=(view._fontFace, fontSize, "bold"))
+    kinds = ", ".join(p.name for p in o.modelObject.getParents()) if o.modelObject is not None else ""
+    self._item("kind", lambda c, **k: canvas.create_text(*c, **k), view.viewToWindow([x2 - 6, y1 + bh / 2]),
+               text=kinds, anchor="e", fill="gray35", font=(view._fontFace, fontSize, "italic"))
+    # a rule's (or definition's) two panes, left and right
     panes = o.panes()
-    if "consequent" in panes:
-      mid = panes["consequent"][0]
+    if len(panes) == 2 and not o.collapsed:
+      left, right = panes
+      mid = panes[right][0]
       self._item("divider", canvas.create_line, view.viewToWindow([mid, y1 + bh, mid, y2]), fill=border, dash=(4, 3))
       font = (view._fontFace, max(5, int(view._fontSize * 0.8 * scale)), "italic")
-      for key, pane in (("anteLabel", "antecedent"), ("consLabel", "consequent")):
+      for key, pane in (("anteLabel", left), ("consLabel", right)):
         px, py = panes[pane][0], panes[pane][1]
         self._item(key, lambda c, **k: canvas.create_text(*c, **k), view.viewToWindow([px + 4, py + 2]),
                    text=pane, anchor="nw", fill="gray50", font=font)
@@ -893,5 +937,5 @@ class ShadowDecorator(Decorator):
     if self.deleted: return
     super().delete()
     self._erase()
-    self.kwargs = None
+    self.kwargs = None #type: ignore[assignment]
 

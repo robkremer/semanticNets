@@ -37,6 +37,16 @@
 %   inherited(T,X,D).         X -T-> D inherited down the isa hierarchy
 %   classify(X,C).            X should be classified under C (most specific)
 %   violation(Code,Sev,Subject,Args).
+%   fired(Rule,T,S,D).        a user rule concluded S -T-> D
+%   rule_attr(Rule,X,K,V).    a user rule concluded that X has attribute K = V
+%   rule_isa(Rule,X,T).       a user rule concluded that X isa T
+%   rule_new(N).              a user rule concluded that object N exists: N is
+%                             new(Rule,Var,Match), one per match of the rule
+%
+% ---- User rules --------------------------------------------------------------
+%   The model's rules (see sn.model.reasoner.ruleOf()) are added to this program
+%   as rules concluding fired/4 and rule_attr/4, whose bodies use the predicates
+%   here (holds/3, isa_star/2, attr/3, prop/2, ...); see ClingoReasoner._rulesProgram().
 
 type(O) :- obj(O), not individual(O).
 rel_type(T) :- kind(T,relation), type(T).
@@ -48,10 +58,26 @@ rel_type(T) :- kind(T,relation), type(T).
 % GraphObject.isPatternElement().
 data(X) :- obj(X), not pattern(X).
 
+% The objects the user's rules create (see rule_new/1) are data too -- but not
+% "base" data: rules' variables range over base data only, so that a rule
+% can't go on creating objects forever. (Queries' variables range over all
+% data.)
+base(X) :- obj(X), not pattern(X).
+data(N) :- rule_new(N).
+any_individual(X) :- individual(X).
+any_individual(N) :- rule_new(N).
+
 %%% Type hierarchy ------------------------------------------------------------
 
 isa_star(X,X) :- obj(X).
 isa_star(X,Z) :- parent(X,Y), isa_star(Y,Z).
+% ... including what the user's rules conclude (see rule_isa/3). isa_base is
+% the asserted hierarchy alone: what the refinement of inherited relations
+% (below) uses under negation, so that the program stays stratified.
+isa_star(N,N) :- rule_new(N).
+isa_star(X,Z) :- rule_isa(_,X,Y), isa_star(Y,Z).
+isa_base(X,X) :- obj(X).
+isa_base(X,Z) :- parent(X,Y), isa_base(Y,Z).
 
 %%% Relations -----------------------------------------------------------------
 
@@ -65,13 +91,17 @@ asserted(T,S,D) :- link(R,S,D), parent(R,T), rel_type(T).
 % inherited one, for the object and everything below it.
 link_holds(T,S,D) :- asserted(T,S,D).
 link_holds(T,X,D) :- link_holds(T,S,D), parent(X,S), data(X), not refined(T,X,D).
-refined(T,X,D) :- asserted(T,_,D), asserted(T2,X,D2), isa_star(T2,T), isa_star(D2,D),
+link_holds(T,X,D) :- link_holds(T,S,D), rule_isa(_,X,S), data(X), not refined(T,X,D).
+refined(T,X,D) :- asserted(T,_,D), asserted(T2,X,D2), isa_base(T2,T), isa_base(D2,D),
                   (T2,D2) != (T,D).
 inherited(T,X,D) :- link_holds(T,X,D), not asserted(T,X,D).
 
 % Every relation type subsumes its sub-relation types (relation hierarchy),
 % including their inferred pairs.
 holds(T,S,D) :- link_holds(T,S,D).
+% What the user's rules conclude holds too -- and so feeds everything else:
+% the relation hierarchy, the algebraic properties, other rules, ...
+holds(T,S,D) :- fired(_,T,S,D).
 holds(T2,S,D) :- holds(T,S,D), parent(T,T2), rel_type(T2).
 
 % Algebraic properties. These are tags on specific relation types and are NOT
@@ -138,6 +168,10 @@ violation0(unset_endpoint, warning, R, (src,)) :-
 violation0(unset_endpoint, warning, R, (dst,)) :-
     kind(R,relation), individual(R), not has_ldst(R).
 
+%%% User rules' attribute conclusions ------------------------------------------
+
+attr(X,K,V) :- rule_attr(_,X,K,V).
+
 % Report only violations about the data (not about pattern elements).
 violation(C,S,X,A) :- violation0(C,S,X,A), data(X).
 
@@ -149,3 +183,7 @@ isa_data(X,T) :- isa_star(X,T), data(X).
 #show inherited/3.
 #show classify/2.
 #show violation/4.
+#show fired/4.
+#show rule_attr/4.
+#show rule_isa/3.
+#show rule_new/1.

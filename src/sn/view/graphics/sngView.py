@@ -22,6 +22,8 @@
 from __future__ import annotations
 from sn import snPrefs
 import sn
+from sn.model.constraints import WHERE, CONSTRAINTS, CONSTRAINTS_NOTE, splitWhere, mergeConstraints, ConstraintError
+from util.attribute import Attribute, VAR
 from sn.model.model import Model, Node, Relation, Collection, IsaIndividual,\
   GraphObject, GORef
 from sn.controller.modelInterface import ModelContext
@@ -45,6 +47,7 @@ from util.utils import Categories
 from math import sqrt
 from util.persistence.serialize import InstantiationInfo, PropertyInfo,\
   ParamInfo, Serializable, SerializableType
+from util.persistence.serialize import DEFAULT_STRATEGY
 from sn.view.graphics.guiApp import Application, AppWindow
 import threading
 from util.abstractGraph import AbstractGraph
@@ -173,7 +176,8 @@ class SNGContext(UIContext):
     def __str__(self):
       return f'{super().__str__()} {self.obj.name} {self.x} {self.y}'
 
-  def resize(self, obj:"VObject", x1:int, y1:int, x2:int, y2:int): #type: ignore[name-defined]
+  def resize(self, obj:"VObject", x1:int, y1:int, x2:int, y2:int, #type: ignore[name-defined]
+             userSized:bool=True, oldBB:list[int]|None=None, oldUserSized:bool|None=None):
     '''
     Set the bounding box of a view object (its position and size).
     '''
@@ -207,7 +211,7 @@ class SNGContext(UIContext):
       self.obj.userSized = self.userSized
       text = self.obj.decorators.get("text")
       if not self.userSized and hasattr(text, "_fitted"):
-        text._fitted = None # fitted to its text from now on
+        text._fitted = None #type: ignore[union-attr] # fitted to its text from now on
       self.obj.reshape(self.bb)
 
     @override
@@ -225,6 +229,42 @@ class SNGContext(UIContext):
     @override
     def __str__(self):
       return f'{super().__str__()} {self.obj.name} {" ".join(str(v) for v in self.bb)}'
+
+  def collapse(self, obj:"VObject", collapsed:bool=True): #type: ignore[name-defined]
+    '''
+    Show a context window as just its title bar (or, with *collapsed* False, in full).
+    '''
+    print ("dummy graphic command")
+
+  class _Collapse(Command):
+    def __init__(self, obj:"VObject", collapsed:bool=True): #type: ignore[name-defined]
+      '''
+      Show a context window as just its title bar (or, with *collapsed* False,
+      in full). See *VObject.setCollapsed()*.
+      '''
+      super().__init__("collapse" if collapsed else "expand")
+      self.obj:VObject = obj
+      self.collapsed:bool = collapsed
+      self.old:bool = obj.collapsed
+
+    @override
+    def do(self) -> None:
+      super().do()
+      self.obj.setCollapsed(self.collapsed)
+
+    @override
+    def undo(self):
+      super().undo()
+      self.obj.setCollapsed(self.old)
+
+    @override
+    def delete(self):
+      super().delete()
+      self.obj = None #type: ignore[assignment]
+
+    @override
+    def __str__(self):
+      return f'{super().__str__()} {self.obj.name}'
 
   def represent(self, object:list[GraphObject]):
     '''
@@ -588,6 +628,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
      
     # self._makingRelationFrom:SNGView.makingRelationData|None = None
     self._elasticLineChoiceData:SNGView.ElasticLineChoiceData|None = None
+    self._selectionBoxInfo:list[Any]|None = None
     self._cursorBeforeTerminal:str = "arrow"
     self._inferences:list[dict[str, Any]] = []
     "The inferred/inherited relations drawn as dashed lines (see *drawInferences()*)."
@@ -618,7 +659,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       slf.canvas.after_idle(lambda slf=slf: [slf.applyVisibility(), slf.resetScrollRegion(), slf.setDirty(False)]) # type: ignore[misc]
     ret:InstantiationInfo = super().getInstantiationInfo()
     # ret.class_ = cls
-    ret.conArgs.append(ParamInfo("model", str, getter=lambda slf: cast(SNGView,slf).model.url, setter=lambda m: Model(cast(str,m))))
+    # (its model's URL relative to the view's file if they're side by side -- see PRDb.relativeURL() -- so
+    # a view and model copied together stay together; a relative URL is resolved against the view's file on reading)
+    ret.conArgs.append(ParamInfo("model", str, getter=lambda slf: PRDb.relativeURL(cast(SNGView,slf).model.url),
+                                 setter=lambda m: Model(cast(str,m))))
     ret.conKWArgs.append(ParamInfo("geometry", str, getter=lambda slf: cast(SNGView,slf).window.geometry()))
     ret.postconSetters.append(PropertyInfo("hides", str,
         lambda slf: ",".join(f"{k}={v}" for k, v in cast(SNGView, slf).hides.items()),
@@ -629,7 +673,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
   
   @override
-  def save(self, saveas:Optional[str]=None, overwrite=False, format:str="XML") -> None:
+  def save(self, saveas:Optional[str]=None, overwrite=False, format:str=DEFAULT_STRATEGY) -> None:
     super().save(saveas=saveas, overwrite=overwrite, format=format)
     self.setDirty(False)
 
@@ -732,6 +776,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
           logger.info(f'  Creating V{modelObj.__class__.__name__} for model object {modelObj}:{modelObj.__class__.__name__}')
           if (modelObj.isType() or isinstance(modelObj, Node)) and self.canvas: 
             applyEditAttrsBox(self.canvas, modelObj, title=modelObj.name, editKey="name")
+            # a variable's name may be typed with constraints: "?p :where: alive" (see sn.model.constraints)
+            if WHERE in modelObj.name:
+              self._applyWhere(modelObj)
           typ:type = type(modelObj)
           newObj:VObject|None = None
           if typ is Collection:
@@ -861,7 +908,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       # Not now: we may be inside another object's construction (eg: a relation
       # resolving its ends), and that object isn't finished yet.
       if self.canvas:
-        self.canvas.after_idle(lambda vo=ret: self._attachDanglingEnds(vo))
+        self.canvas.after_idle(lambda vo=ret: self._attachDanglingEnds(vo)) #type: ignore[misc]
       else:
         self._attachDanglingEnds(ret)
     if expand > 0:
@@ -915,6 +962,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       if not isinstance(r, VRelation) or r is vo or r.modelObject is None or not r._isConnected() \
          or not hasattr(r, "_floatingAnchor") or not hasattr(r, "_drawVersion"):
         continue
+      assert isinstance(r, Relation)
       try:
         changed = False
         for end in ("src", "dst"):
@@ -1268,7 +1316,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     rect = self.viewToWindow(self.canvas.canvasx(event.x), self.canvas.canvasy(event.y), self.canvas.canvasx(event.x), self.canvas.canvasy(event.y))
     #rect = self.windowToView(self.canvas.canvasx(event.x), self.canvas.canvasy(event.y), self.canvas.canvasx(event.x), self.canvas.canvasy(event.y))
     #rect = [self.canvas.canvasx(event.x), self.canvas.canvasy(event.y), self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)]
-    self._selectionBoxInfo:list[Any] = [
+    self._selectionBoxInfo = [
         self.canvas.create_rectangle(rect, fill="", width=3, outline="blue", dash=(1,6)), 
         rect[0], #event.x, 
         rect[1], #event.y, 
@@ -1475,7 +1523,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     # Handle a multi-selection box
     if self._selectionBoxInfo is not None:
       bb = self.canvas.coords(self._selectionBoxInfo[0])
-      ids = self.canvas.find("overlapping", bb[0], bb[1], bb[2], bb[3]) if len(bb) == 4 else []
+      ids = tuple(self.canvas.find("overlapping", bb[0], bb[1], bb[2], bb[3]) if len(bb) == 4 else [])
       for s in self.selected.copy():  # unselect everything
         s.selected(False)
       for _id in ids:
@@ -1619,7 +1667,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     mo = vo.modelObject
     if mo is None:
       return False
-    if self.isFiltered(mo, ("hide",)):
+    if self._inCollapsedWindow(vo):
+      return True
+    if self.isFiltered(mo, ("hide",)) and not self._inShownContext(vo):
       return True
     if isinstance(vo, VRelation):
       if vo.inWindow():
@@ -1631,6 +1681,21 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         if w is not vo and w.isHidden() and w.paneAt(vo.centerPt()) is not None and w.containmentOf(mo):
           return True
     return False
+
+  def _inCollapsedWindow(self, vo:VObject) -> bool:
+    'Whether *vo* is drawn inside a collapsed context window (see *VObject.setCollapsed()*), and so not shown.'
+    mo = vo.modelObject
+    return any(w.collapsed and w is not vo and w.paneAt(vo.centerPt()) is not None and w.containmentOf(mo)
+               for w in self.contextWindows())
+
+  def _inShownContext(self, vo:VObject) -> bool:
+    '''
+    Whether *vo* is part of a shown context window's content (eg: an isa link
+    in a rule's consequent): it's then shown whatever its category -- it's
+    what the rule says, not clutter.
+    '''
+    mo = vo.modelObject
+    return any(not w.isHidden() and not w.collapsed and w is not vo and w.containmentOf(mo) for w in self.contextWindows())
 
   def applyVisibility(self) -> None:
     'Bring every object into line with the current *hides* (see *VObject._applyHidden()*).'
@@ -1651,8 +1716,28 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       var = tk.BooleanVar(value=self.hides.get(name) == mode)
       self._visibilityVars[(mode, name)] = var
       menu.add_checkbutton(label=name, variable=var, onvalue=True, offvalue=False,
-                           command=lambda n=name, v=var: self.context.visibility(n, mode if v.get() else "show"))
+                           command=lambda n=name, v=var: self.context.visibility(n, mode if v.get() else "show")) #type: ignore[misc]
     return menu
+
+  def _applyWhere(self, mo:GraphObject) -> None:
+    '''
+    A new object's name was typed with constraints, eg: "?p :where: alive":
+    make them its "constraints" attribute. Only variables have constraints;
+    for anything else, or constraints that can't be read, the name stays as
+    typed (and a message says why).
+    '''
+    name, text = splitWhere(mo.name)
+    if not name.startswith("?"):
+      logger.error(f'"{mo.name}": only variables (names starting with "?") have constraints.')
+      return
+    try:
+      merged = mergeConstraints(None, text or "")
+    except ConstraintError as ex:
+      logger.error(f'"{mo.name}": the constraints can\'t be read ({ex}).')
+      return
+    mo["name"] = name
+    if merged:
+      mo.setAttr(CONSTRAINTS, Attribute(merged, str, VAR, CONSTRAINTS_NOTE))
 
   def contextWindows(self) -> list[VObject]:
     'The view objects drawn as context windows (see *VObject.isContextWindow()*).'
@@ -1664,7 +1749,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     relations themselves, nor relations to or from a window.
     '''
     mo = vo.modelObject
-    if mo is None:
+    if mo is None or vo.isHidden(): # (not what can't be seen)
       return False
     if isinstance(vo, VRelation):
       if mo.isa(self.model.CONTAINS):
@@ -1679,11 +1764,13 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     def area(w:VObject) -> float:
       x1, y1, x2, y2 = w.boundingBox()
       return (x2 - x1) * (y2 - y1)
-    return min((w for w in self.contextWindows() if w not in exclude and w.paneAt(pt) is not None), key=area, default=None)
+    return min((w for w in self.contextWindows() if w not in exclude and not w.collapsed and w.paneAt(pt) is not None),
+               key=area, default=None) # (not a collapsed one: what's dropped there couldn't be seen)
 
   def _paneType(self, pane:str) -> Relation:
     m = self.model
-    return {"contains": m.CONTAINS, "antecedent": m.ANTECEDENT, "consequent": m.CONSEQUENT}[pane]
+    return {"contains": m.CONTAINS, "antecedent": m.ANTECEDENT, "consequent": m.CONSEQUENT,
+            "definiendum": m.DEFINIENDUM, "definiens": m.DEFINIENS}[pane]
 
   def _containNewRelation(self, mgr:CompositeCommandMgr, creator:Command, typ:Relation, fromNode:VObject, toNode:VObject) -> None:
     '''
@@ -1707,7 +1794,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     if w is not None:
       mgr._addCommand(_ContainCreated(self.model, self._paneType(w.paneAt(pt)), w.modelObject, creator)) #type: ignore[arg-type]
 
-  def _updateContainment(self, oldCenters:dict[VObject, tuple[float,float]|None]) -> None:
+  def _updateContainment(self, oldCenters:dict[VObject, tuple[float,float]|None],
+                         draggedAlong:Iterable[VObject]=()) -> None:
     '''
     Bring the contexts' containment into line with where the objects in
     *oldCenters* now sit. Positions are centres (a relation's is its label's);
@@ -1722,8 +1810,16 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     - Containment of an object sitting outside the window (eg: out in the "real
       world", with its contains arc showing) is left alone.
 
+    Relations in *draggedAlong* only moved because an end did, so their
+    labels' positions say little: one is put in a window only if both its
+    ends are in the window, and taken out only if neither end is. (Otherwise
+    moving ?x in a rule would pull in, eg: its isa link to a type outside.)
+
     Call inside a *CompositeCommandMgr*, so it's undone with the move.
     '''
+    along = set(draggedAlong)
+    def endsIn(r:VRelation, w:VObject) -> int: # how many of relation r's ends are in w's window
+      return sum(1 for e in (r.src, r.dst) if isinstance(e, VObject) and w.paneAt(e.centerPt()) is not None)
     m = self.model
     windows = self.contextWindows()
     def nestedIn(w:VObject, outer:VObject) -> bool: # w is on outer's window (at any depth)?
@@ -1739,11 +1835,16 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         if w is vo:
           continue
         rels = w.containmentOf(mo)
+        if vo in along and isinstance(vo, VRelation):
+          if w is target and endsIn(vo, w) < 2:
+            continue
+          if w is not target and rels and endsIn(vo, w) > 0:
+            continue
         if w is target:
           want = self._paneType(w.paneAt(new)) #type: ignore[arg-type]
           if any(r.isa(want) for r in rels):
             continue
-          others = [r for r in rels if r.isa(m.ANTECEDENT) or r.isa(m.CONSEQUENT)]
+          others = [r for r in rels if any(r.isa(t) for t in (m.ANTECEDENT, m.CONSEQUENT, m.DEFINIENDUM, m.DEFINIENS))]
           if len(others) > 1: # in both panes: leave it be
             continue
           for r in others:    # switched panes
@@ -1833,72 +1934,14 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     only creates it and returns it.
     """
     assert event is not None
-    x = event.x
-    y = event.y
-    bgMenu:tk.Menu = tk.Menu(self.canvas)
 
-    # A menu command's callback runs on the main/GUI thread, where the
-    # blocking builtin input() always raises RuntimeError — inputAsync()
-    # returns immediately and delivers the typed line to onResult once the
-    # user actually answers.
-    # # "new instance" and "new subtype" for nodes menus
-    if self.isModelEditor():
-      def fillMenu(menu:tk.Menu, model:Model, individual:bool, ptype:type):
-        types = [v for v in model.values() if isinstance(v, ptype) and v.isType()]
-        types.sort(key=lambda x: x.name) #sort by name alphabetically
-        for t in types:
-          if ptype is Node:
-            fun = lambda t=t: self.context.new_node(t, name="", individual=individual, type=not individual)
-          elif ptype is Relation:
-            fun = lambda t=t: self.context.new_relation(t, name="", individual=individual, type=not individual)
-          # elif ptype is Collection:
-          #   fun = lambda t=t: self.context.new_collection(t, name="?", individual=individual)
-          menu.add_command(label=t.name, command=fun)
-    
-      def makeSubmenu(individual:bool, ptype:type):
-        newMenu:tk.Menu = tk.Menu(self.canvas)
-        # process nodes in the included models
-        for v in [self.model, Model.AllDBs["sn:/sn.xml"]]:
-          assert isinstance(v, Model)
-          m = tk.Menu(self.canvas)
-          fillMenu(m, v, individual, ptype)
-          newMenu.add_cascade(label=v.name, menu=m)
-        # process own nodes
-        #fillMenu(newMenu, self.model, individual, ptype)
-        return newMenu
-    
-      modelEditMenu:tk.Menu = tk.Menu(self.canvas)
-      modelEditMenu.add_cascade(label="new instance of Node"   , menu=makeSubmenu(individual=True, ptype=Node))
-      modelEditMenu.add_cascade(label="new subtype of Node"    , menu=makeSubmenu(individual=False, ptype=Node))
-      modelEditMenu.add_cascade(label="new instance of Relation", menu=makeSubmenu(individual=True, ptype=Relation))
-      modelEditMenu.add_cascade(label="new subtype of Relation", menu=makeSubmenu(individual=False, ptype=Relation))
-      # bgMenu.add_cascade(label="new instance of Collection", menu=makeSubmenu(individual=True, ptype=Collection))
-      # bgMenu.add_cascade(label="new subtype of Collection", menu=makeSubmenu(individual=False, ptype=Collection))
-      bgMenu.add_cascade(label="edit model", menu=modelEditMenu)
-      bgMenu.add_separator()
-      bgMenu.add_separator()
-    
-    bgMenu.add_command(label="float all", command=lambda: [r.floating(True) for r in self.context.view.values() if isinstance(r, VRelation) and r.modelObject is not None and r.modelObject.isIndividual()])
-    bgMenu.add_command(label="refresh all", command=lambda: [o.cache.refresh() for o in self.context.view.values()])
-    bgMenu.add_command(label="show all", command=self.context.view.showAllModel)
-    bgMenu.add_command(label="reset scroll region", command=lambda: self.resetScrollRegion(shrink=True))
-    bgMenu.add_command(label="gather nodes", command=self.gatherNodes)
-    bgMenu.add_command(label="clear highlights", command=self.clearHighlights, accelerator=KEY_CLEAR_HIGHLIGHTS[1])
-    bgMenu.add_command(label="reason", command=self.reason)
-    bgMenu.add_command(label="clear reasoning", command=self.clearReasoning,
-                       state=tk.NORMAL if self.reasoning is not None else tk.DISABLED)
-    # bgMenu.add_command(label="toggle field layout", command=self.onToggleFieldsLayout, accelerator=KEY_TOGGLE_FIELDS_LAYOUT[1])
-    # bgMenu.add_command(label="show animation controls", command=self.onShowAnimationControls)
-    # # from sn.view.animatedLayouts import testBones
-    # # bgMenu.add_command(label="test bones", command=lambda s=self: testBones(s))
-    #
     def makeShowMenu():
       newMenu = tk.Menu(self.canvas)
       # sort the list of individuals
       nodes = dict()
       nodeNames = []
       for i in self.model.values():
-        #if i.isIndividual():
+        if not(i.isIndividual() and isinstance(i, Relation)):
           nodes[i.name] = i
           nodeNames.append(i.name)
       nodeNames = sorted(nodeNames)
@@ -1906,9 +1949,78 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       for nn in nodeNames:
         newMenu.add_command(label=nodes[nn].name, command=lambda mo=nodes[nn]: self.makeViewObjectForGraphObject(mo)) #type: ignore[misc]
       return newMenu
-    bgMenu.add_cascade(label="show", menu=makeShowMenu())
-    bgMenu.add_cascade(label="hide", menu=self._visibilityMenu("hide"))
-    bgMenu.add_cascade(label="erase", menu=self._visibilityMenu("erase"))
+
+    def fillModelSubmenu(menu:tk.Menu, model:Model, individual:bool, ptype:type):
+      types = [v for v in model.values() if isinstance(v, ptype) and v.isType()]
+      types.sort(key=lambda x: x.name) #sort by name alphabetically
+      for t in types:
+        if ptype is Node:
+          fun = lambda t=t: self.context.new_node(t, name="", individual=individual, type=not individual)
+        elif ptype is Relation:
+          fun = lambda t=t: self.context.new_relation(t, name="", individual=individual, type=not individual)
+        # elif ptype is Collection:
+        #   fun = lambda t=t: self.context.new_collection(t, name="?", individual=individual)
+        menu.add_command(label=t.name, command=fun)
+  
+    def makeModelSubmenu(individual:bool, ptype:type):
+      newMenu:tk.Menu = tk.Menu(self.canvas)
+      # process nodes in the included models
+      for v in [self.model, Model.AllDBs["sn:/sn.xml"]]:
+        assert isinstance(v, Model)
+        m = tk.Menu(self.canvas)
+        fillModelSubmenu(m, v, individual, ptype)
+        newMenu.add_cascade(label=v.name, menu=m)
+      # process own nodes
+      #fillModelSubmenu(newMenu, self.model, individual, ptype)
+      return newMenu
+
+    bgMenu:tk.Menu = tk.Menu(self.canvas)
+
+    # A menu command's callback runs on the main/GUI thread, where the
+    # blocking builtin input() always raises RuntimeError — inputAsync()
+    # returns immediately and delivers the typed line to onResult once the
+    # user actually answers.
+    # # "new instance" and "new subtype" for nodes menus
+    modelEditMenu:tk.Menu = tk.Menu(self.canvas)
+    bgMenu.add_cascade(label="model", menu=modelEditMenu)
+    if self.isModelEditor():
+      modelEditMenu.add_cascade(label="new instance of Node"   , menu=makeModelSubmenu(individual=True, ptype=Node))
+      modelEditMenu.add_cascade(label="new subtype of Node"    , menu=makeModelSubmenu(individual=False, ptype=Node))
+      modelEditMenu.add_cascade(label="new instance of Relation", menu=makeModelSubmenu(individual=True, ptype=Relation))
+      modelEditMenu.add_cascade(label="new subtype of Relation", menu=makeModelSubmenu(individual=False, ptype=Relation))
+      modelEditMenu.add_separator()
+      # bgMenu.add_cascade(label="new instance of Collection", menu=makeModelSubmenu(individual=True, ptype=Collection))
+      # bgMenu.add_cascade(label="new subtype of Collection", menu=makeModelSubmenu(individual=False, ptype=Collection))
+    if snPrefs.get("gui/debugMenus", storeDefault=False, storeType=bool):
+      modelEditMenu.add_command(label="validate", command=lambda o=self: o.context.view.validate(refresh=True), accelerator=KEY_VALIDATE[1]) #type: ignore[misc]
+    modelEditMenu.add_command(label="refresh all caches", command=lambda: [o.cache.refresh() for o in self.context.view.values()])
+    
+    viewMenu = tk.Menu(self.canvas)
+    bgMenu.add_cascade(label="view", menu=viewMenu)
+    viewMenu.add_command(label="show all", command=self.context.view.showAllModel)
+    viewMenu.add_cascade(label="show node", menu=makeShowMenu())
+    viewMenu.add_cascade(label="hide by category", menu=self._visibilityMenu("hide"))
+    viewMenu.add_cascade(label="erase by category", menu=self._visibilityMenu("erase"))
+    viewMenu.add_separator()
+    viewMenu.add_cascade(label="Zoom", menu=self.makeZoomMenu(viewMenu))
+    viewMenu.add_command(label="reset scroll region", command=lambda: self.resetScrollRegion(shrink=True))
+    viewMenu.add_command(label="gather nodes", command=self.gatherNodes)
+    if snPrefs.get("gui/debugMenus", storeDefault=False, storeType=bool):
+      viewMenu.add_command(label="repaint", command=self.repaint, accelerator=KEY_REPAINT[1])
+    viewMenu.add_separator()
+    viewMenu.add_command(label="float all relations", command=lambda: [r.floating(True) for r in self.context.view.values() if isinstance(r, VRelation) and r.modelObject is not None and r.modelObject.isIndividual()])
+
+    reasonMenu = tk.Menu(self.canvas)
+    bgMenu.add_cascade(label="reasoning", menu=reasonMenu)
+    reasonMenu.add_command(label="clear highlights", command=self.clearHighlights, accelerator=KEY_CLEAR_HIGHLIGHTS[1])
+    reasonMenu.add_command(label="reason", command=self.reason)
+    reasonMenu.add_command(label="clear reasoning", command=self.clearReasoning,
+                       state=tk.NORMAL if self.reasoning is not None else tk.DISABLED)
+    # bgMenu.add_command(label="toggle field layout", command=self.onToggleFieldsLayout, accelerator=KEY_TOGGLE_FIELDS_LAYOUT[1])
+    # bgMenu.add_command(label="show animation controls", command=self.onShowAnimationControls)
+    # # from sn.view.animatedLayouts import testBones
+    # # bgMenu.add_command(label="test bones", command=lambda s=self: testBones(s))
+    #
     
     # "hide/enable" menu
     # hideEnableMenu = tk.Menu(self)
@@ -1944,7 +2056,11 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     # bgMenu.add_cascade(label="global layout", menu=layoutsMenu)
     # bgMenu.add_command(label="reset scroll region", command=self.setScrollRegion)
 
-    zoommenu = tk.Menu(bgMenu)
+
+    return bgMenu
+
+  def makeZoomMenu(self, superMenu:tk.Menu) -> tk.Menu:
+    zoommenu = tk.Menu(superMenu)
     zoommenu.add_command(label="Normal Size", command=self.zoom)
     zoommenu.add_command(label="Zoom In", command=lambda: self.zoom(1.1, delta=True))
     zoommenu.add_command(label="Zoom Out", command=lambda: self.zoom(0.9, delta=True))
@@ -1954,14 +2070,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     zoommenu.add_command(label="75%", command=lambda: self.zoom(0.75))
     zoommenu.add_command(label="50%", command=lambda: self.zoom(0.5))
     zoommenu.add_command(label="25%", command=lambda: self.zoom(0.25))
-    bgMenu.add_cascade(label="Zoom", menu=zoommenu)
-
-    if snPrefs.get("gui/debugMenus", storeDefault=False, storeType=bool):
-      bgMenu.add_separator()
-      bgMenu.add_command(label="validate", command=lambda o=self: o.context.view.validate(refresh=True), accelerator=KEY_VALIDATE[1]) #type: ignore[misc]
-      bgMenu.add_command(label="repaint", command=self.repaint, accelerator=KEY_REPAINT[1])
-
-    return bgMenu
+    return zoommenu
 
   def isModelEditor(self) -> bool:
     return True
@@ -2137,8 +2246,11 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     inheritedIds = {(id(t), id(s), id(d)) for t, s, d in inherited}
     inferred = [(t, s, d) for t, s, d in self.reasoning.inferred if (id(t), id(s), id(d)) not in inheritedIds]
     byKey:dict[tuple, dict[str, Any]] = {}
+    inferred += [(self.model.ISA, x, t) for _, x, t in self.reasoning.ruleIsa] # (isa links the rules concluded)
     for kind, triples in (("inferred", inferred), ("inherited", inherited)):
       for t, s, d in triples:
+        if not (isinstance(s, GraphObject) and isinstance(d, GraphObject)): # (eg: an object a rule creates)
+          continue
         vs, vd = self.findViewObjectForGraphObject(s), self.findViewObjectForGraphObject(d)
         if vs is None or vd is None or vs is vd:
           continue
@@ -2160,7 +2272,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     source's edge, through the label, to the destination's edge -- the way
     relations are drawn through their labels.
     '''
-    from sn.view.graphics.connectors import _clipToEdgeStraight, _farPointAlong, _sub
+    from sn.view.graphics.connectors import _clipToEdgeStraight, _farPointAlong, _sub, PointType
     vs, vd = rec["src"], rec["dst"]
     hide = vs.isHidden() or vd.isHidden() # (see visibility())
     for k in ("line", "label", "patch"):
@@ -2192,10 +2304,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     lineOpts = dict(fill=self.INFERENCE_COLOR, dash=self.INFERENCE_DASH[rec["kind"]],
                     arrow=tk.BOTH if rec["both"] else tk.LAST, width=1, smooth=True)
     if rec["line"] is None:
-      rec["line"] = self.canvas.create_line(coords, state="disabled", tags=["inference"], **lineOpts)
+      rec["line"] = self.canvas.create_line(coords, state="disabled", tags=["inference"], **lineOpts) #type: ignore[call-overload]
     else:
       self.canvas.coords(rec["line"], coords)
-      self.canvas.itemconfigure(rec["line"], **lineOpts)
+      self.canvas.itemconfigure(rec["line"], lineOpts)
 
     # a patch of background behind the label, so the line doesn't run through the text
     bb = self.canvas.bbox(rec["label"])

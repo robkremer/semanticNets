@@ -75,6 +75,7 @@ from importlib import import_module
 from typing import Any, ClassVar
 import sn
 from sn.model.model import Model, GraphObject, Node, Collection, Relation, IsaIndividual
+from sn.model.constraints import CONSTRAINTS, PRESENT, ValueVar
 
 logger:sn.SNLogger = sn.getLogger(__name__)
 
@@ -93,6 +94,10 @@ _MESSAGES:dict[str,str] = {
   "asymmetric":            "asymmetric {0} relates {1} and {2} both ways",
   "property_conflict":     "{0} is both {1} and {2}",
   "unset_endpoint":        "{0} has no local {1}; it inherits its type's",
+  "rule_unbound":          "rule {0}: {1} in the consequent isn't bound by the antecedent",
+  "rule_open_end":         "rule {0}: {1} in the consequent has no {2}",
+  "rule_unsupported":      "rule {0}: {1} in the consequent isn't supported (yet)",
+  "bad_constraints":       "{0}: the constraints of {1} can't be read: {2}",
   }
 "Message templates for violation codes: {0} is the subject, {1}... are the args."
 
@@ -106,6 +111,27 @@ class Sym(str):
 
 Fact = tuple[str, tuple[Any, ...]]
 "(predicate, args); args are GraphObjects, Syms, strs, ints, floats or bools."
+
+@dataclass(frozen=True)
+class NewObject:
+  '''
+  An object a rule concludes exists: one per match of the rule's antecedent,
+  for a consequent variable the antecedent doesn't bind (eg: "every person
+  has a mother": ?m). It's not in the model -- just in the reasoning results.
+  '''
+  rule:GraphObject
+  variable:str
+  "The consequent variable's name, eg: \"?m\"."
+  bindings:tuple[tuple[str, Any], ...]
+  "The match it's for: (variable name, value) pairs of the antecedent's variables."
+
+  def label(self, relativeTo:Model|None=None) -> str:
+    'How it\'s named in messages, eg: "(new ?m for ?p=alice)", with objects named relative to *relativeTo*.'
+    match = ", ".join(f"{n}={_label(v, relativeTo)}" for n, v in self.bindings)
+    return f"(new {self.variable}{' for ' + match if match else ''})"
+
+  def __str__(self) -> str:
+    return self.label()
 
 @dataclass
 class Violation:
@@ -148,6 +174,17 @@ class Inferences:
   violations:list[Violation] = field(default_factory=list)
   isa:set[tuple[GraphObject, GraphObject]] = field(default_factory=set)
   "The reflexive-transitive isa closure."
+  fired:list[tuple[GraphObject, Relation, GraphObject|NewObject, GraphObject|NewObject]] = field(default_factory=list)
+  "(rule, relationType, src, dst): relations the rules concluded (see *ruleOf()*)."
+  ruleAttrs:list[tuple[GraphObject, GraphObject|NewObject, str, Any]] = field(default_factory=list)
+  "(rule, object, key, value): attributes the rules concluded."
+  ruleIsa:list[tuple[GraphObject, GraphObject|NewObject, GraphObject]] = field(default_factory=list)
+  "(rule, object, type): isa links the rules concluded."
+  newObjects:list[NewObject] = field(default_factory=list)
+  '''
+  The objects the rules concluded exist. Relations involving them are only in
+  *fired* (not *holds*, *inferred*, ...: those are about the model's objects).
+  '''
 
   def _index(self) -> tuple[dict, dict]:
     '''
@@ -182,6 +219,42 @@ class Inferences:
         ret.append((t, s, d))
     return ret
 
+  def ruleConclusions(self, rule:GraphObject|None=None, model:Model|None=None) -> list[str]:
+    '''
+    What the rules (or just *rule*) concluded that's new -- relations not
+    already asserted, attributes, isa links and new objects -- one line each,
+    with the rule that concluded it. Objects are named relative to *model*.
+    '''
+    new = {(id(t), id(s), id(d)) for t, s, d in self.inferred}
+    by = lambda r: "" if rule is not None else f"   (by {_label(r, model)})"
+    mine = lambda r: rule is None or r is rule
+    lines = [f'{_label(s, model)} {relationArrow(t)} {_label(d, model)}{by(r)}' for r, t, s, d in self.fired
+             if mine(r) and ((id(t), id(s), id(d)) in new or isinstance(s, NewObject) or isinstance(d, NewObject))]
+    attr = lambda k, v: k if v is True or v is PRESENT else f"{k}: {v}"
+    known = lambda x, k, v: v is not PRESENT and x.get(k, None) == v # (already so: not news)
+    lines += [f'{_label(x, model)} {{{attr(k, v)}}}{by(r)}' for r, x, k, v in self.ruleAttrs
+              if mine(r) and not isinstance(x, NewObject) and not known(x, k, v)]
+    lines += [f'{_label(x, model)} -isa-> {_label(t, model)}{by(r)}' for r, x, t in self.ruleIsa
+              if mine(r) and not isinstance(x, NewObject) and not x.isa(t)]
+    for n in self.newObjects: # (one line each: that it exists, its types and its attributes)
+      if mine(n.rule):
+        types = ", ".join(_label(t, model) for _, x, t in self.ruleIsa if x == n)
+        attrs = ", ".join(attr(k, v) for _, x, k, v in self.ruleAttrs if x == n)
+        lines.append(f'{_label(n, model)} exists{": a " + types if types else ""}{" {" + attrs + "}" if attrs else ""}{by(n.rule)}')
+    return lines
+
+  def ruleObjects(self, rule:GraphObject) -> list[GraphObject]:
+    'The model objects *rule* concluded something about (not new objects).'
+    ret:dict[int, GraphObject] = {}
+    new = {(id(t), id(s), id(d)) for t, s, d in self.inferred}
+    for r, t, s, d in self.fired:
+      if r is rule and ((id(t), id(s), id(d)) in new or isinstance(s, NewObject) or isinstance(d, NewObject)):
+        ret.update({id(x): x for x in (s, d) if isinstance(x, GraphObject)})
+    for r, x, *_ in self.ruleAttrs + self.ruleIsa: # type: ignore[operator]
+      if r is rule and isinstance(x, GraphObject):
+        ret[id(x)] = x
+    return list(ret.values())
+
   def violationsFor(self, subject:GraphObject) -> list[Violation]:
     return [v for v in self.violations if v.subject is subject]
 
@@ -205,6 +278,8 @@ class Inferences:
     inferred = [(t, s, d) for t, s, d in self.inferred if relevant(s, d) and (id(t), id(s), id(d)) not in inherited]
     lines.append(f'Inferred relations: {len(inferred)}')
     lines += [triple(*x) for x in inferred]
+    lines.append(f'Rule conclusions: {len(self.ruleConclusions())}')
+    lines += [f'  {c}' for c in self.ruleConclusions(model=model)]
     inh = [(t, s, d) for t, s, d in self.inherited if relevant(s, d)]
     lines.append(f'Inherited relations: {len(inh)}')
     lines += [triple(*x) for x in inh]
@@ -230,12 +305,24 @@ class Pattern:
   "(x, type): x isa type."
   distinct:list[tuple[GraphObject, GraphObject]] = field(default_factory=list)
   "(x, y): x and y are different objects (a contained \"distinct\" relation)."
-
-def patternOf(context:GraphObject) -> Pattern:
+  constraints:list[tuple[GraphObject, str, Any]] = field(default_factory=list)
   '''
-  :returns: The *Pattern* of *context*: everything it contains through a
-    "contains"-family relation other than "consequent" (so for a rule, its
-    antecedent).
+  (variable, key, value): what the variable matches must have attribute *key*
+  (see *GraphObject.constraints()* and *sn.model.constraints*) -- with any
+  value if *value* is PRESENT; the same value as other constraints naming it
+  if it's a *ValueVar*; else equal to *value*. A relational property
+  (symmetric, ...) is a tag: PRESENT or True means it's there, False not.
+  '''
+  errors:list[tuple[GraphObject, str]] = field(default_factory=list)
+  "(variable, message): constraints that can't be parsed (see *GraphObject.constraintsError()*)."
+
+def patternOf(context:GraphObject, parts:tuple[GraphObject, ...]|None=None) -> Pattern:
+  '''
+  :param parts: The "contains"-family relation types to read the pattern from.
+    By default, all of them other than "consequent" and "definiendum": so for a
+    rule, its antecedent, and for a definition, its definiens.
+  :returns: The *Pattern* of *context*: everything it contains (through
+    *parts*).
 
     - A contained relation must hold, between its (local) ends, for each of its
       types; an end it doesn't have is "something".
@@ -244,6 +331,8 @@ def patternOf(context:GraphObject) -> Pattern:
     - A relation whose type is a variable ranges over relation types.
     - A contained "distinct" relation says its two ends are different objects
       (the usual "for all x, y: x != y, ..."), rather than a relation to find.
+    - A variable's own attributes are constraints on what it matches (see
+      *GraphObject.constraints()*).
   '''
   m = context.model
   ret = Pattern(context)
@@ -251,11 +340,15 @@ def patternOf(context:GraphObject) -> Pattern:
   def note(x:GraphObject|None) -> None:
     if x is not None and x.isVariable() and id(x) not in variables:
       variables[id(x)] = x
+      ret.constraints += [(x, k, v) for k, v in x.constraints().items()]
+      if (err := x.constraintsError()) is not None:
+        ret.errors.append((x, err))
       for p in x.getParents():
         if p not in (m.NODE, m.RELATION, m.TOP) and not isinstance(x, IsaIndividual):
           ret.types.append((x, p))
-  contained = [r.localDst for r, _ in context._getOutgoing(
-                 lambda r: r.isIndividual() and r.isa(m.CONTAINS) and not r.isa(m.CONSEQUENT))
+  inPattern = (lambda r: any(r.isa(p) for p in parts)) if parts is not None else \
+              (lambda r: r.isa(m.CONTAINS) and not r.isa(m.CONSEQUENT) and not r.isa(m.DEFINIENDUM))
+  contained = [r.localDst for r, _ in context._getOutgoing(lambda r: r.isIndividual() and inPattern(r))
                if r.localDst is not None]
   for e in contained:
     if isinstance(e, IsaIndividual):
@@ -276,6 +369,148 @@ def patternOf(context:GraphObject) -> Pattern:
   ret.types = list({(id(x), id(t)): (x, t) for x, t in ret.types}.values()) # once each
   ret.variables = sorted(variables.values(), key=lambda v: v.name)
   return ret
+
+@dataclass
+class RuleSpec:
+  '''
+  A rule, in an engine-neutral form: when its antecedent's *pattern* matches,
+  its consequent's relations (*heads*) hold and its *assertions* (attributes)
+  are true, for the matching values of the variables. Variables are the same
+  variable wherever they have the same name in the rule, so the consequent can
+  have its own copies of the antecedent's variables.
+  '''
+  rule:GraphObject
+  pattern:Pattern
+  "The antecedent (see *patternOf()*)."
+  heads:list[tuple[GraphObject, GraphObject, GraphObject]] = field(default_factory=list)
+  "(relation type, src, dst): what the rule concludes holds."
+  assertions:list[tuple[GraphObject, str, Any]] = field(default_factory=list)
+  "(variable, key, value): attributes the rule concludes -- the constraints of the consequent's own variables."
+  isas:list[tuple[GraphObject, GraphObject]] = field(default_factory=list)
+  "(x, type): isa links the rule concludes."
+  new:list[GraphObject] = field(default_factory=list)
+  "The consequent's variables the antecedent doesn't bind: a new object for each match (see *NewObject*)."
+  problems:list[tuple[str, tuple[Any, ...]]] = field(default_factory=list)
+  "(violation code, args): why the rule can't be used (it's skipped)."
+
+def ruleOf(rule:GraphObject) -> RuleSpec:
+  '''
+  :returns: The *RuleSpec* of *rule*: its antecedent is *patternOf(rule)*; its
+    consequent is what it contains through "consequent" relations:
+
+    - A relation concludes a relation, between its (local) ends, for each of
+      its types -- which may be variables.
+    - A variable's constraints (see *GraphObject.constraints()*) are
+      conclusions if it's the consequent's own variable (not one of the
+      antecedent's nodes, whose constraints are tests).
+    - An isa link concludes an isa link.
+    - A consequent variable the antecedent doesn't bind (by name) stands for a
+      new object, one per match: it's concluded to exist, isa its types (as
+      drawn), and have its constraints. (Relation types can't be new.)
+    - Value variables ("?a") must be bound by the antecedent.
+    - "distinct", and relations or isa links with a missing end, aren't
+      supported: they're reported as problems, and the rule isn't used.
+  '''
+  return _spec(rule, None, rule.model.CONSEQUENT)
+
+def definitionSpecs(definition:GraphObject) -> list[RuleSpec]:
+  '''
+  :returns: The two rules a definition amounts to: its definiens (the meaning)
+    implies its definiendum (the term defined), and its definiendum implies its
+    definiens -- each part of it. Eg: defining ?X -brother-> ?Y as ?X
+    -full-sibling-> ?Y, ?Y {gender: male} concludes brothers from full siblings
+    who are male, and from a brother both that they're full siblings and that
+    he's male. See *ruleOf()*; in the second direction (the definiens as
+    conclusions):
+
+    - its variables' types (as drawn) are concluded, as well as their
+      constraints -- they're part of the meaning;
+    - its "distinct"s are left out: they're tests, not something that can be
+      concluded;
+    - its variables the definiendum doesn't bind are new objects (eg:
+      grandparent defined through an intermediate parent).
+  '''
+  m = definition.model
+  return [_spec(definition, (m.DEFINIENS,), m.DEFINIENDUM),
+          _spec(definition, (m.DEFINIENDUM,), m.DEFINIENS, meaning=True)]
+
+def _spec(rule:GraphObject, parts:tuple[GraphObject, ...]|None, consequentType:GraphObject, meaning:bool=False) -> RuleSpec:
+  '''
+  The *RuleSpec* for *rule*, with the pattern from its *parts* (see
+  *patternOf()*) as the antecedent and what it contains through
+  *consequentType* as the consequent (see *ruleOf()*). With *meaning* (the
+  consequent is a definiens: see *definitionSpecs()*), the consequent's
+  variables' types are concluded too, and its "distinct"s are left out.
+  '''
+  m = rule.model
+  spec = RuleSpec(rule, patternOf(rule, parts))
+  anteObjs = {id(v) for v in spec.pattern.variables}
+  bound = {v.name for v in spec.pattern.variables}
+  bound |= {v for _, _, v in spec.pattern.constraints if isinstance(v, ValueVar)}
+  spec.problems += [("bad_constraints", (x, err)) for x, err in spec.pattern.errors]
+  consequent = [r.localDst for r, _ in rule._getOutgoing(lambda r: r.isIndividual() and r.isa(consequentType))
+                if r.localDst is not None]
+  own:dict[int, GraphObject] = {} # the consequent's own variables
+  new:dict[str, GraphObject] = {}  # the new ones, by name
+  def use(x:GraphObject|None, relType:bool=False) -> None:
+    if x is not None and x.isVariable():
+      if x.name not in bound:
+        if relType:
+          spec.problems.append(("rule_unbound", (x,)))
+        else:
+          new.setdefault(x.name, x)
+          own[id(x)] = x
+      elif id(x) not in anteObjs:
+        own[id(x)] = x
+  for e in consequent:
+    if isinstance(e, Relation) and e.isa(m.DISTINCT):
+      if not meaning: # (in a definiens, a test: nothing to conclude)
+        spec.problems.append(("rule_unsupported", (e,)))
+    elif isinstance(e, IsaIndividual) or (isinstance(e, Relation) and e.isIndividual() and m.ISA in e.getParents()):
+      if e.localSrc is None or e.localDst is None:
+        spec.problems.append(("rule_open_end", (e, Sym("src" if e.localSrc is None else "dst"))))
+      else:
+        spec.isas.append((e.localSrc, e.localDst))
+        use(e.localSrc); use(e.localDst)
+    elif isinstance(e, Relation) and e.isIndividual():
+      for end, x in (("src", e.localSrc), ("dst", e.localDst)):
+        if x is None:
+          spec.problems.append(("rule_open_end", (e, Sym(end))))
+      for t in e.getParents():
+        spec.heads.append((t, e.localSrc, e.localDst))
+        use(t, relType=True)
+      use(e.localSrc); use(e.localDst)
+    else:
+      use(e)
+  spec.new = list(new.values())
+  typed = own.values() if meaning else new.values() # (a new object isa its types, as drawn; so is a definiens' variable)
+  for x in {id(x): x for x in typed}.values():
+    for p in x.getParents():
+      if p not in (m.NODE, m.RELATION, m.TOP) and not isinstance(x, IsaIndividual):
+        spec.isas.append((x, p))
+  for x in own.values():
+    if (err := x.constraintsError()) is not None:
+      spec.problems.append(("bad_constraints", (x, err)))
+    for k, v in x.constraints().items():
+      if isinstance(v, ValueVar) and v not in bound:
+        spec.problems.append(("rule_unbound", (v,)))
+      spec.assertions.append((x, k, v))
+  return spec
+
+def rules(objects:list[GraphObject], kind:str="RULE") -> list[GraphObject]:
+  ':returns: The rules (or with *kind* "DEFINITION", definitions) among *objects*: individuals that isa "rule" ("definition").'
+  ret = []
+  for o in objects:
+    try:
+      if o.isIndividual() and not o.isPatternElement() and o.isa(getattr(o.model, kind)):
+        ret.append(o)
+    except Exception: # (eg: a half-built object)
+      pass
+  return ret
+
+def ruleSpecs(objects:list[GraphObject]) -> list[RuleSpec]:
+  ':returns: Everything the rules and definitions among *objects* amount to, as *RuleSpec*s.'
+  return [ruleOf(r) for r in rules(objects)] + [s for d in rules(objects, "DEFINITION") for s in definitionSpecs(d)]
 
 class Reasoner(ABC):
   '''
@@ -422,7 +657,7 @@ class Reasoner(ABC):
       if isinstance(obj, Relation):
         out += self._relationFacts(obj, ref)
       for key in obj: # local and inherited keys
-        if key == "name" or key.startswith("vis/"):
+        if key in ("name", CONSTRAINTS) or key.startswith("vis/"): # (a variable's constraints aren't facts about it)
           continue
         if dict.__contains__(obj, key):
           out.append(("lattr", (obj, key)))
@@ -500,6 +735,8 @@ def _label(x:Any, relativeTo:Model|None=None) -> str:
   'How an object is named in messages: see *GraphObject.tostring()*\'s "friendly" format.'
   if isinstance(x, GraphObject):
     return x.tostring(relativeTo=relativeTo, format="friendly")
+  if isinstance(x, NewObject):
+    return x.label(relativeTo)
   return str(x)
 
 def relationArrow(relType:Relation) -> str:

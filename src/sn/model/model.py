@@ -35,6 +35,7 @@ from __future__ import annotations
 from util.persistence.pRef import PRObject, PRDb, PReference, PRDbContainer
 from util.persistence.serialize import InstantiationInfo, ParamInfo, PropertyInfo,\
   SerializableType
+from util.persistence.serialize import DEFAULT_STRATEGY
 from util.utils import removeDuplicates, delOne
 from typing import override, cast, Generator, Callable, Optional,\
   Iterable, overload, Iterator, Any
@@ -483,6 +484,47 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     except Exception: # eg: during construction, before it has a name
       return False
 
+  def constraints(self) -> dict[str, Any]:
+    '''
+    :returns: A variable's constraints -- in a pattern, what what it matches
+      must be like: the parsed text of its "constraints" attribute (see
+      *sn.model.constraints*), eg: ``{"alive": PRESENT, "age": 30}``. For
+      anything but a variable, or if the text can't be parsed (see
+      *constraintsError()*), {}.
+    '''
+    from sn.model.constraints import parseConstraints, ConstraintError, CONSTRAINTS
+    if not self.isVariable():
+      return {}
+    try:
+      return parseConstraints(self.getLocal(CONSTRAINTS, None))
+    except ConstraintError:
+      return {}
+
+  def constraintsError(self) -> str|None:
+    ':returns: Why a variable\'s constraints can\'t be parsed, or None if they can (or it has none).'
+    from sn.model.constraints import parseConstraints, ConstraintError, CONSTRAINTS
+    if not self.isVariable():
+      return None
+    try:
+      parseConstraints(self.getLocal(CONSTRAINTS, None))
+    except ConstraintError as ex:
+      return str(ex)
+    return None
+
+  def constraintsText(self) -> str:
+    ':returns: A variable\'s constraints as (normalized) text, eg: "alive, age: 30"; its raw text if it can\'t be parsed; "" if none.'
+    from sn.model.constraints import formatConstraints, CONSTRAINTS
+    if not self.isVariable():
+      return ""
+    if self.constraintsError() is not None:
+      return str(self.getLocal(CONSTRAINTS, "")).strip()
+    return formatConstraints(self.constraints())
+
+  def formatConstraints(self) -> str:
+    ':returns: *constraintsText()* in braces, eg: "{alive, age: 30}" -- or "" if there are none.'
+    text = self.constraintsText()
+    return "{" + text + "}" if text else ""
+
   def isPatternElement(self, _seen:set[int]|None=None) -> bool:
     '''
     :returns: True iff this object describes a pattern rather than the world --
@@ -817,6 +859,9 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     self.CONSEQUENT:Relation = GORef.eval("$sn#consequent") #type: ignore[assignment]
     self.QUERY:Node = GORef.eval("$sn#query") #type: ignore[assignment]
     self.DISTINCT:Relation = GORef.eval("$sn#distinct") #type: ignore[assignment]
+    self.DEFINITION:Node = GORef.eval("$sn#definition") #type: ignore[assignment]
+    self.DEFINIENDUM:Relation = GORef.eval("$sn#definiendum") #type: ignore[assignment]
+    self.DEFINIENS:Relation = GORef.eval("$sn#definiens") #type: ignore[assignment]
 
     if hasattr(self, "_initialized") or _reading: # This means the __new__ method has returned an existing object, so don't truck over it!
       return
@@ -829,7 +874,17 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     ret:InstantiationInfo = super().getInstantiationInfo()
     ret.class_ = cls
     ret.finalSetters.append(PropertyInfo("_", bool, setter=lambda slf,_t:cast(Model,slf).setDirty(False))) #type: ignore[arg-type]
+    ret.finalSetters.append(PropertyInfo("_", bool, setter=lambda slf,_t:cast(Model,slf)._migrate())) #type: ignore[arg-type]
     return ret
+
+  def _migrate(self) -> None:
+    '''
+    After reading: bring older files up to date (leaving the model dirty if
+    anything changed, so it gets saved).
+    '''
+    from sn.model.constraints import migrateConstraints
+    for msg in migrateConstraints(self):
+      logger.warning(f'{self.name}: {msg}')
 
   @override
   @classmethod
@@ -876,7 +931,7 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
   #   #   cm.registerTopics(("del GraphObject", (_id,)))    
   
   @override
-  def save(self, saveas:Optional[str]=None, overwrite=False, format:str="XML") -> None:
+  def save(self, saveas:Optional[str]=None, overwrite=False, format:str=DEFAULT_STRATEGY) -> None:
     super().save(saveas=saveas, overwrite=overwrite, format=format)
     self.setDirty(False)
 
