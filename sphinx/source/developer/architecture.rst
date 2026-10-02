@@ -81,9 +81,10 @@ A command is declared as a pair:
 - a nested **Command class** named after it (``_Move``), which does the work.
 
 :py:class:`~util.commandParser.CommandContext` turns each signature method
-into a command-line command (``new_node`` becomes ``new node``; the
-positional-only parameters, before the ``/``, become its arguments, and the
-rest its options, eg: ``--name``), and wraps calls to it: calling
+into a command-line command (``new_node`` becomes ``new node``; its
+parameters without defaults become its arguments, and those with defaults its
+options, eg: ``--name`` -- unless they're positional-only, before the ``/``),
+and wraps calls to it: calling
 ``context.move(vo, 10, 20)`` constructs a ``_Move`` and runs it through the
 undo list. Arguments are converted by the context's **decoders** (eg: an
 object's name typed at the terminal becomes the GraphObject), and missing
