@@ -49,16 +49,38 @@ Created on May 14, 2026
 '''
 class ConvertingDict(dict[str, Any]):
   def __init__(self, context:ModelContext, iterable:Iterable=[]):
+    '''
+    :param context:
+    :type context: ModelContext
+    :param iterable:
+    :type iterable: Iterable
+    '''
     super().__init__(iterable)
     self.context = context
     
   def typeCheck(self, obj:Any, typ:type) -> Any:
+    '''
+    :param obj:
+    :type obj: Any
+    :param typ:
+    :type typ: type
+    :returns:
+    :rtype: Any
+    '''
     if not isinstance(obj, typ):
       raise TypeError(f'Expected object of type {type.__name__}, but got type {obj.__class__.__name__}.')
     return obj
     
   @override
   def __setitem__(self, key:str, value:Any):
+    '''
+    :param key:
+    :type key: str
+    :param value:
+    :type value: Any
+    :returns:
+    :rtype:
+    '''
     if key == "model" and not isinstance(value, Model):
       return super().__setitem__(key, Model.getDB(value))
     if (key == "node" or key.endswith("_node")) and isinstance(value, str):
@@ -105,12 +127,20 @@ class ModelContext(CommandContext):
     }
   
   def __init__(self, model:Model):
+    '''
+    :param model:
+    :type model: Model
+    '''
     super().__init__(TopCommandParser("sn", defaults=ConvertingDict(self)))
     assert isinstance(self.parser, TopCommandParser)
     self.defaults["model"] = model
     
   @override
   def _defineDecoders(self):
+    '''
+    :returns:
+    :rtype:
+    '''
     def getModel(s:str) -> Model:
       ret:Model = cast(Model, GORef.eval(s))
       assert isinstance(ret, Model)
@@ -134,6 +164,9 @@ class ModelContext(CommandContext):
   def cache(self):
     '''
     Show models in memory.
+
+    :returns:
+    :rtype:
     '''
     return Model.AllDBs
     
@@ -145,6 +178,8 @@ class ModelContext(CommandContext):
     :type object: GraphObject|Model|None
     :param model: The model context in which to interpret *object* if necessary.
     :type model: Model
+    :returns:
+    :rtype: list[str] | list[tuple[GraphObject, list[str]]]
     '''
     if object is not None and type(object) is str: # the environment failed to interpret the object
       raise KeyError(f'Object "{object}" not found in model "{model}".')
@@ -170,6 +205,8 @@ class ModelContext(CommandContext):
     :type model: Model
     :param engine: The reasoner engine (see *sn.model.reasoner.Reasoner.create()*).
     :type engine: str
+    :returns:
+    :rtype: str
     '''
     from sn.model.reasoner import reason
     if model is None:
@@ -183,6 +220,8 @@ class ModelContext(CommandContext):
 
     :param model: The model. By default, the default model.
     :type model: Model
+    :returns:
+    :rtype: str
     '''
     from sn.model.reasoner import clearReasoning
     if model is None:
@@ -202,6 +241,8 @@ class ModelContext(CommandContext):
     :type model: Model
     :param engine: The reasoner engine (see *sn.model.reasoner.Reasoner.create()*).
     :type engine: str
+    :returns:
+    :rtype: str
     '''
     from sn.model.reasoner import Reasoner
     if type(query) is str: # the environment failed to interpret the object
@@ -210,7 +251,16 @@ class ModelContext(CommandContext):
     return self._formatAnswers(Reasoner.create(model, engine).answer(query), model)
 
   def _formatAnswers(self, rows:list, model:Model) -> str:
-    '''Answers from *Reasoner.answer()* as text: one line per match, "?var = value, ...".'''
+    '''
+    Answers from *Reasoner.answer()* as text: one line per match, "?var = value, ...".
+
+    :param rows:
+    :type rows: list
+    :param model:
+    :type model: Model
+    :returns:
+    :rtype: str
+    '''
     if not rows:
       return "no"
     if rows == [{}]:
@@ -230,6 +280,8 @@ class ModelContext(CommandContext):
     :type model: Model
     :param engine: The reasoner engine (see *sn.model.reasoner.Reasoner.create()*).
     :type engine: str
+    :returns:
+    :rtype: str
     '''
     from sn.model.reasoner import Reasoner
     if model is None:
@@ -252,6 +304,7 @@ class ModelContext(CommandContext):
     :type detail: bool
     :param format: Attempts to return the result in the specified format. Currently,
       it accepts "str", "repr", "xml", and "json".
+    :type format: str | None
     :returns: The string representation of the object
     :rtype: str
     :raises MalformedIDError: if the form of the ID is not valid.
@@ -296,6 +349,13 @@ class ModelContext(CommandContext):
     For "show --detail": the relations the last "reason" over the model inferred
     or found inherited (see *sn.model.reasoner.reason()*) -- all of them for a
     model, or those *object* takes part in -- or "" if there are no results.
+
+    :param object:
+    :type object: GraphObject | Model
+    :param model:
+    :type model: Model
+    :returns:
+    :rtype: str
     '''
     from sn.model.reasoner import reasoningFor, relationArrow
     reasoning = reasoningFor(model if isinstance(object, GraphObject) else object)
@@ -315,6 +375,8 @@ class ModelContext(CommandContext):
     :type model: Model
     :param url: The url or file name to save the model to.
     :type url: str
+    :param overwrite:
+    :type overwrite: bool
     :param format: The format to save the file or url in: a serialization strategy's name, eg: "XML2" (the default), "XML" or "JSON".
     :type format: str
     '''
@@ -377,6 +439,8 @@ class ModelContext(CommandContext):
       restriction on the attribute. Legal values are "VAR", "VAR_DEFAULTED", 
       "CONST", "CONST_TYPEOVERRIDE", "TYPENAME". Default is "VAR" 
     :type restriction: str
+    :returns:
+    :rtype: Any | None
     '''
     pass
     
@@ -453,6 +517,10 @@ class ModelContext(CommandContext):
 
     @override
     def __str__(self):
+      '''
+      :returns: A readable string for this object.
+      :rtype:
+      '''
       return f'{super().__str__()} {self.object.getPRef().tostring()} {self.key} {self.value}{(" --type="+self.typ.__name__) if self.typ is not None else ""}{(" --restriction="+self.restrictionStr) if self.restrictionStr is not None else ""}'
 
       
@@ -467,6 +535,8 @@ class ModelContext(CommandContext):
     :type key: str
     :param model: The model to look in. Defaults to the default model.
     :type model: Model
+    :returns:
+    :rtype: Any | None
     '''
     pass
     
@@ -506,6 +576,10 @@ class ModelContext(CommandContext):
 
     @override
     def __str__(self):
+      '''
+      :returns: A readable string for this object.
+      :rtype:
+      '''
       return f'{super().__str__()} {self.object.getPRef().tostring()} {self.key}'
 
       
@@ -556,6 +630,8 @@ class ModelContext(CommandContext):
     :type keepdups: bool
     :param model: The model to look in. Defaults to the default model.
     :type model: Model
+    :returns:
+    :rtype:
     '''
     if isinstance(objects, str):
       objects = [objects]
@@ -689,6 +765,12 @@ class ModelContext(CommandContext):
                         {and IsaInstance("isa", #28, <individual>, #28 -> #23)}
                         Create a new relation instance "sibling" between "fred" and "gorge".
     
+    :param objects:
+    :type objects: list[str | GraphObject]
+    :param type:
+    :type type: bool
+    :param model:
+    :type model: Optional[Model]
     '''
     pass
 
@@ -699,6 +781,12 @@ class ModelContext(CommandContext):
       add a parent type to an object, or create a new relation between objects.
       
       
+      :param objects:
+      :type objects: list[str | GraphObject]
+      :param type:
+      :type type: bool
+      :param model:
+      :type model: Optional[Model]
       '''
       def eval_(s:str|GraphObject, m:Model, filtr:Callable=lambda o:True) -> GraphObject:
         if isinstance(s, GraphObject):
@@ -746,6 +834,10 @@ class ModelContext(CommandContext):
       
     @override
     def do(self) -> GraphObject:
+      '''
+      :returns:
+      :rtype: GraphObject
+      '''
       super().do()
       if self.artifact is not None: # this is a redo: just reconnect the object
         self.artifact._reconnect()
@@ -792,6 +884,10 @@ class ModelContext(CommandContext):
         
     @override
     def undo(self):
+      '''
+      :returns:
+      :rtype:
+      '''
       assert self.artifact is not None
       super().undo()
       if self.oldSrcDst:
@@ -813,6 +909,10 @@ class ModelContext(CommandContext):
       
     @override
     def __str__(self):
+      '''
+      :returns: A readable string for this object.
+      :rtype:
+      '''
       def getName(obj:GraphObject|None):
         return obj.name if obj is not None else "None"
       if self.rel is None:
@@ -903,6 +1003,10 @@ class ModelContext(CommandContext):
     
     @override
     def do(self) -> Node:
+      '''
+      :returns:
+      :rtype: Node
+      '''
       super().do()
       with Subject.ChangeMgr(self.model, later=True) as cm:
         if self.node is None:
@@ -913,6 +1017,10 @@ class ModelContext(CommandContext):
   
     @override
     def undo(self):
+      '''
+      :returns:
+      :rtype:
+      '''
       assert self.node is not None
       super().undo()
       with Subject.ChangeMgr(self.model, later=True) as cm:
@@ -927,6 +1035,10 @@ class ModelContext(CommandContext):
       
     @override
     def __str__(self):
+      '''
+      :returns: A readable string for this object.
+      :rtype:
+      '''
       name = f' --name={self.nodeName}' if self.nodeName is not None else ''
       #TODO: the 'self.parents' part is a bit of cluge as the python version takes a list and the argparse version only takes an singleton.
       return f'{super().__str__()} {self.parents[0]}{name} --individual={self.individual} --model="{self.model.url}"'
@@ -970,6 +1082,10 @@ class ModelContext(CommandContext):
       
     @override
     def __str__(self):
+      '''
+      :returns: A readable string for this object.
+      :rtype:
+      '''
       return f'{super().__str__()} {self.object.getPRef().tostring()}'
 
   def reconnect(self, relation:Relation, /, source:GraphObject|None=None, destination:GraphObject|None=None,
@@ -994,6 +1110,18 @@ class ModelContext(CommandContext):
   class _Reconnect(Command):
     def __init__(self, relation:Relation, /, source:GraphObject|None=None, destination:GraphObject|None=None,
                  clear_source:bool=False, clear_destination:bool=False):
+      '''
+      :param relation:
+      :type relation: Relation
+      :param source:
+      :type source: GraphObject | None
+      :param destination:
+      :type destination: GraphObject | None
+      :param clear_source:
+      :type clear_source: bool
+      :param clear_destination:
+      :type clear_destination: bool
+      '''
       super().__init__("reconnect")
       if not isinstance(relation, Relation):
         raise TypeError(f'reconnect: expected a Relation, got {type(relation).__name__}.')
@@ -1033,6 +1161,10 @@ class ModelContext(CommandContext):
 
     @override
     def __str__(self):
+      '''
+      :returns: A readable string for this object.
+      :rtype:
+      '''
       ends = [f'{k}={v.getPRef().tostring()}' for k, v in (("source", self.source), ("destination", self.destination)) if v is not None]
       return f'{super().__str__()} {self.relation.getPRef().tostring()} {" ".join(ends)}'
 
@@ -1125,6 +1257,10 @@ class ModelContext(CommandContext):
     
     @override
     def do(self) -> Relation:
+      '''
+      :returns:
+      :rtype: Relation
+      '''
       super().do()
       if self.relation is None:
         if len(self.parents) ==1 and self.parents[0] is self.model.ISA:
@@ -1137,6 +1273,10 @@ class ModelContext(CommandContext):
   
     @override
     def undo(self):
+      '''
+      :returns:
+      :rtype:
+      '''
       assert self.relation is not None
       super().undo()
       self.relation._disconnect()
@@ -1150,6 +1290,10 @@ class ModelContext(CommandContext):
       
     @override
     def __str__(self):
+      '''
+      :returns: A readable string for this object.
+      :rtype:
+      '''
       name = f' --name={self.nodeName}' if self.nodeName is not None else ''
       #TODO: the 'self.parents' part is a bit of cluge as the python version takes a list and the argparse version only takes an singleton.
       return f'{super().__str__()} {self.parents[0]}{name} --individual={self.individual} --model="{self.model.url}"'

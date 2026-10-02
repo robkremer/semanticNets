@@ -31,7 +31,7 @@ from sn.controller.modelInterface import ModelContext
 from typing import cast, override, Any, Iterable, Callable, Optional
 from util.utils import bindRightMouse, fixURL, isValidURL, urlExists, expandRect,\
   flattenPairs, s_SHIFT, normalizeRect
-from sn.view.graphics.utils import eventEqual, addToMenuBar, removeFromMenuBar
+from sn.view.graphics.utils import eventEqual, addToMenuBar, addCheckToMenuBar, removeFromMenuBar
 from util.terminal import inputAsync
 from util.persistence.pRef import PRDb, PReference
 from util.observer import Subject, Observer
@@ -79,12 +79,22 @@ class SNGContext(UIContext):
   #from sn.view.graphics.vobjects import VObject
   @override
   def __init__(self, model:Model, view:SNGView):
+    '''
+    :param model:
+    :type model: Model
+    :param view:
+    :type view: SNGView
+    '''
     super().__init__(model)
     self.view:SNGView = view
     self.defaults["view"] = view
     
   @override
   def _defineDecoders(self):
+    '''
+    :returns:
+    :rtype:
+    '''
     def getVObject(s:str, d:dict, **kwargs) -> "VObject": #type: ignore[name-defined]
       try:
         ret = self.view.get(s)
@@ -96,22 +106,44 @@ class SNGContext(UIContext):
     self.decoders["VObject"] = lambda s, d=self.defaults, **kwargs: getVObject(s,d,**kwargs)
     
   def _setView(self, view:SNGView):
+    '''
+    :param view:
+    :type view: SNGView
+    '''
     self.view = view
     self.defaults["view"] = self.view
     
   def move(self, obj:"VObject", x:int|float, y:int|float, _oldPos:list[int]|None=None, adjustPos:bool=True): #type: ignore[name-defined]
     '''
     This is a dummy graphic command.
+
+    :param obj:
+    :type obj: VObject
+    :param x:
+    :type x: int | float
+    :param y:
+    :type y: int | float
+    :param _oldPos:
+    :type _oldPos: list[int] | None
+    :param adjustPos:
+    :type adjustPos: bool
     '''
     print ("dummy graphic command")
     
   class _Move(Command):
     def __init__(self, obj:"VObject", x:int|float, y:int|float, _oldPos:list[int]|None=None, adjustPos:bool=True): #type: ignore[name-defined]
       '''
+      :param obj:
+      :type obj: VObject
+      :param x:
+      :type x: int | float
+      :param y:
+      :type y: int | float
       :param adjustPos: [default=True] Passed to *obj.moveTo()*: whether to let
         the local layout heuristic (FindFree) nudge *obj* off anything it
         lands on. Moves that must land exactly where computed (eg: gathering
         outliers) pass False.
+      :type adjustPos: bool
       :param _oldPos: [Optional] The object's true position *before the drag
         that produced (x,y) began* -- eg: *self.dragInfo[0], self.dragInfo[1]*,
         captured in *VObject.onButton_1()* at mouse-down, before any
@@ -174,12 +206,33 @@ class SNGContext(UIContext):
       
     @override
     def __str__(self):
+      '''
+      :returns: A readable string for this object.
+      :rtype:
+      '''
       return f'{super().__str__()} {self.obj.name} {self.x} {self.y}'
 
   def resize(self, obj:"VObject", x1:int, y1:int, x2:int, y2:int, #type: ignore[name-defined]
              userSized:bool=True, oldBB:list[int]|None=None, oldUserSized:bool|None=None):
     '''
     Set the bounding box of a view object (its position and size).
+
+    :param obj:
+    :type obj: VObject
+    :param x1:
+    :type x1: int
+    :param y1:
+    :type y1: int
+    :param x2:
+    :type x2: int
+    :param y2:
+    :type y2: int
+    :param userSized:
+    :type userSized: bool
+    :param oldBB:
+    :type oldBB: list[int] | None
+    :param oldUserSized:
+    :type oldUserSized: bool | None
     '''
     print ("dummy graphic command")
 
@@ -187,12 +240,25 @@ class SNGContext(UIContext):
     def __init__(self, obj:"VObject", x1:int, y1:int, x2:int, y2:int, #type: ignore[name-defined]
                  userSized:bool=True, oldBB:list[int]|None=None, oldUserSized:bool|None=None):
       '''
+      :param obj:
+      :type obj: VObject
+      :param x1:
+      :type x1: int
+      :param y1:
+      :type y1: int
+      :param x2:
+      :type x2: int
+      :param y2:
+      :type y2: int
       :param userSized: [default=True] Whether the result counts as sized by
         the user (so it's no longer fitted to its text) -- False for "fit to text".
+      :type userSized: bool
       :param oldBB: [Optional] The bounding box before -- for a resize that
         was already applied live (eg: a handle drag), since by *do()*-time
         the object already has its new box. Captured at *do()* if omitted.
+      :type oldBB: list[int] | None
       :param oldUserSized: [Optional] *obj.userSized* before; likewise.
+      :type oldUserSized: bool | None
       '''
       super().__init__("resize")
       self.obj:VObject = obj
@@ -228,11 +294,20 @@ class SNGContext(UIContext):
 
     @override
     def __str__(self):
+      '''
+      :returns: A readable string for this object.
+      :rtype:
+      '''
       return f'{super().__str__()} {self.obj.name} {" ".join(str(v) for v in self.bb)}'
 
   def collapse(self, obj:"VObject", collapsed:bool=True): #type: ignore[name-defined]
     '''
     Show a context window as just its title bar (or, with *collapsed* False, in full).
+
+    :param obj:
+    :type obj: VObject
+    :param collapsed:
+    :type collapsed: bool
     '''
     print ("dummy graphic command")
 
@@ -241,6 +316,11 @@ class SNGContext(UIContext):
       '''
       Show a context window as just its title bar (or, with *collapsed* False,
       in full). See *VObject.setCollapsed()*.
+
+      :param obj:
+      :type obj: VObject
+      :param collapsed:
+      :type collapsed: bool
       '''
       super().__init__("collapse" if collapsed else "expand")
       self.obj:VObject = obj
@@ -264,6 +344,10 @@ class SNGContext(UIContext):
 
     @override
     def __str__(self):
+      '''
+      :returns: A readable string for this object.
+      :rtype:
+      '''
       return f'{super().__str__()} {self.obj.name}'
 
   def represent(self, object:list[GraphObject]):
@@ -285,6 +369,8 @@ class SNGContext(UIContext):
       
       :param object: One or more model objects.
       :type object: list[GraphObject|str]
+      :param objects:
+      :type objects: list[GraphObject | str]
       :param view: The view to add to.
       :type view: SNGView
       :returns: None
@@ -317,6 +403,10 @@ class SNGContext(UIContext):
         for mo in self.modelObjects:
           self.view.makeViewObjectForGraphObject(mo) # seems odd, but the callback should add this to self.vobjects
         view.detachCallback(detachCode) # kill the callback
+        for mo in self.modelObjects: # (asked for explicitly: shown even if in a hidden category)
+          vo = self.view.findViewObjectForGraphObject(mo)
+          if vo is not None:
+            self.view._exemptIfFiltered(vo)
       else: # subsequent call (redo)
         # Nodes first: a node's _reconnect() also restores the relations it
         # kept a reference to (see AGObject._disconnect()/_reconnect()), from
@@ -345,6 +435,10 @@ class SNGContext(UIContext):
   
     @override
     def __str__(self):
+      '''
+      :returns: A readable string for this object.
+      :rtype:
+      '''
       params = ' '.join([mo.name for mo in self.modelObjects])
       return f'{super().__str__()} {" ".join([mo.name for mo in self.modelObjects])} --view {self.view}'
 
@@ -392,6 +486,10 @@ class SNGContext(UIContext):
       
     @override
     def __str__(self):
+      '''
+      :returns: A readable string for this object.
+      :rtype:
+      '''
       return f'{super().__str__()} {self.objects[0].getPRef().tostring()}'
 
 
@@ -403,7 +501,9 @@ class SNGContext(UIContext):
     won't bring in more of them.
 
     :param category: The category's name, eg: "types", "isa individuals".
+    :type category: str
     :param mode: "show", "hide" or "erase".
+    :type mode: str
     '''
     print ("dummy graphic command")
 
@@ -413,7 +513,11 @@ class SNGContext(UIContext):
       Show, hide or erase a category of objects in the view.
 
       :param category: The category's name, eg: "types", "isa individuals".
+      :type category: str
       :param mode: "show", "hide" or "erase".
+      :type mode: str
+      :param view:
+      :type view: SNGView | None
       '''
       super().__init__("visibility")
       assert view is not None
@@ -434,6 +538,10 @@ class SNGContext(UIContext):
         v.hides.pop(self.category, None)
       else:
         v.hides[self.category] = self.mode
+        for vo in v.values(): # (hiding again hides what was shown anyway since)
+          if vo is not None and vo.categoryExempt and vo.modelObject is not None \
+             and v.categories.isCategory(vo.modelObject, [self.category]):
+            vo.categoryExempt = False
       if self.mode == "erase":
         if not self.erased: # (first time: what to erase)
           victims = [vo for vo in v.values() if vo is not None and vo._isConnected() and vo.modelObject is not None
@@ -470,16 +578,31 @@ class SNGContext(UIContext):
 
     @override
     def __str__(self):
+      '''
+      :returns: A readable string for this object.
+      :rtype:
+      '''
       return f'{super().__str__()} {self.category} {self.mode}'
 
   def expand(self, object:GraphObject):
     '''
     This is a dummy graphic command.
+
+    :param object:
+    :type object: GraphObject
     '''
     print ("dummy graphic command")
     
   class _Expand(Command):
     def __init__(self, object:VObject, *, levels:int=0, _filter:Callable[[Any, Relation], bool]=lambda _vn, _mr: True):
+      '''
+      :param object:
+      :type object: VObject
+      :param levels:
+      :type levels: int
+      :param _filter:
+      :type _filter: Callable[[Any, Relation], bool]
+      '''
       super().__init__("expand")
       self.obj:VObject = object
       self.levels:int = levels
@@ -517,6 +640,10 @@ class SNGContext(UIContext):
   
     @override
     def __str__(self):
+      '''
+      :returns: A readable string for this object.
+      :rtype:
+      '''
       return Command.__str__(self)
 
     
@@ -528,12 +655,26 @@ class _ContainCreated(Command):
   doesn't exist yet when this is made. See *SNGView._containNewRelation()*.
   '''
   def __init__(self, model:Model, typ:Relation, context:GraphObject, creator:Command):
+    '''
+    :param model:
+    :type model: Model
+    :param typ:
+    :type typ: Relation
+    :param context:
+    :type context: GraphObject
+    :param creator:
+    :type creator: Command
+    '''
     super().__init__("contain")
     self.model, self.typ, self.context, self.creator = model, typ, context, creator
     self.relation:Relation|None = None
 
   @override
   def do(self) -> Relation|None:
+    '''
+    :returns:
+    :rtype: Relation | None
+    '''
     super().do()
     if self.relation is None:
       created = getattr(self.creator, "relation", None)
@@ -546,6 +687,10 @@ class _ContainCreated(Command):
 
   @override
   def undo(self):
+    '''
+    :returns:
+    :rtype:
+    '''
     super().undo()
     if self.relation is not None:
       self.relation._disconnect()
@@ -561,11 +706,37 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
             = namedtuple('ElasticLineChoiceData', 'originNode lineID filter callback onEmpty', defaults=(None,))
 
   def __new__(cls, url:str, model:Model, *, mode="w", geometry:str="300x400+20+20", _reading:bool=False):
+    '''
+    :param url:
+    :type url: str
+    :param model:
+    :type model: Model
+    :param mode:
+    :type mode:
+    :param geometry:
+    :type geometry: str
+    :param _reading:
+    :type _reading: bool
+    :returns:
+    :rtype:
+    '''
     if url is None:
       url = fixURL(model.url, extension=".snv", replaceExt=True, mode="w")[0]
     return PRDb.__new__(cls, url, mode=mode, memoryResident=False, _reading=_reading)
 
   def __init__(self, url:str, model:Model, *, mode="w", geometry:str="300x400+20+20", _reading:bool=False):
+    '''
+    :param url:
+    :type url: str
+    :param model:
+    :type model: Model
+    :param mode:
+    :type mode:
+    :param geometry:
+    :type geometry: str
+    :param _reading:
+    :type _reading: bool
+    '''
     if hasattr(self, "_initialized"): # This means the __new__ method has returned an existing object, so don't truck over it!
       return
     if url is None:
@@ -651,12 +822,16 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   @override
   @classmethod
   def getInstantiationInfo(cls) -> InstantiationInfo:
+    '''
+    :returns:
+    :rtype: InstantiationInfo
+    '''
     def finalize(slf:Serializable, _:SerializableType):
       assert isinstance(slf, SNGView), f'Expected SNGView for param 1, got {type(slf)}.'
       for rel in list(slf.values()):
         if isinstance(rel, VRelation):
           rel.connect()
-      slf.canvas.after_idle(lambda slf=slf: [slf.applyVisibility(), slf.resetScrollRegion(), slf.setDirty(False)]) # type: ignore[misc]
+      slf.canvas.after_idle(lambda slf=slf: [slf.applyVisibility(), slf._restoreAnimationState(), slf.resetScrollRegion(), slf.setDirty(False)]) # type: ignore[misc]
     ret:InstantiationInfo = super().getInstantiationInfo()
     # ret.class_ = cls
     # (its model's URL relative to the view's file if they're side by side -- see PRDb.relativeURL() -- so
@@ -668,12 +843,24 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         lambda slf: ",".join(f"{k}={v}" for k, v in cast(SNGView, slf).hides.items()),
         lambda slf, v: setattr(slf, "hides", dict(kv.split("=", 1) for kv in str(v).split(",") if "=" in kv)),
         optional=True)) # optional: views saved before it existed still load
+    ret.postconSetters.append(PropertyInfo("animation", str,
+        lambda slf: cast(SNGView, slf)._animationState(),
+        lambda slf, v: setattr(slf, "_pendingAnimation", str(v)), # (applied once the view is built: see _restoreAnimationState())
+        optional=True))
     ret.finalSetters.append(PropertyInfo("_", bool, setter=finalize))
     return ret
 
   
   @override
   def save(self, saveas:Optional[str]=None, overwrite=False, format:str=DEFAULT_STRATEGY) -> None:
+    '''
+    :param saveas:
+    :type saveas: Optional[str]
+    :param overwrite:
+    :type overwrite:
+    :param format:
+    :type format: str
+    '''
     super().save(saveas=saveas, overwrite=overwrite, format=format)
     self.setDirty(False)
 
@@ -707,6 +894,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :rtype: None
     '''
     addToMenuBar("File|Save view", self.doSaveView)
+    addCheckToMenuBar("View|Animation toolbar", self._animationToolbarShown(), self._onAnimationToolbarItem,
+                      cascadePositions={"View": 1})
 
   def onWindowFocusOut(self) -> None:
     '''
@@ -723,6 +912,103 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :rtype: None
     '''
     removeFromMenuBar("File|Save view")
+    removeFromMenuBar("View|Animation toolbar")
+
+  ANIMATION_SETTINGS = ("flowStrength", "e", "k", "heat")
+  "The animation layout's numeric settings saved with the view (see *_animationState()*)."
+
+  def _animationState(self) -> str:
+    '''
+    :returns: What's saved with the view about its animation layout: whether
+      the animation toolbar is shown, and the settings it shows -- eg:
+      "toolbar=1;direction=down;follows=isa;flowStrength=6.0;e=1000.0;k=0.005;heat=6.0".
+    :rtype: str
+    '''
+    layout = self.animationLayout()
+    parts = {"toolbar": "1" if self._animationToolbarShown().get() else "0",
+             "direction": layout.flowDirection or "none",
+             "follows": (layout.flowRelation or self.model.ISA).name}
+    parts.update({k: repr(float(getattr(layout, k))) for k in self.ANIMATION_SETTINGS})
+    return ";".join(f"{k}={v}" for k, v in parts.items())
+
+  def _restoreAnimationState(self) -> None:
+    '''
+    Once a read view is built: put its saved animation layout settings back,
+    and show its animation toolbar if it was shown (see *_animationState()*).
+    '''
+    text = self.__dict__.pop("_pendingAnimation", None)
+    if not text:
+      return
+    try:
+      state = dict(kv.split("=", 1) for kv in text.split(";") if "=" in kv)
+      layout = self.animationLayout()
+      direction = state.get("direction", "none")
+      layout.flowDirection = None if direction == "none" else direction
+      follows = state.get("follows")
+      if follows and follows != self.model.ISA.name:
+        layout.flowRelation = next((r for r in self.model.values() if isinstance(r, Relation) and r.isType() and r.name == follows), None)
+      for k in self.ANIMATION_SETTINGS:
+        if k in state:
+          setattr(layout, k, float(state[k]))
+      if state.get("toolbar") == "1":
+        self.showAnimationToolbar(True)
+    except Exception:
+      logger.exception(f"{self.name}: couldn't restore its animation settings ({text!r})")
+
+  def setAnimationSetting(self, attr:str, value:Any) -> None:
+    '''
+    Change one of the animation layout's settings (eg: from the toolbar or the
+    menu) -- marking the view changed, as they're saved with it.
+
+    :param attr: The layout's attribute, eg: "flowDirection" or "heat".
+    :type attr: str
+    :param value: Its new value.
+    :type value: Any
+    '''
+    layout = self.animationLayout()
+    if getattr(layout, attr, None) != value:
+      setattr(layout, attr, value)
+      self.setDirty()
+
+  def _animationToolbarShown(self) -> tk.BooleanVar:
+    '''
+    :returns: Whether this view's animation toolbar is shown -- what "View | Animation toolbar" shows (and sets).
+    :rtype: tk.BooleanVar
+    '''
+    var = self.__dict__.get("_toolbarVar")
+    if var is None:
+      var = self._toolbarVar = tk.BooleanVar(self.canvas, value=False)
+    return var
+
+  def _onAnimationToolbarItem(self) -> None:
+    'The "View | Animation toolbar" item was chosen: its check mark is already set; show or hide accordingly.'
+    self.showAnimationToolbar(self._animationToolbarShown().get())
+
+  def toggleAnimationToolbar(self) -> None:
+    'Show the animation toolbar if it\'s hidden, or hide it if it\'s shown.'
+    self.showAnimationToolbar(not self._animationToolbarShown().get())
+
+  def showAnimationToolbar(self, show:bool=True) -> None:
+    '''
+    Show (or hide) the animation toolbar (see *animationToolbar*) across the top of
+    this view's window.
+
+    :param show: True to show it; False to hide it.
+    :type show: bool
+    '''
+    from sn.view.graphics.animationToolbar import AnimationToolbar
+    bar = self.__dict__.get("_animationToolbar")
+    if show:
+      if bar is None:
+        bar = self._animationToolbar = AnimationToolbar(self.window, self)
+      bar.pack(side=tk.TOP, fill=tk.X, before=self.window.appPanedWidget)
+      bar.startPolling()
+    elif bar is not None:
+      bar.stopPolling()
+      bar.pack_forget()
+    if self._animationToolbarShown().get() != show:
+      self._animationToolbarShown().set(show)
+      self.setDirty() # (saved with the view)
 
   @override
   def _register(self, value: VObject, _id:Optional[int]=None) -> int: # type: ignore[override]
@@ -733,6 +1019,13 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     *This violates subsumption rules, but that's what we want here!* 
     
     Also sets the dirty bit and notifies any observers ("add GraphObject" (GraphObject))
+
+    :param value:
+    :type value: VObject
+    :param _id:
+    :type _id: Optional[int]
+    :returns:
+    :rtype: int
     '''
     assert isinstance(value, VObject), \
         f'Models are restricted to containing only GraphObject subtypes; got a {value.__class__.__name__} type.'
@@ -746,12 +1039,21 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     Overrides the 
     :py:meth:`parent method <pythonUtils:util.persistence.pRef.PRDb._register>`
     to also set the dirty bit and notify any observers () 
+
+    :param _id:
+    :type _id: int
     '''
     super()._unregister(_id)
     self.setDirty()
     
   @override
   def update(self, subject:Subject, *topics:tuple[str, tuple[Any, ...]])->None:
+    '''
+    :param subject:
+    :type subject: Subject
+    :param topics:
+    :type topics: tuple[str, tuple[Any, ...]]
+    '''
     from sn.view.graphics.vobjects import VObject
     from sn.view.graphics.vnodes import VNode
     from sn.view.graphics.vrelations import VRelation #, VIsa
@@ -812,6 +1114,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
           #   newObj = VIsa(self, modelObj)
           else:
             logger.error(f"VObject subtype not implemented for model type {typ.__name__}.")
+          if newObj is not None: # (made just now, in a hidden category: shown anyway -- see _exemptIfFiltered())
+            self._exemptIfFiltered(newObj)
   
         # elif topicName == 'del GraphObject':
         case ["reasoned", _] | ["reasoning cleared", _]:
@@ -828,6 +1132,12 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
           logger.warning(f'Unsupported topic "{topicName}": {topicData}')
 
   def suppressLocalLayout(self, suppress:str|bool|None=None):
+    '''
+    :param suppress:
+    :type suppress: str | bool | None
+    :returns:
+    :rtype:
+    '''
     if suppress is not None:
       if isinstance(suppress, str):
         self._suppressLocalLayout = suppress.lower() in ['true', 't', 'yes', 'y', 'on']
@@ -839,9 +1149,13 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   def intersectTag(self, ids:Iterable[int], tag:str, exclude:list[int]|int=[]) -> list[int]:
     '''
     :param ids: [Iterable[int]] An *Iterable* of *ints* representing *Canvas* ids.
+    :type ids: Iterable[int]
     :param tag: [str] A *str* *Canvas* tag.
+    :type tag: str
     :param exclude: [list[int] or int, default=[]] A list of *int* representing *Canvas* ids.
+    :type exclude: list[int] | int
     :return: A list of all ids in *ids* that have tag *tag* that are not in *exclude*.
+    :rtype: list[int]
 
     Used by *sn.view.graphics.layout.LayoutHieristic.findOverlapping()* (e.g. FindFree) to
     filter the results of *self.canvas.find_overlapping()* down to just the shape items
@@ -870,14 +1184,19 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     *mObject* in the view) a VObect that represents *mObject*.
     
     :param mObject: A model object.
+    :type mObject: GraphObject
     :param atPoint: [Optional, 2-Tuple[float]] The point where the new object
         should be displayed if it has to be created.
+    :type atPoint: tuple[float, float] | None
     :param expand: [Optional[int], default=None] The number of hops to expand.
+    :type expand: int
     :param filter: Optional[Callable[[Self, Relation], bool]] A function *selfxRelation->bool*
         where that relation will only be expanded if the function returns *True*
+    :type filter: Callable[[Any, Relation], bool]
     :return: If there is a *VObject* currently in the display representing *mObject* then
         that is returned, otherwise an attempt is make to create such an object referencing
         *mObject* and that is returned.
+    :rtype: VObject
     '''
     from sn.view.graphics.vrelations import VRelation
     from sn.view.graphics.vobjects import VObject
@@ -916,6 +1235,12 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     return ret
   
   def findAGoodLocation(self, mObject:GraphObject) -> tuple[int,int]:
+    '''
+    :param mObject:
+    :type mObject: GraphObject
+    :returns:
+    :rtype: tuple[int, int]
+    '''
     mParents = mObject.getParents()
     mParent = mParents[0] if len(mParents) > 0 else None
     vParent = self.findViewObjectForGraphObject(mParent) if mParent is not None else None
@@ -934,6 +1259,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       the canvas (eg: the command came from the text terminal), the top-left
       of the visible part of the canvas instead, so the result is on screen.
       (0, 0) if there's no canvas.
+    :rtype: tuple[int, int]
     '''
     if not self.canvas:
       return 0, 0
@@ -952,6 +1278,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     endpoint is *vo*'s model object, but which were left dangling because it
     wasn't shown (eg: top -- see *VRelation._resolveEnd()* -- or an erased
     object), attach to it.
+
+    :param vo:
+    :type vo: VObject
     '''
     from sn.view.graphics.vrelations import VRelation
     if not vo._isConnected() or vo.modelObject is None: # (gone again meanwhile)
@@ -962,7 +1291,6 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       if not isinstance(r, VRelation) or r is vo or r.modelObject is None or not r._isConnected() \
          or not hasattr(r, "_floatingAnchor") or not hasattr(r, "_drawVersion"):
         continue
-      assert isinstance(r, Relation)
       try:
         changed = False
         for end in ("src", "dst"):
@@ -981,6 +1309,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :param mObject: A model object or a boolean function taking a VObject
     :type mObject: GraphObject|Callable[[VObject],bool]
     :return: A *VObject* currently in the display representing *mObject*, or *None* if there is not such object.
+    :rtype: VObject | None
     '''
     if isinstance(mObject, GraphObject):
       for obj in self.values():
@@ -994,6 +1323,12 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     return None
 
   def validate(self, refresh:bool=False) -> int:
+    '''
+    :param refresh:
+    :type refresh: bool
+    :returns:
+    :rtype: int
+    '''
     errCount = 0
     vobjs:list[VObject] = list(self._db.values())
     for n in vobjs:
@@ -1154,16 +1489,25 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     self.canvas.focus_set()
 
   def onUndo(self, event:tk.Event):
+    '''
+    :param event: The Tk event.
+    :type event: tk.Event
+    '''
     self.context.undo()
     self.addEventHandled(event)
     
   def onRedo(self, event:tk.Event):
+    '''
+    :param event: The Tk event.
+    :type event: tk.Event
+    '''
     self.context.redo()
     self.addEventHandled(event)
     
   def onMotion(self, event:tk.Event) -> None:
     """
     :param event: *event.x* and *event.y* contain the x,y coordinate of the click.
+    :type event: tk.Event
     :return: None
     
     If there's a _elasticLineChoiceData going on (elastic line), then continue the
@@ -1196,10 +1540,13 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   def _relationTerminalNear(self, x:float, y:float) -> VRelation|None:
     '''
     :param x: Canvas (window) coordinates.
+    :type x: float
     :param y: See *x*.
+    :type y: float
     :returns: An editable relation with a terminal within reach of (x, y) --
       ie: one that a press there would grab (see *VRelation.grabTerminal()*)
       -- or None. Only objects drawn near (x, y) are examined.
+    :rtype: VRelation | None
     '''
     r = VRelation.TERMINAL_HIT_RADIUS
     items = self.canvas.find_overlapping(x - r, y - r, x + r, y + r)
@@ -1229,7 +1576,16 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   "The cursors shown over a selected object's corner (resize) handles."
 
   def _handleNear(self, x:float, y:float) -> str|None:
-    'The corner of the selected object\'s resize handle at canvas (x, y), or None.'
+    '''
+    The corner of the selected object\'s resize handle at canvas (x, y), or None.
+
+    :param x:
+    :type x: float
+    :param y:
+    :type y: float
+    :returns:
+    :rtype: str | None
+    '''
     from sn.view.graphics.decorators import Selected
     for obj in self.selected:
       sel = obj.decorators.get("selected") if obj.decorators else None
@@ -1245,6 +1601,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     *TERMINAL_CURSOR* over a draggable relation terminal, restoring whatever
     cursor was there before (eg: the "hand" a node's *onEnter()* set) when the
     pointer moves off.
+
+    :param event: The Tk event.
+    :type event: tk.Event
     '''
     x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
     corner = self._handleNear(x, y)
@@ -1265,7 +1624,12 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       self.canvas.configure(cursor=self._cursorBeforeTerminal or "arrow")
 
   def _trackElasticLine(self, event:tk.Event) -> None:
-    'Stretch the elastic line (see *elasticLineChoice()*) to the cursor.'
+    '''
+    Stretch the elastic line (see *elasticLineChoice()*) to the cursor.
+
+    :param event: The Tk event.
+    :type event: tk.Event
+    '''
     assert self._elasticLineChoiceData is not None
     self.canvas.coords(self._elasticLineChoiceData.lineID,
           flattenPairs([self.viewToWindow(self._elasticLineChoiceData.originNode.centerPt()),
@@ -1274,6 +1638,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   def onButton_1(self, event):
     """
     :param event: *event.x* and *event.y* contain the x,y coordinate of the click.
+    :type event:
     :return: *None*
     
     If the SHIFT key is pressed: start a drag-scroll. Otherwise, unselect 
@@ -1325,6 +1690,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   def onB1_Motion(self, event):
     """
     :param event: *event.x* and *event.y* contain the x,y coordinate of the click.
+    :type event:
     :return: None
     
     If we are either drag-scrolling or drag-drawing a multi-selection
@@ -1387,9 +1753,13 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :param arrowHeads: 0=no arrowheads, 1=arrowhead at the origin, 2=arrowhead
       at the cursor, 3=arrowhead at both ends. For anything larger, just he lowest
       2 bits will be used. [Optional, default=2]
+    :type arrowHeads: int
+    :param color:
+    :type color: str
     :param onEmpty: If given, called with *originNode* when the line is dropped
       on empty space (no object at all under the cursor); otherwise that
       abandons the choice, as Escape always does (see *cancelElasticLine()*).
+    :type onEmpty: Callable[[VObject], Any] | None
     '''
     assert isinstance(originNode, VObject)
     arrowHeads %= 4 # strip any high bits
@@ -1405,7 +1775,12 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     self.canvas.focus_set() # so Escape reaches us (see cancelElasticLine())
 
   def cancelElasticLine(self, event:tk.Event|None=None) -> None:
-    'Abandon an elastic-line choice in progress (bound to Escape) -- or, if there is none, clear the highlights.'
+    '''
+    Abandon an elastic-line choice in progress (bound to Escape) -- or, if there is none, clear the highlights.
+
+    :param event: The Tk event.
+    :type event: tk.Event | None
+    '''
     if self._elasticLineChoiceData is not None:
       self.canvas.delete(self._elasticLineChoiceData.lineID)
       self._elasticLineChoiceData = None
@@ -1421,6 +1796,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   def onB1_ButtonRelease(self, event:tk.Event) -> None:
     """
     :param event: *event.x* and *event.y* contain the x,y coordinate of the click.
+    :type event: tk.Event
     :return: None
     
     Depending on the context, finish creating a Relation or create a selection
@@ -1536,6 +1912,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   def onMouseWheel(self, event):
     """
     :param event: *event.delta* contains the scroll offset.
+    :type event:
     :return: None
     
     Y-axis scroll.
@@ -1555,6 +1932,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   def onShift_MouseWheel(self, event):
     """
     :param event: *event.delta* contains the scroll offset.
+    :type event:
     :return: None
     
     X-axis scroll.
@@ -1574,6 +1952,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   def makeRelationFrom(self, node:VObject, typ:Optional[Relation]=None):
     '''
     :param node: [VObject]
+    :type node: VObject
+    :param typ:
+    :type typ: Optional[Relation]
     '''
     assert isinstance(node, VObject)
     
@@ -1609,6 +1990,13 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     Make an individual relation of type *typ* from *fromNode* to *toNode* --
     or, if *toNode* is None, with no destination of its own (so it inherits
     *typ*'s range: it's drawn to that, faded, or dangling if that's top).
+
+    :param fromNode:
+    :type fromNode: VObject
+    :param toNode:
+    :type toNode: VObject | None
+    :param typ:
+    :type typ: Relation
     '''
     assert isinstance(fromNode, VObject)
     assert toNode is None or isinstance(toNode, VObject)
@@ -1640,7 +2028,16 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 #       raise ex
 
   def isFiltered(self, mo:GraphObject, modes:Iterable[str]=("hide", "erase")) -> bool:
-    'True iff *mo* is in a category currently in one of *modes* (see *hides*).'
+    '''
+    True iff *mo* is in a category currently in one of *modes* (see *hides*).
+
+    :param mo:
+    :type mo: GraphObject
+    :param modes:
+    :type modes: Iterable[str]
+    :returns:
+    :rtype: bool
+    '''
     active = [c for c, mode in self.hides.items() if mode in modes and c in self.categories.keys()]
     try:
       return bool(active) and self.categories.isCategory(mo, active)
@@ -1649,13 +2046,52 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
   def _erasedRelation(self, rel:Relation) -> bool:
     '''
-    Whether a new relation shouldn't be shown: it's in an erased category, or
-    it would bring an end in an erased category back into the view.
+    Whether a new relation shouldn't be shown: it would bring an end in an
+    erased category back into the view. (A relation that's in an erased
+    category itself is shown, as anything made is: see *_exemptIfFiltered()*.)
+
+    :param rel:
+    :type rel: Relation
+    :returns:
+    :rtype: bool
     '''
-    if self.isFiltered(rel, ("erase",)):
-      return True
     return any(e is not None and self.findViewObjectForGraphObject(e) is None and self.isFiltered(e, ("erase",))
                for e in (rel.localSrc, rel.localDst))
+
+  def _exemptIfFiltered(self, vo:VObject) -> None:
+    '''
+    *vo* was just made (or shown explicitly): if it's in a hidden or erased
+    category, show it anyway -- hiding is "soft": it applies to what was there
+    when the category was hidden, and hiding the category again hides this too
+    -- and say so (one message for everything made at once).
+
+    :param vo:
+    :type vo: VObject
+    '''
+    mo = vo.modelObject
+    if mo is None or vo.categoryExempt or not self.isFiltered(mo):
+      return
+    vo.categoryExempt = True
+    cats = [c for c, mode in self.hides.items() if c in self.categories.keys() and self.categories.isCategory(mo, [c])]
+    pending = self.__dict__.setdefault("_exemptPending", {})
+    if not pending and self.canvas:
+      self.canvas.after_idle(self._reportExempt)
+    label = vo.name or type(mo).__name__
+    ends = [getattr(mo, "localSrc", None), getattr(mo, "localDst", None)]
+    if all(e is not None for e in ends): # (a relation: by its ends, eg: "isa (tom → person)")
+      label = f"{label} ({ends[0].name} → {ends[1].name})"
+    for c in cats:
+      pending.setdefault(c, []).append(label)
+    vo._applyHidden()
+
+  def _reportExempt(self) -> None:
+    pending = self.__dict__.pop("_exemptPending", {})
+    for c, names in pending.items():
+      shown = ", ".join(dict.fromkeys(names)) # (once each, in order)
+      mode = "hidden" if self.hides.get(c) == "hide" else "erased"
+      menu = "hide" if mode == "hidden" else "erase"
+      logger.warning(f'{shown}: in the {mode} category "{c}", but shown anyway, as it was just made (or asked for). '
+                     f'To {menu} it too, {menu} "{c}" again: uncheck and re-check it in the {menu} menu.')
 
   def shouldHide(self, vo:VObject) -> bool:
     '''
@@ -1663,13 +2099,18 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     it's a relation to or from something hidden (it would lead nowhere), or a
     containment drawn as being inside its window (see *VRelation.inWindow()*);
     or it's inside a hidden context's window.
+
+    :param vo:
+    :type vo: VObject
+    :returns:
+    :rtype: bool
     '''
     mo = vo.modelObject
     if mo is None:
       return False
     if self._inCollapsedWindow(vo):
       return True
-    if self.isFiltered(mo, ("hide",)) and not self._inShownContext(vo):
+    if self.isFiltered(mo, ("hide",)) and not vo.categoryExempt and not self._inShownContext(vo):
       return True
     if isinstance(vo, VRelation):
       if vo.inWindow():
@@ -1683,7 +2124,14 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     return False
 
   def _inCollapsedWindow(self, vo:VObject) -> bool:
-    'Whether *vo* is drawn inside a collapsed context window (see *VObject.setCollapsed()*), and so not shown.'
+    '''
+    Whether *vo* is drawn inside a collapsed context window (see *VObject.setCollapsed()*), and so not shown.
+
+    :param vo:
+    :type vo: VObject
+    :returns:
+    :rtype: bool
+    '''
     mo = vo.modelObject
     return any(w.collapsed and w is not vo and w.paneAt(vo.centerPt()) is not None and w.containmentOf(mo)
                for w in self.contextWindows())
@@ -1693,6 +2141,11 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     Whether *vo* is part of a shown context window's content (eg: an isa link
     in a rule's consequent): it's then shown whatever its category -- it's
     what the rule says, not clutter.
+
+    :param vo:
+    :type vo: VObject
+    :returns:
+    :rtype: bool
     '''
     mo = vo.modelObject
     return any(not w.isHidden() and not w.collapsed and w is not vo and w.containmentOf(mo) for w in self.contextWindows())
@@ -1709,6 +2162,11 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     A checkbox per category for *mode* ("hide" or "erase"): checking it sets
     that category to *mode* (so unchecks it in the other menu); unchecking it
     shows the category again.
+
+    :param mode:
+    :type mode: str
+    :returns:
+    :rtype: tk.Menu
     '''
     menu = tk.Menu(self.canvas)
     self._visibilityVars = getattr(self, "_visibilityVars", {}) # (keep the variables alive)
@@ -1725,6 +2183,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     make them its "constraints" attribute. Only variables have constraints;
     for anything else, or constraints that can't be read, the name stays as
     typed (and a message says why).
+
+    :param mo:
+    :type mo: GraphObject
     '''
     name, text = splitWhere(mo.name)
     if not name.startswith("?"):
@@ -1740,13 +2201,23 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       mo.setAttr(CONSTRAINTS, Attribute(merged, str, VAR, CONSTRAINTS_NOTE))
 
   def contextWindows(self) -> list[VObject]:
-    'The view objects drawn as context windows (see *VObject.isContextWindow()*).'
+    '''
+    The view objects drawn as context windows (see *VObject.isContextWindow()*).
+
+    :returns:
+    :rtype: list[VObject]
+    '''
     return [w for w in self.values() if w is not None and not isinstance(w, VRelation) and w._isConnected() and w.isContextWindow()]
 
   def _containable(self, vo:VObject) -> bool:
     '''
     Whether *vo* takes part in containment-by-position: not containment
     relations themselves, nor relations to or from a window.
+
+    :param vo:
+    :type vo: VObject
+    :returns:
+    :rtype: bool
     '''
     mo = vo.modelObject
     if mo is None or vo.isHidden(): # (not what can't be seen)
@@ -1760,7 +2231,16 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     return True
 
   def _windowAt(self, pt, exclude:Iterable[VObject]=()) -> VObject|None:
-    'The innermost context window with a pane at *pt* (view coords), other than those in *exclude*.'
+    '''
+    The innermost context window with a pane at *pt* (view coords), other than those in *exclude*.
+
+    :param pt:
+    :type pt:
+    :param exclude:
+    :type exclude: Iterable[VObject]
+    :returns:
+    :rtype: VObject | None
+    '''
     def area(w:VObject) -> float:
       x1, y1, x2, y2 = w.boundingBox()
       return (x2 - x1) * (y2 - y1)
@@ -1768,6 +2248,12 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
                key=area, default=None) # (not a collapsed one: what's dropped there couldn't be seen)
 
   def _paneType(self, pane:str) -> Relation:
+    '''
+    :param pane:
+    :type pane: str
+    :returns:
+    :rtype: Relation
+    '''
     m = self.model
     return {"contains": m.CONTAINS, "antecedent": m.ANTECEDENT, "consequent": m.CONSEQUENT,
             "definiendum": m.DEFINIENDUM, "definiens": m.DEFINIENS}[pane]
@@ -1778,6 +2264,17 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     *toNode* whose label will sit (midway between them) in a context window's
     pane is contained by it -- eg: one drawn between two things in a rule's
     antecedent is part of the antecedent.
+
+    :param mgr:
+    :type mgr: CompositeCommandMgr
+    :param creator:
+    :type creator: Command
+    :param typ:
+    :type typ: Relation
+    :param fromNode:
+    :type fromNode: VObject
+    :param toNode:
+    :type toNode: VObject
     '''
     if typ.isa(self.model.CONTAINS) or any(e.isContextWindow() for e in (fromNode, toNode) if not isinstance(e, VRelation)):
       return
@@ -1816,6 +2313,11 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     moving ?x in a rule would pull in, eg: its isa link to a type outside.)
 
     Call inside a *CompositeCommandMgr*, so it's undone with the move.
+
+    :param oldCenters:
+    :type oldCenters: dict[VObject, tuple[float, float] | None]
+    :param draggedAlong:
+    :type draggedAlong: Iterable[VObject]
     '''
     along = set(draggedAlong)
     def endsIn(r:VRelation, w:VObject) -> int: # how many of relation r's ends are in w's window
@@ -1863,6 +2365,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   def isEventHandled(self, event:tk.Event) -> bool:
     """
     :param event: The event to test.
+    :type event: tk.Event
     :returns: *True* iff *event* is the same physical event most recently
       passed to *addEventHandled()* (and not yet cleared by
       *removeEventHandled()*).
@@ -1887,6 +2390,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     generic handling.
 
     :param event: The event that was just handled.
+    :type event: tk.Event
     :rtype: None
     """
     self._eventHandled = event
@@ -1899,6 +2403,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
     :param event: Unused (kept for symmetry with *addEventHandled()* and
       the analogous methods elsewhere, e.g. *SNView*).
+    :type event: tk.Event
     :rtype: None
     """
     self._eventHandled = None
@@ -1906,7 +2411,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   def onRightMouse(self, event:tk.Event): # -> Optional[tk.Menu]:
     """
     :param event: *event.x* and *event.y* contain the x,y coordinate of the click.
+    :type event: tk.Event
     :return: None or the result of *self.makeMenu()*.
+    :rtype:
 
     Called when the right mouse button is pressed (different for Mac and other OS's).
 
@@ -1928,7 +2435,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     """
     :param event: *event.x* and *event.y* contain the x,y coordinate of the click.
       (Only used for the location of a newly created node if that happens.)
+    :type event: tk.Event
     :return: The newly created menu.
+    :rtype: tk.Menu
 
     Create the popup menu for a *SNView* window. Does not display the menu,
     only creates it and returns it.
@@ -2005,6 +2514,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     viewMenu.add_cascade(label="Zoom", menu=self.makeZoomMenu(viewMenu))
     viewMenu.add_command(label="reset scroll region", command=lambda: self.resetScrollRegion(shrink=True))
     viewMenu.add_command(label="gather nodes", command=self.gatherNodes)
+    viewMenu.add_cascade(label="animation layout", menu=self._animationLayoutMenu(viewMenu))
     if snPrefs.get("gui/debugMenus", storeDefault=False, storeType=bool):
       viewMenu.add_command(label="repaint", command=self.repaint, accelerator=KEY_REPAINT[1])
     viewMenu.add_separator()
@@ -2060,6 +2570,12 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     return bgMenu
 
   def makeZoomMenu(self, superMenu:tk.Menu) -> tk.Menu:
+    '''
+    :param superMenu:
+    :type superMenu: tk.Menu
+    :returns:
+    :rtype: tk.Menu
+    '''
     zoommenu = tk.Menu(superMenu)
     zoommenu.add_command(label="Normal Size", command=self.zoom)
     zoommenu.add_command(label="Zoom In", command=lambda: self.zoom(1.1, delta=True))
@@ -2073,13 +2589,19 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     return zoommenu
 
   def isModelEditor(self) -> bool:
+    '''
+    :returns:
+    :rtype: bool
+    '''
     return True
   
   def zoom(self, scale:float=1.0, delta=False):
     """
     :param scale: the absolute scale, where 1.0 is "no scaling", unless *delta* is true, in which
             case, multiplier for the current scale (so numbers like 0.9 and 1.1 make sense).
+    :type scale: float
     :param delta: True to do relative scaling, False to do absolute scaling.
+    :type delta:
     """
     oldScale = self._scale
     if delta:
@@ -2105,8 +2627,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :param args: Either a single list argument or multiple float parameters. In either case there
           must be an even number of items, taken as x,y pairs. Since scaling is x:y equal, this "even"
           limitation is relaxed here.
+    :type args:
     :return: A list converted coordinates where the evens are x coordinates and the odds are y coordinates
           converted from view to window coordinates.
+    :rtype: list[float]
     """
     if len(args) == 1 and isinstance(args[0], Iterable):
       args = args[0] # type: ignore[assignment]
@@ -2121,8 +2645,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :param args: Either a single list argument or multiple float parameters. In either case there
           must be an even number of items, taken as x,y pairs. Since scaling is x:y equal, this "even"
           limitation is relaxed here.
+    :type args:
     :return: A list converted coordinates where the evens are x coordinates and the odds are y coordinates
           converted from window to view coordinates.
+    :rtype: list[float]
     """
     if len(args) == 1 and isinstance(args[0], Iterable):
       args = args[0] # type: ignore[assignment]
@@ -2137,6 +2663,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     self._drawVersion += 1
     
   def repaint(self, event=None):
+    '''
+    :param event: The Tk event.
+    :type event:
+    '''
     self.freshPaint()
     for obj in self.context.view.values():
       if obj is not None:
@@ -2144,14 +2674,16 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
   def resetScrollRegion(self, shrink:bool=False) -> None:
     '''
-    :param shrink: [default=False] Normally the region only grows (see below);
-      True fits it to the drawing even if that makes it smaller -- for an
-      explicit user request, when the view jumping to fit is expected.
     Recompute the canvas's scroll region from the current extent of
     everything actually drawn on it, and apply it -- to *self.scrollRegion*
     itself (what *VObject.moveTo()*/*boundingBox()* clamp positions
     against -- see their docstrings) as well as to the canvas widget's own
     ``scrollregion`` configuration option.
+
+    :param shrink: [default=False] Normally the region only grows (see below);
+      True fits it to the drawing even if that makes it smaller -- for an
+      explicit user request, when the view jumping to fit is expected.
+    :type shrink: bool
 
     Called by *VObject.draw()* whenever a *VObject*'s bounding box no longer
     fits inside the existing region -- e.g. after it's been dragged past the
@@ -2190,6 +2722,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     The *sn.model.reasoner.Inferences* from the last "reason" over this view's
     model -- whether run from this view's menu, another view of the same model,
     or the command line (see *sn.model.reasoner.reason()*) -- or None.
+
+    :returns:
+    :rtype: Any
     '''
     from sn.model.reasoner import reasoningFor
     return reasoningFor(self.model)
@@ -2200,6 +2735,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     window's terminal. The results are kept with the model, so this and every
     other view of it show them (see *_showReasoning()*), as they do when
     "reason" is typed at the command line.
+
+    :param engine:
+    :type engine: str
     '''
     from sn.model.reasoner import reason
     try:
@@ -2271,6 +2809,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     *_freeLabelSpot()*), and the line is drawn as a smooth curve from the
     source's edge, through the label, to the destination's edge -- the way
     relations are drawn through their labels.
+
+    :param rec:
+    :type rec: dict[str, Any]
     '''
     from sn.view.graphics.connectors import _clipToEdgeStraight, _farPointAlong, _sub, PointType
     vs, vd = rec["src"], rec["dst"]
@@ -2328,6 +2869,13 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     inference label: the midpoint if that's free, otherwise the first free
     spot from positions further along the line and a little either side of
     it. If none is free, the midpoint.
+
+    :param label:
+    :type label: int
+    :param line:
+    :type line: list[float]
+    :returns:
+    :rtype: tuple[float, float]
     '''
     x1, y1, x2, y2 = line
     bb = self.canvas.bbox(label)
@@ -2345,7 +2893,12 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     return (x1 + x2) / 2, (y1 + y2) / 2
 
   def updateInferencesFor(self, vo:VObject) -> None:
-    'Redraw the inference lines attached to *vo* (eg: after it moved or was resized).'
+    '''
+    Redraw the inference lines attached to *vo* (eg: after it moved or was resized).
+
+    :param vo:
+    :type vo: VObject
+    '''
     for rec in self._inferences:
       if rec["src"] is vo or rec["dst"] is vo:
         self._drawInference(rec)
@@ -2361,6 +2914,71 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         vo.clearStatusReport()
     self.validate(refresh=True)
     self.repaint()
+
+  def animationLayout(self) -> Any:
+    '''
+    :returns: This view's animation layout (see *animatedLayouts.FieldsLayout_threaded*), made if need be.
+    :rtype: FieldsLayout_threaded
+    '''
+    from sn.view.graphics.animatedLayouts import FieldsLayout_threaded
+    layout = self.__dict__.get("_animationLayout")
+    if layout is None:
+      layout = self._animationLayout = FieldsLayout_threaded(self)
+    return layout
+
+  def _animationLayoutMenu(self, parent:tk.Menu) -> tk.Menu:
+    '''
+    The "animation layout" submenu: start/stop it, and its current: the direction
+    it flows in (or none), its strength, and the relation type it lines up
+    (dsts upstream of srcs: eg: "isa" flowing down gives a class diagram).
+
+    :param parent: The menu it's a submenu of.
+    :type parent: tk.Menu
+    :returns: The submenu.
+    :rtype: tk.Menu
+    '''
+    from sn.view.graphics.animatedLayouts import FLOW_DIRECTIONS
+    layout = self.animationLayout()
+    menu = tk.Menu(parent)
+    menu.add_command(label="stop" if layout.active else "start", command=self.toggleAnimationLayout)
+    menu.add_separator()
+    self._flowVars = getattr(self, "_flowVars", {}) # (keep the variables alive)
+    direction = tk.StringVar(value=layout.flowDirection or "none")
+    self._flowVars["direction"] = direction
+    dirMenu = tk.Menu(menu)
+    for name in ["none", *FLOW_DIRECTIONS]:
+      dirMenu.add_radiobutton(label=name, variable=direction, value=name,
+                              command=lambda n=name: self.setAnimationSetting("flowDirection", None if n == "none" else n))
+    menu.add_cascade(label="current direction", menu=dirMenu)
+    strength = tk.DoubleVar(value=layout.flowStrength)
+    self._flowVars["strength"] = strength
+    strMenu = tk.Menu(menu)
+    for label, value in (("weak", 3.0), ("medium", 6.0), ("strong", 10.0)):
+      strMenu.add_radiobutton(label=label, variable=strength, value=value,
+                              command=lambda v=value: self.setAnimationSetting("flowStrength", v))
+    menu.add_cascade(label="current strength", menu=strMenu)
+    relation = tk.StringVar(value=(layout.flowRelation or self.model.ISA).name)
+    self._flowVars["relation"] = relation
+    relMenu = tk.Menu(menu)
+    types = [self.model.ISA] + sorted((r for r in self.model.values() if isinstance(r, Relation) and r.isType()
+                                       and r is not self.model.ISA and not r.isSystemObject()), key=lambda r: r.name.lower())
+    for t in types:
+      relMenu.add_radiobutton(label=t.name, variable=relation, value=t.name,
+                              command=lambda t=t: self.setAnimationSetting("flowRelation", None if t is self.model.ISA else t))
+    menu.add_cascade(label="current follows", menu=relMenu)
+    return menu
+
+  def toggleAnimationLayout(self) -> None:
+    '''
+    Start (or, if it's running, stop) the animation layout: objects
+    repel one another and relations pull them together, until things settle
+    (see *animatedLayouts.FieldsLayout*). The whole run is one undoable command.
+    '''
+    layout = self.animationLayout()
+    if layout.active:
+      layout.kill()
+      return
+    layout(autoOff=True)
 
   def gatherNodes(self) -> None:
     '''

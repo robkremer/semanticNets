@@ -58,7 +58,10 @@ class Direction(Enum):
   
 def depth(obj:GraphObject) -> int:
   '''
+  :param obj:
+  :type obj: GraphObject
   :return: the isa-depth of *obj*.
+  :rtype: int
   '''
   i:int = -1
   p = [obj]
@@ -80,12 +83,25 @@ class LayoutHieristic(ABC):
   def __init__(self, view):
     '''
     Constructor
+
+    :param view:
+    :type view:
     '''
     from sn.view.graphics.sngView import SNGView
     assert isinstance(view, SNGView)
     self.view = view
     
   def _setDirection(self, node:VObject, referenceNode:Optional[VObject], loc:Optional[Point]=None):
+    '''
+    :param node:
+    :type node: VObject
+    :param referenceNode:
+    :type referenceNode: Optional[VObject]
+    :param loc:
+    :type loc: Optional[Point]
+    :returns:
+    :rtype:
+    '''
     if loc is not None:
       return Direction.NEAREST
     if referenceNode is None: # and loc is None
@@ -98,13 +114,24 @@ class LayoutHieristic(ABC):
     
   def findOverlapping(self, rect:list[int], exclude:list[int]=[]) -> list[int]:
     '''
+    :param rect:
+    :type rect: list[int]
+    :param exclude:
+    :type exclude: list[int]
     :return: The (possible zero-length) list of 'vis/shape'-tagged tk.Canvas object ids
         that overlap with bounding box of *node*.
+    :rtype: list[int]
     '''
     overlapping = self.view.intersectTag(self.view.canvas.find_overlapping(*rect), 'vis/shape', exclude)
     return overlapping
     
   def __call__(self, node:Optional[VObject]=None, **kwargs):
+    '''
+    :param node:
+    :type node: Optional[VObject]
+    :param kwargs:
+    :type kwargs:
+    '''
     if node is not None:
       self.placeNode(node, **kwargs)
     else:
@@ -115,6 +142,20 @@ class LayoutHieristic(ABC):
                 referenceNode:Optional[VObject]=None, 
                 direction:Direction=Direction.UNSPECIFIED, 
                 loc:Optional[Point]=None, **kwargs) -> Point:
+    '''
+    :param node:
+    :type node: VObject
+    :param referenceNode:
+    :type referenceNode: Optional[VObject]
+    :param direction:
+    :type direction: Direction
+    :param loc:
+    :type loc: Optional[Point]
+    :param kwargs:
+    :type kwargs:
+    :returns:
+    :rtype: Point
+    '''
     pass
     
   @abstractmethod
@@ -124,6 +165,10 @@ class LayoutHieristic(ABC):
 class FindFree(LayoutHieristic):
   
   def __init__(self, view):
+    '''
+    :param view:
+    :type view:
+    '''
     super().__init__(view)
     self.quanta = 10
     'Used when searching for non-overlapping space'
@@ -142,6 +187,22 @@ class FindFree(LayoutHieristic):
                 loc:Optional[Point]=None,
                 aggressive:bool=False, 
                 **kwargs) -> Point:
+    '''
+    :param node:
+    :type node: VObject
+    :param referenceNode:
+    :type referenceNode: Optional[VObject]
+    :param direction:
+    :type direction: Direction
+    :param loc:
+    :type loc: Optional[Point]
+    :param aggressive:
+    :type aggressive: bool
+    :param kwargs:
+    :type kwargs:
+    :returns:
+    :rtype: Point
+    '''
     from sn.view.graphics.vrelations import VRelation
     expandFactor = self.expandFactor_relations \
           if node.modelObject is not None and node.modelObject.isIndividual() and isinstance(node, VRelation) \
@@ -258,6 +319,12 @@ class FindFree(LayoutHieristic):
 # ---- Gathering outliers ------------------------------------------------------
 
 def _median(values:list[float]) -> float:
+  '''
+  :param values:
+  :type values: list[float]
+  :returns:
+  :rtype: float
+  '''
   if not values:
     return 0.0
   s = sorted(values)
@@ -288,12 +355,16 @@ def gatherAxisShifts(intervals:list[tuple[float, float]], *,
   differences.
 
   :param intervals: (low, high) extents along one axis.
+  :type intervals: list[tuple[float, float]]
   :param gapFactor: How many times the typical spacing a gap must exceed to
     count as stranding what lies beyond it.
+  :type gapFactor: float
   :param minGap: No gap smaller than this counts as stranding, however
     tightly packed the rest of the drawing is -- so a normal (if loose)
     layout is left alone.
+  :type minGap: float
   :returns: The shift for each interval, in the same order.
+  :rtype: list[float]
   '''
   n = len(intervals)
   shifts = [0.0] * n
@@ -351,7 +422,13 @@ def gatherShifts(boxes:list[list[float]], *, gapFactor:float=6.0, minGap:float=3
   only one axis is only pulled back on that axis.
 
   :param boxes: [x1, y1, x2, y2] bounding boxes.
+  :type boxes: list[list[float]]
+  :param gapFactor:
+  :type gapFactor: float
+  :param minGap:
+  :type minGap: float
   :returns: The (dx, dy) to move each box by, in the same order.
+  :rtype: list[tuple[float, float]]
   '''
   dxs = gatherAxisShifts([(b[0], b[2]) for b in boxes], gapFactor=gapFactor, minGap=minGap)
   dys = gatherAxisShifts([(b[1], b[3]) for b in boxes], gapFactor=gapFactor, minGap=minGap)

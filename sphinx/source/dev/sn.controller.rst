@@ -1,14 +1,16 @@
 sn.controller package
 =====================
 
-.. toctree::
-   :maxdepth: 3
-
-   sn.controller.modelInterface
-
-
 .. automodule:: sn.controller
    :members:
    :private-members:
    :show-inheritance:
    :undoc-members:
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   sn.controller.modelInterface

@@ -129,6 +129,7 @@ class ConnectorIDs:
     """Delete every item this result holds an id for, e.g. before a redraw.
 
     :param canvas: The canvas the items were created on.
+    :type canvas:
     :rtype: None
     """
     for fieldID in (self.sourceLineID, self.destLineID, self.sourceTerminatorID,
@@ -147,10 +148,26 @@ ConnectorDrawFn = Callable[..., ConnectorIDs]
 # =============================================================================
 
 def _sub(a: PointType, b: PointType) -> PointType:
+  '''
+  :param a:
+  :type a: PointType
+  :param b:
+  :type b: PointType
+  :returns:
+  :rtype: PointType
+  '''
   return (a[0] - b[0], a[1] - b[1])
 
 
 def _add(a: PointType, b: PointType) -> PointType:
+  '''
+  :param a:
+  :type a: PointType
+  :param b:
+  :type b: PointType
+  :returns:
+  :rtype: PointType
+  '''
   return (a[0] + b[0], a[1] + b[1])
 
 
@@ -185,11 +202,14 @@ def _selfLoopOffset(cs: PointType, cl: PointType, lineWidth: float) -> PointType
   docstring).
 
   :param cs: source's (== destination's) true center point.
+  :type cs: PointType
   :param cl: label's center point -- only its direction from *cs* matters,
     to decide which axis to offset along.
+  :type cl: PointType
   :param lineWidth: The line's stroke width (create_line()'s "width" option,
     or its default of 1 if not given), so thicker lines still end up
     visibly separated rather than just touching edge-to-edge.
+  :type lineWidth: float
   :returns: An (x, y) offset with exactly one non-zero component, sized so
     that adding it to one side and subtracting it from the other leaves
     about :py:data:`_SELF_LOOP_GAP` view units of daylight between the two
@@ -210,6 +230,13 @@ def _labelControlPoint(cs: PointType, cl: PointType, cd: PointType) -> PointType
 
   Solved from B(0.5) = 0.25*cs + 0.5*P1 + 0.25*cd = cl.
 
+  :param cs:
+  :type cs: PointType
+  :param cl:
+  :type cl: PointType
+  :param cd:
+  :type cd: PointType
+  :returns:
   :rtype: PointType
   """
   return (2 * cl[0] - 0.5 * (cs[0] + cd[0]),
@@ -219,6 +246,15 @@ def _labelControlPoint(cs: PointType, cl: PointType, cd: PointType) -> PointType
 def _bezierPoint(p0: PointType, p1: PointType, p2: PointType, t: float) -> PointType:
   """Evaluate the quadratic Bezier [p0, p1, p2] at parameter *t* (0..1).
 
+  :param p0:
+  :type p0: PointType
+  :param p1:
+  :type p1: PointType
+  :param p2:
+  :type p2: PointType
+  :param t:
+  :type t: float
+  :returns:
   :rtype: PointType
   """
   mt = 1 - t
@@ -234,6 +270,17 @@ def _bezierBlossom(p0: PointType, p1: PointType, p2: PointType, ta: float, tb: f
   approximation). This is the symmetric bilinear "blossom"/polar form of a
   quadratic Bezier, b(x,y), evaluated at (ta,tb); b(t,t) == _bezierPoint(t).
 
+  :param p0:
+  :type p0: PointType
+  :param p1:
+  :type p1: PointType
+  :param p2:
+  :type p2: PointType
+  :param ta:
+  :type ta: float
+  :param tb:
+  :type tb: float
+  :returns:
   :rtype: PointType
   """
   w0 = (1 - ta) * (1 - tb)
@@ -258,8 +305,20 @@ def _findBoundaryParam(vobj: VObject, p0: PointType, p1: PointType, p2: PointTyp
   so a fixed count is used rather than a pixel-distance stopping condition.
 
   :param vobj: The shape being clipped against (needs .containsPt()).
+  :type vobj: VObject
+  :param p0:
+  :type p0: PointType
+  :param p1:
+  :type p1: PointType
+  :param p2:
+  :type p2: PointType
   :param tInside: A parameter value where _bezierPoint(...) is inside vobj.
+  :type tInside: float
   :param tOutside: A parameter value where _bezierPoint(...) is outside vobj.
+  :type tOutside: float
+  :param iterations:
+  :type iterations: int
+  :returns:
   :rtype: float
   """
   for _ in range(iterations):
@@ -283,6 +342,19 @@ def _clippedArc(vobj0: VObject, vobj2: VObject, p0: PointType, p1: PointType, p2
   None — logging a warning — if that assumption looks violated, rather than
   producing a nonsensical clip.
 
+  :param vobj0:
+  :type vobj0: VObject
+  :param vobj2:
+  :type vobj2: VObject
+  :param p0:
+  :type p0: PointType
+  :param p1:
+  :type p1: PointType
+  :param p2:
+  :type p2: PointType
+  :param granularity:
+  :type granularity: int
+  :returns:
   :rtype: Optional[tuple[PointType, PointType, PointType]]
   """
   if not vobj0.containsPt(p0):
@@ -314,6 +386,11 @@ def _farPointAlong(vobj: VObject, direction: PointType) -> PointType:
   points rather than a curve parameter, so it needs an outside point to
   bisect toward.
 
+  :param vobj:
+  :type vobj: VObject
+  :param direction:
+  :type direction: PointType
+  :returns:
   :rtype: PointType
   """
   cx, cy = vobj.centerPt()
@@ -333,6 +410,13 @@ def _clipToEdgeStraight(vobj: VObject, farPt: PointType, granularity: int = 1) -
   findIntersection()/arePtsClose() already do, reimplemented here as a free
   function so it doesn't need a VRelation instance.
 
+  :param vobj:
+  :type vobj: VObject
+  :param farPt:
+  :type farPt: PointType
+  :param granularity:
+  :type granularity: int
+  :returns:
   :rtype: PointType
   """
   p1, p2 = farPt, vobj.centerPt()
@@ -353,6 +437,9 @@ def parseTerminatorSpec(spec: Optional[str]) -> Optional[tuple[str, list[float]]
   """Parse a terminator spec string ("arrow(8,10,3)", "circle(5)", "arrow",
   None, "") into (kind, args). Mirrors VRelation.parseEndShape()'s format.
 
+  :param spec:
+  :type spec: Optional[str]
+  :returns:
   :rtype: Optional[tuple[str, list[float]]]
   """
   if not spec:
@@ -385,6 +472,11 @@ def _arrowLineOptions(spec: Optional[str], end: str) -> dict:
   itself — no separate canvas item needed, which is why this returns
   options to merge into the line's own kwargs rather than an id.
 
+  :param spec:
+  :type spec: Optional[str]
+  :param end:
+  :type end: str
+  :returns:
   :rtype: dict
   """
   parsed = parseTerminatorSpec(spec)
@@ -414,6 +506,11 @@ def _mergeArrowOptions(nearSpec: Optional[str], farSpec: Optional[str]) -> dict:
   previously-set arrowhead in place instead of clearing it when a caller's
   terminator spec changes to "no arrow" on a later call.
 
+  :param nearSpec:
+  :type nearSpec: Optional[str]
+  :param farSpec:
+  :type farSpec: Optional[str]
+  :returns:
   :rtype: dict
   """
   near = _arrowLineOptions(nearSpec, 'first')
@@ -433,6 +530,21 @@ def _drawCircleTerminator(view, spec: Optional[str], atPt: PointType, existingID
   Non-circle specs (arrow, None) are handled by the line itself, so this
   always deletes *existingID* and returns None for anything else.
 
+  :param view:
+  :type view:
+  :param spec:
+  :type spec: Optional[str]
+  :param atPt:
+  :type atPt: PointType
+  :param existingID:
+  :type existingID: Optional[int]
+  :param lineColor:
+  :type lineColor: str
+  :param fillColor:
+  :type fillColor: str
+  :param tags:
+  :type tags: Optional[Sequence[str]]
+  :returns:
   :rtype: Optional[int]
   """
   canvas = view.canvas
@@ -471,12 +583,18 @@ def _upsertLine(canvas:tk.Canvas, existingID: Optional[int], coords: Sequence[fl
   3-point arcs and drawStraightConnector's 2-point segments.
 
   :param canvas: The canvas the item lives (or will be created) on.
+  :type canvas: tk.Canvas
   :param existingID: A previous call's item id for this line, or None to
     always create a new item.
+  :type existingID: Optional[int]
   :param coords: Coordinate sequence for canvas.coords()/create_line().
+  :type coords: Sequence[float]
   :param tags: Canvas tags to (re)apply.
+  :type tags: Sequence[str]
   :param opts: create_line()/itemconfigure() keyword options — fill, width,
     arrow, arrowshape, smooth, dash, etc. — re-specified in full every call.
+  :type opts: dict
+  :returns:
   :rtype: int
   """
   coords4 = list(coords)
@@ -510,21 +628,31 @@ def _drawSingleSegment(label: VObject, other: VObject, otherIsSource: bool,
 
   :param label: One end of the single line actually drawn (the end both
     lines of a full connector would otherwise pass through).
+  :type label: VObject
   :param other: The one present endpoint — whichever of source/destination
     isn't *None*.
+  :type other: VObject
   :param otherIsSource: *True* if *other* is standing in for *source* (so
     the terminators.source/labelNear slots, and the sourceLineID/
     sourceTerminatorID/labelNearTerminatorID result fields, apply); *False*
     if it's standing in for *destination* (labelFar/destination slots and
     destLineID/labelFarTerminatorID/destTerminatorID fields).
+  :type otherIsSource: bool
   :param terminators: Same terminators the caller was given.
+  :type terminators: ConnectorTerminators
   :param prior: The caller's *ids* (or an empty ConnectorIDs() if *ids*
     was *None*).
+  :type prior: ConnectorIDs
   :param lineColor: Same as drawSmoothConnector()'s *lineColor*.
+  :type lineColor: str
   :param fillColor: Same as drawSmoothConnector()'s *fillColor*.
+  :type fillColor: str
   :param tagList: Canvas tags, already coerced to a list by the caller.
-  :param lineOpts: The base {'fill': lineColor, **lineKwargs} dict the
+  :type tagList: list
+  :param lineOpts: The base ``{'fill': lineColor, **lineKwargs}`` dict the
     caller already built.
+  :type lineOpts: dict
+  :returns:
   :rtype: ConnectorIDs
   """
   canvas = label.canvas
@@ -625,22 +753,31 @@ def drawSmoothConnector(source: Optional[VObject], label: VObject, destination: 
 
   :param source: The VObject the first line starts from, or *None* if
     there is no source object.
+  :type source: Optional[VObject]
   :param label: The VObject both lines connect through.
+  :type label: VObject
   :param destination: The VObject the second line ends at, or *None* if
     there is no destination object.
+  :type destination: Optional[VObject]
   :param terminators: The four terminator specs (source/labelNear/labelFar/
     destination), or None for no terminators at all.
+  :type terminators: Optional[ConnectorTerminators]
   :param ids: A previous call's ConnectorIDs, to update those exact items in
     place instead of creating new ones. None (the default) draws fresh
     items. Every colour/terminator/line option is re-applied from this
     call's arguments regardless — nothing is assumed to carry over from
     whatever *ids* was drawn with.
+  :type ids: Optional[ConnectorIDs]
   :param lineColor: Passed as create_line()'s "fill" (and terminators'
-    outline colour) unless overridden via **lineKwargs.
+    outline colour) unless overridden via *lineKwargs*.
+  :type lineColor: str
   :param fillColor: Fill colour for "circle" terminators.
+  :type fillColor: str
   :param tags: Canvas tags applied to every item this call touches.
+  :type tags: Optional[Sequence[str]]
   :param lineKwargs: Extra options merged into both create_line() calls
     (width, dash, etc.).
+  :type lineKwargs:
   :returns: The ids of everything drawn, for passing back in on the next
     call (or deleting).
   :rtype: ConnectorIDs
@@ -753,6 +890,25 @@ def drawStraightConnector(source: Optional[VObject], label: VObject, destination
   (see _drawSingleSegment()), or a silent no-op returning *ids* (or a fresh,
   empty ConnectorIDs()) unchanged if both are.
 
+  :param source:
+  :type source: Optional[VObject]
+  :param label:
+  :type label: VObject
+  :param destination:
+  :type destination: Optional[VObject]
+  :param terminators:
+  :type terminators: Optional[ConnectorTerminators]
+  :param ids:
+  :type ids: Optional[ConnectorIDs]
+  :param lineColor:
+  :type lineColor: str
+  :param fillColor:
+  :type fillColor: str
+  :param tags:
+  :type tags: Optional[Sequence[str]]
+  :param lineKwargs:
+  :type lineKwargs:
+  :returns:
   :rtype: ConnectorIDs
   """
   if terminators is None:

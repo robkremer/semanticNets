@@ -1,7 +1,7 @@
-sn.view.graphics.guiApp2
+sn.model.reasoner module
 ========================
 
-.. automodule:: sn.view.graphics.guiApp2
+.. automodule:: sn.model.reasoner
    :members:
    :private-members:
    :show-inheritance:

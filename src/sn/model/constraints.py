@@ -69,10 +69,18 @@ class _Present:
   'The value of a constraint that\'s just a key: the attribute is there (with any value).'
   _instance:_Present|None = None
   def __new__(cls):
+    '''
+    :returns:
+    :rtype:
+    '''
     if cls._instance is None:
       cls._instance = super().__new__(cls)
     return cls._instance
   def __repr__(self) -> str:
+    '''
+    :returns: A string representation of this object.
+    :rtype: str
+    '''
     return "PRESENT"
 
 PRESENT = _Present()
@@ -81,6 +89,10 @@ PRESENT = _Present()
 class ValueVar(str):
   'A value variable, eg: ?a -- the same value wherever it\'s used (as opposed to the text "?a").'
   def __repr__(self) -> str:
+    '''
+    :returns: A string representation of this object.
+    :rtype: str
+    '''
     return f"ValueVar({str.__repr__(self)})"
 
 class ConstraintError(ValueError):
@@ -91,7 +103,16 @@ _VALUE_VAR = re.compile(r"\?\w+$")
 _NUMBERISH = re.compile(r"[-+]?(\d|\.\d)")
 
 def _split(text:str, sep:str) -> list[str]:
-  'Split *text* at *sep* characters that aren\'t inside quotes.'
+  '''
+  Split *text* at *sep* characters that aren\'t inside quotes.
+
+  :param text:
+  :type text: str
+  :param sep:
+  :type sep: str
+  :returns:
+  :rtype: list[str]
+  '''
   parts, cur, quote = [], "", None
   for ch in text:
     if quote:
@@ -112,6 +133,14 @@ def _split(text:str, sep:str) -> list[str]:
   return parts
 
 def _value(text:str, key:str) -> Any:
+  '''
+  :param text:
+  :type text: str
+  :param key:
+  :type key: str
+  :returns:
+  :rtype: Any
+  '''
   v = text.strip()
   if v == "":
     raise ConstraintError(f'"{key}:" has no value')
@@ -134,8 +163,11 @@ def _value(text:str, key:str) -> Any:
 
 def parseConstraints(text:str|None) -> dict[str, Any]:
   '''
+  :param text:
+  :type text: str | None
   :returns: The constraints in *text* (see the module doc), in order: key ->
     PRESENT, a number, a bool, text (str), or a *ValueVar*.
+  :rtype: dict[str, Any]
   :raises ConstraintError: If *text* can't be parsed.
   '''
   ret:dict[str, Any] = {}
@@ -159,6 +191,12 @@ def parseConstraints(text:str|None) -> dict[str, Any]:
   return ret
 
 def _formatValue(v:Any) -> str:
+  '''
+  :param v:
+  :type v: Any
+  :returns:
+  :rtype: str
+  '''
   if isinstance(v, bool):
     return "true" if v else "false"
   if isinstance(v, (int, float, ValueVar)):
@@ -171,7 +209,13 @@ def _formatValue(v:Any) -> str:
   return s
 
 def formatConstraints(constraints:dict[str, Any]) -> str:
-  ':returns: *constraints* (as from *parseConstraints()*) as text, eg: "alive, age: 30".'
+  '''
+  :returns: *constraints* (as from *parseConstraints()*) as text, eg: "alive, age: 30".
+
+  :param constraints:
+  :type constraints: dict[str, Any]
+  :rtype: str
+  '''
   return ", ".join(k if v is PRESENT else f"{k}: {_formatValue(v)}" for k, v in constraints.items())
 
 def splitWhere(text:str) -> tuple[str, str|None]:
@@ -179,6 +223,11 @@ def splitWhere(text:str) -> tuple[str, str|None]:
   Split a name as typed at ":where:", eg: "?p :where: alive, age: 30" ->
   ("?p", "alive, age: 30"). The constraints part is None if there's no
   ":where:" (and "" if it's empty).
+
+  :param text:
+  :type text: str
+  :returns:
+  :rtype: tuple[str, str | None]
   '''
   name, sep, rest = text.partition(WHERE)
   return (name.strip(), rest.strip()) if sep else (text.strip(), None)
@@ -187,7 +236,14 @@ def mergeConstraints(old:str|None, new:str) -> str:
   '''
   *new*'s constraints added to (or replacing the same keys in) *old*'s, as
   text. If *old* can't be parsed, *new* replaces it.
+  :param old:
+  :type old: str | None
+  :param new:
+  :type new: str
   :raises ConstraintError: If *new* can't be parsed.
+
+  :returns:
+  :rtype: str
   '''
   added = parseConstraints(new)
   try:
@@ -202,7 +258,10 @@ def migrateConstraints(model) -> list[str]:
   other than its name, note, "vis/..." and "constraints" -- into its
   "constraints" attribute (see the module doc).
 
+  :param model:
+  :type model:
   :returns: A message for each variable converted.
+  :rtype: list[str]
   '''
   from util.attribute import Attribute, VAR
   msgs:list[str] = []

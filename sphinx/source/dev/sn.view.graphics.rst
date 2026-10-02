@@ -7,10 +7,22 @@ sn.view.graphics package
    :show-inheritance:
    :undoc-members:
 
-Modules
--------
+Submodules
+----------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
 
-   sn.view.graphics.guiApp2
+   sn.view.graphics.animatedLayouts
+   sn.view.graphics.animationToolbar
+   sn.view.graphics.connectors
+   sn.view.graphics.decorators
+   sn.view.graphics.guiApp
+   sn.view.graphics.labels
+   sn.view.graphics.layout
+   sn.view.graphics.shapes
+   sn.view.graphics.sngView
+   sn.view.graphics.utils
+   sn.view.graphics.vnodes
+   sn.view.graphics.vobjects
+   sn.view.graphics.vrelations

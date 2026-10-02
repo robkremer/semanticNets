@@ -1,0 +1,5 @@
+# What the packaged app (and the .pyz's users) need at run time.
+clingo
+requests
+urllib3
+docstring_parser

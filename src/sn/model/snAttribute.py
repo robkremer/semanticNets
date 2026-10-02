@@ -60,6 +60,12 @@ class SNAttributedObject(AttributedObject):
 
   @override
   def __setitem__(self, key:str, value:SerializableType)->None:
+    '''
+    :param key:
+    :type key: str
+    :param value:
+    :type value: SerializableType
+    '''
     if key in RELATIONAL_ATTRS:
       value = Attribute(True, bool, LOCAL)
     super().__setitem__(key, value)
@@ -67,6 +73,14 @@ class SNAttributedObject(AttributedObject):
 
   @override
   def setAttr(self, key:str, attr:Attribute)->Attribute:
+    '''
+    :param key:
+    :type key: str
+    :param attr:
+    :type attr: Attribute
+    :returns:
+    :rtype: Attribute
+    '''
     if key in RELATIONAL_ATTRS:
       attr = Attribute(True, bool, LOCAL)
     return super().setAttr(key, attr)

@@ -40,16 +40,40 @@ logger:sn.SNLogger = sn.getLogger(__name__)
 
 # State bits in events
 def s_CMD(s:int) -> bool:
-  ":return: *True* iff *s* has the Command key bit set."
+  '''
+  :return: *True* iff *s* has the Command key bit set.
+
+  :param s:
+  :type s: int
+  :rtype: bool
+  '''
   return (s&0x18) != 0
 def s_SHIFT(s:int) -> bool: 
-  ":return: *True* iff *s* has the Shift key bit set."
+  '''
+  :return: *True* iff *s* has the Shift key bit set.
+
+  :param s:
+  :type s: int
+  :rtype: bool
+  '''
   return (s&0x1)  != 0
 def s_CTL(s:int) -> bool: 
-  ":return: *True* iff *s* has the Control key bit set."
+  '''
+  :return: *True* iff *s* has the Control key bit set.
+
+  :param s:
+  :type s: int
+  :rtype: bool
+  '''
   return (s&0x4)  != 0
 def s_ALT(s:int) -> bool: 
-  ":return: *True* iff *s* has the Alt or Option key bits set."
+  '''
+  :return: *True* iff *s* has the Alt or Option key bits set.
+
+  :param s:
+  :type s: int
+  :rtype: bool
+  '''
   return (s&0x88) != 0
 s_OPT = s_ALT
 
@@ -66,8 +90,11 @@ CHAR_CMD   = u'\u2318'
 def pointInRect(pt:Iterable[float], rect:Iterable[float]) -> bool:
   """
   :param pt: (x,y) 
+  :type pt: Iterable[float]
   :param rect: (x,y,x1,y1)
+  :type rect: Iterable[float]
   :return: *True* iff the give *pt* lies inside *rect*.
+  :rtype: bool
   """
   return pointInPoly(pt, [(rect[0], rect[1]),
               (rect[2], rect[1]),
@@ -78,8 +105,12 @@ def shiftRectToPoint(rect:Iterable[float], point:Iterable[float]) -> list[float]
   """
   :param pt: (x,y) 
   :param rect: (x,y,x1,y1)
+  :type rect: Iterable[float]
+  :param point:
+  :type point: Iterable[float]
   :return: A new rectangle if the same size and aspect ratio as *rect*, but with the 
     upper left corner at *pt*.
+  :rtype: list[float]
   """
   
   return [point[0], point[1], point[0]+rect[2]-rect[0], point[1]+rect[3]-rect[1]]
@@ -87,8 +118,11 @@ def shiftRectToPoint(rect:Iterable[float], point:Iterable[float]) -> list[float]
 def overlaps(rect1:Iterable[float], rect2:Iterable[float]) -> bool:
   """
   :param rect1: (x,y,x1,y1)
+  :type rect1: Iterable[float]
   :param rect2: (x,y,x1,y1)
+  :type rect2: Iterable[float]
   :return: *True* iff the two rectangles overlap.
+  :rtype: bool
   """
   def overlapDim(a1, a2, b1, b2):
     return not(a2 < b1 or b2 < a1)
@@ -98,8 +132,11 @@ def overlaps(rect1:Iterable[float], rect2:Iterable[float]) -> bool:
 def pointInPoly(pt:Iterable[float], poly:Iterable[float]) -> bool:
   """
   :param pt: (x,y) 
+  :type pt: Iterable[float]
   :param poly: (x,y [,x1,y1]...)
+  :type poly: Iterable[float]
   :return: *True* iff the give *pt* lies inside *poly*.
+  :rtype: bool
   """
   #import numpy as np
   import matplotlib.path as mplPath
@@ -113,16 +150,22 @@ def pointInPoly(pt:Iterable[float], poly:Iterable[float]) -> bool:
 def midpoint(pt1:Iterable[float], pt2:Iterable[float]) -> list[float]:
   """
   :param pt1: (x,y)
+  :type pt1: Iterable[float]
   :param pt2: (x,y)
+  :type pt2: Iterable[float]
   :return: The point midway between the two points.
+  :rtype: list[float]
   """
   return ((pt1[0]+pt2[0])/2, (pt1[1]+pt2[1])/2)
   
 def expandRect(rect:Iterable[float], spacing:Iterable[float]) -> list[float]:
   """
   :param rect: The rectangle to expand.
+  :type rect: Iterable[float]
   :param spacing: The vector of points to expand *rect* as [left, top, right, bottom].
+  :type spacing: Iterable[float]
   :return: A new rectangle representing the expansion of *rect*.
+  :rtype: list[float]
   """ 
   return  [rect[0]-spacing[0],
        rect[1]-spacing[1],
@@ -134,7 +177,10 @@ def normalizeRect(rect:Iterable[float]) -> list[float]:
   Fix up a rect (x,y,x1,y1) such that x<x1 and y<y1, in conformance to tk rules.
   
   :param: rect:
+  :param rect:
+  :type rect: Iterable[float]
   :return: A new rectangle same as *rect*, but s/t x<x1 and y<y1.
+  :rtype: list[float]
   """
   return [rect[0] if rect[0]<rect[2] else rect[2],
       rect[1] if rect[1]<rect[3] else rect[3],
@@ -146,6 +192,12 @@ def normalizeRect(rect:Iterable[float]) -> list[float]:
 ##########################################################################################
 
 def bindRightMouse(window, func):
+  '''
+  :param window:
+  :type window:
+  :param func:
+  :type func:
+  '''
   if window.winfo_toplevel().tk.call("tk", "windowingsystem") == 'aqua':
     window.bind("<2>", func)
     window.bind("<Control-1>", func)
@@ -153,6 +205,14 @@ def bindRightMouse(window, func):
     window.bind("<3>", func)
 
 def tag_bindRightMouse(window, id_, func):
+  '''
+  :param window:
+  :type window:
+  :param id_:
+  :type id_:
+  :param func:
+  :type func:
+  '''
   if window.tk.call("tk", "windowingsystem") == 'aqua':
     window.tag_bind(id_, "<2>", func)
     window.tag_bind(id_, "<Control-1>", func)
@@ -160,6 +220,12 @@ def tag_bindRightMouse(window, id_, func):
     window.tag_bind(id_, "<3>", func)
 
 def tag_unbindRightMouse(window, id_):
+  '''
+  :param window:
+  :type window:
+  :param id_:
+  :type id_:
+  '''
   if window.tk.call("tk", "windowingsystem") == 'aqua':
     window.tag_unbind(id_, "<2>")
     window.tag_unbind(id_, "<Control-1>")
@@ -167,6 +233,14 @@ def tag_unbindRightMouse(window, id_):
     window.tag_unbind(id_, "<3>")
 
 def eventEqual(e1, e2):
+  '''
+  :param e1:
+  :type e1:
+  :param e2:
+  :type e2:
+  :returns:
+  :rtype:
+  '''
   return isinstance(e1, tk.Event) and isinstance(e2, tk.Event) and \
       e1.x_root == e2.x_root and \
       e1.y_root == e2.y_root and \
@@ -181,14 +255,18 @@ def getSubMenu(menu:tk.Menu, name:str, makeIfNone:int|str|None=tk.END) -> Option
   Find a submenu in *menu* with label *name* .
 
   :param menu: The menu to search
+  :type menu: tk.Menu
   :param name: The label of the item we are searching for
+  :type name: str
   :param makeIfNone: [default: tk.END (insert at end)] if not *None* and *menu* does not
       contain any menu items named *name* then insert a new menu named *name* at position
       *makeIfNone* -- either an *int* index or one of Tkinter's symbolic index constants
       (e.g. *tk.END*, which is itself just the *str* "end"; this is what *insert_cascade()*
       itself accepts, so we just pass it straight through).
+  :type makeIfNone: int | str | None
   :return: Return a *tk.Menu* if it is found or created; if it is not found and
       *makeIfNone* is *None*, return *None* .
+  :rtype: Optional[tk.Menu]
   """
   submenu = None
   try:
@@ -205,6 +283,12 @@ def getSubMenu(menu:tk.Menu, name:str, makeIfNone:int|str|None=tk.END) -> Option
 
 
 def getToplevelWindows(root:tk.Tk):
+  '''
+  :param root:
+  :type root: tk.Tk
+  :returns:
+  :rtype:
+  '''
   return [x for x in root.winfo_children() if isinstance(x , tk.Toplevel)]
 
 def _getMenuBar() -> Optional[tk.Menu]:
@@ -213,6 +297,7 @@ def _getMenuBar() -> Optional[tk.Menu]:
 
   :return: The resolved *tk.Menu*, or *None* if there's no default root, or
       it has no menu bar configured.
+  :rtype: Optional[tk.Menu]
   """
   root = tk._default_root  # type: ignore[attr-defined] # @UndefinedVariable
   if root is None:
@@ -225,9 +310,12 @@ def _getMenuBar() -> Optional[tk.Menu]:
 def _findEntry(menu:tk.Menu, label:str) -> tuple[Optional[int], Optional[str]]:
   """
   :param menu: The menu to search.
+  :type menu: tk.Menu
   :param label: The label of the item we are searching for.
+  :type label: str
   :return: *(index, type)* of the entry in *menu* labelled *label*, or
       *(None, None)* if there is no such entry.
+  :rtype: tuple[Optional[int], Optional[str]]
   """
   try:
     # Menu.index(label) raises TclError (not "returns None") when no entry
@@ -255,11 +343,15 @@ def addToMenuBar(path:str, command:Optional[Callable]=None, *, menu:Optional[tk.
       item's own label, e.g. ``"File|Save view"``. All but the last segment
       name cascade submenus, created via *getSubMenu()* if they don't
       already exist; the last segment is the item's own label.
+  :type path: str
   :param command: The callable to invoke when the item is chosen. Give this
       to add/replace a plain command item; mutually exclusive with *menu*.
+  :type command: Optional[Callable]
   :param menu: The submenu to show as a cascade. Give this to add/replace a
       cascade item; mutually exclusive with *command*.
+  :type menu: Optional[tk.Menu]
   :param accelerator: Optional accelerator string to display (e.g. "Cmd+S").
+  :type accelerator: Optional[str]
   :note: Safe to call repeatedly with the same *path* -- e.g. every time a
       window gains focus -- since an existing entry with the same final
       label is reconfigured in place rather than duplicated (and, if it was
@@ -296,6 +388,42 @@ def addToMenuBar(path:str, command:Optional[Callable]=None, *, menu:Optional[tk.
     else:
       target.insert_cascade(index, label=label, menu=menu, state=tk.NORMAL, **kwargs)
 
+def addCheckToMenuBar(path:str, variable:tk.Variable, command:Optional[Callable]=None, *,
+                      cascadePositions:Optional[dict[str, int]]=None) -> None:
+  """
+  Add -- or, if already present, replace -- a check item in the app's menu
+  bar: it shows (and sets) the boolean *variable*, and calls *command* when
+  chosen. Like *addToMenuBar()*, safe to call repeatedly with the same *path*
+  (eg: each time a window gains focus, rebinding it to that window's variable),
+  and removed with *removeFromMenuBar()*.
+
+  :param path: A ``"|"``-separated path of cascade labels ending in the
+      item's own label, e.g. ``"View|Animation toolbar"``.
+  :type path: str
+  :param variable: The (boolean) variable the item shows and sets.
+  :type variable: tk.Variable
+  :param command: Called (after *variable* is set) when the item is chosen.
+  :type command: Optional[Callable]
+  :param cascadePositions: Where to put any cascade that has to be made, by
+      label, eg: ``{"View": 1}`` (just after "File"); by default, at the end.
+  :type cascadePositions: Optional[dict[str, int]]
+  :rtype: None
+  """
+  segments = path.split("|")
+  target = _getMenuBar()
+  assert target is not None, \
+      f'addCheckToMenuBar(): no default menu bar could be resolved (no default root, or it has no menu configured).'
+  for seg in segments[:-1]:
+    target = getSubMenu(target, seg, makeIfNone=(cascadePositions or {}).get(seg, tk.END))
+  label = segments[-1]
+  index, existingType = _findEntry(target, label)
+  if index is not None:
+    target.delete(index) # (rebuilt: a check item's variable can't be rebound by entryconfig on every platform)
+  else:
+    index = tk.END
+  target.insert_checkbutton(index, label=label, variable=variable, onvalue=True, offvalue=False,
+                            command=command, state=tk.NORMAL)
+
 def removeFromMenuBar(path:str) -> None:
   """
   Remove an entry (as added by *addToMenuBar()*) from the app's menu bar.
@@ -306,6 +434,7 @@ def removeFromMenuBar(path:str) -> None:
   actually added the item first.
 
   :param path: Same ``"|"``-separated path as passed to *addToMenuBar()*.
+  :type path: str
   :rtype: None
   """
   segments = path.split("|")
@@ -334,6 +463,7 @@ def play(soundFile:Optional[str]=None):
     - None: plays "/System/Library/Sounds/Sosumi.aiff" (an error beep).
     - Just a file name: (not containing any slashes ("/")) looks in /System/Library/Sounds/ for the file.
     - A path: (containing slashes ("/")) just tries to play that file.
+  :type soundFile: Optional[str]
   """
   if soundFile is None or len(soundFile)==0:
     soundFile = '/System/Library/Sounds/Sosumi.aiff'
@@ -348,6 +478,11 @@ def play(soundFile:Optional[str]=None):
 def flattenPairs(pairs):
   """
   From a vector of pairs, return a simple vector. [(1,2),(3,4)] -> [1,2,3,4]
+
+  :param pairs:
+  :type pairs:
+  :returns:
+  :rtype:
   """
   ret = []
   for p in pairs:
@@ -362,6 +497,14 @@ class VerticalScrolledFrame(ttk.Frame):
     * This frame only allows vertical scrolling.
     """
     def __init__(self, parent, *args, **kw):
+        '''
+        :param parent:
+        :type parent:
+        :param args:
+        :type args:
+        :param kw:
+        :type kw:
+        '''
         ttk.Frame.__init__(self, parent, *args, **kw)
 
         # Create a canvas object and a vertical scrollbar for scrolling it.

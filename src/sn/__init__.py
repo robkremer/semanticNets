@@ -29,27 +29,90 @@ import os
 import sys
 
 from util import setupLogger
-import util.observer as observer
-from util.prefs import Prefs
-
-#setupLogger()
 
 NAME = "Semantic Nets"
 SHORT_NAME = "sn"
 VERSION = "1.0"
-
-observer.alwaysLater = True
 
 class SNLogger(logging.Logger):
   def print(self, *args, **kwargs):
     '''
     Intended to mimic the print system command but allowing for redirection 
     and multiple destinations if necessary.
+
+    :param args:
+    :type args:
+    :param kwargs:
+    :type kwargs:
     '''
     print(*args, **kwargs)
     
-# set up the logger to log to './sn.log' and to stderr  
-setupLogger(SNLogger, SHORT_NAME) 
+# Log to "sn.log" (in the current directory; a packaged app logs in ~/Library/Logs/:
+# see util.setupLogger()) and to stderr. This must come before anything else of
+# util's is imported: util's modules get their loggers as they're imported, and
+# util.getLogger() sets up logging its own way (to "<program>.log") if it finds
+# it isn't set up yet.
+setupLogger(SNLogger, SHORT_NAME)
+
+import util.observer as observer
+from util.prefs import Prefs
+
+observer.alwaysLater = True
+
+def resourcePath(*parts:str) -> str:
+  '''
+  :param parts: A path relative to the project's top folder (eg: "sphinx"),
+    or, in a packaged app, to its bundled resources (where the build puts the
+    same things under the same names).
+  :type parts: str
+  :returns: The full path (which may not exist).
+  :rtype: str
+  '''
+  base = getattr(sys, "_MEIPASS", None) or os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+  return os.path.join(base, *parts)
+
+EXAMPLES_PLACEHOLDER = "file:///SEMANTIC_NETS_EXAMPLES"
+"The folder the example models are stored as being in (see *copyExamples()*)."
+
+def exampleNames() -> list[str]:
+  '''
+  :returns: The example models' files that come with the program (package data:
+    *sn/examples/*), eg: ["animals.snm", "animals.snv", ...].
+  :rtype: list[str]
+  '''
+  import importlib.resources
+  try:
+    folder = importlib.resources.files("sn").joinpath("examples")
+    return sorted(f.name for f in folder.iterdir() if f.name.endswith((".snm", ".snv")))
+  except (FileNotFoundError, NotADirectoryError):
+    return []
+
+def copyExamples(target:str, names:list[str]|None=None) -> list[str]:
+  '''
+  Copy the example models that come with the program (see *exampleNames()*)
+  into the folder *target* (made if need be), and make each copy refer to where
+  it now is -- they're stored as being in *EXAMPLES_PLACEHOLDER* -- so that it
+  isn't taken to have been moved when it's opened.
+
+  :param target: The folder to copy them to.
+  :type target: str
+  :param names: The files to copy (eg: ["family.snm", "family.snv"]); by default, all of them.
+  :type names: list[str]|None
+  :returns: The paths of the copies.
+  :rtype: list[str]
+  '''
+  import importlib.resources
+  from pathlib import Path
+  folder = importlib.resources.files("sn").joinpath("examples")
+  os.makedirs(target, exist_ok=True)
+  ret = []
+  for f in names if names is not None else exampleNames():
+    text = folder.joinpath(f).read_text(encoding="utf-8")
+    path = os.path.join(target, f)
+    with open(path, "w", encoding="utf-8") as fd:
+      fd.write(text.replace(EXAMPLES_PLACEHOLDER, Path(target).as_uri()))
+    ret.append(path)
+  return ret
 # logging.setLoggerClass(SNLogger)
 # logFileName = SHORT_NAME+'.log'
 # if os.path.isfile(logFileName): os.remove(logFileName)
@@ -86,10 +149,18 @@ class SNPrefs(Prefs):
 
   @override
   def getSupers[T:AttributedObject](self)->list[T]:
+    '''
+    :returns:
+    :rtype: list[T]
+    '''
     return []
 
   @override
   def isIndividual(self)->bool:
+    '''
+    :returns:
+    :rtype: bool
+    '''
     return False
   
 prefsfilename = f'{os.path.expanduser("~")}/.{SHORT_NAME}.xml'
@@ -122,7 +193,16 @@ logger.setLevel(logging.getLevelNamesMapping()[snPrefs.get("loggingLevel",
 #
 # registerAtExit()
 
-atexit.register(snPrefs.save)
+def savePrefsIfChanged() -> None:
+  '''
+  Save the preferences -- but only if they've changed, so that merely running
+  (or importing) the program -- eg: the documentation build, or a self-test --
+  doesn't rewrite the user's preferences file.
+  '''
+  if snPrefs.isDirty():
+    snPrefs.save()
+
+atexit.register(savePrefsIfChanged)
 
 def checkSaveModified(obj, url:str, kind:str) -> None:
   '''

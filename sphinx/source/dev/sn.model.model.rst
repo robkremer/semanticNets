@@ -1,5 +1,5 @@
-sn.model.model
-==============
+sn.model.model module
+=====================
 
 .. automodule:: sn.model.model
    :members:

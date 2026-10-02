@@ -11,8 +11,16 @@ Subpackages
 -----------
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 4
 
+   sn.controller
    sn.model
    sn.view
-   sn.controller
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   sn.__main__

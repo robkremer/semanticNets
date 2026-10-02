@@ -1,0 +1,6 @@
+# The build venv (.venv-build): the run-time packages, plus the build tools.
+-r requirements.txt
+pyinstaller
+dmgbuild
+pillow
+delocate

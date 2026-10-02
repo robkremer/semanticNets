@@ -123,6 +123,9 @@ class Cache(dict[str,Any]):
   def __init__(self, owner):
     '''
     ;param owner: [VObject]
+
+    :param owner:
+    :type owner:
     '''
     from sn.view.graphics.vrelations import VRelation
     super().__init__()
@@ -135,8 +138,10 @@ class Cache(dict[str,Any]):
     :param attr: [default=None] The name of the attribute to refresh; if *attr*
         is not already in the cache, it will be added.
         If None, refresh ALL attributes from *VATTRIBUTES* that are already in the cache.
+    :type attr: Optional[str]
     :param verbose: [default=False] If True, write out all the attributes from 
         *VATTRIBUTES* that are in the cache AFTER the update has occurred.
+    :type verbose: bool
         
     Update *attr* from the model object.
     '''
@@ -163,6 +168,12 @@ class Cache(dict[str,Any]):
       logger.info(buf)
       
   def __getitem__(self, key:str) -> Any:
+    '''
+    :param key:
+    :type key: str
+    :returns:
+    :rtype: Any
+    '''
     assert key in self.allkeys
     try:
       return super().__getitem__(key)
@@ -175,10 +186,22 @@ class Cache(dict[str,Any]):
     return self.allkeys[key]
       
   def __setitem__(self, key:str, val:Any) -> None:
+    '''
+    :param key:
+    :type key: str
+    :param val:
+    :type val: Any
+    '''
     assert key in self.allkeys
     super().__setitem__(key, val)
     
   def __contains__(self, key:str) -> bool:
+    '''
+    :param key:
+    :type key: str
+    :returns:
+    :rtype: bool
+    '''
     return key in self.allkeys
       
 
@@ -204,11 +227,17 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     :param view: The SNGView object that "owners" this VObject.
     :type view: SNGView
     :param modelObject: The object in the model that this object represents.
+    :type modelObject: GraphObject | str
     :param shape: [Union[tygra.view.shapes.Shape, str], default=...shapes.Rectangle] The basic shape of this object.
+    :type shape: Union[Any, str]
     :param x: The upper left corner x coordinate
+    :type x: Optional[int]
     :param y: The upper left corner y coordinate
+    :type y: Optional[int]
     :param x1: The lower right corner x coordinate
+    :type x1: Optional[int]
     :param y1: The lower right corner y coordinate
+    :type y1: Optional[int]
     :param kwargs: Passed on to *super().__init__()*. *VObject* is normally
       combined with *AGRelation* via multiple inheritance (see *VRelation*),
       and the two share *AGObject* as a common ancestor -- calling *super()*
@@ -331,6 +360,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
   @classmethod
   @override
   def getInstantiationInfo(cls)->InstantiationInfo:
+    '''
+    :returns:
+    :rtype: InstantiationInfo
+    '''
     from sn.view.graphics.sngView import SNGView
     return InstantiationInfo(
             cls, 
@@ -360,6 +393,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
   @property
   @override
   def name(self)->str:
+    '''
+    :returns:
+    :rtype: str
+    '''
     n = "?" if self.modelObject is None else self.modelObject["name"]
     return str(n)
     # assert n is None or type(n) is str, f'Expecting type str|None, got {n.__class__.__name__}'
@@ -371,7 +408,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     :returns: The corresponding model object.
     :rtype: GraphObject
     :raises ReferenceError: if there is not corresponding model object (deleted?)
-    :
     '''
     # try:
     #   ret:GraphObject|None = self._modelObject
@@ -386,6 +422,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
   
   @property
   def relations(self) -> Iterator[VObject]:
+    '''
+    :returns:
+    :rtype: Iterator[VObject]
+    '''
     for vo in self._incoming + self._outgoing:
       yield vo
         
@@ -436,6 +476,13 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     The bounding box is strictly tracked by the *self.shape()* object. Thus, if 
     you change the boundingBox, this method assures that shape object tracks it
     (along with any decorators).
+
+    :param rect:
+    :type rect: list[int]
+    :param fast:
+    :type fast:
+    :returns:
+    :rtype: list
     '''
     if rect != None and rect != self._boundingBox:
       assert len(rect) == 4
@@ -485,6 +532,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     *SNGView.visibility()*), or depends on something that is, or goes without
     saying (eg: a containment drawn as being inside a window). See
     *SNGView.shouldHide()*.
+
+    :returns:
+    :rtype: bool
     '''
     return self._hidden
 
@@ -546,6 +596,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     its "vis/label" attribute if it has one, else the "gui/label" preference
     ("gui/relationLabel" for relations). A template that can't be expanded
     gives the name, with a warning.
+
+    :returns:
+    :rtype: str
     '''
     from sn.view.graphics.labels import expand, labelLookup, DEFAULT_LABEL, LABEL_NOTE, TemplateError
     mo = self.modelObject
@@ -561,6 +614,12 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       logger.warning(f'{mo.name}: bad label template: {ex}')
       return (mo.name or "").strip()
 
+  categoryExempt:bool = False
+  '''
+  Shown although it's in a hidden category (see *SNGView.visibility()*): it was
+  made (or shown explicitly) since the category was hidden. Hiding the category
+  again hides it too.
+  '''
   collapsed:bool = False
   "A context window shown as just its title bar (see *setCollapsed()*)."
   expandedHeight:int|None = None
@@ -569,14 +628,28 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
   "The width of a context window's collapse/expand triangle, at the left of its title bar."
 
   def fullBoundingBox(self) -> list:
-    'The bounding box -- as it is when expanded, for a collapsed context window (see *setCollapsed()*).'
+    '''
+    The bounding box -- as it is when expanded, for a collapsed context window (see *setCollapsed()*).
+
+    :returns:
+    :rtype: list
+    '''
     bb = list(self.boundingBox())
     if self.collapsed:
       bb[3] = bb[1] + (self.expandedHeight or self.WINDOW_DEFAULT[1])
     return bb
 
   def toggleAt(self, x:float, y:float) -> bool:
-    'Whether (x, y) (view coords) is on a context window\'s collapse/expand triangle.'
+    '''
+    Whether (x, y) (view coords) is on a context window\'s collapse/expand triangle.
+
+    :param x:
+    :type x: float
+    :param y:
+    :type y: float
+    :returns:
+    :rtype: bool
+    '''
     if not self.isContextWindow():
       return False
     x1, y1, _, _ = self.boundingBox()
@@ -589,6 +662,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     with it); what it contains that's outside it stays, with its arcs to the
     title bar -- eg: a query's subject, out in the world. See
     *SNGContext.collapse()* for the undoable command.
+
+    :param collapsed:
+    :type collapsed: bool
     '''
     if collapsed == self.collapsed or not self.isContextWindow():
       return
@@ -614,6 +690,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     True iff this is drawn as a window: an individual context -- a rule,
     query, ... (not the context/rule/query types themselves). See
     *decorators.ContextFrame*.
+
+    :returns:
+    :rtype: bool
     '''
     mo = self.modelObject
     try:
@@ -622,6 +701,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       return False
 
   def bannerHeight(self) -> float:
+    '''
+    :returns:
+    :rtype: float
+    '''
     return self.BANNER
 
   def panes(self) -> dict[str, list[float]]:
@@ -631,6 +714,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     "consequent" (right); a definition's "definiendum" (left: the term
     defined) and "definiens" (right: its meaning); any other context's single
     "contains" area.
+
+    :returns:
+    :rtype: dict[str, list[float]]
     '''
     x1, y1, x2, y2 = self.fullBoundingBox() # (a collapsed window's contents are still in it)
     top = y1 + self.bannerHeight()
@@ -642,14 +728,28 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     return {"contains": [x1, top, x2, y2]}
 
   def paneAt(self, pt) -> str|None:
-    '''The pane (see *panes()*) that the point *pt* (view coords) is in, or None.'''
+    '''
+    The pane (see *panes()*) that the point *pt* (view coords) is in, or None.
+
+    :param pt:
+    :type pt:
+    :returns:
+    :rtype: str | None
+    '''
     for name, (x1, y1, x2, y2) in self.panes().items():
       if x1 <= pt[0] <= x2 and y1 <= pt[1] <= y2:
         return name
     return None
 
   def containmentOf(self, obj) -> list:
-    '''The model relations by which this context contains *obj* (a model object).'''
+    '''
+    The model relations by which this context contains *obj* (a model object).
+
+    :param obj:
+    :type obj:
+    :returns:
+    :rtype: list
+    '''
     mo = self.modelObject
     if mo is None or obj is None:
       return []
@@ -657,7 +757,12 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     return [r for r, _ in mo._getOutgoing(lambda r: r.isIndividual() and r.isa(contains) and r.localDst is obj)]
 
   def windowContents(self) -> list[VObject]:
-    '''The view objects this context contains that sit inside its window.'''
+    '''
+    The view objects this context contains that sit inside its window.
+
+    :returns:
+    :rtype: list[VObject]
+    '''
     mo = self.modelObject
     if mo is None or not self.isContextWindow():
       return []
@@ -670,7 +775,12 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     return ret
 
   def isResizable(self) -> bool:
-    'False iff "vis/minSize" == "vis/maxSize": the size is fixed, so it can\'t be resized by hand. (Windows always can be.)'
+    '''
+    False iff "vis/minSize" == "vis/maxSize": the size is fixed, so it can\'t be resized by hand. (Windows always can be.)
+
+    :returns:
+    :rtype: bool
+    '''
     return self.isContextWindow() or self.cache['vis/minSize'] != self.cache['vis/maxSize']
 
   def minHeight(self) -> float:
@@ -678,6 +788,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     The smallest height (view units) the bounding box may have: "vis/minSize" *
     "vis/aspectRatio" (*NOMINAL_ASPECT* if that's 0), but never less than one
     line of text.
+
+    :returns:
+    :rtype: float
     '''
     ret = self.cache['vis/minSize'] * (self.cache['vis/aspectRatio'] or NOMINAL_ASPECT)
     text = self.decorators.get("text") if getattr(self, "decorators", None) else None
@@ -688,7 +801,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
   def shape(self, c:str=None):
     '''
     :param c: [str, default=None] The name of the new shape.
+    :type c: str
     :return: [str] The name of this object's (possibly changed) shape.
+    :rtype:
     :except Exception: if *c* is not the name of a known shape.
     
     If *c* is given, make self's shape the corresponding *Shape*. 
@@ -718,6 +833,11 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
   def update(self, subject:Subject, *topics:tuple[str, tuple[Any, ...]]) -> None:
       """
       Receive update from subject.
+
+      :param subject:
+      :type subject: Subject
+      :param topics:
+      :type topics: tuple[str, tuple[Any, ...]]
       """
       rm = False # flag for checking if "rm" is one of the topics
       try: # if this is a deletion, the object will fail validation on access
@@ -767,6 +887,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
   def validate(self) -> list[str]:
     '''
     Populates (or clears) the *self.errors* list.
+
+    :returns:
+    :rtype: list[str]
     '''
     try:
       self.assertToStatusReport(self.modelObject is not None, 
@@ -832,13 +955,28 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       self.tooltip.delete()
       
   def onEnter(self, event):
+    '''
+    :param event: The Tk event.
+    :type event:
+    '''
     self.canvas.configure(cursor="hand")
     
   def onLeave(self, event):
+    '''
+    :param event: The Tk event.
+    :type event:
+    '''
     self.canvas.configure(cursor="arrow")
     
   def onRightMouse(self, event):
-    """Creates and displays the node specific menu at the clicked location."""
+    """
+    Creates and displays the node specific menu at the clicked location.
+
+    :param event: The Tk event.
+    :type event:
+    :returns:
+    :rtype:
+    """
     self.view.addEventHandled(event)
     m = self.makeMenu()
     m.post(event.x_root, event.y_root)
@@ -849,6 +987,11 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     The mouse clicked on this node, so begin a mouse event capture. We will
     decide on if it's just a node move or a selection toggle in *self.onB1_Motion()*
     and *self.onB1ButtonRelease()*.
+
+    :param event: The Tk event.
+    :type event:
+    :returns:
+    :rtype:
     """
     # A context window's collapse/expand triangle
     if self.toggleAt(self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)):
@@ -908,6 +1051,11 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     """
     The mouse is moving while being captured by this node, so if we had clicked to start
     accepting events, just move the node to track the event, updating *self.dragInfo*.
+
+    :param event: The Tk event.
+    :type event:
+    :returns:
+    :rtype:
     """
     
     if self.resizeInfo is not None:
@@ -945,6 +1093,11 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     Button one was released. If it was a drag, it was a move, and everything is fine except
     we call self.adjustPos() which may resolve overlap conflicts. If it was a click (no
     intervening <B1_Motion> events), toggle the selection state of the node.
+
+    :param event: The Tk event.
+    :type event:
+    :returns:
+    :rtype:
     """
     #from sn.view.vcommands import MoveCommand
     if self.resizeInfo is not None:
@@ -1012,6 +1165,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     '''
     Begin dragging the *corner* ("nw", "ne", "se" or "sw") handle: the
     opposite corner stays fixed (see *_resizeTo()*).
+
+    :param corner:
+    :type corner: str
     '''
     bb = self.boundingBox()
     x1, y1, x2, y2 = bb
@@ -1026,6 +1182,11 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     "vis/maxSize"); if "vis/aspectRatio" is non-zero the height follows the
     width, otherwise it follows the pointer, but not below *minHeight()*.
     Dragging past the fixed corner just flips to the normalized rectangle.
+
+    :param x:
+    :type x: float
+    :param y:
+    :type y: float
     '''
     assert self.resizeInfo is not None
     (ax, ay), _, _ = self.resizeInfo
@@ -1044,6 +1205,11 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     '''
     Set the bounding box to *bb* (position and size), letting relations follow
     and redrawing.
+
+    :param bb:
+    :type bb: list[float] | list[int]
+    :param adjustPos:
+    :type adjustPos: bool
     '''
     from sn.view.graphics.vrelations import VRelation
     self.boundingBox([int(v) for v in bb])
@@ -1068,6 +1234,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
   # ---- MENUS -----------------------------------------------------------------
   
   def makeMenu(self) -> tk.Menu:
+    '''
+    :returns:
+    :rtype: tk.Menu
+    '''
     m = tk.Menu(self.canvas)
     if True: #app.DEBUG_MENUS:
       if self.modelObject is None:
@@ -1111,6 +1281,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
   #
 
   def addModelEditingMenuItems(self, menu:tk.Menu):
+    '''
+    :param menu:
+    :type menu: tk.Menu
+    '''
     if self.modelObject is None:
       return
     disabled = (self.modelObject.isSystemObject() \
@@ -1134,7 +1308,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     '''
     :param on: True to give this object a glow (see *decorators.Highlight*),
       False to remove it, None to just ask.
+    :type on: bool | None
     :returns: Whether it's highlighted.
+    :rtype: bool
     '''
     if on is True and "highlight" not in self.decorators:
       self.decorators["highlight"] = Highlight(self)
@@ -1192,6 +1368,11 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     The "make relation to..." submenu: a submenu of relation types for each
     ancestor model (the view model's super-models, nearest first) at the top,
     then the view model's own relation types. Each list is sorted by name.
+
+    :param parent:
+    :type parent: tk.Menu
+    :returns:
+    :rtype: tk.Menu
     '''
     def relTypes(model) -> list[Relation]:
       return sorted((r for r in model.values() if isinstance(r, Relation) and r.isType()), key=lambda r: r.name.lower())
@@ -1222,6 +1403,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
 
   @abstractmethod
   def makeModelObjectSubtype(self, individual:bool) -> None:
+    '''
+    :param individual:
+    :type individual: bool
+    '''
     raise NotImplementedError("Must implement VObject.makeSubtypeMenuItemFun().")
     
   def addViewMenuItems(self, menu:tk.Menu):
@@ -1318,6 +1503,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     #       subMenu.add_command(label=f'{k} {arrow} {other.name}',
     #             command = lambda f=filtr: self.canvas.doList.do(ExpandCommand(self, filtr=f)))
     #   expMenu.add_cascade(menu=subMenu, label=f'expand {k} relations ({v[0]+v[1]})')
+    '''
+    :param menu:
+    :type menu: tk.Menu
+    '''
     expMenu = tk.Menu()
     expMenu.add_command(label="expand all, 1 level" , command=lambda: self.view.context.expand(self))
     expMenu.add_command(label="expand all, 2 levels", command=lambda: self.view.context.expand(self, levels=1))
@@ -1336,6 +1525,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
                        state=tk.NORMAL if self.userSized else tk.DISABLED)
          
   def onEditAttributes(self, disabled:bool=False):
+    '''
+    :param disabled:
+    :type disabled: bool
+    '''
     mo = self.modelObject
     edits = editAttrsBox(self.canvas, mo, title=str(mo), disabled=disabled)
     if not disabled and edits is not None:
@@ -1359,6 +1552,15 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     constraints added to any it has; see *sn.model.constraints*). For anything
     but a variable, or constraints that can't be read, the name isn't changed
     (and a message says why).
+
+    :param edits:
+    :type edits: dict
+    :param nameEdit:
+    :type nameEdit: Any
+    :param typed:
+    :type typed: str
+    :returns:
+    :rtype: dict
     '''
     mo = self.modelObject
     name, text = splitWhere(typed)
@@ -1403,6 +1605,12 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     #   self.canvas.logger.write(f"failed to make 'typeMarker': {type(ex).__name__}: {ex}.", level="warning", exception=ex)
 
   def draw(self, fast=False, **kwargs):#, rect=None):
+    '''
+    :param fast:
+    :type fast:
+    :param kwargs:
+    :type kwargs:
+    '''
     if self._drawVersion >= self.view._drawVersion: 
       return
     else: 
@@ -1442,6 +1650,17 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     Move so that the NW corner is on (x,y), informing all the decorators and 
     relations. A context window carries what's inside it along, and isn't
     subject to overlap avoidance (it's meant to have things on it).
+
+    :param x:
+    :type x:
+    :param y:
+    :type y:
+    :param allowOverScrollRegionSE:
+    :type allowOverScrollRegionSE:
+    :param adjustPos:
+    :type adjustPos:
+    :param fast:
+    :type fast:
     """
     bb = self.boundingBox(fast=fast)
     if self.isContextWindow():
@@ -1493,12 +1712,34 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     
       
   def moveBy(self, dx, dy, *, allowOverScrollRegionSE=False, adjustPos=True, fast=False):
+    '''
+    :param dx:
+    :type dx:
+    :param dy:
+    :type dy:
+    :param allowOverScrollRegionSE:
+    :type allowOverScrollRegionSE:
+    :param adjustPos:
+    :type adjustPos:
+    :param fast:
+    :type fast:
+    '''
     bb = self.boundingBox(fast=fast)
     x = bb[0]+dx
     y = bb[1]+dy
     self.moveTo(x, y, allowOverScrollRegionSE=allowOverScrollRegionSE, adjustPos=adjustPos, fast=fast)
     
   def moveToCenterOn(self, x, y, adjustPos=True, fast=False):
+    '''
+    :param x:
+    :type x:
+    :param y:
+    :type y:
+    :param adjustPos:
+    :type adjustPos:
+    :param fast:
+    :type fast:
+    '''
     bb = self.boundingBox(fast=fast)
     width = abs(bb[2]-bb[0])
     height = abs(bb[3]-bb[1])
@@ -1507,14 +1748,33 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     self.moveTo(x, y, adjustPos=adjustPos, fast=fast)
 
   def centerPt(self):
-    """Gets the center point of this shape."""
+    """
+    Gets the center point of this shape.
+
+    :returns:
+    :rtype:
+    """
     r = self.boundingBox()
     return (int((r[0]+r[2])/2), int((r[1]+r[3])/2))
 
   def containsPt(self, pt):
+    '''
+    :param pt:
+    :type pt:
+    :returns:
+    :rtype:
+    '''
     return pointInPoly(pt, self._shape.points())
     
   def adjustPos(self, aggressive:bool=False, fast=False) -> tuple[int,int]:
+    '''
+    :param aggressive:
+    :type aggressive: bool
+    :param fast:
+    :type fast:
+    :returns:
+    :rtype: tuple[int, int]
+    '''
     if fast:
       bb = self.boundingBox(fast=fast)
       return bb[0], bb[1]
@@ -1530,7 +1790,16 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     return r[0], r[1]
     
   def overlaps(self, bb:list=None, others:Iterable=None, spacing:Optional[list]=None) -> list: #list[VObject]:
-    ""
+    '''
+    :param bb:
+    :type bb: list
+    :param others:
+    :type others: Iterable
+    :param spacing:
+    :type spacing: Optional[list]
+    :returns:
+    :rtype: list
+    '''
     if bb is None:
       bb = self.boundingBox() if spacing is None else expandRect(self.boundingBox(), spacing)
     if others is None:
@@ -1553,8 +1822,11 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     """
     :param filter: Optional[Callable[[Self, Relation], bool]] A function *selfxRelation->bool*
         where that relation will only be expanded if the function returns *True* 
+    :type filter: Callable[[Any, Relation], bool]
     :param expand: [Optional[int], default=None] The number of hops to expand.
+    :type expand:
     :return: A set of all the VObjects created during the expansion.
+    :rtype:
     """
     # Iterate all the relations connected to this, collecting all the undisplayed ones in *rels*
     # and also recurse on any displayed ones if *expand* > 0
@@ -1589,6 +1861,12 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         y += 50
 
   def strToShape(self, name):
+    '''
+    :param name:
+    :type name:
+    :returns:
+    :rtype:
+    '''
     from sn.view.graphics.shapes import Shape
     cls = Shape.getShapeClass(name)
     if cls is not None:
@@ -1596,6 +1874,14 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     raise TypeError("VNode.strToShape(): Do not know shape class '"+name+"'.")
 
   def selected(self, val:Optional[bool]=None, _multi:bool=False) -> bool|None:
+    '''
+    :param val:
+    :type val: Optional[bool]
+    :param _multi:
+    :type _multi: bool
+    :returns:
+    :rtype: bool | None
+    '''
     if val is not None:
       if val: # setting selected
         if "selected" not in self.decorators:
@@ -1614,6 +1900,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     return "selected" in self.decorators if self.decorators is not None else None
 
   def tooltipFunc(self) -> str:
+    '''
+    :returns:
+    :rtype: str
+    '''
     tip = ""
     line = "\u2594"*18
     try:
@@ -1647,12 +1937,18 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     return tip
   
   def notifyDecoratorDeletion(self, decorator):
+    '''
+    :param decorator:
+    :type decorator:
+    '''
     self.removeDecorator(obj=decorator)
 
   def removeDecorator(self, key=None, obj=None):
     """
     :param key: A key in the decorator list.
+    :type key:
     :param obj: An actual decorator object.
+    :type obj:
     
     Removes a single decorator from the decorator list, either by *key* or by *obj*\\ .
     If the item is not found, nothing is done.
@@ -1676,6 +1972,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     put it back (see *_reconnect()*). Individual relations attached to it go
     with it; relation *types* attached to it stay, with that end left
     dangling -- a type is still meaningful without this object in view.
+
+    :param kwargs:
+    :type kwargs:
     '''
     from sn.view.graphics.vrelations import VRelation
     detached:list[tuple[VRelation, str]] = []
@@ -1694,6 +1993,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     
   @override
   def _reconnect(self, **kwargs):
+    '''
+    :param kwargs:
+    :type kwargs:
+    '''
     super()._reconnect(**kwargs)
     self._showItems() # (a redraw hides it again if it should be -- see _applyHidden())
     self._hidden = False
@@ -1728,6 +2031,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
   def isHidable(self) -> bool:
     '''
     An object is "hidable" only if ALL it's relations are instances.
+
+    :returns:
+    :rtype: bool
     '''
     # for r in self.relations:
     #   if r.modelObject.isType() and not r.isHidden():
@@ -1744,7 +2050,12 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
   #   #  relation.model.addObserver(self) # observer the relation MODEL
 
   def notifyRelationDeletion(self, relation):
-    """ This is the notification from removal of a relation VIEW. """ 
+    """
+    This is the notification from removal of a relation VIEW.
+
+    :param relation:
+    :type relation:
+    """
     for r in self.relations:
       if r == relation:
         self.relations.remove(r)
@@ -1754,10 +2065,20 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
   
   @override
   def __str__(self) -> str:
+    '''
+    :returns: A readable string for this object.
+    :rtype: str
+    '''
     return self.tostring()
   
   @override
   def tostring(self, relativeTo:"SNGView"|None=None) -> str:
+    '''
+    :param relativeTo:
+    :type relativeTo: 'SNGView' | None
+    :returns:
+    :rtype: str
+    '''
     if self.modelObject is None:
       return f'{self.__class__.__name__}(?, {PReference.formatForURL(self, relativeTo, includeName=False)}, {self.readModelObjectRef if hasattr(self,"readModelObjectRef") else "?"})'
      
@@ -1767,6 +2088,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     return f'{self.__class__.__name__}({name}, {PReference.formatForURL(self, relativeTo, includeName=False)}, {self.modelObject.tostring(self.view.model)})'
   
   def __repr__(self):
+    '''
+    :returns: A string representation of this object.
+    :rtype:
+    '''
     return self.__str__()
   
   # def __hash__(self):

@@ -36,6 +36,8 @@ Created on Sep 24, 2026
 #################################################################################
 from __future__ import annotations
 from pathlib import Path
+import importlib.resources
+from importlib.resources.abc import Traversable
 import re
 from typing import Any, override
 import clingo
@@ -43,8 +45,8 @@ from sn.model.model import Model, GraphObject
 from sn.model.reasoner import Reasoner, Inferences, Violation, Sym, Fact, PROPERTIES, Pattern, patternOf, ruleOf, rules, ruleSpecs, NewObject
 from sn.model.constraints import PRESENT, ValueVar
 
-RULES = Path(__file__).with_name("clingoReasoner.lp")
-"The default rule base."
+RULES = importlib.resources.files("sn.model").joinpath("clingoReasoner.lp")
+"The default rule base. (Package data, so that it's found in a .pyz or a packaged app too.)"
 
 class ClingoReasoner(Reasoner, engine="clingo"):
   '''
@@ -57,9 +59,15 @@ class ClingoReasoner(Reasoner, engine="clingo"):
 
   language = "asp"
 
-  def __init__(self, model:Model, rules:Path|str=RULES):
+  def __init__(self, model:Model, rules:Path|str|Traversable=RULES):
+    '''
+    :param model:
+    :type model: Model
+    :param rules: The rule base: a file, or package data (see *RULES*).
+    :type rules: Path | str | Traversable
+    '''
     super().__init__(model)
-    self.rules = Path(rules)
+    self.rules:Path|Traversable = Path(rules) if isinstance(rules, str) else rules
     self._ids:dict[int, int] = {}
     "id(GraphObject) -> term number"
     self._objs:list[GraphObject] = []
@@ -68,6 +76,12 @@ class ClingoReasoner(Reasoner, engine="clingo"):
   # ── Rendering ────────────────────────────────────────────────────────────
 
   def _term(self, x:Any) -> str:
+    '''
+    :param x:
+    :type x: Any
+    :returns:
+    :rtype: str
+    '''
     if isinstance(x, GraphObject):
       n = self._ids.get(id(x))
       if n is None:
@@ -84,6 +98,12 @@ class ClingoReasoner(Reasoner, engine="clingo"):
     return _str(str(x))
 
   def _program(self, facts:list[Fact]) -> str:
+    '''
+    :param facts:
+    :type facts: list[Fact]
+    :returns:
+    :rtype: str
+    '''
     self._ids.clear()
     self._objs.clear()
     return "\n".join(f'{pred}({",".join(self._term(a) for a in args)}).' for pred, args in facts)
@@ -92,12 +112,17 @@ class ClingoReasoner(Reasoner, engine="clingo"):
 
   def _solve(self, program:str="", facts:str|None=None) -> list[clingo.Symbol]:
     '''
+    :param program:
+    :type program: str
     :param facts: The model's facts, already rendered (see *_program()*) -- for
       a *program* that refers to objects by their o(N) terms, which must come
       from the same rendering. Rendered afresh if None.
+    :type facts: str | None
+    :returns:
+    :rtype: list[clingo.Symbol]
     '''
     ctl = clingo.Control(["--warn=none"])
-    ctl.load(str(self.rules))
+    ctl.add("base", [], self.rules.read_text(encoding="utf-8"))
     ctl.add("base", [], self._program(self.facts()) if facts is None else facts)
     if program:
       ctl.add("base", [], program)
@@ -109,7 +134,14 @@ class ClingoReasoner(Reasoner, engine="clingo"):
     return symbols
 
   def _value(self, sym:clingo.Symbol) -> Any:
-    'Map a clingo symbol back to a GraphObject (for o(N)) or a Python value.'
+    '''
+    Map a clingo symbol back to a GraphObject (for o(N)) or a Python value.
+
+    :param sym:
+    :type sym: clingo.Symbol
+    :returns:
+    :rtype: Any
+    '''
     if sym.type == clingo.SymbolType.Function:
       if sym.name == "o" and len(sym.arguments) == 1:
         return self._objs[sym.arguments[0].number]
@@ -128,6 +160,10 @@ class ClingoReasoner(Reasoner, engine="clingo"):
 
   @override
   def run(self) -> Inferences:
+    '''
+    :returns:
+    :rtype: Inferences
+    '''
     ret = Inferences()
     facts = self._program(self.facts()) # (numbers the objects the rules refer to)
     for sym in self._solve(self._rulesProgram(), facts):
@@ -158,6 +194,15 @@ class ClingoReasoner(Reasoner, engine="clingo"):
     type, and over relation types if it's used as one. A query's variables
     also range over the objects rules create; a rule's (*forRule*) don't --
     or a rule could go on creating objects forever.
+
+    :param pat:
+    :type pat: Pattern
+    :param var:
+    :type var: dict[str, str]
+    :param forRule:
+    :type forRule: bool
+    :returns:
+    :rtype: list[str]
     '''
     dom, ind = ("base", "individual") if forRule else ("data", "any_individual")
     def term(x:GraphObject|None) -> str:
@@ -186,7 +231,14 @@ class ClingoReasoner(Reasoner, engine="clingo"):
 
   @staticmethod
   def _varNames(pat:Pattern) -> dict[str, str]:
-    'A clingo variable for each of *pat*\'s variable names, in answer order.'
+    '''
+    A clingo variable for each of *pat*\'s variable names, in answer order.
+
+    :param pat:
+    :type pat: Pattern
+    :returns:
+    :rtype: dict[str, str]
+    '''
     return {name: f"V{i}" for i, name in enumerate(dict.fromkeys(v.name for v in pat.variables))}
 
   @override
@@ -196,6 +248,11 @@ class ClingoReasoner(Reasoner, engine="clingo"):
     ``ans(V0,...) :- <a holds/3 literal per relation, isa_star/2 per type, ...>``,
     over the reasoner's results (including what the model's rules conclude) --
     so matches include inferred relations. See *_patternBody()*.
+
+    :param context:
+    :type context: GraphObject
+    :returns:
+    :rtype: list[dict[GraphObject, GraphObject]]
     '''
     pat = patternOf(context)
     if pat.errors:
@@ -221,6 +278,17 @@ class ClingoReasoner(Reasoner, engine="clingo"):
     The term for the object *rule* creates for its consequent variable *name*
     in each match: new(Rule,Name,((Var,Value),...)) -- a function of the match,
     so one object per match (see *NewObject*).
+
+    :param rule:
+    :type rule: GraphObject
+    :param name:
+    :type name: str
+    :param matched:
+    :type matched: list[str]
+    :param var:
+    :type var: dict[str, str]
+    :returns:
+    :rtype: str
     '''
     pairs = "".join(f"({_str(n)},{var[n]})," for n in matched)
     return f"new({self._term(rule)},{_str(name)},({pairs}))"
@@ -232,6 +300,15 @@ class ClingoReasoner(Reasoner, engine="clingo"):
     as the conclusions say, and of the types they say (asserted relations and
     types only, so that the program stays stratified) -- and the literal to
     test it with. ("", "") if there's nothing to test.
+
+    :param spec:
+    :type spec:
+    :param var:
+    :type var: dict[str, str]
+    :param n:
+    :type n: int
+    :returns:
+    :rtype: tuple[str, str]
     '''
     new = {x.name for x in spec.new}
     exist = {name: f"E{i}" for i, name in enumerate(sorted(new))}
@@ -256,6 +333,9 @@ class ClingoReasoner(Reasoner, engine="clingo"):
     rule base takes these as holds/3 and attr/3.) A rule with problems isn't
     used: its problems are reported as violations. Call after rendering the
     facts (see *_program()*).
+
+    :returns:
+    :rtype: str
     '''
     out:list[str] = []
     for spec in ruleSpecs(self.objects()):
@@ -298,19 +378,39 @@ class ClingoReasoner(Reasoner, engine="clingo"):
     '''
     :param query: Extra clingo rules defining the predicate *answer*; objects
       can be named with ``name(O,"...")``.
+    :type query: str
+    :param answer:
+    :type answer: str
     :returns: The argument tuples of every *answer* atom, with ``o(N)`` terms
       mapped back to *GraphObjects*.
+    :rtype: list[tuple[Any, ...]]
     '''
     query += f'\n#show {answer}/{_arity(query, answer)}.'
     return [tuple(self._value(a) for a in sym.arguments)
             for sym in self._solve(query) if sym.name == answer]
 
 def _str(s:str) -> str:
-  'A clingo string literal.'
+  '''
+  A clingo string literal.
+
+  :param s:
+  :type s: str
+  :returns:
+  :rtype: str
+  '''
   return '"' + s.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n') + '"'
 
 def _arity(program:str, pred:str) -> int:
-  'The arity of the first head occurrence of *pred* in *program*.'
+  '''
+  The arity of the first head occurrence of *pred* in *program*.
+
+  :param program:
+  :type program: str
+  :param pred:
+  :type pred: str
+  :returns:
+  :rtype: int
+  '''
   start = program.find(pred + "(")
   if start < 0:
     return 0

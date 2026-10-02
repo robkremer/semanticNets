@@ -21,7 +21,17 @@ src/sn/help/
 # --- Ad hoc scratch/test output left in the tree ---
 # (uncomment any of these once you've confirmed they're throwaway, not fixtures)
 *.xml
+!/build.xml
 *.json
 *.snv
 *.snm
 
+
+# --- Example models (shipped with the app) are NOT scratch ---
+!src/sn/examples/*.snm
+!src/sn/examples/*.snv
+
+# --- Packaging (ant: app, dmg, pyz) ---
+/build/
+/dist/
+/.venv-build/

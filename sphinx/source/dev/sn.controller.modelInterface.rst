@@ -1,5 +1,5 @@
-sn.controller.modelInterface
-============================
+sn.controller.modelInterface module
+===================================
 
 .. automodule:: sn.controller.modelInterface
    :members:

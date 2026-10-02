@@ -98,9 +98,21 @@ formatOptions:dict[str, dict[str,Callable[[GraphObject],str]]] = {
   }
 
 def getFormatter(typeName:str) -> Callable:
+  '''
+  :param typeName:
+  :type typeName: str
+  :returns:
+  :rtype: Callable
+  '''
   return formatOptions[typeName][formatters[typeName]]
 
 def getKindMarkStr(go:GraphObject):
+  '''
+  :param go:
+  :type go: GraphObject
+  :returns:
+  :rtype:
+  '''
   if go.isType():
     return kindMarkerStr
   return ""
@@ -112,6 +124,14 @@ class UIContext(ModelContext):
     }
   
   def _format(self, typeName:str|None=None, format:str|None=None, /) -> str|list[str]|None: # @ReservedAssignment
+    '''
+    :param typeName:
+    :type typeName: str | None
+    :param format:
+    :type format: str | None
+    :returns:
+    :rtype: str | list[str] | None
+    '''
     global formatters
     global formatOptions
     assert typeName is None or typeName in formatOptions, \
@@ -135,6 +155,10 @@ class UIContext(ModelContext):
     
     :param format: one of str, repr, name, qname, id, simple.
     :type format: str
+    :param kindMarker:
+    :type kindMarker: str | None
+    :returns:
+    :rtype:
     '''
     global graphObjectFormatter
     global kindMarkerStr
@@ -149,6 +173,8 @@ class UIContext(ModelContext):
     
     :param string: prints this string to stdout.
     :type string: str
+    :param stderr:
+    :type stderr: bool
     '''
     if stderr:
       print(string, file=sys.stderr)
@@ -179,6 +205,8 @@ class UIContext(ModelContext):
     
     :param string: raises an exception with this string as the message.
     :type string: str
+    :returns:
+    :rtype: str
     '''    
     return input(string)
     
@@ -188,10 +216,22 @@ class UIContext(ModelContext):
     
     :param format: one of str, repr.
     :type format: str
+    :returns:
+    :rtype:
     '''      
     return self._format("Model", format)
       
 def printLists(obj:Any, nCarrets=1, contextModel=None) -> str|None:
+  '''
+  :param obj:
+  :type obj: Any
+  :param nCarrets:
+  :type nCarrets:
+  :param contextModel:
+  :type contextModel:
+  :returns:
+  :rtype: str | None
+  '''
   buf:str = ""
   
   def printx(s:str|None, end="\n"):
@@ -266,6 +306,12 @@ class SNAbstractTerminal:
     # get *modelName*: the default model from command line or prefs
     
     
+    '''
+    :param model:
+    :type model: Model | str
+    :param context:
+    :type context: ModelContext | None
+    '''
     if model is None:
       model = cast(str, sn.snPrefs.get("defaultModel", storeDefault="temp.xml", storeType=str))
     if isinstance(model, str):
@@ -297,6 +343,10 @@ class SNAbstractTerminal:
     print(f'Using default model "{self.context.defaults["model"]}".') #type: ignore[attr-defined]
 
   def getPrompt(self):
+    '''
+    :returns:
+    :rtype:
+    '''
     return f'{"" if self.context.defaults["model"] is None else ("@"+self.context.defaults["model"].name)}{CARRET} '
 
   
@@ -317,6 +367,40 @@ class SNTerminalWidget(SNAbstractTerminal, TerminalWidget):
                      bg="AntiqueWhite1",
                      fg="darkblue",
                      **kwargs):
+    '''
+    :param model:
+    :type model: Model | str
+    :param master:
+    :type master: tk.Widget
+    :param context:
+    :type context: ModelContext | None
+    :param registry:
+    :type registry: TerminalRegistry | None
+    :param stderrfg:
+    :type stderrfg: str
+    :param stdoutfg:
+    :type stdoutfg: str
+    :param promptfg:
+    :type promptfg: str
+    :param queryfg:
+    :type queryfg: str
+    :param resultfg:
+    :type resultfg: str
+    :param queryFont:
+    :type queryFont: tuple[str, int, str] | None
+    :param queryFlashColor:
+    :type queryFlashColor: str | None
+    :param queryFlashCount:
+    :type queryFlashCount: int
+    :param queryFlashIntervalMs:
+    :type queryFlashIntervalMs: int
+    :param bg:
+    :type bg:
+    :param fg:
+    :type fg:
+    :param kwargs:
+    :type kwargs:
+    '''
     SNAbstractTerminal.__init__(self, model, context)
     if "wrap" not in kwargs:
       kwargs["wrap"] = tk.WORD if snPrefs.get("text/wrap", storeDefault=False, storeType=bool) else tk.NONE
@@ -339,6 +423,24 @@ class SNPlainTextTerminal(SNAbstractTerminal, PlainTextTerminal):
                      queryfg:str="green",
                      resultfg:str="blue",
                      **kwargs):
+    '''
+    :param model:
+    :type model: Model | str
+    :param context:
+    :type context: ModelContext | None
+    :param stderrfg:
+    :type stderrfg: str
+    :param stdoutfg:
+    :type stdoutfg: str
+    :param promptfg:
+    :type promptfg: str
+    :param queryfg:
+    :type queryfg: str
+    :param resultfg:
+    :type resultfg: str
+    :param kwargs:
+    :type kwargs:
+    '''
     SNAbstractTerminal.__init__(self, model, context=context)
     PlainTextTerminal.__init__(self, self.context.parser.parseLine, prompt=self.getPrompt, #type: ignore[arg-type]
                               resultToStringFun=lambda obj: printLists(obj, contextModel=self.context.defaults["model"]), 

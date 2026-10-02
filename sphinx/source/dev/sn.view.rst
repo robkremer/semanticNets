@@ -7,11 +7,18 @@ sn.view package
    :show-inheritance:
    :undoc-members:
 
-Modules and subpackages
------------------------
+Subpackages
+-----------
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 4
 
    sn.view.graphics
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
    sn.view.textUserInterface

@@ -49,7 +49,10 @@ import traceback
 from util.persistence.serialize import SerializationStrategy
 from util.persistence.pRef import PRDb
 from util.attributeEditor import applyEditAttrsBox
+from util.attribute import Attribute, VAR_DEFAULTED
 import sys
+import os
+from pathlib import Path
 import sn
 import tkinter as tk
 import tkinter.filedialog as filedialog
@@ -135,7 +138,7 @@ class Application(tk.Tk):
     (not the reverse), that tears the whole process down at the C level
     without ever going back through CPython's normal shutdown sequence --
     which is the only thing that runs the *atexit* callbacks registered in
-    *sn/__init__.py* (*saveAtExit()*, *snPrefs.save*). Registering our own
+    *sn/__init__.py* (*saveAtExit()*, *savePrefsIfChanged()*). Registering our own
     handler here (see *onQuit()*) intercepts that default and runs the same
     cleanup explicitly before tearing down, instead of silently skipping it.
 
@@ -146,6 +149,21 @@ class Application(tk.Tk):
     :rtype: None
     """
     self.createcommand("tk::mac::Quit", self.onQuit)
+    self.createcommand("::tk::mac::OpenDocument", self.onOpenDocument)
+    self.createcommand("::tk::mac::ShowHelp", lambda: self.showHelp("user/index.html")) # (the Help menu's own "<App> Help" item)
+
+  def onOpenDocument(self, *paths:str) -> None:
+    """Handle files the Finder asks a packaged app to open (double-clicked,
+    or dropped on its icon) -- the macOS way of passing them, rather than the
+    command line. Each opens in a window, as with *Open...*.
+
+    :param paths: The files' paths.
+    :type paths: str
+    :rtype: None
+    """
+    self._openedDocuments = True # (see startUp(): not then reopening the last session too)
+    for p in paths:
+      self.openWindow(p)
 
   def onQuit(self) -> None:
     """Handle the "Quit \\<AppName\\>" item in macOS's automatic app menu.
@@ -153,14 +171,15 @@ class Application(tk.Tk):
     See *_installQuitHandler()* for why this override is necessary at all:
     without it, quitting via that menu item (or its Cmd+Q shortcut) bypasses
     Python's normal interpreter shutdown entirely, so the *atexit*-registered
-    *saveAtExit()*/*snPrefs.save* never run and unsaved models/views are
+    *saveAtExit()*/*savePrefsIfChanged()* never run and unsaved models/views are
     silently lost. Call them explicitly here, then tear down.
 
     :rtype: None
     """
+    self.rememberOpenWindows() # (before they're closed: see reopenWindows())
     self.closeAllWindows() # each gets the same save check as closing it by hand
     sn.saveAtExit()
-    snPrefs.save()
+    sn.savePrefsIfChanged()
     self.quit()
     sys.exit(0)  #TODO: shouldn't be necessary -- self.quit()/destroy() should
     #             have exited the app on its own, but doesn't; mirrors the
@@ -176,6 +195,7 @@ class Application(tk.Tk):
 
     Called once, from __init__, alongside _installSettingsMenu().
 
+    :returns:
     :rtype: None
     """
     menubar:tk.Menu = tk.Menu(self)
@@ -197,9 +217,27 @@ class Application(tk.Tk):
 
     self.helpmenu = tk.Menu(menubar, name="help")  # macOS auto-fills this (search field, "Python Help", ...)
     menubar.add_cascade(menu=self.helpmenu, label="Help")
+    self.helpmenu.add_command(label=f"{sn.NAME} User Guide", command=lambda: self.showHelp("user/index.html"))
+    self.helpmenu.add_command(label=f"{sn.NAME} Developer Guide", command=lambda: self.showHelp("developer/index.html"))
 
     self.config(menu=menubar)
     return menubar
+
+  def showHelp(self, page:str) -> None:
+    """Show a page of the documentation in the web browser: the copy bundled
+    in a packaged app, or else the project's built documentation.
+
+    :param page: The page, relative to the documentation's top, eg: "user/index.html".
+    :type page: str
+    :rtype: None
+    """
+    import webbrowser
+    for top in (sn.resourcePath("help"), sn.resourcePath("sphinx", "build", "html")):
+      path = os.path.join(top, page)
+      if os.path.exists(path):
+        webbrowser.open(Path(path).as_uri())
+        return
+    logger.error(f'The documentation ("{page}") isn\'t available: build it with the "doc" ant target.')
 
   def openSettings(self) -> None:
     """Show the app-wide Settings dialog, editing *sn.snPrefs* in place.
@@ -238,6 +276,8 @@ class Application(tk.Tk):
     :type name: str
     :param title: Window title. Defaults to name if not given.
     :type title: str
+    :param viewSpec:
+    :type viewSpec: Model | str
     :returns: The newly created Toplevel window.
     :rtype: tk.Toplevel
     """
@@ -341,6 +381,109 @@ class Application(tk.Tk):
       return None
 
 
+  OPEN_WINDOWS_PREF = "gui/openWindows"
+  "The preference recording the windows open when the app last quit (see *rememberOpenWindows()*)."
+
+  def rememberOpenWindows(self) -> None:
+    '''
+    Record the open windows -- each one's view, its model and its size and
+    position -- in the preferences, for *reopenWindows()* the next time the app
+    starts. (When packaged as a .app, the app is normally started with no
+    files to open, so this is how it comes back the way it was left.)
+
+    :rtype: None
+    '''
+    entries = []
+    for window in self.windows.values():
+      view = window.view
+      if view is None:
+        continue
+      try:
+        entries.append({"view": view.url, "model": view.model.url, "geometry": window.geometry()})
+      except Exception:
+        logger.warning(f'Couldn\'t record window "{window.title()}" for reopening.', exc_info=True)
+    snPrefs[self.OPEN_WINDOWS_PREF] = Attribute(entries, list, VAR_DEFAULTED,
+      "The windows open when the app last quit (view, model, size and position), reopened when it next starts.")
+
+  def reopenWindows(self) -> int:
+    '''
+    Reopen the windows recorded by *rememberOpenWindows()*, in the same size
+    and position. A view that was never saved opens as its model's default
+    view; one whose files have gone is skipped (with a message). The views
+    open as they were last saved -- unsaved changes, and the undo history,
+    are gone.
+
+    :returns: The number of windows reopened.
+    :rtype: int
+    '''
+    entries = snPrefs.get(self.OPEN_WINDOWS_PREF, [])
+    count = 0
+    for entry in entries if isinstance(entries, list) else []:
+      if not isinstance(entry, dict):
+        continue
+      viewURL, modelURL = entry.get("view"), entry.get("model")
+      spec = viewURL if viewURL and urlExists(viewURL) else modelURL if modelURL and urlExists(modelURL) else None
+      if spec is None:
+        logger.warning(f'Not reopening "{viewURL}": neither it nor its model "{modelURL}" can be found.')
+        continue
+      window = self.openWindow(spec)
+      if window is not None:
+        count += 1
+        if entry.get("geometry"):
+          try:
+            window.geometry(entry["geometry"])
+          except tk.TclError:
+            pass
+    return count
+
+  def startUp(self, files:list[str]) -> None:
+    '''
+    Open a window on each of *files* (views, .snv, or models, .snm); with none,
+    reopen the windows open when the app last quit (see *reopenWindows()*);
+    and if there were none, ask for a file to open.
+
+    :param files: Files named on the command line.
+    :type files: list[str]
+    :rtype: None
+    '''
+    files = [f for f in files if not f.startswith("-psn_")] # (a process serial number some macOS versions pass to an app)
+    for f in files:
+      self.openWindow(f)
+    if files or getattr(self, "_openedDocuments", False) or self.reopenWindows() > 0:
+      return
+    if not snPrefs.get(self.EXAMPLES_PREF, False) and self.installExamples():
+      return
+    self.doOpen()
+
+  EXAMPLES_PREF = "gui/examplesInstalled"
+  "True once the example models have been installed (see *installExamples()*): it's only done once."
+
+  EXAMPLES_FOLDER = os.path.join("~", "Documents", f"{sn.NAME} Examples")
+  "Where *installExamples()* puts the example models."
+
+  def installExamples(self) -> bool:
+    """On the first launch: copy the example models that come with the app
+    into *EXAMPLES_FOLDER* (an existing copy is left as it is) and open their
+    views.
+
+    :returns: True iff any were opened.
+    :rtype: bool
+    """
+    if not sn.exampleNames():
+      return False
+    target = os.path.expanduser(self.EXAMPLES_FOLDER)
+    try:
+      if not os.path.exists(target): # (an existing copy is left as it is)
+        sn.copyExamples(target)
+    except OSError:
+      logger.error(f'Couldn\'t copy the examples to "{target}".', exc_info=True)
+      return False
+    snPrefs[self.EXAMPLES_PREF] = True
+    views = sorted(f for f in os.listdir(target) if f.endswith(".snv"))
+    for v in views:
+      self.openWindow(os.path.join(target, v))
+    return len(views) > 0
+
   def closeAllWindows(self) -> None:
     """Close every hosted window via *_closeWindow()*, so each view gets
     exactly the same save check (and clean-up) on quitting as it would if
@@ -361,6 +504,8 @@ class Application(tk.Tk):
     :type quitIfLast: bool
     :rtype: None
     """
+    if quitIfLast and list(self.windows) == [name]: # closing the last window quits: remember it for next time
+      self.rememberOpenWindows()
     window = self.windows.pop(name, None)
     if window is not None:
       # Give the user a chance to save this window's SNGView before it's
@@ -407,6 +552,16 @@ class AppWindow(tk.Toplevel):
   '''
 
   def __init__(self, tkdottk:tk.Tk, viewURL:str, geometry:str="300x400+20+20", **kwargs):
+    '''
+    :param tkdottk:
+    :type tkdottk: tk.Tk
+    :param viewURL:
+    :type viewURL: str
+    :param geometry:
+    :type geometry: str
+    :param kwargs:
+    :type kwargs:
+    '''
     from sn.view.graphics.sngView import SNGView
     
     # initialize the window
@@ -466,6 +621,8 @@ class AppWindow(tk.Toplevel):
     """Some widget inside this window just gained focus -- let this
     window's *SNGView* (if any) know it's now the focused one.
 
+    :param event: The Tk event.
+    :type event:
     :rtype: None
     """
     if self.view is not None:
@@ -481,6 +638,8 @@ class AppWindow(tk.Toplevel):
     already been set, so *self.focus_get()* reliably reflects where focus
     actually ended up.
 
+    :param event: The Tk event.
+    :type event:
     :rtype: None
     """
     self.after_idle(self._checkStillActive)
@@ -535,6 +694,7 @@ class AppPanedWidget(tk.PanedWindow):
   def __init__(self, parent:AppWindow, **kwargs):
     r"""
     :param parent: The parent *AppWindow*.
+    :type parent: AppWindow
     :param fixedAppFrame: [bool, default:False] Specifies whether the application *frame*
       is fixed-size or stretchable.
     :param commandParser: [CommandParser , default: an new *TygraCommandParser()* ] User input
@@ -549,6 +709,8 @@ class AppPanedWidget(tk.PanedWindow):
         - "bg" default = "grey"
         - "borderwidth" default = 0
 
+    :param kwargs:
+    :type kwargs:
     """
     assert isinstance(parent, AppWindow)
     # fix up kwargs to contain the necessary defaults and create the PanedWindow (super).
@@ -597,7 +759,9 @@ class SNGViewFrame(tk.Frame):
   def __init__(self, parent:AppPanedWidget, **kwargs):
     '''
     :param parent: The master Widget.
+    :type parent: AppPanedWidget
     :param kwargs: Passed to *Canvas*.
+    :type kwargs:
     '''
     assert isinstance(parent, AppPanedWidget)
     # self.scrollRegion:list = [0,0,1000,1000]
@@ -628,11 +792,12 @@ class SNGViewFrame(tk.Frame):
     self.registry:TerminalRegistry
 
 
-if __name__ == "__main__":
+def main() -> None:
+  """Run the graphical editor: a window on each file named on the command
+  line, or else as *Application.startUp()* says."""
   app = Application()
-  # #win1 = app.openWindow("temp1.snv")
-  # win2 = app.openWindow("temp2.snm")
-  # app.run()
-  # app.after(1000, app.openWindow, Model("temp1"))
-  app.after(1000, app.openWindow, "temp2.snm")
+  app.after(1000, app.startUp, sys.argv[1:])
   app.run()
+
+if __name__ == "__main__":
+  main()

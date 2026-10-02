@@ -82,15 +82,33 @@ class TemplateError(ValueError):
 
 def expand(template:str, lookup:Callable[[str], str]) -> str:
   '''
+  :param template:
+  :type template: str
+  :param lookup:
+  :type lookup: Callable[[str], str]
   :returns: *template* with its substitutions made (see the module doc);
     *lookup(key)* gives a key's value ("" for none).
+  :rtype: str
   :raises TemplateError: If *template* is malformed (eg: an unclosed "${").
   '''
   out, i = _expand(template, 0, lookup, closer=None)
   return out
 
 def _expand(t:str, i:int, lookup:Callable[[str], str], closer:str|None) -> tuple[str, int]:
-  'Expand *t* from *i* up to (not including) an unnested *closer*: (text, index of the closer or end).'
+  '''
+  Expand *t* from *i* up to (not including) an unnested *closer*: (text, index of the closer or end).
+
+  :param t:
+  :type t: str
+  :param i:
+  :type i: int
+  :param lookup:
+  :type lookup: Callable[[str], str]
+  :param closer:
+  :type closer: str | None
+  :returns:
+  :rtype: tuple[str, int]
+  '''
   out:list[str] = []
   depth = 0 # (literal "{"s in the text, which a "}" closes before *closer* does)
   while i < len(t):
@@ -121,7 +139,18 @@ def _expand(t:str, i:int, lookup:Callable[[str], str], closer:str|None) -> tuple
   return "".join(out), i
 
 def _braced(t:str, i:int, lookup:Callable[[str], str]) -> tuple[str, int]:
-  'A ${...} starting just after the "${": (its expansion, the index after its "}").'
+  '''
+  A ${...} starting just after the "${": (its expansion, the index after its "}").
+
+  :param t:
+  :type t: str
+  :param i:
+  :type i: int
+  :param lookup:
+  :type lookup: Callable[[str], str]
+  :returns:
+  :rtype: tuple[str, int]
+  '''
   m = re.compile(r"[A-Za-z_][\w/.-]*").match(t, i)
   if not m:
     raise TemplateError(f'expected a key after "${{" in {t!r}')
@@ -138,7 +167,13 @@ def _braced(t:str, i:int, lookup:Callable[[str], str]) -> tuple[str, int]:
   return (value if value else alt), j + 1
 
 def labelLookup(mo:Any) -> Callable[[str], str]:
-  ':returns: The *lookup* for *expand()* for model object *mo* (see the module doc for the keys).'
+  '''
+  :returns: The *lookup* for *expand()* for model object *mo* (see the module doc for the keys).
+
+  :param mo:
+  :type mo: Any
+  :rtype: Callable[[str], str]
+  '''
   def lookup(key:str) -> str:
     try:
       if key == "name":

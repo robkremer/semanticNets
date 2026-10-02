@@ -68,6 +68,12 @@ REL_SYMMETRIC = SINGLE_LEFT_POINTING_ANGLE_QUOTATION_MARK
 REL_REFLEXIVE = ANTICLOCKWISE_GAPPED_CIRCLE_ARROW
 
 def makeRelationArrow(rel:Relation) -> str:
+  '''
+  :param rel:
+  :type rel: Relation
+  :returns:
+  :rtype: str
+  '''
   t = rel.isTransitive()
   s = rel.isSymmetric()
   r = rel.isReflexive()
@@ -153,6 +159,9 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     The *self._outgoing* and *self.incoming* lists and the *parents* constructor
     param are all left empty here as they will be restored by the relevant 
     :py:class:`Relation` objects.
+
+    :returns:
+    :rtype: InstantiationInfo
     '''
     atObject = AttributedObject.getInstantiationInfo()
     prObject = PRObject.getInstantiationInfo()
@@ -167,7 +176,12 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
 
   @property
   def model(self) -> Model:
-    'Simple aliasing for *self.db*.'
+    '''
+    Simple aliasing for *self.db*.
+
+    :returns:
+    :rtype: Model
+    '''
     return self.db
   
   def _getOutgoing(self, 
@@ -186,6 +200,8 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
       If *localOnly* is False, the second elements will be the inherited value
       (if there's no local). By default, *localOnly* is False.
     :type localOnly: bool
+    :returns:
+    :rtype: Generator[tuple[Relation, GraphObject | None]]
     '''
     for rel in self._outgoing:
       if filtr(rel):
@@ -199,6 +215,13 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     '''
     This method should be used to access all incoming relations.  It will automatically
     include any symmetric relations.
+
+    :param filtr:
+    :type filtr: Callable[[Relation], bool]
+    :param localOnly:
+    :type localOnly: bool
+    :returns:
+    :rtype: Generator[tuple[Relation, GraphObject | None]]
     '''
     for rel in self._incoming:
       if filtr(rel):
@@ -231,6 +254,10 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     #ret:list[str] = []
         
     #check that Python types correspond to SN types.
+    '''
+    :returns:
+    :rtype: list[str]
+    '''
     if type(self) is GraphObject:
       self.assertToStatusReport(self.id == 1, 
             'The only GraphObject should be top', 'E')
@@ -293,6 +320,10 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
   #   return self._STATUS[self.status()]    
     
   def _isConnected(self):
+    '''
+    :returns:
+    :rtype:
+    '''
     return self.id in self.db
 
   def _disconnect(self, **kwargs) -> None:
@@ -309,6 +340,9 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
       User this method when deleting an object with the potential to undo the 
       deletion.  Keep a pointer to the object and undo the deletion by calling
       its _reconnect() method.
+
+    :param kwargs:
+    :type kwargs:
     '''
     # #TODO: This is a potential problem for chains of transitive relations.
     # assert self._isConnected()
@@ -340,6 +374,8 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     
       This method should only be used to undo a _disconnect() operation.
       
+    :param kwargs:
+    :type kwargs:
     '''
     # assert not self._isConnected()
     #
@@ -368,6 +404,10 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
   @override
   def getSupers[GraphObject](self, asTree:bool=False, rmDups:bool=True) -> list:
     '''
+    :param asTree:
+    :type asTree: bool
+    :param rmDups:
+    :type rmDups: bool
     :returns: A list of all super types to this object in mro order.
     :rtype: list[GraphObject]
     '''
@@ -391,6 +431,15 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     '''
     If *typ* is not specified returns a list if isa-ancestors to this object; if *typ*
     is specified returns True iff *typ* is an isa-ancestor of this object.
+
+    :param typ:
+    :type typ: GraphObject | None
+    :param asTree:
+    :type asTree: bool
+    :param rmDups:
+    :type rmDups: bool
+    :returns:
+    :rtype: list | bool
     '''
     if asTree and typ is None:
       ret:list = [self]
@@ -445,6 +494,10 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
       the models. ISA will return [] if *model* is not given. By default, the 
       descendants are limited to the model of *self*.
     :type model: Model
+    :param asTree:
+    :type asTree: bool
+    :param rmDups:
+    :type rmDups: bool
     :returns: A list of all decendents to this object.
     :rtype: list[GraphObject]
     '''
@@ -467,7 +520,7 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
   def getChildren(self)->list[GraphObject]:
     '''
     :returns: The immediate isa-children of this object by iterating the *IsaIndividuals*
-    in *self._getIncoming()*.
+      in *self._getIncoming()*.
     :rtype: list[GraphObject]
     '''
     if self.isIndividual():
@@ -478,6 +531,7 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     '''
     :returns: True iff this is a variable -- its name starts with "?" -- which
       stands for "something" in a pattern (a rule, definition or query).
+    :rtype: bool
     '''
     try:
       return self.name.startswith("?")
@@ -491,6 +545,7 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
       *sn.model.constraints*), eg: ``{"alive": PRESENT, "age": 30}``. For
       anything but a variable, or if the text can't be parsed (see
       *constraintsError()*), {}.
+    :rtype: dict[str, Any]
     '''
     from sn.model.constraints import parseConstraints, ConstraintError, CONSTRAINTS
     if not self.isVariable():
@@ -501,7 +556,11 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
       return {}
 
   def constraintsError(self) -> str|None:
-    ':returns: Why a variable\'s constraints can\'t be parsed, or None if they can (or it has none).'
+    '''
+    :returns: Why a variable\'s constraints can\'t be parsed, or None if they can (or it has none).
+
+    :rtype: str | None
+    '''
     from sn.model.constraints import parseConstraints, ConstraintError, CONSTRAINTS
     if not self.isVariable():
       return None
@@ -512,7 +571,11 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     return None
 
   def constraintsText(self) -> str:
-    ':returns: A variable\'s constraints as (normalized) text, eg: "alive, age: 30"; its raw text if it can\'t be parsed; "" if none.'
+    '''
+    :returns: A variable\'s constraints as (normalized) text, eg: "alive, age: 30"; its raw text if it can\'t be parsed; "" if none.
+
+    :rtype: str
+    '''
     from sn.model.constraints import formatConstraints, CONSTRAINTS
     if not self.isVariable():
       return ""
@@ -521,15 +584,22 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     return formatConstraints(self.constraints())
 
   def formatConstraints(self) -> str:
-    ':returns: *constraintsText()* in braces, eg: "{alive, age: 30}" -- or "" if there are none.'
+    '''
+    :returns: *constraintsText()* in braces, eg: "{alive, age: 30}" -- or "" if there are none.
+
+    :rtype: str
+    '''
     text = self.constraintsText()
     return "{" + text + "}" if text else ""
 
   def isPatternElement(self, _seen:set[int]|None=None) -> bool:
     '''
+    :param _seen:
+    :type _seen: set[int] | None
     :returns: True iff this object describes a pattern rather than the world --
       it's then not data: the reasoner doesn't take it as a fact, and
       *getRelatedTo()* etc. leave it out. That is:
+    :rtype: bool
 
       - a variable (see *isVariable()*), or
       - a relation contained by a context -- the target of a relation that isa
@@ -571,6 +641,13 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
         for it.
 
     [] if there are no reasoning results, or *rel* isn't a relation type.
+
+    :param rel:
+    :type rel: Relation | None
+    :param outgoing:
+    :type outgoing: bool
+    :returns:
+    :rtype: list[tuple[Relation, GraphObject]]
     '''
     from sn.model.reasoner import reasoningFor
     reasoning = reasoningFor(self.model)
@@ -587,7 +664,16 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
 
   @staticmethod
   def _addNew(pairs:list[tuple[Relation,GraphObject]], more:list[tuple[Relation,GraphObject]], byObjectOnly:bool) -> None:
-    'Append the pairs in *more* not already in *pairs* (by identity: of the object, or of both).'
+    '''
+    Append the pairs in *more* not already in *pairs* (by identity: of the object, or of both).
+
+    :param pairs:
+    :type pairs: list[tuple[Relation, GraphObject]]
+    :param more:
+    :type more: list[tuple[Relation, GraphObject]]
+    :param byObjectOnly:
+    :type byObjectOnly: bool
+    '''
     have = {id(o) for _, o in pairs} if byObjectOnly else {(id(r), id(o)) for r, o in pairs}
     for r, o in more:
       key = id(o) if byObjectOnly else (id(r), id(o))
@@ -603,8 +689,14 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     '''
     :param rel: If given, only relations that isa *rel*, and just the related
       objects are returned; otherwise (relation, object) pairs.
+    :type rel: Relation | None
+    :param _seen:
+    :type _seen: set[int] | None
     :param inferred: [default=True] Also include what the model's last "reason"
       inferred (see *_inferredRelated()*).
+    :type inferred: bool
+    :returns:
+    :rtype: list[GraphObject] | list[tuple[Relation, GraphObject]]
     '''
     # def isSeen(obj):
     #   if obj in seen:
@@ -650,6 +742,14 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
   @overload
   def isRelatedTo(self, rel:Relation, obj:GraphObject) -> bool: ...
   def isRelatedTo(self, rel:Relation|None=None, obj:GraphObject|None=None) -> bool|list[GraphObject]|list[tuple[Relation,GraphObject]]:
+    '''
+    :param rel:
+    :type rel: Relation | None
+    :param obj:
+    :type obj: GraphObject | None
+    :returns:
+    :rtype: bool | list[GraphObject] | list[tuple[Relation, GraphObject]]
+    '''
     if obj is None:
       return self.getRelatedTo(rel)
     else:
@@ -663,8 +763,12 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     '''
     :param rel: If given, only relations that isa *rel*, and just the related
       objects are returned; otherwise (relation, object) pairs.
+    :type rel: Relation | None
     :param inferred: [default=True] Also include what the model's last "reason"
       inferred (see *_inferredRelated()*).
+    :type inferred: bool
+    :returns:
+    :rtype: list[GraphObject] | list[tuple[Relation, GraphObject]]
     '''
     # if rel is not None:
     #   return [other for _rel,other in self._getIncoming(lambda r, typ=rel: r.isa(typ)) if other is not None] #type: ignore[misc]
@@ -701,6 +805,14 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
   @overload
   def isRelatedFrom(self, rel:Relation, obj:GraphObject) -> bool: ...
   def isRelatedFrom(self, rel:Relation|None=None, obj:GraphObject|None=None) -> bool|list[GraphObject]|list[tuple[Relation,GraphObject]]:
+    '''
+    :param rel:
+    :type rel: Relation | None
+    :param obj:
+    :type obj: GraphObject | None
+    :returns:
+    :rtype: bool | list[GraphObject] | list[tuple[Relation, GraphObject]]
+    '''
     if obj is None:
       return self.getRelatedFrom(rel)
     else:
@@ -708,15 +820,27 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     
   @override
   def isIndividual(self)->bool:
+    '''
+    :returns:
+    :rtype: bool
+    '''
     return self._individual
   
   def isSystemObject(self) -> bool:
+    '''
+    :returns:
+    :rtype: bool
+    '''
     from sn.model import TopModel  # @UnresolvedImport -- deferred to dodge the sn.model/model.py circular import; see sn/model/__init__.py
     return type(self.model) is TopModel
 
   @property
   @override
   def name(self)->str:
+    '''
+    :returns:
+    :rtype: str
+    '''
     try:
       ret = self["name"]
     except:
@@ -728,22 +852,50 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
   
   @property
   def db(self) -> Model:
+    '''
+    :returns:
+    :rtype: Model
+    '''
     return super().db
   
   @override
   def __repr__(self):
+    '''
+    :returns: A string representation of this object.
+    :rtype:
+    '''
     return self.torepr()
   
   @override
   def torepr(self, relativeTo:Model|None=None):
+    '''
+    :param relativeTo:
+    :type relativeTo: Model | None
+    :returns:
+    :rtype:
+    '''
     return f'{self.tostring(relativeTo)} @ {self.getPRef().tostring(relativeTo)}'
   
   @override
   def __str__(self) -> str:
+    '''
+    :returns: A readable string for this object.
+    :rtype: str
+    '''
     return self.tostring()
   
   @override
   def tostring(self, relativeTo:Model|None=None, format="type", inheritMark:str|None=UP_ARROW) -> str:
+    '''
+    :param relativeTo:
+    :type relativeTo: Model | None
+    :param format:
+    :type format:
+    :param inheritMark:
+    :type inheritMark: str | None
+    :returns:
+    :rtype: str
+    '''
     localname = self.getLocal("name", None)
     inhMark:str = inheritMark if (inheritMark is not None and localname is None) else ""
 
@@ -768,22 +920,44 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
   
   @override
   def __hash__(self): #type: ignore[override]
+    '''
+    :returns:
+    :rtype:
+    '''
     return PRObject.__hash__(self)
   
   @override
   def __delitem__(self, key:str)->None:
+    '''
+    :param key:
+    :type key: str
+    '''
     if self.model.writeLocked():
       raise PermissionError(f'DB "{self.model.name}" is write locked.')
     super().__delitem__(key)
   
   @override
   def __setitem__(self, key:str, value:SerializableType)->None:
+    '''
+    :param key:
+    :type key: str
+    :param value:
+    :type value: SerializableType
+    '''
     if self.model.writeLocked():
       raise PermissionError(f'DB "{self.model.name}" is write locked.')
     super().__setitem__(key, value)
   
   @override
   def setAttr(self, key:str, attr:Attribute) -> Attribute:
+    '''
+    :param key:
+    :type key: str
+    :param attr:
+    :type attr: Attribute
+    :returns:
+    :rtype: Attribute
+    '''
     if self.model.writeLocked():
       raise PermissionError(f'DB "{self.model.name}" is write locked.')
     return super().setAttr(key, attr)
@@ -825,12 +999,29 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     model._writeLocked = True
     
   def __new__(cls, url:str, mode:str="w", _reading:bool=False):
+    '''
+    :param url:
+    :type url: str
+    :param mode:
+    :type mode: str
+    :param _reading:
+    :type _reading: bool
+    :returns:
+    :rtype:
+    '''
     return PRDb.__new__(cls, url, mode=mode, memoryResident=True, _reading=_reading)
     
 
   def __init__(self, url:str, mode:str="w", _reading:bool=False):
     '''
     Constructor
+
+    :param url:
+    :type url: str
+    :param mode:
+    :type mode: str
+    :param _reading:
+    :type _reading: bool
     '''
     PRDb.__init__(self, url, mode=mode, memoryResident=True, _reading=_reading)
     Subject.__init__(self)
@@ -871,6 +1062,10 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
   @override
   @classmethod
   def getInstantiationInfo(cls) -> InstantiationInfo:
+    '''
+    :returns:
+    :rtype: InstantiationInfo
+    '''
     ret:InstantiationInfo = super().getInstantiationInfo()
     ret.class_ = cls
     ret.finalSetters.append(PropertyInfo("_", bool, setter=lambda slf,_t:cast(Model,slf).setDirty(False))) #type: ignore[arg-type]
@@ -891,6 +1086,13 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
   def getDB(cls, url:str, mode="w") -> Model:
     '''
     Override of the super() version to specificatlly return a Model.
+
+    :param url:
+    :type url: str
+    :param mode:
+    :type mode:
+    :returns:
+    :rtype: Model
     '''
     if url in ("sn","$sn"):
       url = "sn:/sn.xml"
@@ -932,10 +1134,22 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
   
   @override
   def save(self, saveas:Optional[str]=None, overwrite=False, format:str=DEFAULT_STRATEGY) -> None:
+    '''
+    :param saveas:
+    :type saveas: Optional[str]
+    :param overwrite:
+    :type overwrite:
+    :param format:
+    :type format: str
+    '''
     super().save(saveas=saveas, overwrite=overwrite, format=format)
     self.setDirty(False)
 
   def validate(self) -> list[tuple[GraphObject,list[str]]]:
+    '''
+    :returns:
+    :rtype: list[tuple[GraphObject, list[str]]]
+    '''
     ret:list[tuple[GraphObject,list[str]]] = []
     go:GraphObject
     for go in self.values():
@@ -946,6 +1160,10 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
   
   @override
   def _makeDBContainer(self) -> AllModelCollection:
+    '''
+    :returns:
+    :rtype: AllModelCollection
+    '''
     return AllModelCollection(self)
 
 
@@ -1008,6 +1226,18 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
 class Node(GraphObject):
   
   def __init__(self, db:Model, parents:Iterable[GraphObject]=[], individual:bool=False, name:Optional[str]=None, **kwargs):
+    '''
+    :param db:
+    :type db: Model
+    :param parents:
+    :type parents: Iterable[GraphObject]
+    :param individual:
+    :type individual: bool
+    :param name:
+    :type name: Optional[str]
+    :param kwargs:
+    :type kwargs:
+    '''
     super().__init__(db, parents, individual=individual, name=name, **kwargs)
 
   def getParents(self)->list[GraphObject]:
@@ -1031,26 +1261,60 @@ class Node(GraphObject):
 class Collection(Node):
   
   def __init__(self, db:Model, parents:Iterable[GraphObject]=[], members:Iterable[GraphObject]=[], individual:bool=False, name:Optional[str]=None):
+    '''
+    :param db:
+    :type db: Model
+    :param parents:
+    :type parents: Iterable[GraphObject]
+    :param members:
+    :type members: Iterable[GraphObject]
+    :param individual:
+    :type individual: bool
+    :param name:
+    :type name: Optional[str]
+    '''
     super().__init__(db, parents, individual=individual, name=name)
     self.members:list[GraphObject] = list(members)
     
   def addMember(self, member:GraphObject):
+    '''
+    :param member:
+    :type member: GraphObject
+    '''
     if member not in self.members:
       self.members.append(member)
       self.setDirty()
       
   def removeMember(self, member:GraphObject):
+    '''
+    :param member:
+    :type member: GraphObject
+    '''
     self.members.remove(member)
     self.setDirty()
     
   def getMembers(self) -> Iterator[GraphObject]:
+    '''
+    :returns:
+    :rtype: Iterator[GraphObject]
+    '''
     for member in self.members:
       yield member
 
   def isMember(self, obj:GraphObject) -> bool:
+    '''
+    :param obj:
+    :type obj: GraphObject
+    :returns:
+    :rtype: bool
+    '''
     return obj in self.members
   
   def countMembers(self) -> int:
+    '''
+    :returns:
+    :rtype: int
+    '''
     return len(self.members)
 
   def getParents(self)->list[GraphObject]:
@@ -1072,6 +1336,16 @@ class Collection(Node):
     
   @override
   def tostring(self, relativeTo:Model | None=None, format="type", inheritMark:str|None=UP_ARROW) -> str:
+    '''
+    :param relativeTo:
+    :type relativeTo: Model | None
+    :param format:
+    :type format:
+    :param inheritMark:
+    :type inheritMark: str | None
+    :returns:
+    :rtype: str
+    '''
     ret = super().tostring(relativeTo, format, inheritMark)
     if format in ("friendly", "minURLnamed"): # names only
       return ret
@@ -1079,6 +1353,12 @@ class Collection(Node):
   
   @override
   def torepr(self, relativeTo:Model | None=None) -> str:
+    '''
+    :param relativeTo:
+    :type relativeTo: Model | None
+    :returns:
+    :rtype: str
+    '''
     ret = self.tostring(relativeTo)+":"
     for m in self.getMembers():
       ret += (f'\n    {m.tostring(relativeTo)}')
@@ -1090,6 +1370,8 @@ class AllModelCollection(Collection, PRDbContainer):
     :param model: The Model this collection is registered as the "all objects"
       container for.
     :type model: Model
+    :param kwargs:
+    :type kwargs:
     '''
     # Same shape of diamond as *Relation* (see its __init__ for the full
     # explanation): *AllModelCollection* inherits from both *Collection*
@@ -1103,23 +1385,45 @@ class AllModelCollection(Collection, PRDbContainer):
   
   @override
   def addMember(self, member:GraphObject):
+    '''
+    :param member:
+    :type member: GraphObject
+    '''
     raise PermissionError("Cannot add members to an AllModelCollection. To add an object, add it to the Model.")
       
   @override
   def removeMember(self, member:GraphObject):
+    '''
+    :param member:
+    :type member: GraphObject
+    '''
     raise PermissionError("Cannot remove members to an AllModelCollection. To remove an object, remove it from the Model.")
     
   @override
   def getMembers(self) -> Iterator[GraphObject]:
+    '''
+    :returns:
+    :rtype: Iterator[GraphObject]
+    '''
     for member in list(self.db.values()):
       yield member
 
   @override
   def isMember(self, obj:GraphObject) -> bool:
+    '''
+    :param obj:
+    :type obj: GraphObject
+    :returns:
+    :rtype: bool
+    '''
     return obj in self.db._db
   
   @override
   def countMembers(self) -> int:
+    '''
+    :returns:
+    :rtype: int
+    '''
     return len(self.db._db)
     
     
@@ -1176,6 +1480,9 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
     The *self._outgoing* and *self.incoming* lists and the *parents* constructor
     param are all left empty here as they will be restored by the relevant 
     :py:class:`Relation` objects.
+
+    :returns:
+    :rtype: InstantiationInfo
     '''
     def connectSrc(slf:Relation, source:str, isSource:bool):
       if source is not None and source!="None":
@@ -1223,8 +1530,11 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
   @property
   def dst(self, localOnly:bool=False) -> GraphObject|None: #GraphObject|None:
     '''
-    :return: The **calculated* destination of this relation; ie: if this relation
+    :param localOnly:
+    :type localOnly: bool
+    :return: The *calculated* destination of this relation; ie: if this relation
       does not have a specific destination, look it up in the ISA hierarchy.
+    :rtype: GraphObject | None
     '''
     if localOnly or self.localDst is not None:
       return self.localDst
@@ -1242,6 +1552,10 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
   
   @dst.setter
   def dst(self, obj:GraphObject|None):
+    '''
+    :param obj:
+    :type obj: GraphObject | None
+    '''
     old = self.localDst
     AGRelation.dst.fset(self, obj) #type: ignore[attr-defined] # @undefinedvariable
     if old is not obj:
@@ -1255,8 +1569,11 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
   @property
   def src(self, localOnly:bool=False) -> GraphObject|None: #GraphObject|None:
     '''
-    :return: The **calculated* source of this relation; ie: if this relation
+    :param localOnly:
+    :type localOnly: bool
+    :return: The *calculated* source of this relation; ie: if this relation
       does not have a specific source, look it up in the ISA hierarchy.
+    :rtype: GraphObject | None
     '''
     if localOnly or self.localSrc is not None:
       return self.localSrc
@@ -1274,6 +1591,10 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
   
   @src.setter
   def src(self, obj:GraphObject|None):
+    '''
+    :param obj:
+    :type obj: GraphObject | None
+    '''
     old = self.localSrc
     AGRelation.src.fset(self, obj) #type: ignore[attr-defined] # @undefinedvariable
     if old is not obj:
@@ -1291,6 +1612,13 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
     showing this relation) with a "mod src" or "mod dst" topic -- and, for a
     relation type, tells the relations below it that inherit that end (see
     *_inheritedEndpointChanged()*).
+
+    :param end:
+    :type end: str
+    :param old:
+    :type old: GraphObject | None
+    :param new:
+    :type new: GraphObject | None
     '''
     self.notify((f"mod {end}", (old, new)))
     if self.isType():
@@ -1302,6 +1630,9 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
     has no *end* of its own -- so inherits it -- that it changed, and so on
     down. One with its own *end* stops the chain: nothing below it inherits
     from here.
+
+    :param end:
+    :type end: str
     '''
     for child in self.getChildren():
       if isinstance(child, Relation) and (child.localSrc if end == "src" else child.localDst) is None:
@@ -1311,11 +1642,18 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
     '''
     The *end* ("src" or "dst") this relation inherits changed: observers are
     told with a "mod inherited src" or "mod inherited dst" topic.
+
+    :param end:
+    :type end: str
     '''
     self.notify((f"mod inherited {end}", ()))
     self._notifyInheritors(end)
 
   def _requireType(self, name:str) -> None:
+    '''
+    :param name:
+    :type name: str
+    '''
     if self.isIndividual():
       raise TypeError(f'{name} applies to relation types; use src/dst on individual relations ({self.tostring(format="friendly")}).')
 
@@ -1326,12 +1664,19 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
     must be (isa). Sugar for *src* -- so it's the effective value, inherited
     from a supertype if not set locally. Relation types only: raises
     *TypeError* for an individual relation.
+
+    :returns:
+    :rtype: GraphObject | None
     '''
     self._requireType("domain")
     return self.src
 
   @domain.setter
   def domain(self, obj:GraphObject|None) -> None:
+    '''
+    :param obj:
+    :type obj: GraphObject | None
+    '''
     self._requireType("domain")
     self.src = obj # (through the setter, so observers are told)
 
@@ -1341,12 +1686,19 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
     The range (signature) of a relation type: what the dst of its relations
     must be (isa). Sugar for *dst* -- see *domain*. Relation types only:
     raises *TypeError* for an individual relation.
+
+    :returns:
+    :rtype: GraphObject | None
     '''
     self._requireType("range")
     return self.dst
 
   @range.setter
   def range(self, obj:GraphObject|None) -> None:
+    '''
+    :param obj:
+    :type obj: GraphObject | None
+    '''
     self._requireType("range")
     self.dst = obj # (through the setter, so observers are told)
 
@@ -1356,6 +1708,9 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
     The source set on this relation itself, or None -- unlike *src*, never
     inherited from a supertype. Read-only: set it through *src* (so observers
     are told).
+
+    :returns:
+    :rtype: GraphObject | None
     '''
     return self._src
 
@@ -1365,31 +1720,52 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
     The destination set on this relation itself, or None -- unlike *dst*, never
     inherited from a supertype. Read-only: set it through *dst* (so observers
     are told).
+
+    :returns:
+    :rtype: GraphObject | None
     '''
     return self._dst
 
   def hasLocalDst(self) -> bool:
     '''
     :returns: True iff and only if this Relation has a locally defined destination.
+    :rtype: bool
     '''
     return self.localDst is not None
     
   def hasLocalSrc(self) -> bool:
     '''
     :returns: True iff and only if this Relation has a locally defined source.
+    :rtype: bool
     '''
     return self.localSrc is not None
     
   def _legalDst(self, obj:GraphObject) -> bool:
     #TODO: need to fill out _legalDst
+    '''
+    :param obj:
+    :type obj: GraphObject
+    :returns:
+    :rtype: bool
+    '''
     return True
     
   def _legalSrc(self, obj:GraphObject) -> bool:
     #TODO: need to fill out _legalSrc
+    '''
+    :param obj:
+    :type obj: GraphObject
+    :returns:
+    :rtype: bool
+    '''
     return True
   
   @override
   def validate(self) -> list[str]:
+    '''
+    :returns:
+    :rtype: list[str]
+    '''
     if self.localSrc is not None:
       self.assertToStatusReport(self in self.localSrc._outgoing, f'src end is not registered with src object, {self.localSrc}', 'E')
     if self.localDst is not None:
@@ -1403,6 +1779,11 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
     is ignored) and they are never inherited -- brother isa sibling, but only
     sibling is symmetric. An individual relation has the property iff one of
     its immediate types does.
+
+    :param prop:
+    :type prop: str
+    :returns:
+    :rtype: bool
     '''
     if self.isType():
       return dict.__contains__(self, prop)
@@ -1413,18 +1794,38 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
     return any(dict.__contains__(p, prop) for p in parents)
 
   def isReflexive(self) -> bool:
+    '''
+    :returns:
+    :rtype: bool
+    '''
     return self._hasRelationalProperty("reflexive")
   
   def isIrreflexive(self) -> bool:
+    '''
+    :returns:
+    :rtype: bool
+    '''
     return self._hasRelationalProperty("irreflexive")
   
   def isSymmetric(self) -> bool:
+    '''
+    :returns:
+    :rtype: bool
+    '''
     return self._hasRelationalProperty("symmetric")
   
   def isAsymmetric(self) -> bool:
+    '''
+    :returns:
+    :rtype: bool
+    '''
     return self._hasRelationalProperty("asymmetric")
   
   def isTransitive(self) -> bool:
+    '''
+    :returns:
+    :rtype: bool
+    '''
     return self._hasRelationalProperty("transitive")
     
   def getParents(self)->list[GraphObject]:
@@ -1449,6 +1850,16 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
 
   @override
   def tostring(self, relativeTo:Model|None=None, format="type", inheritMark:str|None=UP_ARROW) -> str:
+    '''
+    :param relativeTo:
+    :type relativeTo: Model | None
+    :param format:
+    :type format:
+    :param inheritMark:
+    :type inheritMark: str | None
+    :returns:
+    :rtype: str
+    '''
     def makeStr(o:GraphObject|None, inherited:bool) -> str:
       if o is None:
         return 'None'
@@ -1461,6 +1872,10 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
     #return f'{ret[:-1]}, {UP_ARROW if self._src is None else self._src._id} {"makeRelationArrow(self)"} {UP_ARROW if self._dst is None else self._dst._id}{ret[-1]}'
   
   def __hash__(self): #type: ignore[override]
+    '''
+    :returns:
+    :rtype:
+    '''
     return super().__hash__()
   
   def connect(self, source:Optional[GraphObject]=None, destination:Optional[GraphObject]=None):
@@ -1473,8 +1888,8 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
     
       Use this method during Relation construction or when modifying the source 
       and/or destination of the Relation. This method ONLY applies to *Relations*.
-      (contrast :py:method:`GraphObject._disconnect` and 
-      :py:method:`GraphObject._reconnect`) 
+      (contrast :py:meth:`GraphObject._disconnect` and 
+      :py:meth:`GraphObject._reconnect`) 
     
     :param source: The :py:class:`GraphObject` for the *src* link.
     :type source: GraphObject
@@ -1502,6 +1917,14 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]):
 
 class IsaIndividual(Relation):
   def __init__(self, db:Model, src:GraphObject|None=None, dst:GraphObject|None=None):
+    '''
+    :param db:
+    :type db: Model
+    :param src:
+    :type src: GraphObject | None
+    :param dst:
+    :type dst: GraphObject | None
+    '''
     if not db.reading:
       if src is None or dst is None:
         raise ValueError("IsaIndividual.__init__(): ISA relations require both a source and destination.")
@@ -1515,6 +1938,9 @@ class IsaIndividual(Relation):
     The *self._outgoing* and *self.incoming* lists and the *parents* constructor
     param are all left empty here as they will be restored by the relevant 
     :py:class:`Relation` objects.
+
+    :returns:
+    :rtype: InstantiationInfo
     '''
     sup = Relation.getInstantiationInfo()
     return InstantiationInfo(
@@ -1526,6 +1952,14 @@ class IsaIndividual(Relation):
 
   @override
   def getSupers[GraphObject](self, asTree:bool=False, rmDups:bool=True) -> list:
+    '''
+    :param asTree:
+    :type asTree: bool
+    :param rmDups:
+    :type rmDups: bool
+    :returns:
+    :rtype: list
+    '''
     if asTree:
       return [self.db.ISA, [self.db.RELATION, [self.db.TOP]]]
     else:
@@ -1533,6 +1967,10 @@ class IsaIndividual(Relation):
   
   @override
   def getParents(self)->list[GraphObject]:
+    '''
+    :returns:
+    :rtype: list[GraphObject]
+    '''
     return [self.db.ISA]  
   
   # @override
@@ -1563,6 +2001,14 @@ class IsaIndividual(Relation):
   @override
   def _endpointChanged(self, end:str, old:GraphObject|None, new:GraphObject|None) -> None:
     # the parents of our src (old and new, if it's the src that moved) have changed
+    '''
+    :param end:
+    :type end: str
+    :param old:
+    :type old: GraphObject | None
+    :param new:
+    :type new: GraphObject | None
+    '''
     for obj in ((old, new) if end == "src" else (self.localSrc,)):
       if obj is not None:
         obj.retract()
@@ -1570,6 +2016,12 @@ class IsaIndividual(Relation):
 
   @override
   def connect(self, source:Optional[GraphObject]=None, destination:Optional[GraphObject]=None):
+    '''
+    :param source:
+    :type source: Optional[GraphObject]
+    :param destination:
+    :type destination: Optional[GraphObject]
+    '''
     retract = source      is not None and source      is not self.localSrc or \
               destination is not None and destination is not self.localDst  
     super().connect(source, destination)

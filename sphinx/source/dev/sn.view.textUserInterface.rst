@@ -1,5 +1,5 @@
-sn.view.textUserInterface
-===============================
+sn.view.textUserInterface module
+================================
 
 .. automodule:: sn.view.textUserInterface
    :members:

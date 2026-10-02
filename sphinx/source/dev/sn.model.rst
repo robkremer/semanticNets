@@ -11,7 +11,10 @@ Submodules
 ----------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
 
+   sn.model.clingoReasoner
+   sn.model.constraints
    sn.model.model
-
+   sn.model.reasoner
+   sn.model.snAttribute

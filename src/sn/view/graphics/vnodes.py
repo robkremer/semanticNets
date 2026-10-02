@@ -60,10 +60,32 @@ class VNode(VObject):
                shape:Any|str="Rectangle",
                x:Optional[int]=None, y:Optional[int]=None, x1:Optional[int]=None, y1:Optional[int]=None,
                **kwargs):
+    '''
+    :param view:
+    :type view: SNGView
+    :param modelObject:
+    :type modelObject: GraphObject | str
+    :param shape:
+    :type shape: Any | str
+    :param x:
+    :type x: Optional[int]
+    :param y:
+    :type y: Optional[int]
+    :param x1:
+    :type x1: Optional[int]
+    :param y1:
+    :type y1: Optional[int]
+    :param kwargs:
+    :type kwargs:
+    '''
     super().__init__(view, modelObject, shape, x, y, x1, y1)
  
   @override
   def makeModelObjectSubtype(self, individual:bool) -> None:
+    '''
+    :param individual:
+    :type individual: bool
+    '''
     self.view.context.new_node(self.modelObject, name="", individual=individual, type=not individual, model=self.view.model) # type: ignore[arg-type]
 
 #   ### PERSISTENCE ######################################################################
@@ -128,6 +150,10 @@ class VNode(VObject):
   ### ATTRIBUTES #######################################################################
 
   def updateFromAttrs(self, attrs:Optional[list]=None):
+    '''
+    :param attrs:
+    :type attrs: Optional[list]
+    '''
     def update(name):
       if name in attrs and attrsInfo[name]() != self.model.attrs[name]:
         attrsInfo[name](self.model.attrs[name])
@@ -590,11 +616,21 @@ class VNode(VObject):
   #     menu.add_cascade(menu=conMenu, label='contract')
   
   def addDeletionMenuItems(self, menu:tk.Menu):
+    '''
+    :param menu:
+    :type menu: tk.Menu
+    '''
     menu.add_command(label="remove from view", command=self.delete)
     if not self.model.system and self.view.isModelEditor:
       menu.add_command(label="delete from model", command=self.model.delete)
   
   def makeMakeRelationMenu(self, menu:tk.Menu):
+    '''
+    :param menu:
+    :type menu: tk.Menu
+    :returns:
+    :rtype:
+    '''
     m = tk.Menu(menu)
     types = []
     for t in (t for t in self.view.model.relations if t.isType()):
@@ -608,6 +644,12 @@ class VNode(VObject):
   ### Event handling ###################################################################
 
   def setMakingRelation(self, val=True, typ=None):
+    '''
+    :param val:
+    :type val:
+    :param typ:
+    :type typ:
+    '''
     self.canvas.makeRelationFrom(self, typ=typ)
     #self.dragInfo = None
 
@@ -680,6 +722,14 @@ class VNode(VObject):
 #     if modelObj != self.model: # it must be that a IsaIndividual-ancestor of the model changed,
 #       self.canvas.logger.write(f'VNode.notifyModelChanged({modelObj}[NOT self.model], "{modelOperation}", info={info}) [{self}]', level="debug")
 #       self.updateFromAttrs([info[0]])
+    '''
+    :param modelObj:
+    :type modelObj:
+    :param modelOperation:
+    :type modelOperation: str
+    :param info:
+    :type info: Optional[any]
+    '''
     unhandled = False
     if modelOperation == 'del': 
       if modelObj is self.model:

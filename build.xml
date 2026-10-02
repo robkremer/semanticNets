@@ -1,0 +1,211 @@
+<project name="sn" default="dist" basedir=".">
+  <description>
+    Builds Semantic Nets' documentation and its distribution: the stand-alone
+    app, its installer disk image, and the .pyz.
+  </description>
+  <!-- set global properties for this build -->
+  <property name="src" location="src"/>
+  <property name="build" location="build"/>
+  <property name="dist" location="dist"/>
+  <!--property name="html" location="${src}/sn/help"/-->
+  <property name="html" location="/Users/kremer/webserver/dev/sn"/>
+  <property name="sphinx" location="sphinx"/>
+  <property name="sphinxBuild" location="${sphinx}/build"/>
+	<property name="sphinxHTML" location="${sphinxBuild}/html"/>
+	<property name="pythonVersion" value="3.14"/>
+	<property name="pythonVersionPath" location="/Library/Frameworks/Python.framework/Versions/${pythonVersion}"/>
+	<property name="pythonLibPath" location="${pythonVersionPath}/lib/python${pythonVersion}"/>
+	<!--property name="condaPythonVersionPath" location="/opt/homebrew/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/${pythonVersion}"/-->
+	<!--property name="condaPythonLibPath" location="${condaPythonVersionPath}/lib/python${pythonVersion}"/-->
+	
+	<!--sphinx-apidoc - -separate - -private - -implicit-namespaces - -module-first - -remove-old -o '/Users/kremer/Library/Mobile Documents/com~apple~CloudDocs/Apps/pythonUtils/sphinx/source/dev' '/Users/kremer/Library/Mobile Documents/com~apple~CloudDocs/Apps/pythonUtils/src/util'-->
+	<target name="rebuildAutoDoc">
+	<exec executable="${pythonVersionPath}/bin/sphinx-apidoc"> <!-- (the same Python as the code and sphinx/Makefile: see pythonVersion) -->
+		<arg value="--separate"/>
+	  	<arg value="--private"/>
+		<arg value="--implicit-namespaces"/>
+  		<arg value="--module-first"/>
+		<arg value="--remove-old"/>
+		<arg value="--force"/> <!-- (regenerate the package pages too, so they don't list modules that have gone) -->
+  		<arg value="-o"/>
+		<arg value="${sphinx}/source/dev"/>
+  		<arg value="${src}/sn"/>
+  		<arg value="${src}/test"/>
+	</exec>
+	</target>
+	
+	<target name="doc" depends="rebuildAutoDoc" description="Produces the documentation directory using sphinx (regenerating the API pages from the code first)">
+	<delete includeEmptyDirs="false"> <!-- clean the build directory -->
+	  <fileset dir="${sphinxBuild}"/>
+	</delete>
+	<exec executable="make" dir="${sphinx}" searchpath="true">
+	  <arg value="html"/>
+	  <env key="PATH" path="/usr/local/bin:/usr/local/sbin:${pythonVersionPath}/bin"/>
+	  <env key="PYTHONPATH" path=":${pythonLibPath}:${pythonLibPath}/site-packages"/><!--:${pythonLibPath}/lib-dynload--><!-- (not anaconda's 3.12 packages: they'd be mixed into python ${pythonVersion}) -->
+	</exec>
+	<copy todir="${sphinxHTML}/images"> <!-- copy the build directory to the help directory -->
+		<fileset dir="${sphinx}/source/images" includes="**"/>
+	</copy>
+	<delete includeEmptyDirs="false"> <!-- clean the help directory -->
+		<fileset dir="${html}"/>
+  	</delete>
+	<copy todir="${html}"> <!-- copy the build directory to the help directory -->
+		<fileset dir="${sphinxHTML}" includes="**"/>
+	</copy>
+  </target>
+	
+  <!-- ==================================================================== -->
+  <!-- Packaging: the stand-alone app, its installer, and the .pyz.          -->
+  <!-- The build tools live in a build-only virtualenv (.venv-build, made by -->
+  <!-- the "venv" target), so the main Python ${pythonVersion} is left alone.     -->
+  <!-- The packaging files (PyInstaller spec, dmg settings, icon, ...) are   -->
+  <!-- in packaging/.                                                         -->
+  <!-- ==================================================================== -->
+  <property name="packaging" location="packaging"/>
+  <property name="venv" location=".venv-build"/>
+  <property name="venvPython" location="${venv}/bin/python"/>
+  <property name="appName" value="Semantic Nets"/>
+  <property name="app" location="${dist}/${appName}.app"/>
+  <property name="selftestHome" location="${build}/selftest-home"/> <!-- (self-tests run with HOME here: they leave the user's prefs, logs and Documents alone) -->
+  <loadfile property="version" srcFile="${src}/sn/__init__.py"> <!-- sn.VERSION -->
+    <filterchain>
+      <linecontainsregexp><regexp pattern='^VERSION\s*='/></linecontainsregexp>
+      <tokenfilter><replaceregex pattern='^VERSION\s*=\s*"([^"]*)".*' replace="\1"/></tokenfilter>
+      <striplinebreaks/>
+    </filterchain>
+  </loadfile>
+
+  <property name="appUniversal" location="${dist}/universal/${appName}.app"/>
+
+  <target name="dist" depends="dmg,dmgUniversal,pyz"
+          description="Everything to hand out: the installer disk images (with the app in them: for this Mac's architecture, and universal) and the .pyz."/>
+
+  <target name="venv" description="Make (or update) the build-only virtualenv, .venv-build, with the packaging tools.">
+    <available file="${venvPython}" property="venvExists"/>
+    <exec executable="${pythonVersionPath}/bin/python${pythonVersion}" failonerror="true" unless:set="venvExists" xmlns:unless="ant:unless">
+      <arg value="-m"/> <arg value="venv"/> <arg value="${venv}"/>
+    </exec>
+    <exec executable="${venvPython}" failonerror="true">
+      <arg line="-m pip install --quiet --upgrade pip"/>
+    </exec>
+    <exec executable="${venvPython}" failonerror="true">
+      <arg line="-m pip install --quiet -r ${packaging}/requirements-build.txt"/>
+    </exec>
+  </target>
+
+  <target name="icon" depends="venv" description="Redraw the app's (placeholder) icon, packaging/sn.icns.">
+    <exec executable="${venvPython}" failonerror="true">
+      <arg value="${packaging}/makeIcon.py"/>
+    </exec>
+  </target>
+
+  <target name="app" depends="doc,venv"
+          description="Make the stand-alone dist/Semantic Nets.app (its own Python, Tk and clingo; ad hoc signed), and self-test it.">
+    <delete dir="${app}"/>
+    <exec executable="${venv}/bin/pyinstaller" dir="${basedir}" failonerror="true">
+      <arg value="--noconfirm"/>
+      <arg value="--distpath"/> <arg value="${dist}"/>
+      <arg value="--workpath"/> <arg value="${build}/pyinstaller"/>
+      <arg value="${packaging}/semanticNets.spec"/>
+    </exec>
+    <delete dir="${dist}/${appName}"/> <!-- (PyInstaller's intermediate folder: it's all in the .app) -->
+    <antcall target="-selftestApp"/>
+  </target>
+
+  <target name="universalWheels" depends="venv"
+          description="Make the build venv's compiled packages (clingo, cffi) universal, for the universal app.">
+    <exec executable="${venvPython}" dir="${basedir}" failonerror="true">
+      <arg value="${packaging}/makeUniversalWheels.py"/>
+    </exec>
+  </target>
+
+  <target name="appUniversal" depends="doc,universalWheels"
+          description="Make dist/universal/Semantic Nets.app, for Intel and Apple silicon Macs both, and self-test it (natively, and as Intel under Rosetta if it's there).">
+    <delete dir="${appUniversal}"/>
+    <exec executable="${venv}/bin/pyinstaller" dir="${basedir}" failonerror="true">
+      <arg value="--noconfirm"/>
+      <arg value="--distpath"/> <arg value="${dist}/universal"/>
+      <arg value="--workpath"/> <arg value="${build}/pyinstaller-universal"/>
+      <arg value="${packaging}/semanticNets.spec"/>
+      <env key="SN_TARGET_ARCH" value="universal2"/>
+    </exec>
+    <delete dir="${dist}/universal/${appName}"/> <!-- (PyInstaller's intermediate folder) -->
+    <mkdir dir="${selftestHome}"/>
+    <exec executable="${appUniversal}/Contents/MacOS/${appName}" failonerror="true">
+      <arg value="--selftest"/>
+      <env key="HOME" path="${selftestHome}"/>
+    </exec>
+    <exec executable="/usr/bin/arch" resultproperty="rosetta" failonerror="false" outputproperty="ignored"> <!-- (can this Mac run Intel code?) -->
+      <arg line="-x86_64 /usr/bin/true"/>
+    </exec>
+    <condition property="rosettaOK"><equals arg1="${rosetta}" arg2="0"/></condition>
+    <exec executable="/usr/bin/arch" failonerror="true" if:set="rosettaOK" xmlns:if="ant:if">
+      <arg value="-x86_64"/>
+      <arg value="${appUniversal}/Contents/MacOS/${appName}"/>
+      <arg value="--selftest"/>
+      <env key="HOME" path="${selftestHome}"/>
+    </exec>
+  </target>
+
+  <target name="-selftestApp"> <!-- (reason over the bundled example, in the app itself: catches anything the build left out) -->
+    <mkdir dir="${selftestHome}"/>
+    <exec executable="${app}/Contents/MacOS/${appName}" failonerror="true">
+      <arg value="--selftest"/>
+      <env key="HOME" path="${selftestHome}"/>
+    </exec>
+  </target>
+
+  <target name="dmg" depends="app"
+          description="Make the installer disk image, dist/SemanticNets-VERSION.dmg (the app for this Mac's architecture, to drag to Applications, and a Read Me).">
+    <antcall target="-dmg">
+      <param name="dmgApp" location="${app}"/>
+      <param name="dmgFile" location="${dist}/SemanticNets-${version}.dmg"/>
+      <param name="requirements" value="It needs a Mac with Apple silicon (M1 or later), running macOS 11 (Big Sur) or later."/>
+    </antcall>
+  </target>
+
+  <target name="dmgUniversal" depends="appUniversal"
+          description="Make the universal installer disk image, dist/SemanticNets-VERSION-universal.dmg (for Intel and Apple silicon Macs).">
+    <antcall target="-dmg">
+      <param name="dmgApp" location="${appUniversal}"/>
+      <param name="dmgFile" location="${dist}/SemanticNets-${version}-universal.dmg"/>
+      <param name="requirements" value="It runs on Intel Macs with macOS 10.15 (Catalina) or later, and on Macs with Apple silicon with macOS 11 (Big Sur) or later."/>
+    </antcall>
+  </target>
+
+  <target name="-dmg"> <!-- (params: dmgApp, dmgFile, and requirements: the Read Me's line about which Macs it runs on) -->
+    <property name="readMe" location="${build}/ReadMeFirst.txt"/>
+    <copy file="${packaging}/ReadMeFirst.txt" tofile="${readMe}" overwrite="true">
+      <filterset><filter token="REQUIREMENTS" value="${requirements}"/></filterset>
+    </copy>
+    <delete file="${dmgFile}"/>
+    <exec executable="${venv}/bin/dmgbuild" dir="${basedir}" failonerror="true">
+      <arg value="-s"/> <arg value="${packaging}/dmgSettings.py"/>
+      <arg value="-D"/> <arg value="app=${dmgApp}"/>
+      <arg value="-D"/> <arg value="readme=${readMe}"/>
+      <arg value="-D"/> <arg value="icon=${packaging}/sn.icns"/>
+      <arg value="${appName}"/>
+      <arg value="${dmgFile}"/>
+    </exec>
+    <echo>Made ${dmgFile}</echo>
+  </target>
+
+  <target name="pyz" depends="venv"
+          description="Make dist/SemanticNets-VERSION.pyz, a one-file app for people with Python ${pythonVersion} (and clingo etc.: see packaging/requirements.txt), and self-test it.">
+    <exec executable="${pythonVersionPath}/bin/python${pythonVersion}" dir="${basedir}" failonerror="true">
+      <arg value="${packaging}/makePyz.py"/>
+    </exec>
+    <mkdir dir="${selftestHome}"/>
+    <exec executable="${venvPython}" failonerror="true"> <!-- (the venv has the run-time packages: a stand-in for a user's Python) -->
+      <arg value="${dist}/SemanticNets-${version}.pyz"/>
+      <arg value="--selftest"/>
+      <env key="HOME" path="${selftestHome}"/>
+      <env key="PYTHONPATH" value=""/>
+    </exec>
+  </target>
+
+  <target name="clean" description="Delete the packaging output (build/ and dist/); the venv stays.">
+    <delete dir="${build}"/>
+    <delete dir="${dist}"/>
+  </target>
+</project>
