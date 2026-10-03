@@ -23,7 +23,7 @@
 The Semantic Nets package is a tool for ... 
 '''
 import atexit
-from typing import override, cast
+from typing import Any, override, cast
 import logging
 import os
 import sys
@@ -56,6 +56,7 @@ setupLogger(SNLogger, SHORT_NAME)
 
 import util.observer as observer
 from util.prefs import Prefs
+from util.attribute import Attribute, VAR_DEFAULTED
 
 observer.alwaysLater = True
 
@@ -163,12 +164,116 @@ class SNPrefs(Prefs):
     '''
     return False
   
+from sn.view.graphics.labels import DEFAULT_LABEL, LABEL_NOTE # (a plain module: nothing of sn's)
+
+PREFS:dict[str, tuple[Any, Any, str]] = {
+  # key: (type, default, note)
+  "loggingLevel": ("choices[DEBUG,INFO,WARNING,ERROR,CRITICAL]", "DEBUG",
+    "How much detail goes into the program's log and messages: from DEBUG (the most) to CRITICAL (the least)."),
+  "debug": (bool, False,
+    "For developers: show objects' ids in their tooltips, and extra debugging items on their menus."),
+  "debug_popupCache": (bool, True,
+    "For developers, when debug is on: show an object's cached drawing attributes in its tooltip."),
+  "model/defaultModel": (str, "temp.xml",
+    "The model the text interface (sn) uses when it's started without one (eg: by --model)."),
+  "text/wrap": (bool, False,
+    "Whether long lines wrap in the terminal pane (else it scrolls sideways)."),
+  "text/backgroundColor": ("color", "white",
+    "The terminal pane's background colour."),
+  "gui/backgroundColor": ("color", "grey95",
+    "The canvas's background colour."),
+  "gui/highlightColor": ("color", "#ffd966",
+    "The colour of the glow marking highlighted objects (eg: a query's answers)."),
+  "gui/label": (str, DEFAULT_LABEL,
+    "The label template for nodes, unless one has a vis/label of its own. " + LABEL_NOTE),
+  "gui/relationLabel": (str, DEFAULT_LABEL,
+    "The label template for relations, unless one has a vis/label of its own. " + LABEL_NOTE),
+  "gui/NodeMinSize": (int, 30,
+    "The width (before zooming) of a new node's shape, unless its vis/minSize says otherwise."),
+  "gui/NodeAspectRatio": (float, 1.5,
+    "The height-to-width ratio of a new node's shape, unless its vis/aspectRatio says otherwise."),
+  "gui/shadowTypes": (bool, True,
+    "Draw a shadow around all Type objects (as opposed to Individual objects)."),
+  "gui/showSystemTags": (bool, True,
+    "Mark the system model's objects (node, relation, isa, ...) with an \"S\" tag."),
+  "gui/showTypeTags": (bool, True,
+    "Mark types (as opposed to individuals) with a \"T\" tag."),
+  "gui/showRemoteTags": (bool, True,
+    "Mark objects from other models (not the view's own model) with an \"R\" (remote) tag."),
+  "gui/showConstraintMarker": (bool, True,
+    "Mark each variable that has constraints with a \"{}\" marker."),
+  "gui/allowEditingSystemObjects": (bool, False,
+    "Allow editing the system model's objects. They're reset each time the program starts, so changes don't last; "
+    "best left off."),
+  "gui/debugMenus": (bool, False,
+    "For developers: add debugging items (validate, repaint, ...) to the canvas's menus."),
+  "gui/optimization/aggressiveLabelPlacement": (int, 3,
+    "How hard to look for a free spot for a relation's label when placing it, from 0 (not at all: it stays "
+    "midway between the relation's ends) to 10 (up to 100 steps out; n: up to n*n steps). Higher values take "
+    "longer -- a lot longer in a crowded view, as when showing a big model."),
+}
+'''
+The preferences: key -> (type, default, note). Each is in the preferences
+(*snPrefs*) from the start, with its default if the file doesn't have it --
+so a missing preferences file (the first run, or deleted to start afresh) is
+made from these -- and with its note (unless the user has written their own:
+see *Attribute.userNote*). A preference can still be made on the fly (by
+*snPrefs.get(key, storeDefault=...)*), but it should be added here, so it has
+a note. Keys starting with "." -- kept by the program for itself -- aren't
+here: the settings editor doesn't show them.
+'''
+
+RENAMED_PREFS:dict[str, str] = {
+  "gui/openWindows": ".openWindows",
+  "gui/examplesInstalled": ".examplesInstalled",
+  "defaultModel": "model/defaultModel",
+  "gui/showIndividualShadow": "gui/shadowTypes",
+  }
+"Preferences that have been renamed or merged into others: old name -> new name (see *renamePrefs()*)."
+
+def renamePrefs(prefs:Prefs) -> None:
+  '''
+  Move preferences saved under old names (see *RENAMED_PREFS*) to their new
+  ones -- eg: the internal ones that once showed in the Settings dialog, now
+  hidden by a name starting with ".", or ones merged into another. A value
+  already under the new name is kept (and the old one dropped).
+
+  :param prefs: The preferences.
+  :type prefs: Prefs
+  '''
+  for old, new in RENAMED_PREFS.items():
+    if old not in prefs.keys():
+      continue
+    attr = prefs.getLocalAttr(old)
+    if new not in prefs.keys() and attr is not None:
+      prefs.setAttr(new, attr)
+    del prefs[old]
+
+def initPrefs(prefs:Prefs) -> None:
+  '''
+  Put each of *PREFS* in *prefs*: with its default, if it isn't there; and its
+  note, unless the user has written their own. (Notes aren't saved -- only the
+  user's: see *Attribute.userNote* -- so adding them doesn't change the file.)
+
+  :param prefs: The preferences.
+  :type prefs: Prefs
+  '''
+  for key, (typ, default, note) in PREFS.items():
+    attr = dict.get(prefs, key) # (the stored Attribute itself: getAttr() gives a copy)
+    if attr is None:
+      prefs.setAttr(key, Attribute(default, typ, VAR_DEFAULTED, note))
+    elif not (getattr(attr, "userNote", False) and attr.note): # (an empty "user's" note: from a file written before notes were left out of it)
+      attr.note = note
+      attr.userNote = False
+
 prefsfilename = f'{os.path.expanduser("~")}/.{SHORT_NAME}.xml'
 try:
   snPrefs:Prefs = SNPrefs.read(prefsfilename)
 except:
   snPrefs = SNPrefs()
   SNPrefs.prefsFileName = prefsfilename
+renamePrefs(snPrefs) # (first: a renamed preference's value is kept, not replaced by its default)
+initPrefs(snPrefs)
 snPrefs.addCallback("loggingLevel", lambda key, level: (logger.setLevel(logging.getLevelNamesMapping()[level.upper()]), # type: ignore[func-returns-value,arg-type]
                                                            logger.info(f'Updated {key} to {level} ({logging.getLevelName(logger.getEffectiveLevel())}={logger.getEffectiveLevel()})') # type: ignore[attr-defined]
                                                           ))

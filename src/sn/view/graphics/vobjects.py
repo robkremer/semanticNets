@@ -63,7 +63,7 @@ from util.persistence.serialize import InstantiationInfo, ParamInfo, PropertyInf
 from util.commandParser import CompositeCommandMgr
 from util.persistence.pRef import PRObject, PRDb, PReference #, DeletedObjectError
 from util.observer import Observer, Subject
-from util.utils import tag_bindRightMouse, tag_unbindRightMouse, s_CMD, s_SHIFT,\
+from util.utils import removeDuplicates, tag_bindRightMouse, tag_unbindRightMouse, s_CMD, s_SHIFT,\
   expandRect, overlaps, pointInPoly, showExceptionDialog
 from util.tooltip import CreateToolTip
 from util.command import CommandWrapper
@@ -97,6 +97,7 @@ VATTRIBUTES:dict[str,Any] = {
                     'vis/borderSmooth'   : False, 
                     'vis/textColor'      : 'black', 
                     'vis/textModifiesBB' : False,
+                    'vis/titlebarColor'  : '', # (a context window's title bar; "": a tint of its border colour)
                     }
 VREL_ATTRIBUTES:dict[str,Any] = VATTRIBUTES | \
                   { 
@@ -281,6 +282,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         setattr(self.cache, attrName, m.get(attrName, default))      
 
     self.view:SNGView = view
+    view.structureChanged()
 
     # *AGObject* is a common ancestor shared with *AGRelation* whenever this
     # is actually a *VRelation* (see that class's __init__ for the full
@@ -344,10 +346,24 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     
     self.validate()
     
-    self.canvas.after(0, lambda slf=self: [ \
-                                  slf.view.freshPaint(), \
-                                  slf.draw(), \
-                                  slf.makeBindings()]) 
+    self.canvas.after(0, self._firstDraw)
+
+  def _firstDraw(self) -> None:
+    '''
+    Draw this new object for the first time, and make its bindings: queued by
+    the constructor, as it may be inside another object's construction. If it
+    has been taken out of the view meanwhile (eg: erased by a category before
+    the queue got to it), it isn't drawn now -- that would put it back on the
+    canvas, though it isn't in the view -- but when it's put back (see
+    *_reconnect()*).
+    '''
+    if not self._isConnected():
+      self.__dict__["_firstDrawPending"] = True
+      return
+    self.__dict__["_firstDrawPending"] = False
+    self.view.freshPaint()
+    self.draw()
+    self.makeBindings()
     
   # def _post__init__(self):
   #   self.view.freshPaint()
@@ -600,14 +616,14 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     :returns:
     :rtype: str
     '''
-    from sn.view.graphics.labels import expand, labelLookup, DEFAULT_LABEL, LABEL_NOTE, TemplateError
+    from sn.view.graphics.labels import expand, labelLookup, DEFAULT_LABEL, TemplateError
     mo = self.modelObject
     if mo is None:
       return "?"
     template = mo.get("vis/label", None)
     if not isinstance(template, str) or not template:
       pref = "gui/relationLabel" if isinstance(mo, Relation) else "gui/label"
-      template = snPrefs.get(pref, storeDefault=DEFAULT_LABEL, storeType=str, note=LABEL_NOTE)
+      template = snPrefs.get(pref, storeDefault=DEFAULT_LABEL, storeType=str) # (its note: see sn.PREFS)
     try:
       return expand(str(template), labelLookup(mo)).strip()
     except TemplateError as ex:
@@ -696,7 +712,19 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     '''
     mo = self.modelObject
     try:
-      return mo is not None and mo.isIndividual() and mo.isa(mo.model.CONTEXT)
+      if mo is None or not mo.isIndividual():
+        return False
+      # Asked very often (see SNGView.contextWindows(): for every object, each
+      # time one is drawn), and isa() walks all the ancestors: so remembered,
+      # for as long as the object's own types are the same. (Not noticed: an
+      # ancestor further up made a kind of context meanwhile -- rare.)
+      key = tuple(id(p) for p in mo.getParents())
+      cached = self.__dict__.get("_contextWindowCache")
+      if cached is not None and cached[0] == key:
+        return cached[1]
+      ret = mo.isa(mo.model.CONTEXT)
+      self.__dict__["_contextWindowCache"] = (key, ret)
+      return ret
     except Exception: # (eg: during construction)
       return False
 
@@ -839,6 +867,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       :param topics:
       :type topics: tuple[str, tuple[Any, ...]]
       """
+      if getattr(self.view, "_closed", False): # (sent before the view's window closed: see SNGView.detachFromModel())
+        return
       rm = False # flag for checking if "rm" is one of the topics
       try: # if this is a deletion, the object will fail validation on access
         assert subject is self.modelObject
@@ -898,8 +928,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       if self.modelObject is not None:
         model:GraphObject = self.modelObject
         for n in self.view.values(): # check for other objects referencing this one's model object
-          self.assertToStatusReport(n is self or self.modelObject is not n.modelObject,
-            f'View objects {self} and {n} both reference the same model object {self.modelObject}.', 'E', dict())
+          if n is not self and n.modelObject is self.modelObject: # (the message only when it's needed: it's costly, and this is done for every object in the view)
+            self.assertToStatusReport(False,
+              f'View objects {self} and {n} both reference the same model object {self.modelObject}.', 'E', dict())
         model.clearStatusReport()
         model.validate()
         self._statusReport += model._statusReport
@@ -1009,12 +1040,13 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         self._startResize(corner)
         return 'break'
     # A relation's terminal sits right on the edge of the object it connects,
-    # so a press meant for the terminal usually lands on this object instead:
-    # let a nearby terminal of one of our relations take it (VRelation's own
-    # onButton_1() does the same check first).
-    for r in list(self.relations):
-      if r is not self and r.grabTerminal(event):
-        return 'break'
+    # so a press meant for the terminal usually lands on something else: this
+    # object, or -- inside a context window -- the window. Whatever's under it,
+    # a press within reach of a terminal grabs it: the same test that shows the
+    # terminal cursor (see SNGView._relationTerminalNear()), so where the cursor
+    # says a terminal can be dragged, it can.
+    if self.view.grabTerminalNear(event):
+      return 'break'
     self.view.addEventHandled(event)
     #print(f'onButton_1() event x={event.x}, y={event.y}, selected={self.selected()}')
     winX = self.canvas.canvasx(event.x) # convert widget-relative coords to canvas coords (accounts for scroll position)
@@ -1594,9 +1626,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     elif notIsIsa:
       self.decorators["text"] = WrappingText(self)
     self.decorators["markers"] = MarkerContainer(self)
-    # shadow types only. The actual decorator will display conditionally on "gui/showIndividualShadow"
+    # shadow types only. The decorator is also drawn only while "gui/shadowTypes" is on (see ShadowDecorator.draw())
     if notIsIsa and self.modelObject is not None and self.modelObject.isType() and \
-        snPrefs.get("gui/shadowTypes", storeDefault=True, storeType=bool, note="Draw a shadow around all Type objects (as opposed to Individual objects)."): 
+        snPrefs.get("gui/shadowTypes", storeDefault=True, storeType=bool): # (its note: see sn.PREFS)
       self.decorators["shadow"] = ShadowDecorator(self)
     # try:
     #   if self.modelObject.isType() or self.modelObject.isSystemObject:
@@ -1818,47 +1850,60 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
 
   def expand(self, 
              filter:Callable[[Any, Relation], bool]=lambda _vn, _mr: True, 
-             expand=0):
+             expand=0,
+             _done:dict[int, int]|None=None):
     """
+    Show this object's relations that aren't shown yet (and so what's at their
+    other ends) -- and, if *expand* > 0, expand each object at the other end of
+    each of its relations (shown already or not) in turn, by *expand* - 1. So 0
+    shows this object's neighbours, 1 their neighbours too, and so on.
+
     :param filter: Optional[Callable[[Self, Relation], bool]] A function *selfxRelation->bool*
         where that relation will only be expanded if the function returns *True* 
     :type filter: Callable[[Any, Relation], bool]
-    :param expand: [Optional[int], default=None] The number of hops to expand.
-    :type expand:
-    :return: A set of all the VObjects created during the expansion.
-    :rtype:
+    :param expand: [Optional[int], default=0] The number of hops to expand beyond this
+      object's neighbours.
+    :type expand: int
+    :param _done: (Internal) The objects expanded so far in this expansion
+      (by *id()*), and by how many more hops: none is done twice to the same
+      depth or less, as an expansion would otherwise grow exponentially with
+      the depth (going back and forth along each relation, round each cycle).
+    :type _done: dict[int, int] | None
     """
-    # Iterate all the relations connected to this, collecting all the undisplayed ones in *rels*
-    # and also recurse on any displayed ones if *expand* > 0
-    rels:list[Relation] = []
+    from sn.view.graphics.vrelations import VRelation
+    if _done is None:
+      _done = {}
+    mo = self.modelObject
+    if mo is None or _done.get(id(self), -1) >= expand:
+      return
+    _done[id(self)] = expand
     # nothing in a hidden or erased category (see SNGView.visibility()): not
     # the relation, nor what it leads to
-    userFilter = filter
-    def filter(vn, rel:Relation, mo=self.modelObject) -> bool: # pylint: disable=redefined-builtin
+    def ok(rel:Relation) -> bool:
       if self.view.isFiltered(rel):
         return False
       other = rel.localDst if rel.localSrc is mo else rel.localSrc
-      return not (other is not None and self.view.isFiltered(other)) and userFilter(vn, rel)
-    for mRelr in list(self.modelObject._getIncoming(filtr=lambda rel, slf=self: filter(slf,rel)))+list(self.modelObject._getOutgoing(filtr=lambda rel, slf=self: filter(slf,rel))):
-      mRel:Relation = mRelr[0]
-      # if not self.canvas.categories.isCategory(mRel, self.canvas.hiddenCategories):
-      #   if filter(self, mRel):
-      if True:
-          vRel = self.view.findViewObjectForGraphObject(mRel)
-          if vRel is None:
-            rels.append(mRel)
-          elif expand > 0:
-            vRel.expand(filter=filter, expand=expand-1)
+      return not (other is not None and self.view.isFiltered(other)) and filter(self, rel)
+    rels:list[Relation] = removeDuplicates([r for r, _ in mo._getIncoming(filtr=ok)] + [r for r, _ in mo._getOutgoing(filtr=ok)])
             
-    # *rels* contains the unexpanded model *Relations*, so create a VRelations for
-    # each of them.
-    if len(rels) > 0:
+    # show the ones that aren't shown (with what's at their other ends: see VRelation._resolveEnd())
+    new = [r for r in rels if self.view.findViewObjectForGraphObject(r) is None]
+    if len(new) > 0:
       bb = self.boundingBox()
       x = bb[2] + 50
-      y = len(rels) * 25
-      for r in rels:
-        self.view.makeViewObjectForGraphObject(r, atPoint=(x,y), expand=expand, filter=filter)
+      y = len(new) * 25
+      for r in new:
+        self.view.makeViewObjectForGraphObject(r, atPoint=(x,y))
         y += 50
+
+    if expand > 0: # and on to what's at their other ends
+      for r in rels:
+        vRel = self.view.findViewObjectForGraphObject(r)
+        if not isinstance(vRel, VRelation):
+          continue
+        other = vRel.dst if vRel.src is self else vRel.src
+        if other is not None and other is not self and other._isConnected():
+          other.expand(filter=filter, expand=expand - 1, _done=_done)
 
   def strToShape(self, name):
     '''
@@ -1986,6 +2031,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
             detached.append((r, end))
     self._detachedTypeEnds = detached
     super()._disconnect(**kwargs)
+    self.view.structureChanged()
     self._hideItems()
     for r, _ in detached:
       r.view.freshPaint()
@@ -1998,6 +2044,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     :type kwargs:
     '''
     super()._reconnect(**kwargs)
+    self.view.structureChanged()
+    if self.__dict__.get("_firstDrawPending"): # (taken out before it was ever drawn: see _firstDraw())
+      self._firstDraw()
     self._showItems() # (a redraw hides it again if it should be -- see _applyHidden())
     self._hidden = False
     for r, end in getattr(self, "_detachedTypeEnds", []): # re-attach the relation types' ends

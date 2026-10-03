@@ -456,6 +456,13 @@ class FieldsLayout():
     'While a current flows: steps without the relations coming further into line before it stops arranging and settles (see *_cool()*).'
     self.alignProgress:float = 0.05
     'While a current flows: how much the total misalignment must fall to count as coming further into line.'
+    self.placeLabels:bool = True
+    '''
+    Whether a run ends by finding free places for the floating relation labels
+    (see *_settleLabels()*). That can take a while in a crowded view; turned
+    off, eg: while starting run after run, the labels just stay between their
+    ends (see *settleLabels()* to place them later).
+    '''
     self._killFlag = False
     self.active = False
     'Indicates the animation is running.'
@@ -599,6 +606,21 @@ class FieldsLayout():
     else:
       self._finish()
 
+  def settleLabels(self) -> None:
+    '''
+    Find free places for the floating relation labels now (see
+    *_settleLabels()*), as the end of a run does if *placeLabels* is on: eg:
+    when it's turned on after runs without it. Not while a run is going: the
+    end of the run does it.
+    '''
+    if self.active:
+      return
+    try:
+      view = self.view
+    except WeakrefError:
+      return
+    self._settleLabels(view)
+
   def _settleLabels(self, view:SNView) -> None:
     '''
     What a move does when it's dropped, for every floating relation label: put
@@ -667,7 +689,8 @@ class FieldsLayout():
       view = self.view
     except WeakrefError:
       return
-    self._settleLabels(view)
+    if self.placeLabels:
+      self._settleLabels(view)
     moved = [(vo, bb) for vo, bb in start.values() if vo._isConnected() and list(vo.boundingBox()) != bb]
     if moved:
       from util.commandParser import CompositeCommandMgr

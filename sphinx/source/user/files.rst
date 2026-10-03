@@ -16,6 +16,10 @@ opens the models it uses.
 - **File | Open...** opens a view -- or a model, with a default view of it.
 - **File | New...** makes a new view, of a new or existing model.
 - **File | Save view** saves the window's view.
+- **File | Close model** closes every window on the window's model (offering
+  to save each changed view, and then the model), and forgets the model: open
+  it again and it's read afresh from its file. (A model that another open
+  model builds on can't be closed: models stay in memory until you quit.)
 - Modified models (and views) are offered for saving when you quit: you're
   asked about each one. The terminal's ``save`` command saves a model at any
   time.
@@ -50,29 +54,30 @@ Settings
 program's settings, and lets you change them. They're kept in ``~/.sn.xml``.
 Among them:
 
-=================================  ==========================================
-setting                            controls
-=================================  ==========================================
-``gui/label``                      the default label template for nodes
-                                   (see :doc:`viewing`)
-``gui/relationLabel``              the default label template for relations
-``gui/showSystemTags``,            whether to show the **S**, **T**, **R** and
-``gui/showTypeTags``,              **{}** markers
+===============================================  ==========================================
+setting                                          controls
+===============================================  ==========================================
+``gui/label``                                    the default label template for nodes
+                                                 (see :doc:`viewing`)
+``gui/relationLabel``                            the default label template for relations
+``gui/showSystemTags``,                          whether to show the **S**, **T**, **R** and
+``gui/showTypeTags``,                            **{}** markers
 ``gui/showRemoteTags``,
 ``gui/showConstraintMarker``
-``gui/shadowTypes``                whether types are drawn with a shadow
-``gui/NodeMinSize``,               the default size and shape of a node
+``gui/shadowTypes``                              whether types are drawn with a shadow
+``gui/NodeMinSize``,                             the default size and shape of a node
 ``gui/NodeAspectRatio``
-``gui/highlightColor``             the colour of highlights (eg: a query's
-                                   answers)
-``gui/openWindows``                the windows open when you last quit,
-                                   reopened at start-up (kept up to date
-                                   automatically)
-``gui/backgroundColor``            the canvas's colour
-``gui/allowEditingSystemObjects``  whether the system model's objects can be
-                                   edited (best left off)
-``loggingLevel``                   how much detail the program's messages go
-                                   into
-=================================  ==========================================
+``gui/highlightColor``                           the colour of highlights (eg: a query's
+                                                 answers)
+``gui/backgroundColor``                          the canvas's colour
+``gui/allowEditingSystemObjects``                whether the system model's objects can be
+                                                 edited (best left off)
+``gui/optimization/aggressiveLabelPlacement``    how hard to look for a free spot for a
+                                                 relation's label when placing it: 0 (not
+                                                 at all) to 10 (furthest; slow in a crowded
+                                                 view, as when showing a big model)
+``loggingLevel``                                 how much detail the program's messages go
+                                                 into
+===============================================  ==========================================
 
 Hover over a setting's name for its description.

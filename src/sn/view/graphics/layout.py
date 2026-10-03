@@ -49,6 +49,29 @@ from util.utils import removeDuplicates
 
 logger:sn.SNLogger = sn.getLogger(__name__)
 
+LABEL_PLACEMENT_PREF = "gui/optimization/aggressiveLabelPlacement"
+"The preference for how hard *FindFree* looks for a free spot for a relation's label: see *labelPlacementLevel()*."
+
+LABEL_PLACEMENT_DEFAULT = sn.PREFS[LABEL_PLACEMENT_PREF][1]
+
+def labelPlacementLevel() -> int:
+  '''
+  :returns: The *LABEL_PLACEMENT_PREF* preference, from 0 to 10: how far
+    *FindFree* looks for a free spot for a relation's label. 0: it doesn't (the
+    label stays where it's made, midway between the relation's ends); else up
+    to *level* squared rings out from there (10: 100, as for nodes). The time
+    taken grows with the square of that, so a lot in a crowded view, as when
+    showing a big model.
+  :rtype: int
+  '''
+  level = sn.snPrefs.get(LABEL_PLACEMENT_PREF, storeDefault=LABEL_PLACEMENT_DEFAULT, storeType=int) # (its note: see sn.PREFS)
+  if not isinstance(level, (int, float, str)):
+    return LABEL_PLACEMENT_DEFAULT
+  try:
+    return min(10, max(0, int(level)))
+  except ValueError:
+    return LABEL_PLACEMENT_DEFAULT
+
 class Direction(Enum):
   UNSPECIFIED = 0
   SUB = 1
@@ -229,11 +252,19 @@ class FindFree(LayoutHieristic):
     #direction = Direction.NEAREST # Get rid of this!!!! 
     assert direction != Direction.UNSPECIFIED   
         
+    maxRings = 100 # (how far out to look for a free spot: see LABEL_PLACEMENT_PREF)
+    if isinstance(node, VRelation):
+      level = labelPlacementLevel()
+      if level == 0: # (labels stay where they're made: midway between their ends)
+        bb = node.boundingBox()
+        return bb[0], bb[1]
+      maxRings = level * level
+
     def place(rect:list[int], 
               expandFactor:int, 
               quanta:int=self.quanta, 
               limit:list[int]=self.limit, 
-              exclude=[]):
+              exclude=[]) -> tuple[int, int]|None:
       assert len(rect) == 4
       rect = [int(i) for i in rect]
       assert len(limit) == 4
@@ -243,19 +274,20 @@ class FindFree(LayoutHieristic):
       assert w>0
       assert h>0
       
-      for dist in range(0, 100): # the width/height of the rectangular scan
+      for dist in range(0, maxRings): # the width/height of the rectangular scan
         yStart   = max(limit[1], rect[1]-dist*quanta)
         yEnd     = min(limit[3], rect[1]+dist*quanta)
         for y in range(yStart, yEnd+1, quanta):
           xStart = max(limit[0], rect[0]-dist*quanta)
           xEnd   = min(limit[2], rect[0]+dist*quanta)
-          xIncr  = max(1, (xEnd-xStart) if y==yStart or y==yEnd else quanta)
+          # the ring's perimeter: all of its top and bottom rows, just the ends of the others
+          xIncr  = quanta if y==yStart or y==yEnd else max(1, xEnd-xStart)
           for x in range(xStart, xEnd+1, xIncr):
             r = [x, y, x+w, y+h]
             overlapping = self.findOverlapping(expandRect(r, expandFactor), exclude)
             if len(overlapping) == 0:
               return x,y
-              
+      return None # (nowhere free within maxRings)
       
     rect = node.boundingBox()
     if loc is not None:
@@ -300,6 +332,9 @@ class FindFree(LayoutHieristic):
       
     finalLimit = [int(i) for i in [leftLimit, topLimit, rightLimit, bottomLimit]]
     pt = place(rect, expandFactor=expandFactor, exclude=exclude, limit=finalLimit)
+    if pt is None: # (nowhere free close enough: it stays where it is)
+      bb = node.boundingBox()
+      return bb[0], bb[1]
     
     # if pt[0]!=rect[0] or pt[1]!=rect[1]:
     #   logger.debug(f'Node "{node.modelObject.name}:{node.modelObject._id}" moving in direction {direction}, limit={finalLimit} to {pt}, ref={referenceNode}.')

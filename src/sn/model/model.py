@@ -194,8 +194,8 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     for rel in self._outgoing:
       if filtr(rel):
         yield rel, rel.localDst if localOnly else rel.dst
-    for rel in self._incoming:
-      if filtr(rel) and rel.isSymmetric():
+    for rel in self._incoming: # (an isa is never symmetric: skipped first, as a type's incoming isa's can be many)
+      if not isinstance(rel, IsaIndividual) and filtr(rel) and rel.isSymmetric():
         yield rel, rel.localSrc if localOnly else rel.src
 
   def _getIncoming(self, filtr:Callable[[Relation], bool]=lambda _: True, 
@@ -214,8 +214,8 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     for rel in self._incoming:
       if filtr(rel):
         yield rel, rel.localSrc if localOnly else rel.src
-    for rel in self._outgoing:
-      if filtr(rel) and rel.isSymmetric():
+    for rel in self._outgoing: # (an isa is never symmetric: see _getOutgoing())
+      if not isinstance(rel, IsaIndividual) and filtr(rel) and rel.isSymmetric():
         yield rel, rel.localDst if localOnly else rel.dst
         
   def validate(self) -> list[str]:        
@@ -1039,6 +1039,53 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     return ret
   
   @override
+  def dependents(self) -> list[tuple[str, str]]:
+    '''
+    :returns: What still uses this model, as (kind, URL) pairs: ("view", ...)
+      for each view of it still observing it (an open window: closing a
+      window's view stops it observing -- see *SNGView.detachFromModel()*),
+      and ("model", ...) for each other model in memory that builds on it:
+      that has a relation into it (eg: an isa link to one of its types), or
+      lists it among its super-models.
+    :rtype: list[tuple[str, str]]
+    '''
+    ret:list[tuple[str, str]] = []
+    for observer, _topics in self._observers:
+      if not getattr(observer, "_closed", False):
+        ret.append(("view", getattr(observer, "url", repr(observer))))
+    for url, db in list(PRDb.AllDBs.items()):
+      if db is self or not isinstance(db, Model):
+        continue
+      if self in db.superDBs or any(isinstance(o, Relation) and any(end is not None and end.db is self for end in (o.localSrc, o.localDst))
+                                    for o in db.values()):
+        ret.append(("model", url))
+    return ret
+
+  def unload(self) -> None:
+    '''
+    Forget this model -- eg: to read its file afresh after the file has been
+    replaced. It's dropped from the cache of open databases (*PRDb.AllDBs*),
+    and its relations are removed from the objects of *other* models they
+    connect to (eg: its objects' isa links to the system model's *node*), so
+    nothing outside it still leads to it. (The model itself is left as it is,
+    and isn't saved.)
+
+    :raises RuntimeError: if anything still uses it (see *dependents()*): an
+      open view of it, or another model with relations into it -- which would
+      be left pointing at its old objects. Close those first.
+    '''
+    users = self.dependents()
+    if users:
+      raise RuntimeError(f'Can\'t unload model {self.url}: still used by ' + ", ".join(f"{kind} {url}" for kind, url in users))
+    for obj in list(self.values()):
+      if not isinstance(obj, Relation):
+        continue
+      for end, links in ((obj.localSrc, "_outgoing"), (obj.localDst, "_incoming")):
+        if end is not None and end.db is not self:
+          delOne(getattr(end, links), obj, throw=False)
+    if PRDb.AllDBs.get(self.url) is self:
+      del PRDb.AllDBs[self.url]
+
   def _makeDBContainer(self) -> AllModelCollection:
     '''
     :returns:

@@ -73,12 +73,17 @@ springs         how strongly relations pull their ends together
 heat            random jiggling (with a current), which fades as the layout
                 settles. It shakes the layout out of dead ends; more heat is
                 livelier, but takes longer to settle
+place labels    whether a run ends by finding free places for the relations'
+                labels (which can take a while in a crowded view). Ticked
+                between runs, it places them straight away; ticked during a
+                run, at the end of the run
 Reset           put the sliders back to their defaults
 ==============  ==========================================================
 
 Changes take effect immediately, even while it runs. The current's settings
 are also on the **view | animation layout** menu (**current direction**,
-**current strength**, **current follows**). They're saved with the view.
+**current strength**, **current follows**). They're saved with the view, as
+is **place labels**.
 
 Tips
 ----
@@ -88,5 +93,7 @@ Tips
 - If a tree won't turn the right way up, raise **heat** a little and run it
   again.
 - Running it again from where it stopped usually improves things further.
+  Untick **place labels** while you do, and tick it again at the end: the
+  labels are only placed once.
 - Before laying out a big model, hide what you don't need to see (eg: the
   *isa individuals*, or *system objects*): see :doc:`viewing`.

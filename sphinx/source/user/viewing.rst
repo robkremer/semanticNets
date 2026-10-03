@@ -21,16 +21,19 @@ Hiding and erasing by category
 **view | hide by category** and **view | erase by category** each list the
 categories of objects:
 
-==================  ====================================================
-category            is
-==================  ====================================================
-system objects      the system model's objects (*top*, *node*, *isa*, ...)
-isa individuals     the *isa* links themselves
-types               all types
-non-local           objects from other models
-rules               rules
-queries             queries
-==================  ====================================================
+==========================  ====================================================
+category                    is
+==========================  ====================================================
+system objects              the system model's objects (*top*, *node*, *isa*, ...)
+isa individuals             the *isa* links themselves
+higher-order isa relations  the *isa* links from individual relations to their
+                            relation types (eg: from *alice -has-parent-> bob*
+                            to *has-parent*)
+types                       all types
+non-local                   objects from other models
+rules                       rules
+queries                     queries
+==========================  ====================================================
 
 Checking a category in the **hide** menu stops drawing those objects (they
 stay in the view, with their positions); in the **erase** menu, takes them
@@ -100,6 +103,8 @@ attribute                   controls
 ``vis/minSize``,            its size limits, and the shape of its box
 ``vis/maxSize``,
 ``vis/aspectRatio``
+``vis/titlebarColor``       a context window's title bar (rules, queries
+                            and definitions each have their own)
 ``vis/label``               what its label says (below)
 ==========================  =============================================
 

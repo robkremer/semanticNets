@@ -151,7 +151,8 @@ class VRelation(VObject, AGRelation):
     self._floatingAnchor = True if floating is None else floating
     # self._redrawExecuting = False
     
-    self.canvas.after(0, lambda slf=self: slf.reposition(aggressive=True)) #type: ignore[misc]
+    # (not if it's been taken out of the view meanwhile: that would draw it again -- see VObject._firstDraw())
+    self.canvas.after(0, lambda slf=self: slf.reposition(aggressive=True) if slf._isConnected() else None) #type: ignore[misc]
     # self.canvas.freshPaint()
     # self.draw()
     self.connectInfo:ConnectorIDs|None = None
@@ -1128,6 +1129,8 @@ class VRelation(VObject, AGRelation):
     :param topics:
     :type topics: tuple[str, tuple[Any, ...]]
     '''
+    if getattr(self.view, "_closed", False): # (sent before the view's window closed: see SNGView.detachFromModel())
+      return
     rest = []
     for topic in topics:
       if topic[0] in ("mod src", "mod dst", "mod inherited src", "mod inherited dst"):

@@ -313,7 +313,7 @@ class SNAbstractTerminal:
     :type context: ModelContext | None
     '''
     if model is None:
-      model = cast(str, sn.snPrefs.get("defaultModel", storeDefault="temp.xml", storeType=str))
+      model = cast(str, sn.snPrefs.get("model/defaultModel", storeDefault="temp.xml", storeType=str))
     if isinstance(model, str):
       model = Model(model)
     assert isinstance(model, Model)

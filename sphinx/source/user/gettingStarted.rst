@@ -34,6 +34,9 @@ Open **Semantic Nets** as you would any app, or double-click a model
   Examples*, and opens them: a family, with a rule, a definition and a query
   (see :doc:`contexts`), and a small taxonomy of animals (see
   :doc:`animation`).
+  **Help | Install Example Models** puts fresh copies there at any time (eg:
+  those of a newer version), replacing the old ones -- and any changes you've
+  made to them.
 - **After that**, it reopens the windows that were open when you last quit, at
   the same size and place -- as they were last saved: changes you chose not to
   save, and the undo history, are gone. If there were none, it asks you for a
@@ -90,7 +93,8 @@ shown and how it's arranged) and **reasoning** -- and **Zoom**.
 The menu bar has:
 
 - **File**: **New...** (a new model, or a new view of a model), **Open...**,
-  and **Save view** (the view of the window you're in).
+  **Save view** (the view of the window you're in) and **Close model** (its
+  model, and all the windows on it).
 - **View**: **Animation toolbar** (see :doc:`animation`).
 - **Window** and **Help**.
 

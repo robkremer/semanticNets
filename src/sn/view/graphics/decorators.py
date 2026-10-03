@@ -643,8 +643,7 @@ class ConstraintMarker(MarkerWithTooltip):
     '''
     mo = owner.modelObject
     return mo is not None and mo.isVariable() and bool(mo.constraintsText()) \
-           and bool(snPrefs.get("gui/showConstraintMarker", storeDefault=True, storeType=bool,
-                           note="Mark each variable that has constraints with a \"{}\" marker."))
+           and bool(snPrefs.get("gui/showConstraintMarker", storeDefault=True, storeType=bool)) # (its note: see sn.PREFS)
 
   def tip(self) -> str:
     '''
@@ -969,7 +968,7 @@ class ContextFrame(Decorator):
     scale = view._scale
     # the banner, and the title in it
     self._item("banner", canvas.create_rectangle, view.viewToWindow([x1, y1, x2, y1 + bh]),
-               fill=_blend(canvas, border, 0.18), outline=border)
+               fill=o.cache['vis/titlebarColor'] or _blend(canvas, border, 0.18), outline=border) # (its type's colour, eg: a rule's)
     # the collapse/expand triangle (see VObject.setCollapsed()), the title, and
     # (right-aligned, in italics) what kind of context it is: rule, query, ...
     fontSize = max(6, int(view._fontSize * scale))
@@ -1059,8 +1058,7 @@ class Highlight(Decorator):
     '''
     from sn.view.graphics.shapes import Oval
     canvas = self.owner.canvas
-    color = snPrefs.get("gui/highlightColor", storeDefault="#ffd966", storeType="color",
-                        note="The colour of the glow marking highlighted objects (eg: a query's answers).")
+    color = snPrefs.get("gui/highlightColor", storeDefault="#ffd966", storeType="color") # (its note: see sn.PREFS)
     x1, y1, x2, y2 = self.owner.view.viewToWindow(self.owner.boundingBox(fast=fast))
     p = self.PAD
     rect = [x1 - p, y1 - p, x2 + p, y2 + p]
@@ -1092,7 +1090,7 @@ class ShadowDecorator(Decorator):
   the owner's own shape -- the standard tk drop-shadow technique, rather than
   anything Pillow/raster-based (too costly to redraw/rescale for this).
 
-  Only drawn for snPrefs["gui/showIndividualShadow"] is True.
+  Only drawn while snPrefs["gui/shadowTypes"] is True (checked at each draw, so turning it off takes effect at once).
 
   Does NOT yet support "vis/shadowColor" or any other attribute-driven
   customization -- the constructor *kwargs* are the only knob for now. See
@@ -1153,7 +1151,7 @@ class ShadowDecorator(Decorator):
     :param kwargs:
     :type kwargs:
     '''
-    if not snPrefs.get("gui/showIndividualShadow", storeDefault=True, storeType=bool):
+    if not snPrefs.get("gui/shadowTypes", storeDefault=True, storeType=bool):
       self._erase()
       return
 

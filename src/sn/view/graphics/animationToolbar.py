@@ -70,6 +70,9 @@ TIPS:dict[str, str] = {
              "superclasses above their subclasses.",
   "follows": "The relation type the current lines up (by default, isa).",
   "reset": "Put the sliders back to their defaults.",
+  "labels": "Whether a run ends by finding free places for the relations' labels -- which can take a while in "
+            "a crowded view. Turn it off while starting run after run; turning it on (between runs) places "
+            "them straight away.",
 }
 "Tooltips for the toolbar's other controls."
 
@@ -94,6 +97,7 @@ class AnimationToolbar(ttk.Frame):
     self._polling = False
     self._refreshing = False
     self._rows:list[list[ttk.Frame]] = []
+    self._rowHeights:list[int] = []
     self.groups:list[ttk.Frame] = []
     "The toolbar's groups of controls, in order: laid out in rows, as many as fit across (see *_reflow()*)."
     tip = lambda widgets, text: [CreateToolTip(w, text, wrapLength=300) for w in widgets]
@@ -138,6 +142,12 @@ class AnimationToolbar(ttk.Frame):
       tip([label, scale, value], tiptext)
 
     g = self._group()
+    self.placeLabels = tk.BooleanVar(self, value=True)
+    labels = ttk.Checkbutton(g, text="place labels", variable=self.placeLabels, command=self._setPlaceLabels)
+    labels.pack(side=tk.LEFT)
+    tip([labels], TIPS["labels"])
+
+    g = self._group()
     reset = ttk.Button(g, text="Reset", width=6, command=self.reset)
     reset.pack(side=tk.LEFT)
     tip([reset], TIPS["reset"])
@@ -175,13 +185,16 @@ class AnimationToolbar(ttk.Frame):
         used = 0
       used += (gap if rows[-1] else 0) + w
       rows[-1].append(g)
-    if rows == self._rows:
+    heights = [max(g.winfo_reqheight() for g in row) for row in rows]
+    # (the heights too: before the toolbar is first shown, its groups don't know theirs yet -- 1 --
+    # and the toolbar's own height would stay that small)
+    if rows == self._rows and heights == self._rowHeights:
       return
-    self._rows = rows
+    self._rows, self._rowHeights = rows, heights
     # (placed by hand: each row on its own, left to right -- grid would line the rows' columns up)
     y = 0
-    for row in rows:
-      x, height = 0, max(g.winfo_reqheight() for g in row)
+    for row, height in zip(rows, heights):
+      x = 0
       for g in row:
         g.place(x=x, y=y + (height - g.winfo_reqheight()) // 2)
         x += g.winfo_reqwidth() + gap
@@ -236,6 +249,16 @@ class AnimationToolbar(ttk.Frame):
     scale, label, fmt = self.sliders[attr]
     label.configure(text=fmt.format(value))
 
+  def _setPlaceLabels(self) -> None:
+    '''
+    "place labels" was checked or unchecked. Checked between runs, the labels
+    are placed straight away; during a run, the end of the run places them.
+    '''
+    on = self.placeLabels.get()
+    self.view.setAnimationSetting("placeLabels", on)
+    if on and not self.layout.active:
+      self.layout.settleLabels()
+
   def reset(self) -> None:
     'Put the sliders\' settings back to their defaults.'
     for attr, value in DEFAULTS.items():
@@ -255,6 +278,8 @@ class AnimationToolbar(ttk.Frame):
     r = (layout.flowRelation or self.view.model.ISA).name
     if self.relation.get() != r:
       self.relation.set(r)
+    if self.placeLabels.get() != layout.placeLabels:
+      self.placeLabels.set(layout.placeLabels)
     self._refreshing = True # (a ttk scale calls its command when it's set, too)
     try:
       for attr, (scale, label, fmt) in self.sliders.items():

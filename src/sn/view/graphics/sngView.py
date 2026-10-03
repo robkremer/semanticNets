@@ -174,8 +174,7 @@ class SNGContext(UIContext):
       if self.oldPos is None:
         self.oldPos = self.obj.boundingBox()
       self.obj.moveTo(self.x, self.y, adjustPos=self.adjustPos)
-      self.obj.view.freshPaint()
-      self.obj.view.repaint()
+      self.obj.view.repaintSoon() # (not now: a layout's run is many moves -- see repaintSoon())
   
     @override
     def undo(self):
@@ -196,8 +195,7 @@ class SNGContext(UIContext):
       self.obj.moveTo(self.oldPos[0], self.oldPos[1], adjustPos=False)
       if isinstance(self.obj, VRelation):
         self.obj.floating(self.floating)
-      self.obj.view.freshPaint()
-      self.obj.view.repaint()
+      self.obj.view.repaintSoon()
       
     @override
     def delete(self):
@@ -633,10 +631,9 @@ class SNGContext(UIContext):
           obj._disconnect()
         
     @override
-    def delete(self):
-      for obj in self.createdObjects:
-        obj.delete()
-      self.createdObjects = None #type: ignore[assignment]
+    def delete(self): # (as _Represent's: the objects are out of the view already, if undone -- just let them go)
+      super().delete()
+      self.createdObjects = [] # (not None: the view's notices of them can still arrive -- see do())
   
     @override
     def __str__(self):
@@ -778,6 +775,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     self.window._root().terminalRegistry.registerWindow(self.window, self.terminal) #type: ignore[attr-defined]
 
     model.addObserver(self)
+    self._closed:bool = False
+    "Set when the view's window is closed (see *detachFromModel()*): it then ignores the model's updates."
     
     # self.context._setView(self) # make this view the view of the context. #TODO: hackey ...
     self.selected:set[VObject] = set()
@@ -811,6 +810,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     m = self.model
     self.categories.addCategory("system objects",  lambda mo: mo.isSystemObject())
     self.categories.addCategory("isa individuals", lambda mo: isinstance(mo, IsaIndividual))
+    self.categories.addCategory("higher-order isa relations", # (an individual relation's isa to its relation type)
+                                lambda mo: isinstance(mo, IsaIndividual) and isinstance(mo.src, Relation) and mo.src.isIndividual()
+                                           and isinstance(mo.dst, Relation) and mo.dst.isType())
     self.categories.addCategory("types",           lambda mo: mo.isType())
     self.categories.addCategory("non-local",       lambda mo: mo.model is not self.model)
     self.categories.addCategory("rules",           lambda mo: mo.isIndividual() and mo.isa(m.RULE))
@@ -879,6 +881,17 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     '''
     self.save(overwrite=True)
 
+  def doCloseModel(self) -> None:
+    '''
+    Close this view's model: the target of the "File | Close model" menu item
+    (added/removed like "Save view": see *onWindowFocusIn()*). See
+    *Application.closeModel()*.
+
+    :rtype: None
+    '''
+    if self.model is not None:
+      self.root.closeModel(self.model)
+
   def onWindowFocusIn(self) -> None:
     '''
     This view's *AppWindow* just gained focus -- add (or, if already
@@ -894,6 +907,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :rtype: None
     '''
     addToMenuBar("File|Save view", self.doSaveView)
+    addToMenuBar("File|Close model", self.doCloseModel)
     addCheckToMenuBar("View|Animation toolbar", self._animationToolbarShown(), self._onAnimationToolbarItem,
                       cascadePositions={"View": 1})
 
@@ -912,6 +926,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :rtype: None
     '''
     removeFromMenuBar("File|Save view")
+    removeFromMenuBar("File|Close model")
     removeFromMenuBar("View|Animation toolbar")
 
   ANIMATION_SETTINGS = ("flowStrength", "e", "k", "heat")
@@ -921,13 +936,14 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     '''
     :returns: What's saved with the view about its animation layout: whether
       the animation toolbar is shown, and the settings it shows -- eg:
-      "toolbar=1;direction=down;follows=isa;flowStrength=6.0;e=1000.0;k=0.005;heat=6.0".
+      "toolbar=1;direction=down;follows=isa;labels=1;flowStrength=6.0;e=1000.0;k=0.005;heat=6.0".
     :rtype: str
     '''
     layout = self.animationLayout()
     parts = {"toolbar": "1" if self._animationToolbarShown().get() else "0",
              "direction": layout.flowDirection or "none",
-             "follows": (layout.flowRelation or self.model.ISA).name}
+             "follows": (layout.flowRelation or self.model.ISA).name,
+             "labels": "1" if layout.placeLabels else "0"}
     parts.update({k: repr(float(getattr(layout, k))) for k in self.ANIMATION_SETTINGS})
     return ";".join(f"{k}={v}" for k, v in parts.items())
 
@@ -950,6 +966,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       for k in self.ANIMATION_SETTINGS:
         if k in state:
           setattr(layout, k, float(state[k]))
+      layout.placeLabels = state.get("labels", "1") != "0"
       if state.get("toolbar") == "1":
         self.showAnimationToolbar(True)
     except Exception:
@@ -1047,6 +1064,25 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     self.setDirty()
     
   @override
+  def detachFromModel(self) -> None:
+    '''
+    The view's window is closing: stop observing the model, and stop each of
+    the view's objects observing its model object -- the model stays in memory
+    (it may have other views), and its changes mustn't reach a window that's
+    gone. Notifications already on their way are ignored (see *_closed*).
+    '''
+    self._closed = True
+    self.model.detach(self)
+    for vo in list(self._db.values()):
+      if vo is None:
+        continue
+      try:
+        mo = vo.modelObject
+      except Exception: # (eg: its model object has been deleted)
+        continue
+      if mo is not None:
+        mo.detach(vo)
+
   def update(self, subject:Subject, *topics:tuple[str, tuple[Any, ...]])->None:
     '''
     :param subject:
@@ -1058,6 +1094,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     from sn.view.graphics.vnodes import VNode
     from sn.view.graphics.vrelations import VRelation #, VIsa
     assert isinstance(subject, Model), f'Expected Model, got {type(subject)}.'
+    if getattr(self, "_closed", False): # (a notification sent before the window closed: see detachFromModel())
+      return
+    self.structureChanged() # (eg: an object retyped: maybe now a context window)
     logger.info(f'SNGView.update({subject.name}, {len(topics)} topics):')
     for t in topics:
       topicName:str = t[0]
@@ -1571,6 +1610,21 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         return rel
     return None
 
+  def grabTerminalNear(self, event:tk.Event) -> bool:
+    '''
+    If a button-1 press is within reach of an editable relation's terminal --
+    whatever's under it: the object the relation connects, a context window
+    it's drawn in, or the background -- grab that terminal (see
+    *VRelation.grabTerminal()*).
+
+    :param event: The Tk event.
+    :type event: tk.Event
+    :returns: True iff it did (so the caller shouldn't start its own drag).
+    :rtype: bool
+    '''
+    rel = self._relationTerminalNear(self.canvas.canvasx(event.x), self.canvas.canvasy(event.y))
+    return rel is not None and rel.grabTerminal(event)
+
   HANDLE_CURSORS = {"nw": "top_left_corner", "ne": "top_right_corner",
                     "se": "bottom_right_corner", "sw": "bottom_left_corner"}
   "The cursors shown over a selected object's corner (resize) handles."
@@ -1664,6 +1718,11 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
     # check of a widget has handled the event
     if self.isEventHandled(event):
+      self.removeEventHandled(event)
+      return None
+
+    # a relation's terminal, over the background (see grabTerminalNear())
+    if not s_SHIFT(event.state) and self.grabTerminalNear(event):
       self.removeEventHandled(event)
       return None
 
@@ -2200,14 +2259,30 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     if merged:
       mo.setAttr(CONSTRAINTS, Attribute(merged, str, VAR, CONSTRAINTS_NOTE))
 
+  def structureChanged(self) -> None:
+    '''
+    Note that what's in the view, or the model, has changed: an object was
+    added to or taken out of the view, or the model changed. What's worked out
+    from that and remembered (see *contextWindows()*) is worked out afresh.
+    '''
+    self.__dict__["_structureVersion"] = self.__dict__.get("_structureVersion", 0) + 1
+
   def contextWindows(self) -> list[VObject]:
     '''
     The view objects drawn as context windows (see *VObject.isContextWindow()*).
+    Asked for every object each time one's drawn, so remembered until the
+    view or model changes (see *structureChanged()*).
 
     :returns:
     :rtype: list[VObject]
     '''
-    return [w for w in self.values() if w is not None and not isinstance(w, VRelation) and w._isConnected() and w.isContextWindow()]
+    version = self.__dict__.get("_structureVersion", 0)
+    cached = self.__dict__.get("_contextWindowsCache")
+    if cached is not None and cached[0] == version:
+      return cached[1]
+    ret = [w for w in self.values() if w is not None and not isinstance(w, VRelation) and w._isConnected() and w.isContextWindow()]
+    self.__dict__["_contextWindowsCache"] = (version, ret)
+    return ret
 
   def _containable(self, vo:VObject) -> bool:
     '''
@@ -2662,6 +2737,25 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     'Increments self._drawVersion so that graphic options can know whether to update of not.'''
     self._drawVersion += 1
     
+  def repaintSoon(self) -> None:
+    '''
+    Repaint the whole view (see *repaint()*) once things are idle -- once, however
+    many times this is called before then: eg: the moves of a whole run of the
+    animation layout, recorded (or undone) as one command, each of which would
+    otherwise repaint everything.
+    '''
+    if self.__dict__.get("_repaintPending"):
+      return
+    if not self.canvas:
+      self.repaint()
+      return
+    self._repaintPending = True
+    def go() -> None:
+      self._repaintPending = False
+      if not getattr(self, "_closed", False):
+        self.repaint()
+    self.canvas.after_idle(go)
+
   def repaint(self, event=None):
     '''
     :param event: The Tk event.

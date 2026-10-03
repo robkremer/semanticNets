@@ -45,6 +45,7 @@ Created on Aug 18, 2026
 @author: robkremer
 '''
 from __future__ import annotations
+import sn # (first: it sets up logging -- see sn/__init__.py -- before util's modules, which get their loggers as they're imported)
 import traceback
 from util.persistence.serialize import SerializationStrategy
 from util.persistence.pRef import PRDb
@@ -53,9 +54,9 @@ from util.attribute import Attribute, VAR_DEFAULTED
 import sys
 import os
 from pathlib import Path
-import sn
 import tkinter as tk
 import tkinter.filedialog as filedialog
+from tkinter import messagebox
 from typing import cast
 from types import NoneType
 from tkinter import ttk
@@ -219,6 +220,8 @@ class Application(tk.Tk):
     menubar.add_cascade(menu=self.helpmenu, label="Help")
     self.helpmenu.add_command(label=f"{sn.NAME} User Guide", command=lambda: self.showHelp("user/index.html"))
     self.helpmenu.add_command(label=f"{sn.NAME} Developer Guide", command=lambda: self.showHelp("developer/index.html"))
+    self.helpmenu.add_separator()
+    self.helpmenu.add_command(label="Install Example Models", command=self.onInstallExamples)
 
     self.config(menu=menubar)
     return menubar
@@ -240,19 +243,15 @@ class Application(tk.Tk):
     logger.error(f'The documentation ("{page}") isn\'t available: build it with the "doc" ant target.')
 
   def openSettings(self) -> None:
-    """Show the app-wide Settings dialog, editing *sn.snPrefs* in place.
-
-    Builds its form generically from whatever's currently in snPrefs: each
-    key becomes a labelled row, rendered as a dropdown if the Attribute's
-    type is a "choices[...]" constraint (see util.attribute), a checkbox if
-    its current value is a bool, otherwise a plain text entry. Save writes
-    each edited value back via snPrefs[key] = ... (which validates against
-    the Attribute's type/restriction) and persists immediately via
-    snPrefs.save(), rather than relying solely on the atexit hook.
+    """Show the app-wide Settings dialog: an attribute editor on *sn.snPrefs*,
+    applying the changes to it (saved when the program ends: see
+    *sn.savePrefsIfChanged()*). Only the settings' values are shown: their
+    types and qualifiers are fixed, and their notes -- documentation, from
+    *sn.PREFS* -- are their names' tooltips.
 
     :rtype: None
     """
-    applyEditAttrsBox(self, snPrefs, title="Semantic Nets Preferences")
+    applyEditAttrsBox(self, snPrefs, title="Semantic Nets Preferences", hideColumns=("type", "qualifiers", "note"))
 
   def doOpen(self, ): # respond to the "Open..." menu item.
     filename = filedialog.askopenfilename(
@@ -381,8 +380,10 @@ class Application(tk.Tk):
       return None
 
 
-  OPEN_WINDOWS_PREF = "gui/openWindows"
-  "The preference recording the windows open when the app last quit (see *rememberOpenWindows()*)."
+  OPEN_WINDOWS_PREF = ".openWindows"
+  '''The preference recording the windows open when the app last quit (see
+  *rememberOpenWindows()*). (Its name starts with ".", so the Settings dialog
+  doesn't show it: it isn't for the user to edit.)'''
 
   def rememberOpenWindows(self) -> None:
     '''
@@ -455,16 +456,20 @@ class Application(tk.Tk):
       return
     self.doOpen()
 
-  EXAMPLES_PREF = "gui/examplesInstalled"
-  "True once the example models have been installed (see *installExamples()*): it's only done once."
+  EXAMPLES_PREF = ".examplesInstalled"
+  "True once the example models have been installed (see *installExamples()*): it's only done once. (Hidden from Settings: see *OPEN_WINDOWS_PREF*.)"
 
   EXAMPLES_FOLDER = os.path.join("~", "Documents", f"{sn.NAME} Examples")
   "Where *installExamples()* puts the example models."
 
-  def installExamples(self) -> bool:
-    """On the first launch: copy the example models that come with the app
-    into *EXAMPLES_FOLDER* (an existing copy is left as it is) and open their
-    views.
+  def installExamples(self, replace:bool=False) -> bool:
+    """Copy the example models that come with the app into *EXAMPLES_FOLDER*,
+    and open their views: on the first launch (see *startUp()*), or when asked
+    to (see *onInstallExamples()*).
+
+    :param replace: Whether to replace copies already there. If not (as on
+      the first launch), an existing folder is left as it is.
+    :type replace: bool
 
     :returns: True iff any were opened.
     :rtype: bool
@@ -473,7 +478,7 @@ class Application(tk.Tk):
       return False
     target = os.path.expanduser(self.EXAMPLES_FOLDER)
     try:
-      if not os.path.exists(target): # (an existing copy is left as it is)
+      if replace or not os.path.exists(target): # (unless replacing, an existing copy is left as it is)
         sn.copyExamples(target)
     except OSError:
       logger.error(f'Couldn\'t copy the examples to "{target}".', exc_info=True)
@@ -483,6 +488,82 @@ class Application(tk.Tk):
     for v in views:
       self.openWindow(os.path.join(target, v))
     return len(views) > 0
+
+  def onInstallExamples(self) -> None:
+    """The Help menu's *Install Example Models*: put fresh copies of the
+    example models that come with this version of the app in *EXAMPLES_FOLDER*
+    -- replacing any copies there (once the user agrees: changes made to them
+    are lost) -- and open them. Their windows are closed first, and the models
+    forgotten, so the new files are read afresh. (Any other files in the folder
+    are left alone.)
+
+    :rtype: None
+    """
+    from util.persistence.pRef import PRDb
+    target = os.path.expanduser(self.EXAMPLES_FOLDER)
+    names = sn.exampleNames()
+    if not names:
+      messagebox.showerror(sn.NAME, "This version doesn't have any example models to install.")
+      return
+    existing = [n for n in names if os.path.exists(os.path.join(target, n))]
+    if existing and not messagebox.askokcancel(sn.NAME,
+        f'Replace the example models in "{target}" with fresh copies?\n\n'
+        "Any changes you've made to them will be lost.", icon=messagebox.WARNING):
+      return
+    prefix = Path(target).as_uri() + "/"
+    # Another model that builds on an example (eg: one of its types isa an
+    # example's) would be left pointing at the old examples: stop, with
+    # nothing changed. (Views of the examples are fine: they're closed below.)
+    users = sorted({url for db in list(PRDb.AllDBs.values()) if isinstance(db, Model) and db.url.startswith(prefix)
+                        for kind, url in db.dependents() if kind == "model" and not url.startswith(prefix)})
+    if users:
+      messagebox.showerror(sn.NAME, "The example models can't be replaced while other models use them:\n\n  "
+                           + "\n  ".join(users) + "\n\nModels stay in memory until you quit: quit, start again, and install "
+                           "the examples before opening those.")
+      return
+    for name, window in list(self.windows.items()): # (their windows: no "save changes?" -- the user has just agreed to lose them)
+      view = window.view
+      if name.startswith(prefix) or (view is not None and view.model is not None and view.model.url.startswith(prefix)):
+        self._closeWindow(name, quitIfLast=False, askToSave=False)
+    for url in [u for u in PRDb.AllDBs if u.startswith(prefix)]: # (forget the old models, so the new files are read)
+      db = PRDb.AllDBs[url]
+      if isinstance(db, Model):
+        db.unload() # (and unlink it from the system model's objects)
+      else:
+        del PRDb.AllDBs[url]
+    self.installExamples(replace=True)
+
+  def closeModel(self, model:Model) -> None:
+    """The File menu's *Close model*: close every window on *model* (offering
+    to save each changed view, as closing them by hand does), offer to save the
+    model if it's changed, and forget it -- so opening it again reads the file
+    afresh. If that was the last window, the app quits, as it does when the
+    last window is closed by hand.
+
+    A model that other loaded models build on (eg: one of their types isa one
+    of its) can't be closed: they'd be left pointing at it. Nothing is changed
+    then.
+
+    :param model: The model.
+    :type model: Model
+    :rtype: None
+    """
+    users = sorted({url for kind, url in model.dependents() if kind == "model"})
+    if users:
+      messagebox.showerror(sn.NAME, f'"{os.path.basename(model.url)}" can\'t be closed while other models use it:\n\n  '
+                           + "\n  ".join(users) + "\n\nModels stay in memory until you quit.")
+      return
+    for name, window in list(self.windows.items()):
+      if window.view is not None and window.view.model is model:
+        self._closeWindow(name, quitIfLast=False)
+    sn.checkSaveModified(model, model.url, "model") # (now or never: once forgotten, quitting won't ask)
+    try:
+      model.unload()
+    except RuntimeError: # (eg: a view of it that isn't in a window: it stays in memory, as before)
+      logger.warning(f'Couldn\'t forget model "{model.url}".', exc_info=True)
+    if not self.windows:
+      self.rememberOpenWindows() # (none: it was closed on purpose, so it isn't reopened next time)
+      self.quit()
 
   def closeAllWindows(self) -> None:
     """Close every hosted window via *_closeWindow()*, so each view gets
@@ -494,7 +575,7 @@ class Application(tk.Tk):
     for name in list(self.windows):
       self._closeWindow(name, quitIfLast=False)
 
-  def _closeWindow(self, name: str, quitIfLast: bool = True) -> None:
+  def _closeWindow(self, name: str, quitIfLast: bool = True, askToSave: bool = True) -> None:
     """Close a specific hosted window and check whether the app should exit.
 
     :param name: The window's key, as passed to openWindow.
@@ -502,6 +583,10 @@ class Application(tk.Tk):
     :param quitIfLast: Quit the application if this was the last window.
       False when the caller is already quitting (see *closeAllWindows()*).
     :type quitIfLast: bool
+    :param askToSave: Whether to offer to save the window's view if it's
+      changed. False when the user has already agreed to lose the changes
+      (see *onInstallExamples()*).
+    :type askToSave: bool
     :rtype: None
     """
     if quitIfLast and list(self.windows) == [name]: # closing the last window quits: remember it for next time
@@ -515,7 +600,9 @@ class Application(tk.Tk):
       # it; nothing else keeps a reference to it once the window is torn
       # down. Must happen before onWindowFocusOut()/destroy() below.
       if window.view is not None:
-        sn.checkSaveModified(window.view, window.view.url, "view")
+        if askToSave:
+          sn.checkSaveModified(window.view, window.view.url, "view")
+        window.view.detachFromModel() # (the model stays in memory: its changes mustn't reach this window once it's gone)
       # If this window's view is currently the one advertising "Save view"
       # in the File menu, make sure it's withdrawn -- closing a window isn't
       # guaranteed to fire a Tk <FocusOut> on its widgets first (unlike
