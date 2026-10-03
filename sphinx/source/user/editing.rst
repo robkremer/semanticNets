@@ -57,10 +57,10 @@ inherits shown above it in grey. You can add attributes, change their values
 and types, and delete them. Hover over a row's name for its description.
 
 .. figure:: ../images/user/attribute-editor.png
-   :alt: The attribute editor, on the variable ?b: its constraints, its own name (with the name it would inherit, in grey, above), and the vis/ attributes it inherits
+   :alt: The attribute editor, on the variable ?b: its constraints, its own name (with the name it would inherit, in grey, above), and -- grouped under vis -- the look it inherits from person
    :width: 560px
 
-   The attribute editor, on the variable ?b: its constraints, its own name (with the name it would inherit, in grey, above), and the vis/ attributes it inherits.
+   The attribute editor, on the variable ?b: its constraints, its own name (with the name it would inherit, in grey, above), and -- grouped under *vis* -- the look it inherits from *person*: its colour and shape.
 
 Removing things
 ---------------

@@ -159,3 +159,26 @@ app runs in ``/``, so its log goes to *~/Library/Logs/Semantic Nets/*.
 
 The app's icon, ``packaging/sn.icns``, is a placeholder, drawn by
 ``packaging/makeIcon.py`` (the ``icon`` target).
+
+The examples and the screenshots
+--------------------------------
+
+The example models that come with the program (``src/sn/examples/``) and the
+User Guide's screenshots (``sphinx/source/images/user/``) are made by the
+scripts in ``tools/docExamples/``, so they can be remade when the program
+changes:
+
+``makeExamples.py``
+  Builds the family and animals models from scratch -- their relations named
+  ``has-*``, and their look set on their types, so it's inherited -- lays out
+  and saves their views (off screen), and installs them in
+  ``src/sn/examples/``.
+
+``showScene.py <scene>``
+  Shows one of the scenes the screenshots are of (eg: ``overview``, the
+  family after reasoning), set up from the examples; its documentation lists
+  which screenshots come from which scene. The screenshots themselves are
+  taken by hand: macOS doesn't let a script capture the screen.
+
+Both run as a temporary user, on copies, so they never touch your own files
+or preferences.

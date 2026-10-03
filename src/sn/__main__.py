@@ -30,7 +30,7 @@ def selftest() -> int:
     model = Model.getDB(Path(folder, "family.snm").as_uri())
     report = reason(model).report(model)
     print(report)
-    expected = ["-brother->", "-uncle->", "Violations: 0 error(s)"]
+    expected = ["-has-brother->", "-has-uncle->", "Violations: 0 error(s)"] # (alice has-brother bob, so carol has-uncle bob)
     missing = [e for e in expected if e not in report]
     import platform
     print("selftest:", ("FAILED: missing " + ", ".join(missing)) if missing else "ok", f"({platform.machine()})")

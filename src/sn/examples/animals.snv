@@ -2,9 +2,7 @@
 <object type="util.persistence.serialize.strdict">
   <property key="header">
     <object type="util.persistence.serialize.strdict">
-      <property key="application">
-        <object type="str" value="Semantic Nets" />
-      </property>
+      <property key="application" type="str" value="tools/docExamples/makeExamples.py" />
       <property key="applicaitonVersion" type="str" value="Unknown" />
       <property key="serializationStrategyVersion" type="str" value="1.0" />
       <property key="protocol" type="str" value="XML2" />
@@ -18,7 +16,7 @@
     </object>
   </property>
   <property key="root">
-    <object type="sn.view.graphics.sngView.SNGView" id="4420168272">
+    <object type="sn.view.graphics.sngView.SNGView" id="4779075840">
       <property key="url">
         <object type="str" value="file:///SEMANTIC_NETS_EXAMPLES/animals.snv" />
       </property>
@@ -30,11 +28,11 @@
         <object type="util.persistence.serialize.strdict">
           <property key="1">
             <object type="sn.view.graphics.vnodes.VNode">
-              <property key="view" ref="4420168272" />
+              <property key="view" ref="4779075840" />
               <property key="modelObject" type="str" value="#256" />
-              <property key="x" type="int" value="454" />
-              <property key="y" type="int" value="42" />
-              <property key="x1" type="int" value="490" />
+              <property key="x" type="int" value="446" />
+              <property key="y" type="int" value="40" />
+              <property key="x1" type="int" value="486" />
               <property key="y1" type="int" value="64" />
               <property key="userSized" type="bool" value="False" />
               <property key="collapsed" type="bool" value="False" />
@@ -43,11 +41,11 @@
           </property>
           <property key="2">
             <object type="sn.view.graphics.vrelations.VRelation">
-              <property key="view" ref="4420168272" />
+              <property key="view" ref="4779075840" />
               <property key="modelObject" type="str" value="#257" />
-              <property key="x" type="int" value="247" />
+              <property key="x" type="int" value="242" />
               <property key="y" type="int" value="36" />
-              <property key="x1" type="int" value="251" />
+              <property key="x1" type="int" value="246" />
               <property key="y1" type="int" value="40" />
               <property key="floating" type="bool" value="True" />
               <property key="userSized" type="bool" value="False" />
@@ -57,7 +55,7 @@
           </property>
           <property key="3">
             <object type="sn.view.graphics.vnodes.VNode">
-              <property key="view" ref="4420168272" />
+              <property key="view" ref="4779075840" />
               <property key="modelObject" type="str" value="sn:/sn.xml#6" />
               <property key="x" type="int" value="15" />
               <property key="y" type="int" value="17" />
@@ -70,12 +68,12 @@
           </property>
           <property key="4">
             <object type="sn.view.graphics.vnodes.VNode">
-              <property key="view" ref="4420168272" />
+              <property key="view" ref="4779075840" />
               <property key="modelObject" type="str" value="#258" />
-              <property key="x" type="int" value="302" />
-              <property key="y" type="int" value="98" />
-              <property key="x1" type="int" value="348" />
-              <property key="y1" type="int" value="125" />
+              <property key="x" type="int" value="294" />
+              <property key="y" type="int" value="102" />
+              <property key="x1" type="int" value="342" />
+              <property key="y1" type="int" value="131" />
               <property key="userSized" type="bool" value="False" />
               <property key="collapsed" type="bool" value="False" />
               <property key="expandedHeight" type="int" value="0" />
@@ -83,12 +81,12 @@
           </property>
           <property key="5">
             <object type="sn.view.graphics.vrelations.VRelation">
-              <property key="view" ref="4420168272" />
+              <property key="view" ref="4779075840" />
               <property key="modelObject" type="str" value="#259" />
-              <property key="x" type="int" value="399" />
-              <property key="y" type="int" value="78" />
-              <property key="x1" type="int" value="403" />
-              <property key="y1" type="int" value="82" />
+              <property key="x" type="int" value="392" />
+              <property key="y" type="int" value="80" />
+              <property key="x1" type="int" value="396" />
+              <property key="y1" type="int" value="84" />
               <property key="floating" type="bool" value="True" />
               <property key="userSized" type="bool" value="False" />
               <property key="collapsed" type="bool" value="False" />
@@ -97,12 +95,12 @@
           </property>
           <property key="6">
             <object type="sn.view.graphics.vnodes.VNode">
-              <property key="view" ref="4420168272" />
+              <property key="view" ref="4779075840" />
               <property key="modelObject" type="str" value="#260" />
-              <property key="x" type="int" value="617" />
-              <property key="y" type="int" value="103" />
-              <property key="x1" type="int" value="640" />
-              <property key="y1" type="int" value="120" />
+              <property key="x" type="int" value="612" />
+              <property key="y" type="int" value="104" />
+              <property key="x1" type="int" value="644" />
+              <property key="y1" type="int" value="128" />
               <property key="userSized" type="bool" value="False" />
               <property key="collapsed" type="bool" value="False" />
               <property key="expandedHeight" type="int" value="0" />
@@ -110,12 +108,12 @@
           </property>
           <property key="7">
             <object type="sn.view.graphics.vrelations.VRelation">
-              <property key="view" ref="4420168272" />
+              <property key="view" ref="4779075840" />
               <property key="modelObject" type="str" value="#261" />
-              <property key="x" type="int" value="551" />
-              <property key="y" type="int" value="81" />
-              <property key="x1" type="int" value="555" />
-              <property key="y1" type="int" value="85" />
+              <property key="x" type="int" value="547" />
+              <property key="y" type="int" value="82" />
+              <property key="x1" type="int" value="551" />
+              <property key="y1" type="int" value="86" />
               <property key="floating" type="bool" value="True" />
               <property key="userSized" type="bool" value="False" />
               <property key="collapsed" type="bool" value="False" />
@@ -124,12 +122,12 @@
           </property>
           <property key="8">
             <object type="sn.view.graphics.vnodes.VNode">
-              <property key="view" ref="4420168272" />
+              <property key="view" ref="4779075840" />
               <property key="modelObject" type="str" value="#262" />
-              <property key="x" type="int" value="180" />
-              <property key="y" type="int" value="161" />
-              <property key="x1" type="int" value="203" />
-              <property key="y1" type="int" value="178" />
+              <property key="x" type="int" value="175" />
+              <property key="y" type="int" value="169" />
+              <property key="x1" type="int" value="199" />
+              <property key="y1" type="int" value="189" />
               <property key="userSized" type="bool" value="False" />
               <property key="collapsed" type="bool" value="False" />
               <property key="expandedHeight" type="int" value="0" />
@@ -137,12 +135,12 @@
           </property>
           <property key="9">
             <object type="sn.view.graphics.vrelations.VRelation">
-              <property key="view" ref="4420168272" />
+              <property key="view" ref="4779075840" />
               <property key="modelObject" type="str" value="#263" />
-              <property key="x" type="int" value="250" />
-              <property key="y" type="int" value="140" />
-              <property key="x1" type="int" value="254" />
-              <property key="y1" type="int" value="144" />
+              <property key="x" type="int" value="244" />
+              <property key="y" type="int" value="148" />
+              <property key="x1" type="int" value="248" />
+              <property key="y1" type="int" value="152" />
               <property key="floating" type="bool" value="True" />
               <property key="userSized" type="bool" value="False" />
               <property key="collapsed" type="bool" value="False" />
@@ -151,12 +149,12 @@
           </property>
           <property key="10">
             <object type="sn.view.graphics.vnodes.VNode">
-              <property key="view" ref="4420168272" />
+              <property key="view" ref="4779075840" />
               <property key="modelObject" type="str" value="#264" />
-              <property key="x" type="int" value="386" />
-              <property key="y" type="int" value="161" />
+              <property key="x" type="int" value="385" />
+              <property key="y" type="int" value="170" />
               <property key="x1" type="int" value="406" />
-              <property key="y1" type="int" value="178" />
+              <property key="y1" type="int" value="190" />
               <property key="userSized" type="bool" value="False" />
               <property key="collapsed" type="bool" value="False" />
               <property key="expandedHeight" type="int" value="0" />
@@ -164,12 +162,12 @@
           </property>
           <property key="11">
             <object type="sn.view.graphics.vrelations.VRelation">
-              <property key="view" ref="4420168272" />
+              <property key="view" ref="4779075840" />
               <property key="modelObject" type="str" value="#265" />
-              <property key="x" type="int" value="362" />
-              <property key="y" type="int" value="140" />
-              <property key="x1" type="int" value="366" />
-              <property key="y1" type="int" value="144" />
+              <property key="x" type="int" value="358" />
+              <property key="y" type="int" value="149" />
+              <property key="x1" type="int" value="362" />
+              <property key="y1" type="int" value="153" />
               <property key="floating" type="bool" value="True" />
               <property key="userSized" type="bool" value="False" />
               <property key="collapsed" type="bool" value="False" />
@@ -178,12 +176,12 @@
           </property>
           <property key="12">
             <object type="sn.view.graphics.vnodes.VNode">
-              <property key="view" ref="4420168272" />
+              <property key="view" ref="4779075840" />
               <property key="modelObject" type="str" value="#266" />
-              <property key="x" type="int" value="528" />
-              <property key="y" type="int" value="157" />
-              <property key="x1" type="int" value="570" />
-              <property key="y1" type="int" value="182" />
+              <property key="x" type="int" value="511" />
+              <property key="y" type="int" value="163" />
+              <property key="x1" type="int" value="569" />
+              <property key="y1" type="int" value="198" />
               <property key="userSized" type="bool" value="False" />
               <property key="collapsed" type="bool" value="False" />
               <property key="expandedHeight" type="int" value="0" />
@@ -191,12 +189,12 @@
           </property>
           <property key="13">
             <object type="sn.view.graphics.vrelations.VRelation">
-              <property key="view" ref="4420168272" />
+              <property key="view" ref="4779075840" />
               <property key="modelObject" type="str" value="#267" />
-              <property key="x" type="int" value="589" />
-              <property key="y" type="int" value="135" />
-              <property key="x1" type="int" value="593" />
-              <property key="y1" type="int" value="139" />
+              <property key="x" type="int" value="585" />
+              <property key="y" type="int" value="143" />
+              <property key="x1" type="int" value="589" />
+              <property key="y1" type="int" value="147" />
               <property key="floating" type="bool" value="True" />
               <property key="userSized" type="bool" value="False" />
               <property key="collapsed" type="bool" value="False" />
@@ -205,12 +203,12 @@
           </property>
           <property key="14">
             <object type="sn.view.graphics.vnodes.VNode">
-              <property key="view" ref="4420168272" />
+              <property key="view" ref="4779075840" />
               <property key="modelObject" type="str" value="#268" />
-              <property key="x" type="int" value="735" />
-              <property key="y" type="int" value="162" />
-              <property key="x1" type="int" value="764" />
-              <property key="y1" type="int" value="179" />
+              <property key="x" type="int" value="741" />
+              <property key="y" type="int" value="167" />
+              <property key="x1" type="int" value="781" />
+              <property key="y1" type="int" value="191" />
               <property key="userSized" type="bool" value="False" />
               <property key="collapsed" type="bool" value="False" />
               <property key="expandedHeight" type="int" value="0" />
@@ -218,12 +216,12 @@
           </property>
           <property key="15">
             <object type="sn.view.graphics.vrelations.VRelation">
-              <property key="view" ref="4420168272" />
+              <property key="view" ref="4779075840" />
               <property key="modelObject" type="str" value="#269" />
-              <property key="x" type="int" value="685" />
-              <property key="y" type="int" value="138" />
-              <property key="x1" type="int" value="689" />
-              <property key="y1" type="int" value="142" />
+              <property key="x" type="int" value="691" />
+              <property key="y" type="int" value="145" />
+              <property key="x1" type="int" value="695" />
+              <property key="y1" type="int" value="149" />
               <property key="floating" type="bool" value="True" />
               <property key="userSized" type="bool" value="False" />
               <property key="collapsed" type="bool" value="False" />
@@ -232,12 +230,12 @@
           </property>
           <property key="16">
             <object type="sn.view.graphics.vnodes.VNode">
-              <property key="view" ref="4420168272" />
+              <property key="view" ref="4779075840" />
               <property key="modelObject" type="str" value="#270" />
-              <property key="x" type="int" value="91" />
-              <property key="y" type="int" value="219" />
-              <property key="x1" type="int" value="111" />
-              <property key="y1" type="int" value="236" />
+              <property key="x" type="int" value="90" />
+              <property key="y" type="int" value="234" />
+              <property key="x1" type="int" value="112" />
+              <property key="y1" type="int" value="254" />
               <property key="userSized" type="bool" value="False" />
               <property key="collapsed" type="bool" value="False" />
               <property key="expandedHeight" type="int" value="0" />
@@ -245,12 +243,12 @@
           </property>
           <property key="17">
             <object type="sn.view.graphics.vrelations.VRelation">
-              <property key="view" ref="4420168272" />
+              <property key="view" ref="4779075840" />
               <property key="modelObject" type="str" value="#271" />
-              <property key="x" type="int" value="143" />
-              <property key="y" type="int" value="196" />
-              <property key="x1" type="int" value="147" />
-              <property key="y1" type="int" value="200" />
+              <property key="x" type="int" value="141" />
+              <property key="y" type="int" value="209" />
+              <property key="x1" type="int" value="145" />
+              <property key="y1" type="int" value="213" />
               <property key="floating" type="bool" value="True" />
               <property key="userSized" type="bool" value="False" />
               <property key="collapsed" type="bool" value="False" />
@@ -259,12 +257,12 @@
           </property>
           <property key="18">
             <object type="sn.view.graphics.vnodes.VNode">
-              <property key="view" ref="4420168272" />
+              <property key="view" ref="4779075840" />
               <property key="modelObject" type="str" value="#272" />
-              <property key="x" type="int" value="320" />
-              <property key="y" type="int" value="219" />
-              <property key="x1" type="int" value="343" />
-              <property key="y1" type="int" value="236" />
+              <property key="x" type="int" value="313" />
+              <property key="y" type="int" value="234" />
+              <property key="x1" type="int" value="337" />
+              <property key="y1" type="int" value="254" />
               <property key="userSized" type="bool" value="False" />
               <property key="collapsed" type="bool" value="False" />
               <property key="expandedHeight" type="int" value="0" />
@@ -272,12 +270,12 @@
           </property>
           <property key="19">
             <object type="sn.view.graphics.vrelations.VRelation">
-              <property key="view" ref="4420168272" />
+              <property key="view" ref="4779075840" />
               <property key="modelObject" type="str" value="#273" />
-              <property key="x" type="int" value="360" />
-              <property key="y" type="int" value="196" />
-              <property key="x1" type="int" value="364" />
-              <property key="y1" type="int" value="200" />
+              <property key="x" type="int" value="358" />
+              <property key="y" type="int" value="209" />
+              <property key="x1" type="int" value="362" />
+              <property key="y1" type="int" value="213" />
               <property key="floating" type="bool" value="True" />
               <property key="userSized" type="bool" value="False" />
               <property key="collapsed" type="bool" value="False" />
@@ -286,12 +284,12 @@
           </property>
           <property key="20">
             <object type="sn.view.graphics.vnodes.VNode">
-              <property key="view" ref="4420168272" />
+              <property key="view" ref="4779075840" />
               <property key="modelObject" type="str" value="#274" />
-              <property key="x" type="int" value="614" />
-              <property key="y" type="int" value="218" />
-              <property key="x1" type="int" value="645" />
-              <property key="y1" type="int" value="237" />
+              <property key="x" type="int" value="607" />
+              <property key="y" type="int" value="231" />
+              <property key="x1" type="int" value="650" />
+              <property key="y1" type="int" value="257" />
               <property key="userSized" type="bool" value="False" />
               <property key="collapsed" type="bool" value="False" />
               <property key="expandedHeight" type="int" value="0" />
@@ -299,12 +297,12 @@
           </property>
           <property key="21">
             <object type="sn.view.graphics.vrelations.VRelation">
-              <property key="view" ref="4420168272" />
+              <property key="view" ref="4779075840" />
               <property key="modelObject" type="str" value="#275" />
-              <property key="x" type="int" value="589" />
-              <property key="y" type="int" value="198" />
-              <property key="x1" type="int" value="593" />
-              <property key="y1" type="int" value="202" />
+              <property key="x" type="int" value="584" />
+              <property key="y" type="int" value="212" />
+              <property key="x1" type="int" value="588" />
+              <property key="y1" type="int" value="216" />
               <property key="floating" type="bool" value="True" />
               <property key="userSized" type="bool" value="False" />
               <property key="collapsed" type="bool" value="False" />
@@ -313,12 +311,12 @@
           </property>
           <property key="22">
             <object type="sn.view.graphics.vnodes.VNode">
-              <property key="view" ref="4420168272" />
+              <property key="view" ref="4779075840" />
               <property key="modelObject" type="str" value="#276" />
-              <property key="x" type="int" value="836" />
-              <property key="y" type="int" value="219" />
-              <property key="x1" type="int" value="857" />
-              <property key="y1" type="int" value="236" />
+              <property key="x" type="int" value="849" />
+              <property key="y" type="int" value="232" />
+              <property key="x1" type="int" value="878" />
+              <property key="y1" type="int" value="256" />
               <property key="userSized" type="bool" value="False" />
               <property key="collapsed" type="bool" value="False" />
               <property key="expandedHeight" type="int" value="0" />
@@ -326,12 +324,12 @@
           </property>
           <property key="23">
             <object type="sn.view.graphics.vrelations.VRelation">
-              <property key="view" ref="4420168272" />
+              <property key="view" ref="4779075840" />
               <property key="modelObject" type="str" value="#277" />
-              <property key="x" type="int" value="797" />
-              <property key="y" type="int" value="197" />
-              <property key="x1" type="int" value="801" />
-              <property key="y1" type="int" value="201" />
+              <property key="x" type="int" value="811" />
+              <property key="y" type="int" value="210" />
+              <property key="x1" type="int" value="815" />
+              <property key="y1" type="int" value="214" />
               <property key="floating" type="bool" value="True" />
               <property key="userSized" type="bool" value="False" />
               <property key="collapsed" type="bool" value="False" />

@@ -42,9 +42,9 @@ The results are also drawn on the canvas, in every view of the model:
   problems, or choose **show error report** from the object's menu.
 
 .. figure:: ../images/user/family-reasoned.png
-   :alt: After reasoning: bob and alice are siblings both ways (sibling is symmetric); the definition concludes bob is alice's brother, and that fires the uncle rule: bob is carol's uncle
+   :alt: After reasoning: alice has-sibling bob as well (has-sibling is symmetric); the definition concludes that alice has-brother bob, and that fires the uncle rule: carol has-uncle bob
 
-   After reasoning: bob and alice are siblings both ways (sibling is symmetric); the definition concludes bob is alice's brother, and that fires the uncle rule: bob is carol's uncle.
+   After reasoning: alice *has-sibling* bob as well (*has-sibling* is symmetric); the definition concludes that alice *has-brother* bob, and that fires the uncle rule: carol *has-uncle* bob.
 
 Lines are drawn only between objects that are both shown in the view; a
 relation inferred both ways is one double-headed arrow.

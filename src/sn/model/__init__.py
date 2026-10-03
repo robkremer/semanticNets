@@ -181,10 +181,16 @@ class TopModel(Model):
     self.ISA['vis/terminator4']     = "arrow(8,8,5)"
     self.ISA['vis/aspectRatio']     = 1.0
 
-    # self.SYMMETRIC['vis/terminator1'] = "arrow"
-    # self.REFLEXIVE['vis/terminator2'] = "circle"
-    # self.TRANSITIVE['vis/terminator4'] = "arrow(11,14,3)"
+    self.NODE['vis/fillColor']      = "snow"
     
+    self.CONTEXT['vis/titlebarColor'] = Attribute("grey", "color", VAR_DEFAULTED, "The background color of the title bar of contexts")
+    self.QUERY['vis/titlebarColor'] = "LightBlue3"
+    self.QUERY['vis/fillColor']     = "LightCyan2"
+    self.RULE['vis/titlebarColor']  = "khaki3"
+    self.RULE['vis/fillColor']      = "lemon chiffon"
+    self.DEFINITION['vis/titlebarColor'] = "goldenrod"
+    self.DEFINITION['vis/fillColor']= "bisque"
+        
 model = TopModel("sn:///sn", mode="", _reading=False) # creates a model in memory cache
 model._writeLocked = True
 

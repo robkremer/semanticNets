@@ -46,15 +46,28 @@ reasoner draws the conclusions they imply:
 ==================  ===================================================
 property            means
 ==================  ===================================================
-**symmetric**       *a -R-> b* implies *b -R-> a* (eg: *sibling*)
-**asymmetric**      never both *a -R-> b* and *b -R-> a* (eg: *parent*)
+**symmetric**       *a -R-> b* implies *b -R-> a* (eg: *has-sibling*)
+**asymmetric**      never both *a -R-> b* and *b -R-> a* (eg: *has-parent*)
 **reflexive**       everything related is related to itself
 **irreflexive**     nothing is related to itself
 **transitive**      *a -R-> b* and *b -R-> c* imply *a -R-> c* (eg: *ancestor*)
 ==================  ===================================================
 
 These tags belong to the relation type they're set on, and are *not*
-inherited: *brother* isa *sibling*, but only *sibling* need be symmetric.
+inherited: *has-brother* isa *has-sibling*, but only *has-sibling* need be
+symmetric.
+
+Naming relations
+----------------
+
+A relation's name has to say which way it reads: does *fred -parent-> mary*
+mean that mary is fred's parent, or that fred is mary's? The examples use
+names that leave no doubt, and read from the source to the destination:
+``has-*`` names (*fred -has-parent-> mary*: fred has mary as a parent), or verbs
+(*fred -likes-> mary*). ``has-*`` names also point the same way as *isa*: from
+the child to the parent, as from the subtype to the supertype. Which object a
+pattern's constraints go on then follows: in *?a -has-brother-> ?b*, the
+brother -- the one who's male -- is *?b*.
 
 Attributes
 ----------

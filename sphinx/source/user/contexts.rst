@@ -76,8 +76,8 @@ query ``?p -likes-> mary``, ``?p`` matches everyone who likes mary.
 
 Say what type a variable must be in the usual way -- an *isa* from the
 variable to the type (*?p* isa *person*). A variable used in several places
-must match the same object in all of them, so ``?x -parent-> ?y``, ``?y
--parent-> ?z`` matches grandparents (``?x``) and their grandchildren
+must match the same object in all of them, so ``?x -has-parent-> ?y``, ``?y
+-has-parent-> ?z`` matches grandchildren (``?x``) and their grandparents
 (``?z``).
 
 Objects in a pattern that *aren't* variables (*mary*, above) stand for
@@ -129,10 +129,11 @@ Rules
 -----
 
 A rule says: whenever its antecedent matches, its consequent holds too. For
-example, an *uncle* rule:
+example, an *uncle* rule -- whoever has a parent with a brother has him as an
+uncle:
 
-- antecedent: ``?y -parent-> ?x``, ``?z -brother-> ?y``
-- consequent: ``?z -uncle-> ?x``
+- antecedent: ``?x -has-parent-> ?y``, ``?y -has-brother-> ?z``
+- consequent: ``?x -has-uncle-> ?z``
 
 .. figure:: ../images/user/rule-window.png
    :alt: The uncle rule
@@ -160,10 +161,11 @@ Definitions
 -----------
 
 A definition says the definiendum (the term being defined) and the definiens
-(its meaning) are the same thing. Eg: *brother*:
+(its meaning) are the same thing. Eg: *has-brother* -- someone's brother is a
+sibling of theirs who's male:
 
-- definiendum: ``?x -brother-> ?y``
-- definiens: ``?x -sibling-> ?y``, ``?x {gender: male}``
+- definiendum: ``?a -has-brother-> ?b``
+- definiens: ``?a -has-sibling-> ?b``, ``?b {gender: male}``
 
 .. figure:: ../images/user/definition-window.png
    :alt: A definition of brother (with ?a and ?b): a brother is a male sibling
@@ -172,9 +174,12 @@ A definition says the definiendum (the term being defined) and the definiens
 
 It works both ways, as two rules:
 
-- from the definiens: siblings who are male are concluded to be brothers;
-- from the definiendum: from a *brother* relation, both the *sibling*
-  relation and the brother's gender are concluded.
+- from the definiens: a sibling who's male is concluded to be a brother (in
+  the family example: alice *has-sibling* bob, who's male, so alice
+  *has-brother* bob -- and so, by the uncle rule, alice's child carol
+  *has-uncle* bob);
+- from the definiendum: from a *has-brother* relation, both the
+  *has-sibling* relation and the brother's gender are concluded.
 
 In the second direction, variables the definiendum doesn't mention are new
 objects (eg: a *grandparent* relation defined through an intermediate
