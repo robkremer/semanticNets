@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<library xmlns="http://example.org/lib">
+  <!-- a comment -->
+  <book id="b1" year="1999" note="signed">
+    <title>Gödel, Escher, Bach</title>
+    <author name="Hofstadter"/>
+    <chapter>Introduction</chapter>
+    <chapter>Three-Part Invention</chapter>
+  </book>
+  <book id="b2" year="2006">
+    <title>I Am a Strange Loop</title>
+    <author name="Hofstadter"/>
+  </book>
+  <magazine name="Byte">
+    <title>Byte, August 1985</title>
+  </magazine>
+</library>

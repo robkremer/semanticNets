@@ -1,0 +1,153 @@
+<?xml version="1.0"?>
+<library>
+  <book id="b0" kind="novel" year="1900" lang="en">
+    <title>Title 0</title>
+    <author name="A0"/>
+    <chapter n="1"/>
+    <chapter n="2"/>
+  </book>
+  <book id="b1" kind="textbook" year="1901" lang="en">
+    <title>Title 1</title>
+    <author name="A1"/>
+    <chapter n="1"/>
+    <chapter n="2"/>
+  </book>
+  <book id="b2" kind="poetry" year="1902" lang="en">
+    <title>Title 2</title>
+    <author name="A2"/>
+    <chapter n="1"/>
+    <chapter n="2"/>
+  </book>
+  <book id="b3" kind="biography" year="1903" lang="en">
+    <title>Title 3</title>
+    <author name="A3"/>
+    <chapter n="1"/>
+    <chapter n="2"/>
+  </book>
+  <book id="b4" kind="novel" year="1904" lang="en">
+    <title>Title 4</title>
+    <author name="A4"/>
+    <chapter n="1"/>
+    <chapter n="2"/>
+  </book>
+  <book id="b5" kind="textbook" year="1905" lang="en">
+    <title>Title 5</title>
+    <author name="A5"/>
+    <chapter n="1"/>
+    <chapter n="2"/>
+  </book>
+  <book id="b6" kind="poetry" year="1906" lang="en">
+    <title>Title 6</title>
+    <author name="A6"/>
+    <chapter n="1"/>
+    <chapter n="2"/>
+  </book>
+  <book id="b7" kind="biography" year="1907" lang="en">
+    <title>Title 7</title>
+    <author name="A7"/>
+    <chapter n="1"/>
+    <chapter n="2"/>
+  </book>
+  <book id="b8" kind="novel" year="1908" lang="en">
+    <title>Title 8</title>
+    <author name="A8"/>
+    <chapter n="1"/>
+    <chapter n="2"/>
+  </book>
+  <book id="b9" kind="textbook" year="1909" lang="en">
+    <title>Title 9</title>
+    <author name="A9"/>
+    <chapter n="1"/>
+    <chapter n="2"/>
+  </book>
+  <book id="b10" kind="poetry" year="1910" lang="en">
+    <title>Title 10</title>
+    <author name="A10"/>
+    <chapter n="1"/>
+    <chapter n="2"/>
+  </book>
+  <book id="b11" kind="biography" year="1911" lang="en">
+    <title>Title 11</title>
+    <author name="A11"/>
+    <chapter n="1"/>
+    <chapter n="2"/>
+  </book>
+  <book id="b12" kind="novel" year="1912" lang="en">
+    <title>Title 12</title>
+    <author name="A12"/>
+    <chapter n="1"/>
+    <chapter n="2"/>
+  </book>
+  <book id="b13" kind="textbook" year="1913" lang="en">
+    <title>Title 13</title>
+    <author name="A13"/>
+    <chapter n="1"/>
+    <chapter n="2"/>
+  </book>
+  <book id="b14" kind="poetry" year="1914" lang="en">
+    <title>Title 14</title>
+    <author name="A14"/>
+    <chapter n="1"/>
+    <chapter n="2"/>
+  </book>
+  <book id="b15" kind="biography" year="1915" lang="en">
+    <title>Title 15</title>
+    <author name="A15"/>
+    <chapter n="1"/>
+    <chapter n="2"/>
+  </book>
+  <book id="b16" kind="novel" year="1916" lang="en">
+    <title>Title 16</title>
+    <author name="A16"/>
+    <chapter n="1"/>
+    <chapter n="2"/>
+  </book>
+  <book id="b17" kind="textbook" year="1917" lang="en">
+    <title>Title 17</title>
+    <author name="A17"/>
+    <chapter n="1"/>
+    <chapter n="2"/>
+  </book>
+  <book id="b18" kind="poetry" year="1918" lang="en">
+    <title>Title 18</title>
+    <author name="A18"/>
+    <chapter n="1"/>
+    <chapter n="2"/>
+  </book>
+  <book id="b19" kind="biography" year="1919" lang="en">
+    <title>Title 19</title>
+    <author name="A19"/>
+    <chapter n="1"/>
+    <chapter n="2"/>
+  </book>
+  <book id="b20" kind="novel" year="1920" lang="en">
+    <title>Title 20</title>
+    <author name="A20"/>
+    <chapter n="1"/>
+    <chapter n="2"/>
+  </book>
+  <book id="b21" kind="textbook" year="1921" lang="en">
+    <title>Title 21</title>
+    <author name="A21"/>
+    <chapter n="1"/>
+    <chapter n="2"/>
+  </book>
+  <book id="b22" kind="poetry" year="1922" lang="en">
+    <title>Title 22</title>
+    <author name="A22"/>
+    <chapter n="1"/>
+    <chapter n="2"/>
+  </book>
+  <book id="b23" kind="biography" year="1923" lang="en">
+    <title>Title 23</title>
+    <author name="A23"/>
+    <chapter n="1"/>
+    <chapter n="2"/>
+  </book>
+  <book id="b24" kind="novel" year="1924" lang="en">
+    <title>Title 24</title>
+    <author name="A24"/>
+    <chapter n="1"/>
+    <chapter n="2"/>
+  </book>
+</library>

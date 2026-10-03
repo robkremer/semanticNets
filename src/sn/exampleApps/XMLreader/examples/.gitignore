@@ -1,0 +1,5 @@
+# made by XMLreader from the examples here
+*.snm
+*.snv
+# the examples themselves (the top .gitignore ignores *.xml)
+!*.xml
