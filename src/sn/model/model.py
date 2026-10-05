@@ -1013,6 +1013,21 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     return ret
       
   @override
+  def removeSuperDB(self, db:PRDb) -> None:
+    '''
+    As *PRDb.removeSuperDB()* -- but the system model (sn), which every model
+    builds on (it has the definitions Semantic Nets needs: node, relation,
+    isa, ...), can't be removed.
+
+    :param db: The model.
+    :type db: PRDb
+    :raises ValueError: if *db* is the system model.
+    '''
+    if db is self.TOP.model:
+      raise ValueError(f'The system model ("{db.url}") is a super-model of every model: it can\'t be removed.')
+    super().removeSuperDB(db)
+
+  @override
   def save(self, saveas:Optional[str]=None, overwrite=False, format:str=DEFAULT_STRATEGY) -> None:
     '''
     :param saveas:

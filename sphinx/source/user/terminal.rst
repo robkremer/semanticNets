@@ -56,6 +56,9 @@ Looking at things:
 ``validate``           check an object, or the model
 ``format``             set how objects are printed
 ``cache``              list the models in memory
+``super models``       list the model's super-models, or add (``--add
+                       file``) or remove (``--remove file``) one (see
+                       :doc:`files`)
 =====================  =======================================================
 
 Reasoning (see :doc:`reasoning`):

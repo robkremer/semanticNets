@@ -230,6 +230,49 @@ class ModelContext(CommandContext):
     clearReasoning(model)
     return f'Cleared the reasoning results for {model.name}.'
 
+  def super_models(self, /, add:str|None=None, remove:str|None=None, model:Model|None=None) -> str:
+    '''
+    List a model's super-models -- the models it builds on, whose contents it
+    uses as though they were its own (eg: the reasoner reasons over them too,
+    and their rules apply), though they aren't changed through it -- or add or
+    remove one. The system model (sn) is always one. They're saved with the
+    model (relative to its file, where they're near it).
+
+    :param add: A model file to add as a super-model: it must exist.
+    :type add: str
+    :param remove: A super-model (its file) to remove.
+    :type remove: str
+    :param model: The model. By default, the default model.
+    :type model: Model
+    :returns:
+    :rtype: str
+    '''
+    from util.persistence.pRef import PRDb
+    if model is None:
+      model = self.defaults["model"]
+    assert model is not None
+    messages:list[str] = []
+    for url, adding in ((add, True), (remove, False)):
+      if not url:
+        continue
+      try:
+        db = PRDb.getDB(url) # (an existing one only: from memory, or read from its file)
+        if not isinstance(db, Model):
+          raise ValueError(f'"{url}" isn\'t a model.')
+        if adding:
+          model.addSuperDB(db)
+          messages.append(f'Added "{db.url}" as a super-model of {model.name}.')
+        else:
+          if db not in model.superDBs:
+            raise ValueError(f'"{db.url}" isn\'t a super-model of {model.name}.')
+          model.removeSuperDB(db)
+          messages.append(f'Removed "{db.url}" from the super-models of {model.name}.')
+      except Exception as ex:
+        messages.append(f'{"Adding" if adding else "Removing"} "{url}": {ex}')
+    lines = [f'Super-models of {model.name}:'] + [f'  {db.url}' for db in model.superDBs] \
+          + [f'  {u}  (couldn\'t be read)' for u in model._missingSuperDBs]
+    return "\n".join(messages + lines)
+
   def answer_query(self, query:GraphObject, /, model:Model|None=None, engine:str="clingo") -> str:
     '''
     Answer a query: a context (eg: a query node, or a rule -- its antecedent)

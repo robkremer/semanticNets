@@ -13,6 +13,15 @@ refers to its model, and a model to the models it builds on (always including
 the system model, *sn*), so opening a view opens its model, and the model
 opens the models it uses.
 
+A model's **super-models** are the models it builds on: their contents are
+used as though they were its own -- the reasoner reasons over them too, and
+their rules apply -- though they aren't changed through it. The system model
+is always one. The terminal's ``super models`` command lists them, and adds
+(``--add file``) or removes (``--remove file``) one; they're saved with the
+model, relative to its file where they're near it. A super-model that can't be
+found when the model is opened is reported, and kept in the list for when it's
+there again.
+
 - **File | Open...** opens a view -- or a model, with a default view of it.
 - **File | New...** makes a new view, of a new or existing model.
 - **File | Save view** saves the window's view.
