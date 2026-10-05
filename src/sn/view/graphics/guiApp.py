@@ -253,14 +253,16 @@ class Application(tk.Tk):
     """
     applyEditAttrsBox(self, snPrefs, title="Semantic Nets Preferences", hideColumns=("type", "qualifiers", "note"))
 
-  def doOpen(self, ): # respond to the "Open..." menu item.
+  def doOpen(self, ): 
+    'Respond to the "Open..." menu item.'
     filename = filedialog.askopenfilename(
                 title=f"Open a view (.snv) file or the default view for a model (.snm) file.",
                 filetypes=[("View files", "*.snv *.snm"), ("xml files", "*.xml"), ("All Files", "*.*")])
     if filename:
       self.openWindow(filename)
   
-  def doNew(self, ): # respond to the "New..." menu item.
+  def doNew(self, ): 
+    'Respond to the "New..." menu item.'
     filename = filedialog.asksaveasfilename(
                 title=f"Specify a view (.snv) file (you will be asked for the corresponding model) or model (.snm) file to create a default view for.",
                 defaultextension=".snv",

@@ -376,10 +376,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
   @classmethod
   @override
   def getInstantiationInfo(cls)->InstantiationInfo:
-    '''
-    :returns:
-    :rtype: InstantiationInfo
-    '''
     from sn.view.graphics.sngView import SNGView
     return InstantiationInfo(
             cls, 

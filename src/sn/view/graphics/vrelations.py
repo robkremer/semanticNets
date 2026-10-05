@@ -170,10 +170,6 @@ class VRelation(VObject, AGRelation):
   @classmethod
   @override
   def getInstantiationInfo(cls)->InstantiationInfo:
-    '''
-    :returns:
-    :rtype: InstantiationInfo
-    '''
     sup = VObject.getInstantiationInfo()
     return InstantiationInfo(
             cls, 

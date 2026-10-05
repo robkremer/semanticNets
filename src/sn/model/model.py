@@ -1,5 +1,34 @@
 '''
-.. inheritance-diagram:: Model GraphObject Node Relation IsaIndividual
+This is the base definitions of the :py:class:`Model`, its contained objects,
+:py:class:`GraphObject` objects and specializations of these:
+
+  - :py:class:`Node`
+  
+    - :py:class:`Collection`
+    
+      - :py:class:`AllModelCollection`
+    
+  - :py:class:`Relation`
+  
+    - :py:class:`IsaIndividual`
+    
+Models "live" in memory (:py:attr:`util.persistence.pRef.PRDb.AllDbs`) because 
+one model can be shared by any number of views in the process. However, models
+don't know about views (though views obviously know about models) and comminicate
+with views only indirectly as Subject calling the the upddate() method of an
+Observer in an Observer design pattern.
+
+The various subtypes of :py:class:`GraphObject` model a typed graph of objects
+in higher order logic ("higher order logic" because  also relations
+participate in the type hierarchy). A subtype of :py:class:`Relation` called 
+:py:class:`IsaIndividual` is necessary to implement special behaviour to prevent
+endless recursion as *isa* is defined in terms of itself.
+
+:py:class:`Node` is a simple subclass of :py:class:`GraphObject`, but acts as
+the superclass to :py:class:`Collection` which forms the embodiment of subgraphs
+such as queries, rules, and definitions in the logic.
+
+.. inheritance-diagram:: Model GraphObject Node Relation IsaIndividual Collection AllModelCollection
     :parts: 1
     :private-bases:
     :top-classes: object
@@ -34,9 +63,9 @@ Created on Apr 21, 2026
 from __future__ import annotations
 from util.persistence.pRef import PRObject, PRDb, PReference, PRDbContainer
 from util.persistence.serialize import InstantiationInfo, ParamInfo, PropertyInfo,\
-  SerializableType
+  SerializableType, Serializable
 from util.persistence.serialize import DEFAULT_STRATEGY
-from util.utils import removeDuplicates, delOne
+from util.utils import removeDuplicates, delOne, extendsDoc
 from typing import override, cast, Generator, Callable, Optional,\
   Iterable, overload, Iterator, Any
 from util.attribute import AttributedObject, Attribute, NOVALUE
@@ -142,15 +171,19 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
 
   @classmethod
   @override
-  def getInstantiationInfo(cls)->InstantiationInfo:
+  @extendsDoc(Serializable)
+  def getInstantiationInfo(cls) -> InstantiationInfo:
     '''
     The *self._outgoing* and *self.incoming* lists and the *parents* constructor
     param are all left empty here as they will be restored by the relevant 
     :py:class:`Relation` objects.
-
-    :returns:
-    :rtype: InstantiationInfo
     '''
+    # :returns: A description of the constructor parameters and how to fill them
+    #   (conArgs, conKWArgs), and a further description of any additional data to
+    #   be filled after immediately after the constructor (postconSetters) and 
+    #   more after any contained objects have been fully constructed (finalSetters).
+    # :rtype: InstantiationInfo
+    # '''
     atObject = AttributedObject.getInstantiationInfo()
     prObject = PRObject.getInstantiationInfo()
     return InstantiationInfo(
@@ -279,19 +312,6 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     :param kwargs:
     :type kwargs:
     '''
-    # #TODO: This is a potential problem for chains of transitive relations.
-    # assert self._isConnected()
-    #
-    # children = self.getChildren()
-    #
-    # # unregister from the model
-    # self.db._unregister(self._id)
-    #
-    # # disconnect from related-to objects
-    # for r,_ in self._getIncoming():
-    #   r._disconnect(keep=self)
-    # for r,_ in self._getOutgoing():
-    #   r._disconnect(keep=self)
     super()._disconnect(**kwargs)
       
     for child in self.getChildren(): #TODO: could be more efficient by just fixing the parentCache's.
@@ -381,21 +401,6 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
       in *self._getOutgoing()*.
     :rtype: list[GraphObject]
     '''
-    # dispose of an inferred parents that can be dropped
-    #TODO: This could be very computationally expensive...
-    # more:bool = True
-    # rel:Relation
-    # other:GraphObject
-    # while more:
-    #   more = False
-    #   relsAndParents = list(self._getOutgoing(lambda r: isinstance(r, IsaIndividual)))
-    #   for rel,parent in relsAndParents:
-    #     if rel.inferred:
-    #       if parent in treeFlatten([p.getSupers() for r,p in relsAndParents if not r.inferred and p is not None]):
-    #         rel._disconnect(keep=None)
-    #         more = True
-    #         break
-    
     if self._parentsCache is not None and self.model._allowParentsCaching:
       return self._parentsCache
     
@@ -977,10 +982,6 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
   @override
   @classmethod
   def getInstantiationInfo(cls) -> InstantiationInfo:
-    '''
-    :returns:
-    :rtype: InstantiationInfo
-    '''
     ret:InstantiationInfo = super().getInstantiationInfo()
     ret.class_ = cls
     def setPrefs(slf:Serializable, prefs:SerializableType) -> None:
@@ -1121,7 +1122,6 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
         ret.append((go, res))
     return ret
   
-  @override
   def dependents(self) -> list[tuple[str, str]]:
     '''
     :returns: What still uses this model, as (kind, URL) pairs: ("view", ...)
@@ -1136,7 +1136,7 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     for observer, _topics in self._observers:
       if not getattr(observer, "_closed", False):
         ret.append(("view", getattr(observer, "url", repr(observer))))
-    for url, db in list(PRDb.AllDBs.items()):
+    for url, db in list(PRDb.AllDBs.items()): # @UndefinedVariable
       if db is self or not isinstance(db, Model):
         continue
       if self in db.superDBs or any(isinstance(o, Relation) and any(end is not None and end.db is self for end in (o.localSrc, o.localDst))
@@ -1166,7 +1166,7 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
       for end, links in ((obj.localSrc, "_outgoing"), (obj.localDst, "_incoming")):
         if end is not None and end.db is not self:
           delOne(getattr(end, links), obj, throw=False)
-    if PRDb.AllDBs.get(self.url) is self:
+    if PRDb.AllDBs.get(self.url) is self: # @UndefinedVariable
       del PRDb.AllDBs[self.url]
 
   def _makeDBContainer(self) -> AllModelCollection:
@@ -1419,14 +1419,6 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]): #type: ignore[misc]
   @classmethod
   @override
   def getInstantiationInfo(cls)->InstantiationInfo:
-    '''
-    The *self._outgoing* and *self.incoming* lists and the *parents* constructor
-    param are all left empty here as they will be restored by the relevant 
-    :py:class:`Relation` objects.
-
-    :returns:
-    :rtype: InstantiationInfo
-    '''
     def connectSrc(slf:Relation, source:str, isSource:bool):
       if source is not None and source!="None":
         sideText = "src" if isSource else "dst"
@@ -1854,14 +1846,6 @@ class IsaIndividual(Relation):
   @classmethod
   @override
   def getInstantiationInfo(cls)->InstantiationInfo:
-    '''
-    The *self._outgoing* and *self.incoming* lists and the *parents* constructor
-    param are all left empty here as they will be restored by the relevant 
-    :py:class:`Relation` objects.
-
-    :returns:
-    :rtype: InstantiationInfo
-    '''
     sup = Relation.getInstantiationInfo()
     return InstantiationInfo(
             cls, 
@@ -1897,11 +1881,13 @@ class IsaIndividual(Relation):
   def _endpointChanged(self, end:str, old:GraphObject|None, new:GraphObject|None) -> None:
     # the parents of our src (old and new, if it's the src that moved) have changed
     '''
-    :param end:
+    We want to change the end points from one object to another.
+    
+    :param end: The end to change. Either 'src' or 'dst'
     :type end: str
-    :param old:
+    :param old: The original object at that end point.
     :type old: GraphObject | None
-    :param new:
+    :param new: The new object to attach to.
     :type new: GraphObject | None
     '''
     for obj in ((old, new) if end == "src" else (self.localSrc,)):

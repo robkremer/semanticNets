@@ -826,10 +826,6 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   @override
   @classmethod
   def getInstantiationInfo(cls) -> InstantiationInfo:
-    '''
-    :returns:
-    :rtype: InstantiationInfo
-    '''
     def finalize(slf:Serializable, _:SerializableType):
       assert isinstance(slf, SNGView), f'Expected SNGView for param 1, got {type(slf)}.'
       for rel in list(slf.values()):

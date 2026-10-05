@@ -14,6 +14,8 @@ Subpackages
    :maxdepth: 4
 
    sn.controller
+   sn.exampleApps
+   sn.examples
    sn.model
    sn.view
 
