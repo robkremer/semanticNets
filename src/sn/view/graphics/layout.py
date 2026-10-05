@@ -330,8 +330,8 @@ class FindFree(LayoutHieristic):
     if node.modelObject is not None and (node.modelObject.isType() or isinstance(node, Node)) and aggressive:
       topLimit = max(topLimit, self.isaLevelSpacing*depth(node.modelObject)+self.topMargin)
       
-    # what a context contains, dropped in its pane, stays in it (see SNGView.containmentHomes())
-    if not isinstance(node, VRelation) and node.modelObject is not None:
+    # what a context contains (a relation's label too), dropped in its pane, stays in it (see SNGView.containmentHomes())
+    if node.modelObject is not None:
       win, pane = self.view.containmentHomes([node]).get(node, (None, ""))
       cx, cy = node.centerPt()
       px1, py1, px2, py2 = self.view.homeRect(win, pane) if win is not None else (0, 0, -1, -1)

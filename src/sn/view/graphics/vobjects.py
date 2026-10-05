@@ -836,6 +836,23 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         ret.append(vo)
     return ret
 
+  def carriedContents(self) -> list[VObject]:
+    '''
+    What moves with this context window when it's moved (see *moveTo()*): what
+    belongs in it (see *SNGView.containmentHomes()*: what it contains, and the
+    variables its contents use -- eg: a base rule's !a and !b), and anything
+    else of what it contains that's drawn inside it (eg: a label placed by
+    hand) and doesn't belong in another window.
+
+    :returns:
+    :rtype: list[VObject]
+    '''
+    if not self.isContextWindow():
+      return []
+    homes = self.view.containmentHomes()
+    ret = [vo for vo, (w, _) in homes.items() if w is self]
+    return ret + [vo for vo in self.windowContents() if vo not in homes and vo not in ret]
+
   def isResizable(self) -> bool:
     '''
     False iff "vis/minSize" == "vis/maxSize": the size is fixed, so it can\'t be resized by hand. (Windows always can be.)
@@ -1746,7 +1763,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       if (dx or dy) and carry:
         # (not objects that are themselves being moved -- eg: also selected -- nor
         # floating relation labels: they follow their ends, so they'd move twice)
-        carried = [vo for vo in self.windowContents() if not (self.selected() and vo.selected())
+        carried = [vo for vo in self.carriedContents() if not (self.selected() and vo.selected())
                    and not (callable(getattr(vo, "floating", None)) and vo.modelObject is not None and vo.modelObject.isIndividual() and vo.floating())]
         for vo in carried:
           vo.moveBy(dx, dy, adjustPos=False, fast=fast)
