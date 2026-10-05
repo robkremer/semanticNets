@@ -107,9 +107,11 @@ class Snapshot:
     :param relationWeights: The weight (0..1) of each relation type by name; "*" for the rest.
     :type relationWeights: dict[str, float]
     '''
-    self.objects:list[VObject] = [vo for vo in view.values() if vo is not None and isEligible(vo)]
-    index = {id(vo): i for i, vo in enumerate(self.objects)}
     homes = view.containmentHomes()
+    self.objects:list[VObject] = [vo for vo in view.values() if vo is not None and (isEligible(vo) or self._placed(vo, homes))]
+    index = {id(vo): i for i, vo in enumerate(self.objects)}
+    self.pinned:set[int] = {i for i, vo in enumerate(self.objects) if isinstance(vo, VRelation) and vo.modelObject.isIndividual() and vo.floating()}
+    "The relations' labels (by index) that float now, but are placed in their panes: moving them pins them (see *_placed()*)."
     self.owners:list[int|None] = [None] * len(self.objects)
     "The window (by index) each object is in (see *SNGView.containmentHomes()*), or None for one out on the canvas."
     self.regions:list[tuple[float, float, float, float]|None] = [None] * len(self.objects)
@@ -118,9 +120,8 @@ class Snapshot:
       w, pane = homes.get(vo, (None, ""))
       if w is not None and id(w) in index:
         self.owners[i] = index[id(w)]
-        panes = w.panes()
-        x1, y1, x2, y2 = panes[pane]
-        top = PANE_LABEL if len(panes) > 1 else 0.0
+        x1, y1, x2, y2 = view.homeRect(w, pane)
+        top = PANE_LABEL if len(w.panes()) > 1 else 0.0
         self.regions[i] = (x1 + PANE_MARGIN, y1 + PANE_MARGIN + top, x2 - PANE_MARGIN, y2 - PANE_MARGIN)
     self.chains:list[list[int]] = []
     "Each object (by index), then the window it's in, the window that's in, ..., out to the canvas."
@@ -135,10 +136,11 @@ class Snapshot:
     contains that's hidden (eg: in a collapsed window), and labels placed by
     hand inside it.
     '''
-    parents:dict[VObject, VObject] = {vo: w for vo, (w, _) in homes.items() if id(vo) not in index}
+    floats = lambda vo: isinstance(vo, VRelation) and vo.floating() # (follows its ends: not moved itself)
+    parents:dict[VObject, VObject] = {vo: w for vo, (w, _) in homes.items() if id(vo) not in index and not floats(vo)}
     for w in view.contextWindows():
       for vo in w.windowContents():
-        if id(vo) not in index and not (isinstance(vo, VRelation) and vo.floating()):
+        if id(vo) not in index and not floats(vo):
           parents.setdefault(vo, w)
     for vo in parents:
       w, steps = parents[vo], 0
@@ -174,12 +176,12 @@ class Snapshot:
         if not isinstance(rel, VRelation) or rel.modelObject is None or not rel._isConnected():
           continue
         weight = float(relationWeights.get(rel.modelObject.name, default))
-        if rel.modelObject.isType(): # (a relation type is a body itself: attached to it)
+        if rel.modelObject.isType() or id(rel) in index: # (a relation type, or a placed label, is a body itself: attached to it)
           link(vo, rel, weight)
         else: # (an individual relation: its ends attract one another)
           other = rel.dst if rel.src is vo else rel.src
           link(vo, other, weight)
-      if isinstance(vo, VRelation): # (a relation type: attracted to its ends)
+      if isinstance(vo, VRelation): # (a relation type, or a placed label: attracted to its ends)
         weight = float(relationWeights.get(vo.modelObject.name, default))
         for end in (vo.src, vo.dst):
           link(vo, end, weight)
@@ -215,6 +217,29 @@ class Snapshot:
           self.directed.append(pair)
     self.ranks:dict[int, int] = rankOf(self.directed)
     "Each object in a directed relation (by index): its layer -- 0 for those with no dst (eg: root classes), then one more than its deepest dst's."
+
+  @staticmethod
+  def _placed(vo:VObject, homes:dict) -> bool:
+    '''
+    Whether *vo* is a relation's label that's laid out as a body in its context
+    window (see *SNGView.containmentHomes()*): one the window contains whose
+    place floating between its ends wouldn't say which pane it's in -- an end
+    is elsewhere, eg: on the other side, or astride the divider (as in a rule
+    saying a -r-> b gives b -r-> a) -- or one placed by hand (it doesn't float).
+
+    :param vo: A view object.
+    :type vo: VObject
+    :param homes: Where contained objects belong (see *SNGView.containmentHomes()*).
+    :type homes: dict
+    :returns: True iff it's laid out in its pane.
+    :rtype: bool
+    '''
+    if not isinstance(vo, VRelation) or vo not in homes or vo.modelObject is None or not vo.modelObject.isIndividual() \
+       or not vo._isConnected() or vo.isHidden():
+      return False
+    if not vo.floating():
+      return True
+    return any(not isinstance(e, VObject) or homes.get(e) != homes[vo] for e in (vo.src, vo.dst))
 
   def siblings(self, i:int, j:int) -> tuple[int, int]|None:
     '''
@@ -588,6 +613,8 @@ class FieldsLayout():
     self.active = False
     'Indicates the animation is running.'
     self._start:dict[int, tuple[VObject, list[int]]] = {} # id(vo) -> (vo, its bounding box when the run started): for the undo
+    self._wasFloating:dict[int, bool] = {} # id(label) -> whether it floated when the run started, for the labels it pinned: for the undo
+    self._pins:set[int] = set() # id(label) of the floating labels this step places (see Snapshot.pinned)
     self._view = weakref.ref(view)
 
   @property
@@ -614,7 +641,7 @@ class FieldsLayout():
     if self.active:
       return
     self._killFlag = False
-    self._start = {}
+    self._start, self._wasFloating = {}, {}
     self.temperature, self._best, self._stalled = 1.0, float("inf"), 0
     self._misalignment, self._bestMisalignment, self._arranged = None, float("inf"), False
     self._straightening, self._straightened = 0, False
@@ -673,6 +700,7 @@ class FieldsLayout():
                    layerGain=self.settleLayerGain if settling else self.layerGain, straighten=straighten,
                    flowSpacing=self.flowSpacing, heat=(self.heat * self.temperature) if flow is not None and not straighten else 0.0,
                    arranging=flow is not None and not self._arranged)
+    self._pins = {id(snap.objects[i]) for i in snap.pinned}
     # (an object moves if it moves enough -- or if its window does: it mustn't be left behind)
     moving:set[int] = set()
     ret:list[tuple[VObject, tuple[float, float]]] = []
@@ -721,6 +749,9 @@ class FieldsLayout():
       for vo, (dx, dy) in changes:
         if vo._isConnected():
           self._start.setdefault(id(vo), (vo, list(vo.boundingBox())))
+          if id(vo) in self._pins: # (a floating label placed in its pane: pinned there -- see Snapshot._placed())
+            self._wasFloating.setdefault(id(vo), vo.floating())
+            vo._floatingAnchor = False
           vo.moveBy(dx, dy, adjustPos=False, carry=False) # (a window's contents have moves of their own)
       moved = len(changes) > 0
       self._cool(sum(abs(dx) + abs(dy) for _, (dx, dy) in changes))
@@ -815,6 +846,7 @@ class FieldsLayout():
     self.active = False
     logger.info("FieldsLayout animation off")
     start, self._start = self._start, {}
+    wasFloating, self._wasFloating = self._wasFloating, {}
     try:
       view = self.view
     except WeakrefError:
@@ -827,7 +859,7 @@ class FieldsLayout():
       with CompositeCommandMgr(view.context):
         for vo, bb in moved:
           now = vo.boundingBox()
-          view.context.move(vo, now[0], now[1], _oldPos=bb, adjustPos=False, _carry=False)
+          view.context.move(vo, now[0], now[1], _oldPos=bb, adjustPos=False, _carry=False, _wasFloating=wasFloating.get(id(vo)))
 
 class FieldsLayout_threaded(FieldsLayout):
   '''

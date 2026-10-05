@@ -333,8 +333,9 @@ class FindFree(LayoutHieristic):
     # what a context contains, dropped in its pane, stays in it (see SNGView.containmentHomes())
     if not isinstance(node, VRelation) and node.modelObject is not None:
       win, pane = self.view.containmentHomes([node]).get(node, (None, ""))
-      if win is not None and win.paneAt(node.centerPt()) == pane:
-        px1, py1, px2, py2 = win.panes()[pane]
+      cx, cy = node.centerPt()
+      px1, py1, px2, py2 = self.view.homeRect(win, pane) if win is not None else (0, 0, -1, -1)
+      if px1 <= cx <= px2 and py1 <= cy <= py2:
         w, h = rect[2] - rect[0], rect[3] - rect[1]
         inside = [max(leftLimit, px1 + expandFactor), max(topLimit, py1 + expandFactor),
                   min(rightLimit, px2 - expandFactor - w), min(bottomLimit, py2 - expandFactor - h)]

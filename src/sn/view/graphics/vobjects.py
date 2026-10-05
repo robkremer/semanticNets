@@ -1699,8 +1699,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       adjustPos = False
       dx, dy = x - bb[0], y - bb[1]
       if (dx or dy) and carry:
-        # (not objects that are themselves being moved -- eg: also selected)
-        carried = [vo for vo in self.windowContents() if not (self.selected() and vo.selected())]
+        # (not objects that are themselves being moved -- eg: also selected -- nor
+        # floating relation labels: they follow their ends, so they'd move twice)
+        carried = [vo for vo in self.windowContents() if not (self.selected() and vo.selected())
+                   and not (callable(getattr(vo, "floating", None)) and vo.modelObject is not None and vo.modelObject.isIndividual() and vo.floating())]
         for vo in carried:
           vo.moveBy(dx, dy, adjustPos=False, fast=fast)
     if bb[0] == x and bb[1] == y and not adjustPos:

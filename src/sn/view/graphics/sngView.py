@@ -115,7 +115,8 @@ class SNGContext(UIContext):
     self.view = view
     self.defaults["view"] = self.view
     
-  def move(self, obj:"VObject", x:int|float, y:int|float, _oldPos:list[int]|None=None, adjustPos:bool=True, _carry:bool=True): #type: ignore[name-defined]
+  def move(self, obj:"VObject", x:int|float, y:int|float, _oldPos:list[int]|None=None, adjustPos:bool=True, _carry:bool=True, #type: ignore[name-defined]
+           _wasFloating:bool|None=None):
     '''
     This is a dummy graphic command.
 
@@ -131,11 +132,14 @@ class SNGContext(UIContext):
     :type adjustPos: bool
     :param _carry:
     :type _carry: bool
+    :param _wasFloating:
+    :type _wasFloating: bool | None
     '''
     print ("dummy graphic command")
     
   class _Move(Command):
-    def __init__(self, obj:"VObject", x:int|float, y:int|float, _oldPos:list[int]|None=None, adjustPos:bool=True, _carry:bool=True): #type: ignore[name-defined]
+    def __init__(self, obj:"VObject", x:int|float, y:int|float, _oldPos:list[int]|None=None, adjustPos:bool=True, _carry:bool=True, #type: ignore[name-defined]
+                 _wasFloating:bool|None=None):
       '''
       :param obj:
       :type obj: VObject
@@ -168,6 +172,10 @@ class SNGContext(UIContext):
         layout's) whose contents are moved by their own commands passes False:
         otherwise redoing or undoing it would move them twice.
       :type _carry: bool
+      :param _wasFloating: [Optional] For a relation's label placed by a layout:
+        whether it floated (between its ends) before -- the move pins it (it
+        no longer floats), and undoing it puts that back.
+      :type _wasFloating: bool | None
       '''
       super().__init__("move")
       self.obj:VObject = obj
@@ -175,14 +183,17 @@ class SNGContext(UIContext):
       self.x, self.y = x, y
       self.adjustPos = adjustPos
       self.carry = _carry
+      self.pin = _wasFloating is not None
       if isinstance(self.obj, VRelation):
-        self.floating:bool = self.obj.floating()
+        self.floating:bool = self.obj.floating() if _wasFloating is None else _wasFloating
 
     @override
     def do(self) -> None:
       super().do()
       if self.oldPos is None:
         self.oldPos = self.obj.boundingBox()
+      if self.pin and isinstance(self.obj, VRelation):
+        self.obj._floatingAnchor = False # (directly: not recentred between its ends first)
       self.obj.moveTo(self.x, self.y, adjustPos=self.adjustPos, carry=self.carry)
       self.obj.view.repaintSoon() # (not now: a layout's run is many moves -- see repaintSoon())
   
@@ -2438,19 +2449,28 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     self.__dict__["_contextWindowsCache"] = (version, ret)
     return ret
 
+  BOTH_PANES = "both"
+  "The pseudo-pane (see *containmentHomes()*) of something a rule or definition uses on both sides: astride the divider."
+
   def containmentHomes(self, among:Iterable[VObject]|None=None) -> dict[VObject, tuple[VObject, str]]:
     '''
     Where each contained object belongs: the context window, and its pane
-    (see *VObject.panes()*), that it should sit in -- what layouts keep it in.
-    Nodes and relation types only (an individual relation's label floats
-    between its ends). An object contained by more than one context (eg: by a
-    rule and by another window on the rule) belongs in the innermost one whose
-    pane it's in, or, if it's in none, the smallest (the innermost, if they're
-    nested). A window belongs only in a bigger window (so nesting can't go
-    round in circles). In a rule or definition, the pane is the one its
-    containment says (antecedent, consequent, definiendum, definiens) -- the one
-    it's in, if it's in both -- or, for a plain "contains", the one it's in
-    (or nearer).
+    (see *VObject.panes()*), that it should sit in -- what layouts keep it in
+    (see *homeRect()*).
+
+    What a context contains directly -- nodes, relation types, and relations
+    (their labels) -- belongs in it. So do the variables a contained relation
+    uses but the context doesn't contain itself: its ends (eg: the base rules'
+    !a and !b) and its type (?r). An object contained by (or used in) more than
+    one context (eg: by a rule and by another window on the rule) belongs in
+    the innermost one whose pane it's in, or, if it's in none, the smallest
+    (the innermost, if they're nested). A window belongs only in a bigger
+    window (so nesting can't go round in circles).
+
+    In a rule or definition, the pane is the one its containment says
+    (antecedent, consequent, definiendum, definiens) -- the one it's in, if
+    it's in both -- or, for a plain "contains", the one it's in (or nearer). A
+    variable used on both sides belongs astride the divider (*BOTH_PANES*).
 
     :param among: Just these view objects (default: all of them).
     :type among: Iterable[VObject] | None
@@ -2459,13 +2479,22 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     '''
     m = self.model
     byObj:dict[int, dict[VObject, list[Relation]]] = {} # id(contained model object) -> {window: its containments of it}
+    uses:dict[int, dict[VObject, set[str|None]]] = {}   # id(variable) -> {window: the panes of the contained relations using it}
     for w in self.contextWindows():
       mo = w.modelObject
       if mo is None:
         continue
+      panes = w.panes()
       for r, _ in mo._getOutgoing(lambda r: r.isIndividual() and r.isa(m.CONTAINS)):
-        if r.localDst is not None and r.localDst is not mo:
-          byObj.setdefault(id(r.localDst), {}).setdefault(w, []).append(r)
+        d = r.localDst
+        if d is None or d is mo:
+          continue
+        byObj.setdefault(id(d), {}).setdefault(w, []).append(r)
+        if isinstance(d, Relation) and d.isIndividual():
+          pane = "contains" if "contains" in panes else next((p for p in panes if r.isa(self._paneType(p))), None)
+          for e in (d.localSrc, d.localDst, *d.getParents()):
+            if e is not None and e is not mo and e.isVariable():
+              uses.setdefault(id(e), {}).setdefault(w, set()).add(pane)
     if not byObj:
       return {}
     def area(w:VObject) -> float:
@@ -2474,9 +2503,12 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     ret:dict[VObject, tuple[VObject, str]] = {}
     for vo in (self.values() if among is None else among):
       mo = vo.modelObject if vo is not None else None
-      if mo is None or id(mo) not in byObj or not vo._isConnected() or (isinstance(vo, VRelation) and mo.isIndividual()):
+      if mo is None or not vo._isConnected():
         continue
-      cands = byObj[id(mo)]
+      direct = id(mo) in byObj
+      if not direct and (id(mo) not in uses or (isinstance(vo, VRelation) and mo.isIndividual())):
+        continue
+      cands:dict = byObj[id(mo)] if direct else uses[id(mo)]
       if not isinstance(vo, VRelation) and vo.isContextWindow():
         cands = {w: rs for w, rs in cands.items() if w is not vo and area(w) > area(vo)}
       if not cands:
@@ -2488,6 +2520,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       if "contains" in panes:
         ret[vo] = (w, "contains")
         continue
+      if not direct: # (used, not contained: on the side it's used on, or astride the divider)
+        used = cands[w]
+        ret[vo] = (w, next(iter(used)) if len(used) == 1 and None not in used else self.BOTH_PANES)
+        continue
       here = w.paneAt(center)
       said = [p for p in panes if any(r.isa(self._paneType(p)) for r in cands[w])]
       if said:
@@ -2497,6 +2533,26 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       else: # (the nearer pane)
         ret[vo] = (w, min(panes, key=lambda p: abs((panes[p][0] + panes[p][2]) / 2 - center[0])))
     return ret
+
+  def homeRect(self, w:VObject, pane:str) -> list[float]:
+    '''
+    The area (view coords) of window *w* that what belongs in its *pane* (see
+    *containmentHomes()*) is kept in: the pane; or, for *BOTH_PANES*, a band
+    astride the divider, a third of the window wide.
+
+    :param w: A context window.
+    :type w: VObject
+    :param pane: One of its panes' names, or *BOTH_PANES*.
+    :type pane: str
+    :returns: [x1, y1, x2, y2].
+    :rtype: list[float]
+    '''
+    panes = w.panes()
+    if pane != self.BOTH_PANES:
+      return panes[pane]
+    left, right = panes.values()
+    half = (right[2] - left[0]) / 6
+    return [left[2] - half, left[1], left[2] + half, left[3]]
 
   def restackWindows(self) -> None:
     '''
@@ -3334,7 +3390,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       if vo in homes:
         win, pane = homes[vo]
         x1, y1, x2, y2 = vo.boundingBox()
-        ex, ey = intoRect([x1 + dx, y1 + dy, x2 + dx, y2 + dy], [c + d for c, d in zip(win.panes()[pane], (dx, dy, dx, dy))],
+        ex, ey = intoRect([x1 + dx, y1 + dy, x2 + dx, y2 + dy], [c + d for c, d in zip(self.homeRect(win, pane), (dx, dy, dx, dy))],
                           margin=10.0, topMargin=22.0 if len(win.panes()) > 1 else 10.0)
         dx, dy = dx + ex, dy + ey
       shifts[vo] = (dx, dy)
