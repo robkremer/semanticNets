@@ -858,8 +858,11 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     # ret.class_ = cls
     # (its model's URL relative to the view's file if they're side by side -- see PRDb.relativeURL() -- so
     # a view and model copied together stay together; a relative URL is resolved against the view's file on reading)
+    def readModel(m:Any) -> Model: # (one already in memory -- eg: the system model, sn, which has no file -- as is)
+      db = PRDb.AllDBs.get(str(m))
+      return db if isinstance(db, Model) else Model(cast(str, m))
     ret.conArgs.append(ParamInfo("model", str, getter=lambda slf: PRDb.relativeURL(cast(SNGView,slf).model.url),
-                                 setter=lambda m: Model(cast(str,m))))
+                                 setter=readModel))
     ret.conKWArgs.append(ParamInfo("geometry", str, getter=lambda slf: cast(SNGView,slf).window.geometry()))
     ret.postconSetters.append(PropertyInfo("hides", str,
         lambda slf: ",".join(f"{k}={v}" for k, v in cast(SNGView, slf).hides.items()),
@@ -1084,6 +1087,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     addToMenuBar("File|Save model", self.doSaveModel)
     addToMenuBar("File|Save model as...", self.doSaveModelAs)
     addToMenuBar("File|Close model", self.doCloseModel)
+    addToMenuBar("File|Open super model", menu=self._superModelsMenu())
     addToMenuBar("Edit|Model preferences...", self.doModelPreferences, cascadePositions={"Edit": self._afterFileMenu()})
     addCheckToMenuBar("View|Animation toolbar", self._animationToolbarShown(), self._onAnimationToolbarItem,
                       cascadePositions={"View": self._afterFileMenu() + 1}) # (after "Edit", made just above)
@@ -1110,8 +1114,81 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     removeFromMenuBar("File|Save model as...")
     removeFromMenuBar("Edit|Model preferences...")
     removeFromMenuBar("File|Close model")
+    removeFromMenuBar("File|Open super model")
     removeFromMenuBar("View|Animation toolbar")
     removeFromMenuBar("View|Reasoning toolbar")
+
+  SN_VIEW = "sn.snv"
+  '''
+  The file name of the system model's (sn's) view, in the sn.model package's
+  folder: sn has no file of its own, so it's taken to be there -- with the base
+  rules (see *superModelView()*).
+  '''
+
+  def _superModelsMenu(self) -> tk.Menu:
+    '''
+    :returns: The "File | Open super model" cascade: an item for each of this
+      view's model's super-models (see *superModelView()*), nearest first.
+    :rtype: tk.Menu
+    '''
+    from sn.view.graphics.utils import _getMenuBar, getSubMenu
+    from sn.model.reasoner import baseRulesSource
+    old = self.__dict__.get("_superMenu")
+    parent = getSubMenu(_getMenuBar(), "File") # type: ignore[arg-type]
+    menu = self._superMenu = tk.Menu(parent, tearoff=0)
+    supers = self.model.allSuperDBs()
+    for db in supers:
+      if not isinstance(db, Model):
+        continue
+      if db is self.model.TOP.model:
+        label = "sn (the system model)"
+      elif baseRulesSource(db) is not None:
+        label = f"{os.path.splitext(db.name)[0]} (base rules)"
+      else:
+        label = PRDb.relativeURL(db.url, base=self.model.url)
+      menu.add_command(label=label, command=lambda db=db: self.openSuperModel(db))
+    if not supers:
+      menu.add_command(label="(none)", state=tk.DISABLED)
+    if old is not None:
+      self.canvas.after_idle(old.destroy) # (once it's no longer in the menu bar)
+    return menu
+
+  def superModelView(self, model:Model) -> tuple[str, str]:
+    '''
+    Where a super-model's view goes: next to its file, with the same name and
+    ".snv" -- for the base rules, next to the file they come from (see
+    *sn.model.reasoner.baseRulesSource()*), not the copy they're read from; for
+    the system model (sn), which has no file, in the sn.model package's folder
+    (see *SN_VIEW*).
+
+    :param model: A super-model.
+    :type model: Model
+    :returns: (the URL of the model's file -- or "" for sn, which has none --
+      and the URL of its view).
+    :rtype: tuple[str, str]
+    '''
+    import importlib.resources
+    from pathlib import Path
+    from sn.model.reasoner import baseRulesSource
+    if model is self.model.TOP.model:
+      return "", Path(str(importlib.resources.files("sn.model").joinpath(self.SN_VIEW))).as_uri()
+    src = baseRulesSource(model) or model.url
+    return src, fixURL(src, ".snv", replaceExt=True, mode="w")[0]
+
+  def openSuperModel(self, model:Model) -> None:
+    '''
+    Open a window on one of this view's model's super-models (see
+    *superModelView()*): its view, if it has one, or else a new one -- for the
+    base rules, of the file they come from (read-only).
+
+    :param model: The super-model.
+    :type model: Model
+    '''
+    app = self.window._root()
+    src, viewURL = self.superModelView(model)
+    if src and src != model.url and not urlExists(viewURL): # (the base rules: a view of the file they come from)
+      model = Model(src)
+    app.openViewOn(model, viewURL) #type: ignore[attr-defined]
 
   ANIMATION_SETTINGS = ("flowStrength", "e", "k", "heat")
   "The animation layout's numeric settings saved with the view (see *_animationState()*)."

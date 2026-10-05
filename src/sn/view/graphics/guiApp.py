@@ -382,6 +382,35 @@ class Application(tk.Tk):
       return None
 
 
+  def openViewOn(self, model:Model, viewURL:str) -> tk.Toplevel|None:
+    '''
+    Open a window on *model*: its view saved at *viewURL* if there is one
+    there (see *openWindow()*), or else a new view of it that'll be saved
+    there -- eg: a model with no file of its own (the system model, sn), or one
+    read from a copy (the base rules).
+
+    :param model: The model.
+    :type model: Model
+    :param viewURL: Where its view is (or will be) saved.
+    :type viewURL: str
+    :returns: The window.
+    :rtype: tk.Toplevel | None
+    '''
+    from sn.view.graphics.sngView import SNGView
+    if viewURL in self.windows:
+      self.windows[viewURL].lift()
+      return self.windows[viewURL]
+    if urlExists(viewURL):
+      return self.openWindow(viewURL)
+    try:
+      view = SNGView(viewURL, model=model, mode="w")
+    except Exception:
+      logger.error(f'While opening a view of "{model.url}" at "{viewURL}"', exc_info=True)
+      return None
+    self.defaultChildLocation = (self.defaultChildLocation[0] + 40, self.defaultChildLocation[1] + 40)
+    self.windows[view.url] = view.window
+    return view.window
+
   OPEN_WINDOWS_PREF = ".openWindows"
   '''The preference recording the windows open when the app last quit (see
   *rememberOpenWindows()*). (Its name starts with ".", so the Settings dialog

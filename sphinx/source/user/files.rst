@@ -26,6 +26,12 @@ found when the model is opened is reported, and kept in the list for when it's
 there again.
 
 - **File | Open...** opens a view -- or a model, with a default view of it.
+- **File | Open super model** opens a window on one of the window's model's
+  super-models (they're listed): its view -- the file next to it with the
+  same name, ending ".snv" -- or, if there isn't one, a new view that will be
+  saved there. The base rules' view is next to the file they come with; the
+  system model, sn, has no file, so its view is taken to be there too
+  (``sn.snv``). Both are read-only.
 - **File | New...** makes a new view, of a new or existing model.
 - **File | Save view** saves the window's view.
 - **File | Save model** saves the window's model.

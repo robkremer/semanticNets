@@ -78,6 +78,7 @@ import atexit
 import os
 from pathlib import Path
 import shutil
+from urllib.parse import urlparse, unquote
 import tempfile
 from typing import Any, ClassVar, Iterator
 from contextlib import contextmanager, ExitStack
@@ -766,6 +767,24 @@ _baseSpecs:dict[int, tuple[Model, list, list]] = {}
 "id(base rules model) -> (it, its RuleSpecs, its ConstraintSpecs): see *Reasoner.specs()*."
 _readingBase:list[bool] = []
 "Non-empty while *baseRuleModels()* is reading them: the base rules don't build on themselves."
+
+def baseRulesSource(model:Model) -> str|None:
+  '''
+  :param model: A model.
+  :type model: Model
+  :returns: If *model* is one of the base rules (see *baseRuleModels()*),
+    the URL of the file it's read from -- for package data, the package's own
+    file, not the copy it's actually read from -- else None.
+  :rtype: str|None
+  '''
+  path = urlparse(model.url).path if model.url.startswith("file:") else None
+  for src in BASE_RULES:
+    if isinstance(src, str):
+      if Model.absoluteURL(src) == model.url:
+        return model.url
+    elif path is not None and _baseFiles.get(str(src)) and os.path.realpath(_baseFiles[str(src)]) == os.path.realpath(unquote(path)):
+      return Path(str(src)).as_uri()
+  return None
 
 def baseRuleModels() -> list[Model]:
   '''
