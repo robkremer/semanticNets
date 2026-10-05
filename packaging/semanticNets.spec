@@ -38,6 +38,7 @@ MIN_MACOS = {"x86_64": "10.15", "arm64": "11.0"}
 
 datas = [
   (os.path.join(SRC, "sn", "model", "clingoReasoner.lp"), os.path.join("sn", "model")),
+  (os.path.join(SRC, "sn", "model", "baseRules.snm"), os.path.join("sn", "model")),
   (os.path.join(SRC, "sn", "examples"), os.path.join("sn", "examples")),
 ]
 html = os.path.join(ROOT, "sphinx", "build", "html")

@@ -1593,8 +1593,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     mo = self.modelObject
     name, text = splitWhere(typed)
     ret = {k: v for k, v in edits.items() if k != "name"}
-    if not name.startswith("?"):
-      logger.error(f'"{typed}": only variables (names starting with "?") have constraints. The name wasn\'t changed.')
+    if not name.startswith(("?", "!")):
+      logger.error(f'"{typed}": only variables (names starting with "?" or "!") have constraints. The name wasn\'t changed.')
       return ret
     base = edits.get(CONSTRAINTS)
     base = (base.value if isinstance(base, Attribute) else base) if CONSTRAINTS in edits else mo.getLocal(CONSTRAINTS, None)

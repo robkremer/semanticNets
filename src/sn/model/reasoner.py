@@ -72,6 +72,13 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from importlib import import_module
+import importlib.resources
+from importlib.resources.abc import Traversable
+import atexit
+import os
+from pathlib import Path
+import shutil
+import tempfile
 from typing import Any, ClassVar
 import sn
 from sn.model.model import Model, GraphObject, Node, Collection, Relation, IsaIndividual
@@ -98,6 +105,8 @@ _MESSAGES:dict[str,str] = {
   "rule_open_end":         "rule {0}: {1} in the consequent has no {2}",
   "rule_unsupported":      "rule {0}: {1} in the consequent isn't supported (yet)",
   "bad_constraints":       "{0}: the constraints of {1} can't be read: {2}",
+  "constraint_report":     "constraint {0}: {1} in its report isn't one of its variables",
+  "constraint_severity":   "constraint {0}: its severity is {1}; it should be error or warning",
   }
 "Message templates for violation codes: {0} is the subject, {1}... are the args."
 
@@ -158,6 +167,8 @@ class Violation:
   "The object the violation should be reported against."
   args:tuple[Any, ...]
   "Other objects (or plain values) involved, in rule-specific order."
+  template:str|None = field(default=None, compare=False)
+  "The message template (as *_MESSAGES*'), if not the code's: eg: a constraint's own message (see *ConstraintSpec*)."
 
   @property
   def message(self) -> str:
@@ -178,8 +189,13 @@ class Violation:
     :returns:
     :rtype: str
     '''
-    template = _MESSAGES.get(self.code, "{0}: " + self.code + " {1}")
-    return template.format(*(_label(x, relativeTo) for x in (self.subject,) + self.args))
+    template = self.template or _MESSAGES.get(self.code) or ("{0}: " + self.code + "".join(f" {{{i}}}" for i in range(1, len(self.args) + 1)))
+    labels = [_label(x, relativeTo) for x in (self.subject,) + self.args]
+    try:
+      return template.format(*labels)
+    except (IndexError, KeyError, ValueError): # (a user's template that doesn't fit)
+      return f'{template} ({", ".join(labels)})'
+
 
   def __str__(self) -> str:
     '''
@@ -599,7 +615,7 @@ def _spec(rule:GraphObject, parts:tuple[GraphObject, ...]|None, consequentType:G
 
 def rules(objects:list[GraphObject], kind:str="RULE") -> list[GraphObject]:
   '''
-  :returns: The rules (or with *kind* "DEFINITION", definitions) among *objects*: individuals that isa "rule" ("definition").
+  :returns: The rules (or with *kind* "DEFINITION" or "CONSTRAINT", definitions or constraints) among *objects*: individuals that isa "rule" ("definition", "constraint").
 
   :param objects:
   :type objects: list[GraphObject]
@@ -607,14 +623,110 @@ def rules(objects:list[GraphObject], kind:str="RULE") -> list[GraphObject]:
   :type kind: str
   :rtype: list[GraphObject]
   '''
-  ret = []
+  return _contexts(objects).get(kind, [])
+
+def _contexts(objects:list[GraphObject]) -> dict[str, list[GraphObject]]:
+  '''
+  :returns: The rules, definitions and constraints among *objects*, in one
+    pass: "RULE" -> the rules, ... (see *rules()*).
+  :param objects:
+  :type objects: list[GraphObject]
+  :rtype: dict[str, list[GraphObject]]
+  '''
+  ret:dict[str, list[GraphObject]] = {}
   for o in objects:
     try:
-      if o.isIndividual() and not o.isPatternElement() and o.isa(getattr(o.model, kind)):
-        ret.append(o)
+      if o.isIndividual() and isinstance(o, Node) and o.isa(o.model.CONTEXT) and not o.isPatternElement():
+        for kind in ("RULE", "DEFINITION", "CONSTRAINT"):
+          if o.isa(getattr(o.model, kind)):
+            ret.setdefault(kind, []).append(o)
     except Exception: # (eg: a half-built object)
       pass
   return ret
+
+@dataclass
+class ConstraintSpec:
+  '''
+  A constraint (a context that isa "constraint"), in an engine-neutral form:
+  its *pattern* must not match -- each match is a *Violation*, of *code* and
+  *severity*, reported against the first of *report* (the subject) with the
+  rest as its args. Read from the constraint's attributes (see *constraintOf()*).
+  '''
+  constraint:GraphObject
+  pattern:Pattern
+  "What it contains (see *patternOf()*)."
+  code:str
+  severity:str
+  "error or warning"
+  report:list[Any] = field(default_factory=list)
+  "The subject, then the args: the pattern's variables, or constants (*Sym*)."
+  template:str|None = None
+  "The message template ({0}: the subject; {1}...: the args), or None for the code's (see *_MESSAGES*)."
+  problems:list[tuple[str, tuple[Any, ...]]] = field(default_factory=list)
+  "(violation code, args): why the constraint can't be used (it's skipped)."
+
+CONSTRAINT_ATTRIBUTES:dict[str, str] = {
+  "code":     "The code of the violations it reports (default: the constraint's name).",
+  "severity": "error (the default) or warning.",
+  "report":   "What a violation is about, as a comma-separated list: its subject, then its arguments -- each one "
+              "of the constraint's variables (eg: ?r), or a word taken as is (eg: reflexive). By default, all "
+              "its variables, in name order (or the constraint itself if it has none).",
+  "message":  "The message, with {0} for the subject and {1}, {2}, ... for the arguments. By default, the "
+              "code's built-in message, if it has one.",
+  }
+"The attributes a constraint is read from: key -> note (see *constraintOf()*)."
+
+def constraintOf(constraint:GraphObject) -> ConstraintSpec:
+  '''
+  :param constraint:
+  :type constraint: GraphObject
+  :returns: The *ConstraintSpec* of *constraint*: its pattern is what it
+    contains (see *patternOf()*), and the rest is from its attributes (see
+    *CONSTRAINT_ATTRIBUTES*). Eg: a constraint named "irreflexive" containing
+    !a -?r-> !a, with ?r {irreflexive} and report "?r, !a", reports each
+    irreflexive relation type relating something to itself.
+  :rtype: ConstraintSpec
+  '''
+  pat = patternOf(constraint)
+  def attr(key:str) -> str|None:
+    try:
+      v = constraint.get(key, None)
+    except Exception:
+      return None
+    return None if v is None or str(v).strip() == "" else str(v).strip()
+  spec = ConstraintSpec(constraint, pat, attr("code") or constraint.name, (attr("severity") or "error").lower(),
+                        template=attr("message"))
+  spec.problems += [("bad_constraints", (x, err)) for x, err in pat.errors]
+  if spec.severity not in ("error", "warning"):
+    spec.problems.append(("constraint_severity", (spec.severity,)))
+  byName = {v.name: v for v in pat.variables}
+  text = attr("report")
+  if text is None:
+    spec.report = list(byName.values()) or [constraint]
+  else:
+    for tok in (t.strip() for t in text.split(",")):
+      if not tok:
+        continue
+      if tok.startswith(("?", "!")):
+        if tok in byName:
+          spec.report.append(byName[tok])
+        else:
+          spec.problems.append(("constraint_report", (tok,)))
+      else:
+        spec.report.append(Sym(tok))
+    if not spec.report or not isinstance(spec.report[0], GraphObject): # (the subject must be an object)
+      spec.report.insert(0, constraint)
+  return spec
+
+def constraintSpecs(objects:list[GraphObject]) -> list[ConstraintSpec]:
+  '''
+  :returns: The constraints among *objects*, as *ConstraintSpec* objects.
+
+  :param objects:
+  :type objects: list[GraphObject]
+  :rtype: list[ConstraintSpec]
+  '''
+  return [constraintOf(c) for c in rules(objects, "CONSTRAINT")]
 
 def ruleSpecs(objects:list[GraphObject]) -> list[RuleSpec]:
   '''
@@ -625,6 +737,61 @@ def ruleSpecs(objects:list[GraphObject]) -> list[RuleSpec]:
   :rtype: list[RuleSpec]
   '''
   return [ruleOf(r) for r in rules(objects)] + [s for d in rules(objects, "DEFINITION") for s in definitionSpecs(d)]
+
+# ── Base rules ────────────────────────────────────────────────────────────
+
+BASE_RULES_PLACEHOLDER = "file:///SEMANTIC_NETS_BASE_RULES"
+"The folder the base rules that come with the program are stored as being in (see *baseRuleModels()*)."
+
+BASE_RULES:list[str|Traversable] = [importlib.resources.files("sn.model").joinpath("baseRules.snm")]
+'''
+The models of base rules every reasoner applies to every model (see
+*Reasoner.ruleObjects()*), as well as the model's own and its super-models'.
+By default, the meaning of the relational properties (symmetric, transitive,
+reflexive, irreflexive, asymmetric) -- package data, made by
+*tools/makeBaseRules.py*. An application can change the list (eg: to its own
+base rules): a file or URL (str), or package data (Traversable). They're
+read-only.
+'''
+
+_baseFiles:dict[str, str] = {}
+"Package data in *BASE_RULES* -> the path of the copy it's read from (see *baseRuleModels()*)."
+_baseFolder:list[str] = []
+_baseSpecs:dict[int, tuple[Model, list, list]] = {}
+"id(base rules model) -> (it, its RuleSpecs, its ConstraintSpecs): see *Reasoner.specs()*."
+
+def baseRuleModels() -> list[Model]:
+  '''
+  :returns: The models of *BASE_RULES*, read (and write-locked) if need be.
+    Package data -- which may be in a zip, and is stored as being in
+    *BASE_RULES_PLACEHOLDER* -- is read from a copy in a temporary folder,
+    made to refer to where it then is.
+  :rtype: list[Model]
+  '''
+  ret:list[Model] = []
+  for src in BASE_RULES:
+    if isinstance(src, str):
+      url = src
+    else:
+      path = _baseFiles.get(str(src), "")
+      if not path or not os.path.exists(path): # (eg: the first time)
+        if not _baseFolder:
+          _baseFolder.append(os.path.realpath(tempfile.mkdtemp(prefix="snBaseRules-")))
+          atexit.register(shutil.rmtree, _baseFolder[0], True)
+        folder = os.path.join(_baseFolder[0], str(len(_baseFiles))) # (a folder each: they may have the same name)
+        os.makedirs(folder, exist_ok=True)
+        path = _baseFiles[str(src)] = os.path.join(folder, src.name)
+        with open(path, "w", encoding="utf-8") as fd:
+          fd.write(src.read_text(encoding="utf-8").replace(BASE_RULES_PLACEHOLDER, Path(folder).as_uri()))
+      url = Path(path).as_uri()
+    try:
+      m = Model.getDB(url, mode="")
+    except Exception:
+      logger.error(f'Couldn\'t read the base rules "{src}".', exc_info=True)
+      continue
+    m._writeLocked = True
+    ret.append(m)
+  return ret
 
 class Reasoner(ABC):
   '''
@@ -678,19 +845,29 @@ class Reasoner(ABC):
       import_module(f'sn.model.{engine}Reasoner')
     return cls.engines[engine](model, **kwargs)
 
-  def __init__(self, model:Model):
+  def __init__(self, model:Model, showSysRules:bool|None=None):
     '''
     :param model:
     :type model: Model
+    :param showSysRules: Whether the base rules (see *BASE_RULES*) show in
+      the results: their objects as data, and their conclusions as rule
+      conclusions (rather than plain inferences). By default, as the
+      "reasoner/showSysRules" preference says.
+    :type showSysRules: bool | None
     '''
     self.model = model
+    if showSysRules is None:
+      showSysRules = bool(sn.snPrefs.get("reasoner/showSysRules", False))
+    self.showSysRules:bool = showSysRules
 
   # ── Engine interface ─────────────────────────────────────────────────────
 
   @abstractmethod
   def run(self) -> Inferences:
     '''
-    Reason over the current state of the model.
+    Reason over the current state of the model. An engine reasons with the
+    rules, definitions and constraints of *ruleObjects()* (so including the
+    base rules), and passes what it finds through *_finish()*.
 
     :returns:
     :rtype: Inferences
@@ -801,10 +978,94 @@ class Reasoner(ABC):
         pending.extend(m.superDBs) #type: ignore[arg-type]
     return [obj for m in models for obj in list(m.values())]
 
+  def ruleObjects(self) -> list[GraphObject]:
+    '''
+    :returns: What the rules, definitions and constraints are read from:
+      *objects()*, and the base rules' (see *BASE_RULES*).
+    :rtype: list[GraphObject]
+    '''
+    ret = self.objects()
+    have = {id(o.model) for o in ret}
+    return ret + [o for m in baseRuleModels() if id(m) not in have for o in list(m.values())]
+
+  def specs(self) -> tuple[list[RuleSpec], list[ConstraintSpec]]:
+    '''
+    :returns: The rules and definitions (see *ruleSpecs()*), and the
+      constraints (see *constraintSpecs()*), of *ruleObjects()*. (The base
+      rules' are read once: they're read-only.)
+    :rtype: tuple[list[RuleSpec], list[ConstraintSpec]]
+    '''
+    objs = self.objects()
+    have = {id(o.model) for o in objs}
+    found = _contexts(objs)
+    rs = [ruleOf(r) for r in found.get("RULE", [])] + [s for d in found.get("DEFINITION", []) for s in definitionSpecs(d)]
+    cs = [constraintOf(c) for c in found.get("CONSTRAINT", [])]
+    for m in baseRuleModels():
+      if id(m) not in have:
+        cached = _baseSpecs.get(id(m))
+        if cached is None or cached[0] is not m:
+          objs = list(m.values())
+          cached = _baseSpecs[id(m)] = (m, ruleSpecs(objs), constraintSpecs(objs))
+        rs += cached[1]
+        cs += cached[2]
+    self._constraintSpecs = cs
+    return rs, cs
+
+  def isSystem(self, obj:Any) -> bool:
+    '''
+    :param obj:
+    :type obj: Any
+    :returns: True iff *obj* is (or is made by) one of the base rules (see *BASE_RULES*).
+    :rtype: bool
+    '''
+    if isinstance(obj, NewObject):
+      obj = obj.rule
+    return isinstance(obj, GraphObject) and any(obj.model is m for m in baseRuleModels())
+
+  def _finish(self, ret:Inferences) -> Inferences:
+    '''
+    What every engine does with its results, before returning them from *run()*:
+
+      - A violation is reported once per set of objects it's about: eg: an
+        asymmetric relation between a and b once, not again for b and a. (Of
+        such, the one whose args come first in the models' order is kept.)
+      - A constraint's violations get its message (see *ConstraintSpec*).
+      - Unless *showSysRules*, the base rules' conclusions aren't reported as
+        rule conclusions (*fired*, ...): what they conclude is in *holds*,
+        *inferred*, ... as any inference is.
+
+    :param ret:
+    :type ret: Inferences
+    :returns: *ret*, changed.
+    :rtype: Inferences
+    '''
+    def order(x:Any) -> tuple:
+      return (str(x.model.url), x._id) if isinstance(x, GraphObject) else ("", str(x))
+    def key(v:Violation) -> tuple:
+      return (v.code, v.severity, id(v.subject), tuple(sorted((order(a) for a in v.args))))
+    best:dict[tuple, Violation] = {}
+    for v in ret.violations:
+      k = key(v)
+      if k not in best or [order(a) for a in v.args] < [order(a) for a in best[k].args]:
+        best[k] = v
+    specs = getattr(self, "_constraintSpecs", None) # (as the engine used them: see specs())
+    templates = {s.code: s.template for s in (specs if specs is not None else self.specs()[1]) if s.template}
+    ret.violations = [v for v in ret.violations if best[key(v)] is v]
+    for v in ret.violations:
+      if v.template is None and v.code in templates:
+        v.template = templates[v.code]
+    if not self.showSysRules:
+      ret.fired = [x for x in ret.fired if not self.isSystem(x[0])]
+      ret.ruleAttrs = [x for x in ret.ruleAttrs if not self.isSystem(x[0])]
+      ret.ruleIsa = [x for x in ret.ruleIsa if not self.isSystem(x[0])]
+      ret.newObjects = [x for x in ret.newObjects if not self.isSystem(x)]
+    return ret
+
   def facts(self) -> list[Fact]:
     '''
     :returns: The model (and its super-models) as engine-neutral facts; see
-      the module documentation for the vocabulary.
+      the module documentation for the vocabulary. With *showSysRules*, the
+      base rules too (see *BASE_RULES*).
     :rtype: list[Fact]
     '''
     out:list[Fact] = []
@@ -812,7 +1073,7 @@ class Reasoner(ABC):
       out.append(("const", (Sym(key), getattr(self.model, key.upper()))))
 
     # Work through a queue that grows if an object refers to one we haven't seen.
-    queue = self.objects()
+    queue = self.ruleObjects() if self.showSysRules else self.objects()
     seen = {id(o) for o in queue}
     def ref(obj:GraphObject) -> GraphObject:
       if id(obj) not in seen:

@@ -458,12 +458,26 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
 
   def isVariable(self) -> bool:
     '''
-    :returns: True iff this is a variable -- its name starts with "?" -- which
-      stands for "something" in a pattern (a rule, definition or query).
+    :returns: True iff this is a variable -- its name starts with "?" or "!"
+      (see *isAnyVariable()*) -- which stands for "something" in a pattern (a
+      rule, definition or query).
     :rtype: bool
     '''
     try:
-      return self.name.startswith("?")
+      return self.name.startswith(("?", "!"))
+    except Exception: # eg: during construction, before it has a name
+      return False
+
+  def isAnyVariable(self) -> bool:
+    '''
+    :returns: True iff this is an "any" variable -- its name starts with "!"
+      (eg: "!x") -- which matches individuals and types alike. (An ordinary
+      variable, "?x", matches individuals if it's an individual, and types if
+      it's a type.)
+    :rtype: bool
+    '''
+    try:
+      return self.name.startswith("!")
     except Exception: # eg: during construction, before it has a name
       return False
 
@@ -973,6 +987,7 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     self.DEFINITION:Node = GORef.eval("$sn#definition") #type: ignore[assignment]
     self.DEFINIENDUM:Relation = GORef.eval("$sn#definiendum") #type: ignore[assignment]
     self.DEFINIENS:Relation = GORef.eval("$sn#definiens") #type: ignore[assignment]
+    self.CONSTRAINT:Node = GORef.eval("$sn#constraint") #type: ignore[assignment]
 
     if hasattr(self, "_initialized") or _reading: # This means the __new__ method has returned an existing object, so don't truck over it!
       return

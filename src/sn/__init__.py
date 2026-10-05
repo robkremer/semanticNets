@@ -176,6 +176,10 @@ PREFS:dict[str, tuple[Any, Any, str]] = {
     "For developers, when debug is on: show an object's cached drawing attributes in its tooltip."),
   "model/defaultModel": (str, "temp.xml",
     "The model the text interface (sn) uses when it's started without one (eg: by --model)."),
+  "reasoner/showSysRules": (bool, False,
+    "Show the base rules (the meaning of symmetric, transitive, ...: see sn.model.reasoner.BASE_RULES) in the "
+    "reasoner's results: their objects as data, and what they conclude as rule conclusions rather than plain "
+    "inferences. For debugging the base rules; best left off."),
   "text/wrap": (bool, False,
     "Whether long lines wrap in the terminal pane (else it scrolls sideways)."),
   "text/backgroundColor": ("color", "white",

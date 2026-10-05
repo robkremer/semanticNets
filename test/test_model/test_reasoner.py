@@ -156,6 +156,82 @@ class ReasonerSpec:
     # spot's tail12 (isa tail) refines the inherited has -> tail
     self.assertEqual(r.related(self.spot, self.has), [self.tail12])
 
+  def _fresh(self, name):
+    Path(f"temp_reasoner_{name}.xml").unlink(missing_ok=True) # (saved at exit by an earlier run)
+    m = Model(f"temp_reasoner_{name}.xml") # a separate model, so it doesn't disturb the others
+    return m, Node(m, [m.NODE], name="person")
+
+  def test0270propertiesOfTypes(self):
+    'The relational properties apply between types too, not just individuals.'
+    m, _ = self._fresh("types")
+    a, b, c = (Node(m, [m.NODE], name=n) for n in "abc")
+    partOf = Relation(m, [m.RELATION], name="partOf"); partOf["transitive"] = True
+    near = Relation(m, [m.RELATION], name="near"); near["symmetric"] = True
+    same = Relation(m, [m.RELATION], name="same"); same["reflexive"] = True
+    Relation(m, [partOf], a, b, individual=True); Relation(m, [partOf], b, c, individual=True)
+    Relation(m, [near], a, c, individual=True)
+    Relation(m, [same], b, c, individual=True)
+    r = self.ENGINE(m).run()
+    self.assertIn(c, r.related(a, partOf))
+    self.assertIn(a, r.related(c, near))
+    self.assertEqual(set(r.related(b, same)), {b, c})
+    self.assertEqual(set(r.related(c, same)), {c})
+
+  def test0275reflexive(self):
+    m, person = self._fresh("refl")
+    x, y = (Node(m, [person], individual=True, name=n) for n in "xy")
+    same = Relation(m, [m.RELATION], person, person, name="same"); same["reflexive"] = True
+    Relation(m, [same], x, y, individual=True)
+    r = self.ENGINE(m).run()
+    self.assertEqual(set(r.related(x, same)), {x, y})
+    self.assertEqual(set(r.related(y, same)), {y})
+    self.assertTrue(any(t is same and s is y and d is y for t, s, d in r.inferred))
+
+  def test0280propertiesOfRuleObjects(self):
+    'The objects the rules create get the relational properties too: a new twin is a twin both ways.'
+    m, person = self._fresh("twins")
+    for n in ("ann", "bob"):
+      Node(m, [person], individual=True, name=n)
+    twin = Relation(m, [m.RELATION], person, person, name="twin"); twin["symmetric"] = True
+    rule = Node(m, [m.RULE], individual=True, name="everyone has a twin")
+    P, P2, T = Node(m, [person], individual=True, name="?p"), Node(m, [m.NODE], individual=True, name="?p"), \
+               Node(m, [person], individual=True, name="?t")
+    Relation(m, [m.ANTECEDENT], rule, P, individual=True)
+    Relation(m, [m.CONSEQUENT], rule, Relation(m, [twin], P2, T, individual=True), individual=True)
+    q = Node(m, [m.QUERY], individual=True, name="twins?")
+    X, Y = Node(m, [m.NODE], individual=True, name="?x"), Node(m, [m.NODE], individual=True, name="?y")
+    Relation(m, [m.CONTAINS], q, Relation(m, [twin], X, Y, individual=True), individual=True)
+    rows = self.ENGINE(m).answer(q)
+    self.assertEqual(len(rows), 4, rows) # ann -> her twin, her twin -> ann; the same for bob
+
+  def test0285violationsOfProperties(self):
+    m, person = self._fresh("props")
+    a, b = (Node(m, [person], individual=True, name=n) for n in "ab")
+    asym = Relation(m, [m.RELATION], person, person, name="asym"); asym["asymmetric"] = True
+    Relation(m, [asym], a, b, individual=True); Relation(m, [asym], b, a, individual=True)
+    Relation(m, [asym], a, a, individual=True)
+    bad = Relation(m, [m.RELATION], person, person, name="bad")
+    bad["reflexive"] = True; bad["irreflexive"] = True
+    vs = self.ENGINE(m).run().violations
+    asyms = sorted((tuple(x.name for x in v.args), v.severity) for v in vs if v.code == "asymmetric" and v.subject is asym)
+    self.assertEqual(asyms, [(("a", "a"), "error"), (("a", "b"), "error")]) # once per pair
+    conflict = [v for v in vs if v.code == "property_conflict" and v.subject is bad]
+    self.assertEqual(len(conflict), 1)
+    self.assertTrue(conflict[0].message.endswith("is both reflexive and irreflexive"), conflict[0].message)
+    self.assertEqual([str(x) for x in conflict[0].args], ["reflexive", "irreflexive"])
+    self.assertFalse(any(v.code == "irreflexive" and v.subject is bad for v in vs)) # (bad relates nothing)
+
+  def test0290noSystemNoise(self):
+    'The results are about the model (and its super-models), with no trace of how the reasoner works.'
+    m, person = self._fresh("noise")
+    a = Node(m, [person], individual=True, name="a")
+    r = self.ENGINE(m).run()
+    models = {id(m), id(m.TOP.model)}
+    for t, s, d in r.holds:
+      self.assertTrue(all(id(x.model) in models for x in (t, s, d)), (t, s, d))
+    self.assertEqual(r.fired, [])
+    self.assertEqual([v for v in r.violations if v.code.startswith("rule")], [])
+
   def test0500portableQueries(self):
     r = self.reasoner
     self.assertEqual(r.related(self.fred, self.has), [self.car1])
