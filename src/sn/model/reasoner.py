@@ -79,7 +79,9 @@ import os
 from pathlib import Path
 import shutil
 import tempfile
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Iterator
+from contextlib import contextmanager, ExitStack
+from util.observer import Subject
 import sn
 from sn.model.model import Model, GraphObject, Node, Collection, Relation, IsaIndividual
 from sn.model.constraints import CONSTRAINTS, PRESENT, ValueVar
@@ -980,6 +982,14 @@ class Reasoner(ABC):
       they're rules, not data (see *ruleObjects()*).
     :rtype: list[GraphObject]
     '''
+    return [obj for m in self.dataModels() for obj in list(m.values()) if not getattr(obj, "inferred", False)]
+
+  def dataModels(self) -> list[Model]:
+    '''
+    :returns: The model and (transitively) its super-models -- but not the base
+      rules (see *BASE_RULES*), unless it's one of them (see *objects()*).
+    :rtype: list[Model]
+    '''
     base = [m for m in baseRuleModels() if m is not self.model]
     models:list[Model] = []
     pending = [self.model]
@@ -988,7 +998,7 @@ class Reasoner(ABC):
       if m not in models and not any(m is b for b in base):
         models.append(m)
         pending.extend(m.superDBs) #type: ignore[arg-type]
-    return [obj for m in models for obj in list(m.values())]
+    return models
 
   def ruleObjects(self) -> list[GraphObject]:
     '''
@@ -1077,7 +1087,16 @@ class Reasoner(ABC):
     '''
     :returns: The model (and its super-models) as engine-neutral facts; see
       the module documentation for the vocabulary. With *showSysRules*, the
-      base rules too (see *BASE_RULES*).
+      base rules too (see *BASE_RULES*). What a previous "reason" inferred
+      isn't among them (see *withoutInferences()*).
+    :rtype: list[Fact]
+    '''
+    with withoutInferences([*self.dataModels(), *baseRuleModels()]):
+      return self._facts()
+
+  def _facts(self) -> list[Fact]:
+    '''
+    :returns: *facts()*, with the inferred objects out of the way.
     :rtype: list[Fact]
     '''
     out:list[Fact] = []
@@ -1184,7 +1203,9 @@ def reason(model:Model, engine:str="clingo") -> Inferences:
   :returns:
   :rtype: Inferences
   '''
-  ret = Reasoner.create(model, engine).run()
+  reasoner = Reasoner.create(model, engine)
+  ret = reasoner.run()
+  materialize(model, ret, reasoner.dataModels())
   model.reasoning = ret #type: ignore[attr-defined]
   model.notify(("reasoned", (ret,)))
   return ret
@@ -1196,8 +1217,118 @@ def clearReasoning(model:Model) -> None:
   :param model:
   :type model: Model
   '''
+  with model.inferring(*model.allSuperDBs()): #type: ignore[arg-type]
+    for obj in _inferredRelations(model).values():
+      if obj._isConnected():
+        obj._disconnect()
   model.reasoning = None #type: ignore[attr-defined]
   model.notify(("reasoning cleared", ()))
+
+@contextmanager
+def withoutInferences(models:list[Model]) -> Iterator[None]:
+  '''
+  A context in which the inferred objects of *models* (see
+  *GraphObject.inferred*) are out of them -- so what the reasoner reads is
+  what's asserted: an inferred isa link, eg, would otherwise give its object
+  the type's attributes, and justify itself. They're put back (the same
+  objects) afterwards. Nobody's told: as far as the models' observers are
+  concerned, nothing happened.
+
+  :param models: The models.
+  :type models: list[Model]
+  '''
+  models = [m for i, m in enumerate(models) if not any(m is n for n in models[:i])]
+  objs = [o for m in models for o in m.inferredObjects()]
+  if not objs:
+    yield
+    return
+  with ExitStack() as stack:
+    for m in models: # (hold the models' notifications, to drop those about this)
+      stack.enter_context(Subject.ChangeMgr(m))
+    out:list[GraphObject] = []
+    with models[0].inferring(*models[1:]):
+      for o in objs:
+        if o._isConnected(): # (not one taken out with another: eg: a relation's isa link)
+          o._disconnect()
+          out.append(o)
+    try:
+      yield
+    finally:
+      with models[0].inferring(*models[1:]):
+        for o in reversed(out):
+          if not o._isConnected():
+            o._reconnect()
+      ids = {(id(o.model), o.id) for o in objs}
+      for m in models:
+        m._topics = [t for t in m._topics if not (t[0] in ("new", "del") and (id(m), t[1][0]) in ids)]
+
+def _inferredRelations(model:Model) -> dict[tuple[int, int, int], Relation]:
+  '''
+  :param model: A model.
+  :type model: Model
+  :returns: *model*'s inferred relations -- not the isa links of inferred
+    relations, which go with them -- by (id(type), id(src), id(dst)); an isa
+    link's type is the model's ISA.
+  :rtype: dict[tuple[int, int, int], Relation]
+  '''
+  ret:dict[tuple[int, int, int], Relation] = {}
+  for o in model.inferredObjects():
+    if not isinstance(o, Relation) or not o.isIndividual():
+      continue
+    src, dst = o.localSrc, o.localDst
+    if isinstance(o, IsaIndividual):
+      if src is not None and getattr(src, "inferred", False):
+        continue # (an inferred relation's own isa link)
+      t:GraphObject = model.ISA
+    else:
+      parents = [p for _, p in o._getOutgoing(lambda r: isinstance(r, IsaIndividual)) if p is not None]
+      if not parents:
+        continue
+      t = parents[0]
+    ret[(id(t), id(src), id(dst))] = o
+  return ret
+
+def materialize(model:Model, inferences:Inferences, models:list[Model]) -> None:
+  '''
+  Bring *model*'s inferred objects (see *GraphObject.inferred*) into line with
+  *inferences*: a relation for each relation it inferred or found inherited,
+  and an isa link for each one the rules concluded, between objects of the
+  model or its super-models (*models*). Those already there are kept (the
+  same objects, so the views keep them where they are); those no longer
+  inferred are removed. Objects the rules conclude exist (*NewObject*) aren't
+  made (yet): relations involving them are left out. None of this is saved,
+  dirties the model, or is undone (see *Model.inferring()*).
+
+  :param model: The model reasoned over.
+  :type model: Model
+  :param inferences: What the reasoner concluded.
+  :type inferences: Inferences
+  :param models: *model* and its super-models.
+  :type models: list[Model]
+  '''
+  want:dict[tuple[int, int, int], tuple[GraphObject, GraphObject, GraphObject]] = {}
+  for t, s, d in inferences.newFacts():
+    if isinstance(s, GraphObject) and isinstance(d, GraphObject) and isinstance(t, Relation):
+      want[(id(t), id(s), id(d))] = (t, s, d)
+  for _, x, t in inferences.ruleIsa:
+    if isinstance(x, GraphObject) and isinstance(t, GraphObject) and \
+       not any(p is t for _, p in x._getOutgoing(lambda r: isinstance(r, IsaIndividual) and not r.inferred)): # (not asserted already)
+      want[(id(model.ISA), id(x), id(t))] = (model.ISA, x, t)
+  have = _inferredRelations(model)
+  with model.inferring(*models):
+    for key, obj in have.items():
+      if key not in want and obj._isConnected():
+        obj._disconnect()
+    for key, (t, s, d) in want.items():
+      if key in have:
+        continue
+      try:
+        if t is model.ISA:
+          IsaIndividual(model, s, d, inferred=True)
+        else:
+          Relation(model, [t], s, d, individual=True, inferred=True)
+      except Exception as ex:
+        logger.warning(f"Couldn't add the inferred {t.name} from {s.name} to {d.name}: {type(ex).__name__}: {ex}")
 
 def reasoningFor(model:Model|None) -> Inferences|None:
   '''

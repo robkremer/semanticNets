@@ -75,6 +75,31 @@ The pipeline
 a snapshot -- not saved, and not updated as the model is edited -- until the
 next ``reason()`` or :py:func:`~sn.model.reasoner.clearReasoning`.
 
+What was inferred is also put in the model, as **inferred objects**
+(:py:attr:`GraphObject.inferred <sn.model.model.GraphObject.inferred>`):
+:py:func:`~sn.model.reasoner.materialize` makes a relation for each inferred
+or inherited relation, and an isa link for each one the rules concluded
+(objects the rules conclude exist aren't made yet). So the model's own
+queries -- :py:meth:`~sn.model.model.GraphObject.getRelatedTo`, isa,
+inherited attributes -- see them like anything else. They're kept apart from
+what's asserted:
+
+- they're **not saved** (the model's object table leaves them out), and
+  adding or removing them doesn't make the model dirty, or go on the undo
+  list -- even a write-locked model can be reasoned over (see
+  :py:meth:`Model.inferring() <sn.model.model.Model.inferring>`);
+- the reasoner **doesn't read them**: while it gathers its facts they're
+  taken out of the model and put back afterwards
+  (:py:func:`~sn.model.reasoner.withoutInferences`) -- otherwise an inferred
+  isa link, say, would give its object the type's attributes, and justify
+  itself;
+- the next ``reason()`` **keeps** those still inferred (the same objects),
+  adds the new ones, and removes the rest; ``clearReasoning()`` removes them
+  all.
+
+Views don't show inferred objects themselves (yet): they draw the results as
+dashed lines.
+
 The rule base
 -------------
 

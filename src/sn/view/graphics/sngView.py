@@ -1279,6 +1279,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
             return
           
           modelObj = topicData[1]
+          if getattr(modelObj, "inferred", False): # (what "reason" concluded: drawn as dashed lines -- see drawInferences())
+            continue
           logger.info(f'  Creating V{modelObj.__class__.__name__} for model object {modelObj}:{modelObj.__class__.__name__}')
           if (modelObj.isType() or isinstance(modelObj, Node)) and self.canvas: 
             applyEditAttrsBox(self.canvas, modelObj, title=modelObj.name, editKey="name")

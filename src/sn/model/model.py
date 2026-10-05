@@ -61,6 +61,7 @@ Created on Apr 21, 2026
 # SOFTWARE.                                                                     #
 #################################################################################
 from __future__ import annotations
+from contextlib import contextmanager
 from util.persistence.pRef import PRObject, PRDb, PReference, PRDbContainer
 from util.persistence.serialize import InstantiationInfo, ParamInfo, PropertyInfo,\
   SerializableType, Serializable
@@ -125,7 +126,8 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     (*PRDb*).
   '''
   
-  def __init__(self, db:Model, parents:Iterable[GraphObject]=[], individual:bool=False, name:Optional[str]=None, **kwargs):
+  def __init__(self, db:Model, parents:Iterable[GraphObject]=[], individual:bool=False, name:Optional[str]=None,
+               inferred:bool=False, **kwargs):
     '''
     :param db: The Model in which to create the object
     :type db: Model
@@ -137,6 +139,10 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
       may lead to ambiguities in searching for it my name, so uniqueness would be good...
       If the name is not given, it will inherit it's name from the first parent.
     :type name: Optional[str]
+    :param inferred: Whether it's something the reasoner concluded, not
+      something asserted (see *inferred*): its isa links are too. Set before
+      anyone is told it's there.
+    :type inferred: bool
     :param kwargs: Passed on to *super().__init__()*. *GraphObject* is normally
       combined with *AGRelation* via multiple inheritance (see *Relation*),
       and the two share *AGObject* as a common ancestor -- calling *super()*
@@ -154,20 +160,24 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     self._parentsCache:list[GraphObject]|None = []
     
     self._individual = individual
+    self.inferred:bool = inferred
+    '''
+    Whether this is something the reasoner concluded (see
+    *sn.model.reasoner.reason()*), not asserted: it's left out when the model
+    is saved, and the next "reason" keeps, replaces or removes it.
+    '''
 
     super().__init__(db=db, **kwargs)
 
     if parents is not None: # Will be None when reading in from persistent store
       for p in parents:
-        IsaIndividual(db, self, p)
+        IsaIndividual(db, self, p, inferred=inferred)
     if name is not None:
       try:
         self["name"] = name
       except Exception as ex:
         logger.warning(f'Cannot update name field ({ex.__class__.__name__}): {ex}')
       
-    self.inferred:bool = False
-    "Used to mark objects are inferred by the system so they may later be retracted."
 
   @classmethod
   @override
@@ -582,10 +592,10 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     pairs:
 
       - with *rel* (a relation type): (rel, other) for everything related
-        under it, asserted or inferred;
-      - without: (relation type, other) for each relation that was inferred or
-        inherited -- ie: not asserted -- since there's no individual Relation
-        for it.
+        under it, asserted or inferred (eg: under a supertype of the
+        relations, or through a transitive one);
+      - without: nothing -- the relations it inferred or found inherited are
+        in the model, as inferred relations (see *GraphObject.inferred*).
 
     [] if there are no reasoning results, or *rel* isn't a relation type.
 
@@ -605,9 +615,7 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
         return []
       others = reasoning.related(self, rel) if outgoing else reasoning.relatedFrom(self, rel)
       return [(rel, o) for o in others]
-    if outgoing:
-      return [(t, d) for t, s, d in reasoning.newFacts() if s is self]
-    return [(t, s) for t, s, d in reasoning.newFacts() if d is self]
+    return []
 
   @staticmethod
   def _addNew(pairs:list[tuple[Relation,GraphObject]], more:list[tuple[Relation,GraphObject]], byObjectOnly:bool) -> None:
@@ -640,7 +648,8 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     :param _seen:
     :type _seen: set[int] | None
     :param inferred: [default=True] Also include what the model's last "reason"
-      inferred (see *_inferredRelated()*).
+      inferred: its inferred relations (see *GraphObject.inferred*), and what
+      it found related under *rel* (see *_inferredRelated()*).
     :type inferred: bool
     :returns:
     :rtype: list[GraphObject] | list[tuple[Relation, GraphObject]]
@@ -655,13 +664,13 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     typeOk:Callable[[Relation], bool] = (lambda r: True) if rel is None else (cast(Callable[[Relation], bool], lambda r, typ=rel: r.isa(typ)))
     # pattern relations (inside rules etc.) aren't about the world -- unless we're a pattern element ourselves
     patternOk:Callable[[Relation], bool] = (lambda r: True) if self.isPatternElement() else (lambda r: not r.isPatternElement())
-    filtr:Callable[[Relation], bool] = lambda r: typeOk(r) and patternOk(r)
+    filtr:Callable[[Relation], bool] = lambda r: typeOk(r) and patternOk(r) and (inferred or not r.inferred)
     for r,other in self._getOutgoing(filtr):
       if other is not None:
         ret.append((r, other))
         if r.isTransitive() and other is not self:
           # add in any transitives, filtering out anything we already refer to
-          ret += [ret2 for ret2 in other.getRelatedTo(_seen=seen, inferred=False) if filtr(r)]
+          ret += [ret2 for ret2 in other.getRelatedTo(_seen=seen, inferred=inferred) if filtr(r)]
         if r.isReflexive() and other is not self and self not in seen:
           ret.append((r, self))
     if inferred and _seen is None: # the outermost call only
@@ -701,13 +710,13 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
   def getRelatedFrom(self, *, inferred:bool=True)                         -> list[tuple[Relation,GraphObject]]: ...
   @overload
   def getRelatedFrom(self, rel:Relation|None=None, *, inferred:bool=True) -> list[GraphObject]: ...
-  def getRelatedFrom(self, rel:Relation|None=None, *, inferred:bool=True) -> list[GraphObject]|list[tuple[Relation,GraphObject]]:
+  def getRelatedFrom(self, rel:Relation|None=None, *, inferred:bool=True, _snapshot:bool=True) -> list[GraphObject]|list[tuple[Relation,GraphObject]]:
     '''
     :param rel: If given, only relations that isa *rel*, and just the related
       objects are returned; otherwise (relation, object) pairs.
     :type rel: Relation | None
     :param inferred: [default=True] Also include what the model's last "reason"
-      inferred (see *_inferredRelated()*).
+      inferred (as for *getRelatedTo()*).
     :type inferred: bool
     :returns:
     :rtype: list[GraphObject] | list[tuple[Relation, GraphObject]]
@@ -717,15 +726,15 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     typeOk:Callable[[Relation], bool] = (lambda r: True) if rel is None else (cast(Callable[[Relation], bool], lambda r, typ=rel: r.isa(typ)))
     # pattern relations (inside rules etc.) aren't about the world -- unless we're a pattern element ourselves
     patternOk:Callable[[Relation], bool] = (lambda r: True) if self.isPatternElement() else (lambda r: not r.isPatternElement())
-    filtr:Callable[[Relation], bool] = lambda r: typeOk(r) and patternOk(r)
+    filtr:Callable[[Relation], bool] = lambda r: typeOk(r) and patternOk(r) and (inferred or not r.inferred)
     for r,other in self._getIncoming(filtr):
       if other is not None:
         ret.append((r, other))
         seen = [] if ret == [] else list(list(zip(*ret))[1])
         if r.isTransitive() and other is not self:
           # add in any transitives, filtering out anything we already refer to
-          ret += [ret2 for ret2 in other.getRelatedFrom(inferred=False) if ret2[1] not in seen and filtr(r)]
-    if inferred:
+          ret += [ret2 for ret2 in other.getRelatedFrom(inferred=inferred, _snapshot=False) if ret2[1] not in seen and filtr(r)]
+    if inferred and _snapshot:
       self._addNew(ret, self._inferredRelated(rel, outgoing=False), byObjectOnly=rel is not None)
     if rel is not None: # and not _returnPairs:
       return [o for _, o in ret] # return only the objects
@@ -1006,6 +1015,15 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
         initModelPrefs(prefs) # (any added since it was saved; and their notes)
     from sn.model.modelPrefs import ModelPrefs
     for p in ret.postconSetters: # the implicit super-models other than sn aren't saved: they're always there (and the base rules' file may be a temporary copy)
+      if p.name == "_db": # (inferred objects aren't saved: see GraphObject.inferred)
+        def assertedObjects(slf:Serializable) -> SerializableType:
+          from util.persistence.serialize import strdict
+          ret = strdict()
+          for k, v in cast(Model, slf)._db.items():
+            if not getattr(v, "inferred", False):
+              ret[str(k)] = v
+          return ret
+        p.getter = assertedObjects
       if p.name == "superDBs":
         def superDBURLs(slf:Serializable) -> SerializableType: # (as PRDb's)
           m = cast(Model, slf)
@@ -1018,6 +1036,37 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     ret.finalSetters.append(PropertyInfo("_", bool, setter=lambda slf,_t:cast(Model,slf).setDirty(False))) #type: ignore[arg-type]
     ret.finalSetters.append(PropertyInfo("_", bool, setter=lambda slf,_t:cast(Model,slf)._migrate())) #type: ignore[arg-type]
     return ret
+
+  @contextmanager
+  def inferring(self, *others:Model) -> Iterator[None]:
+    '''
+    A context in which the reasoner adds and removes inferred objects (see
+    *GraphObject.inferred*) in this model -- and connects them to objects in
+    *others* (eg: its super-models) -- without making any of them dirty: they
+    aren't saved. It works on write-locked models too: they can be reasoned
+    over, though what's inferred can't be marked as asserted in them.
+
+    :param others: Other models whose objects the inferred objects refer to.
+    :type others: Model
+    '''
+    models = [self, *[m for m in others if m is not self]]
+    state = [(m, m._writeLocked, m.isDirty()) for m in models]
+    for m in models:
+      m._writeLocked = False
+    try:
+      yield
+    finally:
+      for m, locked, dirty in state:
+        m._writeLocked = locked
+        if not dirty:
+          m.setDirty(False)
+
+  def inferredObjects(self) -> list[GraphObject]:
+    '''
+    :returns: This model's inferred objects (see *GraphObject.inferred*).
+    :rtype: list[GraphObject]
+    '''
+    return [o for o in self._db.values() if getattr(o, "inferred", False)]
 
   def _migrate(self) -> None:
     '''
@@ -1422,7 +1471,8 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]): #type: ignore[misc]
                src:GraphObject|None=None,
                dst:GraphObject|None=None,
                individual:bool=False,
-               name:Optional[str]=None):
+               name:Optional[str]=None,
+               inferred:bool=False):
     '''
     :param db: The Model in which to create the relation.
     :type db: Model
@@ -1436,6 +1486,8 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]): #type: ignore[misc]
     :type individual: bool
     :param name: The given name of the object; see *GraphObject.__init__()*.
     :type name: Optional[str]
+    :param inferred: See *GraphObject.__init__()*.
+    :type inferred: bool
     '''
     if not db.reading:
       for p in parents:
@@ -1451,7 +1503,7 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]): #type: ignore[misc]
     # arguments for both bases are passed here as keywords; each base
     # consumes the ones it recognizes and forwards the rest via its own
     # **kwargs (see *GraphObject.__init__()* and *AGRelation.__init__()*).
-    super().__init__(db=db, parents=parents, individual=individual, name=name, src=src, dst=dst)
+    super().__init__(db=db, parents=parents, individual=individual, name=name, src=src, dst=dst, inferred=inferred)
 
     
   @classmethod
@@ -1866,7 +1918,7 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]): #type: ignore[misc]
   # _disconnect()/_reconnect() of the src/dst ends are inherited from AGRelation.
 
 class IsaIndividual(Relation):
-  def __init__(self, db:Model, src:GraphObject|None=None, dst:GraphObject|None=None):
+  def __init__(self, db:Model, src:GraphObject|None=None, dst:GraphObject|None=None, inferred:bool=False):
     '''
     :param db:
     :type db: Model
@@ -1874,11 +1926,13 @@ class IsaIndividual(Relation):
     :type src: GraphObject | None
     :param dst:
     :type dst: GraphObject | None
+    :param inferred: See *GraphObject.__init__()*.
+    :type inferred: bool
     '''
     if not db.reading:
       if src is None or dst is None:
         raise ValueError("IsaIndividual.__init__(): ISA relations require both a source and destination.")
-    super().__init__(db, [], src, dst, individual=True)
+    super().__init__(db, [], src, dst, individual=True, inferred=inferred)
     
     
   @classmethod

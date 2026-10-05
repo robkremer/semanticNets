@@ -255,12 +255,38 @@ class TestClingo(ReasonerSpec, unittest.TestCase):
       self.assertIn(self.tail, self.rex.getRelatedTo(self.has))
       self.assertTrue(self.rex.isRelatedTo(self.has, self.tail))
       self.assertIn(self.rex, self.tail.getRelatedFrom(self.has))
-      self.assertIn((self.has, self.tail), [(r, o) for r, o in self.rex.getRelatedTo() if r is self.has])
+      self.assertIn(self.tail, [o for r, o in self.rex.getRelatedTo() if r.isa(self.has) and r.inferred]) # (an inferred relation, in the model)
       self.assertNotIn(self.tail, self.rex.getRelatedTo(self.has, inferred=False))
       self.assertEqual(self.fred.getRelatedTo(self.owns).count(self.car1), 1) # asserted: not duplicated
     finally:
       clearReasoning(self.m)
     self.assertNotIn(self.tail, self.rex.getRelatedTo(self.has))
+
+  def test0950inferredObjects(self):
+    from sn.model.reasoner import reason, clearReasoning
+    clearReasoning(self.m)
+    dirty = self.m.isDirty()
+    try:
+      reason(self.m, "clingo")
+      first = self.m.inferredObjects()
+      rels = [r for r in first if r.isa(self.has) and r.localSrc is self.rex and r.localDst is self.tail]
+      self.assertEqual(len(rels), 1)                                     # the inherited rex -has-> tail, as a relation
+      self.assertTrue(all(r.inferred for r, _ in rels[0]._getOutgoing()))  # and its isa link
+      self.assertEqual(self.m.isDirty(), dirty)                          # not something to save
+      reason(self.m, "clingo")
+      self.assertEqual({id(o) for o in self.m.inferredObjects()}, {id(o) for o in first}) # kept, not remade
+      info = type(self.m).getInstantiationInfo()
+      saved = next(p for p in info.postconSetters if p.name == "_db").getter(self.m)
+      self.assertFalse(any(getattr(o, "inferred", False) for o in saved.values()))       # not saved
+      self.m._writeLocked = True
+      try:
+        reason(self.m, "clingo")                                         # a write-locked model can be reasoned over
+        self.assertTrue(self.m.writeLocked())
+      finally:
+        self.m._writeLocked = False
+    finally:
+      clearReasoning(self.m)
+    self.assertEqual(self.m.inferredObjects(), [])
 
   def test0800reportAndCommands(self):
     from sn.controller.modelInterface import ModelContext
