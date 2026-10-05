@@ -881,6 +881,23 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     '''
     self.save(overwrite=True)
 
+  def doSaveModel(self) -> None:
+    '''
+    Save this view's model: the target of the "File | Save model" menu item
+    (added/removed like "Save view": see *onWindowFocusIn()*). Not a model
+    that's write-locked (eg: the system model).
+
+    :rtype: None
+    '''
+    model = self.model
+    if model is None:
+      return
+    if model.writeLocked():
+      logger.warning(f'"{model.url}" is write-locked: not saved.')
+      return
+    model.save()
+    logger.info(f'Saved "{model.url}".')
+
   def doCloseModel(self) -> None:
     '''
     Close this view's model: the target of the "File | Close model" menu item
@@ -907,6 +924,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :rtype: None
     '''
     addToMenuBar("File|Save view", self.doSaveView)
+    addToMenuBar("File|Save model", self.doSaveModel)
     addToMenuBar("File|Close model", self.doCloseModel)
     addCheckToMenuBar("View|Animation toolbar", self._animationToolbarShown(), self._onAnimationToolbarItem,
                       cascadePositions={"View": 1})
@@ -926,6 +944,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :rtype: None
     '''
     removeFromMenuBar("File|Save view")
+    removeFromMenuBar("File|Save model")
     removeFromMenuBar("File|Close model")
     removeFromMenuBar("View|Animation toolbar")
 

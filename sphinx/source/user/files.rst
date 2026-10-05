@@ -16,13 +16,14 @@ opens the models it uses.
 - **File | Open...** opens a view -- or a model, with a default view of it.
 - **File | New...** makes a new view, of a new or existing model.
 - **File | Save view** saves the window's view.
+- **File | Save model** saves the window's model.
 - **File | Close model** closes every window on the window's model (offering
   to save each changed view, and then the model), and forgets the model: open
   it again and it's read afresh from its file. (A model that another open
   model builds on can't be closed: models stay in memory until you quit.)
 - Modified models (and views) are offered for saving when you quit: you're
-  asked about each one. The terminal's ``save`` command saves a model at any
-  time.
+  asked about each one. **File | Save model** (or the terminal's ``save``
+  command) saves a model at any time.
 
 Copying and moving files
 ------------------------

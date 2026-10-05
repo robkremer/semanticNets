@@ -93,8 +93,8 @@ shown and how it's arranged) and **reasoning** -- and **Zoom**.
 The menu bar has:
 
 - **File**: **New...** (a new model, or a new view of a model), **Open...**,
-  **Save view** (the view of the window you're in) and **Close model** (its
-  model, and all the windows on it).
+  **Save view** (the view of the window you're in), **Save model** (its model)
+  and **Close model** (its model, and all the windows on it).
 - **View**: **Animation toolbar** (see :doc:`animation`).
 - **Window** and **Help**.
 
@@ -124,6 +124,6 @@ history: see :doc:`terminal`.
 Saving
 ------
 
-**File | Save view** saves the view (positions, what's shown, ...). Models are
-saved when you quit (you're asked about each one that's changed), or with the
-terminal's ``save`` command. See :doc:`files`.
+**File | Save view** saves the view (positions, what's shown, ...), and **File |
+Save model** the model. Models are also offered for saving when you quit
+(you're asked about each one that's changed). See :doc:`files`.
