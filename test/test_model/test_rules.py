@@ -221,6 +221,38 @@ class TestRules(unittest.TestCase):
     self.rel(m.CONTAINS, q, X)
     self.assertEqual(len(ClingoReasoner(m).answer(q)), 5)  # queries do see them
 
+  def test0710newObjectsInTheModel(self):
+    'What a rule concludes exists is put in the model, as inferred nodes, with its types, attributes and relations.'
+    from sn.model.reasoner import reason, clearReasoning
+    from sn.controller.modelInterface import ModelContext
+    m = self.m
+    mother = Relation(m, [m.RELATION], self.person, self.person, name="mother")
+    P, P2, M = self.var("?p", self.person), self.var("?p"), self.var("?m", self.person)
+    M["constraints"] = "alive"
+    self.rule("everyone has a mother", [P], [self.rel(mother, P2, M)])
+    reason(m)
+    nodes = [o for o in m.inferredObjects() if isinstance(o, Node)]
+    self.assertEqual(len(nodes), 5)
+    alices = [n for n in nodes if n.name == "(m for alice)"]
+    self.assertEqual(len(alices), 1)
+    am = alices[0]
+    self.assertTrue(am.isa(self.person))                                   # its type...
+    self.assertIs(am.get("alive", None), True)                             # ... its attributes...
+    self.assertIn(am, self.p["alice"].getRelatedTo(mother))                # ... and its relations
+    self.assertFalse(am.isVariable())                                      # (not a pattern variable)
+    reason(m)
+    self.assertEqual({id(o) for o in m.inferredObjects() if isinstance(o, Node)}, {id(n) for n in nodes}) # kept
+    rel = next(r for r, o in self.p["alice"]._getOutgoing(lambda r: r.inferred and r.isa(mother)))
+    ModelContext(m).mark_asserted(am)                                      # with the relation the rule gave it
+    self.assertFalse(am.inferred or rel.inferred)
+    reason(m)                                                              # alice has a mother now: no new one...
+    names = [o.name for o in m.inferredObjects() if isinstance(o, Node)]
+    self.assertNotIn("(m for alice)", names)
+    self.assertIn("(m for (m for alice))", names)                          # ... but she's a person: she has one
+    clearReasoning(m)
+    self.assertEqual([o for o in m.inferredObjects() if isinstance(o, Node)], [])
+    self.assertTrue(am._isConnected())                                     # (asserted: stays)
+
   # ---- definitions (rules both ways) ------------------------------------------
 
   def definition(self, name, definiendum, definiens):

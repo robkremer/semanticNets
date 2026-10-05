@@ -3182,10 +3182,12 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
   def _showInferred(self) -> None:
     '''
-    Show what the model's last "reason" inferred (see *GraphObject.inferred*):
-    a view object for each inferred relation between objects shown in this
-    view that doesn't have one yet -- drawn in its usual look, faded, with a
-    dashed line (dotted if it's inherited). Those no longer inferred go when
+    Show what the model's last "reason" inferred (see *GraphObject.inferred*),
+    for what this view shows: each object a rule concluded exists that's
+    related to something shown (beside it), and each inferred relation (and
+    a new object's isa links) between objects shown -- those that don't have
+    view objects yet. They're drawn in their usual look, faded; relations
+    with dashed lines (dotted if inherited). Those no longer inferred go when
     the model removes them. None of this makes the view dirty: they aren't
     saved with it.
     '''
@@ -3193,18 +3195,30 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     if not self.canvas:
       return
     dirty = self.isDirty()
-    for rel in _inferredRelations(self.model).values():
-      if not rel._isConnected() or self.findViewObjectForGraphObject(rel) is not None:
-        continue
-      ends = (rel.localSrc, rel.localDst)
-      if any(e is None or self.findViewObjectForGraphObject(e) is None for e in ends):
-        continue
+    shown = lambda o: o is not None and self.findViewObjectForGraphObject(o) is not None
+    def show(o:GraphObject, atPoint=None) -> None:
       try:
-        vo = self.makeViewObjectForGraphObject(rel)
+        vo = self.makeViewObjectForGraphObject(o, atPoint=atPoint)
         if vo is not None:
           self._exemptIfFiltered(vo)
+          if atPoint is not None:
+            vo.adjustPos() # (a free place, beside it)
       except Exception:
-        logger.exception(f"Couldn't show the inferred {rel.name}")
+        logger.exception(f"Couldn't show the inferred {o.name}")
+    inferred = [o for o in self.model.inferredObjects() if o._isConnected()]
+    for node in [o for o in inferred if getattr(o, "inferredKind", None) == "new" and not shown(o)]:
+      for r, other in [*node._getOutgoing(lambda r: r.inferred and not isinstance(r, IsaIndividual)),
+                       *node._getIncoming(lambda r: r.inferred and not isinstance(r, IsaIndividual))]:
+        if shown(other):
+          x1, y1, x2, y2 = self.findViewObjectForGraphObject(other).boundingBox()
+          show(node, (x2 + 60, y1))
+          break
+    rels = list(_inferredRelations(self.model).values()) \
+         + [r for o in inferred if getattr(o, "inferredKind", None) == "new"
+              for r, _ in o._getOutgoing(lambda r: isinstance(r, IsaIndividual) and r.inferred)] # (a new object's types)
+    for rel in rels:
+      if rel._isConnected() and not shown(rel) and shown(rel.localSrc) and shown(rel.localDst):
+        show(rel)
     if not dirty:
       self.setDirty(False)
 

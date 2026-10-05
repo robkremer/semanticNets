@@ -78,8 +78,13 @@ next ``reason()`` or :py:func:`~sn.model.reasoner.clearReasoning`.
 What was inferred is also put in the model, as **inferred objects**
 (:py:attr:`GraphObject.inferred <sn.model.model.GraphObject.inferred>`):
 :py:func:`~sn.model.reasoner.materialize` makes a relation for each inferred
-or inherited relation, and an isa link for each one the rules concluded
-(objects the rules conclude exist aren't made yet). So the model's own
+or inherited relation, an isa link for each one the rules concluded, and a
+node for each object the rules concluded exists
+(:py:class:`~sn.model.reasoner.NewObject`) -- named for the rule's variable
+and the match, eg: "(m for alice)" -- with the types, attributes and
+relations the rules gave it. Each one's ``inferredKind`` says what it is
+("inferred", "inherited", "rule" or "new"); a new object is kept from one
+"reason" to the next by its rule, variable and match. So the model's own
 queries -- :py:meth:`~sn.model.model.GraphObject.getRelatedTo`, isa,
 inherited attributes -- see them like anything else. They're kept apart from
 what's asserted:
@@ -103,9 +108,12 @@ what's asserted:
   (:py:meth:`ModelContext.mark_asserted() <sn.controller.modelInterface.ModelContext.mark_asserted>`,
   undoable; not in a write-locked model) makes one asserted, with what has to
   come with it (:py:meth:`GraphObject.assertedWith() <sn.model.model.GraphObject.assertedWith>`:
-  its inferred isa links, and a relation's inferred ends).
+  its inferred isa links, a relation's inferred ends, and the relations a
+  rule gave a new object -- without them the next ``reason()`` would make
+  another in its place).
 
-Views show the inferred relations between objects they show
+Views show the new objects related to objects they show (beside them), and
+the inferred relations between objects they show
 (``SNGView._showInferred()``, on the ``"reasoned"`` topic) as ordinary view
 objects that are drawn faded (``VObject.isInferred()``; the vis cache fades
 their colours toward the background) with dashed lines -- dotted for

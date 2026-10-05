@@ -155,8 +155,14 @@ that the matched object is of that type). Conclusions can feed other rules.
 
 A variable that appears only in the consequent stands for a **new object**:
 for each match, the reasoner concludes that some object exists that's related
-as the consequent says. (They're reported, and listed by **show
-conclusions**, but not added to the model.)
+as the consequent says -- unless the model already has one (related, and of
+the types, the consequent says). Each is added to the model as an
+**inferred** object, named for the variable and the match -- eg: "(m for
+alice)" for ``?m`` in "everyone has a mother" -- with the types, attribute
+values and relations the rule gives it, and shown (faded) beside what it's
+related to in each view. Like other inferred objects (see :doc:`reasoning`)
+it isn't saved, and **mark as asserted** in its menu makes it -- and the
+relations the rule gave it -- an ordinary part of the model.
 
 The reasoner reports rules it can't use, and why: a consequent relation with
 no source or destination, or (in some cases) a variable it can't bind.

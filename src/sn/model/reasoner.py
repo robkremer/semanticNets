@@ -1218,7 +1218,7 @@ def clearReasoning(model:Model) -> None:
   :type model: Model
   '''
   with model.inferring(*model.allSuperDBs()): #type: ignore[arg-type]
-    for obj in _inferredRelations(model).values():
+    for obj in [*_inferredRelations(model).values(), *model.inferredObjects()]: # (relations first: then the new objects)
       if obj._isConnected():
         obj._disconnect()
   model.reasoning = None #type: ignore[attr-defined]
@@ -1288,17 +1288,47 @@ def _inferredRelations(model:Model) -> dict[tuple[int, int, int], Relation]:
     ret[(id(t), id(src), id(dst))] = o
   return ret
 
+def _newObjectKey(n:NewObject) -> tuple:
+  '''
+  :param n: An object a rule concluded exists.
+  :type n: NewObject
+  :returns: What identifies it from one "reason" to the next: the rule, the
+    variable, and the match (by identity, for the model's objects).
+  :rtype: tuple
+  '''
+  return (id(n.rule), n.variable, tuple((name, id(v) if isinstance(v, GraphObject) else repr(v)) for name, v in n.bindings))
+
+def _newObjectName(n:NewObject, model:Model) -> str:
+  '''
+  :param n: An object a rule concluded exists.
+  :type n: NewObject
+  :param model: The model it's made in (objects are named relative to it).
+  :type model: Model
+  :returns: The name of the inferred node made for it, eg: "(m for alice)" --
+    not a variable's name (no leading "?" or "!": it isn't a pattern).
+  :rtype: str
+  '''
+  what = n.variable.lstrip("?!") or "new"
+  match = ", ".join(v.name if isinstance(v, GraphObject) else str(v) for _, v in n.bindings)
+  return f"({what} for {match})" if match else f"(new {what})"
+
 def materialize(model:Model, inferences:Inferences, models:list[Model]) -> None:
   '''
   Bring *model*'s inferred objects (see *GraphObject.inferred*) into line with
-  *inferences*: a relation for each relation it inferred or found inherited,
-  and an isa link for each one the rules concluded, between objects of the
-  model or its super-models (*models*). Those already there are kept (the
-  same objects, so the views keep them where they are); those no longer
-  inferred are removed. Objects the rules conclude exist (*NewObject*) aren't
-  made (yet): relations involving them are left out. None of this is saved,
-  dirties the model, or is undone (see *Model.inferring()*). Each relation's
-  *inferredKind* says whether it was "inferred" or "inherited".
+  *inferences*:
+
+  - a relation for each relation it inferred or found inherited, and an isa
+    link for each one the rules concluded, between objects of the model or
+    its super-models (*models*);
+  - a node for each object the rules concluded exists (*NewObject*), of the
+    types they said (or just a node), with the attributes they gave it, and
+    the relations they gave it.
+
+  Those already there are kept (the same objects, so the views keep them where
+  they are); those no longer inferred are removed. None of this is saved,
+  dirties the model, or is undone (see *Model.inferring()*). Each object's
+  *inferredKind* says what it is: "inferred" or "inherited" (a relation),
+  "rule" (a relation the rules gave a new object), or "new" (a new object).
 
   :param model: The model reasoned over.
   :type model: Model
@@ -1307,26 +1337,62 @@ def materialize(model:Model, inferences:Inferences, models:list[Model]) -> None:
   :param models: *model* and its super-models.
   :type models: list[Model]
   '''
-  want:dict[tuple[int, int, int], tuple[GraphObject, GraphObject, GraphObject]] = {}
+  want:dict[tuple[int, int, int], tuple[GraphObject, Any, Any]] = {}
+  kinds:dict[tuple[int, int, int], str] = {}
   inherited = {(id(t), id(s), id(d)) for t, s, d in inferences.inherited}
   for t, s, d in inferences.newFacts():
     if isinstance(s, GraphObject) and isinstance(d, GraphObject) and isinstance(t, Relation):
-      want[(id(t), id(s), id(d))] = (t, s, d)
+      key = (id(t), id(s), id(d))
+      want[key], kinds[key] = (t, s, d), "inherited" if key in inherited else "inferred"
   for _, x, t in inferences.ruleIsa:
     if isinstance(x, GraphObject) and isinstance(t, GraphObject) and \
        not any(p is t for _, p in x._getOutgoing(lambda r: isinstance(r, IsaIndividual) and not r.inferred)): # (not asserted already)
-      want[(id(model.ISA), id(x), id(t))] = (model.ISA, x, t)
+      key = (id(model.ISA), id(x), id(t))
+      want[key], kinds[key] = (model.ISA, x, t), "inferred"
+  # the new objects: kept by what identifies them (see _newObjectKey())
+  newOnes = {_newObjectKey(n): n for n in inferences.newObjects}
+  haveNodes = {o.inferredKey: o for o in model.inferredObjects()
+               if not isinstance(o, Relation) and getattr(o, "inferredKey", None) is not None}
   have = _inferredRelations(model)
   with model.inferring(*models):
+    nodes:dict[tuple, GraphObject] = {}
+    for key, n in newOnes.items():
+      node = haveNodes.get(key)
+      if node is None or not node._isConnected():
+        types = [t for _, x, t in inferences.ruleIsa if isinstance(x, NewObject) and _newObjectKey(x) == key and isinstance(t, GraphObject)]
+        try:
+          node = Node(model, types or [model.NODE], individual=True, name=_newObjectName(n, model), inferred=True)
+        except Exception as ex:
+          logger.warning(f"Couldn't add the new object {n}: {type(ex).__name__}: {ex}")
+          continue
+        node.inferredKey, node.inferredKind = key, "new"
+      nodes[key] = node
+    for _, x, k, v in inferences.ruleAttrs: # (their attributes -- the model's own objects' are just reported)
+      node = nodes.get(_newObjectKey(x)) if isinstance(x, NewObject) else None
+      if node is not None and node.get(k, None) != v:
+        try:
+          node[k] = v
+        except Exception as ex:
+          logger.warning(f"Couldn't give {node.name} {k}={v}: {type(ex).__name__}: {ex}")
+    real = lambda o: nodes.get(_newObjectKey(o)) if isinstance(o, NewObject) else o
+    for _, t, s, d in inferences.fired: # (the relations the rules gave the new objects)
+      if isinstance(s, NewObject) or isinstance(d, NewObject):
+        rs, rd = real(s), real(d)
+        if isinstance(t, Relation) and isinstance(rs, GraphObject) and isinstance(rd, GraphObject):
+          key = (id(t), id(rs), id(rd))
+          want[key], kinds[key] = (t, rs, rd), "rule"
     for key, obj in have.items():
       if key not in want and obj._isConnected():
         obj._disconnect()
+    for key, node in haveNodes.items():
+      if key not in nodes and node._isConnected():
+        node._disconnect()
     for key, (t, s, d) in want.items():
       try:
         obj = have.get(key)
-        if obj is None:
+        if obj is None or not obj._isConnected():
           obj = IsaIndividual(model, s, d, inferred=True) if t is model.ISA else Relation(model, [t], s, d, individual=True, inferred=True)
-        obj.inferredKind = "inherited" if key in inherited else "inferred" # (for how it's drawn)
+        obj.inferredKind = kinds[key] # (for how it's drawn)
       except Exception as ex:
         logger.warning(f"Couldn't add the inferred {t.name} from {s.name} to {d.name}: {type(ex).__name__}: {ex}")
 

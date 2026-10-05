@@ -925,7 +925,9 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     What has to be marked as asserted along with this inferred object (see
     *inferred*): itself, its inferred isa links, and -- for a relation -- its
     inferred ends (and theirs, ...). (They're all inferred, so not saved: an
-    asserted relation can't refer to an object that isn't.)
+    asserted relation can't refer to an object that isn't.) For an object a
+    rule concluded exists, the relations the rule gave it too: without them,
+    the next "reason" would make another one in its place.
 
     :returns: The inferred objects, this one first ([] if it isn't inferred).
     :rtype: list[GraphObject]
@@ -940,6 +942,9 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
       pending += [r for r, _ in o._getOutgoing(lambda r: isinstance(r, IsaIndividual) and r.inferred)]
       if isinstance(o, Relation):
         pending += [e for e in (o.localSrc, o.localDst) if e is not None]
+      elif getattr(o, "inferredKind", None) == "new": # (see sn.model.reasoner.materialize())
+        rule = lambda r: r.inferred and getattr(r, "inferredKind", None) == "rule"
+        pending += [r for r, _ in o._getOutgoing(rule)] + [r for r, _ in o._getIncoming(rule)]
     return ret
     
     
