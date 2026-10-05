@@ -58,8 +58,8 @@ def isEligible(obj:VObject) -> bool:
   '''
   Whether *obj* takes part in the fields layout as a body of its own: shown
   nodes, context windows and relation types -- not individual relations (their
-  labels float between their ends), hidden objects, or what's drawn inside a
-  context window (it moves with the window).
+  labels float between their ends) or hidden objects. What a context contains
+  is a body inside its window (see *Snapshot.owners*).
 
   :param obj: A view object.
   :type obj: VObject
@@ -69,9 +69,12 @@ def isEligible(obj:VObject) -> bool:
   mo = obj.modelObject
   if mo is None or not obj._isConnected() or obj.isHidden():
     return False
-  if isinstance(obj, VRelation) and not mo.isType():
-    return False
-  return not any(w is not obj and obj in w.windowContents() for w in obj.view.contextWindows())
+  return not (isinstance(obj, VRelation) and not mo.isType())
+
+PANE_MARGIN = 10.0
+"The space (view units) a layout keeps between what a context window contains and the edges of its pane."
+PANE_LABEL = 12.0
+"The extra space it keeps at the top of a labelled pane (a rule's or definition's), for the label."
 
 FLOW_DIRECTIONS:dict[str, tuple[float, float]] = {
   "down": (0.0, 1.0), "up": (0.0, -1.0), "right": (1.0, 0.0), "left": (-1.0, 0.0),
@@ -84,6 +87,12 @@ class Snapshot:
   The layout's view of the graph at one moment, as plain numbers -- so the
   forces can be calculated away from the GUI (eg: in a thread: Tk isn't
   thread-safe).
+
+  What a context contains (see *SNGView.containmentHomes()*) is a body in its
+  window: it's kept in its pane (a rule's antecedent, ...), and it's pushed and
+  pulled only by the other bodies in the same window -- a relation to something
+  outside pulls the window (or the window it's in, ...) instead. It moves with
+  its window, and within it.
   '''
   def __init__(self, view:SNView, relationWeights:dict[str, float], flowRelation:Any=None):
     '''
@@ -100,6 +109,43 @@ class Snapshot:
     '''
     self.objects:list[VObject] = [vo for vo in view.values() if vo is not None and isEligible(vo)]
     index = {id(vo): i for i, vo in enumerate(self.objects)}
+    homes = view.containmentHomes()
+    self.owners:list[int|None] = [None] * len(self.objects)
+    "The window (by index) each object is in (see *SNGView.containmentHomes()*), or None for one out on the canvas."
+    self.regions:list[tuple[float, float, float, float]|None] = [None] * len(self.objects)
+    "The area (x1, y1, x2, y2) the contained objects' footprints are kept in: their panes, less a margin; None for the rest."
+    for i, vo in enumerate(self.objects):
+      w, pane = homes.get(vo, (None, ""))
+      if w is not None and id(w) in index:
+        self.owners[i] = index[id(w)]
+        panes = w.panes()
+        x1, y1, x2, y2 = panes[pane]
+        top = PANE_LABEL if len(panes) > 1 else 0.0
+        self.regions[i] = (x1 + PANE_MARGIN, y1 + PANE_MARGIN + top, x2 - PANE_MARGIN, y2 - PANE_MARGIN)
+    self.chains:list[list[int]] = []
+    "Each object (by index), then the window it's in, the window that's in, ..., out to the canvas."
+    for i in range(len(self.objects)):
+      chain = [i]
+      while (o := self.owners[chain[-1]]) is not None and len(chain) <= len(self.objects):
+        chain.append(o)
+      self.chains.append(chain)
+    self.passengers:dict[int, list[VObject]] = {}
+    '''
+    What moves with each window (by index) that isn't a body itself: what it
+    contains that's hidden (eg: in a collapsed window), and labels placed by
+    hand inside it.
+    '''
+    parents:dict[VObject, VObject] = {vo: w for vo, (w, _) in homes.items() if id(vo) not in index}
+    for w in view.contextWindows():
+      for vo in w.windowContents():
+        if id(vo) not in index and not (isinstance(vo, VRelation) and vo.floating()):
+          parents.setdefault(vo, w)
+    for vo in parents:
+      w, steps = parents[vo], 0
+      while id(w) not in index and w in parents and steps < len(parents):
+        w, steps = parents[w], steps + 1
+      if id(w) in index:
+        self.passengers.setdefault(index[id(w)], []).append(vo)
     self.positions:list[tuple[float, float]] = [vo.centerPt() for vo in self.objects]
     "The objects' centres, in the same order."
     self.halfSizes:list[tuple[float, float]] = []
@@ -137,8 +183,17 @@ class Snapshot:
         weight = float(relationWeights.get(vo.modelObject.name, default))
         for end in (vo.src, vo.dst):
           link(vo, end, weight)
-    self.links:list[tuple[int, int, float]] = [(i, j, w) for (i, j), w in links.items()]
-    "(i, j, weight): pairs of objects (by index) attracted to one another."
+    lifted:dict[tuple[int, int], float] = {}
+    for (i, j), w in links.items():
+      pair = self.siblings(i, j)
+      if pair is not None:
+        key = (min(pair), max(pair))
+        lifted[key] = max(w, lifted.get(key, 0.0))
+    self.links:list[tuple[int, int, float]] = [(i, j, w) for (i, j), w in lifted.items()]
+    '''
+    (i, j, weight): pairs of objects (by index) attracted to one another: always
+    in the same window (or both out on the canvas) -- see *siblings()*.
+    '''
     self.directed:list[tuple[int, int]] = []
     "(src, dst): the objects (by index) at the ends of each relation of the flow relation type."
     if flowRelation is not None:
@@ -153,11 +208,36 @@ class Snapshot:
         except Exception:
           continue
         i, j = index.get(id(rel.src)), index.get(id(rel.dst))
-        if i is not None and j is not None and i != j and (i, j) not in seen:
-          seen.add((i, j))
-          self.directed.append((i, j))
+        pair = self.siblings(i, j) if i is not None and j is not None else None
+        # (only out on the canvas: the current layers the canvas, not inside windows)
+        if pair is not None and self.owners[pair[0]] is None and pair not in seen:
+          seen.add(pair)
+          self.directed.append(pair)
     self.ranks:dict[int, int] = rankOf(self.directed)
     "Each object in a directed relation (by index): its layer -- 0 for those with no dst (eg: root classes), then one more than its deepest dst's."
+
+  def siblings(self, i:int, j:int) -> tuple[int, int]|None:
+    '''
+    What a relation between objects *i* and *j* pulls together: they
+    themselves if they're in the same window (or both out on the canvas);
+    otherwise the windows they're in (or they themselves) that are side by
+    side, in the innermost window that has them both (or out on the canvas).
+
+    :param i: An object's index.
+    :type i: int
+    :param j: Another object's index.
+    :type j: int
+    :returns: The pair (by index), in the same order; None if one is (in) the other.
+    :rtype: tuple[int, int] | None
+    '''
+    ci, cj = self.chains[i], self.chains[j]
+    inJ = set(cj)
+    common = next((a for a in ci if a in inJ), None)
+    if common == i or common == j:
+      return None
+    if common is None:
+      return ci[-1], cj[-1]
+    return ci[ci.index(common) - 1], cj[cj.index(common) - 1]
 
 def rankOf(directed:list[tuple[int, int]]) -> dict[int, int]:
   '''
@@ -232,7 +312,8 @@ def misalignment(snap:Snapshot, flow:tuple[float, float]) -> float:
 
 def forces(snap:Snapshot, e:float, gMaxDist:float, k:float, kMinDist:float, maxDisplacement:float,
            flow:tuple[float, float]|None=None, flowStrength:float=0.0, flowSpacing:float=40.0,
-           heat:float=0.0, arranging:bool=False, layerGain:float=0.2, straighten:bool=False) -> list[tuple[float, float]]:
+           heat:float=0.0, arranging:bool=False, layerGain:float=0.2, straighten:bool=False,
+           pull:float=30.0) -> list[tuple[float, float]]:
   '''
   The displacement of each object in *snap* (in its order), with distances
   measured between the objects' edges (see *gap()*), so big objects -- context
@@ -253,7 +334,15 @@ def forces(snap:Snapshot, e:float, gMaxDist:float, k:float, kMinDist:float, maxD
     out, so the current arranges things without carrying them away. (Across
     the current, repulsion and the relations' pull arrange them as usual.);
 
-  each capped at *maxDisplacement* in x and in y. The canvas's top and left edges
+  each capped at *maxDisplacement* in x and in y.
+
+  What's in a context window (see *Snapshot.owners*) is pushed and pulled only
+  by what's in the same window, and kept in its pane (see *Snapshot.regions*):
+  anything outside it floats in (by up to *pull*, or a quarter of the way, in a
+  step), and nothing inside it is moved out. Its move is on top of its
+  window's: it moves with the window, and within it.
+
+  The canvas's top and left edges
   are kept by sliding the whole arrangement down or right exactly as needed, so
   no object's footprint -- its box and any text
   spilling out of it -- goes off them, without stopping objects there one by one.
@@ -289,14 +378,19 @@ def forces(snap:Snapshot, e:float, gMaxDist:float, k:float, kMinDist:float, maxD
   :param straighten: Put the objects the current layers onto their layers' lines: along the current, they move
     only toward their layers (other forces act on them only across it).
   :type straighten: bool
-  :returns: (dx, dy) for each object.
+  :param pull: The least a contained object outside its pane is moved toward it in a step (when it's further).
+  :type pull: float
+  :returns: (dx, dy) for each object: how far it moves on the canvas (with its window's move).
   :rtype: list[tuple[float, float]]
   '''
   n = len(snap.positions)
   fx, fy = [0.0] * n, [0.0] * n
   across = flow is not None and arranging # (ranked objects repel only across the current: see *arranging*)
-  for i in range(n): # repulsion
+  owners = snap.owners
+  for i in range(n): # repulsion (only between objects in the same window, or both out on the canvas)
     for j in range(i + 1, n):
+      if owners[i] != owners[j]:
+        continue
       g, ux, uy = gap(snap, i, j)
       if g > gMaxDist:
         continue
@@ -338,24 +432,51 @@ def forces(snap:Snapshot, e:float, gMaxDist:float, k:float, kMinDist:float, maxD
       fy[i] += (random() * 2 - 1) * heat
   cap = lambda v: max(-maxDisplacement, min(maxDisplacement, v))
   capped = [(cap(fx[i]), cap(fy[i])) for i in range(n)]
-  if ((flow is not None and flowStrength > 0) or heat > 0) and n: # (no overall drift: take out the average movement)
-    mx, my = sum(d[0] for d in capped) / n, sum(d[1] for d in capped) / n
-    capped = [(dx - mx, dy - my) for dx, dy in capped]
+  if not n:
+    return []
+  top = [i for i in range(n) if owners[i] is None] # (out on the canvas: the rest move with their windows)
+  if ((flow is not None and flowStrength > 0) or heat > 0) and top: # (no overall drift: take out the average movement)
+    mx, my = sum(capped[i][0] for i in top) / len(top), sum(capped[i][1] for i in top) / len(top)
+    for i in top:
+      capped[i] = (capped[i][0] - mx, capped[i][1] - my)
+  for i in range(n): # (what's in a window: in its pane -- in its window's frame, as its window moves it too)
+    region = snap.regions[i]
+    if region is None:
+      continue
+    d = list(capped[i])
+    for k in (0, 1):
+      p, h = snap.positions[i][k], snap.halfSizes[i][k]
+      lo, hi = region[k] + h, region[k + 2] - h # (where its centre may be)
+      if lo > hi: # (too big for the pane: centred in it)
+        lo = hi = (lo + hi) / 2
+      if p < lo or p > hi: # (outside: floats in)
+        dist = (lo if p < lo else hi) - p
+        step = min(abs(dist), max(pull, abs(dist) * 0.25))
+        d[k] = step if dist > 0 else -step
+      else: # (inside: stays in)
+        d[k] = max(lo, min(hi, p + d[k])) - p
+    capped[i] = (d[0], d[1])
   # Keep everything on the canvas (x, y >= 0) by sliding the whole arrangement,
   # not by stopping objects at the edge one by one -- that would block them
   # (eg: a tree turning around) and skew the layout.
-  if not n:
-    return []
-  over = lambda k: min(snap.positions[i][k] + capped[i][k] - snap.halfSizes[i][k] for i in range(n)) # (the furthest footprint edge, after the step)
-  sx, sy = max(0.0, -over(0)), max(0.0, -over(1)) # (exactly enough: never short, or objects would hit the edge one by one)
-  return [(dx + sx, dy + sy) for dx, dy in capped]
+  over = lambda k: min(snap.positions[i][k] + capped[i][k] - snap.halfSizes[i][k] for i in top) # (the furthest footprint edge, after the step)
+  sx, sy = (max(0.0, -over(0)), max(0.0, -over(1))) if top else (0.0, 0.0) # (exactly enough: never short, or objects would hit the edge one by one)
+  for i in top:
+    capped[i] = (capped[i][0] + sx, capped[i][1] + sy)
+  ret:list[tuple[float, float]] = list(capped)
+  for i in sorted(range(n), key=lambda i: len(snap.chains[i])): # (windows before what's in them: each moves with its window)
+    o = owners[i]
+    if o is not None:
+      ret[i] = (capped[i][0] + ret[o][0], capped[i][1] + ret[o][1])
+  return ret
 
 class FieldsLayout():
   '''
   The animation layout -- a "physics" layout: objects repel one another like similarly charged
   particles, and relations pull what they connect together like elastic bands
   -- run as an animation, step by step, until nothing moves much (or it's
-  stopped). Context windows move as wholes, carrying their contents.
+  stopped). Context windows move as wholes, carrying their contents, which
+  are laid out inside them, each in its pane (see *Snapshot*).
 
   Each step's forces are calculated from a *Snapshot* of the graph (see
   *forces()*); here, on the GUI thread, a step at a time between Tk events (see
@@ -552,7 +673,16 @@ class FieldsLayout():
                    layerGain=self.settleLayerGain if settling else self.layerGain, straighten=straighten,
                    flowSpacing=self.flowSpacing, heat=(self.heat * self.temperature) if flow is not None and not straighten else 0.0,
                    arranging=flow is not None and not self._arranged)
-    return [(snap.objects[i], d) for i, d in enumerate(moves) if abs(d[0]) + abs(d[1]) > self.displacementSensitivity]
+    # (an object moves if it moves enough -- or if its window does: it mustn't be left behind)
+    moving:set[int] = set()
+    ret:list[tuple[VObject, tuple[float, float]]] = []
+    for i in sorted(range(len(moves)), key=lambda i: len(snap.chains[i])):
+      dx, dy = moves[i]
+      if abs(dx) + abs(dy) > self.displacementSensitivity or (snap.owners[i] in moving and (dx or dy)):
+        moving.add(i)
+        ret.append((snap.objects[i], (dx, dy)))
+        ret += [(vo, (dx, dy)) for vo in snap.passengers.get(i, ())]
+    return ret
 
   def _call(self, autoOff:bool):
     '''
@@ -591,7 +721,7 @@ class FieldsLayout():
       for vo, (dx, dy) in changes:
         if vo._isConnected():
           self._start.setdefault(id(vo), (vo, list(vo.boundingBox())))
-          vo.moveBy(dx, dy, adjustPos=False)
+          vo.moveBy(dx, dy, adjustPos=False, carry=False) # (a window's contents have moves of their own)
       moved = len(changes) > 0
       self._cool(sum(abs(dx) + abs(dy) for _, (dx, dy) in changes))
       # (settled, with a current: straighten its layers before stopping -- see *straightenSteps*)
@@ -697,7 +827,7 @@ class FieldsLayout():
       with CompositeCommandMgr(view.context):
         for vo, bb in moved:
           now = vo.boundingBox()
-          view.context.move(vo, now[0], now[1], _oldPos=bb, adjustPos=False)
+          view.context.move(vo, now[0], now[1], _oldPos=bb, adjustPos=False, _carry=False)
 
 class FieldsLayout_threaded(FieldsLayout):
   '''

@@ -40,7 +40,7 @@ from sn.view.textUserInterface import UIContext, SNTerminalWidget
 from util.command import Command
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
-from sn.view.graphics.layout import FindFree, gatherShifts
+from sn.view.graphics.layout import FindFree, gatherShifts, intoRect
 from sn.view.graphics.decorators import NOMINAL_ASPECT
 from util.commandParser import CompositeCommandMgr
 from util.utils import Categories
@@ -115,7 +115,7 @@ class SNGContext(UIContext):
     self.view = view
     self.defaults["view"] = self.view
     
-  def move(self, obj:"VObject", x:int|float, y:int|float, _oldPos:list[int]|None=None, adjustPos:bool=True): #type: ignore[name-defined]
+  def move(self, obj:"VObject", x:int|float, y:int|float, _oldPos:list[int]|None=None, adjustPos:bool=True, _carry:bool=True): #type: ignore[name-defined]
     '''
     This is a dummy graphic command.
 
@@ -129,11 +129,13 @@ class SNGContext(UIContext):
     :type _oldPos: list[int] | None
     :param adjustPos:
     :type adjustPos: bool
+    :param _carry:
+    :type _carry: bool
     '''
     print ("dummy graphic command")
     
   class _Move(Command):
-    def __init__(self, obj:"VObject", x:int|float, y:int|float, _oldPos:list[int]|None=None, adjustPos:bool=True): #type: ignore[name-defined]
+    def __init__(self, obj:"VObject", x:int|float, y:int|float, _oldPos:list[int]|None=None, adjustPos:bool=True, _carry:bool=True): #type: ignore[name-defined]
       '''
       :param obj:
       :type obj: VObject
@@ -161,12 +163,18 @@ class SNGContext(UIContext):
         explicitly is what lets a single *undo()* restore the whole move
         rather than just its last FindFree-driven leg.
       :type _oldPos: Optional[list[int]]
+      :param _carry: [default=True] Passed to *obj.moveTo()*: whether a context
+        window carries what's inside it along. A move that's one of many (eg: a
+        layout's) whose contents are moved by their own commands passes False:
+        otherwise redoing or undoing it would move them twice.
+      :type _carry: bool
       '''
       super().__init__("move")
       self.obj:VObject = obj
       self.oldPos:list[int]|None = list(_oldPos) if _oldPos is not None else None
       self.x, self.y = x, y
       self.adjustPos = adjustPos
+      self.carry = _carry
       if isinstance(self.obj, VRelation):
         self.floating:bool = self.obj.floating()
 
@@ -175,7 +183,7 @@ class SNGContext(UIContext):
       super().do()
       if self.oldPos is None:
         self.oldPos = self.obj.boundingBox()
-      self.obj.moveTo(self.x, self.y, adjustPos=self.adjustPos)
+      self.obj.moveTo(self.x, self.y, adjustPos=self.adjustPos, carry=self.carry)
       self.obj.view.repaintSoon() # (not now: a layout's run is many moves -- see repaintSoon())
   
     @override
@@ -194,7 +202,7 @@ class SNGContext(UIContext):
       # than where it started. adjustPos=False is the same mechanism
       # notifyNodeMove()/reposition() already use during a live drag tick,
       # for the identical reason -- see VRelation.reposition()'s docstring.
-      self.obj.moveTo(self.oldPos[0], self.oldPos[1], adjustPos=False)
+      self.obj.moveTo(self.oldPos[0], self.oldPos[1], adjustPos=False, carry=self.carry)
       if isinstance(self.obj, VRelation):
         self.obj.floating(self.floating)
       self.obj.view.repaintSoon()
@@ -2429,6 +2437,84 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     self.__dict__["_contextWindowsCache"] = (version, ret)
     return ret
 
+  def containmentHomes(self, among:Iterable[VObject]|None=None) -> dict[VObject, tuple[VObject, str]]:
+    '''
+    Where each contained object belongs: the context window, and its pane
+    (see *VObject.panes()*), that it should sit in -- what layouts keep it in.
+    Nodes and relation types only (an individual relation's label floats
+    between its ends). An object contained by more than one context (eg: by a
+    rule and by another window on the rule) belongs in the innermost one whose
+    pane it's in, or, if it's in none, the smallest (the innermost, if they're
+    nested). A window belongs only in a bigger window (so nesting can't go
+    round in circles). In a rule or definition, the pane is the one its
+    containment says (antecedent, consequent, definiendum, definiens) -- the one
+    it's in, if it's in both -- or, for a plain "contains", the one it's in
+    (or nearer).
+
+    :param among: Just these view objects (default: all of them).
+    :type among: Iterable[VObject] | None
+    :returns: Each contained view object: (its window, the pane's name).
+    :rtype: dict[VObject, tuple[VObject, str]]
+    '''
+    m = self.model
+    byObj:dict[int, dict[VObject, list[Relation]]] = {} # id(contained model object) -> {window: its containments of it}
+    for w in self.contextWindows():
+      mo = w.modelObject
+      if mo is None:
+        continue
+      for r, _ in mo._getOutgoing(lambda r: r.isIndividual() and r.isa(m.CONTAINS)):
+        if r.localDst is not None and r.localDst is not mo:
+          byObj.setdefault(id(r.localDst), {}).setdefault(w, []).append(r)
+    if not byObj:
+      return {}
+    def area(w:VObject) -> float:
+      x1, y1, x2, y2 = w.fullBoundingBox()
+      return (x2 - x1) * (y2 - y1)
+    ret:dict[VObject, tuple[VObject, str]] = {}
+    for vo in (self.values() if among is None else among):
+      mo = vo.modelObject if vo is not None else None
+      if mo is None or id(mo) not in byObj or not vo._isConnected() or (isinstance(vo, VRelation) and mo.isIndividual()):
+        continue
+      cands = byObj[id(mo)]
+      if not isinstance(vo, VRelation) and vo.isContextWindow():
+        cands = {w: rs for w, rs in cands.items() if w is not vo and area(w) > area(vo)}
+      if not cands:
+        continue
+      center = vo.centerPt()
+      inside = [w for w in cands if w.paneAt(center) is not None]
+      w = min(inside or cands, key=area)
+      panes = w.panes()
+      if "contains" in panes:
+        ret[vo] = (w, "contains")
+        continue
+      here = w.paneAt(center)
+      said = [p for p in panes if any(r.isa(self._paneType(p)) for r in cands[w])]
+      if said:
+        ret[vo] = (w, here if here in said else said[0])
+      elif here is not None:
+        ret[vo] = (w, here)
+      else: # (the nearer pane)
+        ret[vo] = (w, min(panes, key=lambda p: abs((panes[p][0] + panes[p][2]) / 2 - center[0])))
+    return ret
+
+  def restackWindows(self) -> None:
+    '''
+    Put the context windows beneath everything else, each above the window
+    it's on (see *containmentHomes()*): a window inside another is drawn on
+    top of it, whichever was drawn last.
+    '''
+    windows = self.contextWindows()
+    if not windows or self.canvas is None:
+      return
+    homes = {vo: w for vo, (w, _) in self.containmentHomes(windows).items()} if len(windows) > 1 else {}
+    def depth(w:VObject) -> int:
+      d = 0
+      while (w := homes.get(w)) is not None and d < len(windows): #type: ignore[assignment]
+        d += 1
+      return d
+    for w in sorted(windows, key=depth, reverse=True): # (the innermost lowered first: the outermost ends up at the bottom)
+      self.canvas.tag_lower(w.tag)
+
   def _containable(self, vo:VObject) -> bool:
     '''
     Whether *vo* takes part in containment-by-position: not containment
@@ -3226,21 +3312,46 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     command. See *layout.gatherShifts()* for the (per-axis) heuristic.
 
     Floating relations aren't moved directly: they re-centre themselves on
-    their (moved) nodes.
+    their (moved) nodes. What's in a context window moves with it, and is put
+    in its pane if it isn't there (see *containmentHomes()*).
     '''
+    homes = self.containmentHomes()
+    parents:dict[VObject, VObject] = {vo: w for vo, (w, _) in homes.items()}
+    for w in self.contextWindows():
+      for vo in w.windowContents():
+        parents.setdefault(vo, w)
+    floats = lambda o: isinstance(o, VRelation) and o.floating()
     objs = [o for o in self.context.view.values()
-            if o is not None and not o.isHidden() and not (isinstance(o, VRelation) and o.floating())]
+            if o is not None and o._isConnected() and not o.isHidden() and not floats(o) and o not in parents]
     boxes = [o.boundingBox() for o in objs]
-    moves = [(o, bb, dx, dy) for o, bb, (dx, dy) in zip(objs, boxes, gatherShifts(boxes))
-             if dx or dy]
+    shifts:dict[VObject, tuple[float, float]] = {o: d for o, d in zip(objs, gatherShifts(boxes))}
+    def shift(vo:VObject, depth:int=0) -> tuple[float, float]: # (its window's, and into its pane)
+      if vo in shifts:
+        return shifts[vo]
+      w = parents.get(vo)
+      dx, dy = shift(w, depth + 1) if w is not None and depth < len(parents) else (0.0, 0.0)
+      if vo in homes:
+        win, pane = homes[vo]
+        x1, y1, x2, y2 = vo.boundingBox()
+        ex, ey = intoRect([x1 + dx, y1 + dy, x2 + dx, y2 + dy], [c + d for c, d in zip(win.panes()[pane], (dx, dy, dx, dy))],
+                          margin=10.0, topMargin=22.0 if len(win.panes()) > 1 else 10.0)
+        dx, dy = dx + ex, dy + ey
+      shifts[vo] = (dx, dy)
+      return dx, dy
+    moves = []
+    for o in [*objs, *[vo for vo in parents if vo._isConnected() and not floats(vo)]]:
+      dx, dy = shift(o)
+      if dx or dy:
+        bb = o.boundingBox()
+        moves.append((o, bb, dx, dy))
     if not moves:
       logger.info("gatherNodes(): nothing to gather.")
       return
     with CompositeCommandMgr(self.context):
-      for o, bb, dx, dy in moves:
-        self.context.move(o, bb[0] + dx, bb[1] + dy, _oldPos=bb, adjustPos=False)
+      for o, bb, dx, dy in moves: # (windows don't carry their contents: they have moves of their own)
+        self.context.move(o, bb[0] + dx, bb[1] + dy, _oldPos=bb, adjustPos=False, _carry=False)
     self.resetScrollRegion(shrink=True)
-    logger.info(f"gatherNodes(): moved {len(moves)} of {len(objs)} objects.")
+    logger.info(f"gatherNodes(): moved {len(moves)} of {len(objs) + len(parents)} objects.")
 
   def runBackgroundWork(self, fn: Callable[[], None]) -> None:
     """Launch background work (e.g. a long model computation triggered by the

@@ -909,8 +909,8 @@ class ContextFrame(Decorator):
   Draws a context (a rule, query, ...) as a window: a title banner with its
   name and, for a rule, a divider between its antecedent (left) and
   consequent (right) panes, each labelled. The owner's shape is the window
-  body. The window is kept beneath everything else, so what it contains sits
-  on top of it, and its body is left out of overlap avoidance (it's retagged
+  body. The window is kept beneath everything else (but above any window it's
+  on: see *SNGView.restackWindows()*), so what it contains sits on top of it, and its body is left out of overlap avoidance (it's retagged
   from "vis/shape" to "context-frame"), so objects can be placed inside it.
   See *VObject.isContextWindow()*.
   '''
@@ -995,11 +995,13 @@ class ContextFrame(Decorator):
     else:
       for key in ("divider", "anteLabel", "consLabel"):
         self._drop(key)
-    # the body isn't an obstacle for overlap avoidance, and the whole window is beneath everything
+    # the body isn't an obstacle for overlap avoidance, and the whole window is
+    # beneath everything -- but above any window it's on (see SNGView.restackWindows())
     if o._shape is not None and o._shape.id is not None:
       canvas.dtag(o._shape.id, "vis/shape")
       canvas.addtag_withtag("context-frame", o._shape.id)
     canvas.tag_lower(o.tag)
+    view.restackWindows()
 
   def delete(self):
     if self.deleted: return

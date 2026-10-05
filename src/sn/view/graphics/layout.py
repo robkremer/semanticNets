@@ -330,6 +330,17 @@ class FindFree(LayoutHieristic):
     if node.modelObject is not None and (node.modelObject.isType() or isinstance(node, Node)) and aggressive:
       topLimit = max(topLimit, self.isaLevelSpacing*depth(node.modelObject)+self.topMargin)
       
+    # what a context contains, dropped in its pane, stays in it (see SNGView.containmentHomes())
+    if not isinstance(node, VRelation) and node.modelObject is not None:
+      win, pane = self.view.containmentHomes([node]).get(node, (None, ""))
+      if win is not None and win.paneAt(node.centerPt()) == pane:
+        px1, py1, px2, py2 = win.panes()[pane]
+        w, h = rect[2] - rect[0], rect[3] - rect[1]
+        inside = [max(leftLimit, px1 + expandFactor), max(topLimit, py1 + expandFactor),
+                  min(rightLimit, px2 - expandFactor - w), min(bottomLimit, py2 - expandFactor - h)]
+        if inside[0] <= inside[2] and inside[1] <= inside[3]:
+          leftLimit, topLimit, rightLimit, bottomLimit = inside
+
     finalLimit = [int(i) for i in [leftLimit, topLimit, rightLimit, bottomLimit]]
     pt = place(rect, expandFactor=expandFactor, exclude=exclude, limit=finalLimit)
     if pt is None: # (nowhere free close enough: it stays where it is)
@@ -350,6 +361,37 @@ class FindFree(LayoutHieristic):
   def placeAll(self):
     pass
 
+
+def intoRect(box:list[float], rect:list[float], margin:float=0.0, topMargin:float|None=None) -> tuple[float, float]:
+  '''
+  How far to move *box* to put it inside *rect*, *margin* in from its edges
+  (*topMargin* from its top, if given) -- the least move that does it; centred
+  in an axis it's too big for.
+
+  :param box: [x1, y1, x2, y2].
+  :type box: list[float]
+  :param rect: [x1, y1, x2, y2].
+  :type rect: list[float]
+  :param margin: The space to leave inside *rect*'s edges.
+  :type margin: float
+  :param topMargin: The space to leave at its top (default: *margin*).
+  :type topMargin: float | None
+  :returns: (dx, dy).
+  :rtype: tuple[float, float]
+  '''
+  ret = []
+  for k, before in ((0, margin), (1, margin if topMargin is None else topMargin)):
+    lo, hi = rect[k] + before, rect[k + 2] - margin
+    b1, b2 = box[k], box[k + 2]
+    if b2 - b1 > hi - lo:
+      ret.append((lo + hi) / 2 - (b1 + b2) / 2)
+    elif b1 < lo:
+      ret.append(lo - b1)
+    elif b2 > hi:
+      ret.append(hi - b2)
+    else:
+      ret.append(0.0)
+  return ret[0], ret[1]
 
 # ---- Gathering outliers ------------------------------------------------------
 

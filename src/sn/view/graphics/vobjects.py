@@ -1673,11 +1673,12 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     if bb[0] < sr[0] or bb[1] < sr[1] or bb[2] > sr[2] or bb[3] > sr[3]:
       self.view.resetScrollRegion()
     
-  def moveTo(self, x, y, *, allowOverScrollRegionSE=False, adjustPos=True, fast=False):
+  def moveTo(self, x, y, *, allowOverScrollRegionSE=False, adjustPos=True, fast=False, carry=True):
     """ 
     Move so that the NW corner is on (x,y), informing all the decorators and 
-    relations. A context window carries what's inside it along, and isn't
-    subject to overlap avoidance (it's meant to have things on it).
+    relations. A context window carries what's inside it along (unless
+    *carry* is False: eg: a layout moving everything to where it computed),
+    and isn't subject to overlap avoidance (it's meant to have things on it).
 
     :param x:
     :type x:
@@ -1689,12 +1690,14 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     :type adjustPos:
     :param fast:
     :type fast:
+    :param carry: Whether a context window carries what's inside it along.
+    :type carry: bool
     """
     bb = self.boundingBox(fast=fast)
     if self.isContextWindow():
       adjustPos = False
       dx, dy = x - bb[0], y - bb[1]
-      if dx or dy:
+      if (dx or dy) and carry:
         # (not objects that are themselves being moved -- eg: also selected)
         carried = [vo for vo in self.windowContents() if not (self.selected() and vo.selected())]
         for vo in carried:
@@ -1739,7 +1742,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     self.setDirty()
     
       
-  def moveBy(self, dx, dy, *, allowOverScrollRegionSE=False, adjustPos=True, fast=False):
+  def moveBy(self, dx, dy, *, allowOverScrollRegionSE=False, adjustPos=True, fast=False, carry=True):
     '''
     :param dx:
     :type dx:
@@ -1751,11 +1754,13 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     :type adjustPos:
     :param fast:
     :type fast:
+    :param carry: Whether a context window carries what's inside it along (see *moveTo()*).
+    :type carry: bool
     '''
     bb = self.boundingBox(fast=fast)
     x = bb[0]+dx
     y = bb[1]+dy
-    self.moveTo(x, y, allowOverScrollRegionSE=allowOverScrollRegionSE, adjustPos=adjustPos, fast=fast)
+    self.moveTo(x, y, allowOverScrollRegionSE=allowOverScrollRegionSE, adjustPos=adjustPos, fast=fast, carry=carry)
     
   def moveToCenterOn(self, x, y, adjustPos=True, fast=False):
     '''
