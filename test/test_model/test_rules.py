@@ -282,5 +282,92 @@ class TestRules(unittest.TestCase):
     links = {(getattr(s, "name", "new"), getattr(x, "name", "new")) for r, t, s, x in res.fired if r is d and t is self.parent}
     self.assertEqual(links, {("alice", "new"), ("new", "carol")})            # backward, through the new parent
 
+  # ---- "any" variables, chaining, constraints, the base rules -------------------
+
+  def test0900anyVariables(self):
+    'An "any" variable (!x) matches types as well as individuals; an ordinary one (?x) only one or the other.'
+    m = self.m
+    self.likes["mirrored"] = True
+    cat, dog = Node(m, [m.NODE], name="cat"), Node(m, [m.NODE], name="dog")
+    self.rel(self.likes, cat, dog)                                         # between types
+    self.rel(self.likes, self.p["alice"], self.p["bob"])                   # between individuals
+    self.symmetryRule("mirrored")                                          # ?A, ?B: individuals
+    fired = lambda: {(s.name, d.name) for _, t, s, d in self.reason().fired if t is self.likes}
+    self.assertEqual(fired(), {("bob", "alice"), ("alice", "bob")})                     # (and mirrored back)
+    A, B, R = self.var("!A"), self.var("!B"), self.relVar("?R", mirrored=True)
+    self.assertTrue(A.isVariable() and A.isAnyVariable() and not self.var("?C").isAnyVariable())
+    self.rule("any symmetry", [self.rel(R, A, B)], [self.rel(R, B, A)])
+    self.assertEqual(fired(), {("bob", "alice"), ("alice", "bob"), ("dog", "cat"), ("cat", "dog")})
+
+  def test0910chainingOnNewObjects(self):
+    'A rule that creates nothing matches the objects other rules create (one that creates objects doesn\'t: see test0700).'
+    m = self.m
+    mother = Relation(m, [m.RELATION], self.person, self.person, name="mother")
+    child = Relation(m, [m.RELATION], self.person, self.person, name="child")
+    P, P2, M = self.var("?p", self.person), self.var("?p"), self.var("?m", self.person)
+    self.rule("everyone has a mother", [P], [self.rel(mother, P2, M)])
+    X, Y = self.var("?x"), self.var("?y")
+    r = self.rule("a mother's child", [self.rel(mother, X, Y)], [self.rel(child, Y, X)])
+    res = self.reason()
+    self.assertEqual(len([1 for x, t, s, d in res.fired if x is r and t is child]), 5)
+    self.assertEqual(len(res.newObjects), 5)                              # (still terminates)
+
+  def constraint(self, name, pattern, **attrs):
+    c = Node(self.m, [self.m.CONSTRAINT], individual=True, name=name)
+    for k, v in attrs.items():
+      c[k] = v
+    for x in pattern:
+      self.rel(self.m.CONTAINS, c, x)
+    return c
+
+  def test0920constraints(self):
+    'A constraint\'s pattern must not match: each match is a violation, as its attributes say.'
+    X = self.var("?x")
+    c = self.constraint("narcissism", [self.rel(self.likes, X, X)], report="?x", severity="warning",
+                        message="{0} likes themselves")
+    self.rel(self.likes, self.p["alice"], self.p["alice"])
+    self.rel(self.likes, self.p["alice"], self.p["bob"])
+    vs = [v for v in self.reason().violations if v.code == "narcissism"]
+    self.assertEqual([(v.subject.name, v.severity, v.args) for v in vs], [("alice", "warning", ())])
+    self.assertTrue(vs[0].message.endswith("likes themselves"), vs[0].message)
+    c["report"] = "?y"                                                     # not one of its variables
+    vs = self.reason().violations
+    self.assertFalse(any(v.code == "narcissism" for v in vs))
+    self.assertTrue(any(v.code == "constraint_report" and v.subject is c for v in vs))
+
+  def test0930systemRules(self):
+    'The base rules\' conclusions are plain inferences -- unless showSysRules.'
+    self.rel(self.sib, self.p["alice"], self.p["bob"])
+    hidden = ClingoReasoner(self.m, showSysRules=False).run()
+    shown = ClingoReasoner(self.m, showSysRules=True).run()
+    self.assertIn(("bob", "alice"), self.pairs(hidden.inferred, self.sib))
+    self.assertEqual(hidden.fired, [])
+    self.assertIn(("bob", "alice"), {(s.name, d.name) for r, t, s, d in shown.fired if r.name == "symmetric"})
+    self.assertEqual(self.pairs(hidden.holds, self.sib), self.pairs(shown.holds, self.sib))
+
+  def test0940baseRulesSuperModel(self):
+    'The base rules are a (locked) super-model of every model -- but can\'t be removed, and aren\'t saved with it.'
+    import tempfile
+    from sn.model.reasoner import baseRuleModels
+    base = baseRuleModels()
+    self.assertTrue(base)
+    for b in base:
+      self.assertIn(b, self.m.superDBs)
+      self.assertTrue(b.writeLocked())
+      self.assertNotIn(b, b.superDBs)
+      self.assertRaises(ValueError, self.m.removeSuperDB, b)
+    self.assertEqual(self.m.superModelPaths(), [])
+    self.m.setSuperModels([])
+    self.assertEqual(self.m.superDBs, self.m.implicitSuperDBs())
+    r = ClingoReasoner(self.m)
+    self.assertFalse(any(o.model in base for o in r.objects()))           # rules, not data
+    self.assertTrue(any(o.model in base for o in r.ruleObjects()))
+    with tempfile.TemporaryDirectory() as folder:
+      path = str(Path(folder, "m.xml"))
+      self.m.save(saveas=path)
+      text = Path(path).read_text(encoding="utf-8")
+    self.assertNotIn("baseRules", text)
+    self.assertIn("sn:/sn.xml", text)
+
 if __name__ == "__main__":
   unittest.main()

@@ -35,7 +35,7 @@ LineType = "choices[smooth,straight]"
 
 NAME_NOTE = '''The name of the object. Can be used to access the object in the model.
 
-A name starting with "?" is a variable: in a pattern (a rule, query or definition) it stands for whatever matches. Its constraints -- what what it matches must be like -- are in its "constraints" attribute (see that attribute's note). They can also be typed here, after the name and ":where:", eg:
+A name starting with "?" is a variable: in a pattern (a rule, query, definition or constraint) it stands for whatever matches -- individuals if it's an individual, types if it's a type. A name starting with "!" is an "any" variable: it matches individuals and types alike. Its constraints -- what what it matches must be like -- are in its "constraints" attribute (see that attribute's note). They can also be typed here, after the name and ":where:", eg:
   ?p :where: alive, age: 30
 and are then moved into that attribute.'''
 "The note on the name attribute: shown as its tooltip in the attribute editor."
@@ -130,6 +130,10 @@ class TopModel(Model):
     self.DEFINITION:Node = Node(self, [self.CONTEXT], individual=False, name="definition")
     self.DEFINIENDUM:Relation = Relation(self, [self.CONTAINS], self.DEFINITION, self.TOP, individual=False, name="definiendum")
     self.DEFINIENS:Relation = Relation(self, [self.CONTAINS], self.DEFINITION, self.TOP, individual=False, name="definiens")
+    # A constraint: what it contains (with plain "contains", as a query) must
+    # not match -- each match is a violation (see sn.model.reasoner.constraintOf()).
+    # Added last, so existing ids don't change.
+    self.CONSTRAINT:Node = Node(self, [self.CONTEXT], individual=False, name="constraint")
 
     self._allowParentsCaching = True
     
@@ -190,6 +194,18 @@ class TopModel(Model):
     self.RULE['vis/fillColor']      = "lemon chiffon"
     self.DEFINITION['vis/titlebarColor'] = "goldenrod"
     self.DEFINITION['vis/fillColor']= "bisque"
+    self.CONSTRAINT['vis/titlebarColor'] = "IndianRed3"
+    # What a constraint's violations are like (see sn.model.reasoner.CONSTRAINT_ATTRIBUTES).
+    self.CONSTRAINT['code']     = Attribute("", str, VAR_DEFAULTED, "The code of the violations it reports (default: the constraint's name).")
+    self.CONSTRAINT['severity'] = Attribute("error", "choices[error,warning]", VAR_DEFAULTED, "How bad a violation is: error or warning.")
+    self.CONSTRAINT['report']   = Attribute("", str, VAR_DEFAULTED,
+      "What a violation is about, as a comma-separated list: its subject, then its arguments -- each one of the "
+      "constraint's variables (eg: ?r), or a word taken as is (eg: reflexive). By default, all its variables, in "
+      "name order (or the constraint itself if it has none).")
+    self.CONSTRAINT['message']  = Attribute("", str, VAR_DEFAULTED,
+      "The message, with {0} for the subject and {1}, {2}, ... for the arguments. By default, the code's built-in "
+      "message, if it has one.")
+    self.CONSTRAINT['vis/fillColor'] = "MistyRose"
         
 model = TopModel("sn:///sn", mode="", _reading=False) # creates a model in memory cache
 model._writeLocked = True

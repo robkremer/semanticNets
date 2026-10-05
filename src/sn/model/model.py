@@ -458,12 +458,26 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
 
   def isVariable(self) -> bool:
     '''
-    :returns: True iff this is a variable -- its name starts with "?" -- which
-      stands for "something" in a pattern (a rule, definition or query).
+    :returns: True iff this is a variable -- its name starts with "?" or "!"
+      (see *isAnyVariable()*) -- which stands for "something" in a pattern (a
+      rule, definition or query).
     :rtype: bool
     '''
     try:
-      return self.name.startswith("?")
+      return self.name.startswith(("?", "!"))
+    except Exception: # eg: during construction, before it has a name
+      return False
+
+  def isAnyVariable(self) -> bool:
+    '''
+    :returns: True iff this is an "any" variable -- its name starts with "!"
+      (eg: "!x") -- which matches individuals and types alike. (An ordinary
+      variable, "?x", matches individuals if it's an individual, and types if
+      it's a type.)
+    :rtype: bool
+    '''
+    try:
+      return self.name.startswith("!")
     except Exception: # eg: during construction, before it has a name
       return False
 
@@ -949,9 +963,9 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     
     self._allowParentsCaching:bool = False
 
-    sn:Model = cast(Model, GORef.eval("$sn"))
-    if sn not in self.superDBs:
-      self.superDBs.append(sn) #type: ignore[arg-type]
+    for db in self.implicitSuperDBs(): # (the system model, then the base rules)
+      if db not in self.superDBs:
+        self.superDBs.append(db) #type: ignore[arg-type]
 
     from sn.model.modelPrefs import ModelPrefs, initModelPrefs
     self.prefs:ModelPrefs = ModelPrefs()
@@ -973,6 +987,7 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     self.DEFINITION:Node = GORef.eval("$sn#definition") #type: ignore[assignment]
     self.DEFINIENDUM:Relation = GORef.eval("$sn#definiendum") #type: ignore[assignment]
     self.DEFINIENS:Relation = GORef.eval("$sn#definiens") #type: ignore[assignment]
+    self.CONSTRAINT:Node = GORef.eval("$sn#constraint") #type: ignore[assignment]
 
     if hasattr(self, "_initialized") or _reading: # This means the __new__ method has returned an existing object, so don't truck over it!
       return
@@ -990,6 +1005,14 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
         cast(Model, slf).prefs = prefs
         initModelPrefs(prefs) # (any added since it was saved; and their notes)
     from sn.model.modelPrefs import ModelPrefs
+    for p in ret.postconSetters: # the implicit super-models other than sn aren't saved: they're always there (and the base rules' file may be a temporary copy)
+      if p.name == "superDBs":
+        def superDBURLs(slf:Serializable) -> SerializableType: # (as PRDb's)
+          m = cast(Model, slf)
+          skip = [db for db in m.implicitSuperDBs() if db is not m.TOP.model]
+          return [PRDb.relativeURL(db.url) for db in m.superDBs if not any(db is s for s in skip)] \
+               + list(m._missingSuperDBs)
+        p.getter = superDBURLs
     ret.postconSetters.append(PropertyInfo("prefs", ModelPrefs, lambda slf: cast(Model, slf).prefs, setPrefs,
                                            optional=True)) # optional: older files don't have it
     ret.finalSetters.append(PropertyInfo("_", bool, setter=lambda slf,_t:cast(Model,slf).setDirty(False))) #type: ignore[arg-type]
@@ -1026,23 +1049,35 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
       raise TypeError(f'Database "{url}" is of type {ret.__class__.__name__}; expected type Model."')
     return ret
       
+  def implicitSuperDBs(self) -> list[Model]:
+    '''
+    :returns: The super-models every model has, first: the system model
+      (sn), and the base rules (see *sn.model.reasoner.BASE_RULES*) -- but
+      not the base rules themselves, while they're being read (see
+      *sn.model.reasoner.baseRuleModels()*). They can't be removed, and only
+      sn is saved with a model (the base rules are added when it's read).
+    :rtype: list[Model]
+    '''
+    from sn.model.reasoner import baseRuleModels
+    return [cast(Model, GORef.eval("$sn"))] + [m for m in baseRuleModels() if m is not self]
+
   def superModelPaths(self) -> list[str]:
     '''
     :returns: This model's super-models (see *PRDb.superDBs*) in order, as
       shown to the user: their files relative to this one's where they're
-      near it; then any that couldn't be read when it was. Not the system
-      model: it's always the first.
+      near it; then any that couldn't be read when it was. Not the implicit
+      ones (see *implicitSuperDBs()*): they're always the first.
     :rtype: list[str]
     '''
-    sn = self.TOP.model
-    return [PRDb.relativeURL(db.url, base=self.url) for db in self.superDBs if db is not sn] \
+    implicit = self.implicitSuperDBs()
+    return [PRDb.relativeURL(db.url, base=self.url) for db in self.superDBs if not any(db is i for i in implicit)] \
          + list(self._missingSuperDBs)
 
   def setSuperModels(self, paths:list[str]) -> None:
     '''
     Make this model's super-models those at *paths*, in that order, after the
-    system model (always the first): eg: as edited in its preferences (see
-    *superModelPaths()*). Relative paths are relative to this model's file.
+    implicit ones (always the first: see *implicitSuperDBs()*): eg: as edited
+    in its preferences (see *superModelPaths()*). Relative paths are relative to this model's file.
     Nothing is changed unless all of them are fine.
 
     :param paths: The super-models' files (or URLs).
@@ -1050,7 +1085,7 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     :raises ValueError: listing the paths that can't be used, and why: eg:
       not a model, can't be read, or builds on this one.
     '''
-    sn = self.TOP.model
+    implicit = self.implicitSuperDBs()
     dbs:list[PRDb] = []
     missing:list[str] = []
     problems:list[str] = []
@@ -1070,11 +1105,11 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
         problems.append(f'"{p}" isn\'t a model.')
       elif db is self or self in db.allSuperDBs():
         problems.append(f'"{p}" is, or builds on, this model.')
-      elif db is not sn and db not in dbs:
+      elif not any(db is i for i in implicit) and db not in dbs:
         dbs.append(db)
     if problems:
       raise ValueError("\n".join(problems))
-    new = [sn] + dbs
+    new = implicit + dbs
     if new != self.superDBs or missing != self._missingSuperDBs:
       self.superDBs[:] = new #type: ignore[assignment]
       self._missingSuperDBs[:] = missing
@@ -1083,16 +1118,19 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
   @override
   def removeSuperDB(self, db:PRDb) -> None:
     '''
-    As *PRDb.removeSuperDB()* -- but the system model (sn), which every model
-    builds on (it has the definitions Semantic Nets needs: node, relation,
-    isa, ...), can't be removed.
+    As *PRDb.removeSuperDB()* -- but the implicit super-models (see
+    *implicitSuperDBs()*), which every model builds on -- the system model
+    (sn: the definitions Semantic Nets needs: node, relation, isa, ...) and
+    the base rules -- can't be removed.
 
     :param db: The model.
     :type db: PRDb
-    :raises ValueError: if *db* is the system model.
+    :raises ValueError: if *db* is one of the implicit super-models.
     '''
     if db is self.TOP.model:
       raise ValueError(f'The system model ("{db.url}") is a super-model of every model: it can\'t be removed.')
+    if any(db is m for m in self.implicitSuperDBs()):
+      raise ValueError(f'The base rules ("{db.url}") are a super-model of every model: they can\'t be removed.')
     super().removeSuperDB(db)
 
   @override

@@ -30,6 +30,8 @@ src/sn/help/
 # --- Example models (shipped with the app) are NOT scratch ---
 !src/sn/examples/*.snm
 !src/sn/examples/*.snv
+# --- The base rules (package data, made by tools/makeBaseRules.py) ---
+!src/sn/model/baseRules.snm
 
 # --- Packaging (ant: app, dmg, pyz) ---
 /build/
@@ -37,3 +39,6 @@ src/sn/help/
 /.venv-build/
 /archive/
 /notes/
+
+# Claude Code per-user settings
+.claude/settings.local.json

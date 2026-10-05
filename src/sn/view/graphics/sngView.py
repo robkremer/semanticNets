@@ -827,6 +827,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     self.categories.addCategory("non-local",       lambda mo: mo.model is not self.model)
     self.categories.addCategory("rules",           lambda mo: mo.isIndividual() and mo.isa(m.RULE))
     self.categories.addCategory("queries",         lambda mo: mo.isIndividual() and mo.isa(m.QUERY))
+    self.categories.addCategory("constraints",     lambda mo: mo.isIndividual() and mo.isa(m.CONSTRAINT))
     self.hides:dict[str, str] = {}
     "The categories currently hidden or erased: category name -> \"hide\" or \"erase\". Saved with the view."
     
@@ -2400,8 +2401,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :type mo: GraphObject
     '''
     name, text = splitWhere(mo.name)
-    if not name.startswith("?"):
-      logger.error(f'"{mo.name}": only variables (names starting with "?") have constraints.')
+    if not name.startswith(("?", "!")):
+      logger.error(f'"{mo.name}": only variables (names starting with "?" or "!") have constraints.')
       return
     try:
       merged = mergeConstraints(None, text or "")

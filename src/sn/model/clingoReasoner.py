@@ -42,7 +42,7 @@ import re
 from typing import Any, override
 import clingo
 from sn.model.model import Model, GraphObject
-from sn.model.reasoner import Reasoner, Inferences, Violation, Sym, Fact, PROPERTIES, Pattern, patternOf, ruleOf, rules, ruleSpecs, NewObject
+from sn.model.reasoner import Reasoner, Inferences, Violation, Sym, Fact, PROPERTIES, Pattern, patternOf, ruleOf, rules, ruleSpecs, constraintSpecs, NewObject
 from sn.model.constraints import PRESENT, ValueVar
 
 RULES = importlib.resources.files("sn.model").joinpath("clingoReasoner.lp")
@@ -59,14 +59,16 @@ class ClingoReasoner(Reasoner, engine="clingo"):
 
   language = "asp"
 
-  def __init__(self, model:Model, rules:Path|str|Traversable=RULES):
+  def __init__(self, model:Model, rules:Path|str|Traversable=RULES, showSysRules:bool|None=None):
     '''
     :param model:
     :type model: Model
     :param rules: The rule base: a file, or package data (see *RULES*).
     :type rules: Path | str | Traversable
+    :param showSysRules: See *Reasoner.__init__()*.
+    :type showSysRules: bool | None
     '''
-    super().__init__(model)
+    super().__init__(model, showSysRules=showSysRules)
     self.rules:Path|Traversable = Path(rules) if isinstance(rules, str) else rules
     self._ids:dict[int, int] = {}
     "id(GraphObject) -> term number"
@@ -181,7 +183,7 @@ class ClingoReasoner(Reasoner, engine="clingo"):
         case "rule_isa":  ret.ruleIsa.append(tuple(args)) #type: ignore[arg-type]
         case "rule_new":  ret.newObjects.append(args[0])
         case "violation": ret.violations.append(Violation(*args))
-    return ret
+    return self._finish(ret)
 
   def _patternBody(self, pat:Pattern, var:dict[str, str], forRule:bool=False) -> list[str]:
     '''
@@ -191,9 +193,11 @@ class ClingoReasoner(Reasoner, engine="clingo"):
 
     Variables range over data only (see *GraphObject.isPatternElement()*):
     over individuals if the variable is an individual, over types if it's a
-    type, and over relation types if it's used as one. A query's variables
-    also range over the objects rules create; a rule's (*forRule*) don't --
-    or a rule could go on creating objects forever.
+    type, over both if it's an "any" variable ("!x": see
+    *GraphObject.isAnyVariable()*), and over relation types if it's used as
+    one. A query's variables also range over the objects rules create; a
+    rule's (*forRule*: a rule that creates objects) don't -- or it could go on
+    creating objects forever.
 
     :param pat:
     :type pat: Pattern
@@ -210,7 +214,7 @@ class ClingoReasoner(Reasoner, engine="clingo"):
     relTypeVars = {t.name for t, _, _ in pat.triples if t.isVariable()}
     body:list[str] = []
     for v in {v.name: v for v in pat.variables}.values():
-      body.append(f"{dom}({var[v.name]})" + ("" if v.name in relTypeVars else
+      body.append(f"{dom}({var[v.name]})" + ("" if v.name in relTypeVars or v.isAnyVariable() else
                   f", {ind}({var[v.name]})" if v.isIndividual() else f", type({var[v.name]})"))
     for t, s, d in pat.triples:
       body.append(f"holds({term(t)},{term(s)},{term(d)})")
@@ -327,18 +331,35 @@ class ClingoReasoner(Reasoner, engine="clingo"):
 
   def _rulesProgram(self) -> str:
     '''
-    The model's rules (see *reasoner.ruleOf()*) as clingo rules, one per
+    The rules (see *reasoner.ruleOf()*) -- the model's, its super-models' and
+    the base rules (see *Reasoner.ruleObjects()*) -- as clingo rules, one per
     conclusion: ``fired(Rule,T,S,D) :- <antecedent>.`` for a relation, and
     ``rule_attr(Rule,X,Key,Value) :- <antecedent>.`` for an attribute. (The
-    rule base takes these as holds/3 and attr/3.) A rule with problems isn't
-    used: its problems are reported as violations. Call after rendering the
-    facts (see *_program()*).
+    rule base takes these as holds/3 and attr/3.) The constraints (see
+    *reasoner.constraintOf()*) likewise:
+    ``violation0(Code,Severity,Subject,(Args,)) :- <pattern>.`` A rule or
+    constraint with problems isn't used: its problems are reported as
+    violations. Call after rendering the facts (see *_program()*).
 
     :returns:
     :rtype: str
     '''
     out:list[str] = []
-    for spec in ruleSpecs(self.objects()):
+    rules, constraints = self.specs()
+    for spec in constraints:
+      c = spec.constraint
+      if spec.problems:
+        out += [f'violation0({code},warning,{self._term(c)},({"".join(self._term(a) + "," for a in args)})).'
+                for code, args in spec.problems]
+        continue
+      var = self._varNames(spec.pattern)
+      body = self._patternBody(spec.pattern, var)
+      if not body:
+        continue
+      term = lambda x: var[x.name] if isinstance(x, GraphObject) and x.isVariable() else self._term(x)
+      subject, *args = spec.report
+      out.append(f'violation0({self._term(spec.code)},{spec.severity},{term(subject)},({"".join(term(a) + "," for a in args)})) :- {", ".join(body)}.')
+    for spec in rules:
       r = spec.rule
       if spec.problems:
         for code, args in spec.problems:
@@ -347,7 +368,7 @@ class ClingoReasoner(Reasoner, engine="clingo"):
       if not (spec.heads or spec.assertions or spec.isas or spec.new):
         continue
       var = self._varNames(spec.pattern)
-      body = self._patternBody(spec.pattern, var, forRule=True)
+      body = self._patternBody(spec.pattern, var, forRule=bool(spec.new)) # (a rule that creates nothing can't run away: it ranges over all the data)
       matched = [n for n in var if not n.startswith("?") or n in {v.name for v in spec.pattern.variables}]
       newTerms = {x.name: self._newTerm(r, x.name, matched, var) for x in spec.new}
       def term(x:GraphObject|None) -> str:
@@ -385,9 +406,10 @@ class ClingoReasoner(Reasoner, engine="clingo"):
       mapped back to *GraphObjects*.
     :rtype: list[tuple[Any, ...]]
     '''
-    query += f'\n#show {answer}/{_arity(query, answer)}.'
+    facts = self._program(self.facts()) # (numbers the objects the rules refer to)
+    program = self._rulesProgram() + "\n" + query + f'\n#show {answer}/{_arity(query, answer)}.'
     return [tuple(self._value(a) for a in sym.arguments)
-            for sym in self._solve(query) if sym.name == answer]
+            for sym in self._solve(program, facts) if sym.name == answer]
 
 def _str(s:str) -> str:
   '''

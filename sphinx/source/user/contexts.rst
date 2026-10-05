@@ -1,10 +1,10 @@
 
-Contexts: Rules, Definitions and Queries
-========================================
+Contexts: Rules, Definitions, Queries and Constraints
+=====================================================
 
 A **context** is a node that *contains* other objects: a little network of its
 own, standing for a pattern rather than for facts about the world. The system
-model defines three kinds:
+model defines four kinds:
 
 ==============  ============================================================
 kind            what its contents mean
@@ -14,13 +14,15 @@ kind            what its contents mean
                 antecedent matches, conclude the consequent"
 **definition**  a *definiendum* and a *definiens*: "the one means exactly the
                 other" -- a rule that works both ways
+**constraint**  a pattern that must *not* match: "each match is a problem"
 ==============  ============================================================
 
 (*context* itself is the general kind: a context that's none of these simply
 contains things.)
 
 To make one, use **model | new instance of Node** on the background menu and
-choose *query*, *rule* or *definition* (or a subtype of one of them).
+choose *query*, *rule*, *definition* or *constraint* (or a subtype of one of
+them).
 
 Context windows
 ---------------
@@ -79,6 +81,12 @@ variable to the type (*?p* isa *person*). A variable used in several places
 must match the same object in all of them, so ``?x -has-parent-> ?y``, ``?y
 -has-parent-> ?z`` matches grandchildren (``?x``) and their grandparents
 (``?z``).
+
+A variable matches individuals if it's an individual, and types if it's a
+type. A variable whose name starts with ``!`` instead (eg: ``!x``) is an
+**"any" variable**: it matches individuals and types alike. (A variable used
+as a relation's type, eg: ``?r`` in ``!a -?r-> !b``, matches relation
+types.)
 
 Objects in a pattern that *aren't* variables (*mary*, above) stand for
 themselves.
@@ -199,3 +207,39 @@ the canvas. **Esc** clears the highlights.
    :width: 460px
 
    Answering the query who likes dave?: the answer, carol, is highlighted, and printed in the terminal.
+
+Constraints
+-----------
+
+A **constraint** contains a pattern, as a query does, that the model must
+*not* match: each match is reported as a problem when you reason (see
+:doc:`reasoning`). Its attributes say how:
+
+=============  ===============================================================
+attribute      meaning
+=============  ===============================================================
+``code``       the problem's code (default: the constraint's name)
+``severity``   ``error`` (the default) or ``warning``
+``report``     what the problem is about, as a comma-separated list: its
+               subject, then its arguments -- each one of the constraint's
+               variables (eg: ``?x``) or a word taken as is. By default, all
+               its variables, in name order.
+``message``    the message, with ``{0}`` for the subject and ``{1}``, ``{2}``,
+               ... for the arguments
+=============  ===============================================================
+
+Eg: a constraint containing ``?x -likes-> ?x``, with report ``?x`` and
+message ``{0} likes themselves``, reports everyone who likes themselves. A
+problem is reported once per set of objects it's about, so a constraint
+matching both ``a -r-> b`` and ``b -r-> a`` reports a and b once.
+
+The base rules
+--------------
+
+What the relational properties mean (symmetric, transitive, reflexive,
+irreflexive, asymmetric) is itself written as rules and constraints, in a
+model of **base rules** that comes with the program. Like the system model,
+it's a super-model of every model -- read-only, always there, and not listed
+in a model's preferences or saved with it. What they conclude is reported as plain inferences, not as rule
+conclusions -- unless the ``reasoner/showSysRules`` preference is on, which
+shows them as any rule's (for debugging the base rules).

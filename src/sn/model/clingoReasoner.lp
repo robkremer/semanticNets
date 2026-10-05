@@ -44,9 +44,12 @@
 %                             new(Rule,Var,Match), one per match of the rule
 %
 % ---- User rules --------------------------------------------------------------
-%   The model's rules (see sn.model.reasoner.ruleOf()) are added to this program
-%   as rules concluding fired/4 and rule_attr/4, whose bodies use the predicates
-%   here (holds/3, isa_star/2, attr/3, prop/2, ...); see ClingoReasoner._rulesProgram().
+%   The rules (see sn.model.reasoner.ruleOf()) -- the model's, and the base
+%   rules' (see sn.model.reasoner.BASE_RULES) -- are added to this program as
+%   rules concluding fired/4 and rule_attr/4, whose bodies use the predicates
+%   here (holds/3, isa_star/2, attr/3, prop/2, ...); the constraints (see
+%   sn.model.reasoner.constraintOf()) as rules concluding violation0/4. See
+%   ClingoReasoner._rulesProgram().
 
 type(O) :- obj(O), not individual(O).
 rel_type(T) :- kind(T,relation), type(T).
@@ -59,9 +62,9 @@ rel_type(T) :- kind(T,relation), type(T).
 data(X) :- obj(X), not pattern(X).
 
 % The objects the user's rules create (see rule_new/1) are data too -- but not
-% "base" data: rules' variables range over base data only, so that a rule
-% can't go on creating objects forever. (Queries' variables range over all
-% data.)
+% "base" data: the variables of rules that create objects range over base
+% data only, so that such a rule can't go on creating objects forever. (Other
+% rules' variables, and queries', range over all data.)
 base(X) :- obj(X), not pattern(X).
 data(N) :- rule_new(N).
 any_individual(X) :- individual(X).
@@ -99,26 +102,16 @@ inherited(T,X,D) :- link_holds(T,X,D), not asserted(T,X,D).
 % Every relation type subsumes its sub-relation types (relation hierarchy),
 % including their inferred pairs.
 holds(T,S,D) :- link_holds(T,S,D).
-% What the user's rules conclude holds too -- and so feeds everything else:
+% What the rules conclude (the user's, and the base rules) holds too -- and so feeds everything else:
 % the relation hierarchy, the algebraic properties, other rules, ...
 holds(T,S,D) :- fired(_,T,S,D).
 holds(T2,S,D) :- holds(T,S,D), parent(T,T2), rel_type(T2).
 
-% Algebraic properties. These are tags on specific relation types and are NOT
-% inherited (brother isa sibling, but only sibling is symmetric); brother pairs
-% still count as sibling pairs, and so get sibling's symmetric closure.
-holds(T,D,S) :- holds(T,S,D), prop(T,symmetric).
-holds(T,X,Z) :- holds(T,X,Y), holds(T,Y,Z), prop(T,transitive), not equiv_minus_id(T).
-% Symmetric + transitive + irreflexive (eg: full-sibling) means "an equivalence
-% minus identity": plain transitivity would force x -T-> x for anything related
-% at all (x->y, y->x, so x->x), making the three tags contradictory. So such a
-% type's transitivity skips the diagonal. (A transitive, irreflexive type that
-% ISN'T symmetric keeps the plain rule: there a self-pair can only come from a
-% cycle -- a real error the irreflexive violation should catch.)
-equiv_minus_id(T) :- prop(T,symmetric), prop(T,transitive), prop(T,irreflexive).
-holds(T,X,Z) :- holds(T,X,Y), holds(T,Y,Z), X != Z, equiv_minus_id(T).
-holds(T,X,X) :- holds(T,X,_), prop(T,reflexive).
-holds(T,X,X) :- holds(T,_,X), prop(T,reflexive).
+% The relational properties (symmetric, transitive, reflexive -- tags on
+% relation types, read as prop/2) aren't here: what they mean is in the base
+% rules, a model of ordinary rules every reasoner applies (see
+% sn.model.reasoner.BASE_RULES and tools/makeBaseRules.py), whose conclusions
+% are holds/3 as any rule's are.
 
 % Report only genuinely new pairs, not those that follow by mere subsumption.
 sub_holds(T,S,D) :- holds(T2,S,D), parent(T2,T), rel_type(T2).
@@ -153,11 +146,8 @@ violation0(node_isa_relation, error, X, (R,)) :-
 violation0(relation_isa_node, error, X, (N,)) :-
     kind(X,relation), const(node,N), isa_star(X,N).
 
-violation0(irreflexive, error, T, (X,)) :- holds(T,X,X), prop(T,irreflexive).
-violation0(asymmetric, error, T, (X,Y)) :- holds(T,X,Y), holds(T,Y,X), X < Y, prop(T,asymmetric).
-violation0(asymmetric, error, T, (X,X)) :- holds(T,X,X), prop(T,asymmetric). % asymmetric implies irreflexive
-conflicting(reflexive,irreflexive). conflicting(symmetric,asymmetric). conflicting(reflexive,asymmetric).
-violation0(property_conflict, error, T, (P,Q)) :- prop(T,P), prop(T,Q), conflicting(P,Q).
+% (The relational properties' violations -- irreflexive, asymmetric and
+% property_conflict -- are constraints in the base rules: see above.)
 
 % An individual relation without a local endpoint silently takes its type's
 % endpoint (ultimately top, from relation) -- almost certainly unintended.

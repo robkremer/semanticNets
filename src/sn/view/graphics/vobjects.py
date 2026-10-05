@@ -1403,7 +1403,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     :rtype: tk.Menu
     '''
     def relTypes(model) -> list[Relation]:
-      return sorted((r for r in model.values() if isinstance(r, Relation) and r.isType()), key=lambda r: r.name.lower())
+      return sorted((r for r in model.values() if isinstance(r, Relation) and r.isType() and not r.isVariable()), # (a pattern's ?r isn't a type to make)
+                    key=lambda r: r.name.lower())
     def add(menu:tk.Menu, r:Relation) -> None:
       menu.add_command(label=r.name, command=lambda r=r: self.view.makeRelationFrom(self, r))
     model = self.view.model
@@ -1593,8 +1594,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     mo = self.modelObject
     name, text = splitWhere(typed)
     ret = {k: v for k, v in edits.items() if k != "name"}
-    if not name.startswith("?"):
-      logger.error(f'"{typed}": only variables (names starting with "?") have constraints. The name wasn\'t changed.')
+    if not name.startswith(("?", "!")):
+      logger.error(f'"{typed}": only variables (names starting with "?" or "!") have constraints. The name wasn\'t changed.')
       return ret
     base = edits.get(CONSTRAINTS)
     base = (base.value if isinstance(base, Attribute) else base) if CONSTRAINTS in edits else mo.getLocal(CONSTRAINTS, None)

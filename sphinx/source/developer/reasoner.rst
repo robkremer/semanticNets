@@ -83,8 +83,8 @@ The rule base
 - ``isa_star``: the reflexive-transitive isa closure (including types that
   rules conclude);
 - ``holds(T,S,D)``: S is related to D under relation type T -- directly, by
-  a subtype of T, by a relational property (symmetric, transitive, ...), by
-  inheritance down the isa hierarchy, or by a rule;
+  a subtype of T, by inheritance down the isa hierarchy, or by a rule
+  (including the base rules: see below);
 - ``inferred`` and ``inherited``: the holds that weren't asserted (and
   aren't implied by a more specific relation type);
 - ``classify(X,C)``: a type that would make a relation's end fit its
@@ -128,12 +128,56 @@ It's represented by a term that's a function of the match --
 and reported as a :py:class:`~sn.model.reasoner.NewObject`. Two things keep
 this finite and stratified:
 
-- a rule's variables range over the model's data only, never over created
-  objects (``base``/``individual`` rather than ``data``/``any_individual``),
-  so a rule can't keep creating objects from its own creations;
+- the variables of a rule that creates objects range over the model's data
+  only, never over created objects (``base``/``individual`` rather than
+  ``data``/``any_individual``), so it can't keep creating objects from its
+  own creations (a rule that creates nothing can't run away, so its
+  variables range over all the data, created objects included);
 - an object is created only if the data doesn't already have one doing the
   job (``_satisfied``) -- tested against *asserted* relations and types
   only, so the test doesn't depend on its own outcome.
+
+Constraints
+-----------
+
+:py:func:`~sn.model.reasoner.constraintOf` reads a constraint into a
+:py:class:`~sn.model.reasoner.ConstraintSpec`: its pattern, and from its
+attributes the violation's code, severity, what it reports (subject first)
+and message. Each compiles to one clingo rule:
+
+.. code-block:: none
+
+   violation0(Code, Severity, Subject, (Args,)) :- <pattern>.
+
+:py:meth:`~sn.model.reasoner.Reasoner._finish` -- which every engine passes
+its results through -- reports a violation once per set of objects it's
+about (so a constraint matching a-b and b-a reports it once), and gives a
+constraint's violations its message.
+
+The base rules
+--------------
+
+The meaning of the relational properties (symmetric, transitive, reflexive,
+irreflexive, asymmetric) isn't in ``clingoReasoner.lp``: it's ordinary rules
+and constraints, in a model of **base rules** (``sn/model/baseRules.snm``,
+made by ``tools/makeBaseRules.py``) that every reasoner applies to every
+model (:py:meth:`~sn.model.reasoner.Reasoner.ruleObjects`), so a new engine
+gets them by translating rules, with nothing more to write. They use "any"
+variables (``!a``: individuals and types alike) and a relation-type variable
+(``?r``) tagged with the property, eg: ``!a -?r-> !b`` with ``?r
+{symmetric}`` concludes ``!b -?r-> !a``.
+
+:py:data:`~sn.model.reasoner.BASE_RULES` lists the base rules' models, and
+an application can change it (eg: to base rules of its own), before it makes
+or reads a model. :py:func:`~sn.model.reasoner.baseRuleModels` reads them
+(write-locked) once. Like the system model, they're super-models of every
+model (:py:meth:`~sn.model.model.Model.implicitSuperDBs`): they can't be
+removed, and aren't saved with it (the file read may be a temporary copy of
+package data), but are added again when it's read.
+:py:meth:`~sn.model.reasoner.Reasoner.objects` leaves them out: their
+objects aren't facts, and their conclusions are reported as plain
+inferences, unless the ``reasoner/showSysRules`` preference (or the
+reasoner's *showSysRules*) is on.
 
 Queries
 -------
