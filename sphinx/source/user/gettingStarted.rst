@@ -81,9 +81,9 @@ Each window shows one view of one model. It has two parts:
   the reasoner's report) and takes typed commands (see :doc:`terminal`).
 
 .. figure:: ../images/user/family-reasoned.png
-   :alt: A window on a small family model, after reasoning: the people on the left (with the reasoner's conclusions as dashed grey lines), a rule, a definition and a query in their windows on the right, and the end of the reasoner's report in the terminal pane
+   :alt: A window on a small family model, after reasoning: the people on the left (with the reasoner's conclusions faded, with dashed lines), a rule, a definition and a query in their windows on the right, the end of the reasoner's report in the terminal pane, and the reasoning toolbar below it
 
-   A window on a small family model, after reasoning: the people on the left (with the reasoner's conclusions as dashed grey lines), a rule, a definition and a query in their windows on the right, and the end of the reasoner's report in the terminal pane.
+   A window on a small family model, after reasoning: the people on the left (with the reasoner's conclusions faded, with dashed lines), a rule, a definition and a query in their windows on the right, the end of the reasoner's report in the terminal pane, and the reasoning toolbar below it.
 
 Most things are done from the right-click menus: on an object for things to
 do with it, and on the background for everything else. The background menu
@@ -116,9 +116,10 @@ A first network
 5. Make a relation type: background menu, **model | new subtype of Relation**,
    and name it ``likes``. Then right-click *rex*, **make relation to... |
    likes**, and click on something rex likes.
-6. Right-click the background: **reasoning | reason**. The report appears in
-   the terminal pane, and what the reasoner inferred is drawn on the canvas as
-   dashed grey lines.
+6. Click **Reason** on the reasoning toolbar at the bottom of the window (or
+   right-click the background: **reasoning | reason**). The report appears in
+   the terminal pane, and what the reasoner inferred is shown on the canvas,
+   faded, with dashed lines.
 
 Undo and redo are **Cmd-Z** and **Shift-Cmd-Z**; nearly everything can be
 undone, including moves, layouts and edits. Each window has its own undo

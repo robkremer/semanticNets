@@ -131,10 +131,13 @@ Reasoning results
 -----------------
 
 When the model announces "reasoned", the view refreshes its objects' status
-reports (the **E** markers) and draws the inferred and inherited relations
-(``drawInferences``) as dashed or dotted grey arrows. These are bare canvas
-items, not VObjects: they're not part of the view, aren't saved, take no
-mouse clicks, and follow their ends as they move.
+reports (the **E** markers) and shows the model's inferred objects
+(``_showInferred``: see :doc:`reasoner`): view objects like any others, drawn
+in their own look but faded (``VObject.isInferred()``; the vis cache fades
+their colours), relations with dashed lines (dotted if inherited). They take
+part in layouts, but aren't saved with the view, and don't make it dirty. The
+reasoning toolbar (``reasoningToolbar.py``) at the bottom of the window
+reasons and retracts, and says what the last reason found.
 
 Interaction
 -----------
