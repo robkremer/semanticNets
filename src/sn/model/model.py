@@ -1023,7 +1023,8 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     :type format: str
     '''
     super().save(saveas=saveas, overwrite=overwrite, format=format)
-    self.setDirty(False)
+    if saveas is None: # (saving a copy elsewhere doesn't save this: see PRDb.save())
+      self.setDirty(False)
 
   def validate(self) -> list[tuple[GraphObject,list[str]]]:
     '''

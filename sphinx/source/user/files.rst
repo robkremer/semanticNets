@@ -17,6 +17,9 @@ opens the models it uses.
 - **File | New...** makes a new view, of a new or existing model.
 - **File | Save view** saves the window's view.
 - **File | Save model** saves the window's model.
+- **File | Save view as...** and **File | Save model as...** save a *copy* in
+  another file. The window stays on the original (the terminal pane says so),
+  and further changes go to the original: open the copy to work on it.
 - **File | Close model** closes every window on the window's model (offering
   to save each changed view, and then the model), and forgets the model: open
   it again and it's read afresh from its file. (A model that another open

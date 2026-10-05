@@ -49,6 +49,7 @@ from util.persistence.serialize import InstantiationInfo, PropertyInfo,\
   ParamInfo, Serializable, SerializableType
 from util.persistence.serialize import DEFAULT_STRATEGY
 from sn.view.graphics.guiApp import Application, AppWindow
+import os
 import threading
 from util.abstractGraph import AbstractGraph
 from util.dirtyable import Dirtyable
@@ -864,7 +865,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :type format: str
     '''
     super().save(saveas=saveas, overwrite=overwrite, format=format)
-    self.setDirty(False)
+    if saveas is None: # (saving a copy elsewhere doesn't save this: see PRDb.save())
+      self.setDirty(False)
 
   def doSaveView(self) -> None:
     '''
@@ -898,6 +900,62 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     model.save()
     logger.info(f'Saved "{model.url}".')
 
+  def _saveCopy(self, what:str, db:Any, extension:str, filetypes:list[tuple[str, str]]) -> None:
+    '''
+    Ask for a file, and save a copy of *db* (this view, or its model) there.
+    This window stays on the original -- not as a Mac "Save As" does -- so say
+    so, in the log, and flash the terminal pane to draw attention to it.
+
+    :param what: "view" or "model", for the messages.
+    :type what: str
+    :param db: The view or model.
+    :type db: SNGView | Model
+    :param extension: Its files' extension, eg: ".snv".
+    :type extension: str
+    :param filetypes: For the file dialog.
+    :type filetypes: list[tuple[str, str]]
+    '''
+    from tkinter import filedialog, messagebox
+    current = fixURL(db.url)[0]
+    path = current[len("file://"):] if current.startswith("file://") else ""
+    filename = filedialog.asksaveasfilename(parent=self.window, title=f"Save a copy of the {what} as",
+                                            defaultextension=extension, filetypes=filetypes,
+                                            initialdir=os.path.dirname(path) or None,
+                                            initialfile=f"{os.path.splitext(os.path.basename(path))[0]} copy{extension}" if path else "")
+    if not filename:
+      return
+    if fixURL(filename, extension, replaceExt=None, mode="w")[0] == current: # (its own file: just save it)
+      db.save(overwrite=True)
+      logger.info(f'Saved "{current}".')
+      return
+    try:
+      db.save(saveas=filename, overwrite=True) # (the dialog has asked about replacing an existing file)
+    except Exception as ex:
+      messagebox.showerror("Save a copy", f"The {what} couldn't be saved as\n{filename}:\n\n{ex}", parent=self.window)
+      return
+    logger.warning(f'Saved a copy of the {what} as "{filename}". This window is still on the original, '
+                   f'"{current}", and further changes go there.')
+    self.terminal.flash()
+
+  def doSaveViewAs(self) -> None:
+    '''
+    Save a copy of this view in another file: the target of "File | Save view
+    as..." (see *_saveCopy()*). This window stays on this view.
+
+    :rtype: None
+    '''
+    self._saveCopy("view", self, ".snv", [("View files", "*.snv"), ("All files", "*.*")])
+
+  def doSaveModelAs(self) -> None:
+    '''
+    Save a copy of this view's model in another file: the target of "File |
+    Save model as..." (see *_saveCopy()*). This window stays on the model.
+
+    :rtype: None
+    '''
+    if self.model is not None:
+      self._saveCopy("model", self.model, ".snm", [("Model files", "*.snm"), ("All files", "*.*")])
+
   def doCloseModel(self) -> None:
     '''
     Close this view's model: the target of the "File | Close model" menu item
@@ -924,7 +982,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :rtype: None
     '''
     addToMenuBar("File|Save view", self.doSaveView)
+    addToMenuBar("File|Save view as...", self.doSaveViewAs)
     addToMenuBar("File|Save model", self.doSaveModel)
+    addToMenuBar("File|Save model as...", self.doSaveModelAs)
     addToMenuBar("File|Close model", self.doCloseModel)
     addCheckToMenuBar("View|Animation toolbar", self._animationToolbarShown(), self._onAnimationToolbarItem,
                       cascadePositions={"View": 1})
@@ -944,7 +1004,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :rtype: None
     '''
     removeFromMenuBar("File|Save view")
+    removeFromMenuBar("File|Save view as...")
     removeFromMenuBar("File|Save model")
+    removeFromMenuBar("File|Save model as...")
     removeFromMenuBar("File|Close model")
     removeFromMenuBar("View|Animation toolbar")
 
