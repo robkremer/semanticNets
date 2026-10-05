@@ -763,16 +763,28 @@ class VRelation(VObject, AGRelation):
             lineColor=self.cache['vis/lineColor'], 
             fillColor=self.cache['vis/lineFillColor'], 
             width=self.cache['vis/lineWidth'],
-            tags=[self.tag])
+            tags=[self.tag], **self._inferredLine())
     else:
       self.connectInfo = drawSmoothConnector(self.src, self, self.dst, 
             terminators, self.connectInfo, 
             lineColor=self.cache['vis/lineColor'], 
             fillColor=self.cache['vis/lineFillColor'], 
             width=self.cache['vis/lineWidth'],
-            tags=[self.tag])
+            tags=[self.tag], **self._inferredLine())
     self._styleEnds()
     self._applyHidden()
+
+  INFERRED_DASH = {"inferred": (6, 4), "inherited": (2, 3)}
+  "The dash patterns of inferred relations' lines (see *GraphObject.inferred*): inferred ones dashed, inherited ones dotted."
+
+  def _inferredLine(self) -> dict[str, Any]:
+    '''
+    :returns: Extra options for this relation's line: an inferred one's dashes (see *INFERRED_DASH*).
+    :rtype: dict[str, Any]
+    '''
+    if not self.isInferred():
+      return {}
+    return {"dash": self.INFERRED_DASH.get(getattr(self.modelObject, "inferredKind", "inferred"), self.INFERRED_DASH["inferred"])}
 
   def inWindow(self) -> bool:
     '''

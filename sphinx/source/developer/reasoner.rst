@@ -97,8 +97,13 @@ what's asserted:
   adds the new ones, and removes the rest; ``clearReasoning()`` removes them
   all.
 
-Views don't show inferred objects themselves (yet): they draw the results as
-dashed lines.
+Views show the inferred relations between objects they show
+(``SNGView._showInferred()``, on the ``"reasoned"`` topic) as ordinary view
+objects that are drawn faded (``VObject.isInferred()``; the vis cache fades
+their colours toward the background) with dashed lines -- dotted for
+inherited ones (the relation's ``inferredKind``). They take part in layouts
+like anything else, but aren't saved with the view, and neither they nor the
+model's inferred objects count when a view or model checks whether it's dirty.
 
 The rule base
 -------------

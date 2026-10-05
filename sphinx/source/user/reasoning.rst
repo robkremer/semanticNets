@@ -34,10 +34,15 @@ model. The report goes to the terminal pane, in sections:
   Types an object could be given to make a relation it's in fit its type's
   domain or range.
 
-The results are also drawn on the canvas, in every view of the model:
+The results are also shown on the canvas, in every view of the model:
 
-- inferred relations (and rules' conclusions) as **dashed** grey lines;
-- inherited relations as **dotted** grey lines;
+- inferred relations (and the relations and types rules conclude) are added
+  to the model as **inferred** relations, drawn in their usual look, but
+  **faded**, with **dashed** lines; inherited relations the same, with
+  **dotted** lines. They're relations like any other -- they take part in
+  the layouts, for example -- but they aren't saved with the model or the
+  view, and adding them doesn't count as a change to either (even a
+  read-only model can be reasoned over);
 - objects with violations get a red **E** marker: hover over it for the
   problems, or choose **show error report** from the object's menu.
 
@@ -46,13 +51,14 @@ The results are also drawn on the canvas, in every view of the model:
 
    After reasoning: alice *has-sibling* bob as well (*has-sibling* is symmetric); the definition concludes that alice *has-brother* bob, and that fires the uncle rule: carol *has-uncle* bob.
 
-Lines are drawn only between objects that are both shown in the view; a
-relation inferred both ways is one double-headed arrow.
+Inferred relations are shown only between objects that are both shown in
+the view.
 
 The results stay until you reason again or choose **reasoning | clear
 reasoning** -- they aren't updated as you edit, so reason again after
-changing the model. Typing ``reason`` in the terminal does the same as the
-menu item.
+changing the model. Reasoning again keeps the inferred relations that are
+still inferred (where you've put them), adds new ones, and removes the
+rest. Typing ``reason`` in the terminal does the same as the menu item.
 
 Highlights
 ----------

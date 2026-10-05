@@ -1037,6 +1037,23 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     ret.finalSetters.append(PropertyInfo("_", bool, setter=lambda slf,_t:cast(Model,slf)._migrate())) #type: ignore[arg-type]
     return ret
 
+  @override
+  def isDirty(self) -> bool:
+    '''
+    True iff it, or one of its objects, has changed since it was saved --
+    not counting inferred objects (see *GraphObject.inferred*): they aren't saved.
+
+    :returns:
+    :rtype: bool
+    '''
+    if Dirtyable.isDirty(self):
+      return True
+    for obj in self._db.values():
+      if obj is not None and not (getattr(obj, "inferred", False)) and obj.isDirty():
+        Dirtyable.setDirty(self, True)
+        return True
+    return False
+
   @contextmanager
   def inferring(self, *others:Model) -> Iterator[None]:
     '''

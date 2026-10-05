@@ -821,8 +821,6 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     self._elasticLineChoiceData:SNGView.ElasticLineChoiceData|None = None
     self._selectionBoxInfo:list[Any]|None = None
     self._cursorBeforeTerminal:str = "arrow"
-    self._inferences:list[dict[str, Any]] = []
-    "The inferred/inherited relations drawn as dashed lines (see *drawInferences()*)."
     "The cursor to restore when the pointer moves off a relation terminal (see *_updateTerminalCursor()*)."
     self._scrolling:bool = False
 
@@ -867,6 +865,16 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         lambda slf: cast(SNGView, slf)._animationState(),
         lambda slf, v: setattr(slf, "_pendingAnimation", str(v)), # (applied once the view is built: see _restoreAnimationState())
         optional=True))
+    for p in ret.postconSetters: # (inferred objects aren't saved: see VObject.isInferred())
+      if p.name == "_db":
+        def assertedObjects(slf:Serializable) -> SerializableType:
+          from util.persistence.serialize import strdict
+          ret = strdict()
+          for k, v in cast(SNGView, slf)._db.items():
+            if not (isinstance(v, VObject) and v.isInferred()):
+              ret[str(k)] = v
+          return ret
+        p.getter = assertedObjects
     ret.finalSetters.append(PropertyInfo("_", bool, setter=finalize))
     return ret
 
@@ -1279,7 +1287,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
             return
           
           modelObj = topicData[1]
-          if getattr(modelObj, "inferred", False): # (what "reason" concluded: drawn as dashed lines -- see drawInferences())
+          if getattr(modelObj, "inferred", False): # (what "reason" concluded: shown when it's done -- see _showInferred())
             continue
           logger.info(f'  Creating V{modelObj.__class__.__name__} for model object {modelObj}:{modelObj.__class__.__name__}')
           if (modelObj.isType() or isinstance(modelObj, Node)) and self.canvas: 
@@ -1331,8 +1339,11 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
           modelID = topicData[0]
           obj:VObject|None = self.findViewObjectForGraphObject(lambda vo: vo.modelObject is not None and vo.modelObject.id==modelID)
           if obj is not None:
+            dirty = self.isDirty()
             obj._disconnect()
             self._deletedGraphObjectsCache[modelID] = obj
+            if obj.isInferred() and not dirty: # (no longer inferred: not a change to the view -- see _showInferred())
+              self.setDirty(False)
           
         case [topicName, topicData]:
           logger.warning(f'Unsupported topic "{topicName}": {topicData}')
@@ -2381,7 +2392,6 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     vos = [vo for vo in self.values() if vo is not None and vo._isConnected()]
     for vo in sorted(vos, key=lambda vo: isinstance(vo, VRelation)): # (nodes first: relations follow their ends)
       vo._applyHidden()
-    self.drawInferences()
 
   def _visibilityMenu(self, mode:str) -> tk.Menu:
     '''
@@ -2976,8 +2986,6 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     self.canvas.scale("all", 0, 0, self._scale / oldScale, self._scale / oldScale)
     for child_widget in self.canvas.find_withtag("text"):
       self.canvas.itemconfigure(child_widget, font=(self._fontFace, int(self._fontSize * self._scale)))
-    for rec in self._inferences: # their label fonts (and label placement) too
-      self._drawInference(rec)
     try:
       bb = list(self.canvas.bbox("all"))
     except:
@@ -3141,156 +3149,60 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     '''
     Show the model's current reasoning results (or their absence): violations
     in the objects' status reports (their error markers and "show error
-    report"), and inferred and inherited relations as dashed lines.
+    report"), and the inferred objects (see *_showInferred()*).
     Called when the model reports a "reasoned" or "reasoning cleared" topic.
+    Not a change to the view: it's left as clean (or dirty) as it was.
     '''
-    self.clearInferences()
+    dirty = self.isDirty()
     self._refreshStatusReports()
-    self.drawInferences()
+    self._showInferred()
+    if not dirty:
+      self.setDirty(False)
 
-  INFERENCE_COLOR = "gray45"
-  INFERENCE_DASH = {"inferred": (6, 4), "inherited": (2, 3)}
-  "Dash patterns: inferred relations are dashed, those inherited down the isa hierarchy dotted."
-
-  def drawInferences(self) -> None:
+  @override
+  def isDirty(self) -> bool:
     '''
-    Draw the relations the last "reason" inferred (dashed) or found inherited
-    down the isa hierarchy (dotted) as grey arrows with their relation type's
-    name -- for those whose two ends are both shown in this view. A relation
-    inferred in both directions gets one double-headed arrow. The lines follow
-    their ends as they're moved or resized (see *updateInferencesFor()*), and
-    never take mouse clicks.
-    '''
-    self.clearInferences()
-    if self.reasoning is None or not self.canvas:
-      return
-    inherited = [(t, s, d) for t, s, d in self.reasoning.inherited]
-    inheritedIds = {(id(t), id(s), id(d)) for t, s, d in inherited}
-    inferred = [(t, s, d) for t, s, d in self.reasoning.inferred if (id(t), id(s), id(d)) not in inheritedIds]
-    byKey:dict[tuple, dict[str, Any]] = {}
-    inferred += [(self.model.ISA, x, t) for _, x, t in self.reasoning.ruleIsa] # (isa links the rules concluded)
-    for kind, triples in (("inferred", inferred), ("inherited", inherited)):
-      for t, s, d in triples:
-        if not (isinstance(s, GraphObject) and isinstance(d, GraphObject)): # (eg: an object a rule creates)
-          continue
-        vs, vd = self.findViewObjectForGraphObject(s), self.findViewObjectForGraphObject(d)
-        if vs is None or vd is None or vs is vd:
-          continue
-        reverse = byKey.get((id(t), id(vd), id(vs)))
-        if reverse is not None: # the same relation both ways: one double-headed arrow
-          reverse["both"] = True
-          continue
-        byKey[(id(t), id(vs), id(vd))] = {"type": t, "src": vs, "dst": vd, "kind": kind, "both": False,
-                                          "line": None, "label": None, "patch": None}
-    self._inferences = list(byKey.values())
-    for rec in self._inferences:
-      self._drawInference(rec)
+    True iff it, or one of its objects, has changed since it was saved --
+    not counting inferred objects (see *GraphObject.inferred*): they aren't saved.
 
-  def _drawInference(self, rec:dict[str, Any]) -> None:
-    '''
-    Draw (or redraw) one inference: its label goes in a free spot near the
-    middle of the straight line between the two objects (see
-    *_freeLabelSpot()*), and the line is drawn as a smooth curve from the
-    source's edge, through the label, to the destination's edge -- the way
-    relations are drawn through their labels.
-
-    :param rec:
-    :type rec: dict[str, Any]
-    '''
-    from sn.view.graphics.connectors import _clipToEdgeStraight, _farPointAlong, _sub, PointType
-    vs, vd = rec["src"], rec["dst"]
-    hide = vs.isHidden() or vd.isHidden() # (see visibility())
-    for k in ("line", "label", "patch"):
-      if rec.get(k) is not None:
-        self.canvas.itemconfigure(rec[k], state="hidden" if hide else "disabled")
-    if hide:
-      return
-    cs, cd = vs.centerPt(), vd.centerPt()
-    if cs == cd:
-      return
-    font = (self._fontFace, max(6, int(self._fontSize * 0.8 * self._scale)), "italic")
-    if rec["label"] is None:
-      rec["label"] = self.canvas.create_text(0, 0, text=rec["type"].name, fill=self.INFERENCE_COLOR, font=font,
-                                             state="disabled", tags=["inference", "inference-label"])
-    else:
-      self.canvas.itemconfigure(rec["label"], font=font)
-
-    # the label: a free spot near the middle of the straight line between the objects
-    a = _clipToEdgeStraight(vs, _farPointAlong(vs, _sub(cd, cs)))
-    b = _clipToEdgeStraight(vd, _farPointAlong(vd, _sub(cs, cd)))
-    spot = self._freeLabelSpot(rec["label"], self.viewToWindow([a[0], a[1], b[0], b[1]]))
-    self.canvas.coords(rec["label"], spot)
-
-    # the line: through the label, clipped to each object's edge toward it
-    lp = tuple(self.windowToView(spot))
-    a = _clipToEdgeStraight(vs, _farPointAlong(vs, _sub(lp, cs)))
-    b = _clipToEdgeStraight(vd, _farPointAlong(vd, _sub(lp, cd)))
-    coords = self.viewToWindow([a[0], a[1], lp[0], lp[1], b[0], b[1]])
-    lineOpts = dict(fill=self.INFERENCE_COLOR, dash=self.INFERENCE_DASH[rec["kind"]],
-                    arrow=tk.BOTH if rec["both"] else tk.LAST, width=1, smooth=True)
-    if rec["line"] is None:
-      rec["line"] = self.canvas.create_line(coords, state="disabled", tags=["inference"], **lineOpts) #type: ignore[call-overload]
-    else:
-      self.canvas.coords(rec["line"], coords)
-      self.canvas.itemconfigure(rec["line"], lineOpts)
-
-    # a patch of background behind the label, so the line doesn't run through the text
-    bb = self.canvas.bbox(rec["label"])
-    patch = [bb[0] - 1, bb[1], bb[2] + 1, bb[3]] if bb else [0, 0, 0, 0]
-    if rec.get("patch") is None:
-      rec["patch"] = self.canvas.create_rectangle(patch, fill=self.canvas.cget("background"), outline="",
-                                                  state="disabled", tags=["inference"])
-    else:
-      self.canvas.coords(rec["patch"], patch)
-    self.canvas.tag_lower(rec["line"])               # the line under everything,
-    self.canvas.tag_raise(rec["patch"], rec["line"]) # the patch over the line,
-    self.canvas.tag_raise(rec["label"], rec["patch"]) # and the label over the patch
-
-  def _freeLabelSpot(self, label:int, line:list[float]) -> tuple[float, float]:
-    '''
-    Where to centre an inference *label* on the straight *line* (window
-    coords) so it doesn't sit on an object's shape or text, or on another
-    inference label: the midpoint if that's free, otherwise the first free
-    spot from positions further along the line and a little either side of
-    it. If none is free, the midpoint.
-
-    :param label:
-    :type label: int
-    :param line:
-    :type line: list[float]
     :returns:
-    :rtype: tuple[float, float]
+    :rtype: bool
     '''
-    x1, y1, x2, y2 = line
-    bb = self.canvas.bbox(label)
-    w, h = (bb[2] - bb[0], bb[3] - bb[1]) if bb else (0, 0)
-    length = max(1.0, sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2))
-    nx, ny = -(y2 - y1) / length, (x2 - x1) / length # unit normal to the line
-    blocking = ("vis/shape", "text", "inference-label")
-    for f in (0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8):
-      for side in (0, 1, -1, 2, -2):
-        cx = x1 + (x2 - x1) * f + nx * side * (h + 2)
-        cy = y1 + (y2 - y1) * f + ny * side * (h + 2)
-        hits = self.canvas.find_overlapping(cx - w / 2 - 2, cy - h / 2 - 2, cx + w / 2 + 2, cy + h / 2 + 2)
-        if not any(i != label and any(t in blocking for t in self.canvas.gettags(i)) for i in hits):
-          return cx, cy
-    return (x1 + x2) / 2, (y1 + y2) / 2
+    if Dirtyable.isDirty(self):
+      return True
+    for obj in self._db.values():
+      if obj is not None and not (isinstance(obj, VObject) and obj.isInferred()) and obj.isDirty():
+        Dirtyable.setDirty(self, True)
+        return True
+    return False
 
-  def updateInferencesFor(self, vo:VObject) -> None:
+  def _showInferred(self) -> None:
     '''
-    Redraw the inference lines attached to *vo* (eg: after it moved or was resized).
-
-    :param vo:
-    :type vo: VObject
+    Show what the model's last "reason" inferred (see *GraphObject.inferred*):
+    a view object for each inferred relation between objects shown in this
+    view that doesn't have one yet -- drawn in its usual look, faded, with a
+    dashed line (dotted if it's inherited). Those no longer inferred go when
+    the model removes them. None of this makes the view dirty: they aren't
+    saved with it.
     '''
-    for rec in self._inferences:
-      if rec["src"] is vo or rec["dst"] is vo:
-        self._drawInference(rec)
-
-  def clearInferences(self) -> None:
-    if self.canvas:
-      self.canvas.delete("inference")
-    self._inferences = []
+    from sn.model.reasoner import _inferredRelations
+    if not self.canvas:
+      return
+    dirty = self.isDirty()
+    for rel in _inferredRelations(self.model).values():
+      if not rel._isConnected() or self.findViewObjectForGraphObject(rel) is not None:
+        continue
+      ends = (rel.localSrc, rel.localDst)
+      if any(e is None or self.findViewObjectForGraphObject(e) is None for e in ends):
+        continue
+      try:
+        vo = self.makeViewObjectForGraphObject(rel)
+        if vo is not None:
+          self._exemptIfFiltered(vo)
+      except Exception:
+        logger.exception(f"Couldn't show the inferred {rel.name}")
+    if not dirty:
+      self.setDirty(False)
 
   def _refreshStatusReports(self) -> None:
     for vo in list(self._db.values()):

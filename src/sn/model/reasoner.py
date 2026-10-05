@@ -1297,7 +1297,8 @@ def materialize(model:Model, inferences:Inferences, models:list[Model]) -> None:
   same objects, so the views keep them where they are); those no longer
   inferred are removed. Objects the rules conclude exist (*NewObject*) aren't
   made (yet): relations involving them are left out. None of this is saved,
-  dirties the model, or is undone (see *Model.inferring()*).
+  dirties the model, or is undone (see *Model.inferring()*). Each relation's
+  *inferredKind* says whether it was "inferred" or "inherited".
 
   :param model: The model reasoned over.
   :type model: Model
@@ -1307,6 +1308,7 @@ def materialize(model:Model, inferences:Inferences, models:list[Model]) -> None:
   :type models: list[Model]
   '''
   want:dict[tuple[int, int, int], tuple[GraphObject, GraphObject, GraphObject]] = {}
+  inherited = {(id(t), id(s), id(d)) for t, s, d in inferences.inherited}
   for t, s, d in inferences.newFacts():
     if isinstance(s, GraphObject) and isinstance(d, GraphObject) and isinstance(t, Relation):
       want[(id(t), id(s), id(d))] = (t, s, d)
@@ -1320,13 +1322,11 @@ def materialize(model:Model, inferences:Inferences, models:list[Model]) -> None:
       if key not in want and obj._isConnected():
         obj._disconnect()
     for key, (t, s, d) in want.items():
-      if key in have:
-        continue
       try:
-        if t is model.ISA:
-          IsaIndividual(model, s, d, inferred=True)
-        else:
-          Relation(model, [t], s, d, individual=True, inferred=True)
+        obj = have.get(key)
+        if obj is None:
+          obj = IsaIndividual(model, s, d, inferred=True) if t is model.ISA else Relation(model, [t], s, d, individual=True, inferred=True)
+        obj.inferredKind = "inherited" if key in inherited else "inferred" # (for how it's drawn)
       except Exception as ex:
         logger.warning(f"Couldn't add the inferred {t.name} from {s.name} to {d.name}: {type(ex).__name__}: {ex}")
 

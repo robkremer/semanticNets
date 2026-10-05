@@ -177,14 +177,18 @@ class Cache(dict[str,Any]):
     '''
     assert key in self.allkeys
     try:
-      return super().__getitem__(key)
+      ret = super().__getitem__(key)
     except:
       self.refresh(key)
-    try:
-      return super().__getitem__(key)
-    except:
-      pass
-    return self.allkeys[key]
+      try:
+        ret = super().__getitem__(key)
+      except:
+        ret = self.allkeys[key]
+    if key.endswith("Color") and ret: # (an inferred object's look: its own, faded -- see VObject.isInferred())
+      owner = self._owner()
+      if owner is not None and owner.isInferred():
+        return fadeColor(owner.canvas, ret)
+    return ret
       
   def __setitem__(self, key:str, val:Any) -> None:
     '''
@@ -205,6 +209,31 @@ class Cache(dict[str,Any]):
     '''
     return key in self.allkeys
       
+
+INFERRED_FADE = 0.4
+"How much of its own colours an inferred object keeps (see *fadeColor()*): the rest is the canvas's background."
+
+def fadeColor(canvas, color:str, amount:float=INFERRED_FADE) -> str:
+  '''
+  *color* faded toward *canvas*'s background: *amount* of the colour (1: the
+  colour; 0: the background).
+
+  :param canvas: A Tk canvas (or anything with *winfo_rgb()* and *cget("background")*).
+  :type canvas:
+  :param color: A Tk colour.
+  :type color: str
+  :param amount: How much of *color* to keep.
+  :type amount: float
+  :returns: The faded colour, as "#rrggbb" (*color* if it can't be read).
+  :rtype: str
+  '''
+  try:
+    fg = canvas.winfo_rgb(color)
+    bg = canvas.winfo_rgb(canvas.cget("background"))
+  except Exception:
+    return color
+  mix = [int((f * amount + b * (1 - amount)) / 257) for f, b in zip(fg, bg)]
+  return "#{:02x}{:02x}{:02x}".format(*mix)
 
 class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReportingObject):
   '''
@@ -572,8 +601,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       if self.isContextWindow():
         dependents += self.windowContents()
       c.after_idle(lambda: [d._applyHidden() for d in dependents if d._isConnected()])
-      if getattr(self.view, "_inferences", None):
-        self.view.updateInferencesFor(self)
 
   def _hideItems(self) -> None:
     '''
@@ -696,6 +723,17 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
   "A context window's size when it's first drawn (as a window)."
   BANNER = 18
   "The height (view units) of a context window's title banner."
+
+  def isInferred(self) -> bool:
+    '''
+    True iff this shows something the reasoner concluded, not asserted (see
+    *GraphObject.inferred*): it's drawn in its usual look, faded (see
+    *fadeColor()*), and isn't saved with the view.
+
+    :returns:
+    :rtype: bool
+    '''
+    return bool(getattr(self.modelObject, "inferred", False))
 
   def isContextWindow(self) -> bool:
     '''
@@ -1664,9 +1702,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       d.draw(fast=fast)
 
     self._applyHidden()
-    # inferred-relation lines attached to this object follow it (see SNGView.drawInferences())
-    if getattr(self.view, "_inferences", None):
-      self.view.updateInferencesFor(self)
 
     # make sure this is reachable by resetting the bounding box if necessary
     bb = self.boundingBox()
