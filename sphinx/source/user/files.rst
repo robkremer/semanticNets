@@ -16,9 +16,12 @@ opens the models it uses.
 A model's **super-models** are the models it builds on: their contents are
 used as though they were its own -- the reasoner reasons over them too, and
 their rules apply -- though they aren't changed through it. The system model
-is always one. The terminal's ``super models`` command lists them, and adds
-(``--add file``) or removes (``--remove file``) one; they're saved with the
-model, relative to its file where they're near it. A super-model that can't be
+is always one, and comes first. Set them in **Edit | Model preferences...**
+(*superModels*: **Add...** chooses a model file, and the arrows set the order
+-- a name that could mean objects in more than one model is looked up in the
+first first), or with the terminal's ``super models`` command (``--add file``,
+``--remove file``). They're saved with the model, relative to its file where
+they're near it. A super-model that can't be
 found when the model is opened is reported, and kept in the list for when it's
 there again.
 

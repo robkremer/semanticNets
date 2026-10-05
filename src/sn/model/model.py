@@ -947,6 +947,11 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     sn:Model = cast(Model, GORef.eval("$sn"))
     if sn not in self.superDBs:
       self.superDBs.append(sn) #type: ignore[arg-type]
+
+    from sn.model.modelPrefs import ModelPrefs, initModelPrefs
+    self.prefs:ModelPrefs = ModelPrefs()
+    "This model's own preferences (see *sn.model.modelPrefs*): saved with it."
+    initModelPrefs(self.prefs)
     
     self.TOP:GraphObject = GORef.eval("$sn#top") #type: ignore[assignment]
     self.RELATION:Relation = GORef.eval("$sn#relation") #type: ignore[assignment]
@@ -978,6 +983,14 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     '''
     ret:InstantiationInfo = super().getInstantiationInfo()
     ret.class_ = cls
+    def setPrefs(slf:Serializable, prefs:SerializableType) -> None:
+      from sn.model.modelPrefs import ModelPrefs, initModelPrefs
+      if isinstance(prefs, ModelPrefs):
+        cast(Model, slf).prefs = prefs
+        initModelPrefs(prefs) # (any added since it was saved; and their notes)
+    from sn.model.modelPrefs import ModelPrefs
+    ret.postconSetters.append(PropertyInfo("prefs", ModelPrefs, lambda slf: cast(Model, slf).prefs, setPrefs,
+                                           optional=True)) # optional: older files don't have it
     ret.finalSetters.append(PropertyInfo("_", bool, setter=lambda slf,_t:cast(Model,slf).setDirty(False))) #type: ignore[arg-type]
     ret.finalSetters.append(PropertyInfo("_", bool, setter=lambda slf,_t:cast(Model,slf)._migrate())) #type: ignore[arg-type]
     return ret
@@ -1012,6 +1025,60 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
       raise TypeError(f'Database "{url}" is of type {ret.__class__.__name__}; expected type Model."')
     return ret
       
+  def superModelPaths(self) -> list[str]:
+    '''
+    :returns: This model's super-models (see *PRDb.superDBs*) in order, as
+      shown to the user: their files relative to this one's where they're
+      near it; then any that couldn't be read when it was. Not the system
+      model: it's always the first.
+    :rtype: list[str]
+    '''
+    sn = self.TOP.model
+    return [PRDb.relativeURL(db.url, base=self.url) for db in self.superDBs if db is not sn] \
+         + list(self._missingSuperDBs)
+
+  def setSuperModels(self, paths:list[str]) -> None:
+    '''
+    Make this model's super-models those at *paths*, in that order, after the
+    system model (always the first): eg: as edited in its preferences (see
+    *superModelPaths()*). Relative paths are relative to this model's file.
+    Nothing is changed unless all of them are fine.
+
+    :param paths: The super-models' files (or URLs).
+    :type paths: list[str]
+    :raises ValueError: listing the paths that can't be used, and why: eg:
+      not a model, can't be read, or builds on this one.
+    '''
+    sn = self.TOP.model
+    dbs:list[PRDb] = []
+    missing:list[str] = []
+    problems:list[str] = []
+    for p in paths:
+      p = p.strip()
+      if not p:
+        continue
+      if p in self._missingSuperDBs: # (still missing: kept, as it was)
+        missing.append(p)
+        continue
+      try:
+        db = PRDb.getDB(PRDb.absoluteURL(p, base=self.url))
+      except Exception as ex:
+        problems.append(f'"{p}": {ex}')
+        continue
+      if not isinstance(db, Model):
+        problems.append(f'"{p}" isn\'t a model.')
+      elif db is self or self in db.allSuperDBs():
+        problems.append(f'"{p}" is, or builds on, this model.')
+      elif db is not sn and db not in dbs:
+        dbs.append(db)
+    if problems:
+      raise ValueError("\n".join(problems))
+    new = [sn] + dbs
+    if new != self.superDBs or missing != self._missingSuperDBs:
+      self.superDBs[:] = new #type: ignore[assignment]
+      self._missingSuperDBs[:] = missing
+      self.setDirty()
+
   @override
   def removeSuperDB(self, db:PRDb) -> None:
     '''

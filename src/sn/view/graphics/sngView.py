@@ -51,6 +51,7 @@ from util.persistence.serialize import DEFAULT_STRATEGY
 from sn.view.graphics.guiApp import Application, AppWindow
 import os
 import threading
+from pathlib import Path
 from util.abstractGraph import AbstractGraph
 from util.dirtyable import Dirtyable
 from copy import copy
@@ -956,6 +957,71 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     if self.model is not None:
       self._saveCopy("model", self.model, ".snm", [("Model files", "*.snm"), ("All files", "*.*")])
 
+  @staticmethod
+  def _afterFileMenu() -> int:
+    '''
+    :returns: The menu bar position just after "File" (where "Edit" goes).
+    :rtype: int
+    '''
+    try:
+      bar = tk._default_root.nametowidget(tk._default_root["menu"]) # type: ignore[attr-defined,union-attr]
+      return int(bar.index("File")) + 1
+    except Exception:
+      return 1
+
+  def doModelPreferences(self) -> None:
+    '''
+    "Edit | Model preferences...": edit this view's model's preferences (see
+    *sn.model.modelPrefs*) -- just their values (their notes are their names'
+    tooltips). Its super-models are shown as its *superDBs* are (see
+    *Model.superModelPaths()*), "Add..." choosing a model file, and set from
+    the edited list (see *Model.setSuperModels()*): if that can't be done,
+    nothing is changed, and the reasons are shown.
+
+    :rtype: None
+    '''
+    from tkinter import filedialog, messagebox
+    from util.attributeEditor import editAttrsBox
+    from util.persistence.pRef import PRDb
+    from sn.model.modelPrefs import SUPER_MODELS
+    model = self.model
+    if model is None or not hasattr(model, "prefs"):
+      return
+    if model.writeLocked():
+      messagebox.showinfo("Model preferences", f'"{model.url}" is write-locked: its preferences can\'t be changed.', parent=self.window)
+      return
+    modelFile = model.url[len("file://"):] if model.url.startswith("file://") else ""
+    def chooseModel(parent:tk.Misc) -> str|None:
+      path = filedialog.askopenfilename(parent=parent, title="Choose a model this one builds on",
+                                        filetypes=[("Model files", "*.snm"), ("All files", "*.*")],
+                                        initialdir=os.path.dirname(modelFile) or None)
+      return PRDb.relativeURL(Path(path).as_uri(), base=model.url) if path else None
+    updates = editAttrsBox(self.window, model.prefs, title=f"Preferences of {model.name}",
+                           displayValues={SUPER_MODELS: model.superModelPaths()},
+                           hideColumns=("type", "qualifiers", "note"),
+                           listItemMakers={SUPER_MODELS: chooseModel})
+    if not updates:
+      return
+    for key, attr in updates.items():
+      if key == SUPER_MODELS:
+        if attr is None:
+          continue
+        try:
+          model.setSuperModels(list(attr.value or []))
+          logger.info(f'{model.name}: super-models now {["sn"] + model.superModelPaths()}.')
+        except ValueError as ex:
+          messagebox.showerror("Model preferences", f"The super-models weren't changed:\n\n{ex}", parent=self.window)
+      else:
+        try:
+          if attr is None:
+            del model.prefs[key]
+          else:
+            model.prefs.setAttr(key, attr)
+          model.setDirty()
+        except Exception as ex:
+          logger.exception(f'{model.name}: preference "{key}" couldn\'t be set.')
+          messagebox.showerror("Model preferences", f'"{key}" couldn\'t be set:\n\n{ex}', parent=self.window)
+
   def doCloseModel(self) -> None:
     '''
     Close this view's model: the target of the "File | Close model" menu item
@@ -986,8 +1052,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     addToMenuBar("File|Save model", self.doSaveModel)
     addToMenuBar("File|Save model as...", self.doSaveModelAs)
     addToMenuBar("File|Close model", self.doCloseModel)
+    addToMenuBar("Edit|Model preferences...", self.doModelPreferences, cascadePositions={"Edit": self._afterFileMenu()})
     addCheckToMenuBar("View|Animation toolbar", self._animationToolbarShown(), self._onAnimationToolbarItem,
-                      cascadePositions={"View": 1})
+                      cascadePositions={"View": self._afterFileMenu() + 1}) # (after "Edit", made just above)
 
   def onWindowFocusOut(self) -> None:
     '''
@@ -1007,6 +1074,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     removeFromMenuBar("File|Save view as...")
     removeFromMenuBar("File|Save model")
     removeFromMenuBar("File|Save model as...")
+    removeFromMenuBar("Edit|Model preferences...")
     removeFromMenuBar("File|Close model")
     removeFromMenuBar("View|Animation toolbar")
 

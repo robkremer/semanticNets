@@ -96,6 +96,8 @@ The menu bar has:
   **Save view** (the view of the window you're in), **Save model** (its model),
   **Save view as...** and **Save model as...** (a copy of either: see
   :doc:`files`), and **Close model** (its model, and all the windows on it).
+- **Edit**: **Model preferences...** (the window's model's own settings, eg:
+  its super-models: see :doc:`files`).
 - **View**: **Animation toolbar** (see :doc:`animation`).
 - **Window** and **Help**.
 

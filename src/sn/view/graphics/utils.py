@@ -329,7 +329,7 @@ def _findEntry(menu:tk.Menu, label:str) -> tuple[Optional[int], Optional[str]]:
   return index, menu.type(index)
 
 def addToMenuBar(path:str, command:Optional[Callable]=None, *, menu:Optional[tk.Menu]=None,
-    accelerator:Optional[str]=None) -> None:
+    accelerator:Optional[str]=None, cascadePositions:Optional[dict[str, int]]=None) -> None:
   """
   Add -- or, if already present, replace -- an entry in the app's menu bar.
 
@@ -352,6 +352,9 @@ def addToMenuBar(path:str, command:Optional[Callable]=None, *, menu:Optional[tk.
   :type menu: Optional[tk.Menu]
   :param accelerator: Optional accelerator string to display (e.g. "Cmd+S").
   :type accelerator: Optional[str]
+  :param cascadePositions: Where to put any cascade that has to be made, by
+      label, eg: ``{"Edit": 1}``; by default, at the end (as for *addCheckToMenuBar()*).
+  :type cascadePositions: Optional[dict[str, int]]
   :note: Safe to call repeatedly with the same *path* -- e.g. every time a
       window gains focus -- since an existing entry with the same final
       label is reconfigured in place rather than duplicated (and, if it was
@@ -368,7 +371,7 @@ def addToMenuBar(path:str, command:Optional[Callable]=None, *, menu:Optional[tk.
   assert target is not None, \
       f'addToMenuBar(): no default menu bar could be resolved (no default root, or it has no menu configured).'
   for seg in segments[:-1]:
-    target = getSubMenu(target, seg)
+    target = getSubMenu(target, seg, makeIfNone=(cascadePositions or {}).get(seg, tk.END))
   label = segments[-1]
   kwargs = {} if accelerator is None else {"accelerator": accelerator}
   wantType = "command" if command is not None else "cascade"
