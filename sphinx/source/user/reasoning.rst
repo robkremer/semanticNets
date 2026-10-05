@@ -10,8 +10,12 @@ programming system.
 Reasoning
 ---------
 
-**reasoning | reason** (on the background menu) reasons over the window's
-model. The report goes to the terminal pane, in sections:
+**Reason**, on the reasoning toolbar along the bottom of the window (or
+**reasoning | reason** on the background menu), reasons over the window's
+model; **Retract** takes what it inferred back out again. The toolbar also
+says what the last reason found -- how many relations and new objects it
+inferred, and how many problems. (**View | Reasoning toolbar** hides it, or
+shows it again.) The report goes to the terminal pane, in sections:
 
 **Violations**
   Errors and warnings: relations whose source or destination is outside their
@@ -46,6 +50,12 @@ The results are also shown on the canvas, in every view of the model:
   be edited, removed, or related to anything -- but **mark as asserted** in
   an inferred relation's menu makes it an ordinary (asserted) part of the
   model, saved with it (not in a read-only model). It can be undone;
+- attribute values rules conclude for the model's own objects (eg: from a
+  definition's constraints) are added as **inferred** attributes: they're
+  used like any other value, but aren't saved, and an object's own (given)
+  value always wins over one inferred. The attribute editor shows an
+  inferred value greyed out, marked **I**, with an **assert** button: press
+  it, then **Save Changes**, to make it an ordinary value;
 - objects with violations get a red **E** marker: hover over it for the
   problems, or choose **show error report** from the object's menu.
 
@@ -61,7 +71,8 @@ The results stay until you reason again or choose **reasoning | clear
 reasoning** -- they aren't updated as you edit, so reason again after
 changing the model. Reasoning again keeps the inferred relations that are
 still inferred (where you've put them), adds new ones, and removes the
-rest. Typing ``reason`` in the terminal does the same as the menu item.
+rest. Typing ``reason`` (or ``clear reasoning``) in the terminal does the
+same as the button.
 
 Highlights
 ----------

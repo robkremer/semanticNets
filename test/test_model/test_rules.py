@@ -284,6 +284,36 @@ class TestRules(unittest.TestCase):
     self.assertIn(("dave", "gender", "male"), {(x.name, k, v) for r, x, k, v in res.ruleAttrs if r is d}) # ... and the constraint
     self.assertIn(("carol", "dave"), self.pairs(res.holds, self.sib))
 
+  def test0805inferredValues(self):
+    'Attribute values a rule concludes for the model\'s own objects are inferred attributes: not saved, not read back, given ones win.'
+    from sn.model.reasoner import reason, clearReasoning
+    from util.attribute import AttributedObject
+    m, p = self.m, self.p
+    brother = Relation(m, [m.RELATION], self.person, self.person, name="brother")
+    X, Y = self.var("?X"), self.var("?Y")
+    X2, Y2 = self.var("?X"), self.var("?Y"); Y2["constraints"] = "gender: male"
+    self.definition("brother", [self.rel(brother, X, Y)], [self.rel(self.sib, X2, Y2), Y2])
+    self.rel(brother, p["carol"], p["dave"])                      # so dave is male
+    m.setDirty(False)
+    reason(m)
+    dave = p["dave"]
+    attr = dave.getLocalAttr("gender")
+    self.assertTrue(attr is not None and attr.inferred and attr.value == "male")
+    self.assertFalse(m.isDirty())                                 # not a change
+    saved = next(q for q in AttributedObject.getInstantiationInfo().postconSetters if q.name == "attributes").getter(dave)
+    self.assertNotIn("gender", saved)                             # not saved
+    reason(m)
+    self.assertIs(dave.getLocalAttr("gender"), attr)              # kept (and the reasoner didn't read it as given)
+    dave["gender"] = "male"                                       # given now
+    self.assertFalse(dave.getLocalAttr("gender").inferred)
+    self.assertTrue(m.isDirty())
+    reason(m)
+    self.assertFalse(dave.getLocalAttr("gender").inferred)        # given beats inferred
+    del dave["gender"]
+    reason(m)
+    clearReasoning(m)
+    self.assertIsNone(dave.getLocalAttr("gender"))                # retracted
+
   def test0810typeDefinition(self):
     'x isa bachelor  <=>  x isa man, x {married: false}: classification both ways.'
     m = self.m

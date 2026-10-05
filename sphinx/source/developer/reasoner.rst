@@ -112,6 +112,15 @@ what's asserted:
   rule gave a new object -- without them the next ``reason()`` would make
   another in its place).
 
+Attribute values the rules conclude for the model's own objects
+(``ruleAttrs``) become **inferred attributes** (``Attribute.inferred``, in
+pythonUtils): set where the object has no value of its own (nor that value
+inherited), not saved with it, taken out while the reasoner gathers its facts,
+and kept, updated or removed by the next ``reason()``. Setting a value where
+one is inferred replaces it with an ordinary one (``GraphObject.__setitem__``),
+so undo brings the inferred one back; the attribute editor's **assert** button
+does the same.
+
 Views show the new objects related to objects they show (beside them), and
 the inferred relations between objects they show
 (``SNGView._showInferred()``, on the ``"reasoned"`` topic) as ordinary view

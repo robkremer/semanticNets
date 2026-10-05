@@ -891,6 +891,11 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     if self.model.writeLocked():
       raise PermissionError(f'DB "{self.model.name}" is write locked.')
     self._refuseIfInferred("change")
+    local = dict.get(self, key)
+    if isinstance(local, Attribute) and local.inferred and not getattr(self.model, "_inferringDepth", 0):
+      # (a value given where one was inferred: it's given now -- a new attribute, so undo puts the inferred one back)
+      self.setAttr(key, Attribute(value, local.type, local.restriction, local.note))
+      return
     super().__setitem__(key, value)
   
   @override

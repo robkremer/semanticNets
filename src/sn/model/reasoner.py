@@ -84,6 +84,7 @@ from contextlib import contextmanager, ExitStack
 from util.observer import Subject
 import sn
 from sn.model.model import Model, GraphObject, Node, Collection, Relation, IsaIndividual
+from util.attribute import Attribute, Restriction
 from sn.model.constraints import CONSTRAINTS, PRESENT, ValueVar
 
 logger:sn.SNLogger = sn.getLogger(__name__)
@@ -1221,6 +1222,8 @@ def clearReasoning(model:Model) -> None:
     for obj in [*_inferredRelations(model).values(), *model.inferredObjects()]: # (relations first: then the new objects)
       if obj._isConnected():
         obj._disconnect()
+    for o, k, _ in _inferredAttributes([model, *model.allSuperDBs()]): #type: ignore[list-item]
+      del o[k]
   model.reasoning = None #type: ignore[attr-defined]
   model.notify(("reasoning cleared", ()))
 
@@ -1239,8 +1242,15 @@ def withoutInferences(models:list[Model]) -> Iterator[None]:
   '''
   models = [m for i, m in enumerate(models) if not any(m is n for n in models[:i])]
   objs = [o for m in models for o in m.inferredObjects()]
+  attrs = _inferredAttributes(models)
+  for o, k, _ in attrs: # (taken out quietly: straight from the object's dict -- see Attribute.inferred)
+    dict.__delitem__(o, k)
   if not objs:
-    yield
+    try:
+      yield
+    finally:
+      for o, k, a in attrs:
+        dict.__setitem__(o, k, a)
     return
   with ExitStack() as stack:
     for m in models: # (hold the models' notifications, to drop those about this)
@@ -1261,6 +1271,19 @@ def withoutInferences(models:list[Model]) -> Iterator[None]:
       ids = {(id(o.model), o.id) for o in objs}
       for m in models:
         m._topics = [t for t in m._topics if not (t[0] in ("new", "del") and (id(m), t[1][0]) in ids)]
+      for o, k, a in attrs:
+        dict.__setitem__(o, k, a)
+
+def _inferredAttributes(models:list[Model]) -> list[tuple[GraphObject, str, Attribute]]:
+  '''
+  :param models: Some models.
+  :type models: list[Model]
+  :returns: The inferred attributes (see *Attribute.inferred*) of their
+    objects: (object, key, attribute).
+  :rtype: list[tuple[GraphObject, str, Attribute]]
+  '''
+  return [(o, k, a) for m in models for o in list(m.values()) if o is not None
+          for k, a in list(dict.items(o)) if isinstance(a, Attribute) and a.inferred]
 
 def _inferredRelations(model:Model) -> dict[tuple[int, int, int], Relation]:
   '''
@@ -1374,6 +1397,30 @@ def materialize(model:Model, inferences:Inferences, models:list[Model]) -> None:
           node[k] = v
         except Exception as ex:
           logger.warning(f"Couldn't give {node.name} {k}={v}: {type(ex).__name__}: {ex}")
+    # the attribute values the rules concluded for the model's own objects: inferred attributes
+    # (not where the object has a value of its own -- given beats inferred)
+    wantAttrs:dict[tuple[int, str], tuple[GraphObject, str, Any]] = {}
+    for _, x, k, v in inferences.ruleAttrs:
+      if isinstance(x, GraphObject) and not getattr(x, "inferred", False):
+        wantAttrs[(id(x), k)] = (x, k, v)
+    for o, k, a in _inferredAttributes(models):
+      if (id(o), k) not in wantAttrs:
+        del o[k]
+    for x, k, v in wantAttrs.values():
+      local = x.getLocalAttr(k)
+      try:
+        if local is None:
+          if x.get(k, None) == v: # (it has that value already: inherited)
+            continue
+          inh = x._getSuperAttr(k)
+          x.setAttr(k, Attribute(v, inh.type if inh is not None else type(v),
+                                 inh.restriction if inh is not None and inh.restriction is not None else Restriction.fromstring("VAR"),
+                                 inferred=True))
+        elif local.inferred and local.value != v:
+          local.value = v
+          x.notify(("mod attribute", (k, v)))
+      except Exception as ex:
+        logger.warning(f"Couldn't give {x.name} the inferred {k}={v}: {type(ex).__name__}: {ex}")
     real = lambda o: nodes.get(_newObjectKey(o)) if isinstance(o, NewObject) else o
     for _, t, s, d in inferences.fired: # (the relations the rules gave the new objects)
       if isinstance(s, NewObject) or isinstance(d, NewObject):
