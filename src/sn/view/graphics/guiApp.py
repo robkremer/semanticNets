@@ -732,6 +732,8 @@ class AppWindow(tk.Toplevel):
     """
     widget.bind("<FocusIn>", self._onWindowFocusIn, add="+")
     widget.bind("<FocusOut>", self._onWindowFocusOut, add="+")
+    if widget is self: # (the window made active again -- eg: after a dialog, or another application -- needn't give any widget a FocusIn)
+      widget.bind("<Activate>", self._onWindowFocusIn, add="+")
     for child in widget.winfo_children():
       self._bindFocusTracking(child)
 
@@ -770,9 +772,21 @@ class AppWindow(tk.Toplevel):
     :rtype: None
     """
     app = self._root() #type: ignore[attr-defined]
-    current = app.focus_get()
-    stillActive = current is not None and current.winfo_toplevel() is self
-    if not stillActive and self.view is not None:
+    try:
+      current = app.focus_get()
+    except Exception: # (eg: focus in a native dialog, which Tk can't name)
+      current = None
+    if current is None:
+      # Focus is nowhere Tk knows of: another application, or a native dialog
+      # (eg: a save dialog) -- this window is still the one the menu bar is
+      # for when the application is active again, so it keeps its items.
+      return
+    top = current.winfo_toplevel()
+    if top is self or getattr(top, "view", None) is not None:
+      # Still here; or now in another view's window, which put its own items in
+      # the menu bar when it gained focus (perhaps before this ran): leave them be.
+      return
+    if self.view is not None: # (in another of the application's windows: eg: the attribute editor)
       self.view.onWindowFocusOut()
 
   def _bindFocusRouting(self, widget: tk.Misc, terminal: "SNTerminalWidget") -> None: #type: ignore[name-defined]
