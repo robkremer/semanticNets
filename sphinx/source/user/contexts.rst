@@ -242,3 +242,8 @@ model of **base rules** that comes with the program and applies to every
 model. What they conclude is reported as plain inferences, not as rule
 conclusions -- unless the ``reasoner/showSysRules`` preference is on, which
 shows them as any rule's (for debugging the base rules).
+
+The base rules are a write-locked super-model of every model, right after
+the system model, so you see their rules and constraints as you'd see any
+super-model's (eg: by expanding ``rule``). They can't be removed from a
+model's super-models, and aren't saved with it.

@@ -1403,7 +1403,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     :rtype: tk.Menu
     '''
     def relTypes(model) -> list[Relation]:
-      return sorted((r for r in model.values() if isinstance(r, Relation) and r.isType()), key=lambda r: r.name.lower())
+      return sorted((r for r in model.values() if isinstance(r, Relation) and r.isType() and not r.isVariable()), key=lambda r: r.name.lower())
     def add(menu:tk.Menu, r:Relation) -> None:
       menu.add_command(label=r.name, command=lambda r=r: self.view.makeRelationFrom(self, r))
     model = self.view.model

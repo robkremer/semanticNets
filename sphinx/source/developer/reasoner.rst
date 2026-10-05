@@ -169,7 +169,12 @@ variables (``!a``: individuals and types alike) and a relation-type variable
 
 :py:data:`~sn.model.reasoner.BASE_RULES` lists the base rules' models, and
 an application can change it (eg: to base rules of its own).
-:py:func:`~sn.model.reasoner.baseRuleModels` reads them (write-locked) once.
+:py:func:`~sn.model.reasoner.baseRuleModels` reads them (write-locked) once,
+and every model but the system model has them as super-models, right after
+the system model (:py:class:`~sn.model.model.Model`'s constructor), so they
+show as any super-model does. They aren't saved in a model's list of
+super-models, nor shown in it (``superModelPaths()``), and can't be removed
+from it. The reasoner reads their rules once, and caches them.
 Their objects aren't facts, and their conclusions are reported as plain
 inferences, unless the ``reasoner/showSysRules`` preference (or the
 reasoner's *showSysRules*) is on.

@@ -232,6 +232,24 @@ class ReasonerSpec:
     self.assertEqual(r.fired, [])
     self.assertEqual([v for v in r.violations if v.code.startswith("rule")], [])
 
+  def test0295baseRulesAreSuperModels(self):
+    'The base rules are a (locked) super-model of every model, but not saved with it, nor removable.'
+    from sn.model.reasoner import baseRuleModels
+    m, _ = self._fresh("bases")
+    bases = baseRuleModels()
+    self.assertTrue(bases)
+    self.assertEqual(m.superDBs, [m.TOP.model] + bases)
+    self.assertEqual(m.superModelPaths(), [])
+    self.assertTrue(all(b.writeLocked() for b in bases))
+    self.assertIn("symmetric", [r.src.name for r, _ in m.RULE._getIncoming() if r.src.model in bases])
+    for b in bases:
+      self.assertRaises(ValueError, m.removeSuperDB, b)
+    m.setSuperModels([])
+    self.assertEqual(m.superDBs, [m.TOP.model] + bases)
+    m.save()
+    text = Path("temp_reasoner_bases.xml").read_text(encoding="utf-8")
+    self.assertFalse(any(b.url in text for b in bases))
+
   def test0500portableQueries(self):
     r = self.reasoner
     self.assertEqual(r.related(self.fred, self.has), [self.car1])

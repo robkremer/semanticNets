@@ -966,6 +966,14 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     sn:Model = cast(Model, GORef.eval("$sn"))
     if sn not in self.superDBs:
       self.superDBs.append(sn) #type: ignore[arg-type]
+    # The base rules (see sn.model.reasoner.BASE_RULES) are super-models of
+    # every model too, right after sn: so they're seen as any super-model's
+    # rules are. They aren't saved with it (see getInstantiationInfo()).
+    from sn.model.reasoner import baseRuleModels, isBaseRules
+    if not isBaseRules(self):
+      for base in baseRuleModels():
+        if base not in self.superDBs:
+          self.superDBs.append(base) #type: ignore[arg-type]
 
     from sn.model.modelPrefs import ModelPrefs, initModelPrefs
     self.prefs:ModelPrefs = ModelPrefs()
@@ -1009,6 +1017,13 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
                                            optional=True)) # optional: older files don't have it
     ret.finalSetters.append(PropertyInfo("_", bool, setter=lambda slf,_t:cast(Model,slf).setDirty(False))) #type: ignore[arg-type]
     ret.finalSetters.append(PropertyInfo("_", bool, setter=lambda slf,_t:cast(Model,slf)._migrate())) #type: ignore[arg-type]
+    def superDBURLs(slf:Serializable) -> list[str]: # (as PRDb's, but not the base rules: every model gets them anyway -- see __init__())
+      from sn.model.reasoner import isBaseRules
+      m = cast(Model, slf)
+      return [PRDb.relativeURL(db.url) for db in m.superDBs if not isBaseRules(db)] + list(m._missingSuperDBs)
+    for p in ret.postconSetters:
+      if p.name == "superDBs":
+        p.getter = superDBURLs
     return ret
 
   def _migrate(self) -> None:
@@ -1046,17 +1061,19 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     :returns: This model's super-models (see *PRDb.superDBs*) in order, as
       shown to the user: their files relative to this one's where they're
       near it; then any that couldn't be read when it was. Not the system
-      model: it's always the first.
+      model or the base rules (see sn.model.reasoner.BASE_RULES): they're
+      always the first.
     :rtype: list[str]
     '''
+    from sn.model.reasoner import isBaseRules
     sn = self.TOP.model
-    return [PRDb.relativeURL(db.url, base=self.url) for db in self.superDBs if db is not sn] \
+    return [PRDb.relativeURL(db.url, base=self.url) for db in self.superDBs if db is not sn and not isBaseRules(db)] \
          + list(self._missingSuperDBs)
 
   def setSuperModels(self, paths:list[str]) -> None:
     '''
     Make this model's super-models those at *paths*, in that order, after the
-    system model (always the first): eg: as edited in its preferences (see
+    system model and the base rules (always the first): eg: as edited in its preferences (see
     *superModelPaths()*). Relative paths are relative to this model's file.
     Nothing is changed unless all of them are fine.
 
@@ -1065,7 +1082,9 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     :raises ValueError: listing the paths that can't be used, and why: eg:
       not a model, can't be read, or builds on this one.
     '''
+    from sn.model.reasoner import isBaseRules
     sn = self.TOP.model
+    bases = [db for db in self.superDBs if isBaseRules(db)]
     dbs:list[PRDb] = []
     missing:list[str] = []
     problems:list[str] = []
@@ -1085,11 +1104,11 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
         problems.append(f'"{p}" isn\'t a model.')
       elif db is self or self in db.allSuperDBs():
         problems.append(f'"{p}" is, or builds on, this model.')
-      elif db is not sn and db not in dbs:
+      elif db is not sn and db not in bases and db not in dbs:
         dbs.append(db)
     if problems:
       raise ValueError("\n".join(problems))
-    new = [sn] + dbs
+    new = [sn] + bases + dbs
     if new != self.superDBs or missing != self._missingSuperDBs:
       self.superDBs[:] = new #type: ignore[assignment]
       self._missingSuperDBs[:] = missing
@@ -1100,14 +1119,18 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     '''
     As *PRDb.removeSuperDB()* -- but the system model (sn), which every model
     builds on (it has the definitions Semantic Nets needs: node, relation,
-    isa, ...), can't be removed.
+    isa, ...), can't be removed; nor can the base rules (see
+    sn.model.reasoner.BASE_RULES).
 
     :param db: The model.
     :type db: PRDb
-    :raises ValueError: if *db* is the system model.
+    :raises ValueError: if *db* is the system model or the base rules.
     '''
     if db is self.TOP.model:
       raise ValueError(f'The system model ("{db.url}") is a super-model of every model: it can\'t be removed.')
+    from sn.model.reasoner import isBaseRules
+    if isBaseRules(db):
+      raise ValueError(f'The base rules ("{db.url}") are a super-model of every model: they can\'t be removed.')
     super().removeSuperDB(db)
 
   @override

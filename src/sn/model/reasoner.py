@@ -757,6 +757,10 @@ read-only.
 _baseFiles:dict[str, str] = {}
 "Package data in *BASE_RULES* -> the path of the copy it's read from (see *baseRuleModels()*)."
 _baseFolder:list[str] = []
+_loadingBase:list[str] = []
+"The base rules being read (see *baseRuleModels()*, *isBaseRules()*)."
+_baseURLs:set[str] = set()
+"The URLs of the base rules' models that have been read (see *isBaseRules()*)."
 _baseSpecs:dict[int, tuple[Model, list, list]] = {}
 "id(base rules model) -> (it, its RuleSpecs, its ConstraintSpecs): see *Reasoner.specs()*."
 
@@ -784,14 +788,28 @@ def baseRuleModels() -> list[Model]:
         with open(path, "w", encoding="utf-8") as fd:
           fd.write(src.read_text(encoding="utf-8").replace(BASE_RULES_PLACEHOLDER, Path(folder).as_uri()))
       url = Path(path).as_uri()
+    _loadingBase.append(url) # (so it doesn't get the base rules as super-models: see Model.__init__())
     try:
       m = Model.getDB(url, mode="")
     except Exception:
       logger.error(f'Couldn\'t read the base rules "{src}".', exc_info=True)
       continue
+    finally:
+      _loadingBase.pop()
     m._writeLocked = True
+    _baseURLs.add(m.url)
     ret.append(m)
   return ret
+
+def isBaseRules(model:Any) -> bool:
+  '''
+  :param model:
+  :type model: Any
+  :returns: True iff *model* is one of the base rules' models (see
+    *BASE_RULES*), or is being read as one.
+  :rtype: bool
+  '''
+  return bool(_loadingBase) or getattr(model, "url", None) in _baseURLs
 
 class Reasoner(ABC):
   '''
@@ -986,7 +1004,7 @@ class Reasoner(ABC):
     '''
     ret = self.objects()
     have = {id(o.model) for o in ret}
-    return ret + [o for m in baseRuleModels() if id(m) not in have for o in list(m.values())]
+    return ret + [o for m in baseRuleModels() if id(m) not in have for o in list(m.values())] # (the base rules are super-models of every model but sn)
 
   def specs(self) -> tuple[list[RuleSpec], list[ConstraintSpec]]:
     '''
@@ -995,19 +1013,19 @@ class Reasoner(ABC):
       rules' are read once: they're read-only.)
     :rtype: tuple[list[RuleSpec], list[ConstraintSpec]]
     '''
-    objs = self.objects()
-    have = {id(o.model) for o in objs}
+    bases = baseRuleModels()
+    baseIds = {id(m) for m in bases}
+    objs = [o for o in self.objects() if id(o.model) not in baseIds]
     found = _contexts(objs)
     rs = [ruleOf(r) for r in found.get("RULE", [])] + [s for d in found.get("DEFINITION", []) for s in definitionSpecs(d)]
     cs = [constraintOf(c) for c in found.get("CONSTRAINT", [])]
-    for m in baseRuleModels():
-      if id(m) not in have:
-        cached = _baseSpecs.get(id(m))
-        if cached is None or cached[0] is not m:
-          objs = list(m.values())
-          cached = _baseSpecs[id(m)] = (m, ruleSpecs(objs), constraintSpecs(objs))
-        rs += cached[1]
-        cs += cached[2]
+    for m in bases:
+      cached = _baseSpecs.get(id(m))
+      if cached is None or cached[0] is not m:
+        objs = list(m.values())
+        cached = _baseSpecs[id(m)] = (m, ruleSpecs(objs), constraintSpecs(objs))
+      rs += cached[1]
+      cs += cached[2]
     self._constraintSpecs = cs
     return rs, cs
 
@@ -1020,7 +1038,7 @@ class Reasoner(ABC):
     '''
     if isinstance(obj, NewObject):
       obj = obj.rule
-    return isinstance(obj, GraphObject) and any(obj.model is m for m in baseRuleModels())
+    return isinstance(obj, GraphObject) and obj.model.url in _baseURLs
 
   def _finish(self, ret:Inferences) -> Inferences:
     '''
@@ -1073,7 +1091,7 @@ class Reasoner(ABC):
       out.append(("const", (Sym(key), getattr(self.model, key.upper()))))
 
     # Work through a queue that grows if an object refers to one we haven't seen.
-    queue = self.ruleObjects() if self.showSysRules else self.objects()
+    queue = self.ruleObjects() if self.showSysRules else [o for o in self.objects() if not self.isSystem(o)]
     seen = {id(o) for o in queue}
     def ref(obj:GraphObject) -> GraphObject:
       if id(obj) not in seen:
