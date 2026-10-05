@@ -851,7 +851,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       for rel in list(slf.values()):
         if isinstance(rel, VRelation):
           rel.connect()
-      slf.canvas.after_idle(lambda slf=slf: [slf.applyVisibility(), slf._restoreAnimationState(), slf.resetScrollRegion(), slf.setDirty(False)]) # type: ignore[misc]
+      # (a full repaint first: it fits the objects to their text, as any later one would -- by
+      # a pixel or so, if the file was saved with other font metrics -- so that isn't a change)
+      slf.canvas.after_idle(lambda slf=slf: [slf.applyVisibility(), slf._restoreAnimationState(), slf.repaint(), slf.resetScrollRegion(), slf.setDirty(False)]) # type: ignore[misc]
     ret:InstantiationInfo = super().getInstantiationInfo()
     # ret.class_ = cls
     # (its model's URL relative to the view's file if they're side by side -- see PRDb.relativeURL() -- so
