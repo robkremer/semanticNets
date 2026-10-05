@@ -796,6 +796,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     self.window._root().terminalRegistry.registerWindow(self.window, self.terminal) #type: ignore[attr-defined]
 
     model.addObserver(self)
+    # the reasoning toolbar: shown unless the view was saved with it hidden (see showReasoningToolbar())
+    self.canvas.after_idle(lambda: self.showReasoningToolbar(self.__dict__.pop("_pendingReasoningToolbar", "1") != "0", changed=False))
     self._closed:bool = False
     "Set when the view's window is closed (see *detachFromModel()*): it then ignores the model's updates."
     
@@ -861,6 +863,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         lambda slf: ",".join(f"{k}={v}" for k, v in cast(SNGView, slf).hides.items()),
         lambda slf, v: setattr(slf, "hides", dict(kv.split("=", 1) for kv in str(v).split(",") if "=" in kv)),
         optional=True)) # optional: views saved before it existed still load
+    ret.postconSetters.append(PropertyInfo("reasoningToolbar", str,
+        lambda slf: "1" if cast(SNGView, slf)._reasoningToolbarShown().get() else "0",
+        lambda slf, v: setattr(slf, "_pendingReasoningToolbar", str(v)), # (applied once the view is built: see __init__())
+        optional=True)) # optional: views saved before it existed still load (and show it)
     ret.postconSetters.append(PropertyInfo("animation", str,
         lambda slf: cast(SNGView, slf)._animationState(),
         lambda slf, v: setattr(slf, "_pendingAnimation", str(v)), # (applied once the view is built: see _restoreAnimationState())
@@ -1079,6 +1085,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     addToMenuBar("Edit|Model preferences...", self.doModelPreferences, cascadePositions={"Edit": self._afterFileMenu()})
     addCheckToMenuBar("View|Animation toolbar", self._animationToolbarShown(), self._onAnimationToolbarItem,
                       cascadePositions={"View": self._afterFileMenu() + 1}) # (after "Edit", made just above)
+    addCheckToMenuBar("View|Reasoning toolbar", self._reasoningToolbarShown(),
+                      lambda: self.showReasoningToolbar(self._reasoningToolbarShown().get()))
 
   def onWindowFocusOut(self) -> None:
     '''
@@ -1101,6 +1109,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     removeFromMenuBar("Edit|Model preferences...")
     removeFromMenuBar("File|Close model")
     removeFromMenuBar("View|Animation toolbar")
+    removeFromMenuBar("View|Reasoning toolbar")
 
   ANIMATION_SETTINGS = ("flowStrength", "e", "k", "heat")
   "The animation layout's numeric settings saved with the view (see *_animationState()*)."
@@ -1199,6 +1208,62 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     if self._animationToolbarShown().get() != show:
       self._animationToolbarShown().set(show)
       self.setDirty() # (saved with the view)
+
+  def _reasoningToolbarShown(self) -> tk.BooleanVar:
+    '''
+    :returns: Whether this view's reasoning toolbar is shown -- what "View | Reasoning toolbar" shows (and sets).
+    :rtype: tk.BooleanVar
+    '''
+    var = self.__dict__.get("_reasoningToolbarVar")
+    if var is None:
+      var = self._reasoningToolbarVar = tk.BooleanVar(self.canvas, value=False)
+    return var
+
+  def showReasoningToolbar(self, show:bool=True, changed:bool=True) -> None:
+    '''
+    Show (or hide) the reasoning toolbar (see *reasoningToolbar*) across the
+    bottom of this view's window.
+
+    :param show: True to show it; False to hide it.
+    :type show: bool
+    :param changed: Whether it's a change to the view (it's saved with it), not the view being set up.
+    :type changed: bool
+    '''
+    from sn.view.graphics.reasoningToolbar import ReasoningToolbar
+    if getattr(self, "_closed", False):
+      return
+    bar = self.__dict__.get("_reasoningToolbar")
+    if show:
+      if bar is None:
+        bar = self._reasoningToolbar = ReasoningToolbar(self.window, self)
+      bar.pack(side=tk.BOTTOM, fill=tk.X, before=self.window.appPanedWidget)
+      bar.refresh()
+    elif bar is not None:
+      bar.pack_forget()
+    if self._reasoningToolbarShown().get() != show:
+      self._reasoningToolbarShown().set(show)
+      if changed:
+        self.setDirty() # (saved with the view)
+
+  def reasoningSummary(self) -> str:
+    '''
+    :returns: What the model's last "reason" found, in a line -- eg: "inferred:
+      3 relations, 4 new objects; 1 error, 2 warnings" -- or "" if it hasn't
+      been reasoned over (or that's been retracted).
+    :rtype: str
+    '''
+    from sn.model.reasoner import _inferredRelations
+    r = self.reasoning
+    if r is None:
+      return ""
+    plural = lambda n, what: f"{n} {what}{'' if n == 1 else 's'}"
+    rels = len(_inferredRelations(self.model))
+    new = sum(1 for o in self.model.inferredObjects() if getattr(o, "inferredKind", None) == "new")
+    found = [plural(rels, "relation")] + ([plural(new, "new object")] if new else [])
+    errors = sum(1 for v in r.violations if v.severity == "error")
+    warnings = len(r.violations) - errors
+    problems = ", ".join([plural(errors, "error")] * bool(errors) + [plural(warnings, "warning")] * bool(warnings)) or "no problems"
+    return f"inferred: {', '.join(found)}; {problems}"
 
   @override
   def _register(self, value: VObject, _id:Optional[int]=None) -> int: # type: ignore[override]
@@ -3160,6 +3225,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     dirty = self.isDirty()
     self._refreshStatusReports()
     self._showInferred()
+    bar = self.__dict__.get("_reasoningToolbar")
+    if bar is not None:
+      bar.refresh()
     if not dirty:
       self.setDirty(False)
 
