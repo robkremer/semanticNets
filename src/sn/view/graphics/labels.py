@@ -67,7 +67,7 @@ Keys: any attribute, and
   name             its name
   localName        its name, only if it has its own (not inherited)
   type             its types
-  constraints      a variable's constraints
+  constraints      a variable's constraints (a relation of a variable type: the type's)
   id               its id
 Eg:
   $name${constraints:+ {$constraints}}   "fred", or "?p {alive}" (the default)
@@ -166,6 +166,22 @@ def _braced(t:str, i:int, lookup:Callable[[str], str]) -> tuple[str, int]:
     return (alt if value else ""), j + 1
   return (value if value else alt), j + 1
 
+def labelConstraints(mo:Any) -> str:
+  '''
+  :param mo: A model object.
+  :type mo: Any
+  :returns: The constraints its label shows: a variable's own (see
+    *GraphObject.constraintsText()*) -- or, for an individual relation of a
+    variable type whose name it has (eg: a base rule's "?r" relations, of the
+    type "?r {transitive, symmetric: false}"), its type's: they're what it
+    stands for.
+  :rtype: str
+  '''
+  own = mo.constraintsText()
+  if own or not mo.isIndividual() or not hasattr(mo, "localDst") or str(mo.getLocal("name", "") or "").strip():
+    return own
+  return next((p.constraintsText() for p in mo.getParents() if p.isVariable() and p.name == mo.name and p.constraintsText()), "")
+
 def labelLookup(mo:Any) -> Callable[[str], str]:
   '''
   :returns: The *lookup* for *expand()* for model object *mo* (see the module doc for the keys).
@@ -183,7 +199,7 @@ def labelLookup(mo:Any) -> Callable[[str], str]:
       if key == "type":
         return ", ".join(p.name for p in mo.getParents())
       if key == "constraints":
-        return mo.constraintsText().replace(": ", ": ") # (each "key: value" kept on one line)
+        return labelConstraints(mo).replace(": ", ": ") # (each "key: value" kept on one line)
       if key == "id":
         return str(getattr(mo, "_id", ""))
       v = mo.get(key, None)
