@@ -953,6 +953,28 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     return ret
     
     
+def _isPackagedBaseRules(url:str) -> bool:
+  '''
+  :param url: A model's URL.
+  :type url: str
+  :returns: True iff it's the file of base rules that comes with the program
+    (see *sn.model.reasoner.BASE_RULES*) -- opened directly, not as the base
+    rules (which read a copy of it).
+  :rtype: bool
+  '''
+  import os
+  from urllib.parse import urlparse, unquote
+  from importlib.resources.abc import Traversable
+  try:
+    from sn.model.reasoner import BASE_RULES
+    parsed = urlparse(url)
+    if parsed.scheme != "file":
+      return False
+    path = os.path.realpath(unquote(parsed.path))
+    return any(isinstance(src, Traversable) and os.path.realpath(str(src)) == path for src in BASE_RULES)
+  except Exception:
+    return False
+
 class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
   '''
   .. Note::
@@ -999,7 +1021,13 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     :returns:
     :rtype:
     '''
-    return PRDb.__new__(cls, url, mode=mode, memoryResident=True, _reading=_reading)
+    ret = PRDb.__new__(cls, url, mode=mode, memoryResident=True, _reading=_reading)
+    if not _reading and isinstance(ret, Model) and getattr(ret, "_initialized", False) and not getattr(ret, "_writeLocked", False) \
+       and _isPackagedBaseRules(ret.url):
+      ret._writeLocked = True
+      logger.info(f'"{ret.url}" is the base rules that come with the program: it\'s read-only here '
+                  '(they\'re made by tools/makeBaseRules.py).')
+    return ret
     
 
   def __init__(self, url:str, mode:str="w", _reading:bool=False):
