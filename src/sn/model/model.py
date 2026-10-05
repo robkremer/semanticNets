@@ -877,6 +877,7 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     '''
     if self.model.writeLocked():
       raise PermissionError(f'DB "{self.model.name}" is write locked.')
+    self._refuseIfInferred("change")
     super().__delitem__(key)
   
   @override
@@ -889,6 +890,7 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     '''
     if self.model.writeLocked():
       raise PermissionError(f'DB "{self.model.name}" is write locked.')
+    self._refuseIfInferred("change")
     super().__setitem__(key, value)
   
   @override
@@ -903,7 +905,42 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     '''
     if self.model.writeLocked():
       raise PermissionError(f'DB "{self.model.name}" is write locked.')
+    self._refuseIfInferred("change")
     return super().setAttr(key, attr)
+
+  def _refuseIfInferred(self, doing:str) -> None:
+    '''
+    :param doing: What's being done to it, eg: "change", for the message.
+    :type doing: str
+    :raises PermissionError: If this is inferred (see *inferred*) -- except
+      while the reasoner is making or removing inferred objects (see
+      *Model.inferring()*). It has to be marked as asserted first (see
+      *assertedWith()*, and the "mark asserted" command).
+    '''
+    if self.inferred and not getattr(self.model, "_inferringDepth", 0):
+      raise PermissionError(f'"{self.name}" is inferred: mark it as asserted to {doing} it.')
+
+  def assertedWith(self) -> list[GraphObject]:
+    '''
+    What has to be marked as asserted along with this inferred object (see
+    *inferred*): itself, its inferred isa links, and -- for a relation -- its
+    inferred ends (and theirs, ...). (They're all inferred, so not saved: an
+    asserted relation can't refer to an object that isn't.)
+
+    :returns: The inferred objects, this one first ([] if it isn't inferred).
+    :rtype: list[GraphObject]
+    '''
+    ret:list[GraphObject] = []
+    pending:list[GraphObject] = [self]
+    while pending:
+      o = pending.pop(0)
+      if not getattr(o, "inferred", False) or any(o is r for r in ret):
+        continue
+      ret.append(o)
+      pending += [r for r, _ in o._getOutgoing(lambda r: isinstance(r, IsaIndividual) and r.inferred)]
+      if isinstance(o, Relation):
+        pending += [e for e in (o.localSrc, o.localDst) if e is not None]
+    return ret
     
     
 class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
@@ -1070,11 +1107,13 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     state = [(m, m._writeLocked, m.isDirty()) for m in models]
     for m in models:
       m._writeLocked = False
+      m._inferringDepth = getattr(m, "_inferringDepth", 0) + 1 # (inferred objects may be changed: see GraphObject._refuseIfInferred())
     try:
       yield
     finally:
       for m, locked, dirty in state:
         m._writeLocked = locked
+        m._inferringDepth -= 1
         if not dirty:
           m.setDirty(False)
 

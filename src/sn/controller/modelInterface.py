@@ -92,6 +92,20 @@ class ConvertingDict(dict[str, Any]):
     else:
       return super().__setitem__(key, value)
 
+def _refuseInferred(doing:str, *objects:Any) -> None:
+  '''
+  :param doing: What would be done, for the message, eg: "remove".
+  :type doing: str
+  :param objects: The objects it'd be done to (None for none).
+  :type objects: Any
+  :raises PermissionError: If any of *objects* is inferred (see
+    *GraphObject.inferred*): it's the reasoner's, until it's marked as
+    asserted (see *ModelContext.mark_asserted()*).
+  '''
+  for o in objects:
+    if getattr(o, "inferred", False):
+      raise PermissionError(f'"{o.name}" is inferred: mark it as asserted to {doing} it.')
+
 class ModelContext(CommandContext):
   commandSynonyms:dict[str, Iterable[str]] = {
     "query"          :["?"],
@@ -510,6 +524,7 @@ class ModelContext(CommandContext):
       :type restriction: str
       '''
       super().__init__("set attribute")
+      _refuseInferred("change", object)
       self.attr:Attribute|None = value if isinstance(value, Attribute) else None
       "A complete (or value-only) Attribute record, eg: from the attribute editor, is set as is."
       if type is not None: # check the type string to make sure it represents an actual type
@@ -597,6 +612,7 @@ class ModelContext(CommandContext):
       :type model: Model
       '''
       super().__init__("set attribute")
+      _refuseInferred("change", object)
       self.object:GraphObject = object
       self.key:str = key
       self.localObj = self.object.getLocalAttr(key)
@@ -1039,6 +1055,7 @@ class ModelContext(CommandContext):
         self.parents.append(p)
         
       super().__init__("new node")
+      _refuseInferred("make an instance or subtype of", *self.parents)
       self.individual:bool = not type
       self.nodeName:Optional[str] = name
       self.model:Model = model
@@ -1106,6 +1123,7 @@ class ModelContext(CommandContext):
       '''
       # param checking...
       super().__init__("remove")
+      _refuseInferred("remove", object)
       self.object:GraphObject = object
     
     @override
@@ -1130,6 +1148,72 @@ class ModelContext(CommandContext):
       :rtype:
       '''
       return f'{super().__str__()} {self.object.getPRef().tostring()}'
+
+  def mark_asserted(self, object:GraphObject):
+    '''
+    Make an inferred object (see *GraphObject.inferred*) -- something the
+    reasoner concluded -- asserted: part of the model, saved with it, and
+    editable. Its inferred isa links, and a relation's inferred ends, come
+    too (see *GraphObject.assertedWith()*). Not in a write-locked model.
+
+    :param object: The inferred object.
+    :type object: GraphObject
+    '''
+    pass
+
+  class _Mark_asserted(Command):
+    def __init__(self, object:GraphObject):
+      '''
+      Make an inferred object asserted.
+
+      :param object: The inferred object.
+      :type object: GraphObject
+      '''
+      super().__init__("mark asserted")
+      if not getattr(object, "inferred", False):
+        raise ValueError(f'"{object.name}" isn\'t inferred: it\'s asserted already.')
+      if object.model.writeLocked():
+        raise PermissionError(f'"{object.model.name}" is write locked: nothing in it can be marked as asserted.')
+      self.objects:list[GraphObject] = object.assertedWith()
+      self.wasDirty:bool = object.model.isDirty()
+
+    def _set(self, inferred:bool) -> None:
+      '''
+      Mark *objects* inferred or not, and tell their views (they're drawn faded, or not).
+
+      :param inferred:
+      :type inferred: bool
+      '''
+      for o in self.objects:
+        o.inferred = inferred
+      for o in self.objects:
+        o.notify(("inferred" if inferred else "asserted", ()))
+
+    @override
+    def do(self):
+      super().do()
+      self._set(False)
+      self.objects[0].model.setDirty()
+
+    @override
+    def undo(self):
+      super().undo()
+      self._set(True)
+      if not self.wasDirty:
+        self.objects[0].model.setDirty(False)
+
+    @override
+    def delete(self):
+      super().delete()
+      self.objects = []
+
+    @override
+    def __str__(self):
+      '''
+      :returns: A readable string for this object.
+      :rtype:
+      '''
+      return f'{super().__str__()} {self.objects[0].getPRef().tostring() if self.objects else ""}'
 
   def reconnect(self, relation:Relation, /, source:GraphObject|None=None, destination:GraphObject|None=None,
                 clear_source:bool=False, clear_destination:bool=False):
@@ -1168,6 +1252,8 @@ class ModelContext(CommandContext):
       super().__init__("reconnect")
       if not isinstance(relation, Relation):
         raise TypeError(f'reconnect: expected a Relation, got {type(relation).__name__}.')
+      _refuseInferred("reconnect", relation)
+      _refuseInferred("connect a relation to", source, destination)
       if clear_source and source is not None or clear_destination and destination is not None:
         raise ValueError('reconnect: an end can be set or cleared, not both.')
       if (clear_source or clear_destination) and isinstance(relation, IsaIndividual):
@@ -1290,6 +1376,8 @@ class ModelContext(CommandContext):
         
         
       super().__init__("new relation")
+      _refuseInferred("relate", source, destination)
+      _refuseInferred("make a relation of", *self.parents)
       assert model is not None
       self.individual:bool = not type
       self.nodeName:Optional[str] = name

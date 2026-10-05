@@ -95,7 +95,15 @@ what's asserted:
   itself;
 - the next ``reason()`` **keeps** those still inferred (the same objects),
   adds the new ones, and removes the rest; ``clearReasoning()`` removes them
-  all.
+  all;
+- they're **the reasoner's**: changing one's attributes raises
+  ``PermissionError`` (``GraphObject._refuseIfInferred()``), and the model
+  commands refuse to remove, reconnect or relate them, or make instances of
+  them -- until the ``mark asserted`` command
+  (:py:meth:`ModelContext.mark_asserted() <sn.controller.modelInterface.ModelContext.mark_asserted>`,
+  undoable; not in a write-locked model) makes one asserted, with what has to
+  come with it (:py:meth:`GraphObject.assertedWith() <sn.model.model.GraphObject.assertedWith>`:
+  its inferred isa links, and a relation's inferred ends).
 
 Views show the inferred relations between objects they show
 (``SNGView._showInferred()``, on the ``"reasoned"`` topic) as ordinary view

@@ -779,11 +779,13 @@ class VRelation(VObject, AGRelation):
 
   def _inferredLine(self) -> dict[str, Any]:
     '''
-    :returns: Extra options for this relation's line: an inferred one's dashes (see *INFERRED_DASH*).
+    :returns: Extra options for this relation's line: an inferred one's dashes
+      (see *INFERRED_DASH*); none for any other (said explicitly: the line's
+      canvas items are reused, eg: when one is marked as asserted).
     :rtype: dict[str, Any]
     '''
     if not self.isInferred():
-      return {}
+      return {"dash": ""}
     return {"dash": self.INFERRED_DASH.get(getattr(self.modelObject, "inferredKind", "inferred"), self.INFERRED_DASH["inferred"])}
 
   def inWindow(self) -> bool:
@@ -989,8 +991,8 @@ class VRelation(VObject, AGRelation):
     :type menu: tk.Menu
     '''
     super().addModelEditingMenuItems(menu)
-    # Never offered for system relations (those in the always-in-memory sn model).
-    if self.modelObject is None or self.modelObject.isSystemObject():
+    # Never offered for system relations (those in the always-in-memory sn model), or inferred ones.
+    if self.modelObject is None or self.modelObject.isSystemObject() or self.isInferred():
       return
     state = tk.NORMAL if self._endpointsEditable() else tk.DISABLED
     menu.add_command(label="reset src", state=state, command=lambda: self.chooseNewEndpoint("src"))
@@ -1002,11 +1004,12 @@ class VRelation(VObject, AGRelation):
   def _endpointsEditable(self) -> bool:
     '''
     :returns: True iff the user may change this relation's src/dst here: not
-      a system relation, and in an editor view of the relation's own model.
+      a system relation or an inferred one (see *GraphObject.inferred*), and
+      in an editor view of the relation's own model.
     :rtype: bool
     '''
     mo = self.modelObject
-    return mo is not None and not mo.isSystemObject() \
+    return mo is not None and not mo.isSystemObject() and not mo.inferred \
            and self.view.isModelEditor() and self.view.model is mo.model
 
   def _terminalAt(self, x:float, y:float) -> str|None:
@@ -1107,7 +1110,7 @@ class VRelation(VObject, AGRelation):
     isa = isinstance(self.modelObject, IsaIndividual)
     isaParent = end == "dst" and isa
     def acceptable(n:VObject) -> bool:
-      return n is not self \
+      return n is not self and not n.isInferred() \
              and (not isa or other is None or isinstance(n, VRelation) == isinstance(other, VRelation)) \
              and not (isaParent and (n.modelObject is None or n.modelObject.isIndividual()))
     def chosen(_origin:VObject, sel:VObject) -> None:

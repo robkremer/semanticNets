@@ -42,7 +42,10 @@ The results are also shown on the canvas, in every view of the model:
   **dotted** lines. They're relations like any other -- they take part in
   the layouts, for example -- but they aren't saved with the model or the
   view, and adding them doesn't count as a change to either (even a
-  read-only model can be reasoned over);
+  read-only model can be reasoned over). They're the reasoner's: they can't
+  be edited, removed, or related to anything -- but **mark as asserted** in
+  an inferred relation's menu makes it an ordinary (asserted) part of the
+  model, saved with it (not in a read-only model). It can be undone;
 - objects with violations get a red **E** marker: hover over it for the
   problems, or choose **show error report** from the object's menu.
 

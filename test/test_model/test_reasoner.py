@@ -288,6 +288,41 @@ class TestClingo(ReasonerSpec, unittest.TestCase):
       clearReasoning(self.m)
     self.assertEqual(self.m.inferredObjects(), [])
 
+  def test0960markAsserted(self):
+    from sn.model.reasoner import reason, clearReasoning
+    from sn.controller.modelInterface import ModelContext
+    clearReasoning(self.m)
+    ctx = ModelContext(self.m)
+    try:
+      reason(self.m, "clingo")
+      rel = next(r for r in self.m.inferredObjects() if r.isa(self.has) and r.localSrc is self.rex and r.localDst is self.tail)
+      with self.assertRaises(PermissionError):                           # the reasoner's: not to be edited
+        rel["note"] = "mine"
+      with self.assertRaises(PermissionError):
+        ctx.remove(rel)
+      self.m._writeLocked = True
+      try:
+        with self.assertRaises(PermissionError):                         # not in a write-locked model
+          ctx.mark_asserted(rel)
+      finally:
+        self.m._writeLocked = False
+      self.m.setDirty(False)
+      ctx.mark_asserted(rel)
+      self.assertFalse(rel.inferred)
+      self.assertFalse(any(r.inferred for r, _ in rel._getOutgoing()))  # its isa link too
+      self.assertTrue(self.m.isDirty())                                  # a change to save
+      saved = next(p for p in type(self.m).getInstantiationInfo().postconSetters if p.name == "_db").getter(self.m)
+      self.assertIn(rel, list(saved.values()))
+      reason(self.m, "clingo")                                           # not inferred again (it's asserted now)
+      self.assertEqual([r for r in self.m.inferredObjects() if r.isa(self.has) and r.localSrc is self.rex and r.localDst is self.tail], [])
+      ctx.undo()                                                         # inferred again
+      self.assertTrue(rel.inferred)
+    finally:
+      clearReasoning(self.m)
+      if rel._isConnected() and not rel.inferred: # (in case it failed half way)
+        ctx.remove(rel)
+      self.m.setDirty(False)
+
   def test0800reportAndCommands(self):
     from sn.controller.modelInterface import ModelContext
     name = lambda o: o.tostring(relativeTo=self.m, format="friendly")

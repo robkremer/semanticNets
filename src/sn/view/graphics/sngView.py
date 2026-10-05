@@ -2246,6 +2246,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     if typ and not isinstance(typ, Relation):
       logger.error(f'Relation typ {typ["label"]} must be a relation.', level='error')
       return
+    for end in (fromNode, toNode): # (the reasoner's: see GraphObject.inferred)
+      if end is not None and end.isInferred():
+        logger.error(f'"{end.name}" is inferred: mark it as asserted to relate it.')
+        return
     try:
       # rel:GraphObject
       # if typ is self.model.ISA: #isinstance(typ, IsaIndividual):
@@ -2595,7 +2599,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :rtype: bool
     '''
     mo = vo.modelObject
-    if mo is None or vo.isHidden(): # (not what can't be seen)
+    if mo is None or vo.isHidden() or vo.isInferred(): # (not what can't be seen, or the reasoner's: see GraphObject.inferred)
       return False
     if isinstance(vo, VRelation):
       if mo.isa(self.model.CONTAINS):

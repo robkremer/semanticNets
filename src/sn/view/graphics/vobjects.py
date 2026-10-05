@@ -932,6 +932,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
             self.cache.refresh(attname)
           vChanged = True # (the label may show any attribute: see labelText())
           
+        elif topicName in ("asserted", "inferred"): # (marked as asserted, or that undone: drawn faded or not -- see isInferred())
+          vChanged = True
         elif topicName == "rm":
           #self.canvas.remove(self._id)
           self.delete()
@@ -1352,6 +1354,14 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     :type menu: tk.Menu
     '''
     if self.modelObject is None:
+      return
+    if self.isInferred(): # (the reasoner's: it can only be looked at, or made asserted -- see GraphObject.inferred)
+      menu.add_command(label="show attributes", command=lambda: self.onEditAttributes(disabled=True))
+      locked = self.modelObject.model.writeLocked()
+      menu.add_command(label="mark as asserted" + (" (the model is write-locked)" if locked else ""),
+                       state=tk.DISABLED if locked else tk.NORMAL,
+                       command=lambda: self.view.context.mark_asserted(self.modelObject))
+      menu.add_separator()
       return
     disabled = (self.modelObject.isSystemObject() \
                 and not snPrefs.get("gui/allowEditingSystemObjects", storeDefault=False)) \
