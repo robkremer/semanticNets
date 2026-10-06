@@ -44,6 +44,7 @@ import clingo
 from sn.model.model import Model, GraphObject
 from sn.model.reasoner import Reasoner, Inferences, Violation, Sym, Fact, PROPERTIES, Pattern, patternOf, ruleOf, rules, ruleSpecs, constraintSpecs, NewObject
 from sn.model.constraints import PRESENT, ValueVar
+from sn.model.names import NameKind
 
 RULES = importlib.resources.files("sn.model").joinpath("clingoReasoner.lp")
 "The default rule base. (Package data, so that it's found in a .pyz or a packaged app too.)"
@@ -92,7 +93,7 @@ class ClingoReasoner(Reasoner, engine="clingo"):
         self._objs.append(x)
       return f'o({n})'
     if isinstance(x, Sym):
-      return str(x)
+      return str(x) if _SYMBOL.match(x) else _str(str(x)) # (eg: a word in a constraint's report that isn't one)
     if isinstance(x, bool):
       return "true" if x else "false"
     if isinstance(x, int) and abs(x) < 2**30:
@@ -192,10 +193,9 @@ class ClingoReasoner(Reasoner, engine="clingo"):
     gets value variables ("?a") added.
 
     Variables range over data only (see *GraphObject.isPatternElement()*):
-    over individuals if the variable is an individual, over types if it's a
-    type, over both if it's an "any" variable ("!x": see
-    *GraphObject.isAnyVariable()*), and over relation types if it's used as
-    one. A query's variables also range over the objects rules create; a
+    over individuals, types, or both, by their kind (see
+    *GraphObject.variableKind()*: eg: "?x", "^T", "!a") -- and over relation
+    types if used as one, whatever their kind. A query's variables also range over the objects rules create; a
     rule's (*forRule*: a rule that creates objects) don't -- or it could go on
     creating objects forever.
 
@@ -213,9 +213,10 @@ class ClingoReasoner(Reasoner, engine="clingo"):
       return "_" if x is None else var.get(x.name, "") if x.isVariable() else self._term(x)
     relTypeVars = {t.name for t, _, _ in pat.triples if t.isVariable()}
     body:list[str] = []
+    guard = {NameKind.INDIVIDUAL: ind, NameKind.TYPE: "type"}
     for v in {v.name: v for v in pat.variables}.values():
-      body.append(f"{dom}({var[v.name]})" + ("" if v.name in relTypeVars or v.isAnyVariable() else
-                  f", {ind}({var[v.name]})" if v.isIndividual() else f", type({var[v.name]})"))
+      g = None if v.name in relTypeVars else guard.get(v.variableKind()) # (a relation type variable: see rel_type below)
+      body.append(f"{dom}({var[v.name]})" + (f", {g}({var[v.name]})" if g else ""))
     for t, s, d in pat.triples:
       body.append(f"holds({term(t)},{term(s)},{term(d)})")
       if t.isVariable():
@@ -369,7 +370,7 @@ class ClingoReasoner(Reasoner, engine="clingo"):
         continue
       var = self._varNames(spec.pattern)
       body = self._patternBody(spec.pattern, var, forRule=bool(spec.new)) # (a rule that creates nothing can't run away: it ranges over all the data)
-      matched = [n for n in var if not n.startswith("?") or n in {v.name for v in spec.pattern.variables}]
+      matched = [n for n in var if n in {v.name for v in spec.pattern.variables}] # (not value variables)
       newTerms = {x.name: self._newTerm(r, x.name, matched, var) for x in spec.new}
       def term(x:GraphObject|None) -> str:
         if x is not None and x.isVariable():
@@ -410,6 +411,9 @@ class ClingoReasoner(Reasoner, engine="clingo"):
     program = self._rulesProgram() + "\n" + query + f'\n#show {answer}/{_arity(query, answer)}.'
     return [tuple(self._value(a) for a in sym.arguments)
             for sym in self._solve(program, facts) if sym.name == answer]
+
+_SYMBOL = re.compile(r"_*[a-z]\w*$")
+"A clingo symbolic constant (eg: symmetric)."
 
 def _str(s:str) -> str:
   '''

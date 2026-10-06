@@ -208,11 +208,11 @@ class TestQueries(unittest.TestCase):
     '''A variable's constraints (its "constraints" attribute) constrain what it matches: ?x {key}, ?x {key: value}, ?x {key: ?v}.'''
     m = self.m
     self.alice["age"] = 30; self.bob["age"] = 30; self.carol["age"] = 5
-    R = Relation(m, [m.RELATION], name="?R"); R["constraints"] = "symmetric"
+    R = Relation(m, [m.RELATION], name="^R"); R["constraints"] = "symmetric"
     self.assertEqual(R.formatConstraints(), "{symmetric}")
-    self.assertEqual({r["?R"] for r in self.rows(self.query("symmetric types", R))}, {self.sib, m.DISTINCT})
-    notSym = Relation(m, [m.RELATION], name="?S"); notSym["constraints"] = "symmetric: false, transitive: false"
-    self.assertNotIn(self.sib, {r["?S"] for r in self.rows(self.query("not symmetric", notSym))})
+    self.assertEqual({r["^R"] for r in self.rows(self.query("symmetric types", R))}, {self.sib, m.DISTINCT})
+    notSym = Relation(m, [m.RELATION], name="^S"); notSym["constraints"] = "symmetric: false, transitive: false"
+    self.assertNotIn(self.sib, {r["^S"] for r in self.rows(self.query("not symmetric", notSym))})
     p = self.var("?p", self.person); p["constraints"] = "age"
     self.assertEqual({r["?p"] for r in self.rows(self.query("has an age", p))}, {self.alice, self.bob, self.carol})
     p30 = self.var("?p30", self.person); p30["constraints"] = "age:30"

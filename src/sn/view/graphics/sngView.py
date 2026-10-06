@@ -22,6 +22,7 @@
 from __future__ import annotations
 from sn import snPrefs
 import sn
+from sn.model import names
 from sn.model.constraints import WHERE, CONSTRAINTS, CONSTRAINTS_NOTE, splitWhere, mergeConstraints, ConstraintError
 from util.attribute import Attribute, VAR
 from sn.model.model import Model, Node, Relation, Collection, IsaIndividual,\
@@ -2574,8 +2575,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :type mo: GraphObject
     '''
     name, text = splitWhere(mo.name)
-    if not name.startswith(("?", "!")):
-      logger.error(f'"{mo.name}": only variables (names starting with "?" or "!") have constraints.')
+    if not names.isVariableName(name):
+      logger.error(f'"{mo.name}": only variables have constraints ({names.grammar.describe()}).')
       return
     try:
       merged = mergeConstraints(None, text or "")

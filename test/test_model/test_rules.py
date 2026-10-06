@@ -76,16 +76,16 @@ class TestRules(unittest.TestCase):
 
   def symmetryRule(self, tag, copies=False):
     'B -R-> A :- A -R-> B, R {tag}  (with *copies*: the consequent has its own ?A, ?B, ?R)'
-    A, B, R = self.var("?A"), self.var("?B"), self.relVar("?R", **{tag: True})
+    A, B, R = self.var("?A"), self.var("?B"), self.relVar("^R", **{tag: True})
     if copies:
-      A2, B2, R2 = self.var("?A"), self.var("?B"), self.relVar("?R")
+      A2, B2, R2 = self.var("?A"), self.var("?B"), self.relVar("^R")
     else:
       A2, B2, R2 = A, B, R
     return self.rule(f"{tag} symmetry", [self.rel(R, A, B)], [self.rel(R2, B2, A2)])
 
   def transitivityRule(self, tag, distinct=False):
     'A -R-> C :- A -R-> B, B -R-> C, R {tag} [, A distinct C]'
-    A, B, C, R = self.var("?A"), self.var("?B"), self.var("?C"), self.relVar("?R", **{tag: True})
+    A, B, C, R = self.var("?A"), self.var("?B"), self.var("?C"), self.relVar("^R", **{tag: True})
     ante = [self.rel(R, A, B), self.rel(R, B, C)]
     if distinct:
       ante.append(self.rel(self.m.DISTINCT, A, C))
@@ -172,7 +172,7 @@ class TestRules(unittest.TestCase):
     self.likes["mirrored"] = True
     self.rel(self.likes, self.p["alice"], self.p["bob"])
     A, B = self.var("?A"), self.var("?B")
-    Q = self.relVar("?Q")                                                        # a relation type can't be new
+    Q = self.relVar("^Q")                                                        # a relation type can't be new
     r = self.rule("bad", [self.rel(self.likes, A, B)], [self.rel(Q, B, A)])
     self.assertEqual([c for c, _ in ruleOf(r).problems], ["rule_unbound"])
     res = self.reason()
@@ -356,10 +356,57 @@ class TestRules(unittest.TestCase):
     self.symmetryRule("mirrored")                                          # ?A, ?B: individuals
     fired = lambda: {(s.name, d.name) for _, t, s, d in self.reason().fired if t is self.likes}
     self.assertEqual(fired(), {("bob", "alice"), ("alice", "bob")})                     # (and mirrored back)
-    A, B, R = self.var("!A"), self.var("!B"), self.relVar("?R", mirrored=True)
+    A, B, R = self.var("!A"), self.var("!B"), self.relVar("^R", mirrored=True)
     self.assertTrue(A.isVariable() and A.isAnyVariable() and not self.var("?C").isAnyVariable())
     self.rule("any symmetry", [self.rel(R, A, B)], [self.rel(R, B, A)])
     self.assertEqual(fired(), {("bob", "alice"), ("alice", "bob"), ("dog", "cat"), ("cat", "dog")})
+
+  def test0905variableKinds(self):
+    '''
+    A variable's name says what it matches (see sn.model.names): ?x
+    individuals, ^T types, !a either -- whether the object is an individual
+    or a type. A mismatch (?x as a type, ^T as an individual) is a warning.
+    '''
+    m = self.m
+    self.likes["mirrored"] = True
+    cat, dog = Node(m, [m.NODE], name="cat"), Node(m, [m.NODE], name="dog")
+    self.rel(self.likes, cat, dog)                                         # between types
+    self.rel(self.likes, self.p["alice"], self.p["bob"])                   # between individuals
+    fired = lambda: {(s.name, d.name) for _, t, s, d in self.reason().fired if t is self.likes}
+    A, B, R = Node(m, [m.NODE], name="^A"), Node(m, [m.NODE], name="^B"), self.relVar("^R", mirrored=True)
+    self.assertEqual((A.variableKind().value, self.var("?x").variableKind().value, self.var("!a").variableKind().value,
+                      cat.variableKind().value), ("type", "individual", "any", "constant"))
+    self.rule("type symmetry", [self.rel(R, A, B)], [self.rel(R, B, A)])
+    self.assertEqual(fired(), {("dog", "cat"), ("cat", "dog")})            # (and mirrored back)
+    self.assertEqual([v for v in self.reason().violations if v.code == "variable_kind"], [])
+    # The name wins: an individual named ^C still matches types -- with a warning; likewise a type named ?D.
+    C, D, R2 = self.var("^C"), Node(m, [m.NODE], name="?D"), self.relVar("^R", mirrored=True)
+    self.rule("mismatched", [self.rel(R2, C, D)], [self.rel(R2, D, C)])
+    self.assertEqual(fired(), {("dog", "cat"), ("cat", "dog")})            # (^C matches types; ?D, individuals: nothing)
+    self.assertEqual({(v.subject.name, v.args[0]) for v in self.reason().violations if v.code == "variable_kind"},
+                     {("^C", "type"), ("?D", "individual")})
+
+  def test0906nameGrammar(self):
+    '''
+    The grammar of names is in one place (sn.model.names.NameGrammar.parse()),
+    and replaceable: here, Prolog-style -- a capitalized name is an individual
+    variable (and the rest is as before: the base rules use it).
+    '''
+    from sn.model import names
+    class Prolog(names.NameGrammar):
+      def parse(self, name):
+        return (names.NameKind.INDIVIDUAL, name) if name[:1].isupper() else super().parse(name)
+    m = self.m
+    self.rel(self.likes, self.p["alice"], self.p["bob"])
+    names.setGrammar(Prolog())
+    try:
+      X, Y = self.var("X", self.person), self.var("Y", self.person)
+      self.assertTrue(X.isVariable() and not self.p["alice"].isVariable())
+      self.rule("liked back", [self.rel(self.likes, X, Y)], [self.rel(self.likes, Y, X)])
+      fired = {(s.name, d.name) for _, t, s, d in self.reason().fired if t is self.likes}
+      self.assertEqual(fired, {("bob", "alice"), ("alice", "bob")})          # (and back)
+    finally:
+      names.setGrammar(names.NameGrammar())
 
   def test0910chainingOnNewObjects(self):
     'A rule that creates nothing matches the objects other rules create (one that creates objects doesn\'t: see test0700).'

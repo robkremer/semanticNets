@@ -37,6 +37,14 @@ and a **range** (what their destinations must be) -- eg: *likes*, from
 *person* to *person*. The reasoner reports relations that break their
 signature, and suggests how to classify the objects involved.
 
+A relation type's own ends are only its signature: *has-sibling*, from
+*person* to *person*, doesn't say that anyone *has* a sibling. To say that,
+draw a relation of that type between the types: *person -has-mother->
+person* says that **every** person has **some** mother (a person) -- "every"
+at the source, "some" at the destination. It's inherited as usual, so *alice
+-has-mother-> person* says that alice has a mother, whoever she is; when you
+say who (*alice -has-mother-> mary*), that replaces it.
+
 Relational properties
 ---------------------
 
@@ -56,6 +64,14 @@ property            means
 These tags belong to the relation type they're set on, and are *not*
 inherited: *has-brother* isa *has-sibling*, but only *has-sibling* need be
 symmetric.
+
+Between types, they keep to "every ... some": transitivity applies however
+the ends are (*a -R-> person* and *person -R-> c* give *a -R-> c*), but
+symmetry only turns a relation round to an individual -- *alice
+-has-sibling-> person* (she has some sibling) doesn't make *person
+-has-sibling-> alice*. Reflexive, irreflexive and asymmetric are about
+individuals: *person -has-sibling-> person* doesn't relate anyone to
+themselves.
 
 Naming relations
 ----------------

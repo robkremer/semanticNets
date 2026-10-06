@@ -28,14 +28,15 @@ from util.utils import askUser
 from util.observer import Subject
 from util.abstractGraph import AbstractGraph
 from util.dirtyable import Dirtyable
+from sn.model import names
 
 TerminatorType = str
 LineType = "choices[smooth,straight]"
 
 
-NAME_NOTE = '''The name of the object. Can be used to access the object in the model.
+NAME_NOTE = f'''The name of the object. Can be used to access the object in the model.
 
-A name starting with "?" is a variable: in a pattern (a rule, query, definition or constraint) it stands for whatever matches -- individuals if it's an individual, types if it's a type. A name starting with "!" is an "any" variable: it matches individuals and types alike. Its constraints -- what what it matches must be like -- are in its "constraints" attribute (see that attribute's note). They can also be typed here, after the name and ":where:", eg:
+In a pattern (a rule, query, definition or constraint) a variable stands for whatever matches: {names.grammar.describe()}. A variable's constraints -- what what it matches must be like -- are in its "constraints" attribute (see that attribute's note). They can also be typed here, after the name and ":where:", eg:
   ?p :where: alive, age: 30
 and are then moved into that attribute.'''
 "The note on the name attribute: shown as its tooltip in the attribute editor."
@@ -200,7 +201,7 @@ class TopModel(Model):
     self.CONSTRAINT['severity'] = Attribute("error", "choices[error,warning]", VAR_DEFAULTED, "How bad a violation is: error or warning.")
     self.CONSTRAINT['report']   = Attribute("", str, VAR_DEFAULTED,
       "What a violation is about, as a comma-separated list: its subject, then its arguments -- each one of the "
-      "constraint's variables (eg: ?r), or a word taken as is (eg: reflexive). By default, all its variables, in "
+      "constraint's variables (eg: ^r), or a word taken as is (eg: reflexive). By default, all its variables, in "
       "name order (or the constraint itself if it has none).")
     self.CONSTRAINT['message']  = Attribute("", str, VAR_DEFAULTED,
       "The message, with {0} for the subject and {1}, {2}, ... for the arguments. By default, the code's built-in "

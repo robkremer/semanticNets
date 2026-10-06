@@ -217,10 +217,28 @@ irreflexive, asymmetric) isn't in ``clingoReasoner.lp``: it's ordinary rules
 and constraints, in a model of **base rules** (``sn/model/baseRules.snm``,
 made by ``tools/makeBaseRules.py``) that every reasoner applies to every
 model (:py:meth:`~sn.model.reasoner.Reasoner.ruleObjects`), so a new engine
-gets them by translating rules, with nothing more to write. They use "any"
-variables (``!a``: individuals and types alike) and a relation-type variable
-(``?r``) tagged with the property, eg: ``!a -?r-> !b`` with ``?r
-{symmetric}`` concludes ``!b -?r-> !a``.
+gets them by translating rules, with nothing more to write. They use a
+relation-type variable (``^r``) tagged with the property, and individual
+(``?a``) or "any" (``!a``) variables by what a relation with a type at an end
+means -- "every" at its source, "some" at its destination: eg: ``!a -^r-> ?b``
+with ``^r {symmetric}`` concludes ``?b -^r-> !a`` (but nothing from ``a -r->
+T``: which T?); transitivity is all ``!``; reflexive, irreflexive and
+asymmetric are all ``?``. See ``tools/makeBaseRules.py``.
+
+Variable names
+--------------
+
+Which names are variables, and of which kind, is decided in one place:
+:py:meth:`sn.model.names.NameGrammar.parse` (``?x`` individual, ``^T`` type,
+``!a`` any; anything else a constant). Everything else asks it, through
+:py:meth:`~sn.model.model.GraphObject.variableKind` or
+:py:func:`sn.model.names.isVariableName` -- the engines (a variable's kind
+is a guard in clingo: ``individual(V)``, ``type(V)`` or none), the
+constraints' value variables, the views. An application that needs its own
+syntax for names subclasses it and installs it with
+:py:func:`~sn.model.names.setGrammar`; it should leave the names it doesn't
+claim to the default (``super().parse()``), as the base rules are written in
+it.
 
 :py:data:`~sn.model.reasoner.BASE_RULES` lists the base rules' models, and
 an application can change it (eg: to base rules of its own), before it makes

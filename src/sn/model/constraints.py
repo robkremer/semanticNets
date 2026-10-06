@@ -9,8 +9,8 @@ A variable's constraints are the text of its "constraints" attribute, eg::
 
 - ``key`` alone: has the attribute (any value).
 - ``key: value``: has it with that value. A value is a number, ``true`` or
-  ``false``, a value variable (``?o``: the same value wherever it's used in the
-  rule or query), or text -- quoted (``'...'`` or ``"..."``) if it has commas,
+  ``false``, a value variable (a variable's name, eg: ``?o`` -- see
+  *sn.model.names*: the same value wherever it's used in the rule or query), or text -- quoted (``'...'`` or ``"..."``) if it has commas,
   colons or quotes in it, or would otherwise read as one of the others.
 - The relational properties (symmetric, asymmetric, reflexive, irreflexive,
   transitive) are tags on relation types: ``symmetric`` means it is,
@@ -48,6 +48,7 @@ from __future__ import annotations
 import re
 import logging
 from typing import Any
+from sn.model import names
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +100,17 @@ class ConstraintError(ValueError):
   'Constraints text that can\'t be parsed.'
 
 _KEY = re.compile(r"[A-Za-z_][\w./-]*$")
-_VALUE_VAR = re.compile(r"\?\w+$")
+_VALUE_VAR_STEM = re.compile(r"\w+$")
+
+def _isValueVar(v:str) -> bool:
+  '''
+  :param v:
+  :type v: str
+  :returns: True iff *v* is a well-formed value variable: a variable's name
+    (see *sn.model.names*; its kind doesn't matter) with a word for a stem.
+  :rtype: bool
+  '''
+  return names.isVariableName(v) and bool(_VALUE_VAR_STEM.match(names.stem(v)))
 _NUMBERISH = re.compile(r"[-+]?(\d|\.\d)")
 
 def _split(text:str, sep:str) -> list[str]:
@@ -155,8 +166,8 @@ def _value(text:str, key:str) -> Any:
       return conv(v)
     except ValueError:
       pass
-  if v.startswith("?"):
-    if not _VALUE_VAR.match(v):
+  if names.isVariableName(v):
+    if not _isValueVar(v):
       raise ConstraintError(f"bad value variable {v!r}")
     return ValueVar(v)
   return v
@@ -203,7 +214,7 @@ def _formatValue(v:Any) -> str:
     return str(v)
   s = str(v)
   if s == "" or s != s.strip() or any(c in s for c in ",:'\"{}") or s.lower() in ("true", "false") \
-     or s.startswith("?") or _NUMBERISH.match(s):
+     or names.isVariableName(s) or _NUMBERISH.match(s):
     q = "'" if "'" not in s else '"'
     return f"{q}{s}{q}"
   return s
@@ -275,7 +286,7 @@ def migrateConstraints(model) -> list[str]:
       continue
     if not old:
       continue
-    folded = {k: PRESENT if v is True or v == "" else ValueVar(v) if isinstance(v, str) and _VALUE_VAR.match(v) else v
+    folded = {k: PRESENT if v is True or v == "" else ValueVar(v) if isinstance(v, str) and _isValueVar(v) else v
               for k, v in old.items()}
     text = mergeConstraints(obj.getLocal(CONSTRAINTS, None), formatConstraints(folded))
     for k in old:

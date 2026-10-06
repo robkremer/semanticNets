@@ -77,6 +77,7 @@ import sn
 from sn import snPrefs
 from sn.model import GraphObject, Relation
 from sn.model.model import UP_ARROW, IsaIndividual
+from sn.model import names
 from sn.model.constraints import WHERE, CONSTRAINTS, CONSTRAINTS_NOTE, splitWhere, mergeConstraints, ConstraintError
 from util.attribute import Attribute, VAR
 from sn.view.graphics.decorators import WrappingText, Selected, Highlight, ContextFrame, MarkerContainer, NOMINAL_ASPECT,\
@@ -1659,8 +1660,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     mo = self.modelObject
     name, text = splitWhere(typed)
     ret = {k: v for k, v in edits.items() if k != "name"}
-    if not name.startswith(("?", "!")):
-      logger.error(f'"{typed}": only variables (names starting with "?" or "!") have constraints. The name wasn\'t changed.')
+    if not names.isVariableName(name):
+      logger.error(f'"{typed}": only variables have constraints ({names.grammar.describe()}). The name wasn\'t changed.')
       return ret
     base = edits.get(CONSTRAINTS)
     base = (base.value if isinstance(base, Attribute) else base) if CONSTRAINTS in edits else mo.getLocal(CONSTRAINTS, None)

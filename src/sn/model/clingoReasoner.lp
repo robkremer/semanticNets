@@ -25,6 +25,8 @@
 %                             irreflexive, symmetric, asymmetric, transitive)
 %   member(C,M).              Collection membership
 %   pattern(X).               X is a pattern element (see GraphObject.isPatternElement())
+%   var_kind(X,K).            X is a variable over K: individual, type or any (see
+%                             GraphObject.variableKind() and sn.model.names)
 %   attr(O,K,V).              effective (local or inherited, per the model's
 %                             Restriction rules) non-"vis/" scalar attributes
 %   lattr(O,K).               O has K locally
@@ -164,6 +166,14 @@ attr(X,K,V) :- rule_attr(_,X,K,V).
 
 % Report only violations about the data (not about pattern elements).
 violation(C,S,X,A) :- violation0(C,S,X,A), data(X).
+
+% ... and, about pattern elements, a variable whose name says what it ranges
+% over (see sn.model.names) though the object is the other: ?x as a type, or
+% ^T as an individual. The name wins (see ClingoReasoner._patternBody()) --
+% except that a variable used as a relation's type in a pattern ranges over
+% relation types whatever its name (so an old ?r still works there).
+violation(variable_kind, warning, X, (individual, "a type")) :- var_kind(X,individual), type(X).
+violation(variable_kind, warning, X, (type, "an individual")) :- var_kind(X,type), individual(X).
 
 % The isa closure, as reported: data only (a variable isn't an instance of anything).
 isa_data(X,T) :- isa_star(X,T), data(X).

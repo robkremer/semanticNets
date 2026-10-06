@@ -14,9 +14,21 @@ src/sn/model/, stored as being in sn.model.reasoner.BASE_RULES_PLACEHOLDER
 
 The properties are tags on specific relation types, and aren't inherited
 (brother isa sibling, but only sibling is symmetric); brother pairs still
-count as sibling pairs, so they get sibling's symmetric closure. The rules'
-variables are "any" variables (!a: individuals and types alike), and ?r, used
-as a relation's type, ranges over relation types.
+count as sibling pairs, so they get sibling's symmetric closure. ^r, used as
+a relation's type, ranges over relation types.
+
+The other variables' kinds (see sn.model.names) follow from what a relation
+with a type at an end means: "every" at its source, "some" at its destination
+-- person -has-mother-> person: every person has some mother (a person); Alice
+-has-mother-> person (inherited): Alice has one, whoever she is. So:
+
+- symmetric: A -r-> b (every A, b) gives b -r-> A (b, some A) -- but a -r-> T
+  (a, some T) says nothing that can be put that way. Its source is any (!a),
+  its destination an individual (?b).
+- transitive: holds whatever the ends are (eg: a -r-> T and T -r-> c: a's T
+  is, like every T, related to c), so all any (!a).
+- reflexive, irreflexive, asymmetric: about objects themselves, so
+  individuals (?a): person -r-> person isn't a person related to itself.
 
 .. codeauthor:: Rob Kremer <robkremer@me.com>
 '''
@@ -54,7 +66,7 @@ def makeBaseRules(path:str) -> None:
   def var(name):
     return Node(m, [m.NODE], individual=True, name=name)
   def relVar(constraints=None):
-    r = Relation(m, [m.RELATION], name="?r")
+    r = Relation(m, [m.RELATION], name="^r")
     if constraints:
       r["constraints"] = constraints
     return r
@@ -75,9 +87,9 @@ def makeBaseRules(path:str) -> None:
       rel(m.CONTAINS, c, x)
 
   # ---- inferences ---------------------------------------------------------------
-  a, b, r = var("!a"), var("!b"), relVar("symmetric")
+  a, b, r = var("!a"), var("?b"), relVar("symmetric")
   rule("symmetric", [rel(r, a, b)], [rel(r, b, a)],
-       "a -r-> b gives b -r-> a, for a symmetric r.")
+       "a -r-> b gives b -r-> a, for a symmetric r and an individual b (a -r-> T says a relates to some T: not which one).")
   # Symmetric + transitive + irreflexive (eg: full-sibling) means "an
   # equivalence minus identity": plain transitivity would force x -r-> x for
   # anything related at all (x->y, y->x, so x->x), making the three tags
@@ -97,23 +109,23 @@ def makeBaseRules(path:str) -> None:
          {"transitive": " that isn't symmetric.",
           "transitive (not irreflexive)": " that isn't irreflexive.",
           "transitive (off the diagonal)": ", when a and c are different (see the other two)."}[name])
-  a, r = var("!a"), relVar("reflexive")
+  a, r = var("?a"), relVar("reflexive")
   rule("reflexive (source)", [rel(r, a, None)], [rel(r, a, a)],
        "a -r-> anything gives a -r-> a, for a reflexive r.")
-  a, r = var("!a"), relVar("reflexive")
+  a, r = var("?a"), relVar("reflexive")
   rule("reflexive (destination)", [rel(r, None, a)], [rel(r, a, a)],
        "anything -r-> a gives a -r-> a, for a reflexive r.")
 
   # ---- violations ---------------------------------------------------------------
-  a, r = var("!a"), relVar("irreflexive")
-  constraint("irreflexive", [rel(r, a, a)], "?r, !a",
+  a, r = var("?a"), relVar("irreflexive")
+  constraint("irreflexive", [rel(r, a, a)], "^r, ?a",
              "An irreflexive r relates nothing to itself.")
-  a, b, r = var("!a"), var("!b"), relVar("asymmetric")
-  constraint("asymmetric", [rel(r, a, b), rel(r, b, a)], "?r, !a, !b",
+  a, b, r = var("?a"), var("?b"), relVar("asymmetric")
+  constraint("asymmetric", [rel(r, a, b), rel(r, b, a)], "^r, ?a, ?b",
              "An asymmetric r relates nothing both ways (and so nothing to itself).")
   for p, q in (("reflexive", "irreflexive"), ("symmetric", "asymmetric"), ("reflexive", "asymmetric")):
     r = relVar(f"{p}, {q}")
-    constraint(f"property_conflict ({p}, {q})", [r], f"?r, {p}, {q}",
+    constraint(f"property_conflict ({p}, {q})", [r], f"^r, {p}, {q}",
                f"Nothing can be both {p} and {q}.")
     c = next(o for o in m.values() if o.name == f"property_conflict ({p}, {q})")
     c["code"] = "property_conflict"

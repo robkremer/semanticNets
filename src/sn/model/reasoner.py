@@ -27,6 +27,8 @@ A reasoner engine subclasses :py:class:`Reasoner` (see
   ``lattr(O,K)``              O has attribute K locally
   ``pattern(X)``              X describes a pattern (in a rule etc.), not the world
                               (see GraphObject.isPatternElement())
+  ``var_kind(X,K)``           X is a variable over K: individual, type or any
+                              (see GraphObject.variableKind() and sn.model.names)
   ==========================  ================================================
 
 - :py:class:`Inferences` and :py:class:`Violation` are what every engine
@@ -87,6 +89,7 @@ import sn
 from sn.model.model import Model, GraphObject, Node, Collection, Relation, IsaIndividual
 from util.attribute import Attribute, Restriction
 from sn.model.constraints import CONSTRAINTS, PRESENT, ValueVar
+from sn.model import names
 
 logger:sn.SNLogger = sn.getLogger(__name__)
 
@@ -109,6 +112,7 @@ _MESSAGES:dict[str,str] = {
   "rule_open_end":         "rule {0}: {1} in the consequent has no {2}",
   "rule_unsupported":      "rule {0}: {1} in the consequent isn't supported (yet)",
   "bad_constraints":       "{0}: the constraints of {1} can't be read: {2}",
+  "variable_kind":         "{0}: its name makes it a variable over {1}s, but it's {2}",
   "constraint_report":     "constraint {0}: {1} in its report isn't one of its variables",
   "constraint_severity":   "constraint {0}: its severity is {1}; it should be error or warning",
   }
@@ -673,7 +677,7 @@ CONSTRAINT_ATTRIBUTES:dict[str, str] = {
   "code":     "The code of the violations it reports (default: the constraint's name).",
   "severity": "error (the default) or warning.",
   "report":   "What a violation is about, as a comma-separated list: its subject, then its arguments -- each one "
-              "of the constraint's variables (eg: ?r), or a word taken as is (eg: reflexive). By default, all "
+              "of the constraint's variables (eg: ^r), or a word taken as is (eg: reflexive). By default, all "
               "its variables, in name order (or the constraint itself if it has none).",
   "message":  "The message, with {0} for the subject and {1}, {2}, ... for the arguments. By default, the "
               "code's built-in message, if it has one.",
@@ -687,7 +691,7 @@ def constraintOf(constraint:GraphObject) -> ConstraintSpec:
   :returns: The *ConstraintSpec* of *constraint*: its pattern is what it
     contains (see *patternOf()*), and the rest is from its attributes (see
     *CONSTRAINT_ATTRIBUTES*). Eg: a constraint named "irreflexive" containing
-    !a -?r-> !a, with ?r {irreflexive} and report "?r, !a", reports each
+    ?a -^r-> ?a, with ^r {irreflexive} and report "^r, ?a", reports each
     irreflexive relation type relating something to itself.
   :rtype: ConstraintSpec
   '''
@@ -711,7 +715,7 @@ def constraintOf(constraint:GraphObject) -> ConstraintSpec:
     for tok in (t.strip() for t in text.split(",")):
       if not tok:
         continue
-      if tok.startswith(("?", "!")):
+      if names.isVariableName(tok):
         if tok in byName:
           spec.report.append(byName[tok])
         else:
@@ -1141,6 +1145,8 @@ class Reasoner(ABC):
         out.append(("pattern", (obj,)))
       if obj.isIndividual():
         out.append(("individual", (obj,)))
+      if (vk := obj.variableKind()).isVariable and dict.__contains__(obj, "name"): # (not a ^r's relations, which inherit its name)
+        out.append(("var_kind", (obj, Sym(vk.value))))
       out.append(("kind", (obj, Sym(_kind(obj)))))
       out.append(("name", (obj, obj.name)))
       try:
@@ -1347,10 +1353,10 @@ def _newObjectName(n:NewObject, model:Model) -> str:
   :param model: The model it's made in (objects are named relative to it).
   :type model: Model
   :returns: The name of the inferred node made for it, eg: "(m for alice)" --
-    not a variable's name (no leading "?" or "!": it isn't a pattern).
+    not a variable's name (see *sn.model.names*: it isn't a pattern).
   :rtype: str
   '''
-  what = n.variable.lstrip("?!") or "new"
+  what = names.stem(n.variable) or "new"
   match = ", ".join(v.name if isinstance(v, GraphObject) else str(v) for _, v in n.bindings)
   return f"({what} for {match})" if match else f"(new {what})"
 

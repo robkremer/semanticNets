@@ -72,9 +72,10 @@ innermost one.
 Variables
 ---------
 
-Inside a context, an object whose name starts with ``?`` is a **variable**:
-it matches *any* object that fits everything the pattern says about it. In a
-query ``?p -likes-> mary``, ``?p`` matches everyone who likes mary.
+Inside a context, an object whose name starts with ``?``, ``^`` or ``!`` is
+a **variable**: it matches *any* object that fits everything the pattern says
+about it. In a query ``?p -likes-> mary``, ``?p`` matches everyone who likes
+mary.
 
 Say what type a variable must be in the usual way -- an *isa* from the
 variable to the type (*?p* isa *person*). A variable used in several places
@@ -82,11 +83,19 @@ must match the same object in all of them, so ``?x -has-parent-> ?y``, ``?y
 -has-parent-> ?z`` matches grandchildren (``?x``) and their grandparents
 (``?z``).
 
-A variable matches individuals if it's an individual, and types if it's a
-type. A variable whose name starts with ``!`` instead (eg: ``!x``) is an
-**"any" variable**: it matches individuals and types alike. (A variable used
-as a relation's type, eg: ``?r`` in ``!a -?r-> !b``, matches relation
-types.)
+The first character of a variable's name says what it matches:
+
+=========  ==========================================================
+``?x``     an **individual variable**: matches individuals
+``^T``     a **type variable**: matches types (so ``^T`` isa *animal*
+           matches *dog*, *cat*, ...)
+``!a``     an **"any" variable**: matches individuals and types alike
+=========  ==========================================================
+
+Make an individual variable an individual, and a type variable a type: the
+name decides what it matches, but the reasoner warns about a mismatch (a
+type named ``?x``, or an individual named ``^T``). A variable used as a
+relation's type, eg: ``^r`` in ``!a -^r-> ?b``, matches relation types.
 
 Objects in a pattern that *aren't* variables (*mary*, above) stand for
 themselves.

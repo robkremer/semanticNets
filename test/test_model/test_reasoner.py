@@ -162,20 +162,32 @@ class ReasonerSpec:
     return m, Node(m, [m.NODE], name="person")
 
   def test0270propertiesOfTypes(self):
-    'The relational properties apply between types too, not just individuals.'
+    '''
+    Between types, a relation means "every" at its source and "some" at its
+    destination (A -r-> B: every A relates to some B), and the relational
+    properties respect that: transitivity applies whatever the ends; symmetry
+    only flips a relation to an individual (A -r-> x gives x -r-> A -- but
+    A -r-> B says nothing about which B); reflexivity, irreflexivity and
+    asymmetry are about individuals.
+    '''
     m, _ = self._fresh("types")
     a, b, c = (Node(m, [m.NODE], name=n) for n in "abc")
+    x = Node(m, [m.NODE], individual=True, name="x")
     partOf = Relation(m, [m.RELATION], name="partOf"); partOf["transitive"] = True
     near = Relation(m, [m.RELATION], name="near"); near["symmetric"] = True
     same = Relation(m, [m.RELATION], name="same"); same["reflexive"] = True
+    other = Relation(m, [m.RELATION], name="other"); other["irreflexive"] = True
     Relation(m, [partOf], a, b, individual=True); Relation(m, [partOf], b, c, individual=True)
-    Relation(m, [near], a, c, individual=True)
+    Relation(m, [near], a, c, individual=True); Relation(m, [near], b, x, individual=True)
     Relation(m, [same], b, c, individual=True)
+    Relation(m, [other], a, a, individual=True) # every a is other than some a: no violation
     r = self.ENGINE(m).run()
     self.assertIn(c, r.related(a, partOf))
-    self.assertIn(a, r.related(c, near))
-    self.assertEqual(set(r.related(b, same)), {b, c})
-    self.assertEqual(set(r.related(c, same)), {c})
+    self.assertNotIn(a, r.related(c, near))
+    self.assertIn(b, r.related(x, near))
+    self.assertEqual(set(r.related(b, same)), {c})
+    self.assertEqual(set(r.related(c, same)), set())
+    self.assertFalse([v for v in r.violations if v.code == "irreflexive"])
 
   def test0275reflexive(self):
     m, person = self._fresh("refl")

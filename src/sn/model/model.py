@@ -77,6 +77,8 @@ from util.dirtyable import Dirtyable
 from util.abstractGraph import AGRelation, AbstractGraph, AGObject
 from util.errorReportingObject import ErrorReportingObject
 from sn.model.snAttribute import SNAttributedObject
+from sn.model import names
+from sn.model.names import NameKind
 
 logger:sn.SNLogger = sn.getLogger(__name__)
 
@@ -466,30 +468,34 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
       return []
     return [other for _rel,other in self._getIncoming(lambda r: isinstance(r, IsaIndividual)) if other is not None]    
 
-  def isVariable(self) -> bool:
+  def variableKind(self) -> NameKind:
     '''
-    :returns: True iff this is a variable -- its name starts with "?" or "!"
-      (see *isAnyVariable()*) -- which stands for "something" in a pattern (a
-      rule, definition or query).
-    :rtype: bool
+    :returns: What this object's name makes it (see *sn.model.names*): a
+      constant (NameKind.CONSTANT), or a variable that stands for "something"
+      in a pattern (a rule, definition, query or constraint) -- individuals
+      (NameKind.INDIVIDUAL, eg: "?x"), types (NameKind.TYPE, eg: "^T"), or
+      either (NameKind.ANY, eg: "!a").
+    :rtype: NameKind
     '''
     try:
-      return self.name.startswith(("?", "!"))
+      return names.nameKind(self.name)
     except Exception: # eg: during construction, before it has a name
-      return False
+      return NameKind.CONSTANT
+
+  def isVariable(self) -> bool:
+    '''
+    :returns: True iff this is a variable (see *variableKind()*).
+    :rtype: bool
+    '''
+    return self.variableKind().isVariable
 
   def isAnyVariable(self) -> bool:
     '''
-    :returns: True iff this is an "any" variable -- its name starts with "!"
-      (eg: "!x") -- which matches individuals and types alike. (An ordinary
-      variable, "?x", matches individuals if it's an individual, and types if
-      it's a type.)
+    :returns: True iff this is an "any" variable (see *variableKind()*), which
+      matches individuals and types alike.
     :rtype: bool
     '''
-    try:
-      return self.name.startswith("!")
-    except Exception: # eg: during construction, before it has a name
-      return False
+    return self.variableKind() is NameKind.ANY
 
   def constraints(self) -> dict[str, Any]:
     '''
