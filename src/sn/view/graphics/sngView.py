@@ -584,7 +584,8 @@ class SNGContext(UIContext):
       else:
         v.hides[self.category] = self.oldMode
       for vo in self.erased: # (nodes first, as in _Represent)
-        if not vo._isConnected():
+        mo = vo.modelObject
+        if not vo._isConnected() and (mo is None or mo._isConnected()): # (not an inferred object a later "reason" took out of the model)
           vo._reconnect()
       v.setDirty()
       v.applyVisibility()
@@ -839,6 +840,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     self.categories.addCategory("rules",           lambda mo: mo.isIndividual() and mo.isa(m.RULE))
     self.categories.addCategory("queries",         lambda mo: mo.isIndividual() and mo.isa(m.QUERY))
     self.categories.addCategory("constraints",     lambda mo: mo.isIndividual() and mo.isa(m.CONSTRAINT))
+    self.categories.addCategory("inferred objects", lambda mo: getattr(mo, "inferred", False)) # (what "reason" put in the model: see GraphObject.inferred)
     self.hides:dict[str, str] = {}
     "The categories currently hidden or erased: category name -> \"hide\" or \"erase\". Saved with the view."
     
@@ -3344,11 +3346,15 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     dirty = self.isDirty()
     shown = lambda o: o is not None and self.findViewObjectForGraphObject(o) is not None
     def show(o:GraphObject, atPoint=None) -> None:
+      # (by its categories: hidden ones are made hidden, erased ones not made at all -- not
+      # exempted, as something the user made would be: see _exemptIfFiltered())
+      if self.isFiltered(o, ("erase",)):
+        return
       try:
         vo = self.makeViewObjectForGraphObject(o, atPoint=atPoint)
         if vo is not None:
-          self._exemptIfFiltered(vo)
-          if atPoint is not None:
+          vo._applyHidden()
+          if atPoint is not None and not vo.isHidden():
             vo.adjustPos() # (a free place, beside it)
       except Exception:
         logger.exception(f"Couldn't show the inferred {o.name}")

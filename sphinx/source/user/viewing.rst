@@ -33,6 +33,8 @@ types                       all types
 non-local                   objects from other models
 rules                       rules
 queries                     queries
+constraints                 constraints
+inferred objects            what the reasoner inferred (see :doc:`reasoning`)
 ==========================  ====================================================
 
 Checking a category in the **hide** menu stops drawing those objects (they
@@ -44,7 +46,9 @@ The settings are saved with the view.
 Hiding is *soft*: it applies to what's there when you check the category. An
 object you make (or ask for, with **show node**) that's in a hidden category
 is shown anyway, and a message in the terminal says so. To hide it too,
-uncheck and re-check the category.
+uncheck and re-check the category. (What the reasoner infers isn't
+something you made: with *inferred objects* hidden, reasoning again adds
+them hidden; erased, it doesn't add them to the view at all.)
 
 Arranging
 ---------
