@@ -328,8 +328,34 @@ def _findEntry(menu:tk.Menu, label:str) -> tuple[Optional[int], Optional[str]]:
     return None, None
   return index, menu.type(index)
 
+_separatedItems:set[tuple[str, str]] = set()
+"(menu, label) of the items added with a separator just above them (see *addToMenuBar()*'s *separatorBefore*)."
+
+def _separate(menu:tk.Menu, label:str, separatorBefore:bool) -> None:
+  '''
+  If *separatorBefore*: make sure the item labelled *label* in *menu* has a
+  separator just above it (unless it's the first), and note that it's the
+  item's, to go with it (see *removeFromMenuBar()*).
+
+  :param menu: The menu.
+  :type menu: tk.Menu
+  :param label: The item's label.
+  :type label: str
+  :param separatorBefore: Whether it has a separator above it.
+  :type separatorBefore: bool
+  '''
+  if not separatorBefore:
+    return
+  index, _ = _findEntry(menu, label)
+  if index is None:
+    return
+  _separatedItems.add((str(menu), label))
+  if index > 0 and menu.type(index - 1) != "separator":
+    menu.insert_separator(index)
+
 def addToMenuBar(path:str, command:Optional[Callable]=None, *, menu:Optional[tk.Menu]=None,
-    accelerator:Optional[str]=None, cascadePositions:Optional[dict[str, int]]=None) -> None:
+    accelerator:Optional[str]=None, cascadePositions:Optional[dict[str, int]]=None,
+    separatorBefore:bool=False) -> None:
   """
   Add -- or, if already present, replace -- an entry in the app's menu bar.
 
@@ -355,6 +381,10 @@ def addToMenuBar(path:str, command:Optional[Callable]=None, *, menu:Optional[tk.
   :param cascadePositions: Where to put any cascade that has to be made, by
       label, eg: ``{"Edit": 1}``; by default, at the end (as for *addCheckToMenuBar()*).
   :type cascadePositions: Optional[dict[str, int]]
+  :param separatorBefore: Put a separator just above the item (unless it's
+      the first, or there's one there already): it starts a group of items.
+      *removeFromMenuBar()* removes the separator with the item.
+  :type separatorBefore: bool
   :note: Safe to call repeatedly with the same *path* -- e.g. every time a
       window gains focus -- since an existing entry with the same final
       label is reconfigured in place rather than duplicated (and, if it was
@@ -390,9 +420,10 @@ def addToMenuBar(path:str, command:Optional[Callable]=None, *, menu:Optional[tk.
       target.entryconfig(index, menu=menu, state=tk.NORMAL, **kwargs)
     else:
       target.insert_cascade(index, label=label, menu=menu, state=tk.NORMAL, **kwargs)
+  _separate(target, label, separatorBefore)
 
 def addCheckToMenuBar(path:str, variable:tk.Variable, command:Optional[Callable]=None, *,
-                      cascadePositions:Optional[dict[str, int]]=None) -> None:
+                      cascadePositions:Optional[dict[str, int]]=None, separatorBefore:bool=False) -> None:
   """
   Add -- or, if already present, replace -- a check item in the app's menu
   bar: it shows (and sets) the boolean *variable*, and calls *command* when
@@ -410,6 +441,8 @@ def addCheckToMenuBar(path:str, variable:tk.Variable, command:Optional[Callable]
   :param cascadePositions: Where to put any cascade that has to be made, by
       label, eg: ``{"View": 1}`` (just after "File"); by default, at the end.
   :type cascadePositions: Optional[dict[str, int]]
+  :param separatorBefore: As for *addToMenuBar()*.
+  :type separatorBefore: bool
   :rtype: None
   """
   segments = path.split("|")
@@ -426,10 +459,12 @@ def addCheckToMenuBar(path:str, variable:tk.Variable, command:Optional[Callable]
     index = tk.END
   target.insert_checkbutton(index, label=label, variable=variable, onvalue=True, offvalue=False,
                             command=command, state=tk.NORMAL)
+  _separate(target, label, separatorBefore)
 
 def removeFromMenuBar(path:str) -> None:
   """
-  Remove an entry (as added by *addToMenuBar()*) from the app's menu bar.
+  Remove an entry (as added by *addToMenuBar()*) from the app's menu bar --
+  and the separator above it, if it was added with one (*separatorBefore*).
 
   Safe to call even when the item (or an intervening cascade) isn't
   currently present -- this is simply a no-op in that case, so callers
@@ -453,6 +488,9 @@ def removeFromMenuBar(path:str) -> None:
   index, _ = _findEntry(target, label)
   if index is not None:
     target.delete(index)
+    # (the separator it was added with: see addToMenuBar()'s separatorBefore)
+    if (str(target), label) in _separatedItems and index > 0 and target.type(index - 1) == "separator":
+      target.delete(index - 1)
   
 ##########################################################################################
 ########## SOUNDS ########################################################################

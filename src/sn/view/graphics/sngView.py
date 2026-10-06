@@ -1086,7 +1086,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     addToMenuBar("File|Save view as...", self.doSaveViewAs)
     addToMenuBar("File|Save model", self.doSaveModel)
     addToMenuBar("File|Save model as...", self.doSaveModelAs)
-    addToMenuBar("File|Close model", self.doCloseModel)
+    addToMenuBar("File|Close model", self.doCloseModel, separatorBefore=True) # (after the saves)
     addToMenuBar("File|Open super model", menu=self._superModelsMenu())
     addToMenuBar("Edit|Model preferences...", self.doModelPreferences, cascadePositions={"Edit": self._afterFileMenu()})
     addCheckToMenuBar("View|Animation toolbar", self._animationToolbarShown(), self._onAnimationToolbarItem,
