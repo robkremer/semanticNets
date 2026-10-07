@@ -481,13 +481,6 @@ def forces(snap:Snapshot, e:float, gMaxDist:float, k:float, kMinDist:float, maxD
       else: # (inside: stays in)
         d[k] = max(lo, min(hi, p + d[k])) - p
     capped[i] = (d[0], d[1])
-  # Keep everything on the canvas (x, y >= 0) by sliding the whole arrangement,
-  # not by stopping objects at the edge one by one -- that would block them
-  # (eg: a tree turning around) and skew the layout.
-  over = lambda k: min(snap.positions[i][k] + capped[i][k] - snap.halfSizes[i][k] for i in top) # (the furthest footprint edge, after the step)
-  sx, sy = (max(0.0, -over(0)), max(0.0, -over(1))) if top else (0.0, 0.0) # (exactly enough: never short, or objects would hit the edge one by one)
-  for i in top:
-    capped[i] = (capped[i][0] + sx, capped[i][1] + sy)
   ret:list[tuple[float, float]] = list(capped)
   for i in sorted(range(n), key=lambda i: len(snap.chains[i])): # (windows before what's in them: each moves with its window)
     o = owners[i]

@@ -185,6 +185,9 @@ class LayoutHieristic(ABC):
   def placeAll(self):
     pass
     
+UNBOUNDED = 10**9
+"A limit (view units) that's no limit: objects may be placed anywhere, at negative coordinates too."
+
 class FindFree(LayoutHieristic):
   
   def __init__(self, view):
@@ -198,9 +201,10 @@ class FindFree(LayoutHieristic):
     self.expandFactor_relations = 5
     self.expandFactor_nodes = 15
     'Clear space (view units) a node wants around it (relation labels: *expandFactor_relations*).'
-    self.leftMargin = 30
     self.topMargin = 30
-    self.limit = [self.leftMargin, self.topMargin, 10000, 10000]
+    'Where the isa levels start, for an aggressive placement (see *placeNode()*).'
+    self.limit = [-UNBOUNDED, -UNBOUNDED, UNBOUNDED, UNBOUNDED]
+    'Where objects may be placed: anywhere (coordinates may be negative).'
     self.isaLevelSpacing = 120
     
   @override
@@ -296,21 +300,18 @@ class FindFree(LayoutHieristic):
     # not rel._id, the view object's id, a different numbering altogether)
     exclude = [node._shape.id] + [rel._shape.id for rel in node.relations if rel._shape is not None and rel._shape.id is not None]
     
-    topLimit = self.topMargin
-    bottomLimit = 10000
-    leftLimit = self.leftMargin
-    rightLimit = 10000
+    leftLimit, topLimit, rightLimit, bottomLimit = self.limit
     
     if direction == Direction.NEAREST:
       pass
       
     elif direction == Direction.SUB:
       if referenceNode is not None:
-        topLimit = max(self.topMargin, referenceNode.boundingBox()[3]+expandFactor* \
-           (2 if node.__class__ is referenceNode.__class__ else 1))
+        topLimit = referenceNode.boundingBox()[3]+expandFactor* \
+           (2 if node.__class__ is referenceNode.__class__ else 1)
           
       else:
-        topLimit = max(self.topMargin, rect[1])
+        topLimit = rect[1]
       
     elif direction == Direction.SUPER:
       h = rect[3] - rect[1]
@@ -318,14 +319,12 @@ class FindFree(LayoutHieristic):
         bottomLimit = referenceNode.boundingBox()[1]-expandFactor
       else:
         bottomLimit = rect[1]-h-expandFactor
-      if bottomLimit < h+2*expandFactor: # fix the problem of squeezing at the top
-        bottomLimit = h+3*expandFactor
       
     elif direction == Direction.LATERAL:
       if referenceNode is not None:
-        leftLimit = max(self.leftMargin, referenceNode.boundingBox()[2]+expandFactor)
+        leftLimit = referenceNode.boundingBox()[2]+expandFactor
       else:
-        leftLimit = max(self.leftMargin, rect[0])
+        leftLimit = rect[0]
         
     if node.modelObject is not None and (node.modelObject.isType() or isinstance(node, Node)) and aggressive:
       topLimit = max(topLimit, self.isaLevelSpacing*depth(node.modelObject)+self.topMargin)

@@ -513,7 +513,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
   def boundingBox(self, rect:list[int]=None, fast=False) -> list:
     '''
     Returns or sets the bounding box for the *VObject* in [minX, minY, maxX, maxY]
-    form.  Checks *rect* for sanity and shifts it to be right of and below the origin.
+    form.  Checks *rect* for sanity (coordinates may be negative: the canvas
+    extends every way -- see *SNGView.resetScrollRegion()*).
     
     The bounding box is strictly tracked by the *self.shape()* object. Thus, if 
     you change the boundingBox, this method assures that shape object tracks it
@@ -538,13 +539,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         z = rect[1]
         rect[1] = rect[3]
         rect[3] = z 
-      if rect[0] < 0: # make sure it's to the right of origin
-        rect[2] = rect[2]-rect[0]
-        rect[0] = 0 
-      if rect[1] < 0: # make sure it's below origin
-        rect[3] = rect[3]-rect[1]
-        rect[1] = 0 
-      # No clamp at the SE edge of the scroll region: objects may be moved (eg:
+      # No clamp at any edge of the scroll region: objects may be moved (eg:
       # dragged) past it, and draw() then grows the region to include them
       # (see SNGView.resetScrollRegion()).
       self._boundingBox = rect.copy()

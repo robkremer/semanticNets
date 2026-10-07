@@ -3144,7 +3144,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       bb = list(self.canvas.bbox("all"))
     except:
       bb = [0, 0, 0, 0]
-    bb = [0, 0, bb[2] + 800, bb[3] + 600]
+    bb = [bb[0] - 800, bb[1] - 600, bb[2] + 800, bb[3] + 600] # (the canvas extends every way: coordinates may be negative)
     self.canvas.configure(scrollregion=bb) #type: ignore[call-overload]
 
   # ---- Utility ---------------------------------------------------------------
