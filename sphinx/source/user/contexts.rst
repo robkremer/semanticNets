@@ -67,6 +67,9 @@ Putting things into a window
 - **Drag it out** of the window to remove it from the context.
 - A **relation** drawn between two objects, whose label lands in a pane, is
   contained in that pane too.
+  A contained relation's label, while it floats (follows its ends), stays in
+  its pane, even if one of its ends is moved outside the window. To take the
+  relation out of the context, drag its label out.
 - You can also say it explicitly: draw a *contains* (or *antecedent*,
   *consequent*, *definiendum*, *definiens*) relation from the window to an
   object. This is the way to put an object in *both* of a rule's panes, or to
