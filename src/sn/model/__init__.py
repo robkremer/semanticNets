@@ -83,7 +83,7 @@ class TopModel(Model):
     self.TOP.setAttr("name", Attribute("top", str, VAR_DEFAULTED, NAME_NOTE))
     if self.TOP._id != 1:
       raise Exception("TopModel.__init__() called twice.")
-    self.RELATION.setAttr("name", Attribute("relation", None, TYPENAME, NAME_NOTE)) # can't do this until AFTER ISA exists.
+    self.RELATION.setAttr("name", Attribute("relation", None, VAR_DEFAULTED, NAME_NOTE)) # can't do this until AFTER ISA exists.
     self.ISA["name"] = "isa"
     self.NODE:Node = Node(self, [self.TOP]) #6,7
     self.NODE.setAttr("name", Attribute("node", None, VAR, NAME_NOTE)) # can't do this until AFTER ISA exists.

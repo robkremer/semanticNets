@@ -1383,7 +1383,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
                or not self.view.isModelEditor()
     relInst =  self.modelObject.isIndividual() and isinstance(self.modelObject, Relation)
     remote = self.view.model != self.modelObject.model
-    menu.add_command(label=f"{'show' if disabled or relInst else 'edit'} attributes", \
+    menu.add_command(label=f"{'show' if disabled or remote else 'edit'} attributes", \
                      command=lambda disabled=disabled: self.onEditAttributes(disabled=disabled or remote))    
     if self.modelObject.isType():
       menu.add_command(label='make new instance', command=lambda: self.makeModelObjectSubtype(individual=True))
