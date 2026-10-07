@@ -892,7 +892,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     # global way to get the tk application-root window
     self.root = tk._default_root # type: ignore[attr-defined] # @UndefinedVariable 
     
-    self.window = AppWindow(self.root, url, geometry)
+    self.window = AppWindow(self.root, self.url, geometry) # (self.url: where it is -- eg: a copied file's, not the URL stored in it)
     self.window.view = self  # so AppWindow's focus handling can dispatch to this SNGView (see onWindowFocusIn()/onWindowFocusOut())
     self.canvas:tk.Canvas = self.window.appPanedWidget.canvasFrame.canvas
     self.terminalFrame = self.window.appPanedWidget.textDisplayFrame

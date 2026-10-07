@@ -606,6 +606,23 @@ class Application(tk.Tk):
     for name in list(self.windows):
       self._closeWindow(name, quitIfLast=False)
 
+  def _closeWindowOf(self, window: "AppWindow") -> None:
+    """Close *window* (its close button: see *AppWindow*), whatever it's
+    filed under in *windows* -- which needn't be the URL it was made with
+    (eg: a copied file's view is filed under where it is now, or a view saved
+    as another file). One that isn't filed at all is still closed.
+
+    :param window: The window.
+    :type window: AppWindow
+    :rtype: None
+    """
+    name = next((k for k, w in self.windows.items() if w is window), None)
+    if name is None:
+      logger.warning(f'Closing a window that isn\'t in the list of open windows: "{window.title()}".')
+      name = f"<unlisted window {id(window)}>"
+      self.windows[name] = window # (so it's closed just as any other)
+    self._closeWindow(name)
+
   def _closeWindow(self, name: str, quitIfLast: bool = True, askToSave: bool = True) -> None:
     """Close a specific hosted window and check whether the app should exit.
 
@@ -687,7 +704,7 @@ class AppWindow(tk.Toplevel):
     self.geometry(geometry)
     name = viewURL
     self.title(name)
-    self.protocol("WM_DELETE_WINDOW", lambda name=name: self._root()._closeWindow(name)) #type: ignore[misc, attr-defined]
+    self.protocol("WM_DELETE_WINDOW", lambda: self._root()._closeWindowOf(self)) #type: ignore[misc, attr-defined]
 
     self.view: SNGView|None = None
     'The SNGView that owns this window -- set by SNGView.__init__() right after it constructs this AppWindow, so this window\'s FocusIn/FocusOut handling (see _onWindowFocusIn()/_onWindowFocusOut()) can dispatch straight to the SNGView that should react to it.'
