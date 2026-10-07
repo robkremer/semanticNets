@@ -556,3 +556,53 @@ def freeSpotIn(box:list[float], rect:list[float], obstacles:Iterable[list[float]
     if clear(x, y):
       return x - box[0], y - box[1]
   return None
+
+# ---- Keeping out of context windows ------------------------------------------
+
+def clearOf(box:list[float], keepOut:list[list[float]], obstacles:list[list[float]]=[], *,
+            within:list[float]|None=None, gap:float=10.0) -> tuple[float, float]|None:
+  '''
+  How far to move *box* -- as little as can be -- so it's *gap* clear of every
+  rect in *keepOut* (eg: windows it doesn't belong in), clear of *obstacles*
+  too (by *gap* / 2), and inside *within* (if given: eg: its own pane). The
+  candidates are the positions that just clear something (or line up with
+  *within*'s edges), alone and in pairs (one across, one down), so the result
+  is the nearest one there is, but not necessarily the very nearest point.
+
+  :param box: [x1, y1, x2, y2].
+  :type box: list[float]
+  :param keepOut: Rects to stay out of.
+  :type keepOut: list[list[float]]
+  :param obstacles: Rects not to land on (if that can be helped: if there's
+    no such place, they're ignored).
+  :type obstacles: list[list[float]]
+  :param within: A rect to stay in.
+  :type within: list[float] | None
+  :param gap: The clearance.
+  :type gap: float
+  :returns: (dx, dy), (0, 0) if it's fine where it is -- or None if there's no place.
+  :rtype: tuple[float, float] | None
+  '''
+  w, h = box[2] - box[0], box[3] - box[1]
+  def hits(x:float, y:float, rects:list[list[float]], g:float) -> bool:
+    return any(x < r[2] + g and r[0] - g < x + w and y < r[3] + g and r[1] - g < y + h for r in rects)
+  def inside(x:float, y:float) -> bool:
+    return within is None or (within[0] <= x and within[1] <= y and x + w <= within[2] and y + h <= within[3])
+  def search(rects:list[list[float]]) -> tuple[float, float]|None:
+    xs, ys = {box[0]}, {box[1]}
+    for r, g in [*((r, gap) for r in keepOut), *((r, gap / 2) for r in rects)]:
+      xs |= {r[0] - g - w, r[2] + g}
+      ys |= {r[1] - g - h, r[3] + g}
+    if within is not None:
+      xs |= {within[0], within[2] - w}
+      ys |= {within[1], within[3] - h}
+    best:tuple[float, float, float]|None = None
+    for x in xs:
+      for y in ys:
+        d = (x - box[0]) ** 2 + (y - box[1]) ** 2
+        if (best is None or d < best[0]) and inside(x, y) and not hits(x, y, keepOut, gap) and not hits(x, y, rects, gap / 2):
+          best = (d, x, y)
+    return None if best is None else (best[1] - box[0], best[2] - box[1])
+  if inside(box[0], box[1]) and not hits(box[0], box[1], keepOut, gap):
+    return 0.0, 0.0 # (nothing to do: it isn't in the way -- whatever it may overlap otherwise)
+  return search(obstacles) or (search([]) if obstacles else None)

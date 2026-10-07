@@ -79,6 +79,16 @@ Putting things into a window
 Windows can be nested: an object dropped where windows overlap goes into the
 innermost one.
 
+A window holds only what its context contains. Anything else that ends up in
+it -- a window dropped or expanded over it, an object dropped half on its
+edge, its containment removed -- is pushed out, the least way, onto a free
+spot if there's one near (staying in its own pane, if it's in another
+window). Of two windows dropped on each other (neither in the other), the
+smaller is pushed off, carrying its contents. A relation's label that floats
+between its ends keeps out of windows that don't contain it. This happens
+when a change is made -- a drop, not while dragging -- and is undone with
+it.
+
 Variables
 ---------
 

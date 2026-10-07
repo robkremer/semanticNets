@@ -41,9 +41,10 @@ from sn.view.textUserInterface import UIContext, SNTerminalWidget
 from util.command import Command
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
-from sn.view.graphics.layout import FindFree, gatherShifts, intoRect, freeSpotIn
+from sn.view.graphics.layout import FindFree, gatherShifts, intoRect, freeSpotIn, clearOf
 from sn.view.graphics.decorators import NOMINAL_ASPECT
-from util.commandParser import CompositeCommandMgr
+from util.commandParser import CompositeCommandMgr, CompositeCommand
+from util.command import DoList
 from util.utils import Categories
 from math import sqrt
 from util.persistence.serialize import InstantiationInfo, PropertyInfo,\
@@ -91,6 +92,7 @@ class SNGContext(UIContext):
     super().__init__(model)
     self.view:SNGView = view
     self.defaults["view"] = view
+    self.doList = self.parser.doList = ViewDoList(view) # (bumps what's left in a window it doesn't belong in)
     
   @override
   def _defineDecoders(self):
@@ -667,6 +669,122 @@ class SNGContext(UIContext):
       return Command.__str__(self)
 
     
+
+class _BumpIntruders(Command):
+  '''
+  Push what's in a context window it doesn't belong in out of it (see
+  *SNGView.bumpIntruders()*). What to move is worked out when it's first done
+  -- after the commands before it, so a drop into a pane has already made the
+  object contained -- and replayed on a redo.
+  '''
+  def __init__(self, view:SNGView):
+    '''
+    :param view:
+    :type view: SNGView
+    '''
+    super().__init__("bump out of windows")
+    self.view:SNGView|None = view
+    self.moves:list[tuple[VObject, list[int], list[int]]]|None = None
+    "(object, its box before, after), in the order they were moved."
+
+  @override
+  def do(self) -> None:
+    super().do()
+    assert self.view is not None
+    if self.moves is None:
+      self.moves = self.view.bumpIntruders()
+      return
+    for vo, _, new in self.moves:
+      vo.moveTo(new[0], new[1], adjustPos=False)
+
+  @override
+  def undo(self):
+    super().undo()
+    for vo, old, _ in reversed(self.moves or []):
+      vo.moveTo(old[0], old[1], adjustPos=False)
+
+  @override
+  def delete(self):
+    super().delete()
+    self.view, self.moves = None, None
+
+class _Bumped(CompositeCommand):
+  '''
+  A command, already done, and the bumping out of windows that followed it
+  (see *ViewDoList*): one entry on the undo list, named as the command.
+  '''
+  def __init__(self, command:Command, bump:_BumpIntruders):
+    '''
+    :param command:
+    :type command: Command
+    :param bump:
+    :type bump: _BumpIntruders
+    '''
+    super().__init__([command, bump])
+    self.name = command.name
+    self.done = True
+
+  @override
+  def undo(self) -> Any:
+    '''
+    Undo both -- then put the floating labels of the relations to and from
+    what was bumped back between their ends: they were put back while what
+    the command moved (eg: a window dropped on them) was still in the way.
+
+    :returns:
+    :rtype: Any
+    '''
+    ret = super().undo()
+    bump = self.commands[1]
+    assert isinstance(bump, _BumpIntruders)
+    moved = [vo for vo, _, _ in bump.moves or []]
+    for vo in [*moved, *(c for w in moved for c in w.carriedContents())]:
+      for r in list(vo.relations):
+        if isinstance(r, VRelation) and r._isConnected() and r.floating():
+          r.reposition(adjustPos=False)
+    return ret
+
+  @override
+  def __str__(self):
+    '''
+    :returns: A readable string for this object.
+    :rtype:
+    '''
+    return str(self.commands[0])
+
+class ViewDoList(DoList):
+  '''
+  A view's undo list (see *SNGContext*). After each command that changes
+  anything, whatever is left in a context window it doesn't belong in is
+  pushed out (see *SNGView.bumpIntruders()*) -- as part of the same undo
+  entry. (Not during a drag, which isn't a command until it's dropped.)
+  '''
+  def __init__(self, view:SNGView):
+    '''
+    :param view:
+    :type view: SNGView
+    '''
+    super().__init__()
+    self.view:SNGView = view
+
+  @override
+  def do(self, c:Command) -> Any:
+    '''
+    :param c:
+    :type c: Command
+    :returns:
+    :rtype: Any
+    '''
+    ret = super().do(c)
+    if c.mutatedData and 0 <= self.index < len(self.queue) and self.queue[self.index] is c:
+      try:
+        bump = _BumpIntruders(self.view)
+        bump.do()
+        if bump.moves:
+          self.queue[self.index] = _Bumped(c, bump)
+      except Exception:
+        logger.exception("couldn't bump objects out of the windows they don't belong in")
+    return ret
 
 class _ContainCreated(Command):
   '''
@@ -2719,6 +2837,151 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     left, right = panes.values()
     half = (right[2] - left[0]) / 6
     return [left[2] - half, left[1], left[2] + half, left[3]]
+
+  BUMP_GAP = 12.0
+  "How far outside a window (view units) something that doesn't belong in it is put (see *bumpIntruders()*)."
+
+  def windowChain(self, vo:VObject, homes:dict[VObject, tuple[VObject, str]]) -> list[VObject]:
+    '''
+    :param vo:
+    :type vo: VObject
+    :param homes: As from *containmentHomes()* (for *vo* and the windows, at least).
+    :type homes: dict[VObject, tuple[VObject, str]]
+    :returns: The window *vo* belongs in, the window that one's in, and so on out.
+    :rtype: list[VObject]
+    '''
+    ret:list[VObject] = []
+    w = homes.get(vo, (None, ""))[0]
+    while w is not None and w is not vo and w not in ret:
+      ret.append(w)
+      w = homes.get(w, (None, ""))[0]
+    return ret
+
+  def belongsIn(self, vo:VObject, w:VObject, homes:dict[VObject, tuple[VObject, str]]) -> bool:
+    '''
+    Whether *vo* may be in context window *w*: it's *w*; *w* contains it (or
+    its contents use it), directly or by way of a window in *w*; it's a window
+    that *w* is in; or it's a relation to or from *w*, or *w*'s containment of
+    something (drawn as being inside it).
+
+    :param vo:
+    :type vo: VObject
+    :param w:
+    :type w: VObject
+    :param homes: As from *containmentHomes()* (for *vo* and the windows, at least).
+    :type homes: dict[VObject, tuple[VObject, str]]
+    :rtype: bool
+    '''
+    if vo is w or w in self.windowChain(vo, homes) or vo in self.windowChain(w, homes):
+      return True
+    if isinstance(vo, VRelation) and (w in (vo.src, vo.dst) or vo.inWindow()):
+      return True
+    mo = vo.modelObject
+    return mo is not None and bool(w.containmentOf(mo))
+
+  def _visibleWindows(self) -> list[VObject]:
+    '''
+    :returns: The context windows that are drawn.
+    :rtype: list[VObject]
+    '''
+    return [w for w in self.contextWindows() if not w.isHidden()]
+
+  def awayFromWindows(self, vo:VObject, box:list[float], homes:dict[VObject, tuple[VObject, str]],
+                      obstacles:list[list[float]]=[], gap:float|None=None) -> tuple[float, float]|None:
+    '''
+    How far to move *vo*, were its box *box*, to be clear of every context
+    window it doesn't belong in (see *belongsIn()*) -- the least move, keeping
+    it in its own pane if it's in it now (see *containmentHomes()*), and off
+    *obstacles* if it can be (see *layout.clearOf()*).
+
+    :param vo:
+    :type vo: VObject
+    :param box: Its box, there.
+    :type box: list[float]
+    :param homes: As from *containmentHomes()* (for *vo* and the windows, at least).
+    :type homes: dict[VObject, tuple[VObject, str]]
+    :param obstacles: Boxes not to land on.
+    :type obstacles: list[list[float]]
+    :param gap: The clearance (default: *BUMP_GAP*).
+    :type gap: float | None
+    :returns: (dx, dy) -- (0, 0) if it's clear already -- or None if there's no place.
+    :rtype: tuple[float, float] | None
+    '''
+    windows = self._visibleWindows()
+    keepOut = [list(w.boundingBox()) for w in windows if w is not vo and not self.belongsIn(vo, w, homes)]
+    if not keepOut:
+      return 0.0, 0.0
+    within = None
+    if (home := homes.get(vo)) is not None:
+      r = self.homeRect(*home)
+      cx, cy = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
+      if r[0] <= cx <= r[2] and r[1] <= cy <= r[3] and box[2] - box[0] <= r[2] - r[0] and box[3] - box[1] <= r[3] - r[1]:
+        within = r # (it's in its pane: it stays in it)
+    return clearOf(box, keepOut, obstacles, within=within, gap=self.BUMP_GAP if gap is None else gap)
+
+  def _intrudes(self, vo:VObject, w:VObject, homes:dict[VObject, tuple[VObject, str]]) -> bool:
+    '''
+    :returns: Whether *vo* overlaps window *w* without belonging in it (see
+      *belongsIn()*). Of two windows overlapping, neither in the other, the
+      smaller is the one that\'s in the way.
+    :rtype: bool
+    '''
+    if vo is w or self.belongsIn(vo, w, homes):
+      return False
+    a, b = vo.boundingBox(), w.boundingBox()
+    if not (a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]):
+      return False
+    if not isinstance(vo, VRelation) and vo.isContextWindow():
+      area = lambda r: (r[2] - r[0]) * (r[3] - r[1])
+      return (area(a), vo._id) < (area(b), w._id) # (the smaller yields)
+    return True
+
+  def bumpIntruders(self) -> list[tuple[VObject, list[int], list[int]]]:
+    '''
+    Push everything drawn in a context window it doesn't belong in (see
+    *belongsIn()*: eg: something a window was dropped on, or uncovered by
+    expanding it, or whose containment was removed) out of it -- each the
+    least it takes (see *awayFromWindows()*), onto a free place if there's one
+    near. Windows go first (carrying their contents), then nodes, then
+    relations' labels; a floating label is put back between its ends (see
+    *VRelation.reposition()*), which keeps it out of windows itself. Done
+    after every command (see *ViewDoList*), not in the middle of a drag.
+
+    :returns: (object, its box before, after) for each one moved, in order.
+    :rtype: list[tuple[VObject, list[int], list[int]]]
+    '''
+    windows = self._visibleWindows()
+    if not windows:
+      return []
+    homes = self.containmentHomes()
+    objs = [o for o in self.values() if o is not None and o._isConnected() and not o.isHidden()]
+    isWindow = lambda o: not isinstance(o, VRelation) and o.isContextWindow()
+    floats = lambda o: isinstance(o, VRelation) and o.floating()
+    rank = lambda o: 0 if isWindow(o) else 2 if isinstance(o, VRelation) else 1
+    moves:list[tuple[VObject, list[int], list[int]]] = []
+    for vo in sorted(objs, key=rank):
+      if not any(self._intrudes(vo, w, homes) for w in windows):
+        continue
+      old = list(vo.boundingBox())
+      if floats(vo):
+        vo.reposition(adjustPos=False) # (back between its ends -- out of the window: see VRelation.placedLabel())
+      else:
+        carried = set(vo.carriedContents()) if isWindow(vo) else set()
+        near = expandRect(old, 400)
+        obstacles = [list(o.boundingBox()) for o in objs if o is not vo and o not in carried and not isWindow(o) and not floats(o)
+                     and (b := o.boundingBox())[0] < near[2] and near[0] < b[2] and b[1] < near[3] and near[1] < b[3]]
+        d = self.awayFromWindows(vo, old, homes, obstacles)
+        if d is None or d == (0.0, 0.0):
+          continue
+        vo.moveTo(old[0] + d[0], old[1] + d[1], adjustPos=False)
+      new = list(vo.boundingBox())
+      if new != old:
+        moves.append((vo, old, new))
+        if isWindow(vo):
+          homes = self.containmentHomes() # (what's where has changed)
+    if moves:
+      logger.info(f"moved {len(moves)} object{'' if len(moves) == 1 else 's'} out of windows {'it doesn' if len(moves) == 1 else 'they don'}'t belong in.")
+    return moves
 
   def restackWindows(self) -> None:
     '''

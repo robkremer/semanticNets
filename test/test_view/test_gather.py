@@ -25,7 +25,7 @@ Created on Sep 26, 2026
 @author: robkremer
 '''
 import unittest
-from sn.view.graphics.layout import gatherShifts, gatherAxisShifts, freeSpotIn
+from sn.view.graphics.layout import gatherShifts, gatherAxisShifts, freeSpotIn, clearOf
 
 
 def grid(nx:int, ny:int, x0:int=0, y0:int=0, w:int=60, h:int=30, gapX:int=40, gapY:int=40) -> list[list[float]]:
@@ -128,6 +128,34 @@ class Test(unittest.TestCase):
       self.assertTrue(10 <= a[0] and a[2] <= 390 and 22 <= a[1] and a[3] <= 290)
       for b in placed[:i]:
         self.assertTrue(a[2] <= b[0] or b[2] <= a[0] or a[3] <= b[1] or b[3] <= a[1])
+
+  # ---- clearOf: keeping out of windows ---------------------------------------
+
+  def test2000alreadyClear(self):
+    self.assertEqual(clearOf([0, 0, 20, 20], [[100, 100, 300, 300]]), (0, 0))
+
+  def test2100leastWayOut(self):
+    'Just inside the left edge: out to the left, clear by the gap.'
+    dx, dy = clearOf([105, 150, 125, 170], [[100, 100, 300, 300]], gap=10)
+    self.assertEqual((105 + dx + 20, dy), (90, 0))
+
+  def test2200avoidsObstaclesOutside(self):
+    'The nearest way out is taken (by something else): the next nearest.'
+    dx, dy = clearOf([105, 150, 125, 170], [[100, 100, 300, 300]], [[60, 140, 89, 180]], gap=10)
+    b = [105 + dx, 150 + dy, 125 + dx, 170 + dy]
+    self.assertFalse(b[0] < 310 and 90 < b[2] and b[1] < 310 and 90 < b[3])         # out of the window
+    self.assertFalse(b[0] < 94 and 55 < b[2] and b[1] < 185 and 135 < b[3])        # off the obstacle
+
+  def test2300staysWithin(self):
+    'In its own pane, out of a window nested in it: it stays in the pane.'
+    pane, inner = [0, 0, 400, 300], [100, 100, 380, 280]
+    dx, dy = clearOf([300, 150, 320, 170], [inner], within=pane, gap=10)
+    b = [300 + dx, 150 + dy, 320 + dx, 170 + dy]
+    self.assertTrue(pane[0] <= b[0] and pane[1] <= b[1] and b[2] <= pane[2] and b[3] <= pane[3])
+    self.assertFalse(b[0] < 390 and 90 < b[2] and b[1] < 290 and 90 < b[3])
+
+  def test2400noPlace(self):
+    self.assertIsNone(clearOf([10, 10, 30, 30], [[0, 0, 100, 100]], within=[0, 0, 100, 100]))
 
 
 if __name__ == "__main__":

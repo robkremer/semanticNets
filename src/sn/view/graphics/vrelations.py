@@ -841,33 +841,37 @@ class VRelation(VObject, AGRelation):
       loops = [r for r in self.src._outgoing if isinstance(r, VRelation) and r.dst is self.src]
       k = loops.index(self) if self in loops else 0
       w = self.boundingBox()[2] - self.boundingBox()[0]
-      self.moveToCenterOn(*self.keptInPane(bb[2] + 30 + w / 2, (bb[1] + bb[3]) / 2 + 22 * k), adjustPos=adjustPos)
+      self.moveToCenterOn(*self.placedLabel(bb[2] + 30 + w / 2, (bb[1] + bb[3]) / 2 + 22 * k), adjustPos=adjustPos)
     elif self.src is not None and self.dst is not None:
-      self.moveToCenterOn(*self.keptInPane(*self.gapMidpoint(self.src, self.dst)), adjustPos=adjustPos)
+      self.moveToCenterOn(*self.placedLabel(*self.gapMidpoint(self.src, self.dst)), adjustPos=adjustPos)
     elif self.src is None and self.dst is None:
       if adjustPos:
         self.adjustPos(aggressive=aggressive)
     elif self.dst is None: # (off its right edge, not its centre: it may be a big window)
       bb = self.src.boundingBox() # type: ignore[union-attr]
-      self.moveToCenterOn(*self.keptInPane(bb[2]+50, (bb[1]+bb[3])/2), adjustPos=adjustPos)
+      self.moveToCenterOn(*self.placedLabel(bb[2]+50, (bb[1]+bb[3])/2), adjustPos=adjustPos)
     elif self.src is None:
       bb = self.dst.boundingBox()
-      self.moveToCenterOn(*self.keptInPane(bb[0]-50, (bb[1]+bb[3])/2), adjustPos=adjustPos)
+      self.moveToCenterOn(*self.placedLabel(bb[0]-50, (bb[1]+bb[3])/2), adjustPos=adjustPos)
 
     if not suppressDraw:
       self.draw()
 
   PANE_MARGIN = 6.0
-  "How far in from its pane's edges a contained relation's floating label is kept (see *keptInPane()*)."
+  "How far in from its pane's edges a contained relation's floating label is kept (see *placedLabel()*)."
 
-  def keptInPane(self, x:float, y:float) -> tuple[float, float]:
+  def placedLabel(self, x:float, y:float) -> tuple[float, float]:
     '''
-    Where a floating label centred on (*x*, *y*) goes, if the relation is
-    contained by a context (see *SNGView.containmentHomes()*): moved the
-    least it takes to put it in the pane it belongs in (antecedent,
-    consequent, ...) -- so it doesn't float out of its window, or into the
-    other pane, when its ends are far apart (eg: one outside the window).
-    Anything else's label stays at (*x*, *y*).
+    Where a floating label centred on (*x*, *y*) goes: there, unless that's
+    out of place --
+
+    - if the relation is contained by a context (see
+      *SNGView.containmentHomes()*), moved the least it takes to put it in the
+      pane it belongs in (antecedent, consequent, ...), so it doesn't float
+      out of its window, or into the other pane, when its ends are far apart;
+    - and moved out of any window it doesn't belong in (see
+      *SNGView.belongsIn()*: eg: a relation between something in a rule and
+      something outside it, whose ends' midpoint is in the rule's window).
 
     :param x:
     :type x: float
@@ -878,17 +882,20 @@ class VRelation(VObject, AGRelation):
     '''
     from sn.view.graphics.layout import intoRect
     mo = self.modelObject
-    if mo is None or not mo.isIndividual() or not self.view.contextWindows():
+    view = self.view
+    windows = view._visibleWindows() if mo is not None else []
+    if not windows:
       return x, y
-    home = self.view.containmentHomes([self]).get(self)
-    if home is None:
-      return x, y
-    win, pane = home
+    homes = view.containmentHomes([self, *windows]) # (for the windows' nesting too)
     bb = self.boundingBox()
     w, h = bb[2] - bb[0], bb[3] - bb[1]
-    dx, dy = intoRect([x - w / 2, y - h / 2, x + w / 2, y + h / 2], self.view.homeRect(win, pane),
-                      margin=self.PANE_MARGIN, topMargin=self.PANE_MARGIN + (14.0 if len(win.panes()) > 1 else 0.0)) # (below the pane's label)
-    return x + dx, y + dy
+    if (home := homes.get(self)) is not None:
+      win, pane = home
+      dx, dy = intoRect([x - w / 2, y - h / 2, x + w / 2, y + h / 2], view.homeRect(win, pane),
+                        margin=self.PANE_MARGIN, topMargin=self.PANE_MARGIN + (14.0 if len(win.panes()) > 1 else 0.0)) # (below the pane's label)
+      x, y = x + dx, y + dy
+    d = view.awayFromWindows(self, [x - w / 2, y - h / 2, x + w / 2, y + h / 2], homes, gap=self.PANE_MARGIN)
+    return (x, y) if d is None else (x + d[0], y + d[1])
 
   def gapMidpoint(self, a:VObject, b:VObject) -> list[float]:
     '''
