@@ -2753,6 +2753,12 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     it's in both -- or, for a plain "contains", the one it's in (or nearer). A
     variable used on both sides belongs astride the divider (*BOTH_PANES*).
 
+    And a relation the context doesn't contain, whose two ends both belong in
+    the same window, belongs there too (eg: a pattern relation's isa link to
+    its type variable, !a -^r-> !b to ^r): in its ends' pane -- or, if they're
+    in different ones, the one that isn't astride the divider, or astride it
+    if neither is.
+
     :param among: Just these view objects (default: all of them).
     :type among: Iterable[VObject] | None
     :param window: Just what this window contains (and its contents use), as
@@ -2784,38 +2790,54 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     def area(w:VObject) -> float:
       x1, y1, x2, y2 = w.fullBoundingBox()
       return (x2 - x1) * (y2 - y1)
-    ret:dict[VObject, tuple[VObject, str]] = {}
-    for vo in (self.values() if among is None else among):
+    memo:dict[int, tuple[VObject, str]|None] = {}
+    def home(vo:VObject) -> tuple[VObject, str]|None: # (remembered: a relation's ends are asked for again and again)
+      if id(vo) not in memo:
+        memo[id(vo)] = None # (so a relation between relations can't go round in circles)
+        memo[id(vo)] = homeOf(vo)
+      return memo[id(vo)]
+    def between(vo:VRelation) -> tuple[VObject, str]|None: # (a relation whose ends belong in the same window)
+      if vo.modelObject.isa(m.CONTAINS) or not all(isinstance(e, VObject) and e._isConnected() for e in (vo.src, vo.dst)):
+        return None
+      hs, hd = home(vo.src), home(vo.dst) #type: ignore[arg-type]
+      if hs is None or hd is None or hs[0] is not hd[0]:
+        return None
+      panes = {hs[1], hd[1]}
+      if len(panes) > 1:
+        panes.discard(self.BOTH_PANES)
+      return hs[0], panes.pop() if len(panes) == 1 else self.BOTH_PANES
+    def homeOf(vo:VObject) -> tuple[VObject, str]|None:
       mo = vo.modelObject if vo is not None else None
       if mo is None or not vo._isConnected():
-        continue
+        return None
       direct = id(mo) in byObj
       if not direct and (id(mo) not in uses or (isinstance(vo, VRelation) and mo.isIndividual())):
-        continue
+        return between(vo) if isinstance(vo, VRelation) else None
       cands:dict = byObj[id(mo)] if direct else uses[id(mo)]
       if not isinstance(vo, VRelation) and vo.isContextWindow():
         cands = {w: rs for w, rs in cands.items() if w is not vo and area(w) > area(vo)}
       if not cands:
-        continue
+        return None
       center = vo.centerPt()
       inside = [w for w in cands if w.paneAt(center) is not None]
       w = min(inside or cands, key=area)
       panes = w.panes()
       if "contains" in panes:
-        ret[vo] = (w, "contains")
-        continue
+        return w, "contains"
       if not direct: # (used, not contained: on the side it's used on, or astride the divider)
         used = cands[w]
-        ret[vo] = (w, next(iter(used)) if len(used) == 1 and None not in used else self.BOTH_PANES)
-        continue
+        return w, next(iter(used)) if len(used) == 1 and None not in used else self.BOTH_PANES
       here = w.paneAt(center)
       said = [p for p in panes if any(r.isa(self._paneType(p)) for r in cands[w])]
       if said:
-        ret[vo] = (w, here if here in said else said[0])
-      elif here is not None:
-        ret[vo] = (w, here)
-      else: # (the nearer pane)
-        ret[vo] = (w, min(panes, key=lambda p: abs((panes[p][0] + panes[p][2]) / 2 - center[0])))
+        return w, here if here in said else said[0]
+      if here is not None:
+        return w, here
+      return w, min(panes, key=lambda p: abs((panes[p][0] + panes[p][2]) / 2 - center[0])) # (the nearer pane)
+    ret:dict[VObject, tuple[VObject, str]] = {}
+    for vo in (self.values() if among is None else among):
+      if vo is not None and (h := home(vo)) is not None:
+        ret[vo] = h
     return ret
 
   def homeRect(self, w:VObject, pane:str) -> list[float]:

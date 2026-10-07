@@ -226,6 +226,8 @@ class Snapshot:
     place floating between its ends wouldn't say which pane it's in -- an end
     is elsewhere, eg: on the other side, or astride the divider (as in a rule
     saying a -r-> b gives b -r-> a) -- or one placed by hand (it doesn't float).
+    (Not a relation that belongs in the window only because its ends do, eg:
+    an isa link: it just follows its ends.)
 
     :param vo: A view object.
     :type vo: VObject
@@ -239,6 +241,8 @@ class Snapshot:
       return False
     if not vo.floating():
       return True
+    if not homes[vo][0].containmentOf(vo.modelObject):
+      return False
     return any(not isinstance(e, VObject) or homes.get(e) != homes[vo] for e in (vo.src, vo.dst))
 
   def siblings(self, i:int, j:int) -> tuple[int, int]|None:

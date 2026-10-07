@@ -79,8 +79,9 @@ Putting things into a window
 Windows can be nested: an object dropped where windows overlap goes into the
 innermost one.
 
-A window holds only what its context contains. Anything else that ends up in
-it -- a window dropped or expanded over it, an object dropped half on its
+A window holds only what its context contains -- and the relations between
+things it holds (eg: a pattern relation's isa link to its type variable),
+which needn't be contained themselves. Anything else that ends up in it -- a window dropped or expanded over it, an object dropped half on its
 edge, its containment removed -- is pushed out, the least way, onto a free
 spot if there's one near (staying in its own pane, if it's in another
 window). Of two windows dropped on each other (neither in the other), the
