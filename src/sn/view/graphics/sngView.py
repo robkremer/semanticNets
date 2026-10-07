@@ -3287,8 +3287,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   
     def makeModelSubmenu(individual:bool, ptype:type):
       newMenu:tk.Menu = tk.Menu(self.canvas)
-      # process nodes in the included models
-      for v in [self.model, Model.AllDBs["sn:/sn.xml"]]:
+      # process nodes in this model, then its super-models (nearest first), then sn
+      implicit = self.model.implicitSuperDBs()
+      supers = [db for db in self.model.allSuperDBs() if isinstance(db, Model) and not any(db is i for i in implicit)]
+      for v in [self.model, *supers, Model.AllDBs["sn:/sn.xml"]]:
         assert isinstance(v, Model)
         m = tk.Menu(self.canvas)
         fillModelSubmenu(m, v, individual, ptype)
