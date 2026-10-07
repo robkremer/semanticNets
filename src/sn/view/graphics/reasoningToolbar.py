@@ -25,7 +25,8 @@ The reasoning toolbar: a strip across the bottom of a view's window with a
 *sn.model.reasoner.reason()*), a *Retract* button (take what it inferred back
 out: see *sn.model.reasoner.clearReasoning()*), and a line saying what the last
 "reason" found. Reasoning isn't redone as the model is edited, so it's a click
-away. Shown and hidden with "View | Reasoning toolbar" (see
+away. At its right, a pencil says whether the view's model can be edited --
+crossed out if it's write-locked (eg: the system model, or the base rules). Shown and hidden with "View | Reasoning toolbar" (see
 *SNGView.showReasoningToolbar()*).
 
 Created on Oct 5, 2026
@@ -45,6 +46,9 @@ TIPS:dict[str, str] = {
             "and its report goes to the terminal. It isn't redone as you edit: click again after changes.",
   "retract": "Take what the reasoner inferred back out of the model (and its views).",
   "status": "What the last \"reason\" found: the objects it inferred, and the problems (violations) it found.",
+  "writable": "The model can be edited (and saved).",
+  "locked": "The model is read-only: it can't be changed here (eg: the system model, or the base rules). "
+            "Its views can still be arranged and saved.",
 }
 "Tooltips for the toolbar's controls."
 
@@ -54,6 +58,8 @@ class ReasoningToolbar(ttk.Frame):
   '''
   PADDING = 4
   "The toolbar's padding (pixels) at its left and right."
+  LOCK_SIZE = 18
+  "The width and height (pixels) of the pencil that says whether the model's write-locked."
 
   def __init__(self, master:tk.Misc, view:SNGView):
     '''
@@ -74,6 +80,15 @@ class ReasoningToolbar(ttk.Frame):
     self.status = ttk.Label(self, foreground="gray35")
     self.status.pack(side=tk.LEFT, padx=(10, 0))
     tip(self.status, TIPS["status"])
+    size = self.LOCK_SIZE
+    lockFrame = ttk.Frame(self) # (the tooltip's on this: on a canvas, it'd have to be on one of its items)
+    lockFrame.pack(side=tk.RIGHT)
+    self.lockIcon = tk.Canvas(lockFrame, width=size, height=size, highlightthickness=0, bd=0,
+                              background=ttk.Style().lookup("TFrame", "background") or self.winfo_toplevel().cget("background"))
+    self.lockIcon.pack()
+    self.lockIcon.create_text(size / 2, size / 2, text="\u270e", font=("Arial", int(size * 0.75)), fill="gray25") # (a pencil)
+    self.lockIcon.create_line(3, size - 3, size - 3, 3, fill="red3", width=2, tags=("slash",))
+    tip(lockFrame, lambda: TIPS["locked" if self.view.model.writeLocked() else "writable"])
     self.refresh()
 
   def refresh(self) -> None:
@@ -84,3 +99,10 @@ class ReasoningToolbar(ttk.Frame):
     summary = self.view.reasoningSummary()
     self.status.configure(text=summary or "not reasoned")
     self.retractButton.state(["!disabled"] if summary else ["disabled"])
+    self.refreshLock()
+
+  def refreshLock(self) -> None:
+    '''
+    Show whether the view's model is write-locked: the pencil crossed out, or not.
+    '''
+    self.lockIcon.itemconfigure("slash", state=tk.NORMAL if self.view.model.writeLocked() else tk.HIDDEN)

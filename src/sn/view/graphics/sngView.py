@@ -1214,6 +1214,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
                       cascadePositions={"View": self._afterFileMenu() + 1}) # (after "Edit", made just above)
     addCheckToMenuBar("View|Reasoning toolbar", self._reasoningToolbarShown(),
                       lambda: self.showReasoningToolbar(self._reasoningToolbarShown().get()))
+    bar = self.__dict__.get("_reasoningToolbar")
+    if bar is not None:
+      bar.refreshLock()
 
   def onWindowFocusOut(self) -> None:
     '''

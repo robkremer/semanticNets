@@ -14,7 +14,9 @@ Reasoning
 **reasoning | reason** on the background menu), reasons over the window's
 model; **Retract** takes what it inferred back out again. The toolbar also
 says what the last reason found -- how many relations and new objects it
-inferred, and how many problems. (**View | Reasoning toolbar** hides it, or
+inferred, and how many problems -- and, at its right, whether the model can
+be edited: a pencil, crossed out in red if the model is read-only (eg: the
+system model, or the base rules). (**View | Reasoning toolbar** hides it, or
 shows it again.) The report goes to the terminal pane, in sections:
 
 **Violations**
