@@ -1615,6 +1615,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       menu.add_command(label="answer query", command=self.answerQuery)
     if mo is not None and mo.isIndividual() and (mo.isa(mo.model.RULE) or mo.isa(mo.model.DEFINITION)):
       menu.add_command(label="show conclusions", command=self.showConclusions)
+    if self.isContextWindow():
+      menu.add_command(label="gather", command=lambda: self.view.gatherIntoWindow(self))
     if isinstance(self.decorators.get("text"), WrappingText):
       menu.add_command(label="fit to text", command=self.fitToText,
                        state=tk.NORMAL if self.userSized else tk.DISABLED)

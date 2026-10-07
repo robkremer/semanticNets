@@ -40,6 +40,13 @@ objects it contains.
 - Resize a window by dragging its corner handles, like any other object. Its
   contents stay put.
 - Dragging the window carries its contents along with it.
+- **gather** (on the window's menu) brings in everything the context
+  contains that isn't in its window -- each into the pane its containment
+  says (antecedent, consequent, ...), and the variables its relations use
+  along with them. Things just outside are nudged in; things from further
+  away are set out in rows, with room for the labels of the relations
+  between them. If there isn't room, the window grows. It's one command, so
+  one undo puts everything back.
 
 .. figure:: ../images/user/collapsed-window.png
    :alt: A collapsed window: just its title bar

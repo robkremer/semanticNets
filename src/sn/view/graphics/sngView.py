@@ -41,7 +41,7 @@ from sn.view.textUserInterface import UIContext, SNTerminalWidget
 from util.command import Command
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
-from sn.view.graphics.layout import FindFree, gatherShifts, intoRect
+from sn.view.graphics.layout import FindFree, gatherShifts, intoRect, freeSpotIn
 from sn.view.graphics.decorators import NOMINAL_ASPECT
 from util.commandParser import CompositeCommandMgr
 from util.utils import Categories
@@ -2615,7 +2615,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   BOTH_PANES = "both"
   "The pseudo-pane (see *containmentHomes()*) of something a rule or definition uses on both sides: astride the divider."
 
-  def containmentHomes(self, among:Iterable[VObject]|None=None) -> dict[VObject, tuple[VObject, str]]:
+  def containmentHomes(self, among:Iterable[VObject]|None=None, window:VObject|None=None) -> dict[VObject, tuple[VObject, str]]:
     '''
     Where each contained object belongs: the context window, and its pane
     (see *VObject.panes()*), that it should sit in -- what layouts keep it in
@@ -2637,13 +2637,16 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
     :param among: Just these view objects (default: all of them).
     :type among: Iterable[VObject] | None
+    :param window: Just what this window contains (and its contents use), as
+      if it were the only one (default: all the windows).
+    :type window: VObject | None
     :returns: Each contained view object: (its window, the pane's name).
     :rtype: dict[VObject, tuple[VObject, str]]
     '''
     m = self.model
     byObj:dict[int, dict[VObject, list[Relation]]] = {} # id(contained model object) -> {window: its containments of it}
     uses:dict[int, dict[VObject, set[str|None]]] = {}   # id(variable) -> {window: the panes of the contained relations using it}
-    for w in self.contextWindows():
+    for w in (self.contextWindows() if window is None else [window]):
       mo = w.modelObject
       if mo is None:
         continue
@@ -3495,6 +3498,87 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         self.context.move(o, bb[0] + dx, bb[1] + dy, _oldPos=bb, adjustPos=False, _carry=False)
     self.resetScrollRegion(shrink=True)
     logger.info(f"gatherNodes(): moved {len(moves)} of {len(objs) + len(parents)} objects.")
+
+  def gatherIntoWindow(self, w:VObject) -> None:
+    '''
+    Move what context window *w* contains (and the variables its contents
+    use) into it, each into its pane (see *containmentHomes()*), at a free
+    spot -- as near as can be to where it was, if that's just outside its
+    pane; otherwise set out in rows from the pane's top left, far enough
+    apart for the labels of the relations between them -- as one undoable
+    command. What's already in its pane stays put, and so does what sits in
+    another window that also contains it. If there's no room, the window
+    grows downward. A collapsed window is expanded first. Floating relations
+    (their labels) aren't moved: they follow their ends.
+
+    :param w: A context window (see *VObject.isContextWindow()*).
+    :type w: VObject
+    '''
+    if not w.isContextWindow():
+      return
+    floats = lambda o: isinstance(o, VRelation) and o.floating()
+    margin = 10.0
+    near = 100.0 # (how far out of its pane something can be and still be just nudged in; otherwise it's set out in rows)
+    topMargin = 22.0 if len(w.panes()) > 1 else margin # (room for the pane labels)
+    allHomes = self.containmentHomes()
+    def elsewhere(vo:VObject) -> bool: # (in another window that has it)
+      other = allHomes.get(vo, (None, None))[0]
+      return other is not None and other is not w and other.paneAt(vo.centerPt()) is not None
+    homes = {vo: pane for vo, (_, pane) in self.containmentHomes(window=w).items()
+             if not floats(vo) and not elsewhere(vo)}
+    def inside(box:list[float], rect:list[float]) -> bool:
+      return rect[0] <= box[0] and rect[1] <= box[1] and box[2] <= rect[2] and box[3] <= rect[3]
+    toMove = sorted((vo for vo, pane in homes.items() if not inside(vo.boundingBox(), self.homeRect(w, pane))),
+                    key=lambda vo: (vo.boundingBox()[1], vo.boundingBox()[0]))
+    if not toMove:
+      logger.info(f'"{w.name}": nothing to gather.')
+      return
+    # Plan it all first (the commands only run when the composite ends): where each goes, and how
+    # big the window must be.
+    moving = set(toMove)
+    labels = [o.boundingBox() for o in self.values() if o is not None and floats(o) and (o.src in moving or o.dst in moving)]
+    gap = (max([margin, *((b[2] - b[0]) + 2 * margin for b in labels)]), # (room between things for the labels between them)
+           max([margin, *((b[3] - b[1]) + 2 * margin for b in labels)]))
+    W = list(w.fullBoundingBox()) # (as expanded, if it's collapsed)
+    def rectIn(pane:str, bb:list[float]) -> list[float]: # (the pane's rect if the window were *bb*: see VObject.panes())
+      r, sx = self.homeRect(w, pane), (bb[2] - bb[0]) / (W[2] - W[0])
+      return [bb[0] + (r[0] - W[0]) * sx, r[1], bb[0] + (r[2] - W[0]) * sx, r[3] + bb[3] - W[3]]
+    obstacles = []
+    for o in self.values():
+      if o is None or o is w or o in moving or not o._isConnected() or o.isHidden():
+        continue
+      if floats(o) and any(e in moving for e in (o.src, o.dst)):
+        continue # (it'll follow its ends)
+      b = list(o.boundingBox())
+      if not isinstance(o, VRelation) and o.isContextWindow() and b[0] <= W[0] and b[1] <= W[1] and W[2] <= b[2] and W[3] <= b[3]:
+        continue # (a window w is in)
+      obstacles.append(b)
+    bb, moves = list(W), []
+    for vo in toMove:
+      box = list(vo.boundingBox())
+      while True:
+        rect = rectIn(homes[vo], bb)
+        inRect = [o for o in obstacles if o[0] < rect[2] and rect[0] < o[2] and o[1] < rect[3] and rect[1] < o[3]]
+        out = max(rect[0] - box[0], box[2] - rect[2], rect[1] - box[1], box[3] - rect[3])
+        if (d := freeSpotIn(box, rect, inRect, margin=margin, topMargin=topMargin, gap=gap, rows=out > near)) is not None:
+          break
+        # No room: grow down by its height -- and wider, if it's too wide for its pane (the panes
+        # share the width).
+        short = (box[2] - box[0]) + 2 * margin - (rect[2] - rect[0])
+        bb[2] += short * (bb[2] - bb[0]) / (rect[2] - rect[0]) if short > 0 else 0
+        bb[3] += (box[3] - box[1]) + gap[1] + margin
+      placed = [box[0] + d[0], box[1] + d[1], box[2] + d[0], box[3] + d[1]]
+      obstacles.append(placed)
+      moves.append((vo, box, placed))
+    with CompositeCommandMgr(self.context):
+      if w.collapsed:
+        self.context.collapse(w, False)
+      if bb != W:
+        self.context.resize(w, bb[0], bb[1], bb[2], bb[3])
+      for vo, box, placed in moves:
+        self.context.move(vo, placed[0], placed[1], _oldPos=box, adjustPos=False)
+    self.resetScrollRegion(shrink=True)
+    logger.info(f'"{w.name}": gathered {len(toMove)} object{"" if len(toMove) == 1 else "s"}.')
 
   def runBackgroundWork(self, fn: Callable[[], None]) -> None:
     """Launch background work (e.g. a long model computation triggered by the

@@ -25,7 +25,7 @@ Created on Sep 26, 2026
 @author: robkremer
 '''
 import unittest
-from sn.view.graphics.layout import gatherShifts, gatherAxisShifts
+from sn.view.graphics.layout import gatherShifts, gatherAxisShifts, freeSpotIn
 
 
 def grid(nx:int, ny:int, x0:int=0, y0:int=0, w:int=60, h:int=30, gapX:int=40, gapY:int=40) -> list[list[float]]:
@@ -91,6 +91,43 @@ class Test(unittest.TestCase):
 
   def test0600tooFewToJudge(self):
     self.assertEqual(gatherShifts([[0, 0, 10, 10], [5000, 5000, 5010, 5010]]), [(0, 0), (0, 0)])
+
+  # ---- freeSpotIn: gathering into a context window's pane ---------------------
+
+  def test1000alreadyInsideAndClear(self):
+    self.assertEqual(freeSpotIn([50, 50, 110, 80], [0, 0, 400, 300], []), (0, 0))
+
+  def test1100nearestEdge(self):
+    'Outside, with nothing in the way: just inside the nearest edge (as intoRect()).'
+    dx, dy = freeSpotIn([500, 50, 560, 80], [0, 0, 400, 300], [])
+    self.assertEqual((500 + dx + 60, 50 + dy), (390, 50))
+
+  def test1200avoidsObstacles(self):
+    rect = [0, 0, 400, 300]
+    obstacles = [[320, 30, 390, 90]]                                       # where intoRect() would put it
+    box = [500, 50, 560, 80]
+    dx, dy = freeSpotIn(box, rect, obstacles, gap=10)
+    b = [box[0] + dx, box[1] + dy, box[2] + dx, box[3] + dy]
+    self.assertTrue(10 <= b[0] and b[2] <= 390 and 10 <= b[1] and b[3] <= 290)  # inside, margin in
+    o = obstacles[0]
+    self.assertTrue(b[2] + 10 <= o[0] or o[2] + 10 <= b[0] or b[3] + 10 <= o[1] or o[3] + 10 <= b[1])
+    self.assertLess(abs(b[0] - 330) + abs(b[1] - 50), 150)                       # near where it was headed
+
+  def test1300noRoom(self):
+    self.assertIsNone(freeSpotIn([0, 0, 60, 30], [0, 0, 400, 300], [[0, 0, 400, 300]]))  # full
+    self.assertIsNone(freeSpotIn([0, 0, 600, 30], [0, 0, 400, 300], []))                 # too wide
+
+  def test1400manyFit(self):
+    'Gathering several, one after another, each clear of those before.'
+    rect, placed = [0, 0, 400, 300], []
+    for i in range(12):
+      box = [1000 + 70 * i, 2000, 1060 + 70 * i, 2030]
+      dx, dy = freeSpotIn(box, rect, placed, topMargin=22)
+      placed.append([box[0] + dx, box[1] + dy, box[2] + dx, box[3] + dy])
+    for i, a in enumerate(placed):
+      self.assertTrue(10 <= a[0] and a[2] <= 390 and 22 <= a[1] and a[3] <= 290)
+      for b in placed[:i]:
+        self.assertTrue(a[2] <= b[0] or b[2] <= a[0] or a[3] <= b[1] or b[3] <= a[1])
 
 
 if __name__ == "__main__":

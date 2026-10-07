@@ -39,7 +39,7 @@ import sn
 import logging
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Optional, override
+from typing import Optional, override, Iterable
 from sn.view.graphics.vnodes import VNode
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
@@ -511,3 +511,49 @@ def gatherShifts(boxes:list[list[float]], *, gapFactor:float=6.0, minGap:float=3
   dxs = gatherAxisShifts([(b[0], b[2]) for b in boxes], gapFactor=gapFactor, minGap=minGap)
   dys = gatherAxisShifts([(b[1], b[3]) for b in boxes], gapFactor=gapFactor, minGap=minGap)
   return list(zip(dxs, dys))
+
+# ---- Gathering into a context window -----------------------------------------
+
+def freeSpotIn(box:list[float], rect:list[float], obstacles:Iterable[list[float]], *,
+               margin:float=10.0, topMargin:float|None=None, gap:float|tuple[float, float]=10.0, step:float=10.0,
+               rows:bool=False) -> tuple[float, float]|None:
+  '''
+  How far to move *box* to put it inside *rect* (*margin* in from its edges;
+  *topMargin* from its top, if given), clear of every one of *obstacles* by
+  *gap* (or (across, down)), on a *step* grid: the spot nearest to where *intoRect()* would put it
+  (a box that's already inside and clear stays put) -- or, with *rows*, the
+  first free spot reading *rect* row by row from its top left (so things
+  brought from far away are set out tidily).
+
+  :param box: [x1, y1, x2, y2].
+  :type box: list[float]
+  :param rect: [x1, y1, x2, y2].
+  :type rect: list[float]
+  :param obstacles: Boxes to keep clear of.
+  :type obstacles: Iterable[list[float]]
+  :returns: (dx, dy) -- or None if there's no room.
+  :rtype: tuple[float, float] | None
+  '''
+  obs = [o for o in obstacles]
+  gx, gy = gap if isinstance(gap, tuple) else (gap, gap)
+  w, h = box[2] - box[0], box[3] - box[1]
+  lo_x, lo_y = rect[0] + margin, rect[1] + (margin if topMargin is None else topMargin)
+  hi_x, hi_y = rect[2] - margin - w, rect[3] - margin - h
+  if hi_x < lo_x or hi_y < lo_y:
+    return None
+  def clear(x:float, y:float) -> bool:
+    return all(x + w + gx <= o[0] or o[2] + gx <= x or y + h + gy <= o[1] or o[3] + gy <= y for o in obs)
+  nx, ny = int((hi_x - lo_x) // step), int((hi_y - lo_y) // step)
+  spots = [(lo_x + i * step, lo_y + j * step) for i in range(nx + 1) for j in range(ny + 1)]
+  if rows:
+    spots.sort(key=lambda p: (p[1], p[0]))
+  else:
+    ex, ey = intoRect(box, rect, margin, topMargin)
+    tx, ty = box[0] + ex, box[1] + ey # (where it would go, ignoring the obstacles)
+    if clear(tx, ty):
+      return ex, ey
+    spots.sort(key=lambda p: (p[0] - tx) ** 2 + (p[1] - ty) ** 2)
+  for x, y in spots:
+    if clear(x, y):
+      return x - box[0], y - box[1]
+  return None
