@@ -444,6 +444,40 @@ class TestRules(unittest.TestCase):
     self.assertFalse(any(v.code == "narcissism" for v in vs))
     self.assertTrue(any(v.code == "constraint_report" and v.subject is c for v in vs))
 
+  def test0925negatedConstraints(self):
+    '"not" constraints: a negated test (negation as failure: no value at all passes too); not allowed in a consequent.'
+    for n, g in (("alice", "female"), ("bob", "male"), ("carol", "female")):
+      self.p[n]["gender"] = g
+    self.rel(self.parent, self.p["dave"], self.p["alice"])                  # fine
+    self.rel(self.parent, self.p["dave"], self.p["bob"])                    # bob isn't female
+    self.rel(self.parent, self.p["carol"], self.p["fred"])                  # fred has no gender
+    def violators(constraints):
+      P, M = self.var("?person"), self.var("?mother")
+      M["constraints"] = constraints
+      c = self.constraint(f"mother {constraints}", [self.rel(self.parent, P, M)], report="?person, ?mother")
+      ret = {(v.subject.name, v.args[0].name) for v in self.reason().violations if v.code == c.name}
+      return ret
+    self.assertEqual(violators("not gender: female"), {("dave", "bob"), ("carol", "fred")})
+    self.assertEqual(violators("gender, not gender: female"), {("dave", "bob")})
+    self.assertEqual(violators("not gender"), {("carol", "fred")})
+    # a negated value variable needs a value from elsewhere
+    P, M = self.var("?p"), self.var("?m")
+    P["constraints"] = "gender: ?g"; M["constraints"] = "not gender: ?g"
+    c = self.constraint("same", [self.rel(self.parent, P, M)], report="?p, ?m")
+    self.assertEqual({(v.subject.name, v.args[0].name) for v in self.reason().violations if v.code == "same"},
+                     {("carol", "fred")})                                   # (dave has no gender: no ?g)
+    self.p["dave"]["gender"] = "male"
+    self.assertEqual({(v.subject.name, v.args[0].name) for v in self.reason().violations if v.code == "same"},
+                     {("carol", "fred"), ("dave", "alice")})
+    lone = self.var("?l"); lone["constraints"] = "not gender: ?h"
+    q = self.constraint("unbound", [self.rel(self.parent, lone, self.var("?k"))])
+    self.assertTrue(any(v.code == "bad_constraints" and v.subject is q for v in self.reason().violations))
+    # not in a consequent
+    A, B = self.var("?A"), self.var("?B")
+    B2 = self.var("?B"); B2["constraints"] = "not gender: male"
+    r = self.rule("negated", [self.rel(self.parent, A, B)], [B2])
+    self.assertEqual([c for c, _ in ruleOf(r).problems], ["rule_negated"])
+
   def test0930systemRules(self):
     'The base rules\' conclusions are plain inferences -- unless showSysRules.'
     self.rel(self.sib, self.p["alice"], self.p["bob"])

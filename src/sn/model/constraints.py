@@ -15,6 +15,13 @@ A variable's constraints are the text of its "constraints" attribute, eg::
 - The relational properties (symmetric, asymmetric, reflexive, irreflexive,
   transitive) are tags on relation types: ``symmetric`` means it is,
   ``symmetric: false`` that it isn't.
+- ``not`` before any of these negates it: ``not alive``: doesn't have the
+  attribute; ``not gender: female``: doesn't have it with that value (so
+  something with no gender at all passes -- ``gender, not gender: female``
+  says it has one, and it isn't female). There can be more than one for a key
+  (``not colour: red, not colour: blue``). A negated value variable must also
+  be used without ``not`` somewhere in the pattern, which gives it its value.
+  They're tests: a rule can't conclude that something *isn't* so.
 
 They may be typed with a variable's name, after ``:where:`` -- eg: ``?p :where:
 alive, age: 30`` -- and are then moved into the attribute (see *splitWhere()*).
@@ -63,6 +70,7 @@ CONSTRAINTS_NOTE = '''A variable's constraints: what an object must be like to m
   age: 30         has "age" equal to 30 (numbers, true/false, or text: quote it if it has commas, colons or quotes, eg: 'Big Al')
   age: ?a         has "age" equal to that of the other constraints using ?a
   symmetric       (of a relation type) is tagged symmetric; "symmetric: false": isn't. Likewise asymmetric, reflexive, irreflexive, transitive.
+  not ...         negates any of these, eg: "not gender: female" (true, too, of something with no gender at all), "not alive". Only as tests: not in a rule's consequent.
 They can also be typed with the name, after ":where:", eg: ?p :where: alive, age: 30'''
 "The note on the constraints attribute: shown as its tooltip in the attribute editor."
 
@@ -96,10 +104,78 @@ class ValueVar(str):
     '''
     return f"ValueVar({str.__repr__(self)})"
 
+class Not:
+  '''
+  A negated constraint's value (in a *Pattern*'s constraints -- see
+  *sn.model.reasoner.patternOf()*): what the variable matches mustn't have
+  the attribute with *value* (or, if *value* is PRESENT, at all).
+  '''
+  __slots__ = ("value",)
+  def __init__(self, value:Any):
+    '''
+    :param value: The value it mustn't have: as a constraint's value (see *parseConstraints()*).
+    :type value: Any
+    '''
+    self.value = value
+  def __eq__(self, other:object) -> bool:
+    '''
+    :param other:
+    :type other: object
+    :returns:
+    :rtype: bool
+    '''
+    return isinstance(other, Not) and type(self.value) is type(other.value) and self.value == other.value
+  def __hash__(self) -> int:
+    '''
+    :returns:
+    :rtype: int
+    '''
+    return hash(("Not", self.value))
+  def __repr__(self) -> str:
+    '''
+    :returns: A string representation of this object.
+    :rtype: str
+    '''
+    return f"Not({self.value!r})"
+
+NOT = "not "
+'''
+The prefix of a negated constraint, as typed (eg: "not gender: female") --
+and of its key in the parsed constraints (see *parseConstraints()*).
+'''
+
+def isNegated(key:str) -> bool:
+  '''
+  :param key: A key of parsed constraints (see *parseConstraints()*).
+  :type key: str
+  :returns: True iff it's a negated constraint's ("not gender").
+  :rtype: bool
+  '''
+  return key.startswith(NOT)
+
+def constraintItems(constraints:dict[str, Any]) -> list[tuple[str, Any]]:
+  '''
+  :param constraints: Parsed constraints (see *parseConstraints()*).
+  :type constraints: dict[str, Any]
+  :returns: Each constraint as (attribute key, value): a negated one's value
+    a *Not*, one for each of its values. Eg: {"alive": PRESENT, "not gender":
+    ("female",)} -> [("alive", PRESENT), ("gender", Not("female"))].
+  :rtype: list[tuple[str, Any]]
+  '''
+  ret:list[tuple[str, Any]] = []
+  for k, v in constraints.items():
+    if isNegated(k):
+      ret += [(k[len(NOT):], Not(x)) for x in v]
+    else:
+      ret.append((k, v))
+  return ret
+
 class ConstraintError(ValueError):
   'Constraints text that can\'t be parsed.'
 
 _KEY = re.compile(r"[A-Za-z_][\w./-]*$")
+_NEGATED = re.compile(r"not\s+\S")
+"A constraint's key part that's negated: \"not\", a space, and the key (but \"not\" alone is a key)."
 _VALUE_VAR_STEM = re.compile(r"\w+$")
 
 def _isValueVar(v:str) -> bool:
@@ -177,7 +253,10 @@ def parseConstraints(text:str|None) -> dict[str, Any]:
   :param text:
   :type text: str | None
   :returns: The constraints in *text* (see the module doc), in order: key ->
-    PRESENT, a number, a bool, text (str), or a *ValueVar*.
+    PRESENT, a number, a bool, text (str), or a *ValueVar*. A negated one's key
+    is "not " and its key (eg: "not gender"), and its value is a tuple of
+    those values, one for each time it's given (eg: ("female",)). (See
+    *constraintItems()*.)
   :rtype: dict[str, Any]
   :raises ConstraintError: If *text* can't be parsed.
   '''
@@ -192,13 +271,23 @@ def parseConstraints(text:str|None) -> dict[str, Any]:
       continue
     key, *rest = _split(item, ":")
     key = key.strip()
+    negated = bool(_NEGATED.match(key))
+    if negated:
+      key = key[len(NOT.strip()):].strip()
     if not _KEY.match(key):
       raise ConstraintError(f"bad key {key!r}" if key else f"missing key in {item.strip()!r}")
-    if key in ret:
-      raise ConstraintError(f'"{key}" is given twice')
     if len(rest) > 1:
       raise ConstraintError(f'more than one ":" in {item.strip()!r} (quote the value?)')
-    ret[key] = _value(rest[0], key) if rest else PRESENT
+    value = _value(rest[0], key) if rest else PRESENT
+    if negated:
+      old = ret.get(NOT + key, ())
+      if Not(value) in [Not(v) for v in old]:
+        raise ConstraintError(f'"{item.strip()}" is given twice')
+      ret[NOT + key] = old + (value,)
+    else:
+      if key in ret:
+        raise ConstraintError(f'"{key}" is given twice')
+      ret[key] = value
   return ret
 
 def _formatValue(v:Any) -> str:
@@ -227,7 +316,9 @@ def formatConstraints(constraints:dict[str, Any]) -> str:
   :type constraints: dict[str, Any]
   :rtype: str
   '''
-  return ", ".join(k if v is PRESENT else f"{k}: {_formatValue(v)}" for k, v in constraints.items())
+  def one(k:str, v:Any) -> str:
+    return k if v is PRESENT else f"{k}: {_formatValue(v)}"
+  return ", ".join(one(NOT + k, v.value) if isinstance(v, Not) else one(k, v) for k, v in constraintItems(constraints))
 
 def splitWhere(text:str) -> tuple[str, str|None]:
   '''

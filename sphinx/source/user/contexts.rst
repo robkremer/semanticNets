@@ -139,7 +139,18 @@ constraint          means
 ``symmetric``       (of a relation type) is tagged symmetric;
                     ``symmetric: false``: it isn't. Likewise *asymmetric*,
                     *reflexive*, *irreflexive* and *transitive*
+``not ...``         the opposite of any of these: ``not alive``: doesn't
+                    have *alive*; ``not gender: female``: doesn't have
+                    *gender* equal to female
 ==================  =========================================================
+
+A ``not`` is true of anything the model doesn't say otherwise about: ``not
+gender: female`` matches something with no *gender* at all, as well as one
+whose gender is something else. To leave out the ones with no gender, say it
+has one, too: ``gender, not gender: female``. A key can have more than one
+``not`` (``not colour: red, not colour: blue``), and a ``not`` with a value
+variable (``not age: ?a``) needs the same variable used without ``not``
+somewhere in the pattern, to give it its value.
 
 You can type them with the variable's name when you make it, after
 ``:where:``:
@@ -161,7 +172,9 @@ What constraints mean depends on where the variable is:
 - in a query, a rule's antecedent or a definition, they're **tests**: the
   variable only matches objects that pass them;
 - in a rule's consequent, they're **conclusions**: they're asserted about
-  whatever the variable matched (eg: ``?x {status: 'grandparent'}``).
+  whatever the variable matched (eg: ``?x {status: 'grandparent'}``). A rule
+  can't conclude that something *isn't* so, so a ``not`` there is reported as
+  a problem when you reason.
 
 Rules
 -----
@@ -264,7 +277,11 @@ attribute      meaning
                ... for the arguments
 =============  ===============================================================
 
-Eg: a constraint containing ``?x -likes-> ?x``, with report ``?x`` and
+Eg: every mother must be female -- a constraint containing ``?person
+-has-mother-> ?mother``, with ``?mother {not gender: female}``, reports each
+mother who isn't (or whose gender isn't known).
+
+Or: a constraint containing ``?x -likes-> ?x``, with report ``?x`` and
 message ``{0} likes themselves``, reports everyone who likes themselves. A
 problem is reported once per set of objects it's about, so a constraint
 matching both ``a -r-> b`` and ``b -r-> a`` reports a and b once.

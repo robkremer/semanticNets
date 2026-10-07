@@ -245,6 +245,22 @@ class TestQueries(unittest.TestCase):
       with self.assertRaises(ConstraintError, msg=bad):
         parseConstraints(bad)
 
+  def test1110negatedConstraintSyntax(self):
+    from sn.model.constraints import parseConstraints, formatConstraints, constraintItems, mergeConstraints, Not, PRESENT, ValueVar, ConstraintError
+    c = parseConstraints("gender, not gender: female, not alive, not colour: red, not colour: 'dark blue', not: 3")
+    self.assertEqual(c, {"gender": PRESENT, "not gender": ("female",), "not alive": (PRESENT,),
+                         "not colour": ("red", "dark blue"), "not": 3})          # ("not" alone is a key)
+    self.assertEqual(constraintItems(c), [("gender", PRESENT), ("gender", Not("female")), ("alive", Not(PRESENT)),
+                                          ("colour", Not("red")), ("colour", Not("dark blue")), ("not", 3)])
+    self.assertEqual(formatConstraints(c), "gender, not gender: female, not alive, not colour: red, not colour: dark blue, not: 3")
+    self.assertEqual(parseConstraints(formatConstraints(c)), c)                # (round trip)
+    self.assertIsInstance(constraintItems(parseConstraints("not age: ?a"))[0][1].value, ValueVar)
+    self.assertNotEqual(Not(1), Not(True))
+    self.assertEqual(mergeConstraints("not gender: female", "gender: male"), "not gender: female, gender: male")
+    for bad in ("not gender: female, not gender: female", "not a b"):
+      with self.assertRaises(ConstraintError, msg=bad):
+        parseConstraints(bad)
+
   def test1200migration(self):
     '''Constraints stored the old way (as a variable's own attributes) are moved into its "constraints" attribute.'''
     from sn.model.constraints import migrateConstraints

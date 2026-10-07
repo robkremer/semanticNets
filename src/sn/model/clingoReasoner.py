@@ -43,7 +43,7 @@ from typing import Any, override
 import clingo
 from sn.model.model import Model, GraphObject
 from sn.model.reasoner import Reasoner, Inferences, Violation, Sym, Fact, PROPERTIES, Pattern, patternOf, ruleOf, rules, ruleSpecs, constraintSpecs, NewObject
-from sn.model.constraints import PRESENT, ValueVar
+from sn.model.constraints import PRESENT, ValueVar, Not
 from sn.model.names import NameKind
 
 RULES = importlib.resources.files("sn.model").joinpath("clingoReasoner.lp")
@@ -224,14 +224,17 @@ class ClingoReasoner(Reasoner, engine="clingo"):
     body += [f"isa_star({term(x)},{term(t)})" for x, t in pat.types]
     body += [f"{term(x)} != {term(y)}" for x, y in pat.distinct]
     for v, key, value in pat.constraints:
+      neg = isinstance(value, Not) # (negation as failure: it isn't so, as far as the model says)
+      if neg:
+        value = value.value
       if key in PROPERTIES:           # a relational property: a tag on a relation type
-        body.append(f"{'not ' if value is False else ''}prop({term(v)},{key})")
+        body.append(f"{'not ' if (value is False) != neg else ''}prop({term(v)},{key})")
       elif value is PRESENT:
-        body.append(f"attr({term(v)},{_str(key)},_)")
-      elif isinstance(value, ValueVar):
-        body.append(f"attr({term(v)},{_str(key)},{var.setdefault(value, f'A{len(var)}')})")
+        body.append(f"{'not ' if neg else ''}attr({term(v)},{_str(key)},_)")
+      elif isinstance(value, ValueVar): # (a negated one is bound by the same one, unnegated: see patternOf())
+        body.append(f"{'not ' if neg else ''}attr({term(v)},{_str(key)},{var.setdefault(value, f'A{len(var)}')})")
       else:
-        body.append(f"attr({term(v)},{_str(key)},{self._term(value)})")
+        body.append(f"{'not ' if neg else ''}attr({term(v)},{_str(key)},{self._term(value)})")
     return body
 
   @staticmethod

@@ -88,7 +88,7 @@ from util.observer import Subject
 import sn
 from sn.model.model import Model, GraphObject, Node, Collection, Relation, IsaIndividual
 from util.attribute import Attribute, Restriction
-from sn.model.constraints import CONSTRAINTS, PRESENT, ValueVar
+from sn.model.constraints import CONSTRAINTS, PRESENT, ValueVar, Not, constraintItems
 from sn.model import names
 
 logger:sn.SNLogger = sn.getLogger(__name__)
@@ -111,6 +111,7 @@ _MESSAGES:dict[str,str] = {
   "rule_unbound":          "rule {0}: {1} in the consequent isn't bound by the antecedent",
   "rule_open_end":         "rule {0}: {1} in the consequent has no {2}",
   "rule_unsupported":      "rule {0}: {1} in the consequent isn't supported (yet)",
+  "rule_negated":          "rule {0}: {1} in the consequent has a negated constraint ({2}): a rule can't conclude that something isn't so",
   "bad_constraints":       "{0}: the constraints of {1} can't be read: {2}",
   "variable_kind":         "{0}: its name makes it a variable over {1}s, but it's {2}",
   "constraint_report":     "constraint {0}: {1} in its report isn't one of its variables",
@@ -415,6 +416,8 @@ class Pattern:
   value if *value* is PRESENT; the same value as other constraints naming it
   if it's a *ValueVar*; else equal to *value*. A relational property
   (symmetric, ...) is a tag: PRESENT or True means it's there, False not.
+  If *value* is a *Not*, the reverse: it mustn't have the attribute with
+  *value.value* (or at all, if that's PRESENT).
   '''
   errors:list[tuple[GraphObject, str]] = field(default_factory=list)
   "(variable, message): constraints that can't be parsed (see *GraphObject.constraintsError()*)."
@@ -447,7 +450,7 @@ def patternOf(context:GraphObject, parts:tuple[GraphObject, ...]|None=None) -> P
   def note(x:GraphObject|None) -> None:
     if x is not None and x.isVariable() and id(x) not in variables:
       variables[id(x)] = x
-      ret.constraints += [(x, k, v) for k, v in x.constraints().items()]
+      ret.constraints += [(x, k, v) for k, v in constraintItems(x.constraints())]
       if (err := x.constraintsError()) is not None:
         ret.errors.append((x, err))
       for p in x.getParents():
@@ -475,6 +478,10 @@ def patternOf(context:GraphObject, parts:tuple[GraphObject, ...]|None=None) -> P
       note(e)
   ret.types = list({(id(x), id(t)): (x, t) for x, t in ret.types}.values()) # once each
   ret.variables = sorted(variables.values(), key=lambda v: v.name)
+  bound = {v for _, _, v in ret.constraints if isinstance(v, ValueVar)}
+  for x, k, v in ret.constraints: # (a negated value variable gets its value elsewhere)
+    if isinstance(v, Not) and isinstance(v.value, ValueVar) and v.value not in bound:
+      ret.errors.append((x, f'{v.value} in "not {k}: {v.value}" must also be used without "not", to give it a value'))
   return ret
 
 @dataclass
@@ -615,7 +622,10 @@ def _spec(rule:GraphObject, parts:tuple[GraphObject, ...]|None, consequentType:G
   for x in own.values():
     if (err := x.constraintsError()) is not None:
       spec.problems.append(("bad_constraints", (x, err)))
-    for k, v in x.constraints().items():
+    for k, v in constraintItems(x.constraints()):
+      if isinstance(v, Not):
+        spec.problems.append(("rule_negated", (x, Sym(f"not {k}"))))
+        continue
       if isinstance(v, ValueVar) and v not in bound:
         spec.problems.append(("rule_unbound", (v,)))
       spec.assertions.append((x, k, v))
