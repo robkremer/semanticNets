@@ -1,28 +1,31 @@
 
-Contexts: Rules, Definitions, Queries and Constraints
-=====================================================
+Contexts: Rules, Definitions, Queries, Constraints and Requirements
+====================================================================
 
 A **context** is a node that *contains* other objects: a little network of its
 own, standing for a pattern rather than for facts about the world. The system
-model defines four kinds:
+model defines five kinds:
 
-==============  ============================================================
-kind            what its contents mean
-==============  ============================================================
-**query**       a pattern to look for: "find everything that matches this"
-**rule**        an *antecedent* and a *consequent*: "whenever the
-                antecedent matches, conclude the consequent"
-**definition**  a *definiendum* and a *definiens*: "the one means exactly the
-                other" -- a rule that works both ways
-**constraint**  a pattern that must *not* match: "each match is a problem"
-==============  ============================================================
+===============  ============================================================
+kind             what its contents mean
+===============  ============================================================
+**query**        a pattern to look for: "find everything that matches this"
+**rule**         an *antecedent* and a *consequent*: "whenever the
+                 antecedent matches, conclude the consequent"
+**definition**   a *definiendum* and a *definiens*: "the one means exactly the
+                 other" -- a rule that works both ways
+**constraint**   a pattern that must *not* match: "each match is a problem"
+**requirement**  a *condition* and what's *required*: "wherever the
+                 condition matches, the required part must hold too" -- a
+                 kind of constraint
+===============  ============================================================
 
 (*context* itself is the general kind: a context that's none of these simply
 contains things.)
 
 To make one, use **model | new instance of Node** on the background menu and
-choose *query*, *rule*, *definition* or *constraint* (or a subtype of one of
-them).
+choose *query*, *rule*, *definition*, *constraint* or *requirement* (or a
+subtype of one of them).
 
 Context windows
 ---------------
@@ -33,7 +36,8 @@ objects it contains.
 - The **title bar** shows the context's name and, in italics, its kind.
 - A rule's window is split into two **panes**, *antecedent* on the left and
   *consequent* on the right; a definition's into *definiendum* and
-  *definiens*. A query (or a plain context) has a single pane.
+  *definiens*; a requirement's into *condition* and *required*. A query, a
+  constraint (or a plain context) has a single pane.
 - The **triangle** at the left of the title bar collapses the window to its
   title bar (and expands it again). The contents of a collapsed window are
   hidden.
@@ -120,6 +124,8 @@ relation's type, eg: ``^r`` in ``!a -^r-> ?b``, matches relation types.
 
 Objects in a pattern that *aren't* variables (*mary*, above) stand for
 themselves.
+
+.. _variable-constraints:
 
 Constraints
 -----------
@@ -257,6 +263,8 @@ the canvas. **Esc** clears the highlights.
 
    Answering the query who likes dave?: the answer, carol, is highlighted, and printed in the terminal.
 
+.. _constraint-contexts:
+
 Constraints
 -----------
 
@@ -285,6 +293,39 @@ Or: a constraint containing ``?x -likes-> ?x``, with report ``?x`` and
 message ``{0} likes themselves``, reports everyone who likes themselves. A
 problem is reported once per set of objects it's about, so a constraint
 matching both ``a -r-> b`` and ``b -r-> a`` reports a and b once.
+
+Requirements
+------------
+
+A **requirement** says what must hold wherever something else does. Its
+window has two panes, like a rule's: the **condition** on the left, and
+what's **required** on the right. Where the condition matches and the
+required part doesn't (for the same values of the variables they share),
+that's a problem, reported when you reason. Variables with the same name are
+the same variable, wherever they are in it, as in a rule.
+
+Eg: every mother must be female:
+
+- condition: ``?person -has-mother-> ?mother``
+- required: ``?mother {gender: female}``
+
+A rule with the same two parts would *conclude* that every mother is female
+(and so that Fred is, if Barney -has-mother-> Fred). A requirement only
+checks it, and reports Barney -has-mother-> Fred as a problem.
+
+A variable only the required part has stands for "something": eg: with
+condition ``?p`` (a person) and required ``?p -has-mother-> ?m``, everyone
+must have a mother -- whoever she is. (A ``not`` can't say that: see
+:ref:`variable-constraints`.) What the reasoner infers counts: a mother concluded by a
+rule meets the requirement as well as one in the model.
+
+A requirement is a kind of constraint, with the same attributes (``code``,
+``severity``, ``report`` and ``message``: see :ref:`constraint-contexts`) -- but
+what it reports can only be the condition's variables: the required part's
+own ones have no single value. A requirement with nothing in its required
+pane is reported as a problem itself, as it can't be violated. (A variable
+astride the divider is in both panes: its constraints are tests on what the
+condition matches.)
 
 The base rules
 --------------

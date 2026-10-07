@@ -28,7 +28,7 @@ import unittest
 from pathlib import Path
 from sn.model.model import Model, Node, Relation, IsaIndividual
 from sn.model.clingoReasoner import ClingoReasoner
-from sn.model.reasoner import ruleOf
+from sn.model.reasoner import ruleOf, constraintOf, constraintSpecs, patternOf
 
 class TestRules(unittest.TestCase):
   '''
@@ -477,6 +477,68 @@ class TestRules(unittest.TestCase):
     B2 = self.var("?B"); B2["constraints"] = "not gender: male"
     r = self.rule("negated", [self.rel(self.parent, A, B)], [B2])
     self.assertEqual([c for c, _ in ruleOf(r).problems], ["rule_negated"])
+
+  def requirement(self, name, condition, required, **attrs):
+    q = Node(self.m, [self.m.REQUIREMENT], individual=True, name=name)
+    for k, v in attrs.items():
+      q[k] = v
+    for x in condition:
+      self.rel(self.m.CONDITION, q, x)
+    for x in required:
+      self.rel(self.m.REQUIRED, q, x)
+    return q
+
+  def violations(self, code):
+    return {tuple(x.name for x in (v.subject, *v.args)) for v in self.reason().violations if v.code == code}
+
+  def test0950requirements(self):
+    'A requirement: wherever its condition matches, what it requires must hold (or it\'s a violation).'
+    for n, g in (("alice", "female"), ("bob", "male"), ("carol", "female")):
+      self.p[n]["gender"] = g
+    self.rel(self.parent, self.p["dave"], self.p["alice"])
+    self.rel(self.parent, self.p["dave"], self.p["bob"])
+    self.rel(self.parent, self.p["carol"], self.p["fred"])
+    # the required pane has its own copy of ?m
+    P, M, M2 = self.var("?p"), self.var("?m"), self.var("?m")
+    M2["constraints"] = "gender: female"
+    self.requirement("mothers", [self.rel(self.parent, P, M)], [M2], report="?p, ?m")
+    self.assertEqual(self.violations("mothers"), {("dave", "bob"), ("carol", "fred")}) # (fred: not known to be female)
+    # or the condition's own ?p and ?m (here, related in the required pane): parents like their children
+    P, M = self.var("?p"), self.var("?m")
+    self.requirement("liked", [self.rel(self.parent, P, M)], [self.rel(self.likes, M, P)], report="?p, ?m")
+    self.rel(self.likes, self.p["alice"], self.p["dave"])
+    self.assertEqual(self.violations("liked"), {("dave", "bob"), ("carol", "fred")})
+    # its own variables are "some": every person must have a parent
+    P, X = self.var("?p", self.person), self.var("?x")
+    P2 = self.var("?p")
+    self.requirement("has a parent", [P], [self.rel(self.parent, P2, X)])
+    self.assertEqual(self.violations("has a parent"), {("alice",), ("bob",), ("fred",)})
+    # what's inferred counts: the base rules make fullSibling symmetric
+    A, B, A2, B2 = self.var("?a"), self.var("?b"), self.var("?a"), self.var("?b")
+    self.requirement("both ways", [self.rel(self.sib, A, B)], [self.rel(self.sib, B2, A2)])
+    self.rel(self.sib, self.p["alice"], self.p["bob"])
+    self.assertEqual(self.violations("both ways"), set())
+    # a negated value variable can get its value from the condition
+    C, D, D2 = self.var("?c"), self.var("?d"), self.var("?d")
+    C["constraints"] = "gender: ?g"; D2["constraints"] = "not gender: ?g"
+    self.requirement("unlike", [self.rel(self.likes, C, D)], [D2], report="?c, ?d")
+    self.rel(self.likes, self.p["alice"], self.p["carol"])
+    self.rel(self.likes, self.p["alice"], self.p["bob"])
+    self.assertEqual(self.violations("unlike"), {("alice", "carol")})
+
+  def test0960requirementProblems(self):
+    'A requirement that requires nothing, or reports a variable only its required part has, is reported, and not used.'
+    P = self.var("?p", self.person)
+    q = self.requirement("nothing", [P], [])
+    self.assertEqual([c for c, _ in constraintOf(q).problems], ["requirement_empty"])
+    self.assertTrue(any(v.code == "requirement_empty" and v.subject is q for v in self.reason().violations))
+    P, X, P2 = self.var("?p", self.person), self.var("?x"), self.var("?p")
+    q = self.requirement("some", [P], [self.rel(self.parent, P2, X)], report="?x")
+    self.assertEqual([c for c, _ in constraintOf(q).problems], ["constraint_report"])
+    self.assertFalse(any(v.code == "some" for v in self.reason().violations))
+    # a requirement is a constraint, and its condition is its pattern (eg: for "answer query")
+    self.assertIn(q, [s.constraint for s in constraintSpecs(list(self.m.values()))])
+    self.assertEqual([x.name for x in patternOf(q).variables], ["?p"])
 
   def test0930systemRules(self):
     'The base rules\' conclusions are plain inferences -- unless showSysRules.'

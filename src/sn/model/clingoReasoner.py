@@ -341,7 +341,10 @@ class ClingoReasoner(Reasoner, engine="clingo"):
     ``rule_attr(Rule,X,Key,Value) :- <antecedent>.`` for an attribute. (The
     rule base takes these as holds/3 and attr/3.) The constraints (see
     *reasoner.constraintOf()*) likewise:
-    ``violation0(Code,Severity,Subject,(Args,)) :- <pattern>.`` A rule or
+    ``violation0(Code,Severity,Subject,(Args,)) :- <pattern>.`` -- for a
+    requirement, ``requirement_holds(Req,(Vars,)) :- <condition>, <required>.``
+    and ``violation0(...) :- <condition>, not requirement_holds(Req,(Vars,)).``
+    over the condition's variables. A rule or
     constraint with problems isn't used: its problems are reported as
     violations. Call after rendering the facts (see *_program()*).
 
@@ -358,6 +361,13 @@ class ClingoReasoner(Reasoner, engine="clingo"):
         continue
       var = self._varNames(spec.pattern)
       body = self._patternBody(spec.pattern, var)
+      if spec.required is not None: # a requirement: violated where its condition matches and what it requires doesn't
+        condVars = "(" + "".join(v + "," for v in var.values()) + ")" # (the condition's variables, and its value variables)
+        for name in dict.fromkeys(v.name for v in spec.required.variables): # (its own: "some")
+          var.setdefault(name, f"V{len(var)}")
+        holds = f"requirement_holds({self._term(c)},{condVars})"
+        out.append(f"{holds} :- {', '.join(body + self._patternBody(spec.required, var))}.") # (the condition too: it gives the shared variables their values)
+        body = body + [f"not {holds}"]
       if not body:
         continue
       term = lambda x: var[x.name] if isinstance(x, GraphObject) and x.isVariable() else self._term(x)

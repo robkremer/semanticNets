@@ -116,6 +116,7 @@ _MESSAGES:dict[str,str] = {
   "variable_kind":         "{0}: its name makes it a variable over {1}s, but it's {2}",
   "constraint_report":     "constraint {0}: {1} in its report isn't one of its variables",
   "constraint_severity":   "constraint {0}: its severity is {1}; it should be error or warning",
+  "requirement_empty":     "requirement {0}: nothing is required (its required pane is empty), so it can't be violated",
   }
 "Message templates for violation codes: {0} is the subject, {1}... are the args."
 
@@ -422,14 +423,19 @@ class Pattern:
   errors:list[tuple[GraphObject, str]] = field(default_factory=list)
   "(variable, message): constraints that can't be parsed (see *GraphObject.constraintsError()*)."
 
-def patternOf(context:GraphObject, parts:tuple[GraphObject, ...]|None=None) -> Pattern:
+def patternOf(context:GraphObject, parts:tuple[GraphObject, ...]|None=None, outer:Pattern|None=None) -> Pattern:
   '''
   :param context:
   :type context: GraphObject
   :param parts: The "contains"-family relation types to read the pattern from.
-    By default, all of them other than "consequent" and "definiendum": so for a
-    rule, its antecedent, and for a definition, its definiens.
+    By default, all of them other than "consequent", "definiendum" and "required": so for a
+    rule, its antecedent, for a definition, its definiens, and for a
+    requirement, its condition.
   :type parts: tuple[GraphObject, ...] | None
+  :param outer: The pattern this one's evaluated within, if any (eg: a
+    requirement's condition, for its required part): its value variables have
+    values here too.
+  :type outer: Pattern | None
   :returns: The *Pattern* of *context*: everything it contains (through
     *parts*).
   :rtype: Pattern
@@ -457,7 +463,7 @@ def patternOf(context:GraphObject, parts:tuple[GraphObject, ...]|None=None) -> P
         if p not in (m.NODE, m.RELATION, m.TOP) and not isinstance(x, IsaIndividual):
           ret.types.append((x, p))
   inPattern = (lambda r: any(r.isa(p) for p in parts)) if parts is not None else \
-              (lambda r: r.isa(m.CONTAINS) and not r.isa(m.CONSEQUENT) and not r.isa(m.DEFINIENDUM))
+              (lambda r: r.isa(m.CONTAINS) and not r.isa(m.CONSEQUENT) and not r.isa(m.DEFINIENDUM) and not r.isa(m.REQUIRED))
   contained = [r.localDst for r, _ in context._getOutgoing(lambda r: r.isIndividual() and inPattern(r))
                if r.localDst is not None]
   for e in contained:
@@ -478,7 +484,7 @@ def patternOf(context:GraphObject, parts:tuple[GraphObject, ...]|None=None) -> P
       note(e)
   ret.types = list({(id(x), id(t)): (x, t) for x, t in ret.types}.values()) # once each
   ret.variables = sorted(variables.values(), key=lambda v: v.name)
-  bound = {v for _, _, v in ret.constraints if isinstance(v, ValueVar)}
+  bound = {v for _, _, v in ret.constraints + (outer.constraints if outer is not None else []) if isinstance(v, ValueVar)}
   for x, k, v in ret.constraints: # (a negated value variable gets its value elsewhere)
     if isinstance(v, Not) and isinstance(v.value, ValueVar) and v.value not in bound:
       ret.errors.append((x, f'{v.value} in "not {k}: {v.value}" must also be used without "not", to give it a value'))
@@ -669,13 +675,20 @@ class ConstraintSpec:
   its *pattern* must not match -- each match is a *Violation*, of *code* and
   *severity*, reported against the first of *report* (the subject) with the
   rest as its args. Read from the constraint's attributes (see *constraintOf()*).
+
+  A requirement (a constraint that isa "requirement") also has *required*:
+  then a match of *pattern* (its condition) is a violation only if *required*
+  doesn't match too, for the same values of the variables they share. Its
+  variables of its own are "some": there must be something for each of them.
   '''
   constraint:GraphObject
   pattern:Pattern
-  "What it contains (see *patternOf()*)."
+  "What it contains (see *patternOf()*): a requirement's condition."
   code:str
   severity:str
   "error or warning"
+  required:Pattern|None = None
+  "A requirement's required part (see *patternOf()*); None for any other constraint."
   report:list[Any] = field(default_factory=list)
   "The subject, then the args: the pattern's variables, or constants (*Sym*)."
   template:str|None = None
@@ -699,13 +712,14 @@ def constraintOf(constraint:GraphObject) -> ConstraintSpec:
   :param constraint:
   :type constraint: GraphObject
   :returns: The *ConstraintSpec* of *constraint*: its pattern is what it
-    contains (see *patternOf()*), and the rest is from its attributes (see
+    contains (see *patternOf()*) -- for a requirement, its condition, and its
+    *required* what's in its required pane -- and the rest is from its attributes (see
     *CONSTRAINT_ATTRIBUTES*). Eg: a constraint named "irreflexive" containing
     ?a -^r-> ?a, with ^r {irreflexive} and report "^r, ?a", reports each
     irreflexive relation type relating something to itself.
   :rtype: ConstraintSpec
   '''
-  pat = patternOf(constraint)
+  pat = patternOf(constraint) # (a requirement's condition: not its "required" pane, which isa consequent)
   def attr(key:str) -> str|None:
     try:
       v = constraint.get(key, None)
@@ -715,6 +729,12 @@ def constraintOf(constraint:GraphObject) -> ConstraintSpec:
   spec = ConstraintSpec(constraint, pat, attr("code") or constraint.name, (attr("severity") or "error").lower(),
                         template=attr("message"))
   spec.problems += [("bad_constraints", (x, err)) for x, err in pat.errors]
+  m = constraint.model
+  if constraint.isa(m.REQUIREMENT):
+    req = spec.required = patternOf(constraint, (m.REQUIRED,), outer=pat)
+    spec.problems += [("bad_constraints", (x, err)) for x, err in req.errors]
+    if not (req.variables or req.triples or req.types or req.distinct):
+      spec.problems.append(("requirement_empty", ()))
   if spec.severity not in ("error", "warning"):
     spec.problems.append(("constraint_severity", (spec.severity,)))
   byName = {v.name: v for v in pat.variables}

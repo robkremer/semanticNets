@@ -770,7 +770,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     A context window's content areas (view coords), below its banner, by the
     containment relation they stand for: a rule's "antecedent" (left) and
     "consequent" (right); a definition's "definiendum" (left: the term
-    defined) and "definiens" (right: its meaning); any other context's single
+    defined) and "definiens" (right: its meaning); a requirement's
+    "condition" (left) and "required" (right); any other context's single
     "contains" area.
 
     :returns:
@@ -779,7 +780,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     x1, y1, x2, y2 = self.fullBoundingBox() # (a collapsed window's contents are still in it)
     top = y1 + self.bannerHeight()
     mo = self.modelObject
-    for kind, (left, right) in (("RULE", ("antecedent", "consequent")), ("DEFINITION", ("definiendum", "definiens"))):
+    for kind, (left, right) in (("RULE", ("antecedent", "consequent")), ("DEFINITION", ("definiendum", "definiens")),
+                                ("REQUIREMENT", ("condition", "required"))):
       if mo is not None and mo.isa(getattr(mo.model, kind)):
         mid = (x1 + x2) / 2
         return {left: [x1, top, mid, y2], right: [mid, top, x2, y2]}

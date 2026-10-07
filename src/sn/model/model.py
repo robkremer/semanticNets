@@ -1078,6 +1078,9 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     self.DEFINIENDUM:Relation = GORef.eval("$sn#definiendum") #type: ignore[assignment]
     self.DEFINIENS:Relation = GORef.eval("$sn#definiens") #type: ignore[assignment]
     self.CONSTRAINT:Node = GORef.eval("$sn#constraint") #type: ignore[assignment]
+    self.REQUIREMENT:Node = GORef.eval("$sn#requirement") #type: ignore[assignment]
+    self.CONDITION:Relation = GORef.eval("$sn#condition") #type: ignore[assignment]
+    self.REQUIRED:Relation = GORef.eval("$sn#required") #type: ignore[assignment]
 
     if hasattr(self, "_initialized") or _reading: # This means the __new__ method has returned an existing object, so don't truck over it!
       return

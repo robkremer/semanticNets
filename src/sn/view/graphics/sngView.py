@@ -3070,7 +3070,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     '''
     m = self.model
     return {"contains": m.CONTAINS, "antecedent": m.ANTECEDENT, "consequent": m.CONSEQUENT,
-            "definiendum": m.DEFINIENDUM, "definiens": m.DEFINIENS}[pane]
+            "definiendum": m.DEFINIENDUM, "definiens": m.DEFINIENS, "condition": m.CONDITION, "required": m.REQUIRED}[pane]
 
   def _containNewRelation(self, mgr:CompositeCommandMgr, creator:Command, typ:Relation, fromNode:VObject, toNode:VObject) -> None:
     '''
@@ -3160,7 +3160,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
           want = self._paneType(w.paneAt(new)) #type: ignore[arg-type]
           if any(r.isa(want) for r in rels):
             continue
-          others = [r for r in rels if any(r.isa(t) for t in (m.ANTECEDENT, m.CONSEQUENT, m.DEFINIENDUM, m.DEFINIENS))]
+          others = [r for r in rels if any(r.isa(t) for t in (m.ANTECEDENT, m.CONSEQUENT, m.DEFINIENDUM, m.DEFINIENS, m.CONDITION, m.REQUIRED))]
           if len(others) > 1: # in both panes: leave it be
             continue
           for r in others:    # switched panes

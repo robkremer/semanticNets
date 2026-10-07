@@ -135,6 +135,13 @@ class TopModel(Model):
     # not match -- each match is a violation (see sn.model.reasoner.constraintOf()).
     # Added last, so existing ids don't change.
     self.CONSTRAINT:Node = Node(self, [self.CONTEXT], individual=False, name="constraint")
+    # A requirement: a constraint whose "required" part must hold wherever its
+    # "condition" does -- each match of the condition it doesn't is a violation
+    # (see sn.model.reasoner.constraintOf()). Added last, so existing ids don't change.
+    self.REQUIREMENT:Node = Node(self, [self.CONSTRAINT], individual=False, name="requirement")
+    # (not subtypes of antecedent and consequent: their domain is rule)
+    self.CONDITION:Relation = Relation(self, [self.CONTAINS], self.REQUIREMENT, self.TOP, individual=False, name="condition")
+    self.REQUIRED:Relation = Relation(self, [self.CONTAINS], self.REQUIREMENT, self.TOP, individual=False, name="required")
 
     self._allowParentsCaching = True
     
@@ -207,6 +214,8 @@ class TopModel(Model):
       "The message, with {0} for the subject and {1}, {2}, ... for the arguments. By default, the code's built-in "
       "message, if it has one.")
     self.CONSTRAINT['vis/fillColor'] = "MistyRose"
+    self.REQUIREMENT['vis/titlebarColor'] = "PaleVioletRed3"
+    self.REQUIREMENT['vis/fillColor'] = "LavenderBlush"
         
 model = TopModel("sn:///sn", mode="", _reading=False) # creates a model in memory cache
 model._writeLocked = True

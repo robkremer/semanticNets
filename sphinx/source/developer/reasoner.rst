@@ -204,6 +204,20 @@ and message. Each compiles to one clingo rule:
 
    violation0(Code, Severity, Subject, (Args,)) :- <pattern>.
 
+A requirement (a constraint that isa *requirement*) has a second pattern, its
+required part (:py:attr:`~sn.model.reasoner.ConstraintSpec.required`); its
+pattern is its condition. It compiles to two rules, over the condition's
+variables (``Vars``):
+
+.. code-block:: none
+
+   requirement_holds(Req, (Vars,)) :- <condition>, <required>.
+   violation0(Code, Severity, Subject, (Args,)) :- <condition>, not requirement_holds(Req, (Vars,)).
+
+The first has the condition in its body too, so the variables the two parts
+share have values even where the required part only uses them in a ``not``
+(eg: ``not gender: ?g``); its own variables are existential.
+
 :py:meth:`~sn.model.reasoner.Reasoner._finish` -- which every engine passes
 its results through -- reports a violation once per set of objects it's
 about (so a constraint matching a-b and b-a reports it once), and gives a
