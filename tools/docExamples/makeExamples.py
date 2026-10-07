@@ -50,11 +50,13 @@ def setUp() -> str:
 
 def makeFamily(folder:str) -> None:
   '''
-  A small family, with a rule (uncle), a definition (brother) and a query
-  (who likes dave?). The reasoner concludes that alice has-brother bob (from
-  the definition: he's her sibling, and male), and so -- by the rule --
-  carol has-uncle bob; and, has-sibling being symmetric, that alice
-  has-sibling bob.
+  A small family, with a rule (uncle), a definition (brother), a query
+  (who likes dave?) and a requirement (siblings have parents). The reasoner
+  concludes that alice has-brother bob (from the definition: he's her
+  sibling, and male), and so -- by the rule -- carol has-uncle bob; and,
+  has-sibling being symmetric, that alice has-sibling bob. The requirement
+  warns that alice and bob have siblings, but no parents (alice's sibling
+  bob only by inference).
 
   :param folder: Where to save it (as family.snm).
   :type folder: str
@@ -113,6 +115,17 @@ def makeFamily(folder:str) -> None:
   W = var("?who")
   rel(m.CONTAINS, q, W)
   rel(m.CONTAINS, q, rel(likes, W, p["dave"]))
+  # the requirement: whoever has a sibling has some parent (?p: anyone) -- a warning
+  req = Node(m, [m.REQUIREMENT], individual=True, name="siblings have parents")
+  req["severity"] = "warning"
+  req["report"] = "?s"
+  req["message"] = "{0} has a sibling, but no parent"
+  S, T = var("?s"), var("?t")
+  for x in (S, T, rel(hasSibling, S, T)):
+    rel(m.CONDITION, req, x)
+  S2, P = var("?s"), var("?p")
+  for x in (S2, P, rel(hasParent, S2, P)):
+    rel(m.REQUIRED, req, x)
   m.save()
 
 def makeAnimals(folder:str) -> None:
@@ -147,7 +160,8 @@ def makeAnimals(folder:str) -> None:
 def layOutFamily(app, folder:str, done) -> None:
   '''
   Open the family model's view, arrange it -- the family on the left, the
-  rule, definition and query in their windows on the right -- and save it.
+  rule, definition and requirement in their windows on the right, and the
+  query below the family -- and save it.
 
   :param app: The editor.
   :param folder: Where the model is.
@@ -155,7 +169,7 @@ def layOutFamily(app, folder:str, done) -> None:
   :param done: Called when it's saved.
   '''
   win = app.openWindow(os.path.join(folder, "family.snm"))
-  win.geometry("1000x760+40+40")
+  win.geometry("1000x960+40+40")
   v = win.view; ctx = v.context
   v.showAllModel()
   for cat in ("system objects", "isa individuals", "types"):
@@ -174,6 +188,7 @@ def layOutFamily(app, folder:str, done) -> None:
     box("uncle rule", 420, 30, 960, 260)
     box("brother def", 420, 300, 960, 520)
     box("who likes dave?", 40, 530, 300, 660)
+    box("siblings have parents", 420, 560, 960, 760)
     # the rule: ?x -has-parent-> ?y -has-brother-> ?z  =>  ?x -has-uncle-> ?z
     at("?x", 450, 70); at("?y", 450, 190); at("?z", 600, 190)
     at("?x", 740, 70, 1); at("?z", 740, 190, 1)
@@ -181,6 +196,9 @@ def layOutFamily(app, folder:str, done) -> None:
     at("?a", 450, 345); at("?b", 450, 460)
     at("?a", 740, 345, 1); at("?b", 740, 450, 1)
     at("?who", 70, 590)
+    # the requirement: ?s -has-sibling-> ?t  requires  ?s -has-parent-> ?p
+    at("?s", 450, 605); at("?t", 450, 715)
+    at("?s", 740, 605, 1); at("?p", 740, 715)
     for r in [o for o in v.values() if o is not None and hasattr(o, "floating")]:
       try:
         r.floating(True)

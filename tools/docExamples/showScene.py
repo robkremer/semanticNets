@@ -16,6 +16,7 @@ screenshots taken of them:
   query        the query answered (carol highlighted): query-answer.png
                (the left part of the window, with the terminal pane)
   collapsed    the rule's window collapsed: collapsed-window.png (its title bar)
+  requirement  the requirement's window, close up: requirement-window.png
   attributes   the attribute editor, on the definition's ?b (it has
                constraints): attribute-editor.png (the editor's window)
   animals      the taxonomy laid out with an isa current, and the animation
@@ -33,25 +34,31 @@ Otherwise, take them by hand (eg: with Shift-Cmd-4, then Space, to take a
 window). The other screenshots (rule-window.png, definition-window.png,
 collapsed-window.png, attribute-editor.png) are still taken by hand.
 
+The scene's output (eg: the reasoner's report) goes to its window's terminal
+pane, even if the window isn't the frontmost one -- as when it's started
+from the background.
+
 .. codeauthor:: Rob Kremer <robkremer@me.com>
 '''
 import os, sys, tempfile, subprocess
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-SCENES = ("overview", "query", "collapsed", "attributes", "animals")
+SCENES = ("overview", "query", "collapsed", "attributes", "animals", "requirement")
 TITLE_BAR = 28
 "The height (points) of a macOS window's title bar, above the window's content."
 CAPTURES:dict[str, list[tuple[str, str, float]]] = {
   "overview": [("family-reasoned.png", "window", 0.5)],
   "query":    [("query-answer.png", "left", 1.0)],
   "animals":  [("animation-class-diagram.png", "diagram", 1.0)],
+  "requirement": [("requirement-window.png", "context:siblings have parents", 1.0)],
 }
 """
 Each scene's screenshots, for --capture: (file name, what's in it, scale --
 of the screen's pixels: 0.5 halves a Retina screen's). What's in it:
 "window" is the whole window, title bar and all; "left" its left part, from
 the canvas to the terminal pane (without the reasoning toolbar below); and
-"diagram" the animation toolbar and the canvas below it.
+"diagram" the animation toolbar and the canvas below it; and "context:<name>" the
+context window of that name (and a few points around it).
 """
 CAPTURE_DELAY = 4000
 "How long (ms) to let a scene settle (eg: reasoning, answering) before it's captured."
@@ -79,6 +86,13 @@ def region(win, what:str) -> tuple[int, int, int, int]:
     if drawn:
       bottom = min(bottom, c.winfo_rooty() + int(drawn[3] - c.canvasy(0)) + 30)
     return x, bar.winfo_rooty(), w, bottom - bar.winfo_rooty()
+  if what.startswith("context:"):
+    c = win.view.canvas
+    [o] = [o for o in win.view.values() if o is not None and o.modelObject is not None and o.modelObject.name == what[len("context:"):]]
+    x1, y1, x2, y2 = c.bbox(o.tag)
+    pad = 4
+    return (c.winfo_rootx() + int(x1 - c.canvasx(0)) - pad, c.winfo_rooty() + int(y1 - c.canvasy(0)) - pad,
+            int(x2 - x1) + 2 * pad, int(y2 - y1) + 2 * pad)
   raise ValueError(what)
 
 def capture(win, scene:str, folder:str) -> None:
@@ -142,8 +156,10 @@ def main() -> None:
       win.update_idletasks()
       win.geometry(f"{win.winfo_width()}x{win.winfo_height() + bar.winfo_reqheight()}")
     app.after(100, roomForToolbar)
+    def toTerminal() -> None: # (output goes to the focused, or frontmost, window's terminal -- which this may not be, if it's started from the background)
+      app.terminalRegistry.bindThreadToTerminal(v.terminal)
     if scene in ("overview", "query"): # (once the window's terminal is set up, so the report goes there)
-      app.after(1000, v.reason)
+      app.after(1000, lambda: (toTerminal(), v.reason()))
     if scene == "query":
       app.after(1500, lambda: vo(v, "who likes dave?").answerQuery())
     elif scene == "collapsed":

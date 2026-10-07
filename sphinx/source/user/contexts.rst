@@ -319,6 +319,13 @@ must have a mother -- whoever she is. (A ``not`` can't say that: see
 :ref:`variable-constraints`.) What the reasoner infers counts: a mother concluded by a
 rule meets the requirement as well as one in the model.
 
+The family example has one: whoever has a sibling must have a parent.
+
+.. figure:: ../images/user/requirement-window.png
+   :alt: The requirement siblings have parents: condition ?s -has-sibling-> ?t; required ?s -has-parent-> ?p
+
+   The requirement *siblings have parents*: wherever ?s *has-sibling* ?t, ?s must *has-parent* someone (?p). It's a warning, reported against ?s with the message "{0} has a sibling, but no parent" -- and in the example, both alice and bob are reported: bob's sibling is given, and alice's is inferred (*has-sibling* is symmetric).
+
 A requirement is a kind of constraint, with the same attributes (``code``,
 ``severity``, ``report`` and ``message``: see :ref:`constraint-contexts`) -- but
 what it reports can only be the condition's variables: the required part's

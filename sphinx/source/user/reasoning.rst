@@ -60,9 +60,9 @@ The results are also shown on the canvas, in every view of the model:
   problems, or choose **show error report** from the object's menu.
 
 .. figure:: ../images/user/family-reasoned.png
-   :alt: After reasoning: alice has-sibling bob as well (has-sibling is symmetric); the definition concludes that alice has-brother bob, and that fires the uncle rule: carol has-uncle bob
+   :alt: After reasoning: alice has-sibling bob as well (has-sibling is symmetric); the definition concludes that alice has-brother bob, and that fires the uncle rule: carol has-uncle bob; and the requirement warns that alice and bob have siblings but no parents
 
-   After reasoning: alice *has-sibling* bob as well (*has-sibling* is symmetric); the definition concludes that alice *has-brother* bob, and that fires the uncle rule: carol *has-uncle* bob.
+   After reasoning: alice *has-sibling* bob as well (*has-sibling* is symmetric); the definition concludes that alice *has-brother* bob, and that fires the uncle rule: carol *has-uncle* bob. And the requirement (see :doc:`contexts`) warns that alice and bob have siblings, but no parents: hover over their markers to see.
 
 Inferred relations are shown only between objects that are both shown in
 the view.

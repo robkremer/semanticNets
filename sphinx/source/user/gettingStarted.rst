@@ -81,9 +81,9 @@ Each window shows one view of one model. It has two parts:
   the reasoner's report) and takes typed commands (see :doc:`terminal`).
 
 .. figure:: ../images/user/family-reasoned.png
-   :alt: A window on a small family model, after reasoning: the people on the left (with the reasoner's conclusions faded, with dashed lines), a rule, a definition and a query in their windows on the right, the end of the reasoner's report in the terminal pane, and the reasoning toolbar below it
+   :alt: A window on a small family model, after reasoning: the people on the left (with the reasoner's conclusions faded, with dashed lines, and markers on the two the reasoner warns about), a query below them, a rule, a definition and a requirement in their windows on the right, the end of the reasoner's report in the terminal pane, and the reasoning toolbar below it
 
-   A window on a small family model, after reasoning: the people on the left (with the reasoner's conclusions faded, with dashed lines), a rule, a definition and a query in their windows on the right, the end of the reasoner's report in the terminal pane, and the reasoning toolbar below it.
+   A window on a small family model, after reasoning: the people on the left (with the reasoner's conclusions faded, with dashed lines, and markers on the two the reasoner warns about), a query below them, a rule, a definition and a requirement in their windows on the right, the end of the reasoner's report in the terminal pane, and the reasoning toolbar below it.
 
 Most things are done from the right-click menus: on an object for things to
 do with it, and on the background for everything else. The background menu
