@@ -1378,20 +1378,20 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       return
     disabled = (self.modelObject.isSystemObject() \
                 and not snPrefs.get("gui/allowEditingSystemObjects", storeDefault=False)) \
-               or not self.view.isModelEditor() \
-               or self.modelObject.isIndividual() and isinstance(self.modelObject, Relation)
+               or not self.view.isModelEditor()
+    relInst =  self.modelObject.isIndividual() and isinstance(self.modelObject, Relation)
     remote = self.view.model != self.modelObject.model
-    menu.add_command(label=f"{'show' if disabled else 'edit'} attributes", \
+    menu.add_command(label=f"{'show' if disabled or relInst else 'edit'} attributes", \
                      command=lambda disabled=disabled: self.onEditAttributes(disabled=disabled or remote))    
     if self.modelObject.isType():
       menu.add_command(label='make new instance', command=lambda: self.makeModelObjectSubtype(individual=True))
       menu.add_command(label='make new subtype', command=lambda: self.makeModelObjectSubtype(individual=False))
-      menu.add_separator()
-    if not disabled:
+    if not (disabled or relInst):
       menu.add_cascade(label="make relation to...", menu=self._relationTypesMenu(menu))
+    if not disabled:
       menu.add_command(label="remove from model", state=tk.DISABLED if remote else tk.NORMAL, 
                        command=lambda: self.view.context.remove(self.modelObject))
-      menu.add_separator()
+    menu.add_separator()
       
   def highlight(self, on:bool|None=None) -> bool:
     '''
