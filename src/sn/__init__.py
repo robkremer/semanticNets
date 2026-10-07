@@ -339,13 +339,51 @@ def checkSaveModified(obj, url:str, kind:str) -> None:
   is asked and nothing is saved -- for automated runs, such as tests, which
   would otherwise put a dialog on the screen for every modified model.
   '''
-  from util.utils import askUser
   if os.environ.get("SN_NO_SAVE_PROMPT"): # eg: automated test runs -- don't ask, don't save
     return
-  if not obj.writeLocked() and obj.isDirty():
-    ans:str|None = askUser(f'Save modified {kind}?\n  {url}\n(Y/N):', f'Save modified {kind.capitalize()}?')
-    if ans is not None and ans.upper() in ["Y", "YES", "T", "TRUE"]:
-      obj.save()
+  if not obj.writeLocked() and obj.isDirty() and askYesNo(f'Save the changes to this {kind}?\n\n{_displayPath(url)}', f'Save modified {kind}?'):
+    obj.save()
+
+def _displayPath(url:str) -> str:
+  '''
+  :param url:
+  :type url: str
+  :returns: *url* as the user knows it: a local file's path (eg: "~/models/family.snv"), or else the URL.
+  :rtype: str
+  '''
+  from urllib.parse import urlparse, unquote
+  parsed = urlparse(url)
+  if parsed.scheme != "file":
+    return url
+  path = unquote(parsed.path)
+  home = os.path.expanduser("~")
+  return "~" + path[len(home):] if path.startswith(home + os.sep) else path
+
+def askYesNo(question:str, title:str) -> bool:
+  '''
+  Ask the user a yes-or-no question: in a Yes/No dialog over the focused
+  window, if the GUI is running; otherwise (eg: the terminal interface, or
+  once the windows are gone at exit) as text (see *util.utils.askUser()*).
+
+  :param question:
+  :type question: str
+  :param title: The dialog's title.
+  :type title: str
+  :returns: True iff the answer is yes.
+  :rtype: bool
+  '''
+  import tkinter as tk
+  root = tk._default_root # type: ignore[attr-defined]
+  if root is not None:
+    from tkinter import messagebox
+    try:
+      focused = root.focus_get()
+    except KeyError: # (eg: a menu's popdown, which isn't a Python widget)
+      focused = None
+    return bool(messagebox.askyesno(title, question, parent=focused.winfo_toplevel() if focused is not None else root))
+  from util.utils import askUser
+  ans = askUser(f'{question}\n(Y/N):', title)
+  return ans is not None and ans.strip().upper() in ("Y", "YES", "T", "TRUE")
 
 _savedAtExit = False
 "Set once saveAtExit() has run, so the atexit call after an explicit one doesn't ask again."
