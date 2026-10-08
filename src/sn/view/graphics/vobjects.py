@@ -1427,8 +1427,12 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     self.view.clearHighlights()
     for row in rows:
       for x in row.values():
-        vo = self.view.findViewObjectForGraphObject(x) if isinstance(x, GraphObject) else None
+        if not isinstance(x, GraphObject):
+          continue
+        # an answer's shown -- even if it's in a hidden or erased category (eg: inferred objects), or wasn't shown at all
+        vo = self.view.findViewObjectForGraphObject(x) or self.view.makeViewObjectForGraphObject(x)
         if vo is not None:
+          self.view._exemptIfFiltered(vo)
           vo.highlight(True)
 
   def showConclusions(self) -> None:
