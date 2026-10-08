@@ -1052,7 +1052,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     
   def onRightMouse(self, event):
     """
-    Creates and displays the node specific menu at the clicked location.
+    Creates and displays the node specific menu at the clicked location -- or,
+    in the body of a (expanded) context window, the menu for making things in
+    the pane clicked in (see *SNGView.addNewObjectMenus()*), as the
+    background's makes them there: the window's own menu is on its title bar.
 
     :param event: The Tk event.
     :type event:
@@ -1060,7 +1063,13 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     :rtype:
     """
     self.view.addEventHandled(event)
-    m = self.makeMenu()
+    pt = self.view.windowToView(self.canvas.canvasx(event.x), self.canvas.canvasy(event.y))
+    pane = self.paneAt(pt) if self.isContextWindow() and not self.collapsed and self.view.isModelEditor() else None
+    if pane is not None:
+      m = tk.Menu(self.canvas)
+      self.view.addNewObjectMenus(m, (pt[0], pt[1]), into=(self, pane))
+    else:
+      m = self.makeMenu()
     m.post(event.x_root, event.y_root)
     return 'break'
 

@@ -788,9 +788,10 @@ class ViewDoList(DoList):
 
 class _ContainCreated(Command):
   '''
-  Contains, in *context*, the relation that the command *creator* creates --
-  *creator* being queued earlier in the same composite command, so the relation
-  doesn't exist yet when this is made. See *SNGView._containNewRelation()*.
+  Contains, in *context*, the relation (or node) that the command *creator*
+  creates -- *creator* being queued earlier in the same composite command, so
+  it doesn't exist yet when this is made. See *SNGView._containNewRelation()*
+  and *SNGView.addNewObjectMenus()*.
   '''
   def __init__(self, model:Model, typ:Relation, context:GraphObject, creator:Command):
     '''
@@ -815,7 +816,7 @@ class _ContainCreated(Command):
     '''
     super().do()
     if self.relation is None:
-      created = getattr(self.creator, "relation", None)
+      created = getattr(self.creator, "relation", None) or getattr(self.creator, "node", None)
       if created is None:
         return None
       self.relation = Relation(db=self.model, parents=[self.typ], src=self.context, dst=created, individual=True)
@@ -1716,6 +1717,52 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       ret.expand(filter=filter, expand=expand - 1)
     return ret
   
+  def addNewObjectMenus(self, menu:tk.Menu, at:tuple[float, float], into:tuple[VObject, str]|None=None) -> None:
+    '''
+    Add the "new instance of Node", "new subtype of Node", "new instance of
+    Relation" and "new subtype of Relation" cascades to *menu*: each with a
+    submenu per model (this view's, its super-models, then sn) of its types.
+    What's made is put at *at* (see *_newObjectLocation()*) -- and, with
+    *into*, contained in that context window's pane (one undo for both): eg:
+    the menu on a rule's window, to edit it in place.
+
+    :param menu:
+    :type menu: tk.Menu
+    :param at: Where the menu was asked for (view coords).
+    :type at: tuple[float, float]
+    :param into: (a context window, the name of one of its panes: see *VObject.panes()*), or None.
+    :type into: tuple[VObject, str] | None
+    '''
+    self._newAt = None
+    def make(t:GraphObject, individual:bool, ptype:type) -> None:
+      if ptype is Node: # (put where the menu was asked for: see _newObjectLocation())
+        self._newAt = (int(at[0]), int(at[1]), t)
+      new = self.context.new_node if ptype is Node else self.context.new_relation
+      if into is None:
+        new(t, name="", individual=individual, type=not individual)
+        return
+      win, pane = into
+      with CompositeCommandMgr(self.context) as mgr:
+        new(t, name="", individual=individual, type=not individual)
+        if mgr.commands and win.modelObject is not None:
+          mgr._addCommand(_ContainCreated(self.model, self._paneType(pane), win.modelObject, mgr.commands[-1]))
+    def typesMenu(individual:bool, ptype:type) -> tk.Menu:
+      ret = tk.Menu(self.canvas)
+      # this model's types, then its super-models' (nearest first), then sn's
+      implicit = self.model.implicitSuperDBs()
+      supers = [db for db in self.model.allSuperDBs() if isinstance(db, Model) and not any(db is i for i in implicit)]
+      for v in [self.model, *supers, Model.AllDBs["sn:/sn.xml"]]:
+        assert isinstance(v, Model)
+        m = tk.Menu(self.canvas)
+        for t in sorted((o for o in v.values() if isinstance(o, ptype) and o.isType()), key=lambda o: o.name):
+          m.add_command(label=t.name, command=lambda t=t: make(t, individual, ptype)) #type: ignore[misc]
+        ret.add_cascade(label=v.name, menu=m)
+      return ret
+    menu.add_cascade(label="new instance of Node", menu=typesMenu(True, Node))
+    menu.add_cascade(label="new subtype of Node", menu=typesMenu(False, Node))
+    menu.add_cascade(label="new instance of Relation", menu=typesMenu(True, Relation))
+    menu.add_cascade(label="new subtype of Relation", menu=typesMenu(False, Relation))
+
   _newAt:tuple[int, int, GraphObject]|None = None
   '''
   Where the background menu that's making a node was asked for (view coords),
@@ -3302,10 +3349,6 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     """
     assert event is not None
     clickAt = self.windowToView(self.canvas.canvasx(event.x), self.canvas.canvasy(event.y))
-    self._newAt = None
-    def at(typ:GraphObject, create:Callable[[], Any]) -> None: # (what's made is put where the menu was asked for: see _newObjectLocation())
-      self._newAt = (int(clickAt[0]), int(clickAt[1]), typ)
-      create()
 
     def makeShowMenu():
       newMenu = tk.Menu(self.canvas)
@@ -3322,32 +3365,6 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         newMenu.add_command(label=nodes[nn].name, command=lambda mo=nodes[nn]: self.makeViewObjectForGraphObject(mo)) #type: ignore[misc]
       return newMenu
 
-    def fillModelSubmenu(menu:tk.Menu, model:Model, individual:bool, ptype:type):
-      types = [v for v in model.values() if isinstance(v, ptype) and v.isType()]
-      types.sort(key=lambda x: x.name) #sort by name alphabetically
-      for t in types:
-        if ptype is Node:
-          fun = lambda t=t: at(t, lambda: self.context.new_node(t, name="", individual=individual, type=not individual))
-        elif ptype is Relation:
-          fun = lambda t=t: self.context.new_relation(t, name="", individual=individual, type=not individual)
-        # elif ptype is Collection:
-        #   fun = lambda t=t: self.context.new_collection(t, name="?", individual=individual)
-        menu.add_command(label=t.name, command=fun)
-  
-    def makeModelSubmenu(individual:bool, ptype:type):
-      newMenu:tk.Menu = tk.Menu(self.canvas)
-      # process nodes in this model, then its super-models (nearest first), then sn
-      implicit = self.model.implicitSuperDBs()
-      supers = [db for db in self.model.allSuperDBs() if isinstance(db, Model) and not any(db is i for i in implicit)]
-      for v in [self.model, *supers, Model.AllDBs["sn:/sn.xml"]]:
-        assert isinstance(v, Model)
-        m = tk.Menu(self.canvas)
-        fillModelSubmenu(m, v, individual, ptype)
-        newMenu.add_cascade(label=v.name, menu=m)
-      # process own nodes
-      #fillModelSubmenu(newMenu, self.model, individual, ptype)
-      return newMenu
-
     bgMenu:tk.Menu = tk.Menu(self.canvas)
 
     # A menu command's callback runs on the main/GUI thread, where the
@@ -3358,10 +3375,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     modelEditMenu:tk.Menu = tk.Menu(self.canvas)
     bgMenu.add_cascade(label="model", menu=modelEditMenu)
     if self.isModelEditor():
-      modelEditMenu.add_cascade(label="new instance of Node"   , menu=makeModelSubmenu(individual=True, ptype=Node))
-      modelEditMenu.add_cascade(label="new subtype of Node"    , menu=makeModelSubmenu(individual=False, ptype=Node))
-      modelEditMenu.add_cascade(label="new instance of Relation", menu=makeModelSubmenu(individual=True, ptype=Relation))
-      modelEditMenu.add_cascade(label="new subtype of Relation", menu=makeModelSubmenu(individual=False, ptype=Relation))
+      self.addNewObjectMenus(modelEditMenu, (clickAt[0], clickAt[1]))
       modelEditMenu.add_separator()
       # bgMenu.add_cascade(label="new instance of Collection", menu=makeModelSubmenu(individual=True, ptype=Collection))
       # bgMenu.add_cascade(label="new subtype of Collection", menu=makeModelSubmenu(individual=False, ptype=Collection))

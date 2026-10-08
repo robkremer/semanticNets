@@ -44,6 +44,12 @@ objects it contains.
 - Resize a window by dragging its corner handles, like any other object. Its
   contents stay put.
 - Dragging the window carries its contents along with it.
+- **Right-click in a pane** for the **new instance of / new subtype of**
+  menus, as on the background: what you make goes where you clicked, in that
+  pane (eg: into a rule's antecedent) -- so a rule can be edited in place.
+  The window's own menu (answer query, gather, ...) is on its **title bar**.
+  Relations drawn between things in a pane go in it too, and **make relation
+  to...** picks what's under the pointer, in a window or not.
 - **gather** (on the window's menu) brings in everything the context
   contains that isn't in its window -- each into the pane its containment
   says (antecedent, consequent, ...), and the variables its relations use
