@@ -2423,16 +2423,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
                                 if (self._elasticLineChoiceData.filter(n) \
                                     if self._elasticLineChoiceData.filter is not None \
                                     else True)] 
-      item = None
-      for n in typeList:
-        for _id in ids:
-          tags = self.canvas.gettags(_id)
-          if n.tag in tags:
-            item = n  # this object is selected
-            break
-        else:
-          continue  # only executed if the inner loop did NOT break
-        break  # only executed if the inner loop DID break
+      # the topmost one: eg: an object in a context window, not the window
+      # (find_overlapping() gives the items bottom to top)
+      byTag = {n.tag: n for n in typeList if n is not None}
+      item = next((byTag[tag] for _id in reversed(ids) for tag in self.canvas.gettags(_id) if tag in byTag), None)
       self.canvas.delete(self._elasticLineChoiceData.lineID)
       if item is not None:
         self._elasticLineChoiceData.callback(self._elasticLineChoiceData.originNode, item)
