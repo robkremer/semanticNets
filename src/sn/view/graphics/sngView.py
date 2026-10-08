@@ -2464,7 +2464,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         s.selected(False)
       for _id in ids:
         for n in self.values():  # self.nodes()+self.relations():
-          if n._shape.id == _id:
+          if n is not None and n._shape.id == _id:
             n.selected(True, _multi=True)
       self.canvas.delete(self._selectionBoxInfo[0])
       self.selectionBoxInfo = None

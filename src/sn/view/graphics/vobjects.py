@@ -990,7 +990,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       trace = traceback.format_exc()
       self.assertToStatusReport(False, 
           f'Unexpected exception during valication: {ex.__class__.__name__}: {ex}', 'E',
-          {"view trace": lambda trace=trace: showExceptionDialog(self.canvas.winfo_toplevel(), name=ex.__class__.__name__, text=trace)})
+          {"view trace": lambda trace=trace, ex=ex: showExceptionDialog(self.canvas.winfo_toplevel(), name=ex.__class__.__name__, text=trace)})
     return self.statusReport()
     
   def _addReasonerFindings(self) -> None:
