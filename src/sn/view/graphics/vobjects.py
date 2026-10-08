@@ -1434,6 +1434,30 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         if vo is not None:
           self.view._exemptIfFiltered(vo)
           vo.highlight(True)
+      for r in self._answerRelations(row):
+        rvo = self.view.findViewObjectForGraphObject(r) or self.view.makeViewObjectForGraphObject(r)
+        if rvo is not None:
+          self.view._exemptIfFiltered(rvo)
+
+  def _answerRelations(self, row:dict[GraphObject, Any]) -> list[Relation]:
+    '''
+    :param row: An answer to the query this context describes (see *answerQuery()*).
+    :type row: dict[GraphObject, Any]
+    :returns: The relations (asserted or inferred) the answer matched: for each
+      relation in the query's pattern, those of its type (or a subtype) between
+      what its ends stand for in *row*.
+    :rtype: list[Relation]
+    '''
+    from sn.model.reasoner import patternOf
+    byName = {k.name: v for k, v in row.items()}
+    value = lambda x: byName.get(x.name) if x is not None and x.isVariable() else x
+    ret:list[Relation] = []
+    for t, s, d in patternOf(self.modelObject).triples:
+      T, S, D = value(t), value(s), value(d)
+      if not all(isinstance(o, GraphObject) for o in (T, S, D)): # (an open end, or an object only the reasoner knows of)
+        continue
+      ret += [r for r, other in S._getOutgoing(lambda r: r.isIndividual() and r.isa(T)) if other is D and r not in ret]
+    return ret
 
   def showConclusions(self) -> None:
     '''
