@@ -208,7 +208,7 @@ class ModelContext(CommandContext):
     return ret
 
 
-  def reason(self, /, model:Model|None=None, engine:str="clingo") -> str:
+  def reason(self, /, model:Model|None=None, engine:str="clingo", silent:bool=False) -> str:
     '''
     Run the reasoner over a model: report rule violations, relations inferred
     or inherited down the isa hierarchy, and suggested classifications. The
@@ -219,25 +219,10 @@ class ModelContext(CommandContext):
     :type model: Model
     :param engine: The reasoner engine (see *sn.model.reasoner.Reasoner.create()*).
     :type engine: str
-    :returns:
-    :rtype: str
-    '''
-    from sn.model.reasoner import reason
-    if model is None:
-      model = self.defaults["model"]
-    assert model is not None
-    return reason(model, engine).report(model) # kept on the model: views show them too
-
-  def silent_reason(self, /, model:Model|None=None, engine:str="clingo") -> str: # (not "reason silently": a command can't start with another's name)
-    '''
-    Run the reasoner over a model, as "reason" does, but without showing what
-    it inferred in the views of the model (they show only the problems), and
-    report only a summary: eg: so that queries find what the rules conclude.
-
-    :param model: The model to reason over. By default, the default model.
-    :type model: Model
-    :param engine: The reasoner engine (see *sn.model.reasoner.Reasoner.create()*).
-    :type engine: str
+    :param silent: Don't add what's inferred to the views of the model (they
+      show only the problems), and report only a summary: eg: so that queries
+      find what the rules conclude.
+    :type silent: bool
     :returns:
     :rtype: str
     '''
@@ -245,8 +230,8 @@ class ModelContext(CommandContext):
     if model is None:
       model = self.defaults["model"]
     assert model is not None
-    reason(model, engine, silent=True)
-    return summary(model)
+    result = reason(model, engine, silent=silent) # kept on the model: views show them too (unless silent)
+    return summary(model) if silent else result.report(model)
 
   def clear_reasoning(self, /, model:Model|None=None) -> str:
     '''

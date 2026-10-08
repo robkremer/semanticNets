@@ -64,9 +64,9 @@ Looking at things:
 Reasoning (see :doc:`reasoning`):
 
 =====================  =======================================================
-``reason``             reason over the model, and report
-``silent reason``      reason, without adding what's inferred to the views;
-                       report just a summary
+``reason``             reason over the model, and report; ``reason
+                       --silent``: without adding what's inferred to the
+                       views, and report just a summary
 ``clear reasoning``    forget the last results
 ``answer query``       answer a query (or any context): ``answer query
                        ?likes-fred``
