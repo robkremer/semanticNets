@@ -41,7 +41,7 @@ from sn.view.textUserInterface import UIContext, SNTerminalWidget
 from util.command import Command
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
-from sn.view.graphics.layout import FindFree, gatherShifts, intoRect, freeSpotIn, clearOf
+from sn.view.graphics.layout import FindFree, Direction, gatherShifts, intoRect, freeSpotIn, clearOf
 from sn.view.graphics.decorators import NOMINAL_ASPECT
 from util.commandParser import CompositeCommandMgr, CompositeCommand
 from util.command import DoList
@@ -1699,11 +1699,16 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         aspectRatio = mObject.get('vis/aspectRatio', snPrefs.get("gui/NodeAspectRatio", storeDefault=1.5))
         assert isinstance(aspectRatio, (float,int))
         sizey = int(sizex * (aspectRatio or NOMINAL_ASPECT)) # vis/aspectRatio is height/width; 0 means free
+        under:VObject|None = None
         if atPoint is None:
-          x, y = self.findAGoodLocation(mObject)
+          x, y, under = self._newObjectLocation(mObject)
         else:
           x, y = int(atPoint[0]), int(atPoint[1])
         ret = VNode(self, mObject, x=x, y=y, x1=int(x + sizex), y1=int(y + sizey))
+        if atPoint is None and self.canvas and getattr(self, "localLayout", None) is not None and not self.reading:
+          # not on top of anything: the nearest free place (below its supertype, if it's there) -- once
+          # it's drawn, and so are any others just made (eg: by the same command), so it avoids them too
+          self.canvas.after_idle(lambda vo=ret, under=under: self._placeNew(vo, under)) #type: ignore[misc]
       else:
         raise AttributeError(f'SNView.makeViewObjectforGraphObject(): unexpected model object type: {mObject.__class__.__name__}.')
 
@@ -1719,23 +1724,73 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       ret.expand(filter=filter, expand=expand - 1)
     return ret
   
+  _newAt:tuple[int, int, GraphObject]|None = None
+  '''
+  Where the background menu that's making a node was asked for (view coords),
+  and the type it's making one of, until it's made (see *makeMenu()*, *_newObjectLocation()*).
+  '''
+
+  def _placeNew(self, vo:VObject, under:VObject|None) -> None:
+    '''
+    Move a newly made view object to the nearest free place (see *FindFree*):
+    below *under* (its supertype), if that's given.
+
+    :param vo:
+    :type vo: VObject
+    :param under:
+    :type under: VObject | None
+    '''
+    if not vo._isConnected() or vo.isHidden():
+      return
+    if vo._shape is None or vo._shape.id is None: # (not drawn yet: it'd be invisible to the search)
+      self.freshPaint()
+      vo.draw()
+    if under is not None and not under._isConnected():
+      under = None
+    c = self.canvas
+    seen = list(self.windowToView(c.canvasx(0), c.canvasy(0), c.canvasx(c.winfo_width()), c.canvasy(c.winfo_height())))
+    cx, cy = vo.centerPt()
+    within = seen if c.winfo_width() > 1 and seen[0] <= cx <= seen[2] and seen[1] <= cy <= seen[3] else None # (on screen: kept there)
+    self.localLayout(vo, referenceNode=under, direction=Direction.SUB if under is not None else Direction.NEAREST, within=within)
+
   def findAGoodLocation(self, mObject:GraphObject) -> tuple[int,int]:
     '''
     :param mObject:
     :type mObject: GraphObject
-    :returns:
+    :returns: Where to start looking for a place for a new view object for
+      *mObject* (see *_newObjectLocation()*).
     :rtype: tuple[int, int]
     '''
+    x, y, _ = self._newObjectLocation(mObject)
+    return x, y
+
+  def _newObjectLocation(self, mObject:GraphObject) -> tuple[int, int, "VObject|None"]:
+    '''
+    Where to start looking for a place for a new view object for *mObject*
+    (the nearest free place to it is used: see *makeViewObjectForGraphObject()*):
+    where the background menu making it was asked for, if it was; else just
+    below its (first) supertype, if that's shown; else at the cursor.
+
+    :param mObject:
+    :type mObject: GraphObject
+    :returns: (x, y, and the supertype's view object, if it's below that).
+    :rtype: tuple[int, int, VObject | None]
+    '''
+    if self._newAt is not None and mObject.isa(self._newAt[2]): # (once: see makeMenu())
+      x, y, _ = self._newAt
+      self._newAt = None
+      return x, y, None
     mParents = mObject.getParents()
     mParent = mParents[0] if len(mParents) > 0 else None
     vParent = self.findViewObjectForGraphObject(mParent) if mParent is not None else None
-    if vParent is None:
+    if vParent is None or vParent.isHidden() or vParent.isContextWindow():
       x, y = self.cursorViewPoint()
-    else:
-      bb = vParent.boundingBox()
-      x = bb[0]
-      y = bb[1] + 120
-    return x, y
+      return x, y, None
+    bb = vParent.boundingBox()
+    return int(bb[0]), int(bb[3] + self.NEW_BELOW_GAP), vParent
+
+  NEW_BELOW_GAP = 40
+  "How far below its supertype (view units) a new object is put (see *_newObjectLocation()*)."
 
   def cursorViewPoint(self) -> tuple[int, int]:
     '''
@@ -3260,6 +3315,11 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     only creates it and returns it.
     """
     assert event is not None
+    clickAt = self.windowToView(self.canvas.canvasx(event.x), self.canvas.canvasy(event.y))
+    self._newAt = None
+    def at(typ:GraphObject, create:Callable[[], Any]) -> None: # (what's made is put where the menu was asked for: see _newObjectLocation())
+      self._newAt = (int(clickAt[0]), int(clickAt[1]), typ)
+      create()
 
     def makeShowMenu():
       newMenu = tk.Menu(self.canvas)
@@ -3281,7 +3341,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       types.sort(key=lambda x: x.name) #sort by name alphabetically
       for t in types:
         if ptype is Node:
-          fun = lambda t=t: self.context.new_node(t, name="", individual=individual, type=not individual)
+          fun = lambda t=t: at(t, lambda: self.context.new_node(t, name="", individual=individual, type=not individual))
         elif ptype is Relation:
           fun = lambda t=t: self.context.new_relation(t, name="", individual=individual, type=not individual)
         # elif ptype is Collection:

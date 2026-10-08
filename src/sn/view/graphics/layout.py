@@ -213,10 +213,13 @@ class FindFree(LayoutHieristic):
                 direction:Direction=Direction.UNSPECIFIED, 
                 loc:Optional[Point]=None,
                 aggressive:bool=False, 
+                within:Optional[list[float]]=None,
                 **kwargs) -> Point:
     '''
     :param node:
     :type node: VObject
+    :param within: Where it may be put (x1, y1, x2, y2: view coords), if not anywhere: eg: the visible part of the view.
+    :type within: Optional[list[float]]
     :param referenceNode:
     :type referenceNode: Optional[VObject]
     :param direction:
@@ -301,6 +304,10 @@ class FindFree(LayoutHieristic):
     exclude = [node._shape.id] + [rel._shape.id for rel in node.relations if rel._shape is not None and rel._shape.id is not None]
     
     leftLimit, topLimit, rightLimit, bottomLimit = self.limit
+    if within is not None: # (room for its whole box)
+      w, h = rect[2] - rect[0], rect[3] - rect[1]
+      leftLimit, topLimit = max(leftLimit, within[0]), max(topLimit, within[1])
+      rightLimit, bottomLimit = min(rightLimit, within[2] - w), min(bottomLimit, within[3] - h)
     
     if direction == Direction.NEAREST:
       pass
