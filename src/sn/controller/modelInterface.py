@@ -228,7 +228,7 @@ class ModelContext(CommandContext):
     assert model is not None
     return reason(model, engine).report(model) # kept on the model: views show them too
 
-  def reason_silently(self, /, model:Model|None=None, engine:str="clingo") -> str:
+  def silent_reason(self, /, model:Model|None=None, engine:str="clingo") -> str: # (not "reason silently": a command can't start with another's name)
     '''
     Run the reasoner over a model, as "reason" does, but without showing what
     it inferred in the views of the model (they show only the problems), and
