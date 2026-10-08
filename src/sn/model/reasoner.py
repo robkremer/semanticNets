@@ -1390,6 +1390,22 @@ def _newObjectName(n:NewObject, model:Model) -> str:
   match = ", ".join(v.name if isinstance(v, GraphObject) else str(v) for _, v in n.bindings)
   return f"({what} for {match})" if match else f"(new {what})"
 
+def inferredNodeFor(model:Model, n:Any) -> Any:
+  '''
+  :param model: A model that's been reasoned over.
+  :type model: Model
+  :param n: Anything: eg: an answer's value.
+  :type n: Any
+  :returns: If *n* is an object a rule concluded exists (see *NewObject*), the
+    inferred node made for it in *model* (see *materialize()*), if there is one;
+    otherwise *n*.
+  :rtype: Any
+  '''
+  if not isinstance(n, NewObject):
+    return n
+  key = _newObjectKey(n)
+  return next((o for o in model.inferredObjects() if getattr(o, "inferredKey", None) == key and o._isConnected()), n)
+
 def materialize(model:Model, inferences:Inferences, models:list[Model]) -> None:
   '''
   Bring *model*'s inferred objects (see *GraphObject.inferred*) into line with

@@ -42,7 +42,7 @@ import re
 from typing import Any, override
 import clingo
 from sn.model.model import Model, GraphObject
-from sn.model.reasoner import Reasoner, Inferences, Violation, Sym, Fact, PROPERTIES, Pattern, patternOf, ruleOf, rules, ruleSpecs, constraintSpecs, NewObject
+from sn.model.reasoner import Reasoner, Inferences, Violation, Sym, Fact, PROPERTIES, Pattern, patternOf, ruleOf, rules, ruleSpecs, constraintSpecs, NewObject, inferredNodeFor
 from sn.model.constraints import PRESENT, ValueVar, Not
 from sn.model.names import NameKind
 
@@ -277,7 +277,7 @@ class ClingoReasoner(Reasoner, engine="clingo"):
     rows = [sym for sym in self._solve(program, facts) if sym.name == "ans"]
     ret = []
     for sym in rows:
-      byName = dict(zip(names, (self._value(a) for a in sym.arguments)))
+      byName = dict(zip(names, (inferredNodeFor(self.model, self._value(a)) for a in sym.arguments))) # (a new object: its inferred node, once it's made)
       ret.append({v: byName[v.name] for v in pat.variables})
     return ret
 

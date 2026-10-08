@@ -253,6 +253,25 @@ class TestRules(unittest.TestCase):
     self.assertEqual([o for o in m.inferredObjects() if isinstance(o, Node)], [])
     self.assertTrue(am._isConnected())                                     # (asserted: stays)
 
+  def test0715queriesFindNewObjects(self):
+    'A query answered with an object a rule concluded exists gets its inferred node, once "reason" has made it.'
+    from sn.model.reasoner import reason, NewObject
+    m = self.m
+    mother = Relation(m, [m.RELATION], self.person, self.person, name="mother")
+    P, P2, M = self.var("?p", self.person), self.var("?p"), self.var("?m", self.person)
+    self.rule("everyone has a mother", [P], [self.rel(mother, P2, M)])
+    q = Node(m, [m.QUERY], individual=True, name="alice's mother?")
+    W = self.var("?who")
+    self.rel(m.CONTAINS, q, W)
+    self.rel(m.CONTAINS, q, self.rel(mother, self.p["alice"], W))
+    [row] = ClingoReasoner(m).answer(q)
+    self.assertIsInstance(row[W], NewObject)                               # (not reasoned yet: no node for it)
+    reason(m)
+    [row] = ClingoReasoner(m).answer(q)
+    self.assertIsInstance(row[W], Node)
+    self.assertEqual(row[W].name, "(m for alice)")
+    self.assertTrue(row[W].inferred)
+
   # ---- definitions (rules both ways) ------------------------------------------
 
   def definition(self, name, definiendum, definiens):
