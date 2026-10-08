@@ -10,9 +10,13 @@ programming system.
 Reasoning
 ---------
 
-**Reason**, on the reasoning toolbar along the bottom of the window (or
-**reasoning | reason** on the background menu), reasons over the window's
-model; **Retract** takes what it inferred back out again. The toolbar also
+**Reason** (▶, on the reasoning toolbar along the bottom of the window, or
+**reasoning | reason** on the background menu) reasons over the window's
+model; **Retract** (↺) takes what it inferred back out again. **Reason
+silently** (▷, or **reasoning | reason silently**) reasons too, but doesn't
+add what it infers to the views -- only the problems are marked, and only a
+summary is printed: eg: so that queries find what the rules conclude without
+cluttering the canvas. (Hover over a button to see what it does.) The toolbar also
 says what the last reason found -- how many relations and new objects it
 inferred, and how many problems -- and, at its right, whether the model can
 be edited: a pencil, crossed out in red if the model is read-only (eg: the

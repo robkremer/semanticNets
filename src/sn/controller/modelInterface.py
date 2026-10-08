@@ -228,6 +228,26 @@ class ModelContext(CommandContext):
     assert model is not None
     return reason(model, engine).report(model) # kept on the model: views show them too
 
+  def reason_silently(self, /, model:Model|None=None, engine:str="clingo") -> str:
+    '''
+    Run the reasoner over a model, as "reason" does, but without showing what
+    it inferred in the views of the model (they show only the problems), and
+    report only a summary: eg: so that queries find what the rules conclude.
+
+    :param model: The model to reason over. By default, the default model.
+    :type model: Model
+    :param engine: The reasoner engine (see *sn.model.reasoner.Reasoner.create()*).
+    :type engine: str
+    :returns:
+    :rtype: str
+    '''
+    from sn.model.reasoner import reason, summary
+    if model is None:
+      model = self.defaults["model"]
+    assert model is not None
+    reason(model, engine, silent=True)
+    return summary(model)
+
   def clear_reasoning(self, /, model:Model|None=None) -> str:
     '''
     Forget the results of the last "reason" over a model (in every view of it, too).

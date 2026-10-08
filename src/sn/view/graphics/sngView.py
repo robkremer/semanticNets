@@ -1455,18 +1455,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       been reasoned over (or that's been retracted).
     :rtype: str
     '''
-    from sn.model.reasoner import _inferredRelations
-    r = self.reasoning
-    if r is None:
-      return ""
-    plural = lambda n, what: f"{n} {what}{'' if n == 1 else 's'}"
-    rels = len(_inferredRelations(self.model))
-    new = sum(1 for o in self.model.inferredObjects() if getattr(o, "inferredKind", None) == "new")
-    found = [plural(rels, "relation")] + ([plural(new, "new object")] if new else [])
-    errors = sum(1 for v in r.violations if v.severity == "error")
-    warnings = len(r.violations) - errors
-    problems = ", ".join([plural(errors, "error")] * bool(errors) + [plural(warnings, "warning")] * bool(warnings)) or "no problems"
-    return f"inferred: {', '.join(found)}; {problems}"
+    from sn.model.reasoner import summary
+    return summary(self.model)
 
   @override
   def _register(self, value: VObject, _id:Optional[int]=None) -> int: # type: ignore[override]
@@ -1600,8 +1590,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
             self._exemptIfFiltered(newObj)
   
         # elif topicName == 'del GraphObject':
-        case ["reasoned", _] | ["reasoning cleared", _]:
-          self._showReasoning()
+        case ["reasoned", data]:
+          self._showReasoning(showInferred=not (len(data) > 1 and data[1])) # (not if it was reasoned silently)
+        case ["reasoning cleared", _]: # (nothing's inferred -- or, if this is heard late, what's inferred now is a later reason's, which says itself whether to show it)
+          self._showReasoning(showInferred=False)
 
         case ["del", topicData]:
           modelID = topicData[0]
@@ -3403,6 +3395,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     bgMenu.add_cascade(label="reasoning", menu=reasonMenu)
     reasonMenu.add_command(label="clear highlights", command=self.clearHighlights, accelerator=KEY_CLEAR_HIGHLIGHTS[1])
     reasonMenu.add_command(label="reason", command=self.reason)
+    reasonMenu.add_command(label="reason silently", command=self.reasonSilently)
     reasonMenu.add_command(label="clear reasoning", command=self.clearReasoning,
                        state=tk.NORMAL if self.reasoning is not None else tk.DISABLED)
     # bgMenu.add_command(label="toggle field layout", command=self.onToggleFieldsLayout, accelerator=KEY_TOGGLE_FIELDS_LAYOUT[1])
@@ -3625,7 +3618,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     from sn.model.reasoner import reasoningFor
     return reasoningFor(self.model)
 
-  def reason(self, engine:str="clingo") -> None:
+  def reason(self, engine:str="clingo", silent:bool=False) -> None:
     '''
     Run the reasoner over this view's model and print the report to this
     window's terminal. The results are kept with the model, so this and every
@@ -3634,32 +3627,52 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
     :param engine:
     :type engine: str
+    :param silent: See *reasonSilently()*.
+    :type silent: bool
     '''
-    from sn.model.reasoner import reason
+    from sn.model.reasoner import reason, summary
     try:
-      result = reason(self.model, engine)
+      result = reason(self.model, engine, silent=silent)
     except ImportError as ex:
       logger.error(f'The "{engine}" reasoner isn\'t available: {ex}')
       return
+    if silent:
+      print(f'Reasoned over {self.model.name} (silently): {summary(self.model)}')
+      return
     print(f'Reasoning over {self.model.name}:')
     print(result.report(self.model))
+
+  def reasonSilently(self) -> None:
+    '''
+    Reason (see *reason()*) without cluttering the views: what's inferred
+    isn't added to them (those already shown stay), and only a summary is
+    printed -- the problems are still marked. Eg: so that queries find what
+    the rules conclude (and show those they find: see *VObject.answerQuery()*).
+    '''
+    self.reason(silent=True)
 
   def clearReasoning(self) -> None:
     'Forget the last "reason" results for this view\'s model (in every view of it).'
     from sn.model.reasoner import clearReasoning
     clearReasoning(self.model)
 
-  def _showReasoning(self) -> None:
+  def _showReasoning(self, showInferred:bool=True) -> None:
     '''
     Show the model's current reasoning results (or their absence): violations
     in the objects' status reports (their error markers and "show error
-    report"), and the inferred objects (see *_showInferred()*).
+    report"), and the inferred objects (see *_showInferred()*) -- unless
+    *showInferred* is False (eg: it was reasoned over silently: see
+    *reasonSilently()*), when only those already shown stay.
     Called when the model reports a "reasoned" or "reasoning cleared" topic.
     Not a change to the view: it's left as clean (or dirty) as it was.
+
+    :param showInferred:
+    :type showInferred: bool
     '''
     dirty = self.isDirty()
     self._refreshStatusReports()
-    self._showInferred()
+    if showInferred:
+      self._showInferred()
     bar = self.__dict__.get("_reasoningToolbar")
     if bar is not None:
       bar.refresh()

@@ -1243,12 +1243,12 @@ class Reasoner(ABC):
 
 # ── Shared results ────────────────────────────────────────────────────────
 
-def reason(model:Model, engine:str="clingo") -> Inferences:
+def reason(model:Model, engine:str="clingo", silent:bool=False) -> Inferences:
   '''
   Run the reasoner over *model* and keep the results on the model (see
   *reasoningFor()*), where everything using the model -- the command line,
   every view -- finds the same ones. Observers of the model are told with a
-  ("reasoned", (inferences,)) topic. The results aren't saved with the model,
+  ("reasoned", (inferences, silent)) topic. The results aren't saved with the model,
   and aren't updated as it's edited: they're a snapshot until the next
   *reason()* or *clearReasoning()*.
 
@@ -1256,6 +1256,9 @@ def reason(model:Model, engine:str="clingo") -> Inferences:
   :type model: Model
   :param engine:
   :type engine: str
+  :param silent: True if views shouldn't show what's inferred (eg: just so
+    that queries find it): they show only the problems (see *SNGView._showReasoning()*).
+  :type silent: bool
   :returns:
   :rtype: Inferences
   '''
@@ -1263,8 +1266,29 @@ def reason(model:Model, engine:str="clingo") -> Inferences:
   ret = reasoner.run()
   materialize(model, ret, reasoner.dataModels())
   model.reasoning = ret #type: ignore[attr-defined]
-  model.notify(("reasoned", (ret,)))
+  model.notify(("reasoned", (ret, silent)))
   return ret
+
+def summary(model:Model) -> str:
+  '''
+  :param model:
+  :type model: Model
+  :returns: What *model*'s last "reason" found, in a line -- eg: "inferred:
+    3 relations, 4 new objects; 1 error, 2 warnings" -- or "" if it hasn't
+    been reasoned over (or that's been retracted).
+  :rtype: str
+  '''
+  r = reasoningFor(model)
+  if r is None:
+    return ""
+  plural = lambda n, what: f"{n} {what}{'' if n == 1 else 's'}"
+  rels = len(_inferredRelations(model))
+  new = sum(1 for o in model.inferredObjects() if getattr(o, "inferredKind", None) == "new")
+  found = [plural(rels, "relation")] + ([plural(new, "new object")] if new else [])
+  errors = sum(1 for v in r.violations if v.severity == "error")
+  warnings = len(r.violations) - errors
+  problems = ", ".join([plural(errors, "error")] * bool(errors) + [plural(warnings, "warning")] * bool(warnings)) or "no problems"
+  return f"inferred: {', '.join(found)}; {problems}"
 
 def clearReasoning(model:Model) -> None:
   '''

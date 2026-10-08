@@ -20,10 +20,12 @@
 # SOFTWARE.                                                                     #
 #################################################################################
 '''
-The reasoning toolbar: a strip across the bottom of a view's window with a
-*Reason* button (run the reasoner over the view's model: see
-*sn.model.reasoner.reason()*), a *Retract* button (take what it inferred back
-out: see *sn.model.reasoner.clearReasoning()*), and a line saying what the last
+The reasoning toolbar: a strip across the bottom of a view's window with
+small icon buttons (each with a tooltip) to *Reason* (run the reasoner over
+the view's model: see *sn.model.reasoner.reason()*), *Reason silently* (the
+same, without adding what it infers to the views: see
+*SNGView.reasonSilently()*) and *Retract* (take what it inferred back out: see
+*sn.model.reasoner.clearReasoning()*), and a line saying what the last
 "reason" found. Reasoning isn't redone as the model is edited, so it's a click
 away. At its right, a pencil says whether the view's model can be edited --
 crossed out if it's write-locked (eg: the system model, or the base rules). Shown and hidden with "View | Reasoning toolbar" (see
@@ -42,9 +44,11 @@ if TYPE_CHECKING:
   from sn.view.graphics.sngView import SNGView
 
 TIPS:dict[str, str] = {
-  "reason": "Run the reasoner over the model: what it infers is shown (faded) in every view of the model, "
+  "reason": "Reason: run the reasoner over the model. What it infers is shown (faded) in every view of the model, "
             "and its report goes to the terminal. It isn't redone as you edit: click again after changes.",
-  "retract": "Take what the reasoner inferred back out of the model (and its views).",
+  "reasonSilently": "Reason silently: run the reasoner, but don't add what it infers to the views (only the problems "
+                    "are marked), and print just a summary -- eg: so that queries find what the rules conclude.",
+  "retract": "Retract: take what the reasoner inferred back out of the model (and its views).",
   "status": "What the last \"reason\" found: the objects it inferred, and the problems (violations) it found.",
   "writable": "The model can be edited (and saved).",
   "locked": "The model is read-only: it can't be changed here (eg: the system model, or the base rules). "
@@ -58,6 +62,8 @@ class ReasoningToolbar(ttk.Frame):
   '''
   PADDING = 4
   "The toolbar's padding (pixels) at its left and right."
+  ICON_WIDTH = 2
+  "The width (characters) of the toolbar's icon buttons."
   LOCK_SIZE = 18
   "The width and height (pixels) of the pencil that says whether the model's write-locked."
 
@@ -71,12 +77,14 @@ class ReasoningToolbar(ttk.Frame):
     super().__init__(master, padding=(self.PADDING, 2))
     self.view = view
     tip = lambda widget, text: CreateToolTip(widget, text, wrapLength=300)
-    self.reasonButton = ttk.Button(self, text="Reason", width=8, command=self.view.reason)
-    self.reasonButton.pack(side=tk.LEFT)
-    tip(self.reasonButton, TIPS["reason"])
-    self.retractButton = ttk.Button(self, text="Retract", width=8, command=self.view.clearReasoning)
-    self.retractButton.pack(side=tk.LEFT, padx=(4, 0))
-    tip(self.retractButton, TIPS["retract"])
+    def button(icon:str, command, tipKey:str) -> ttk.Button:
+      b = ttk.Button(self, text=icon, width=self.ICON_WIDTH, command=command, style="Toolbutton") # (compact: not a full-size push button)
+      b.pack(side=tk.LEFT, padx=(0, 2))
+      tip(b, TIPS[tipKey])
+      return b
+    self.reasonButton = button("\u25b6", self.view.reason, "reason")                         # (a "play" triangle)
+    self.reasonSilentlyButton = button("\u25b7", self.view.reasonSilently, "reasonSilently") # (the same, hollow)
+    self.retractButton = button("\u21ba", self.view.clearReasoning, "retract")               # (an "undo" arrow)
     self.status = ttk.Label(self, foreground="gray35")
     self.status.pack(side=tk.LEFT, padx=(10, 0))
     tip(self.status, TIPS["status"])

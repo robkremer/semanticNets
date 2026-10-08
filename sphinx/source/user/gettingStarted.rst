@@ -116,7 +116,7 @@ A first network
 5. Make a relation type: background menu, **model | new subtype of Relation**,
    and name it ``likes``. Then right-click *rex*, **make relation to... |
    likes**, and click on something rex likes.
-6. Click **Reason** on the reasoning toolbar at the bottom of the window (or
+6. Click **Reason** (▶) on the reasoning toolbar at the bottom of the window (or
    right-click the background: **reasoning | reason**). The report appears in
    the terminal pane, and what the reasoner inferred is shown on the canvas,
    faded, with dashed lines.

@@ -1417,6 +1417,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     the variables matched (in this view), replacing any earlier highlights.
     '''
     from sn.model.reasoner import Reasoner
+    if self.view.reasoning is None: # (so what the rules conclude exists is in the model, for the answers to show)
+      self.view.reasonSilently()
     try:
       rows = Reasoner.create(self.view.model).answer(self.modelObject)
     except Exception as ex:
