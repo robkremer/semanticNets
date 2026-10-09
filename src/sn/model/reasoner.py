@@ -119,6 +119,7 @@ _MESSAGES:dict[str,str] = {
   "requirement_empty":     "requirement {0}: nothing is required (its required pane is empty), so it can't be violated",
   "pattern_disconnected":  "{0}: its {1} is in parts that aren't related to each other ({2}): every match of one is paired with every match of the others",
   "requirement_unanchored": "requirement {0}: {1} in its required part isn't related to its condition: it only checks that something like it exists",
+  "unused_variable":       "{0} is a variable (by its name), but isn't in any query, rule, definition, constraint or requirement: it, and its relations, are ignored -- to stand for someone unknown, give it an ordinary name",
   }
 "Message templates for violation codes: {0} is the subject, {1}... are the args."
 
@@ -569,6 +570,43 @@ def reportedAnswers(rows:list[dict[GraphObject, Any]]) -> list[dict[GraphObject,
       seen.add(key)
       ret.append(shown)
   return ret
+
+def unusedVariables(objects:list[GraphObject]) -> list[GraphObject]:
+  '''
+  :param objects: A model's objects (and its super-models').
+  :type objects: list[GraphObject]
+  :returns: The variables among them (see *GraphObject.isVariable()*) that
+    aren't in any context's pattern: not contained by one, nor an end or a
+    type of a relation it contains, nor a type of such a variable. As
+    variables, they -- and their relations -- aren't facts, so they're ignored:
+    eg: a node named ?mother2 to say that two people have the same, unknown,
+    mother.
+  :rtype: list[GraphObject]
+  '''
+  used:set[int] = set()
+  pending:list[GraphObject] = []
+  def use(x:GraphObject|None) -> None:
+    if x is not None and id(x) not in used:
+      used.add(id(x))
+      pending.append(x)
+  for c in objects:
+    try:
+      if not (isinstance(c, Node) and c.isa(c.model.CONTEXT)): # (as GraphObject.isPatternElement(): an individual context or not)
+        continue
+      for _r, e in c._getOutgoing(lambda r: r.isIndividual() and r.isa(c.model.CONTAINS)):
+        use(e)
+    except Exception: # (eg: a half-built object)
+      continue
+  while pending:
+    x = pending.pop()
+    if isinstance(x, Relation):
+      use(x.localSrc); use(x.localDst)
+    try:
+      for p in x.getParents(): # (eg: a relation's type variable, a variable's type variable)
+        use(p)
+    except Exception:
+      pass
+  return [x for x in objects if id(x) not in used and not isinstance(x, IsaIndividual) and x.isVariable()]
 
 def queryWarnings(context:GraphObject) -> list[str]:
   '''
@@ -1229,6 +1267,7 @@ class Reasoner(ABC):
     specs = getattr(self, "_constraintSpecs", None) # (as the engine used them: see specs())
     templates = {s.code: s.template for s in (specs if specs is not None else self.specs()[1]) if s.template}
     ret.violations = [v for v in ret.violations if best[key(v)] is v]
+    ret.violations += [Violation("unused_variable", "warning", x, ()) for x in unusedVariables(self.objects())]
     for v in ret.violations:
       if v.template is None and v.code in templates:
         v.template = templates[v.code]

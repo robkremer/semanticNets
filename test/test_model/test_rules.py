@@ -665,6 +665,46 @@ class TestRules(unittest.TestCase):
       self.person.setIndividual(True)
     self.assertTrue(self.person.isType())
 
+  def test0995inventedObjects(self):
+    'What a rule concludes exists might be anyone: it\'s not "distinct" from anything; and a subtype relation shows one is there already.'
+    from sn.model.reasoner import reason
+    m = self.m
+    parentOf = self.parent
+    mother = Relation(m, [parentOf], self.person, self.person, name="mother")
+    father = Relation(m, [parentOf], self.person, self.person, name="father")
+    half = Relation(m, [m.RELATION], self.person, self.person, name="half")
+    dad = Node(m, [self.person], individual=True, name="dad")
+    for n in ("alice", "bob"):
+      self.rel(father, self.p[n], dad)
+    P, P2, M = self.var("?p", self.person), self.var("?p"), self.var("?m", self.person)
+    self.rule("everyone has a mother", [P], [self.rel(mother, P2, M)])
+    A, B, D, M1, M2 = self.var("?a"), self.var("?b"), self.var("?d"), self.var("?m1"), self.var("?m2")
+    self.rule("half", [self.rel(father, A, D), self.rel(father, B, D), self.rel(mother, A, M1), self.rel(mother, B, M2),
+                       self.rel(m.DISTINCT, M1, M2), self.rel(m.DISTINCT, A, B)], [self.rel(half, A, B)])
+    halves = lambda: self.pairs(self.reason().holds, half)
+    self.assertEqual(halves(), set())                                       # (their mothers are invented: maybe the same one)
+    for n, mum in (("alice", "ann"), ("bob", "bea")):
+      self.rel(mother, self.p[n], Node(m, [self.person], individual=True, name=mum))
+    self.assertEqual(halves(), {("alice", "bob"), ("bob", "alice")})        # (two mothers of the model: different)
+    # "everyone has a parent": not invented for those with a father (has-father isa has-parent)
+    Q, Q2, R = self.var("?q", self.person), self.var("?q"), self.var("?r", self.person)
+    self.rule("everyone has a parent", [Q], [self.rel(parentOf, Q2, R)])
+    reason(m)
+    invented = {o.name for o in m.inferredObjects() if getattr(o, "inferredKind", None) == "new" and o.name.startswith("(r for")}
+    self.assertNotIn("(r for alice)", invented)
+    self.assertIn("(r for carol)", invented)
+
+  def test0996unusedVariables(self):
+    'A variable that isn\'t in any pattern is warned about: it, and its relations, are ignored.'
+    loose = self.var("?unknown", self.person)
+    self.rel(self.parent, self.p["alice"], loose)
+    used = self.var("?w")
+    q = Node(self.m, [self.m.QUERY], individual=True, name="q")
+    self.rel(self.m.CONTAINS, q, self.rel(self.likes, used, self.p["fred"]))
+    warned = {v.subject.name for v in self.reason().violations if v.code == "unused_variable"}
+    self.assertIn("?unknown", warned)
+    self.assertNotIn("?w", warned)                                          # (an end of a relation in a query)
+
   def test0930systemRules(self):
     'The base rules\' conclusions are plain inferences -- unless showSysRules.'
     self.rel(self.sib, self.p["alice"], self.p["bob"])

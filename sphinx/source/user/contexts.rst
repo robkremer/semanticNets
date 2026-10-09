@@ -135,6 +135,12 @@ relation's type, eg: ``^r`` in ``!a -^r-> ?b``, matches relation types.
 Objects in a pattern that *aren't* variables (*mary*, above) stand for
 themselves.
 
+A variable only means something in a pattern: one that isn't in any query,
+rule, definition, constraint or requirement -- eg: a node named ``?mother2``
+to say that two people have the same unknown mother -- is ignored, with its
+relations, and the reasoner warns about it. Give an unknown object an
+ordinary name instead (eg: *Ed's mother*).
+
 A variable whose name starts with ``_`` after its ``?``, ``^`` or ``!`` --
 eg: ``?_brother`` -- is **hidden**: it matches as any other does, but a
 query's answers don't report it, and each answer is given once. Eg: ``?sibling
@@ -223,13 +229,20 @@ that the matched object is of that type). Conclusions can feed other rules.
 A variable that appears only in the consequent stands for a **new object**:
 for each match, the reasoner concludes that some object exists that's related
 as the consequent says -- unless the model already has one (related, and of
-the types, the consequent says). Each is added to the model as an
+the types, the consequent says: a relation of a more specific type counts --
+eg: *has-father* for *has-parent*). Each is added to the model as an
 **inferred** object, named for the variable and the match -- eg: "(m for
 alice)" for ``?m`` in "everyone has a mother" -- with the types, attribute
 values and relations the rule gives it, and shown (faded) beside what it's
 related to in each view. Like other inferred objects (see :doc:`reasoning`)
 it isn't saved, and **mark as asserted** in its menu makes it -- and the
 relations the rule gave it -- an ordinary part of the model.
+
+The reasoner only knows that such an object exists, not who it is: it might
+be anyone -- even someone in the model. So it's never *distinct* from
+anything: eg: if two people's mothers are only concluded ("everyone has a
+mother"), they're not known to be different people, and a definition of
+half-siblings that needs their mothers to be distinct doesn't apply.
 
 The reasoner reports rules it can't use, and why: a consequent relation with
 no source or destination, or (in some cases) a variable it can't bind.

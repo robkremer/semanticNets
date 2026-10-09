@@ -222,7 +222,8 @@ class ClingoReasoner(Reasoner, engine="clingo"):
       if t.isVariable():
         body.append(f"rel_type({term(t)})")
     body += [f"isa_star({term(x)},{term(t)})" for x, t in pat.types]
-    body += [f"{term(x)} != {term(y)}" for x, y in pat.distinct]
+    # (only objects of the model are known to be different: an object a rule concludes exists -- eg: "a mother" -- might be anyone)
+    body += [f"{term(x)} != {term(y)}, obj({term(x)}), obj({term(y)})" for x, y in pat.distinct]
     for v, key, value in pat.constraints:
       neg = isinstance(value, Not) # (negation as failure: it isn't so, as far as the model says)
       if neg:
@@ -305,8 +306,9 @@ class ClingoReasoner(Reasoner, engine="clingo"):
     '''
     For a rule that creates objects (see *NewObject*): a clingo rule saying
     that, for a match, the data already has objects in their place -- related
-    as the conclusions say, and of the types they say (asserted relations and
-    types only, so that the program stays stratified) -- and the literal to
+    as the conclusions say (or by a subtype: has-father for has-parent), and of
+    the types they say (asserted relations and types only, so that the program
+    stays stratified) -- and the literal to
     test it with. ("", "") if there's nothing to test.
 
     :param spec:
@@ -324,7 +326,7 @@ class ClingoReasoner(Reasoner, engine="clingo"):
       if x.isVariable():
         return exist.get(x.name) or var[x.name]
       return self._term(x)
-    lits = [f"asserted({term(t)},{term(s)},{term(d)})" for t, s, d in spec.heads
+    lits = [f"asserted_under({term(t)},{term(s)},{term(d)})" for t, s, d in spec.heads # (eg: has-father counts as has-parent)
             if any(x is not None and x.isVariable() and x.name in new for x in (s, d)) and s is not None and d is not None]
     lits += [f"isa_base({term(x)},{term(t)})" for x, t in spec.isas if x.isVariable() and x.name in new]
     if not lits:

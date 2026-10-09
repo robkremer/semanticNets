@@ -88,6 +88,10 @@ isa_base(X,Z) :- parent(X,Y), isa_base(Y,Z).
 
 % A relation individual instantiates its parent relation types.
 asserted(T,S,D) :- link(R,S,D), parent(R,T), rel_type(T).
+% ... and, with the relation hierarchy, every type above them too (asserted
+% data alone -- for the test of whether a rule's new objects are already
+% there: see ClingoReasoner._satisfied() -- so that the program stays stratified).
+asserted_under(T,S,D) :- asserted(T2,S,D), isa_base(T2,T), rel_type(T).
 
 % Relations inherit down the isa hierarchy from their source, one isa step at a
 % time: dog -has-> tail gives rex -has-> tail. A local relation to a more
