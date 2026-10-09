@@ -1158,6 +1158,59 @@ class ModelContext(CommandContext):
       '''
       return f'{super().__str__()} {self.object.getPRef().tostring()}'
 
+  def set_kind(self, object:GraphObject, kind:str):
+    '''
+    Make an object an individual or a type: eg: a pattern variable named ?x
+    (which matches individuals) that was made a type. Not a relation, nor a
+    type with instances or subtypes (see *GraphObject.individualChangeProblem()*).
+
+    :param object: The object.
+    :type object: GraphObject
+    :param kind: "individual" or "type".
+    :type kind: str
+    '''
+    pass
+
+  class _Set_kind(Command):
+    def __init__(self, object:GraphObject, kind:str):
+      '''
+      Make an object an individual, or a type.
+
+      :param object: The object.
+      :type object: GraphObject
+      :param kind: "individual" or "type".
+      :type kind: str
+      '''
+      super().__init__("set kind")
+      if kind not in ("individual", "type"):
+        raise ValueError(f'The kind is "individual" or "type", not "{kind}".')
+      individual = kind == "individual"
+      problem = object.individualChangeProblem(individual)
+      if problem is not None:
+        raise ValueError(f'"{object.name}" can\'t be made {"an individual" if individual else "a type"}: {problem}.')
+      self.object, self.individual = object, individual
+      self.wasDirty:bool = object.model.isDirty()
+
+    @override
+    def do(self):
+      super().do()
+      self.object.setIndividual(self.individual)
+
+    @override
+    def undo(self):
+      super().undo()
+      self.object.setIndividual(not self.individual)
+      if not self.wasDirty:
+        self.object.model.setDirty(False)
+
+    @override
+    def __str__(self):
+      '''
+      :returns: A readable string for this object.
+      :rtype: str
+      '''
+      return f'{super().__str__()} {self.object.getPRef().tostring()} {"individual" if self.individual else "type"}'
+
   def mark_asserted(self, object:GraphObject):
     '''
     Make an inferred object (see *GraphObject.inferred*) -- something the

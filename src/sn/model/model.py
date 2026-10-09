@@ -774,7 +774,54 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     :rtype: bool
     '''
     return self._individual
-  
+
+  def individualChangeProblem(self, individual:bool) -> str|None:
+    '''
+    :param individual: True to make this an individual, False a type.
+    :type individual: bool
+    :returns: Why it can't be made one (see *setIndividual()*), or None if it can.
+    :rtype: str | None
+    '''
+    what = "an individual" if individual else "a type"
+    if self._individual == individual:
+      return f'it\'s {what} already'
+    if self.model.writeLocked():
+      return f'"{self.model.name}" is write locked'
+    if getattr(self, "inferred", False):
+      return 'it\'s inferred: mark it as asserted first'
+    if isinstance(self, Relation): # (a relation type's ends are a domain and range its instances inherit; an individual's are its own)
+      return 'it\'s a relation: its ends would mean something else'
+    if individual and (children := self.getChildren()): # (an individual can't have instances or subtypes)
+      return f'it has instances or subtypes: {", ".join(c.name for c in children[:5])}{", ..." if len(children) > 5 else ""}'
+    from util.attribute import NOOVERRIDE
+    for key in dict.keys(self): # (an attribute it overrides that it couldn't, as the other kind)
+      try:
+        inherited = self._getSuperAttr(key)
+      except Exception:
+        continue
+      r = getattr(getattr(inherited, "restriction", None), "individual" if individual else "type", None)
+      if r is not None and r & NOOVERRIDE:
+        return f'as {what}, it couldn\'t override its inherited "{key}"'
+    return None
+
+  def setIndividual(self, individual:bool) -> None:
+    '''
+    Make this an individual (or, if *individual* is False, a type): eg: a
+    pattern variable whose name says it matches individuals (?x), but that was
+    made a type. Observers are told with a ("mod individual", (individual,))
+    topic. Use it through *ModelContext.set_kind()* (it's undoable).
+
+    :param individual:
+    :type individual: bool
+    :raises ValueError: If it can't be (see *individualChangeProblem()*).
+    '''
+    problem = self.individualChangeProblem(individual)
+    if problem is not None:
+      raise ValueError(f'"{self.name}" can\'t be made {"an individual" if individual else "a type"}: {problem}.')
+    self._individual = individual
+    self.model.setDirty()
+    self.notify(("mod individual", (individual,)))
+
   def isSystemObject(self) -> bool:
     '''
     :returns:

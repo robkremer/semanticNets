@@ -949,6 +949,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
           
         elif topicName in ("asserted", "inferred"): # (marked as asserted, or that undone: drawn faded or not -- see isInferred())
           vChanged = True
+        elif topicName == "mod individual": # (made a type, or an individual: what it inherits may differ, and it may be in a hidden category now)
+          self.cache.refresh()
+          self.view._exemptIfFiltered(self)
+          vChanged = True
         elif topicName == "rm":
           #self.canvas.remove(self._id)
           self.delete()
@@ -1010,7 +1014,46 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
           actions[f'make "{obj.name}" a "{required.name}"'] = \
             lambda o=obj, c=required: self.view.context.new_relation([self.view.model.ISA], individual=True,
                                                                       source=o, destination=c, model=self.view.model)
+      if v.code == "variable_kind": # args: (the kind its name says, ...): make it that kind, or rename it for the kind it is
+        actions.update(self._variableKindFixes(str(v.args[0]) == "individual"))
       self.assertToStatusReport(False, f'reasoner: {v.message}', "E" if v.severity == "error" else "W", actions)
+
+  def _variableKindFixes(self, namedIndividual:bool) -> dict[str, Callable[[], None]]:
+    '''
+    The fixes for a variable whose name says it matches individuals (if
+    *namedIndividual*; else types) but that's the other kind: make it the kind
+    its name says (see *GraphObject.individualChangeProblem()*), or rename it
+    for the kind it is (eg: ?x, a type, to ^x). Each is undoable, and the
+    model's reasoned over again (silently) afterwards, so the warning goes.
+
+    :param namedIndividual:
+    :type namedIndividual: bool
+    :returns: label -> action.
+    :rtype: dict[str, Callable[[], None]]
+    '''
+    from sn.model import names
+    mo = self.modelObject
+    ret:dict[str, Callable[[], None]] = {}
+    def then(fix:Callable[[], Any]) -> Callable[[], None]:
+      def go() -> None:
+        try:
+          fix()
+        except Exception as ex:
+          logger.error(f'{mo.name}: {ex}')
+          return
+        self.view.reasonSilently()
+      return go
+    if mo is None or mo.model.writeLocked():
+      return ret
+    if mo.individualChangeProblem(namedIndividual) is None:
+      ret[f'make it {"an individual" if namedIndividual else "a type"}'] = \
+        then(lambda: self.view.context.set_kind(mo, "individual" if namedIndividual else "type"))
+    prefixes = {kind: p for p, kind in getattr(names.grammar, "PREFIXES", {}).items()} # (the default grammar's: see names.NameGrammar)
+    prefix = prefixes.get(names.NameKind.INDIVIDUAL if mo.isIndividual() else names.NameKind.TYPE)
+    if prefix is not None:
+      newName = prefix + names.stem(mo.name)
+      ret[f'rename it {newName}'] = then(lambda: self.view.context.set_attribute(mo, "name", newName))
+    return ret
 
   # ---- BINDINGS --------------------------------------------------------------
   

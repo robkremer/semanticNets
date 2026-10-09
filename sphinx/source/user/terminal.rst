@@ -39,6 +39,9 @@ Making and changing things:
 ``remove``             delete an object from the model
 ``set attribute``      set an object's attribute
 ``delete attribute``   remove an object's attribute
+``set kind``           make an object an individual or a type: ``set kind
+                       ?x individual`` (not a relation, nor a type with
+                       instances or subtypes)
 ``undo``, ``redo``     undo or redo the last change
 =====================  =======================================================
 

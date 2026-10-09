@@ -621,6 +621,29 @@ class TestRules(unittest.TestCase):
       self.rel(self.m.CONTAINS, q2, x)
     self.assertEqual(ModelContext(self.m).answer_query(q2), "yes")
 
+  def test0990setIndividual(self):
+    'A variable that\'s the wrong kind for its name can be made the right kind (undoably) -- but not a type with instances, or a relation.'
+    from sn.controller.modelInterface import ModelContext
+    m, ctx = self.m, ModelContext(self.m)
+    X = Node(m, [self.person], individual=False, name="?x")                # (a type, named for individuals)
+    q = Node(m, [m.QUERY], individual=True, name="q")
+    self.rel(m.CONTAINS, q, X)
+    kinds = lambda: {(v.code, v.subject.name) for v in self.reason().violations if v.code == "variable_kind"}
+    self.assertIn(("variable_kind", "?x"), kinds())
+    self.assertIsNone(X.individualChangeProblem(True))
+    ctx.set_kind(X, "individual")
+    self.assertTrue(X.isIndividual())
+    self.assertNotIn(("variable_kind", "?x"), kinds())
+    ctx.undo()
+    self.assertTrue(X.isType())
+    # refused: what it is already; a type with instances; a relation
+    self.assertIn("already", X.individualChangeProblem(False))
+    self.assertIn("instances or subtypes", self.person.individualChangeProblem(True))
+    self.assertIn("relation", self.likes.individualChangeProblem(True))
+    with self.assertRaises(ValueError):
+      self.person.setIndividual(True)
+    self.assertTrue(self.person.isType())
+
   def test0930systemRules(self):
     'The base rules\' conclusions are plain inferences -- unless showSysRules.'
     self.rel(self.sib, self.p["alice"], self.p["bob"])

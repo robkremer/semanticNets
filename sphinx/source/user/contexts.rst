@@ -125,7 +125,11 @@ The first character of a variable's name says what it matches:
 
 Make an individual variable an individual, and a type variable a type: the
 name decides what it matches, but the reasoner warns about a mismatch (a
-type named ``?x``, or an individual named ``^T``). A variable used as a
+type named ``?x``, or an individual named ``^T``). The warning, in the
+object's error report, offers to fix it either way: **make it an individual**
+(or **a type**) -- what its name says -- or **rename it** for what it is (eg:
+``^x``). Both can be undone. (An object with instances or subtypes, or a
+relation, can't be changed to the other kind: only renamed.) A variable used as a
 relation's type, eg: ``^r`` in ``!a -^r-> ?b``, matches relation types.
 
 Objects in a pattern that *aren't* variables (*mary*, above) stand for
