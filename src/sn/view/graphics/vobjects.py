@@ -1425,8 +1425,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     describes: print the answers to the terminal, and highlight every object
     the variables matched (in this view), replacing any earlier highlights.
     '''
-    from sn.model.reasoner import Reasoner
-    from sn.model.reasoner import queryWarnings
+    from sn.model.reasoner import Reasoner, queryWarnings, reportedAnswers
+    from sn.model import names
     if self.view.reasoning is None: # (so what the rules conclude exists is in the model, for the answers to show)
       self.view.reasonSilently()
     for w in queryWarnings(self.modelObject):
@@ -1437,11 +1437,11 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       logger.error(f'Can\'t answer "{self.name}": {ex}')
       return
     print(f'{self.name}:')
-    print(self.view.context._formatAnswers(rows, self.view.model))
+    print(self.view.context._formatAnswers(reportedAnswers(rows), self.view.model)) # (not ?_hidden variables)
     self.view.clearHighlights()
     for row in rows:
-      for x in row.values():
-        if not isinstance(x, GraphObject):
+      for v, x in row.items():
+        if not isinstance(x, GraphObject) or names.isHiddenName(v.name): # (a hidden variable's value isn't an answer)
           continue
         # an answer's shown -- even if it's in a hidden or erased category (eg: inferred objects), or wasn't shown at all
         vo = self.view.findViewObjectForGraphObject(x) or self.view.makeViewObjectForGraphObject(x)

@@ -596,6 +596,31 @@ class TestRules(unittest.TestCase):
     self.assertIn("requirement_unanchored", codes)
     self.assertNotIn("pattern_disconnected", codes)
 
+  def test0980hiddenVariables(self):
+    'A variable named "?_..." matches as any other, but isn\'t reported: its answers once each.'
+    from sn.model import names
+    from sn.model.reasoner import reportedAnswers
+    from sn.controller.modelInterface import ModelContext
+    self.assertTrue(names.isHiddenName("?_b") and names.isHiddenName("?_") and names.isHiddenName("^_t"))
+    self.assertFalse(names.isHiddenName("?b") or names.isHiddenName("_b") or names.isHiddenName("?b_"))
+    al, bob, carol = self.p["alice"], self.p["bob"], self.p["carol"]
+    self.rel(self.likes, al, bob); self.rel(self.likes, al, carol); self.rel(self.likes, bob, carol)
+    q = Node(self.m, [self.m.QUERY], individual=True, name="who likes someone?")
+    X, Y = self.var("?x"), self.var("?_y")
+    for x in (X, Y, self.rel(self.likes, X, Y)):
+      self.rel(self.m.CONTAINS, q, x)
+    rows = ClingoReasoner(self.m).answer(q)
+    self.assertEqual(len(rows), 3)                                         # (matched as usual: alice twice)
+    self.assertEqual(sorted(r[X].name for r in reportedAnswers(rows)), ["alice", "bob"])
+    self.assertEqual({v.name for r in reportedAnswers(rows) for v in r}, {"?x"})
+    out = ModelContext(self.m).answer_query(q)
+    self.assertEqual(sorted(l.split("#")[0] for l in out.splitlines()), ["?x = alice", "?x = bob"]) # (names with their ids)
+    q2 = Node(self.m, [self.m.QUERY], individual=True, name="does anyone like anyone?")
+    A, B = self.var("?_a"), self.var("?_b")
+    for x in (A, B, self.rel(self.likes, A, B)):
+      self.rel(self.m.CONTAINS, q2, x)
+    self.assertEqual(ModelContext(self.m).answer_query(q2), "yes")
+
   def test0930systemRules(self):
     'The base rules\' conclusions are plain inferences -- unless showSysRules.'
     self.rel(self.sib, self.p["alice"], self.p["bob"])

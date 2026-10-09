@@ -244,7 +244,9 @@ Variable names
 
 Which names are variables, and of which kind, is decided in one place:
 :py:meth:`sn.model.names.NameGrammar.parse` (``?x`` individual, ``^T`` type,
-``!a`` any; anything else a constant). Everything else asks it, through
+``!a`` any; anything else a constant -- and a variable whose stem starts with
+``_``, eg: ``?_b``, is hidden: :py:func:`~sn.model.reasoner.reportedAnswers`
+leaves it out of a query's answers). Everything else asks it, through
 :py:meth:`~sn.model.model.GraphObject.variableKind` or
 :py:func:`sn.model.names.isVariableName` -- the engines (a variable's kind
 is a guard in clingo: ``individual(V)``, ``type(V)`` or none), the

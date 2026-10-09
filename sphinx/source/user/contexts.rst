@@ -131,6 +131,14 @@ relation's type, eg: ``^r`` in ``!a -^r-> ?b``, matches relation types.
 Objects in a pattern that *aren't* variables (*mary*, above) stand for
 themselves.
 
+A variable whose name starts with ``_`` after its ``?``, ``^`` or ``!`` --
+eg: ``?_brother`` -- is **hidden**: it matches as any other does, but a
+query's answers don't report it, and each answer is given once. Eg: ``?sibling
+-has-full-brother-> ?_brother`` answers *who* has a full brother (once each,
+however many they have), not who the brothers are. If all of a query's
+variables are hidden, the answer is just "yes" or "no". (Names still say
+which variable is which: two ``?_`` in a pattern are the same one.)
+
 .. _variable-constraints:
 
 Constraints

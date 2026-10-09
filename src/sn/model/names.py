@@ -17,6 +17,11 @@ The default grammar:
 A variable used as a relation's type (eg: ``^r`` in ``!a -^r-> ?b``) matches
 relation types, whatever its kind (an individual can't be a relation's type).
 
+A variable whose stem starts with "_" (eg: ``?_brother``, or just ``?_``) is
+*hidden*: it matches as any other does, but a query's answers don't report
+it (see *isHiddenName()*): eg: ``?x -has-brother-> ?_b`` answers who has a
+brother, not who it is.
+
 Created on Oct 6, 2026
 
 .. codeauthor:: Rob Kremer <robkremer@me.com>
@@ -91,6 +96,17 @@ class NameGrammar:
       return self.PREFIXES[name[0]], name[1:]
     return NameKind.CONSTANT, name
 
+  def isHidden(self, name:str) -> bool:
+    '''
+    :param name: An object's name.
+    :type name: str
+    :returns: True iff it's a hidden variable's: one that answers don't report
+      (see the module doc) -- by default, one whose stem starts with "_".
+    :rtype: bool
+    '''
+    kind, stem = self.parse(name)
+    return kind.isVariable and stem.startswith("_")
+
   def describe(self) -> str:
     '''
     :returns: The grammar in words, for notes and messages.
@@ -98,7 +114,8 @@ class NameGrammar:
     '''
     return ('a name starting with "?" is an individual variable (it matches individuals), '
             'with "^" a type variable (it matches types), and with "!" an "any" variable '
-            '(it matches individuals and types alike); any other name is a constant')
+            '(it matches individuals and types alike); any other name is a constant. A variable whose name '
+            'starts with "_" after that (eg: "?_b") is hidden: it isn\'t reported in a query\'s answers')
 
 grammar:NameGrammar = NameGrammar()
 "The grammar in use. Read it as *names.grammar* (not imported by name), so a replacement is seen."
@@ -130,6 +147,15 @@ def isVariableName(name:object) -> bool:
   :rtype: bool
   '''
   return nameKind(name).isVariable
+
+def isHiddenName(name:object) -> bool:
+  '''
+  :param name:
+  :type name: object
+  :returns: True iff *name* is a hidden variable's, per the grammar in use (see *NameGrammar.isHidden()*).
+  :rtype: bool
+  '''
+  return isinstance(name, str) and grammar.isHidden(name)
 
 def stem(name:str) -> str:
   '''

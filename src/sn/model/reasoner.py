@@ -550,6 +550,26 @@ def patternWarnings(pat:Pattern, part:str) -> list[tuple[str, tuple[Any, ...]]]:
     return []
   return [("pattern_disconnected", (Sym(part), Sym(" | ".join(", ".join(g) for g in groups))))]
 
+def reportedAnswers(rows:list[dict[GraphObject, Any]]) -> list[dict[GraphObject, Any]]:
+  '''
+  :param rows: A query's answers (see *Reasoner.answer()*).
+  :type rows: list[dict[GraphObject, Any]]
+  :returns: Them as they're reported: without their hidden variables (eg:
+    ?_b: see *names.isHiddenName()*), and once each -- eg: who has a brother,
+    once, however many brothers they have. [{}] (yes) if there were answers
+    but all their variables are hidden.
+  :rtype: list[dict[GraphObject, Any]]
+  '''
+  ret:list[dict[GraphObject, Any]] = []
+  seen:set[tuple] = set()
+  for row in rows:
+    shown = {v: x for v, x in row.items() if not names.isHiddenName(v.name)}
+    key = tuple((v.name, id(x)) for v, x in shown.items())
+    if key not in seen:
+      seen.add(key)
+      ret.append(shown)
+  return ret
+
 def queryWarnings(context:GraphObject) -> list[str]:
   '''
   :param context: A query (or any context) about to be answered.
