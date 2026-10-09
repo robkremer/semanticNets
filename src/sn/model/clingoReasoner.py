@@ -353,8 +353,10 @@ class ClingoReasoner(Reasoner, engine="clingo"):
     '''
     out:list[str] = []
     rules, constraints = self.specs()
+    warn = lambda subject, code, args: f'violation0({code},warning,{self._term(subject)},({"".join(self._term(a) + "," for a in args)})).'
     for spec in constraints:
       c = spec.constraint
+      out += [warn(c, code, args) for code, args in spec.warnings] # (it's still used)
       if spec.problems:
         out += [f'violation0({code},warning,{self._term(c)},({"".join(self._term(a) + "," for a in args)})).'
                 for code, args in spec.problems]
@@ -375,6 +377,7 @@ class ClingoReasoner(Reasoner, engine="clingo"):
       out.append(f'violation0({self._term(spec.code)},{spec.severity},{term(subject)},({"".join(term(a) + "," for a in args)})) :- {", ".join(body)}.')
     for spec in rules:
       r = spec.rule
+      out += [warn(r, code, args) for code, args in spec.warnings] # (it's still used)
       if spec.problems:
         for code, args in spec.problems:
           out.append(f'violation0({code},warning,{self._term(r)},({"".join(self._term(a) + "," for a in args)})).')

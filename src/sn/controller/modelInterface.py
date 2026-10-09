@@ -309,7 +309,10 @@ class ModelContext(CommandContext):
     from sn.model.reasoner import Reasoner
     if type(query) is str: # the environment failed to interpret the object
       raise KeyError(f'Query "{query}" not found.')
+    from sn.model.reasoner import queryWarnings
     model = query.model # (the framework always fills *model* in, so the query's own model it is)
+    for w in queryWarnings(query):
+      logger.warning(w)
     return self._formatAnswers(Reasoner.create(model, engine).answer(query), model)
 
   def _formatAnswers(self, rows:list, model:Model) -> str:

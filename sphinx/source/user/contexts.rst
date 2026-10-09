@@ -343,6 +343,28 @@ pane is reported as a problem itself, as it can't be violated. (A variable
 astride the divider is in both panes: its constraints are tests on what the
 condition matches.)
 
+Unrelated parts of a pattern
+----------------------------
+
+The parts of a pattern are all required at once ("and"), and its variables
+range independently -- so parts that aren't related to each other (by
+relations, isa links, distincts or a shared value variable like ``?a`` in
+``age: ?a``) pair up every way. Eg: a query with ``?sibling -has-full-brother->
+fred`` and a ``?brother`` related to nothing answers each of fred's
+siblings once *for every person* ``?brother`` could be. Relating them --
+``?sibling -has-full-brother-> ?brother`` -- is usually what's meant.
+(Constants don't relate parts: ``?a -likes-> fred`` and ``?b -likes-> fred``
+still pair every ?a with every ?b.)
+
+This is seldom meant, so it's warned about: when a query is answered, and,
+for rules, definitions, constraints and requirements, when you reason (they're
+still used). A requirement is also warned about if part of what it requires
+isn't related to its condition: that part only checks that something like it
+exists. Sometimes it is meant -- eg: a rule "everyone who likes fred likes
+every person" -- and then the warning can be ignored. (A rule's consequent can
+have variables of its own: they're new objects -- see Rules, above -- not
+unrelated parts.)
+
 The base rules
 --------------
 

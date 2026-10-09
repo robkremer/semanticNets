@@ -117,6 +117,8 @@ _MESSAGES:dict[str,str] = {
   "constraint_report":     "constraint {0}: {1} in its report isn't one of its variables",
   "constraint_severity":   "constraint {0}: its severity is {1}; it should be error or warning",
   "requirement_empty":     "requirement {0}: nothing is required (its required pane is empty), so it can't be violated",
+  "pattern_disconnected":  "{0}: its {1} is in parts that aren't related to each other ({2}): every match of one is paired with every match of the others",
+  "requirement_unanchored": "requirement {0}: {1} in its required part isn't related to its condition: it only checks that something like it exists",
   }
 "Message templates for violation codes: {0} is the subject, {1}... are the args."
 
@@ -490,6 +492,73 @@ def patternOf(context:GraphObject, parts:tuple[GraphObject, ...]|None=None, oute
       ret.errors.append((x, f'{v.value} in "not {k}: {v.value}" must also be used without "not", to give it a value'))
   return ret
 
+def variableGroups(pat:Pattern) -> list[list[str]]:
+  '''
+  :param pat:
+  :type pat: Pattern
+  :returns: *pat*'s variables' names, in groups of those related to each
+    other: through its relations (and their types, if they're variables), its
+    isa links, its "distinct"s, and their constraints' value variables (eg:
+    "age: ?a" on two of them). Not through constants: ?a -likes-> fred and ?b
+    -likes-> fred don't relate ?a and ?b -- every ?a pairs with every ?b.
+    Each group is sorted; the groups are in order of their first names.
+  :rtype: list[list[str]]
+  '''
+  parent:dict[tuple[str, str], tuple[str, str]] = {}
+  def find(k:tuple[str, str]) -> tuple[str, str]:
+    while parent.setdefault(k, k) != k:
+      k = parent[k]
+    return k
+  def link(*xs:Any) -> None:
+    keys = [("var", x.name) for x in xs if isinstance(x, GraphObject) and x.isVariable()] \
+         + [("value", str(x)) for x in xs if isinstance(x, ValueVar)]
+    for k in keys[1:]:
+      parent[find(k)] = find(keys[0])
+    if keys:
+      find(keys[0])
+  for v in pat.variables:
+    link(v)
+  for t, s, d in pat.triples:
+    link(t, s, d)
+  for x, t in pat.types:
+    link(x, t)
+  for x, y in pat.distinct:
+    link(x, y)
+  for x, _, v in pat.constraints:
+    link(x, v.value if isinstance(v, Not) else v)
+  groups:dict[tuple[str, str], set[str]] = {}
+  for k in list(parent):
+    if k[0] == "var":
+      groups.setdefault(find(k), set()).add(k[1])
+  return sorted((sorted(g) for g in groups.values()), key=lambda g: g[0])
+
+def patternWarnings(pat:Pattern, part:str) -> list[tuple[str, tuple[Any, ...]]]:
+  '''
+  :param pat: A query's, rule's, definition's, constraint's or requirement's pattern.
+  :type pat: Pattern
+  :param part: What it is, for the message: eg: "antecedent", "condition".
+  :type part: str
+  :returns: A "pattern_disconnected" warning (violation code, args) if its
+    variables are in groups that aren't related to each other (see
+    *variableGroups()*): every match of one pairs with every match of the
+    others -- which is seldom meant (eg: "?x -likes-> fred" and "?y" pairs
+    each one who likes fred with everything). Else [].
+  :rtype: list[tuple[str, tuple[Any, ...]]]
+  '''
+  groups = variableGroups(pat)
+  if len(groups) < 2:
+    return []
+  return [("pattern_disconnected", (Sym(part), Sym(" | ".join(", ".join(g) for g in groups))))]
+
+def queryWarnings(context:GraphObject) -> list[str]:
+  '''
+  :param context: A query (or any context) about to be answered.
+  :type context: GraphObject
+  :returns: Warnings about its pattern (see *patternWarnings()*), as messages.
+  :rtype: list[str]
+  '''
+  return [_MESSAGES[code].format(context.name, *args) for code, args in patternWarnings(patternOf(context), "query")]
+
 @dataclass
 class RuleSpec:
   '''
@@ -512,6 +581,8 @@ class RuleSpec:
   "The consequent's variables the antecedent doesn't bind: a new object for each match (see *NewObject*)."
   problems:list[tuple[str, tuple[Any, ...]]] = field(default_factory=list)
   "(violation code, args): why the rule can't be used (it's skipped)."
+  warnings:list[tuple[str, tuple[Any, ...]]] = field(default_factory=list)
+  "(violation code, args): what may not be meant, reported as warnings -- the rule's still used (see *patternWarnings()*)."
 
 def ruleOf(rule:GraphObject) -> RuleSpec:
   '''
@@ -581,6 +652,7 @@ def _spec(rule:GraphObject, parts:tuple[GraphObject, ...]|None, consequentType:G
   '''
   m = rule.model
   spec = RuleSpec(rule, patternOf(rule, parts))
+  spec.warnings += patternWarnings(spec.pattern, "antecedent" if parts is None else " and ".join(p.name for p in parts))
   anteObjs = {id(v) for v in spec.pattern.variables}
   bound = {v.name for v in spec.pattern.variables}
   bound |= {v for _, _, v in spec.pattern.constraints if isinstance(v, ValueVar)}
@@ -695,6 +767,8 @@ class ConstraintSpec:
   "The message template ({0}: the subject; {1}...: the args), or None for the code's (see *_MESSAGES*)."
   problems:list[tuple[str, tuple[Any, ...]]] = field(default_factory=list)
   "(violation code, args): why the constraint can't be used (it's skipped)."
+  warnings:list[tuple[str, tuple[Any, ...]]] = field(default_factory=list)
+  "(violation code, args): what may not be meant, reported as warnings -- the constraint's still used (see *patternWarnings()*)."
 
 CONSTRAINT_ATTRIBUTES:dict[str, str] = {
   "code":     "The code of the violations it reports (default: the constraint's name).",
@@ -731,10 +805,18 @@ def constraintOf(constraint:GraphObject) -> ConstraintSpec:
   spec.problems += [("bad_constraints", (x, err)) for x, err in pat.errors]
   m = constraint.model
   if constraint.isa(m.REQUIREMENT):
+    spec.warnings += patternWarnings(pat, "condition")
     req = spec.required = patternOf(constraint, (m.REQUIRED,), outer=pat)
     spec.problems += [("bad_constraints", (x, err)) for x, err in req.errors]
     if not (req.variables or req.triples or req.types or req.distinct):
       spec.problems.append(("requirement_empty", ()))
+    condition = {v.name for v in pat.variables} | {str(v) for _, _, v in pat.constraints if isinstance(v, ValueVar)}
+    for g in variableGroups(req): # (a part related to none of the condition's variables: it can't fail for one match and not another)
+      if not condition & set(g) and not any(isinstance(v, ValueVar) and str(v) in condition
+                                            for x, _, v in req.constraints if x.name in g):
+        spec.warnings.append(("requirement_unanchored", (Sym(", ".join(g)),)))
+  else:
+    spec.warnings += patternWarnings(pat, "pattern")
   if spec.severity not in ("error", "warning"):
     spec.problems.append(("constraint_severity", (spec.severity,)))
   byName = {v.name: v for v in pat.variables}

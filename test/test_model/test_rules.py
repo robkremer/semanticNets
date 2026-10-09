@@ -559,6 +559,43 @@ class TestRules(unittest.TestCase):
     self.assertIn(q, [s.constraint for s in constraintSpecs(list(self.m.values()))])
     self.assertEqual([x.name for x in patternOf(q).variables], ["?p"])
 
+  def test0970unconnectedPatterns(self):
+    'Parts of a pattern unrelated to each other pair up every way: a warning (the rule or constraint is still used).'
+    from sn.model.reasoner import variableGroups, patternOf, queryWarnings
+    fred = self.p["fred"]
+    # a query: ?x likes fred, and ?y (anyone): unrelated -- even though both are about fred
+    q = Node(self.m, [self.m.QUERY], individual=True, name="q")
+    X, Y, Z = self.var("?x"), self.var("?y"), self.var("?z")
+    for x in (X, Y, self.rel(self.likes, X, fred), self.rel(self.likes, Z, fred)):
+      self.rel(self.m.CONTAINS, q, x)
+    self.assertEqual(variableGroups(patternOf(q)), [["?x"], ["?y"], ["?z"]])
+    self.assertEqual(len(queryWarnings(q)), 1)
+    self.assertIn("?x | ?y | ?z", queryWarnings(q)[0])
+    A, B = self.var("?a"), self.var("?b")
+    A["constraints"] = "age: ?n"; B["constraints"] = "age: ?n"                # (related by a value variable)
+    q2 = Node(self.m, [self.m.QUERY], individual=True, name="q2")
+    for x in (A, B):
+      self.rel(self.m.CONTAINS, q2, x)
+    self.assertEqual(variableGroups(patternOf(q2)), [["?a", "?b"]])
+    self.assertEqual(queryWarnings(q2), [])
+    # a rule: warned, and used
+    self.rel(self.likes, self.p["alice"], fred)
+    P, O, P2, O2 = self.var("?p"), self.var("?o", self.person), self.var("?p"), self.var("?o")
+    r = self.rule("likers like everyone", [self.rel(self.likes, P, fred), O], [self.rel(self.likes, P2, O2)])
+    res = self.reason()
+    self.assertIn(("pattern_disconnected", "likers like everyone"), {(v.code, v.subject.name) for v in res.violations})
+    self.assertIn(("alice", "bob"), self.pairs(res.holds, self.likes))
+    # a constraint
+    C1, C2 = self.var("?c1"), self.var("?c2")
+    c = self.constraint("unrelated", [self.rel(self.likes, C1, fred), C2], report="?c1")
+    self.assertTrue(any(v.code == "pattern_disconnected" and v.subject is c for v in self.reason().violations))
+    # a requirement: its condition, and a required part related to none of it
+    S, S2, Q = self.var("?s", self.person), self.var("?s"), self.var("?q")
+    req = self.requirement("someone's a parent", [S], [S2, self.rel(self.parent, Q, self.var("?r"))])
+    codes = {v.code for v in self.reason().violations if v.subject is req}
+    self.assertIn("requirement_unanchored", codes)
+    self.assertNotIn("pattern_disconnected", codes)
+
   def test0930systemRules(self):
     'The base rules\' conclusions are plain inferences -- unless showSysRules.'
     self.rel(self.sib, self.p["alice"], self.p["bob"])
