@@ -87,7 +87,7 @@ from contextlib import contextmanager, ExitStack
 from util.observer import Subject
 import sn
 from sn.model.model import Model, GraphObject, Node, Collection, Relation, IsaIndividual
-from util.attribute import Attribute, Restriction
+from util.attribute import Attribute, Restriction, coerceValue
 from sn.model.constraints import CONSTRAINTS, PRESENT, ValueVar, Not, constraintItems
 from sn.model import names
 
@@ -1606,13 +1606,14 @@ def materialize(model:Model, inferences:Inferences, models:list[Model]) -> None:
     for x, k, v in wantAttrs.values():
       local = x.getLocalAttr(k)
       try:
+        inh = x._getSuperAttr(k)
+        v = coerceValue(inh.type if inh is not None else None, v) # (eg: 30 for a float: 30.0)
         if local is None:
           if x.get(k, None) == v: # (it has that value already: inherited)
             continue
-          inh = x._getSuperAttr(k)
-          x.setAttr(k, Attribute(v, inh.type if inh is not None else type(v),
-                                 inh.restriction if inh is not None and inh.restriction is not None else Restriction.fromstring("VAR"),
-                                 inferred=True))
+          # an inherited attribute's type (and restrictions) are its type's: the value is just a value
+          x.setAttr(k, Attribute(v, None, None, inferred=True) if inh is not None else
+                       Attribute(v, type(v), Restriction.fromstring("VAR"), inferred=True))
         elif local.inferred and local.value != v:
           local.value = v
           x.notify(("mod attribute", (k, v)))

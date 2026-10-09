@@ -333,6 +333,27 @@ class TestRules(unittest.TestCase):
     clearReasoning(m)
     self.assertIsNone(dave.getLocalAttr("gender"))                # retracted
 
+  def test0806inferredValuesOfInheritedAttributes(self):
+    'A concluded value of an attribute a type declares takes the type\'s type (made one, if need be): eg: a colour, or a number.'
+    from sn.model.reasoner import reason
+    from util.attribute import Attribute, Restriction
+    m, p = self.m, self.p
+    self.person["vis/borderColor"] = "black"                      # (declared, as a colour, by node)
+    self.person.setAttr("height", Attribute(1.5, float, Restriction.fromstring("VAR")))
+    p["fred"]["gender"] = "male"
+    X, X2 = self.var("?p"), self.var("?p")
+    X["constraints"] = "gender: male"
+    X2["constraints"] = "vis/borderColor: blue, height: 2"        # (2: an int, for a float)
+    self.rule("gender: male color", [X], [X2])
+    reason(m)
+    fred = p["fred"]
+    self.assertEqual(fred["vis/borderColor"], "blue")
+    self.assertTrue(fred.getLocalAttr("vis/borderColor").inferred)
+    self.assertEqual(fred.getAttr("vis/borderColor").type, "color")  # (the type's)
+    self.assertEqual(fred["height"], 2.0)
+    self.assertIsInstance(fred["height"], float)
+    self.assertEqual(p["alice"]["vis/borderColor"], "black")       # (not male)
+
   def test0810typeDefinition(self):
     'x isa bachelor  <=>  x isa man, x {married: false}: classification both ways.'
     m = self.m
