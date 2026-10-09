@@ -18,6 +18,7 @@ Submodules
    sn.view.graphics.connectors
    sn.view.graphics.decorators
    sn.view.graphics.guiApp
+   sn.view.graphics.imageExport
    sn.view.graphics.labels
    sn.view.graphics.layout
    sn.view.graphics.shapes

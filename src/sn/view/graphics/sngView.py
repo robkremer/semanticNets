@@ -78,6 +78,7 @@ KEY_REPAINT =               ('<Command-KeyPress-r>'       , 'cmd+r')
 KEY_CUT =                   ('<Command-KeyPress-x>'       , 'Command-X')
 KEY_COPY =                  ('<Command-KeyPress-c>'       , 'Command-C')
 KEY_PASTE =                 ('<Command-KeyPress-v>'       , 'Command-V')
+KEY_COPY_IMAGE =            ('<Shift-Command-KeyPress-C>' , 'Shift-Command-C')
 KEY_CLEAR_HIGHLIGHTS =      ('<Escape>'                   , 'esc')
 KEY_VALIDATE =              ('<Command-KeyPress-v>'       , 'cmd+v')
 KEY_TOGGLE_FIELDS_LAYOUT =  ('<Command-KeyPress-f>'       , 'cmd+f')
@@ -1265,6 +1266,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     addToMenuBar("Edit|Cut", lambda: self._editAction("cut"), accelerator=KEY_CUT[1], cascadePositions={"Edit": self._afterFileMenu()})
     addToMenuBar("Edit|Copy", lambda: self._editAction("copy"), accelerator=KEY_COPY[1])
     addToMenuBar("Edit|Paste", lambda: self._editAction("paste"), accelerator=KEY_PASTE[1])
+    addToMenuBar("Edit|Copy as picture", lambda: self._editAction("copy image"), accelerator=KEY_COPY_IMAGE[1])
     addToMenuBar("Edit|Model preferences...", self.doModelPreferences, separatorBefore=True)
     addCheckToMenuBar("View|Animation toolbar", self._animationToolbarShown(), self._onAnimationToolbarItem,
                       cascadePositions={"View": self._afterFileMenu() + 1}) # (after "Edit", made just above)
@@ -1295,6 +1297,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     removeFromMenuBar("Edit|Cut")
     removeFromMenuBar("Edit|Copy")
     removeFromMenuBar("Edit|Paste")
+    removeFromMenuBar("Edit|Copy as picture")
     removeFromMenuBar("Edit|Model preferences...")
     removeFromMenuBar("File|Close model")
     removeFromMenuBar("File|Open super model")
@@ -1935,13 +1938,16 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   def _editAction(self, action:str) -> None:
     '''
     "Edit | Cut", "Copy" or "Paste" in the menu bar: for the terminal's text,
-    if that has the keyboard focus, else for the canvas.
+    if that has the keyboard focus, else for the canvas. ("Copy as picture" is
+    always the canvas's: see *doCopyImage()*.)
 
-    :param action: "cut", "copy" or "paste".
+    :param action: "cut", "copy", "paste" or "copy image".
     :type action: str
     '''
     w = self.canvas.focus_get()
-    if isinstance(w, (tk.Text, tk.Entry)):
+    if action == "copy image":
+      self.doCopyImage()
+    elif isinstance(w, (tk.Text, tk.Entry)):
       w.event_generate(f"<<{action.capitalize()}>>")
     elif action == "paste":
       self.doPaste()
@@ -1962,6 +1968,58 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     self._editAction(action)
     self.addEventHandled(event)
     return "break"
+
+  def pictureObjects(self) -> list[VObject]:
+    '''
+    :returns: What a picture of the selection shows (see *doCopyImage()*):
+      what's selected, what's in any selected context windows (at any depth),
+      and the relations between any of those -- as far as they're shown.
+    :rtype: list[VObject]
+    '''
+    ret:list[VObject] = []
+    def add(vo:VObject) -> None:
+      if vo in ret or not vo._isConnected() or vo.isHidden():
+        return
+      ret.append(vo)
+      for c in vo.carriedContents():
+        add(c)
+    for vo in self.selected:
+      add(vo)
+    more = True
+    while more: # (relations between them -- and between those)
+      more = False
+      for vo in self.values():
+        if isinstance(vo, VRelation) and vo not in ret and vo.src in ret and vo.dst in ret and vo._isConnected() and not vo.isHidden():
+          ret.append(vo)
+          more = True
+    return ret
+
+  def doCopyImage(self) -> None:
+    '''
+    Put a picture of what's selected (see *pictureObjects()*), as it's drawn
+    (but without the selection's handles), on the system clipboard, as a PNG:
+    to paste into another program (see *imageExport*).
+    '''
+    from sn.view.graphics.imageExport import copyImage
+    vos = self.pictureObjects()
+    if not vos:
+      logger.warning("Nothing is selected to copy as a picture.")
+      return
+    selected = list(self.selected)
+    for vo in selected:
+      vo.selected(False)
+    try:
+      self.canvas.update_idletasks()
+      tags = {vo.tag for vo in vos}
+      items = [i for i in self.canvas.find_all() if tags.intersection(self.canvas.gettags(i))]
+      w, h = copyImage(self.canvas, items)
+      print(f"Copied a picture of {len(vos)} object{'' if len(vos) == 1 else 's'} ({w}\u00d7{h}), to paste into another program.")
+    except Exception as ex:
+      logger.error(f"Can't copy a picture: {ex}")
+    finally:
+      for vo in selected:
+        if vo._isConnected():
+          vo.selected(True, _multi=True)
 
   PASTE_GAP = 40
   "The space (view units) left between pasted objects and what's beside them (see *_pasteOffset()*)."
@@ -2321,6 +2379,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     self.canvas.bind(KEY_CUT[0], lambda e: self.onEditKey(e, "cut"))
     self.canvas.bind(KEY_COPY[0], lambda e: self.onEditKey(e, "copy"))
     self.canvas.bind(KEY_PASTE[0], lambda e: self.onEditKey(e, "paste"))
+    self.canvas.bind(KEY_COPY_IMAGE[0], lambda e: self.onEditKey(e, "copy image"))
 
     # repaint
     self.canvas.bind(KEY_REPAINT[0], self.repaint)

@@ -114,6 +114,14 @@ first).
 Cut and paste can be undone. In the terminal pane, **Cmd-C** and **Cmd-V**
 copy and paste text, as usual.
 
+**Shift-Cmd-C** (**Edit | Copy as picture**, or **copy as picture** in an
+object's menu) copies a *picture* of what's selected instead -- with what any
+selected context windows contain, and the relations between the selected
+objects -- to paste into another program: eg: a rule into Messages, or into
+Preview (**File | New from Clipboard**). It's drawn as it is on the canvas
+(without the selection handles), at twice the size, so it's sharp on a Retina
+screen.
+
 Validation
 ----------
 

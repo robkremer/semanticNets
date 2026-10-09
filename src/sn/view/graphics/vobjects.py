@@ -1447,18 +1447,25 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
                        command=lambda: self.view.context.remove(self.modelObject))
     menu.add_command(label="cut", state=tk.DISABLED if disabled or remote else tk.NORMAL, command=lambda: self.copySelection(cut=True))
     menu.add_command(label="copy", command=self.copySelection)
+    menu.add_command(label="copy as picture", command=lambda: self.copySelection(picture=True))
     menu.add_separator()
 
-  def copySelection(self, cut:bool=False) -> None:
+  def copySelection(self, cut:bool=False, picture:bool=False) -> None:
     '''
-    Copy (or cut) what's selected, if this is; else just this (see *SNGView.doCopy()*).
+    Copy (or cut) what's selected, if this is; else just this (see
+    *SNGView.doCopy()*) -- or copy a picture of it (see *SNGView.doCopyImage()*).
 
     :param cut:
     :type cut: bool
+    :param picture:
+    :type picture: bool
     '''
     if not self.selected():
       self.selected(True)
-    self.view.doCopy(cut=cut)
+    if picture:
+      self.view.doCopyImage()
+    else:
+      self.view.doCopy(cut=cut)
       
   def highlight(self, on:bool|None=None, negative:bool=False) -> bool:
     '''
