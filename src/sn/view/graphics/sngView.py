@@ -3113,6 +3113,37 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       return d
     for w in sorted(windows, key=depth, reverse=True): # (the innermost lowered first: the outermost ends up at the bottom)
       self.canvas.tag_lower(w.tag)
+    # the shadows on a window go just in front of it (see placeShadow()): the outermost first, so the innermost wins
+    c = self.canvas
+    for w in sorted(windows, key=depth):
+      frame = w._shape.id if w._shape is not None else None
+      bb = c.bbox(frame) if frame is not None else None
+      if bb:
+        for item in c.find_overlapping(*bb):
+          tags = c.gettags(item)
+          if "shadow" in tags and w.tag not in tags:
+            c.tag_raise(item, frame)
+
+  def placeShadow(self, item:int, ownerTag:str) -> None:
+    '''
+    Stack a type's shadow (canvas *item*: see *decorators.ShadowDecorator*)
+    behind everything -- but just in front of the topmost context window it's
+    on (other than its owner's, tagged *ownerTag*), so the window doesn't hide
+    it (windows are beneath everything: see *restackWindows()*). One spatial
+    query (find_overlapping()) per shadow.
+
+    :param item:
+    :type item: int
+    :param ownerTag: The tag of the view object it's the shadow of.
+    :type ownerTag: str
+    '''
+    c = self.canvas
+    bb = c.bbox(item)
+    frames = [i for i in c.find_overlapping(*bb) if "context-frame" in (tags := c.gettags(i)) and ownerTag not in tags] if bb else []
+    if frames:
+      c.tag_raise(item, frames[-1]) # (find_overlapping() gives them bottom to top)
+    else:
+      c.tag_lower(item)
 
   def _containable(self, vo:VObject) -> bool:
     '''

@@ -1189,11 +1189,9 @@ class ShadowDecorator(Decorator):
         self.owner.canvas.coords(self.id, self.owner.view.viewToWindow(pts))
         self.owner.canvas.itemconfigure(self.id, **self.kwargs)
 
-    # Always re-assert absolute-bottom stacking: tag_lower() with a single
-    # argument moves this item to the bottom of the *whole* canvas, so this
-    # is enough to keep every shadow behind every real shape and decorator,
-    # with no need to coordinate across VObjects.
-    self.owner.canvas.tag_lower(self.id)
+    # Behind everything -- but in front of any context window it's on, which
+    # would otherwise hide it (see SNGView.placeShadow()).
+    self.owner.view.placeShadow(self.id, self.owner.tag)
 
   @override
   def delete(self):
