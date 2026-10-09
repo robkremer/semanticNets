@@ -37,6 +37,9 @@ Making and changing things:
                        two objects (eg: ``assert fred likes mary``)
 ``reconnect``          change a relation's source or destination
 ``remove``             delete an object from the model
+``copy``, ``cut``      copy objects (and what they contain) to be pasted;
+                       ``cut`` deletes them too
+``paste``              make copies of what was copied, as new objects
 ``set attribute``      set an object's attribute
 ``delete attribute``   remove an object's attribute
 ``set kind``           make an object an individual or a type: ``set kind

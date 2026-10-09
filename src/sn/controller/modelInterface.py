@@ -25,6 +25,7 @@ import builtins
 import sn
 from sn.model.model import GraphObject, Model, Node, Relation, GORef,\
   Collection, IsaIndividual
+from sn.model import copying
 #import util.persistence.pRef as pRef
 #from util.persistence.pRef import PReference
 import logging
@@ -106,6 +107,39 @@ def _refuseInferred(doing:str, *objects:Any) -> None:
   for o in objects:
     if getattr(o, "inferred", False):
       raise PermissionError(f'"{o.name}" is inferred: mark it as asserted to {doing} it.')
+
+def _decodeObjects(objects:list[Any]|GraphObject|str, model:Model|None) -> list[GraphObject]:
+  '''
+  :param objects: Objects, or their names or references as typed (eg: "fred", "#12").
+  :type objects: list[Any] | GraphObject | str
+  :param model: The model to look names up in.
+  :type model: Model | None
+  :returns: The objects.
+  :rtype: list[GraphObject]
+  :raises ValueError: If a name isn't an object's.
+  '''
+  ret:list[GraphObject] = []
+  for o in objects if isinstance(objects, list) else [objects]:
+    if isinstance(o, str):
+      found = GORef.eval(o, model)
+      if not isinstance(found, GraphObject):
+        raise ValueError(f'"{o}" isn\'t an object\'s name.')
+      o = found
+    ret.append(o)
+  return ret
+
+def _describe(clip:copying.Clip) -> str:
+  '''
+  :param clip:
+  :type clip: copying.Clip
+  :returns: What *clip* holds, for a message: eg: '"uncle rule" (and the 8 objects it contains)'.
+  :rtype: str
+  '''
+  names = ", ".join(f'"{clip.entries[i].original.name}"' for i in clip.selected[:4]) + (", ..." if len(clip.selected) > 4 else "")
+  contains = clip.model.CONTAINS
+  more = sum(1 for i, e in enumerate(clip.entries) # (what their contexts contain: not the containment relations, nor isa links)
+             if i not in clip.selected and e.kind != "isa" and not (e.kind == "relation" and e.original.isa(contains)))
+  return names + (f' (and the {more} object{"" if more == 1 else "s"} {"it contains" if len(clip.selected) == 1 else "they contain"})' if more else "")
 
 class ModelContext(CommandContext):
   commandSynonyms:dict[str, Iterable[str]] = {
@@ -1157,6 +1191,147 @@ class ModelContext(CommandContext):
       :rtype:
       '''
       return f'{super().__str__()} {self.object.getPRef().tostring()}'
+
+  def copy(self, objects:list[GraphObject], /, model:Model|None=None) -> str:
+    '''
+    Copy objects to the clipboard, to paste as new objects (see *paste*):
+    with a context's contents, and each object's isa links (see
+    *sn.model.copying*). What's pasted is what they are now, whatever happens
+    to them meanwhile. Not undoable: it changes nothing.
+
+    :param objects: The objects to copy.
+    :type objects: list[GraphObject]
+    :param model: The model to look up the objects' names in. Default: the current model.
+    :type model: Model
+    :returns: What was copied.
+    :rtype: str
+    '''
+    clip = copying.copyObjects(_decodeObjects(objects, model or self.defaults.get("model")))
+    copying.clipboard = clip
+    return f'Copied {_describe(clip)}.'
+
+  def cut(self, objects:list[GraphObject], /, model:Model|None=None):
+    '''
+    Copy objects to the clipboard (see *copy*), and remove them from the
+    model -- a context with its contents (except those another context
+    contains too). Undoing it puts them back (the clipboard keeps the copy).
+
+    :param objects: The objects to cut.
+    :type objects: list[GraphObject]
+    :param model: The model they must be in. Default: the current model.
+    :type model: Model
+    '''
+    pass
+
+  class _Cut(Command):
+    def __init__(self, objects:list[GraphObject], /, model:Model|None=None):
+      '''
+      Copy objects to the clipboard, and remove them from the model -- a
+      context with its contents.
+
+      :param objects:
+      :type objects: list[GraphObject]
+      :param model:
+      :type model: Model | None
+      '''
+      super().__init__("cut")
+      objects = _decodeObjects(objects, model)
+      _refuseInferred("cut", *objects)
+      for o in objects:
+        if model is not None and o.model is not model:
+          raise PermissionError(f'"{o.name}" is in "{o.model.name}", not "{model.name}": it can be copied, but not cut.')
+        if o.model.writeLocked():
+          raise PermissionError(f'"{o.model.name}" is write locked: "{o.name}" can be copied, but not cut.')
+      self.clip:copying.Clip = copying.copyObjects(objects)
+      self.objects:list[GraphObject] = copying.cutObjects(self.clip)
+      self.removed:list[GraphObject] = []
+
+    @override
+    def do(self) -> str:
+      super().do()
+      copying.clipboard = self.clip
+      self.removed = copying.removeObjects(self.objects)
+      return f'Cut {_describe(self.clip)}.'
+
+    @override
+    def undo(self):
+      super().undo()
+      copying.restoreObjects(self.removed)
+
+    @override
+    def delete(self):
+      super().delete()
+      self.objects = self.removed = []
+
+    @override
+    def __str__(self):
+      '''
+      :returns: A readable string for this object.
+      :rtype: str
+      '''
+      return f'{super().__str__()} {" ".join(o.getPRef().tostring() for o in self.objects)}'
+
+  def paste(self, /, model:Model|None=None):
+    '''
+    Make new objects in the model -- with new ids -- copying what was last cut
+    or copied (see *copy*). The copies have the originals' types, and relate
+    what the originals did (or its copy, if that was copied too), so that must
+    all be in the model, or in a model it builds on.
+
+    :param model: The Model to paste into. Default: the current model.
+    :type model: Model
+    '''
+    pass
+
+  class _Paste(Command):
+    def __init__(self, /, model:Model|None=None):
+      '''
+      Make new objects in the model, copying what was last cut or copied.
+
+      :param model:
+      :type model: Model | None
+      '''
+      super().__init__("paste")
+      assert model is not None, "There is no Model specified."
+      problem = copying.pasteProblem(copying.clipboard, model)
+      if problem is not None:
+        raise ValueError(problem)
+      assert copying.clipboard is not None
+      self.clip:copying.Clip = copying.clipboard
+      self.model:Model = model
+      self.made:list[GraphObject]|None = None
+      'The copies, by clip entry (see *copying.pasteInto()*), once made.'
+      self.removed:list[GraphObject] = []
+
+    @override
+    def do(self) -> list[GraphObject]:
+      super().do()
+      if self.made is None:
+        self.made = copying.pasteInto(self.clip, self.model)
+      else:
+        with Subject.ChangeMgr(self.model, later=True):
+          copying.restoreObjects(self.removed)
+      return self.made
+
+    @override
+    def undo(self):
+      super().undo()
+      assert self.made is not None
+      with Subject.ChangeMgr(self.model, later=True):
+        self.removed = copying.removeObjects(reversed(self.made))
+
+    @override
+    def delete(self):
+      super().delete()
+      self.made, self.removed = None, []
+
+    @override
+    def __str__(self):
+      '''
+      :returns: A readable string for this object.
+      :rtype: str
+      '''
+      return f'{super().__str__()} --model="{self.model.url}"'
 
   def set_kind(self, object:GraphObject, kind:str):
     '''

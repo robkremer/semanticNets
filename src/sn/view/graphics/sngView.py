@@ -75,6 +75,9 @@ import tkinter as tk
 KEY_UNDO =                  ('<Command-KeyPress-z>'       , 'cmd+z')
 KEY_REDO =                  ('<Shift-Command-KeyPress-Z>' , 'shift+cmd+Z')
 KEY_REPAINT =               ('<Command-KeyPress-r>'       , 'cmd+r')
+KEY_CUT =                   ('<Command-KeyPress-x>'       , 'Command-X')
+KEY_COPY =                  ('<Command-KeyPress-c>'       , 'Command-C')
+KEY_PASTE =                 ('<Command-KeyPress-v>'       , 'Command-V')
 KEY_CLEAR_HIGHLIGHTS =      ('<Escape>'                   , 'esc')
 KEY_VALIDATE =              ('<Command-KeyPress-v>'       , 'cmd+v')
 KEY_TOGGLE_FIELDS_LAYOUT =  ('<Command-KeyPress-f>'       , 'cmd+f')
@@ -514,6 +517,55 @@ class SNGContext(UIContext):
       '''
       return f'{super().__str__()} {self.objects[0].getPRef().tostring()}'
 
+
+  @override
+  def paste(self, /, model:Model|None=None, x:int|None=None, y:int|None=None):
+    '''
+    Make new objects in the model -- with new ids -- copying what was last cut
+    or copied (see *ModelContext.paste()*), and show them in this view as the
+    originals were shown (see *SNGView.showPasted()*): where they were, or
+    beside them if that's taken -- or with their top left at (*x*, *y*).
+
+    :param model: The Model to paste into. Default: the current model.
+    :type model: Model
+    :param x: Where to put them (view coords), with *y*.
+    :type x: int | None
+    :param y:
+    :type y: int | None
+    '''
+    pass
+
+  class _Paste(ModelContext._Paste):
+    def __init__(self, /, model:Model|None=None, x:int|None=None, y:int|None=None, view:SNGView|None=None):
+      '''
+      Make new objects in the model, copying what was last cut or copied, and
+      show them as the originals were shown.
+
+      :param model:
+      :type model: Model | None
+      :param x:
+      :type x: int | None
+      :param y:
+      :type y: int | None
+      :param view:
+      :type view: SNGView | None
+      '''
+      super().__init__(model=model)
+      self.view:SNGView|None = view
+      self.at:tuple[int, int]|None = None if x is None or y is None else (int(x), int(y))
+
+    @override
+    def do(self) -> list[GraphObject]:
+      first = self.made is None
+      ret = super().do()
+      if first and self.view is not None and self.model is self.view.model: # (not if it's pasted into another model)
+        self.view.showPasted(self.clip, ret, self.at)
+      return ret
+
+    @override
+    def delete(self):
+      super().delete()
+      self.view = None
 
   def visibility(self, category:str, mode:str="hide"):
     '''
@@ -1210,7 +1262,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     addToMenuBar("File|Save model as...", self.doSaveModelAs)
     addToMenuBar("File|Close model", self.doCloseModel, separatorBefore=True) # (after the saves)
     addToMenuBar("File|Open super model", menu=self._superModelsMenu())
-    addToMenuBar("Edit|Model preferences...", self.doModelPreferences, cascadePositions={"Edit": self._afterFileMenu()})
+    addToMenuBar("Edit|Cut", lambda: self._editAction("cut"), accelerator=KEY_CUT[1], cascadePositions={"Edit": self._afterFileMenu()})
+    addToMenuBar("Edit|Copy", lambda: self._editAction("copy"), accelerator=KEY_COPY[1])
+    addToMenuBar("Edit|Paste", lambda: self._editAction("paste"), accelerator=KEY_PASTE[1])
+    addToMenuBar("Edit|Model preferences...", self.doModelPreferences, separatorBefore=True)
     addCheckToMenuBar("View|Animation toolbar", self._animationToolbarShown(), self._onAnimationToolbarItem,
                       cascadePositions={"View": self._afterFileMenu() + 1}) # (after "Edit", made just above)
     addCheckToMenuBar("View|Reasoning toolbar", self._reasoningToolbarShown(),
@@ -1237,6 +1292,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     removeFromMenuBar("File|Save view as...")
     removeFromMenuBar("File|Save model")
     removeFromMenuBar("File|Save model as...")
+    removeFromMenuBar("Edit|Cut")
+    removeFromMenuBar("Edit|Copy")
+    removeFromMenuBar("Edit|Paste")
     removeFromMenuBar("Edit|Model preferences...")
     removeFromMenuBar("File|Close model")
     removeFromMenuBar("File|Open super model")
@@ -1539,17 +1597,20 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         case ['new', topicData]:
           modelID = topicData[0]
           
-          # if this is one we've seen before, just restore it
+          # if this is one we've seen before, just restore it (unless that was done already: an
+          # object's relations come back with it -- eg: when a paste or a cut is redone)
           if modelID in self._deletedGraphObjectsCache:
             vObject:VObject = self._deletedGraphObjectsCache[modelID]
-            vObject._reconnect()
-            return
+            if not vObject._isConnected():
+              vObject._reconnect()
+            continue
           
           modelObj = topicData[1]
           if getattr(modelObj, "inferred", False): # (what "reason" concluded: shown when it's done -- see _showInferred())
             continue
+          pasted = self.__dict__.get("_pasting", {}).pop(id(modelObj), None) is not None # (see showPasted())
           logger.info(f'  Creating V{modelObj.__class__.__name__} for model object {modelObj}:{modelObj.__class__.__name__}')
-          if (modelObj.isType() or isinstance(modelObj, Node)) and self.canvas: 
+          if (modelObj.isType() or isinstance(modelObj, Node)) and self.canvas and not pasted: 
             applyEditAttrsBox(self.canvas, modelObj, title=modelObj.name, editKey="name")
             # a variable's name may be typed with constraints: "?p :where: alive" (see sn.model.constraints)
             if WHERE in modelObj.name:
@@ -1587,7 +1648,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
           #   newObj = VIsa(self, modelObj)
           else:
             logger.error(f"VObject subtype not implemented for model type {typ.__name__}.")
-          if newObj is not None: # (made just now, in a hidden category: shown anyway -- see _exemptIfFiltered())
+          if newObj is not None and not pasted: # (made just now, in a hidden category: shown anyway -- see _exemptIfFiltered())
             self._exemptIfFiltered(newObj)
   
         # elif topicName == 'del GraphObject':
@@ -1791,6 +1852,229 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     cx, cy = vo.centerPt()
     within = seen if c.winfo_width() > 1 and seen[0] <= cx <= seen[2] and seen[1] <= cy <= seen[3] else None # (on screen: kept there)
     self.localLayout(vo, referenceNode=under, direction=Direction.SUB if under is not None else Direction.NEAREST, within=within)
+
+  # ---- Cut, copy and paste ---------------------------------------------------
+
+  def _selectedModelObjects(self) -> list[GraphObject]:
+    '''
+    :returns: The model objects of what's selected, in the order they're drawn
+      (top to bottom, left to right).
+    :rtype: list[GraphObject]
+    '''
+    vos = sorted((vo for vo in self.selected if vo._isConnected() and vo.modelObject is not None),
+                 key=lambda vo: (vo.boundingBox()[1], vo.boundingBox()[0]))
+    return [vo.modelObject for vo in vos] #type: ignore[misc]
+
+  def _geometryOf(self, objects:Iterable[GraphObject]) -> dict[int, dict[str, Any]]:
+    '''
+    :param objects: Model objects.
+    :type objects: Iterable[GraphObject]
+    :returns: How this view shows each of *objects* that it shows (by *id()*
+      of the object): what *showPasted()* needs to show a copy of it the same
+      way (see *copying.Clip.geometry*).
+    :rtype: dict[int, dict[str, Any]]
+    '''
+    ret:dict[int, dict[str, Any]] = {}
+    for mo in objects:
+      vo = self.findViewObjectForGraphObject(mo)
+      if vo is None or not vo._isConnected():
+        continue
+      g:dict[str, Any] = {"bb": [int(v) for v in vo.boundingBox()], "userSized": vo.userSized,
+                          "filtered": self.isFiltered(mo) and not vo.categoryExempt} # (hidden by its category: so is the copy)
+      if isinstance(vo, VRelation):
+        g["floating"] = vo.floating()
+      if getattr(vo, "collapsed", False):
+        g["collapsed"], g["expandedHeight"] = True, getattr(vo, "expandedHeight", None)
+      ret[id(mo)] = g
+    return ret
+
+  def doCopy(self, cut:bool=False) -> None:
+    '''
+    Copy what's selected to the clipboard (see *ModelContext.copy()*), with how
+    this view shows it, so a paste shows the copies the same way (see
+    *showPasted()*). With *cut*, remove it from the model too (undoably).
+
+    :param cut:
+    :type cut: bool
+    '''
+    from sn.model import copying
+    objs = self._selectedModelObjects()
+    if not objs:
+      logger.warning(f'Nothing is selected to {"cut" if cut else "copy"}.')
+      return
+    geometry = self._geometryOf(copying.closure(objs)) # (now: once it's cut, it's not shown)
+    try:
+      msg = self.context.cut(objs) if cut else self.context.copy(objs)
+    except Exception as ex:
+      logger.error(f"Can't {'cut' if cut else 'copy'}: {ex}")
+      return
+    clip = copying.clipboard
+    if clip is not None:
+      clip.geometry = {i: geometry[id(e.original)] for i, e in enumerate(clip.entries) if id(e.original) in geometry}
+      clip.viewURL = self.url
+    if msg:
+      print(msg)
+
+  def doPaste(self, at:tuple[float, float]|None=None) -> None:
+    '''
+    Paste what was last cut or copied (see *ModelContext.paste()*), and show
+    it (see *showPasted()*).
+
+    :param at: Where to put it (view coords: the top left of what's pasted), or
+      None to put it where it was (or beside it, if that's taken).
+    :type at: tuple[float, float] | None
+    '''
+    try:
+      if at is None:
+        self.context.paste()
+      else:
+        self.context.paste(x=int(at[0]), y=int(at[1]))
+    except Exception as ex:
+      logger.error(f"Can't paste: {ex}")
+
+  def _editAction(self, action:str) -> None:
+    '''
+    "Edit | Cut", "Copy" or "Paste" in the menu bar: for the terminal's text,
+    if that has the keyboard focus, else for the canvas.
+
+    :param action: "cut", "copy" or "paste".
+    :type action: str
+    '''
+    w = self.canvas.focus_get()
+    if isinstance(w, (tk.Text, tk.Entry)):
+      w.event_generate(f"<<{action.capitalize()}>>")
+    elif action == "paste":
+      self.doPaste()
+    else:
+      self.doCopy(cut=action == "cut")
+
+  def onEditKey(self, event:tk.Event, action:str) -> str:
+    '''
+    Cmd-X, Cmd-C or Cmd-V on the canvas (see *_editAction()*).
+
+    :param event:
+    :type event: tk.Event
+    :param action: "cut", "copy" or "paste".
+    :type action: str
+    :returns: "break": it's been dealt with.
+    :rtype: str
+    '''
+    self._editAction(action)
+    self.addEventHandled(event)
+    return "break"
+
+  PASTE_GAP = 40
+  "The space (view units) left between pasted objects and what's beside them (see *_pasteOffset()*)."
+
+  def _pasteOffset(self, boxes:list[list[int]], at:tuple[int, int]|None) -> tuple[int, int]:
+    '''
+    :param boxes: Where the pasted objects were (their bounding boxes).
+    :type boxes: list[list[int]]
+    :param at: Where the top left of them all is to go, or None.
+    :type at: tuple[int, int] | None
+    :returns: How far to move them from where they were: to *at*; else not at
+      all, if nothing's there now (eg: they were cut, or copied from another
+      view); else the least distance to the right or down to where nothing is.
+    :rtype: tuple[int, int]
+    '''
+    if not boxes:
+      return 0, 0
+    x1, y1 = min(b[0] for b in boxes), min(b[1] for b in boxes)
+    x2, y2 = max(b[2] for b in boxes), max(b[3] for b in boxes)
+    if at is not None:
+      return int(at[0] - x1), int(at[1] - y1)
+    others = [vo.boundingBox() for vo in self.values() if vo is not None and vo._isConnected() and not vo.isHidden()]
+    def free(dx:int, dy:int) -> bool: # (with room around it -- except where it was: what's near that was near it)
+      g = self.PASTE_GAP // 2 if (dx, dy) != (0, 0) else 0
+      return not any(b[0] < x2 + dx + g and x1 + dx - g < b[2] and b[1] < y2 + dy + g and y1 + dy - g < b[3] for b in others)
+    w, h = int(x2 - x1) + self.PASTE_GAP, int(y2 - y1) + self.PASTE_GAP
+    for k in range(50):
+      for d in ((0, 0),) if k == 0 else ((k * w, 0), (0, k * h)):
+        if free(*d):
+          return d
+    return w, 0
+
+  def showPasted(self, clip:Any, made:list[GraphObject], at:tuple[int, int]|None=None) -> None:
+    '''
+    Show the objects just pasted (by *SNGContext.paste()*) as the view they were
+    copied from showed them (see *copying.Clip.geometry*): the same sizes and
+    layout -- a pasted rule's window with its contents in place -- moved
+    together (see *_pasteOffset()*). What wasn't shown there (eg: an erased isa
+    link) is shown, or not, as any new object is (see *update()*), but without
+    asking for its name. Then what was asked to be copied is selected, so it
+    can be dragged away at once.
+
+    :param clip: What was pasted (a *copying.Clip*).
+    :type clip: copying.Clip
+    :param made: The new objects, by entry of *clip* (see *copying.pasteInto()*).
+    :type made: list[GraphObject]
+    :param at: Where to put the top left of them all (view coords), or None.
+    :type at: tuple[int, int] | None
+    '''
+    from sn.view.graphics.vnodes import VNode
+    pending = self.__dict__.setdefault("_pasting", {}) # (for update(): see there)
+    for mo in made:
+      pending[id(mo)] = mo
+    dx, dy = self._pasteOffset([g["bb"] for g in clip.geometry.values()], at)
+    shown:dict[int, VObject] = {}
+    for i in sorted(range(len(made)), key=lambda i: clip.entries[i].kind != "node"): # (nodes first: they're relations' ends)
+      mo, g = made[i], clip.geometry.get(i)
+      if g is None:
+        continue
+      x1, y1, x2, y2 = g["bb"][0] + dx, g["bb"][1] + dy, g["bb"][2] + dx, g["bb"][3] + dy
+      vo = self.findViewObjectForGraphObject(mo)
+      if vo is None and isinstance(mo, Relation):
+        vo = VRelation(self, mo, x=x1, y=y1, x1=x2, y1=y2, floating=g.get("floating"))
+      elif vo is None:
+        vo = VNode(self, mo, x=x1, y=y1, x1=x2, y1=y2)
+      else: # (made already: an end of a relation shown before it)
+        vo.boundingBox([x1, y1, x2, y2])
+        if isinstance(vo, VRelation) and "floating" in g:
+          vo._floatingAnchor = g["floating"]
+      vo.userSized = g.get("userSized", False)
+      if g.get("collapsed"):
+        vo.collapsed, vo.expandedHeight = True, g.get("expandedHeight")
+      if not g.get("filtered"):
+        self._exemptIfFiltered(vo)
+      shown[i] = vo
+    def select() -> None:
+      for s in self.selected.copy():
+        s.selected(False)
+      boxes = []
+      for i in clip.selected:
+        vo = shown.get(i)
+        if vo is not None and vo._isConnected() and not vo.isHidden():
+          vo.selected(True, _multi=True)
+          boxes.append(vo.boundingBox())
+      if boxes:
+        self.scrollToShow([min(b[0] for b in boxes), min(b[1] for b in boxes), max(b[2] for b in boxes), max(b[3] for b in boxes)])
+    if self.canvas:
+      self.canvas.after_idle(select)
+
+  def scrollToShow(self, box:list[float], margin:int=20) -> None:
+    '''
+    Scroll the canvas, if need be, so that *box* is in sight -- the least it
+    takes (as much of it as fits, from its top left).
+
+    :param box: A rectangle, in view coords.
+    :type box: list[float]
+    :param margin: Room to leave around it (canvas pixels).
+    :type margin: int
+    '''
+    c = self.canvas
+    self.resetScrollRegion()
+    x1, y1, x2, y2 = self.viewToWindow(*box)
+    left, top = c.canvasx(0), c.canvasy(0)
+    right, bottom = left + c.winfo_width(), top + c.winfo_height()
+    sr = self.scrollRegion
+    def start(lo:float, hi:float, a:float, b:float, size:float) -> float|None: # (where the visible lo..hi should start, to show a..b)
+      if lo <= a and b <= hi:
+        return None
+      return a - margin if a < lo or b - a + 2 * margin > size else b + margin - size
+    if (x := start(left, right, x1, x2, right - left)) is not None:
+      c.xview_moveto(max(0.0, (x - sr[0]) / max(1, sr[2] - sr[0])))
+    if (y := start(top, bottom, y1, y2, bottom - top)) is not None:
+      c.yview_moveto(max(0.0, (y - sr[1]) / max(1, sr[3] - sr[1])))
 
   def findAGoodLocation(self, mObject:GraphObject) -> tuple[int,int]:
     '''
@@ -2033,6 +2317,11 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     self.canvas.bind(KEY_UNDO[0], self.onUndo)
     self.canvas.bind(KEY_REDO[0], self.onRedo)
     
+    # cut, copy and paste
+    self.canvas.bind(KEY_CUT[0], lambda e: self.onEditKey(e, "cut"))
+    self.canvas.bind(KEY_COPY[0], lambda e: self.onEditKey(e, "copy"))
+    self.canvas.bind(KEY_PASTE[0], lambda e: self.onEditKey(e, "paste"))
+
     # repaint
     self.canvas.bind(KEY_REPAINT[0], self.repaint)
 
@@ -3409,6 +3698,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     bgMenu.add_cascade(label="model", menu=modelEditMenu)
     if self.isModelEditor():
       self.addNewObjectMenus(modelEditMenu, (clickAt[0], clickAt[1]))
+      modelEditMenu.add_separator()
+      from sn.model import copying
+      modelEditMenu.add_command(label="paste here", command=lambda: self.doPaste(at=(clickAt[0], clickAt[1])),
+                                state=tk.NORMAL if copying.clipboard is not None else tk.DISABLED)
       modelEditMenu.add_separator()
       # bgMenu.add_cascade(label="new instance of Collection", menu=makeModelSubmenu(individual=True, ptype=Collection))
       # bgMenu.add_cascade(label="new subtype of Collection", menu=makeModelSubmenu(individual=False, ptype=Collection))

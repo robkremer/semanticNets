@@ -15,6 +15,7 @@ Submodules
 
    sn.model.clingoReasoner
    sn.model.constraints
+   sn.model.copying
    sn.model.model
    sn.model.reasoner
    sn.model.snAttribute

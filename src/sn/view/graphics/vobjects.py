@@ -1445,7 +1445,20 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     if not disabled:
       menu.add_command(label="remove from model", state=tk.DISABLED if remote else tk.NORMAL, 
                        command=lambda: self.view.context.remove(self.modelObject))
+    menu.add_command(label="cut", state=tk.DISABLED if disabled or remote else tk.NORMAL, command=lambda: self.copySelection(cut=True))
+    menu.add_command(label="copy", command=self.copySelection)
     menu.add_separator()
+
+  def copySelection(self, cut:bool=False) -> None:
+    '''
+    Copy (or cut) what's selected, if this is; else just this (see *SNGView.doCopy()*).
+
+    :param cut:
+    :type cut: bool
+    '''
+    if not self.selected():
+      self.selected(True)
+    self.view.doCopy(cut=cut)
       
   def highlight(self, on:bool|None=None, negative:bool=False) -> bool:
     '''

@@ -76,6 +76,44 @@ An object's menu has two kinds of removal:
 
 Both can be undone.
 
+Cut, copy and paste
+-------------------
+
+**Cmd-C** (**Edit | Copy**, or **copy** in an object's menu) copies what's
+selected; **Cmd-X** (**cut**) copies it and deletes it from the model;
+**Cmd-V** (**Edit | Paste**) pastes it, and **model | paste here** pastes it
+where you clicked.
+
+A view can't show an object twice, so copying is done in the *model*: pasting
+makes **new** objects, copies of the ones you copied -- and they show in every
+view of the model, as any new object does. In the window you paste in, they're
+drawn as the originals were: the same sizes and layout, back where they were
+(if that's clear -- eg: they were cut) or else beside them. They're left
+selected, so you can drag them away at once. Paste again for another copy.
+
+What's copied:
+
+- the objects themselves, with their own attributes (not the ones they
+  inherit), as they were when you copied them;
+- everything a context (a rule, query, definition, ...) contains: copying a
+  rule copies its antecedent and consequent too;
+- each object's types (its isa links).
+
+A copied relation whose end wasn't copied relates the same object, and a copy
+of something whose type wasn't copied is another of that type. So copying a
+couple of *has-brother* rules, pasting them, and changing the pasted relations
+to *has-sister* (eg: with **reset dst** on their isa links) leaves the
+originals as they were.
+
+Since a copy refers to the objects around it (its types, and the ends of its
+relations), you can paste into another model only if it builds on the one you
+copied from (see **Edit | Model preferences...**): otherwise the paste is refused,
+with a message. What the reasoner inferred isn't copied (mark it as asserted
+first).
+
+Cut and paste can be undone. In the terminal pane, **Cmd-C** and **Cmd-V**
+copy and paste text, as usual.
+
 Validation
 ----------
 

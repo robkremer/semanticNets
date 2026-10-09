@@ -113,6 +113,23 @@ an age; it matches things that do). Older models, which stored constraints
 as attributes of their own, are converted when they're read
 (:py:func:`~sn.model.constraints.migrateConstraints`, via ``Model._migrate``).
 
+Copying
+-------
+
+Cut, copy and paste work on the model (:py:mod:`sn.model.copying`): a view
+can't show an object twice, so a copy has to be new model objects.
+:py:func:`~sn.model.copying.copyObjects` takes a snapshot -- a
+:py:class:`~sn.model.copying.Clip` -- of the objects, the contents of any
+contexts among them, and their isa links; :py:func:`~sn.model.copying.pasteInto`
+makes new objects from it, with new ids. What isn't copied (a type, a
+relation's end) is referred to, not copied, so a clip can be pasted only into
+a model that can see those objects: the one it came from, or one that builds
+on it (:py:func:`~sn.model.copying.pasteProblem`). The commands are
+``copy``, ``cut`` and ``paste`` on the
+:py:class:`~sn.controller.modelInterface.ModelContext`; a view adds to the
+clip how it showed the objects (``Clip.geometry``), so it can show the copies
+the same way (``SNGView.showPasted()``).
+
 Persistence
 -----------
 
