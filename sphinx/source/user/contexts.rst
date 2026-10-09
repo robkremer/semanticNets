@@ -273,7 +273,10 @@ Queries
 **answer query** (on a query's menu -- or any context's, including a rule)
 finds every match of the pattern, prints the answers (the value of each
 variable, per match) to the terminal, and highlights the matched objects on
-the canvas. **Esc** clears the highlights. Answers include what the reasoner
+the canvas -- and the query's own window too, to show which query they
+answer: in the same colour if it has answers, and in red (the
+``gui/highlightColorNegative`` setting) if it has none ("no"). **Esc** clears
+the highlights. Answers include what the reasoner
 infers -- the model is reasoned over silently first, if it hasn't been (see
 :doc:`reasoning`) -- and each one is shown, with the relations it matched,
 even if it's in a hidden or erased category (eg: inferred objects).

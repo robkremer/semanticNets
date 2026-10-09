@@ -1036,19 +1036,23 @@ class Highlight(Decorator):
   A "glow": a filled shape a little larger than the owner, drawn beneath
   everything -- eg: to mark a query's matches (see *VObject.highlight()*). An
   oval for an Oval-shaped owner, a rectangle otherwise. The colour is the
-  "gui/highlightColor" preference.
+  "gui/highlightColor" preference -- or, if it's *negative* (eg: a query with
+  no answers), "gui/highlightColorNegative".
   '''
   PAD = 6
   "How far (screen pixels) the glow extends beyond the owner."
 
-  def __init__(self, owner):
+  def __init__(self, owner, negative:bool=False):
     '''
     :param owner:
     :type owner:
+    :param negative: Marks something negative (eg: "no"), in its own colour.
+    :type negative: bool
     '''
     super().__init__(owner, priority=-20)
     self.id:int|None = None
     self._oval:bool|None = None
+    self.negative = negative
 
   @override
   def draw(self, fast=False, **kwargs):
@@ -1060,7 +1064,8 @@ class Highlight(Decorator):
     '''
     from sn.view.graphics.shapes import Oval
     canvas = self.owner.canvas
-    color = snPrefs.get("gui/highlightColor", storeDefault="#ffd966", storeType="color") # (its note: see sn.PREFS)
+    color = snPrefs.get("gui/highlightColorNegative", storeDefault="#f4a3a3", storeType="color") if self.negative \
+            else snPrefs.get("gui/highlightColor", storeDefault="#ffd966", storeType="color") # (their notes: see sn.PREFS)
     x1, y1, x2, y2 = self.owner.view.viewToWindow(self.owner.boundingBox(fast=fast))
     p = self.PAD
     rect = [x1 - p, y1 - p, x2 + p, y2 + p]
@@ -1076,7 +1081,7 @@ class Highlight(Decorator):
     else:
       canvas.coords(self.id, rect)
       canvas.itemconfigure(self.id, **opts)
-    canvas.tag_lower(self.id) # beneath everything
+    self.owner.view.placeBehind(self.id, self.owner.tag) # beneath everything -- but in front of a context window it's on
 
   def delete(self):
     if self.deleted: return
@@ -1190,8 +1195,8 @@ class ShadowDecorator(Decorator):
         self.owner.canvas.itemconfigure(self.id, **self.kwargs)
 
     # Behind everything -- but in front of any context window it's on, which
-    # would otherwise hide it (see SNGView.placeShadow()).
-    self.owner.view.placeShadow(self.id, self.owner.tag)
+    # would otherwise hide it (see SNGView.placeBehind()).
+    self.owner.view.placeBehind(self.id, self.owner.tag)
 
   @override
   def delete(self):

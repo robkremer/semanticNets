@@ -1447,16 +1447,20 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
                        command=lambda: self.view.context.remove(self.modelObject))
     menu.add_separator()
       
-  def highlight(self, on:bool|None=None) -> bool:
+  def highlight(self, on:bool|None=None, negative:bool=False) -> bool:
     '''
     :param on: True to give this object a glow (see *decorators.Highlight*),
       False to remove it, None to just ask.
     :type on: bool | None
+    :param negative: With *on*: in the "negative" colour (eg: a query with no answers).
+    :type negative: bool
     :returns: Whether it's highlighted.
     :rtype: bool
     '''
+    if on is True and "highlight" in self.decorators and self.decorators["highlight"].negative != negative:
+      self.decorators["highlight"].delete() # (the other colour)
     if on is True and "highlight" not in self.decorators:
-      self.decorators["highlight"] = Highlight(self)
+      self.decorators["highlight"] = Highlight(self, negative=negative)
       self.decorators["highlight"].draw()
     elif on is False and "highlight" in self.decorators:
       self.decorators["highlight"].delete()
@@ -1466,7 +1470,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     '''
     Answer the query this context (eg: a query, or a rule's antecedent)
     describes: print the answers to the terminal, and highlight every object
-    the variables matched (in this view), replacing any earlier highlights.
+    the variables matched (in this view), replacing any earlier highlights --
+    and this context too, to say which query they answer: in the "negative"
+    colour if there are none (see *highlight()*).
     '''
     from sn.model.reasoner import Reasoner, queryWarnings, reportedAnswers
     from sn.model import names
@@ -1495,6 +1501,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         rvo = self.view.findViewObjectForGraphObject(r) or self.view.makeViewObjectForGraphObject(r)
         if rvo is not None:
           self.view._exemptIfFiltered(rvo)
+    self.highlight(True, negative=not rows) # (which query the highlights answer -- or that it answered "no")
 
   def _answerRelations(self, row:dict[GraphObject, Any]) -> list[Relation]:
     '''

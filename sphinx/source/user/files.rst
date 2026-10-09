@@ -90,7 +90,9 @@ setting                                          controls
 ``gui/NodeMinSize``,                             the default size and shape of a node
 ``gui/NodeAspectRatio``
 ``gui/highlightColor``                           the colour of highlights (eg: a query's
-                                                 answers)
+                                                 answers, and the query)
+``gui/highlightColorNegative``                   the colour of a query that has no
+                                                 answers
 ``gui/backgroundColor``                          the canvas's colour
 ``gui/allowEditingSystemObjects``                whether the system model's objects can be
                                                  edited (best left off)
