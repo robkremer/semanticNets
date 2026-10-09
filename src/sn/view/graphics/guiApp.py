@@ -204,6 +204,9 @@ class Application(tk.Tk):
     self.filemenu = tk.Menu(menubar, name="file")
     self.filemenu.add_command(label="New...", command=self.doNew)
     self.filemenu.add_command(label="Open...", command=self.doOpen)
+    self.recentMenu = tk.Menu(self.filemenu, name="recent")
+    self.filemenu.add_cascade(label="Open Recent", menu=self.recentMenu)
+    self._fillRecentMenu()
     self.filemenu.add_separator()
     # "Save view" is NOT added here: whichever SNGView's AppWindow currently
     # has focus adds/removes it itself (see SNGView.onWindowFocusIn/Out(),
@@ -252,6 +255,7 @@ class Application(tk.Tk):
     :rtype: None
     """
     applyEditAttrsBox(self, snPrefs, title="Semantic Nets Preferences", hideColumns=("type", "qualifiers", "note"))
+    self._fillRecentMenu() # (in case "gui/recentFiles" changed)
 
   def doOpen(self, ): 
     'Respond to the "Open..." menu item.'
@@ -364,6 +368,7 @@ class Application(tk.Tk):
           raise ReferenceError(f'Invalid URL: {viewSpec}')
       
       name = view.url    
+      self.noteRecent(view.url, view.model.url)
       if name in self.windows:
         self.windows[name].lift()
         return self.windows[name]
@@ -410,6 +415,81 @@ class Application(tk.Tk):
     self.defaultChildLocation = (self.defaultChildLocation[0] + 40, self.defaultChildLocation[1] + 40)
     self.windows[view.url] = view.window
     return view.window
+
+  RECENT_PREF = ".recentFiles"
+  '''The preference listing the views opened most recently, most recent first
+  (see *noteRecent()*). (Hidden from Settings: see *OPEN_WINDOWS_PREF*.)'''
+
+  RECENT_KEPT = 50
+  "How many recent views are remembered, whatever \"gui/recentFiles\" (how many are listed) is."
+
+  def recentFiles(self) -> list[dict[str, str]]:
+    '''
+    :returns: The views opened most recently, most recent first: each
+      {"view": its URL, "model": its model's URL}.
+    :rtype: list[dict[str, str]]
+    '''
+    entries = snPrefs.get(self.RECENT_PREF, [])
+    return [e for e in entries if isinstance(e, dict) and e.get("view")] if isinstance(entries, list) else []
+
+  def _setRecentFiles(self, entries:list[dict[str, str]]) -> None:
+    snPrefs[self.RECENT_PREF] = Attribute(entries[:self.RECENT_KEPT], list, VAR_DEFAULTED,
+      "The views opened most recently (view and model), most recent first: for File | Open Recent.")
+    self._fillRecentMenu()
+
+  def noteRecent(self, viewURL:str, modelURL:str) -> None:
+    '''
+    Put a view (and its model) at the top of the recently opened ones (see
+    *recentFiles()*, and File | Open Recent).
+
+    :param viewURL:
+    :type viewURL: str
+    :param modelURL:
+    :type modelURL: str
+    '''
+    entries = [e for e in self.recentFiles() if e.get("view") != viewURL]
+    self._setRecentFiles([{"view": viewURL, "model": modelURL}, *entries])
+
+  def openRecent(self, entry:dict[str, str]) -> None:
+    '''
+    Open a recently opened view (File | Open Recent): its view, if it's been
+    saved; else its model (with its default view). If neither can be found any
+    more, say so, and take it off the list.
+
+    :param entry: One of *recentFiles()*.
+    :type entry: dict[str, str]
+    '''
+    viewURL, modelURL = entry.get("view"), entry.get("model")
+    spec = viewURL if viewURL and urlExists(viewURL) else modelURL if modelURL and urlExists(modelURL) else None
+    if spec is None:
+      logger.warning(f'Can\'t open "{_fileName(viewURL or "")}": neither it nor its model "{modelURL}" can be found. It\'s been taken off File | Open Recent.')
+      self._setRecentFiles([e for e in self.recentFiles() if e.get("view") != viewURL])
+      return
+    self.openWindow(spec)
+
+  def _fillRecentMenu(self) -> None:
+    '''
+    (Re)fill the File | Open Recent menu from *recentFiles()*: as many as the
+    "gui/recentFiles" preference says, each named by its file (and, if two have
+    the same name, its folder), then "Clear Menu".
+    '''
+    menu = self.__dict__.get("recentMenu")
+    if menu is None:
+      return
+    menu.delete(0, tk.END)
+    pref = snPrefs.get("gui/recentFiles", 10)
+    count = max(0, pref) if isinstance(pref, int) else 10
+    entries = self.recentFiles()[:count]
+    names = [_fileName(e["view"]) for e in entries]
+    for e, name in zip(entries, names):
+      label = name
+      if names.count(name) > 1: # (eg: two family.snv's: say which)
+        label = f"{name} \u2014 {os.path.basename(os.path.dirname(_filePath(e['view'])))}"
+      menu.add_command(label=label, command=lambda e=e: self.openRecent(e))
+    if entries:
+      menu.add_separator()
+    menu.add_command(label="Clear Menu", command=lambda: self._setRecentFiles([]),
+                     state=tk.NORMAL if entries else tk.DISABLED)
 
   OPEN_WINDOWS_PREF = ".openWindows"
   '''The preference recording the windows open when the app last quit (see
@@ -679,6 +759,26 @@ class Application(tk.Tk):
     """
     self.mainloop()
 
+
+def _filePath(url:str) -> str:
+  '''
+  :param url: A file's URL (eg: "file:///Users/me/family.snv").
+  :type url: str
+  :returns: Its path.
+  :rtype: str
+  '''
+  from urllib.parse import urlparse, unquote
+  parsed = urlparse(url)
+  return unquote(parsed.path) if parsed.scheme in ("file", "") else url
+
+def _fileName(url:str) -> str:
+  '''
+  :param url: A file's URL.
+  :type url: str
+  :returns: Its name (eg: "family.snv").
+  :rtype: str
+  '''
+  return os.path.basename(_filePath(url)) or url
 
 class AppWindow(tk.Toplevel):
   '''

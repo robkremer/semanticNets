@@ -93,6 +93,7 @@ shown and how it's arranged) and **reasoning** -- and **Zoom**.
 The menu bar has:
 
 - **File**: **New...** (a new model, or a new view of a model), **Open...**,
+  **Open Recent**,
   **Save view** (the view of the window you're in), **Save model** (its model),
   **Save view as...** and **Save model as...** (a copy of either: see
   :doc:`files`), and **Close model** (its model, and all the windows on it).

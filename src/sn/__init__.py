@@ -184,6 +184,8 @@ PREFS:dict[str, tuple[Any, Any, str]] = {
     "Whether long lines wrap in the terminal pane (else it scrolls sideways)."),
   "text/backgroundColor": ("color", "white",
     "The terminal pane's background colour."),
+  "gui/recentFiles": (int, 10,
+    "How many of the views (or models) opened most recently File | Open Recent lists (0 for none)."),
   "gui/backgroundColor": ("color", "grey95",
     "The canvas's background colour."),
   "gui/highlightColor": ("color", "#ffd966",

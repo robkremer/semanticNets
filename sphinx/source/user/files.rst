@@ -26,6 +26,10 @@ found when the model is opened is reported, and kept in the list for when it's
 there again.
 
 - **File | Open...** opens a view -- or a model, with a default view of it.
+- **File | Open Recent** lists the views you've opened most recently, newest
+  first (how many: the ``gui/recentFiles`` setting, 10 to start with). One
+  that was never saved opens as its model's default view; one that's gone is
+  taken off the list. **Clear Menu** empties it.
 - **File | Open super model** opens a window on one of the window's model's
   super-models (they're listed): its view -- the file next to it with the
   same name, ending ".snv" -- or, if there isn't one, a new view that will be
@@ -87,6 +91,7 @@ setting                                          controls
 ``gui/showRemoteTags``,
 ``gui/showConstraintMarker``
 ``gui/shadowTypes``                              whether types are drawn with a shadow
+``gui/recentFiles``                              how many views **File | Open Recent** lists
 ``gui/NodeMinSize``,                             the default size and shape of a node
 ``gui/NodeAspectRatio``
 ``gui/highlightColor``                           the colour of highlights (eg: a query's
