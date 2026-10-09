@@ -20,6 +20,7 @@
 # SOFTWARE.                                                                     #
 #################################################################################
 from __future__ import annotations
+import copy
 import builtins
 import sn
 from sn.model.model import GraphObject, Model, Node, Relation, GORef,\
@@ -552,7 +553,7 @@ class ModelContext(CommandContext):
       self.restriction:Restriction|None = Restriction.fromstring(restriction) if restriction is not None else None
 
       localObj = self.object.getLocalAttr(key)
-      self.oldAttrValue = None if localObj is None else localObj
+      self.oldAttrValue = None if localObj is None else copy.copy(localObj) # (a copy: setting may change the record in place -- eg: "name" -- and undo must put the old one back)
 
     @override
     def do(self):
