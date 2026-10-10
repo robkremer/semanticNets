@@ -1938,8 +1938,16 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       if (dx or dy) and carry:
         # (not objects that are themselves being moved -- eg: also selected -- nor
         # floating relation labels: they follow their ends, so they'd move twice)
-        carried = [vo for vo in self.carriedContents() if not (self.selected() and vo.selected())
-                   and not (callable(getattr(vo, "floating", None)) and vo.modelObject is not None and vo.modelObject.isIndividual() and vo.floating())]
+        floats = lambda vo: callable(getattr(vo, "floating", None)) and vo.modelObject is not None and vo.modelObject.isIndividual() and vo.floating()
+        contents = self.carriedContents()
+        carried = [vo for vo in contents if not (self.selected() and vo.selected()) and not floats(vo)]
+        # ... and its containment links' labels, if they're pinned (they're drawn only when what they contain is out of the window)
+        carried += [r for r in self.relations if getattr(r, "src", None) is self and getattr(r, "dst", None) in contents
+                    and r not in carried and not floats(r) and not (self.selected() and r.selected())]
+        # The window's own place first: a floating label that follows its ends
+        # as they're carried is kept in its pane (see VRelation.placedLabel()) --
+        # which must be where the window's going, not where it was.
+        self.boundingBox([x, y, x+bb[2]-bb[0], y+bb[3]-bb[1]])
         for vo in carried:
           vo.moveBy(dx, dy, adjustPos=False, fast=fast)
     if bb[0] == x and bb[1] == y and not adjustPos:
