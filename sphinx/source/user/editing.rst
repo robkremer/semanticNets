@@ -53,13 +53,14 @@ Selecting, moving and resizing
 Attributes
 ----------
 
-**edit attributes** (in an object's menu) opens the attribute editor: one row
-per attribute, with its value, type and inheritance rules, and the values it
-inherits shown above it in grey. You can add attributes, change their values
+**edit attributes** (in an object's menu), or **double-clicking** the object,
+opens the attribute editor: one row per attribute, with its value, type and
+inheritance rules, and the values it inherits shown above it in grey. You can add attributes, change their values
 and types, and delete them. Hover over a row's name for its description. A
 value the reasoner inferred is greyed out too, marked **I** in the status
 column: its **assert** button (then **Save Changes**) makes it an ordinary
-value (see :doc:`reasoning`).
+value (see :doc:`reasoning`). **Return** saves the changes (as **Save
+Changes**), and **Escape** cancels them.
 
 .. figure:: ../images/user/attribute-editor.png
    :alt: The attribute editor, on the variable ?b: its constraints, its own name (with the name it would inherit, in grey, above), and -- grouped under vis -- the look it inherits from person

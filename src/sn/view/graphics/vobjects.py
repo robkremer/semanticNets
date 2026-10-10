@@ -1063,6 +1063,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     self.canvas.tag_bind(bindObj, "<Button-1>", self.onButton_1)
     self.canvas.tag_bind(bindObj, "<B1-Motion>", self.onB1_Motion)
     self.canvas.tag_bind(bindObj, "<B1-ButtonRelease>", self.onB1_ButtonRelease)
+    self.canvas.tag_bind(bindObj, "<Double-Button-1>", self.onDouble_1)
     self.canvas.tag_bind(bindObj, "<Enter>", self.onEnter)
     self.canvas.tag_bind(bindObj, "<Leave>", self.onLeave)
   # self.tooltip = CreateToolTip(self.canvas, self.tooltipFunc, bindObj, 
@@ -1076,6 +1077,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     self.canvas.tag_unbind(bindObj, "<Button-1>")
     self.canvas.tag_unbind(bindObj, "<B1-Motion>")
     self.canvas.tag_unbind(bindObj, "<B1-ButtonRelease>")
+    self.canvas.tag_unbind(bindObj, "<Double-Button-1>")
     if self.tooltip is not None:
       self.tooltip.delete()
       
@@ -1222,6 +1224,24 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     #else:
       #print(f'non-drag onB1_Motion() event x={event.x}, y={event.y}')
 
+
+  def onDouble_1(self, event):
+    '''
+    A double-click: its attributes, in the attribute editor -- as "edit
+    attributes" (or "show attributes": see *attributesReadOnly()*) on its
+    menu. (Not on a context window's collapse triangle: that's two toggles.)
+
+    :param event: The Tk event.
+    :type event:
+    :returns:
+    :rtype:
+    '''
+    self.view.addEventHandled(event)
+    self.dragInfo = None
+    if self.modelObject is None or self.toggleAt(self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)):
+      return 'break'
+    self.onEditAttributes(disabled=self.attributesReadOnly())
+    return 'break'
 
   def onB1_ButtonRelease(self, event): #reset data on release
     """
@@ -1415,6 +1435,27 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
   #   self.canvas.shouldCatchNewObjects = self._oldCatchNewObjects
   #
 
+  def _systemLocked(self) -> bool:
+    '''
+    :returns: Whether its model object can't be edited here: it's a system
+      object (unless "gui/allowEditingSystemObjects"), or the view isn't a
+      model editor.
+    :rtype: bool
+    '''
+    mo = self.modelObject
+    return mo is None or (mo.isSystemObject() and not snPrefs.get("gui/allowEditingSystemObjects", storeDefault=False)) \
+           or not self.view.isModelEditor()
+
+  def attributesReadOnly(self) -> bool:
+    '''
+    :returns: Whether its attributes can only be looked at, not edited: it's
+      inferred (see *isInferred()*), a system object (see *_systemLocked()*), or
+      from another model than the view's.
+    :rtype: bool
+    '''
+    mo = self.modelObject
+    return mo is None or self.isInferred() or self._systemLocked() or self.view.model is not mo.model
+
   def addModelEditingMenuItems(self, menu:tk.Menu):
     '''
     :param menu:
@@ -1430,13 +1471,12 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
                        command=lambda: self.view.context.mark_asserted(self.modelObject))
       menu.add_separator()
       return
-    disabled = (self.modelObject.isSystemObject() \
-                and not snPrefs.get("gui/allowEditingSystemObjects", storeDefault=False)) \
-               or not self.view.isModelEditor()
+    disabled = self._systemLocked()
     relInst =  self.modelObject.isIndividual() and isinstance(self.modelObject, Relation)
     remote = self.view.model != self.modelObject.model
-    menu.add_command(label=f"{'show' if disabled or remote else 'edit'} attributes", \
-                     command=lambda disabled=disabled: self.onEditAttributes(disabled=disabled or remote))    
+    readOnly = self.attributesReadOnly()
+    menu.add_command(label=f"{'show' if readOnly else 'edit'} attributes",
+                     command=lambda: self.onEditAttributes(disabled=readOnly))
     if self.modelObject.isType():
       menu.add_command(label='make new instance', command=lambda: self.makeModelObjectSubtype(individual=True))
       menu.add_command(label='make new subtype', command=lambda: self.makeModelObjectSubtype(individual=False))
