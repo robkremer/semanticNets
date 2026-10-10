@@ -1137,8 +1137,9 @@ class VRelation(VObject, AGRelation):
 
     Any object may be chosen -- relations connect nodes and relations in any
     combination (eg: a rule's antecedent can contain a relation) -- except
-    that an isa link must connect two nodes or two relations, and its new
-    parent (dst) must be a type, since individuals can't have children.
+    that an isa link must connect two nodes or two relations, its new
+    parent (dst) must be a type, since individuals can't have children, and
+    it mustn't make an isa cycle (eg: a type its own type).
     Dropping the line on empty space clears the end instead (the relation then
     inherits its type's), except for an isa link, which needs both ends.
 
@@ -1149,10 +1150,17 @@ class VRelation(VObject, AGRelation):
     other = self.dst if end == "src" else self.src
     isa = isinstance(self.modelObject, IsaIndividual)
     isaParent = end == "dst" and isa
+    mo = self.modelObject
+    def cycle(n:VObject) -> bool: # (an isa link from a type to itself, or that makes an isa cycle: see GraphObject.parentProblem())
+      if not isa or mo is None or n.modelObject is None:
+        return False
+      child, parent = (mo.localSrc, n.modelObject) if end == "dst" else (n.modelObject, mo.localDst)
+      return child is not None and child.parentProblem(parent) is not None
     def acceptable(n:VObject) -> bool:
       return n is not self and not n.isInferred() \
              and (not isa or other is None or isinstance(n, VRelation) == isinstance(other, VRelation)) \
-             and not (isaParent and (n.modelObject is None or n.modelObject.isIndividual()))
+             and not (isaParent and (n.modelObject is None or n.modelObject.isIndividual())) \
+             and not cycle(n)
     def chosen(_origin:VObject, sel:VObject) -> None:
       if end == "src":
         self.view.context.reconnect(self.modelObject, source=sel.modelObject)

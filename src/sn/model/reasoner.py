@@ -1328,6 +1328,8 @@ class Reasoner(ABC):
         out.append(("parent", (obj, obj))) # getParents() refuses self-parenting; let the rules report it
       except LookupError:
         pass
+      if obj.selfIsaLinks(): # (getParents() leaves it out: the rules report it -- see isa_cycle)
+        out.append(("parent", (obj, obj)))
       if isinstance(obj, Collection):
         out.append(("collection", (obj,)))
         if type(obj) is Collection: # AllModelCollection would just list the model
@@ -1676,6 +1678,9 @@ def materialize(model:Model, inferences:Inferences, models:list[Model]) -> None:
       try:
         obj = have.get(key)
         if obj is None or not obj._isConnected():
+          if t is model.ISA and (problem := s.parentProblem(d)) is not None: # (a rule concluded an isa cycle)
+            logger.warning(f"Not adding the inferred isa from {s.name} to {d.name}: {problem}")
+            continue
           obj = IsaIndividual(model, s, d, inferred=True) if t is model.ISA else Relation(model, [t], s, d, individual=True, inferred=True)
         obj.inferredKind = kinds[key] # (for how it's drawn)
       except Exception as ex:

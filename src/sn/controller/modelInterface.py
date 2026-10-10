@@ -924,6 +924,8 @@ class ModelContext(CommandContext):
           assert isinstance(objects[1], str)
           self.obj1 = None
           self.objName = objects[1]
+        if self.obj1 is not None and (problem := self.obj1.parentProblem(self.typ)) is not None:
+          raise ValueError(problem)
       elif expLen == 3: # relational expression: rel must be a relation type
         # obj1.isType()&pbj2.isType() -> modify rel type src&dst
         # obj1.isIndividual()&obj2.isIndividual() -> create new rel instance 
@@ -1495,6 +1497,10 @@ class ModelContext(CommandContext):
         raise ValueError('reconnect: an end can be set or cleared, not both.')
       if (clear_source or clear_destination) and isinstance(relation, IsaIndividual):
         raise ValueError('reconnect: an isa link needs both ends; they can be changed but not cleared.')
+      if isinstance(relation, IsaIndividual) and (source is not None or destination is not None):
+        child, parent = source or relation.localSrc, destination or relation.localDst
+        if child is not None and (problem := child.parentProblem(parent)) is not None:
+          raise ValueError(problem)
       self.relation:Relation = relation
       self.source = source
       self.destination = destination
@@ -1610,6 +1616,8 @@ class ModelContext(CommandContext):
         self.parents.append(p)
       if len(self.parents) > 1 and self.model.ISA in self.parents:
         raise TypeError("Multiple parents cannot include the ISA relation.")
+      if self.parents == [model.ISA] and source is not None and (problem := source.parentProblem(destination)) is not None:
+        raise ValueError(problem)
         
         
       super().__init__("new relation")

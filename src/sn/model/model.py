@@ -119,6 +119,13 @@ def makeRelationArrow(rel:Relation) -> str:
 
 GORef = PReference["GraphObject"]
 
+_supersInProgress:set[int] = set()
+"The objects whose supertypes *GraphObject.getSupers()* is finding, just now: to stop at an isa cycle."
+_retracting:set[int] = set()
+"The objects *GraphObject.retract()* is working down from, just now: to stop at an isa cycle."
+_reportedSelfParents:set[int] = set()
+"The objects whose isa link to themselves has been reported (see *GraphObject.getParents()*): it's said once."
+
 class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReportingObject):
   '''
   .. Note::
@@ -297,6 +304,7 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     else:
       self.assertToStatusReport(False,
             f'Unknown subtype of GraphObject: {self.__class__.__name__}', 'W')
+    self._validateSelfIsa()
     return self.statusReport()
   
   def _isConnected(self):
@@ -354,8 +362,14 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     Resets the parent cache of this object and all isa-decendents of this object.
     '''
     self._parentsCache = None
-    for child in self.getChildren():
-      child.retract()
+    if id(self) in _retracting: # (an isa cycle: see getSupers())
+      return
+    _retracting.add(id(self))
+    try:
+      for child in self.getChildren():
+        child.retract()
+    finally:
+      _retracting.discard(id(self))
 
   @override
   def getSupers[GraphObject](self, asTree:bool=False, rmDups:bool=True) -> list:
@@ -371,10 +385,16 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     for parent in self.getParents(): #gather ancestors in mro order
       if parent not in ret: #TODO: this test will likely fail in the the "asTree" case...
         ret.append(parent)
-        if asTree:
-          ret.append(parent.getSupers(asTree=asTree, rmDups=rmDups))
-        else:
-          ret += parent.getSupers(asTree=asTree, rmDups=rmDups)
+        if id(parent) in _supersInProgress: # (an isa cycle -- eg: from an old file: see parentProblem() -- don't go round it forever)
+          continue
+        _supersInProgress.add(id(parent))
+        try:
+          if asTree:
+            ret.append(parent.getSupers(asTree=asTree, rmDups=rmDups))
+          else:
+            ret += parent.getSupers(asTree=asTree, rmDups=rmDups)
+        finally:
+          _supersInProgress.discard(id(parent))
     if rmDups:
       ret = removeDuplicates(ret, asTree=asTree)
     return ret
@@ -419,13 +439,55 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     ret = [other for _rel,other in self._getOutgoing(lambda r: isinstance(r, IsaIndividual)) if other is not None] 
     if ret == [] and type(self) is not GraphObject:
       raise LookupError("No parent found.")
-    if self in ret:
-      logger.error(f'{self.model.url}#{self._id} has itself as parent. {[go._id for go in ret]}')
-      raise RecursionError(f'{self.model.url}#{self._id} has itself as parent. {[go._id for go in ret]}')
-      ret.remove(self)
+    if self in ret: # (eg: from a file written before that was refused: see parentProblem()) -- left out, and reported (once)
+      if id(self) not in _reportedSelfParents:
+        _reportedSelfParents.add(id(self))
+        logger.error(f'"{self.name}" ({self.model.url}#{self._id}) has an isa link to itself: it\'s ignored. '
+                     f'Remove it (see its error report, or select the link and "remove from model").')
+      ret = [p for p in ret if p is not self]
+      if ret == [] and type(self) is not GraphObject:
+        raise LookupError("No parent found.")
 
     self._parentsCache = ret
     return ret   
+
+  def selfIsaLinks(self) -> list[IsaIndividual]:
+    '''
+    :returns: This object's (asserted) isa links to itself -- which no longer
+      can be made (see *parentProblem()*), but an old file may have.
+    :rtype: list[IsaIndividual]
+    '''
+    return [r for r in self._outgoing if isinstance(r, IsaIndividual) and r.localSrc is self and r.localDst is self]
+
+  def _validateSelfIsa(self) -> None:
+    '''
+    Report an isa link to itself (see *selfIsaLinks()*) in the status report,
+    with an action that removes it.
+    '''
+    for r in self.selfIsaLinks():
+      self.assertToStatusReport(False, f'"{self.name}" has an isa link to itself (ignored).', "E",
+                                actions={"remove the isa link to itself": lambda r=r: [r._disconnect(), r.model.setDirty(), None][-1]}) #type: ignore[func-returns-value]
+
+  def parentProblem(self, parent:GraphObject|None) -> str|None:
+    '''
+    :param parent: A would-be new parent (type) of this object: the
+      destination of a new isa link from it.
+    :type parent: GraphObject | None
+    :returns: Why it can't be: it's this object itself, or one of its own
+      subtypes or instances (an isa cycle, which would make each its own
+      ancestor); or None if it can.
+    :rtype: str | None
+    '''
+    if parent is None:
+      return None
+    if parent is self:
+      return f'"{self.name}" can\'t be a type of itself.'
+    try:
+      if parent.isa(self):
+        return f'"{parent.name}" is already a kind of "{self.name}": making "{self.name}" one of it would make an isa cycle.'
+    except (RecursionError, LookupError):
+      pass
+    return None
 
   def getDescendants(self, model:Model|None=None, asTree:bool=False, rmDups:bool=True)->list:
     '''
@@ -1951,6 +2013,7 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]): #type: ignore[misc]
       self.assertToStatusReport(self in self.localSrc._outgoing, f'src end is not registered with src object, {self.localSrc}', 'E')
     if self.localDst is not None:
       self.assertToStatusReport(self in self.localDst._incoming, f'dst end is not registered with dst object, {self.localDst}', 'E')
+    self._validateSelfIsa()
     return self.statusReport()
     
   def _hasRelationalProperty(self, prop:str) -> bool:

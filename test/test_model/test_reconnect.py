@@ -104,6 +104,53 @@ class Test(unittest.TestCase):
     with self.assertRaises(TypeError):
       ModelContext._Reconnect(self.a, destination=self.b)
 
+  def test0900noIsaCycles(self):
+    'An isa link can\'t make a type its own type, directly or not: not by making one, re-pointing one, or asserting one.'
+    m = self.m
+    t = Node(m, [m.NODE], name="t")
+    sub = Node(m, [t], name="sub")
+    c = ModelContext(m)
+    isa = [r for r in t._outgoing if isinstance(r, IsaIndividual)][0]          # t isa node
+    with self.assertRaises(ValueError):
+      c.reconnect(isa, destination=t)                                         # t isa t
+    with self.assertRaises(ValueError):
+      c.reconnect(isa, destination=sub)                                       # t isa sub isa t
+    with self.assertRaises(ValueError):
+      c.new_relation([m.ISA], source=t, destination=t, individual=True)
+    with self.assertRaises(ValueError):
+      c.new_relation([m.ISA], source=t, destination=sub, individual=True)
+    with self.assertRaises(ValueError):
+      c.assert_(["sub", "t"])                                                 # (t is a sub)
+    self.assertEqual(t.getParents(), [m.NODE])
+    c.reconnect(isa, destination=self.a)                                      # (fine)
+    self.assertEqual(t.getParents(), [self.a])
+
+  def test1000oldSelfIsa(self):
+    'An isa link from a type to itself (eg: in a file written before they were refused) is ignored, and reported, not fatal.'
+    m = self.m
+    r = Relation(m, [m.RELATION], name="has-grandparent")
+    loop = IsaIndividual(m, r, r)                                             # (as an old file could have)
+    self.assertEqual(r.getParents(), [m.RELATION])
+    self.assertIn(m.RELATION, r.getSupers())
+    self.assertEqual(r.get("vis/borderColor", None), m.RELATION.get("vis/borderColor", None)) # (attributes still inherited)
+    r.clearStatusReport()
+    errors = r.validate()
+    self.assertTrue(any("isa link to itself" in e for e in errors))
+    from sn.model.clingoReasoner import ClingoReasoner
+    self.assertTrue(any(v.code == "isa_cycle" and v.subject is r for v in ClingoReasoner(m).run().violations))
+    loop._disconnect()
+
+  def test1100supersOfACycle(self):
+    'getSupers() stops at an isa cycle (it doesn\'t go round it forever).'
+    m = self.m
+    x = Node(m, [m.NODE], name="x")
+    y = Node(m, [x], name="y")
+    loop = IsaIndividual(m, x, y)                                             # (x isa y isa x: as an old file could have)
+    x.retract()
+    self.assertIn(y, x.getSupers())
+    self.assertIn(x, y.getSupers())
+    loop._disconnect()
+
 
 if __name__ == "__main__":
   unittest.main()
