@@ -40,6 +40,8 @@ Selecting, moving and resizing
 
 - **Click** an object to select it (**Shift**- or **Cmd**-click to add to the
   selection); click again to deselect.
+- **Cmd-A** (**Edit | Select All**) selects everything shown (not what's
+  hidden, or in a collapsed window). In the terminal pane it selects the text.
 - **Drag** to move it -- or, if it's selected, everything selected. When you
   drop it, it's nudged off anything it landed on.
 - A selected object has handles at its corners: drag one to **resize** it.

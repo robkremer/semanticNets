@@ -79,6 +79,7 @@ KEY_CUT =                   ('<Command-KeyPress-x>'       , 'Command-X')
 KEY_COPY =                  ('<Command-KeyPress-c>'       , 'Command-C')
 KEY_PASTE =                 ('<Command-KeyPress-v>'       , 'Command-V')
 KEY_COPY_IMAGE =            ('<Shift-Command-KeyPress-C>' , 'Shift-Command-C')
+KEY_SELECT_ALL =            ('<Command-KeyPress-a>'       , 'Command-A')
 KEY_CLEAR_HIGHLIGHTS =      ('<Escape>'                   , 'esc')
 KEY_VALIDATE =              ('<Command-KeyPress-v>'       , 'cmd+v')
 KEY_TOGGLE_FIELDS_LAYOUT =  ('<Command-KeyPress-f>'       , 'cmd+f')
@@ -1267,6 +1268,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     addToMenuBar("Edit|Copy", lambda: self._editAction("copy"), accelerator=KEY_COPY[1])
     addToMenuBar("Edit|Paste", lambda: self._editAction("paste"), accelerator=KEY_PASTE[1])
     addToMenuBar("Edit|Copy as picture", lambda: self._editAction("copy image"), accelerator=KEY_COPY_IMAGE[1])
+    addToMenuBar("Edit|Select All", lambda: self._editAction("select all"), accelerator=KEY_SELECT_ALL[1])
     addToMenuBar("Edit|Model preferences...", self.doModelPreferences, separatorBefore=True)
     addCheckToMenuBar("View|Animation toolbar", self._animationToolbarShown(), self._onAnimationToolbarItem,
                       cascadePositions={"View": self._afterFileMenu() + 1}) # (after "Edit", made just above)
@@ -1298,6 +1300,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     removeFromMenuBar("Edit|Copy")
     removeFromMenuBar("Edit|Paste")
     removeFromMenuBar("Edit|Copy as picture")
+    removeFromMenuBar("Edit|Select All")
     removeFromMenuBar("Edit|Model preferences...")
     removeFromMenuBar("File|Close model")
     removeFromMenuBar("File|Open super model")
@@ -1937,30 +1940,41 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
   def _editAction(self, action:str) -> None:
     '''
-    "Edit | Cut", "Copy" or "Paste" in the menu bar: for the terminal's text,
-    if that has the keyboard focus, else for the canvas. ("Copy as picture" is
-    always the canvas's: see *doCopyImage()*.)
+    "Edit | Cut", "Copy", "Paste" or "Select All" in the menu bar: for the
+    terminal's text, if that has the keyboard focus, else for the canvas.
+    ("Copy as picture" is always the canvas's: see *doCopyImage()*.)
 
-    :param action: "cut", "copy", "paste" or "copy image".
+    :param action: "cut", "copy", "paste", "select all" or "copy image".
     :type action: str
     '''
     w = self.canvas.focus_get()
     if action == "copy image":
       self.doCopyImage()
     elif isinstance(w, (tk.Text, tk.Entry)):
-      w.event_generate(f"<<{action.capitalize()}>>")
+      w.event_generate("<<SelectAll>>" if action == "select all" else f"<<{action.capitalize()}>>")
+    elif action == "select all":
+      self.selectAll()
     elif action == "paste":
       self.doPaste()
     else:
       self.doCopy(cut=action == "cut")
 
+  def selectAll(self) -> None:
+    '''
+    Select everything that's shown: not what's hidden (eg: a hidden category,
+    or what's in a collapsed window).
+    '''
+    for vo in self.values():
+      if vo is not None and vo._isConnected() and not vo.isHidden() and not vo.selected():
+        vo.selected(True, _multi=True)
+
   def onEditKey(self, event:tk.Event, action:str) -> str:
     '''
-    Cmd-X, Cmd-C or Cmd-V on the canvas (see *_editAction()*).
+    Cmd-X, Cmd-C, Cmd-V or Cmd-A on the canvas (see *_editAction()*).
 
     :param event:
     :type event: tk.Event
-    :param action: "cut", "copy" or "paste".
+    :param action: "cut", "copy", "paste", "select all" or "copy image".
     :type action: str
     :returns: "break": it's been dealt with.
     :rtype: str
@@ -2380,6 +2394,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     self.canvas.bind(KEY_COPY[0], lambda e: self.onEditKey(e, "copy"))
     self.canvas.bind(KEY_PASTE[0], lambda e: self.onEditKey(e, "paste"))
     self.canvas.bind(KEY_COPY_IMAGE[0], lambda e: self.onEditKey(e, "copy image"))
+    self.canvas.bind(KEY_SELECT_ALL[0], lambda e: self.onEditKey(e, "select all"))
 
     # repaint
     self.canvas.bind(KEY_REPAINT[0], self.repaint)
