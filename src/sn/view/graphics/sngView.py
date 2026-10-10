@@ -1616,11 +1616,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
             continue
           pasted = self.__dict__.get("_pasting", {}).pop(id(modelObj), None) is not None # (see showPasted())
           logger.info(f'  Creating V{modelObj.__class__.__name__} for model object {modelObj}:{modelObj.__class__.__name__}')
-          if (modelObj.isType() or isinstance(modelObj, Node)) and self.canvas and not pasted: 
-            applyEditAttrsBox(self.canvas, modelObj, title=modelObj.name, editKey="name")
-            # a variable's name may be typed with constraints: "?p :where: alive" (see sn.model.constraints)
-            if WHERE in modelObj.name:
-              self._applyWhere(modelObj)
+          if (modelObj.isType() or isinstance(modelObj, Node)) and self.canvas and not pasted:
+            # (once this is done -- not in the middle of it: the editor waits for the user, and meanwhile the app goes on)
+            self.canvas.after_idle(lambda mo=modelObj: self._askName(mo)) #type: ignore[misc]
           typ:type = type(modelObj)
           newObj:VObject|None = None
           if typ is Collection:
@@ -3135,6 +3133,21 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       menu.add_checkbutton(label=name, variable=var, onvalue=True, offvalue=False,
                            command=lambda n=name, v=var: self.context.visibility(n, mode if v.get() else "show")) #type: ignore[misc]
     return menu
+
+  def _askName(self, mo:GraphObject) -> None:
+    '''
+    Ask for a new object's name (and anything else about it), in the
+    attribute editor -- unless it's gone meanwhile (eg: undone).
+
+    :param mo:
+    :type mo: GraphObject
+    '''
+    if getattr(self, "_closed", False) or not mo._isConnected():
+      return
+    applyEditAttrsBox(self.canvas, mo, title=mo.name, editKey="name")
+    # a variable's name may be typed with constraints: "?p :where: alive" (see sn.model.constraints)
+    if WHERE in mo.name:
+      self._applyWhere(mo)
 
   def _applyWhere(self, mo:GraphObject) -> None:
     '''
