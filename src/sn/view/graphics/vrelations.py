@@ -698,7 +698,7 @@ class VRelation(VObject, AGRelation):
     :param kwargs:
     :type kwargs:
     '''
-    if self._drawVersion >= self.view._drawVersion: 
+    if self._drawVersion >= self.view._drawVersion or not self._isConnected(): # (see VObject.draw())
       return
     super().draw(fast=fast, **kwargs)
     if self.modelObject is None:

@@ -1880,7 +1880,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     :param kwargs:
     :type kwargs:
     '''
-    if self._drawVersion >= self.view._drawVersion: 
+    if self._drawVersion >= self.view._drawVersion or not self._isConnected(): # (not if it's out of the view: drawing would show it again)
       return
     else: 
       self._drawVersion = self.view._drawVersion
@@ -2271,6 +2271,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
             setattr(r, end, None) # (AGRelation's setter takes it off our lists too)
             detached.append((r, end))
     self._detachedTypeEnds = detached
+    if self.selected(): # (out of the selection too: else deselecting it later -- eg: a click elsewhere -- would draw it again)
+      self.selected(False)
+    self.view.selected.discard(self)
     super()._disconnect(**kwargs)
     self.view.structureChanged()
     self._hideItems()
