@@ -1617,8 +1617,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
           pasted = self.__dict__.get("_pasting", {}).pop(id(modelObj), None) is not None # (see showPasted())
           logger.info(f'  Creating V{modelObj.__class__.__name__} for model object {modelObj}:{modelObj.__class__.__name__}')
           if (modelObj.isType() or isinstance(modelObj, Node)) and self.canvas and not pasted:
-            # (once this is done -- not in the middle of it: the editor waits for the user, and meanwhile the app goes on)
-            self.canvas.after_idle(lambda mo=modelObj: self._askName(mo)) #type: ignore[misc]
+            # (now: asked later -- after_idle -- the editor came up blank, or unseen, when the
+            # object was made from a pop-up menu, and took all the input: the app seemed to hang)
+            self._askName(modelObj)
           typ:type = type(modelObj)
           newObj:VObject|None = None
           if typ is Collection:
@@ -3137,7 +3138,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   def _askName(self, mo:GraphObject) -> None:
     '''
     Ask for a new object's name (and anything else about it), in the
-    attribute editor -- unless it's gone meanwhile (eg: undone).
+    attribute editor -- unless it's gone (eg: undone).
 
     :param mo:
     :type mo: GraphObject
