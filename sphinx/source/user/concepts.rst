@@ -73,6 +73,36 @@ symmetry only turns a relation round to an individual -- *alice
 individuals: *person -has-sibling-> person* doesn't relate anyone to
 themselves.
 
+Cardinality
+-----------
+
+A relation type can also say how many objects each object is related to by
+it: its ``cardinality`` attribute, written *min..max* -- eg: ``1..1``
+(exactly one), ``0..1`` (at most one), ``2..2`` (exactly two), ``1..*`` (at
+least one), or ``(1,1)``, or just ``2``. It counts its subtypes too: a father
+is a parent, so with *has-father* and *has-mother* each ``1..1``,
+*has-parent* ``2..2`` agrees. Its ``inverseCardinality`` counts the other
+way: how many objects are related *to* each one (eg: a desk that's
+*has-desk* ``inverseCardinality`` ``0..1`` is no-one's, or one person's).
+Like the relational properties, they belong to the relation type they're
+set on, and aren't inherited.
+
+The reasoner uses them:
+
+- **Too many** different objects (ones you've named: they're different
+  people) is an error.
+- **Too few** is a warning -- for the individuals of the relation type's
+  domain (the range's, for ``inverseCardinality``): eg: a person with one
+  parent, when *has-parent* is ``2..2``. (Not if the domain is just *top*:
+  then it's not known who should have them.)
+- **At most one** makes the objects the rules invent the same object: if
+  rules give alice "a mother" twice, it's the same mother -- and if alice's
+  mother is mary, it's mary, and what the rules said of "a mother" they've
+  said of mary.
+- **Exactly one** invents one where the model has none: with *has-father*
+  ``1..1``, a person with no father gets "(has-father for alice)", a person
+  -- which needs no "every person has a father" rule.
+
 Naming relations
 ----------------
 

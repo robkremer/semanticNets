@@ -767,6 +767,108 @@ class TestRules(unittest.TestCase):
     self.assertFalse(r.isDisabled())
     self.assertIn(("bob", "alice"), self.pairs(self.reason().inferred, self.likes))
 
+  # ---- cardinality (see sn.model.reasoner.CARDINALITY) ------------------------
+
+  def cardCodes(self, res, code):
+    return {(v.subject.name, v.args[1], v.args[2]) for v in res.violations if v.code == code}
+
+  def test1700cardinalityChecks(self):
+    'Too many different named objects is an error; too few (for the domain\'s individuals) a warning; a bad value is reported.'
+    m, p = self.m, self.p
+    father = Relation(m, [self.parent], self.person, self.person, name="father")
+    father["cardinality"] = "0..1"
+    self.parent["cardinality"] = "(2,2)"
+    self.rel(father, p["fred"], p["bob"]); self.rel(father, p["fred"], p["dave"])  # two named fathers
+    self.rel(self.parent, p["alice"], p["carol"])                                     # one parent
+    res = self.reason()
+    self.assertIn(("fred", 2, 1), self.cardCodes(res, "cardinality_max"))
+    self.assertIn(("alice", 1, 2), self.cardCodes(res, "cardinality_min"))
+    self.assertNotIn("fred", {x for x, _, _ in self.cardCodes(res, "cardinality_min")})  # (fred has 2: his fathers are parents)
+    self.likes["cardinality"] = "lots"
+    self.assertTrue(any(v.code == "bad_cardinality" and v.subject is self.likes for v in self.reason().violations))
+
+  def fatherRules(self, father):
+    'Two rules that each invent a father for every person.'
+    for name in ("a father", "another father"):
+      P, P2, F = self.var("?p", self.person), self.var("?p"), self.var("?f")
+      self.rule(name, [P], [self.rel(father, P2, F)])
+
+  def test1710mergingInvented(self):
+    'At most one: the fathers the rules invent are one father.'
+    m = self.m
+    father = Relation(m, [self.parent], self.person, self.person, name="father")
+    self.fatherRules(father)
+    self.assertEqual(len([n for n in self.reason().newObjects if n.bindings[0][1] is self.p["alice"]]), 2)
+    father["cardinality"] = "0..1"
+    res = self.reason()
+    mine = [n for n in res.newObjects if n.bindings and n.bindings[0][1] is self.p["alice"]]
+    self.assertEqual(len(mine), 1)
+    self.assertEqual({d for _, t, s, d in res.fired if s is self.p["alice"] and t is father}, set(mine))
+    self.assertEqual(self.cardCodes(res, "cardinality_max"), set())
+
+  def test1720mergingIntoNamed(self):
+    'An invented object that must be a named one is it: what\'s concluded of it is concluded of the named one.'
+    m, p = self.m, self.p
+    father = Relation(m, [self.parent], self.person, self.person, name="father")
+    father["cardinality"] = "0..1"
+    self.rel(self.sib, p["alice"], p["bob"])
+    self.rel(father, p["alice"], p["dave"])
+    X, Y, X2, Y2, F = self.var("?x"), self.var("?y"), self.var("?x"), self.var("?y"), self.var("?f")
+    F["constraints"] = "isFather"
+    self.rule("siblings share a father", [self.rel(self.sib, X, Y)], [self.rel(father, X2, F), self.rel(father, Y2, F), F])
+    res = self.reason()
+    self.assertIn(("bob", "dave"), self.pairs(res.holds, father))                    # bob's father is dave
+    self.assertIn(("alice", "dave"), self.pairs(res.holds, father))
+    self.assertEqual(self.pairs(res.holds, father) - {("alice", "dave"), ("bob", "dave")}, set()) # (no one else)
+    self.assertEqual(res.newObjects, [])                                              # (no invented father left)
+    self.assertIn(("dave", "isFather"), {(x.name, k) for _, x, k, _v in res.ruleAttrs if hasattr(x, "name")})
+    self.rel(father, p["bob"], p["fred"])                                             # but bob's father is fred: contradiction
+    self.assertTrue(self.cardCodes(self.reason(), "cardinality_max"))
+
+  def test1730inventing(self):
+    'Exactly one: a person the model gives no father gets one (just one), of the range\'s type; and not the invented ones.'
+    m, p = self.m, self.p
+    father = Relation(m, [self.parent], self.person, self.person, name="father")
+    father["cardinality"] = "1..1"
+    self.rel(father, p["alice"], p["bob"])
+    res = self.reason()
+    fathers = {s.name: d for _, t, s, d in res.fired if t is father and hasattr(s, "name")}
+    self.assertNotIn("alice", fathers)                                                # (she has one)
+    for n in ("bob", "carol", "dave", "fred"):
+      self.assertIn(n, fathers)
+    self.assertEqual(len(res.newObjects), 4)                                          # (theirs don't get fathers)
+    self.assertTrue(all((n, self.person) in {(x, t) for _, x, t in res.ruleIsa} for n in res.newObjects))
+    self.assertEqual(self.cardCodes(res, "cardinality_min"), set())                   # (everyone has one now)
+    self.fatherRules(father)                                                          # (the rules' merge with them)
+    self.assertEqual(len(self.reason().newObjects), 4)
+
+  def test1740inverse(self):
+    'The other way: how many each destination is related from.'
+    m, p = self.m, self.p
+    desk = Node(m, [m.NODE], name="desk")
+    hasDesk = Relation(m, [m.RELATION], self.person, desk, name="has-desk")
+    hasDesk["inverseCardinality"] = "1..1"
+    d1, d2, d3 = (Node(m, [desk], individual=True, name=n) for n in ("d1", "d2", "d3"))
+    self.rel(hasDesk, p["alice"], d1); self.rel(hasDesk, p["bob"], d1)                # d1: two people's
+    self.rel(hasDesk, p["carol"], d2)
+    res = self.reason()
+    self.assertIn(("d1", 2, 1), self.cardCodes(res, "cardinality_max_in"))
+    owners = {d.name: s for _, t, s, d in res.fired if t is hasDesk and hasattr(d, "name")}
+    self.assertEqual(set(owners), {"d3"})                                             # (d3 got an owner, a person)
+    self.assertIn((owners["d3"], self.person), {(x, t) for _, x, t in res.ruleIsa})
+
+  def test1750answersMerged(self):
+    'A query sees merged objects once.'
+    m = self.m
+    father = Relation(m, [self.parent], self.person, self.person, name="father")
+    father["cardinality"] = "0..1"
+    self.fatherRules(father)
+    q = Node(m, [m.QUERY], individual=True, name="whose father?")
+    X, F = self.var("?x", self.person), self.var("?f")
+    self.rel(m.CONTAINS, q, X); self.rel(m.CONTAINS, q, F); self.rel(m.CONTAINS, q, self.rel(father, X, F))
+    rows = ClingoReasoner(m).answer(q)
+    self.assertEqual(len([r for r in rows if r[X] is self.p["alice"]]), 1)
+
 
 if __name__ == "__main__":
   unittest.main()

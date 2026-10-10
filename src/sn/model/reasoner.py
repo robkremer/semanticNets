@@ -25,6 +25,10 @@ A reasoner engine subclasses :py:class:`Reasoner` (see
   ``member(C,M)``             Collection membership
   ``attr(O,K,V)``             effective non-"vis/" scalar attributes
   ``lattr(O,K)``              O has attribute K locally
+  ``card(T,Dir,Min,Max)``     relation type T's cardinality: each source (Dir
+                              *out*) or destination (*in*) has Min..Max others
+                              by T (Max -1: any number). See *CARDINALITY*.
+  ``card_error(T,K,M)``       T's cardinality attribute K can't be read: message M
   ``pattern(X)``              X describes a pattern (in a rule etc.), not the world
                               (see GraphObject.isPatternElement())
   ``var_kind(X,K)``           X is a variable over K: individual, type or any
@@ -96,6 +100,49 @@ logger:sn.SNLogger = sn.getLogger(__name__)
 PROPERTIES = ("reflexive", "irreflexive", "symmetric", "asymmetric", "transitive")
 "The relational properties, which are tags on specific relations."
 
+CARDINALITY = {"cardinality": "out", "inverseCardinality": "in"}
+'''
+The cardinality attributes of a relation type -- like the relational
+properties, its own (not inherited by its subtypes): how many objects each
+source is related to by it (or by its subtypes: a father is a parent), and how
+many each destination is related from. Eg: has-father's "cardinality" "1..1"
+(everyone has exactly one father), has-parent's "2..2", has-child's "0..*", a
+desk's has-desk "inverseCardinality" "0..1" (no desk is two people's). See
+*parseCardinality()* for how they're written, and *clingoReasoner.lp* for what
+they mean: too many different (named) objects is an error and too few (for
+the domain's individuals: the range's, for "in") a warning; at most one makes
+the objects the rules invent the same object (as each other, or as a named
+one); and exactly one invents one where the model has none.
+'''
+
+def parseCardinality(text:Any) -> tuple[int, int|None]:
+  '''
+  :param text: A cardinality: "min..max" (eg: "1..1", "0..1", "1..*"), "n"
+    (exactly n), or "(min,max)" / "min,max". The max may be "*" or "n" (or
+    missing: "1..") for any number.
+  :type text: Any
+  :returns: (min, max), max None for any number.
+  :rtype: tuple[int, int | None]
+  :raises ValueError: If it can't be read, or min > max.
+  '''
+  t = str(text).strip()
+  if t.startswith("(") and t.endswith(")"):
+    t = t[1:-1].strip()
+  for sep in ("..", ",", "-"):
+    if sep in t:
+      lo, hi = (x.strip() for x in t.split(sep, 1))
+      break
+  else:
+    lo, hi = t, t
+  try:
+    low = int(lo or "0")
+    high = None if hi in ("*", "n", "N", "") else int(hi)
+  except ValueError:
+    raise ValueError(f'"{text}" isn\'t a cardinality: write eg: 1..1, 0..1, 2, or 1..* (or (1,1))') from None
+  if low < 0 or (high is not None and high < low):
+    raise ValueError(f'"{text}": the bounds must be 0 or more, the smaller first')
+  return low, high
+
 _MESSAGES:dict[str,str] = {
   "domain":                "{2}, the source of {0}, is not in the domain of {1} ({3})",
   "range":                 "{2}, the destination of {0}, is not in the range of {1} ({3})",
@@ -119,6 +166,11 @@ _MESSAGES:dict[str,str] = {
   "requirement_empty":     "requirement {0}: nothing is required (its required pane is empty), so it can't be violated",
   "pattern_disconnected":  "{0}: its {1} is in parts that aren't related to each other ({2}): every match of one is paired with every match of the others",
   "requirement_unanchored": "requirement {0}: {1} in its required part isn't related to its condition: it only checks that something like it exists",
+  "cardinality_max":       "{0}: {2} different objects by {1}, but it allows at most {3}",
+  "cardinality_max_in":    "{0}: {2} different objects have it by {1}, but it allows at most {3}",
+  "cardinality_min":       "{0}: {2} by {1}, but it needs at least {3}",
+  "cardinality_min_in":    "{0}: {2} have it by {1}, but it needs at least {3}",
+  "bad_cardinality":       "{0}: its {1} can't be read: {2}",
   "unused_variable":       "{0} is a variable (by its name), but isn't in any query, rule, definition, constraint or requirement: it, and its relations, are ignored -- to stand for someone unknown, give it an ordinary name",
   }
 "Message templates for violation codes: {0} is the subject, {1}... are the args."
@@ -240,6 +292,14 @@ class Inferences:
   "(rule, object, key, value): attributes the rules concluded."
   ruleIsa:list[tuple[GraphObject, GraphObject|NewObject, GraphObject]] = field(default_factory=list)
   "(rule, object, type): isa links the rules concluded."
+  same:list[tuple[GraphObject|NewObject, GraphObject|NewObject]] = field(default_factory=list)
+  '''
+  Pairs the reasoner found must be the same object (by a cardinality of at
+  most one: see *CARDINALITY*), at least one of each an object the rules
+  invented. *Reasoner._finish()* merges them: see *mergeSame()*.
+  '''
+  merged:dict[NewObject, GraphObject|NewObject] = field(default_factory=dict)
+  "Each invented object that was merged, and what it was merged into (see *mergeSame()*)."
   newObjects:list[NewObject] = field(default_factory=list)
   '''
   The objects the rules concluded exist. Relations involving them are only in
@@ -1247,6 +1307,9 @@ class Reasoner(ABC):
         asymmetric relation between a and b once, not again for b and a. (Of
         such, the one whose args come first in the models' order is kept.)
       - A constraint's violations get its message (see *ConstraintSpec*).
+      - Objects that must be the same (*Inferences.same*) are merged (see
+        *mergeSame()*).
+      - The relation triples (*holds*, ...) are put in the models' order.
       - Unless *showSysRules*, the base rules' conclusions aren't reported as
         rule conclusions (*fired*, ...): what they conclude is in *holds*,
         *inferred*, ... as any inference is.
@@ -1265,6 +1328,9 @@ class Reasoner(ABC):
       k = key(v)
       if k not in best or [order(a) for a in v.args] < [order(a) for a in best[k].args]:
         best[k] = v
+    mergeSame(ret)
+    for name in ("holds", "inferred", "inherited", "classify"): # (in the models' order, not the engine's: the same each time)
+      setattr(ret, name, sorted(getattr(ret, name), key=lambda row: [order(x) for x in row]))
     specs = getattr(self, "_constraintSpecs", None) # (as the engine used them: see specs())
     templates = {s.code: s.template for s in (specs if specs is not None else self.specs()[1]) if s.template}
     ret.violations = [v for v in ret.violations if best[key(v)] is v]
@@ -1383,6 +1449,16 @@ class Reasoner(ABC):
       for prop in PROPERTIES:
         if dict.__contains__(rel, prop):
           out.append(("prop", (rel, Sym(prop))))
+      for key, direction in CARDINALITY.items(): # (its own, too: see CARDINALITY)
+        text = rel.getLocal(key, None)
+        if text is None or str(text).strip() == "":
+          continue
+        try:
+          low, high = parseCardinality(text)
+        except ValueError as ex:
+          out.append(("card_error", (rel, key, str(ex))))
+          continue
+        out.append(("card", (rel, Sym(direction), low, -1 if high is None else high)))
     return out
 
 # ── Shared results ────────────────────────────────────────────────────────
@@ -1534,6 +1610,80 @@ def _inferredRelations(model:Model) -> dict[tuple[int, int, int], Relation]:
     ret[(id(t), id(src), id(dst))] = o
   return ret
 
+def sameClasses(pairs:list[tuple[Any, Any]]) -> dict[NewObject, GraphObject|NewObject]:
+  '''
+  :param pairs: Pairs of objects that must be the same (see *Inferences.same*).
+  :type pairs: list[tuple[Any, Any]]
+  :returns: For each invented object (*NewObject*) among them, what stands for
+    its class -- the objects all the same as it: the model's object, if
+    there's just one in the class (the invented ones are it); else one of the
+    invented ones, the same each time (one a rule made, rather than a
+    cardinality -- its name is the user's -- then the shortest name, then the
+    first by name). (Two of the model's objects can't be the same: that's reported --
+    see *CARDINALITY* -- and their invented ones stay invented.)
+  :rtype: dict[NewObject, GraphObject | NewObject]
+  '''
+  key = lambda o: ("g", id(o)) if isinstance(o, GraphObject) else ("n", _newObjectKey(o)) # (by identity: see _newObjectKey())
+  parent:dict[tuple, tuple] = {}
+  objs:dict[tuple, Any] = {}
+  def find(k:tuple) -> tuple:
+    while parent.setdefault(k, k) != k:
+      parent[k] = parent[parent[k]]
+      k = parent[k]
+    return k
+  for a, b in pairs:
+    ka, kb = key(a), key(b)
+    objs[ka], objs[kb] = a, b
+    ra, rb = find(ka), find(kb)
+    if ra != rb:
+      parent[ra] = rb
+  classes:dict[tuple, list[Any]] = {}
+  for k, o in objs.items():
+    classes.setdefault(find(k), []).append(o)
+  ret:dict[NewObject, GraphObject|NewObject] = {}
+  for members in classes.values():
+    named = [o for o in members if isinstance(o, GraphObject)]
+    invented = sorted((o for o in members if isinstance(o, NewObject)), # (one a rule made first: its name is the user's)
+                      key=lambda n: (not names.isVariableName(n.variable), len(_newObjectName(n, None)), _newObjectName(n, None)))
+    if not invented:
+      continue
+    rep = named[0] if len(named) == 1 else invented[0]
+    for n in invented:
+      ret[n] = rep
+  return ret
+
+def mergeSame(ret:Inferences) -> None:
+  '''
+  Merge the objects that must be the same (*ret.same*: see *sameClasses()*):
+  each invented object is replaced by what stands for its class, in the rules'
+  conclusions (*fired*, *ruleAttrs*, *ruleIsa*), and only those that stand for
+  a class (or weren't merged) are left in *newObjects*. (What the engine
+  concluded about the model's objects -- *holds*, ... -- already includes what
+  it concluded about the invented ones that are them.) *ret.merged* is set.
+
+  :param ret:
+  :type ret: Inferences
+  '''
+  m = sameClasses(ret.same)
+  ret.merged = m
+  if not m:
+    return
+  byKey = {_newObjectKey(n): r for n, r in m.items()}
+  f = lambda x: byKey.get(_newObjectKey(x), x) if isinstance(x, NewObject) else x
+  def unique(rows:list) -> list: # (by identity: GraphObjects compare as dicts)
+    seen:set = set()
+    out = []
+    for row in rows:
+      k = tuple(_newObjectKey(x) if isinstance(x, NewObject) else ("g", id(x)) if isinstance(x, GraphObject) else ("v", repr(x)) for x in row)
+      if k not in seen:
+        seen.add(k)
+        out.append(row)
+    return out
+  ret.fired = unique([(r, t, f(s), f(d)) for r, t, s, d in ret.fired])
+  ret.ruleAttrs = unique([(r, f(x), k, v) for r, x, k, v in ret.ruleAttrs])
+  ret.ruleIsa = unique([(r, f(x), t) for r, x, t in ret.ruleIsa])
+  ret.newObjects = [n for (n,) in unique([(n,) for n in ret.newObjects]) if f(n) is n or (isinstance(f(n), NewObject) and _newObjectKey(f(n)) == _newObjectKey(n))]
+
 def _newObjectKey(n:NewObject) -> tuple:
   '''
   :param n: An object a rule concluded exists.
@@ -1544,7 +1694,7 @@ def _newObjectKey(n:NewObject) -> tuple:
   '''
   return (id(n.rule), n.variable, tuple((name, id(v) if isinstance(v, GraphObject) else repr(v)) for name, v in n.bindings))
 
-def _newObjectName(n:NewObject, model:Model) -> str:
+def _newObjectName(n:NewObject, model:Model|None) -> str:
   '''
   :param n: An object a rule concluded exists.
   :type n: NewObject

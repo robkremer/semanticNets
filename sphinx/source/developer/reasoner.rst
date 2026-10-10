@@ -192,6 +192,36 @@ this finite and stratified:
   job (``_satisfied``) -- tested against *asserted* relations and types
   only, so the test doesn't depend on its own outcome.
 
+Cardinality
+~~~~~~~~~~~
+
+A relation type's ``cardinality`` and ``inverseCardinality`` attributes
+(:py:data:`~sn.model.reasoner.CARDINALITY`, read by
+:py:func:`~sn.model.reasoner.parseCardinality`) are exported as
+``card(T, out|in, Min, Max)`` facts (``Max`` -1 for any number), and the rule
+base (``clingoReasoner.lp``, "Cardinality") gives them their meaning:
+
+- **Merging** (at most one): ``same(X, Y)`` for two objects related to (or
+  from) the same object, one of them new -- and its symmetric and transitive
+  closure. What's true of one is then true of the other (``holds``, ``attr``
+  and ``isa_star`` are copied across): positive rules, so the program stays
+  stratified. Two of the model's objects are never merged (they have
+  different names): their being the same is reported, as too many.
+  :py:func:`~sn.model.reasoner.mergeSame` then replaces each new object by what
+  stands for its class (:py:func:`~sn.model.reasoner.sameClasses`: the model's
+  object, if there's one, else one of the new ones) in the results, and the
+  engine's ``answer()`` does the same for answers.
+- **Inventing** (exactly one): a ``new(T, Name, (("of", X),))`` object (``"to"``
+  for ``in``) for each of the domain's (range's) individuals with no asserted
+  relation by T -- like a rule's new objects, only for the model's own
+  individuals (``base``), and tested against asserted relations only.
+- **Checking**: ``cardinality_max`` (``_in``) counts the model's objects only
+  (a new one might be any of them); ``cardinality_min`` (``_in``) counts new
+  ones too, once per merged class.
+
+The relation triples in the results are sorted into the models' order (see
+*Reasoner._finish()*), so they don't depend on the engine's.
+
 Constraints
 -----------
 

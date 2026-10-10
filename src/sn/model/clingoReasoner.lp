@@ -30,6 +30,10 @@
 %   attr(O,K,V).              effective (local or inherited, per the model's
 %                             Restriction rules) non-"vis/" scalar attributes
 %   lattr(O,K).               O has K locally
+%   card(T,Dir,Min,Max).      relation type T's cardinality: each source (Dir out)
+%                             or destination (in) has Min..Max others by T (Max -1:
+%                             any number). See sn.model.reasoner.CARDINALITY.
+%   card_error(T,K,M).        T's cardinality attribute K can't be read: message M
 %
 % ---- Output ------------------------------------------------------------------
 %   isa_data(X,T).            X isa T (reflexive-transitive), X not a pattern element
@@ -44,6 +48,10 @@
 %   rule_isa(Rule,X,T).       a user rule concluded that X isa T
 %   rule_new(N).              a user rule concluded that object N exists: N is
 %                             new(Rule,Var,Match), one per match of the rule
+%                             (or new(T,Name,(("of"|"to",X),)): an object T's
+%                             cardinality says X must have -- see below)
+%   same(X,Y).                X and Y must be the same object (by a cardinality
+%                             of at most one), one of them a new object
 %
 % ---- User rules --------------------------------------------------------------
 %   The rules (see sn.model.reasoner.ruleOf()) -- the model's, and the base
@@ -164,6 +172,63 @@ violation0(unset_endpoint, warning, R, (src,)) :-
 violation0(unset_endpoint, warning, R, (dst,)) :-
     kind(R,relation), individual(R), not has_ldst(R).
 
+%%% Cardinality ---------------------------------------------------------------
+% A relation type's cardinality (see card/4): how many objects each source is
+% related to by it -- or by its subtypes: a father is a parent -- (out), or
+% each destination from (in).
+
+new_obj(N) :- rule_new(N).
+
+% At most one: objects that must be the same. Two of the model's objects are
+% different (they have different names: see violation cardinality_max), but an
+% object the rules invented -- "a mother" -- might be anyone: if it must be
+% the same as another, it is. Whatever's true of one is then true of the other.
+same(D1,D2) :- card(T,out,_,1), holds(T,S,D1), holds(T,S,D2), D1 != D2, new_obj(D1).
+same(S1,S2) :- card(T,in,_,1), holds(T,S1,D), holds(T,S2,D), S1 != S2, new_obj(S1).
+same(X,Y) :- same(Y,X).
+same(X,Z) :- same(X,Y), same(Y,Z), X != Z.
+holds(T,S,Y) :- holds(T,S,X), same(X,Y).
+holds(T,Y,D) :- holds(T,X,D), same(X,Y).
+attr(Y,K,V) :- attr(X,K,V), same(X,Y).
+isa_star(Y,T) :- isa_star(X,T), same(X,Y), T != X.
+
+% Exactly one (at least one, at most one): an object of the domain's (out; the
+% range's, in) that the model doesn't relate by it to anything gets a new
+% object -- of the range (out; the domain, in) -- which merging (above) makes
+% the same as any other it must be. Only for the model's own individuals (see
+% base/1), so new objects don't go on making more.
+card_top(C) :- const(top,C).
+card_of(T,out,X) :- card(T,out,Min,_), Min > 0, domain(T,C), not card_top(C), isa_star(X,C), base(X), individual(X), kind(X,node).
+card_of(T,in,X) :- card(T,in,Min,_), Min > 0, range(T,C), not card_top(C), isa_star(X,C), base(X), individual(X), kind(X,node).
+card_has(T,out,X) :- asserted_under(T,X,_).
+card_has(T,in,X) :- asserted_under(T,_,X).
+card_new(T,out,X) :- card_of(T,out,X), card(T,out,_,1), not card_has(T,out,X).
+card_new(T,in,X) :- card_of(T,in,X), card(T,in,_,1), not card_has(T,in,X).
+rule_new(new(T,N,(("of",X),))) :- card_new(T,out,X), name(T,N).
+fired(T,T,X,new(T,N,(("of",X),))) :- card_new(T,out,X), name(T,N).
+rule_isa(T,new(T,N,(("of",X),)),C) :- card_new(T,out,X), name(T,N), range(T,C), not card_top(C).
+rule_new(new(T,N,(("to",X),))) :- card_new(T,in,X), name(T,N).
+fired(T,T,new(T,N,(("to",X),)),X) :- card_new(T,in,X), name(T,N).
+rule_isa(T,new(T,N,(("to",X),)),C) :- card_new(T,in,X), name(T,N), domain(T,C), not card_top(C).
+
+% Too many, too few. Of what an object is related to, a merged new object is
+% counted once (as the object it's the same as, or as the first of those that
+% are the same: by term order), and too many is only known of the model's own
+% objects (an invented one might be one of them).
+card_counted(D) :- obj(D).
+card_counted(N) :- new_obj(N), not card_merged(N).
+card_merged(N) :- same(N,X), obj(X), new_obj(N).
+card_merged(N) :- same(N,X), new_obj(N), new_obj(X), X < N.
+violation0(cardinality_max, error, S, (T,N,M)) :- card(T,out,_,M), M >= 0, holds(T,S,_), individual(S),
+    N = #count{ D : holds(T,S,D), obj(D) }, N > M.
+violation0(cardinality_max_in, error, D, (T,N,M)) :- card(T,in,_,M), M >= 0, holds(T,_,D), individual(D),
+    N = #count{ S : holds(T,S,D), obj(S) }, N > M.
+violation0(cardinality_min, warning, X, (T,N,Min)) :- card(T,out,Min,_), card_of(T,out,X),
+    N = #count{ D : holds(T,X,D), card_counted(D) }, N < Min.
+violation0(cardinality_min_in, warning, X, (T,N,Min)) :- card(T,in,Min,_), card_of(T,in,X),
+    N = #count{ S : holds(T,S,X), card_counted(S) }, N < Min.
+violation0(bad_cardinality, warning, T, (K,M)) :- card_error(T,K,M).
+
 %%% User rules' attribute conclusions ------------------------------------------
 
 attr(X,K,V) :- rule_attr(_,X,K,V).
@@ -191,3 +256,4 @@ isa_data(X,T) :- isa_star(X,T), data(X).
 #show rule_attr/4.
 #show rule_isa/3.
 #show rule_new/1.
+#show same/2.

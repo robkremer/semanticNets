@@ -42,7 +42,8 @@ import re
 from typing import Any, override
 import clingo
 from sn.model.model import Model, GraphObject
-from sn.model.reasoner import Reasoner, Inferences, Violation, Sym, Fact, PROPERTIES, Pattern, patternOf, ruleOf, rules, ruleSpecs, constraintSpecs, NewObject, inferredNodeFor
+from sn.model.reasoner import Reasoner, Inferences, Violation, Sym, Fact, PROPERTIES, Pattern, patternOf, ruleOf, rules, ruleSpecs, constraintSpecs, NewObject, inferredNodeFor, \
+  sameClasses, _newObjectKey
 from sn.model.constraints import PRESENT, ValueVar, Not
 from sn.model.names import NameKind
 
@@ -171,7 +172,7 @@ class ClingoReasoner(Reasoner, engine="clingo"):
     facts = self._program(self.facts()) # (numbers the objects the rules refer to)
     for sym in self._solve(self._rulesProgram(), facts):
       args = [self._value(a) for a in sym.arguments]
-      if sym.name not in ("fired", "rule_attr", "rule_isa", "rule_new") and any(isinstance(a, NewObject) for a in args):
+      if sym.name not in ("fired", "rule_attr", "rule_isa", "rule_new", "same") and any(isinstance(a, NewObject) for a in args):
         continue # (the general results are about the model's objects: see Inferences.newObjects)
       match sym.name:
         case "holds":     ret.holds.append(tuple(args)) #type: ignore[arg-type]
@@ -183,6 +184,7 @@ class ClingoReasoner(Reasoner, engine="clingo"):
         case "rule_attr": ret.ruleAttrs.append(tuple(args)) #type: ignore[arg-type]
         case "rule_isa":  ret.ruleIsa.append(tuple(args)) #type: ignore[arg-type]
         case "rule_new":  ret.newObjects.append(args[0])
+        case "same":      ret.same.append((args[0], args[1]))
         case "violation": ret.violations.append(Violation(*args))
     return self._finish(ret)
 
@@ -275,10 +277,25 @@ class ClingoReasoner(Reasoner, engine="clingo"):
     args = ",".join(var[n] for n in names)
     head = f"ans({args})" if args else "ans"
     program = self._rulesProgram() + f"\n{head} :- {', '.join(body)}.\n#show ans/{len(names)}."
-    rows = [sym for sym in self._solve(program, facts) if sym.name == "ans"]
-    ret = []
-    for sym in rows:
-      byName = dict(zip(names, (inferredNodeFor(self.model, self._value(a)) for a in sym.arguments))) # (a new object: its inferred node, once it's made)
+    symbols = self._solve(program, facts)
+    merged = sameClasses([(self._value(sym.arguments[0]), self._value(sym.arguments[1])) for sym in symbols if sym.name == "same"])
+    byKey = {_newObjectKey(n): r for n, r in merged.items()}
+    def value(a:clingo.Symbol) -> Any: # (a new object: what it was merged into, if it was; and its inferred node, once it's made)
+      v = self._value(a)
+      if isinstance(v, NewObject):
+        v = byKey.get(_newObjectKey(v), v)
+      return inferredNodeFor(self.model, v)
+    ret:list[dict[GraphObject, GraphObject]] = []
+    seen:set[tuple] = set()
+    for sym in symbols:
+      if sym.name != "ans":
+        continue
+      vals = [value(a) for a in sym.arguments]
+      k = tuple(_newObjectKey(v) if isinstance(v, NewObject) else id(v) for v in vals)
+      if k in seen: # (merged: the same answer)
+        continue
+      seen.add(k)
+      byName = dict(zip(names, vals))
       ret.append({v: byName[v.name] for v in pat.variables})
     return ret
 
