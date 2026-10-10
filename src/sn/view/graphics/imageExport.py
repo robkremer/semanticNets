@@ -429,8 +429,8 @@ def drawItems(canvas:tk.Canvas, items:Iterable[int], scale:float=1.0) -> bytes|N
   :type items: Iterable[int]
   :param scale: Points per canvas pixel.
   :type scale: float
-  :returns: A PDF of *items* (those that aren't hidden), on a page just big
-    enough for them, or None if there's nothing to draw.
+  :returns: A PDF of *items* (those that aren't hidden), on a white page just
+    big enough for them, or None if there's nothing to draw.
   :rtype: bytes | None
   '''
   shown = [i for i in items if canvas.itemcget(i, "state") != "hidden" and canvas.type(i) in ("rectangle", "oval", "polygon", "line", "text")]
@@ -440,6 +440,9 @@ def drawItems(canvas:tk.Canvas, items:Iterable[int], scale:float=1.0) -> bytes|N
   box:list[float] = [min(b[0] for b in boxes) - MARGIN, min(b[1] for b in boxes) - MARGIN,
          max(b[2] for b in boxes) + MARGIN, max(b[3] for b in boxes) + MARGIN]
   pdf = PDF(box, scale)
+  pdf.color((1.0, 1.0, 1.0), stroke=False) # (a white background: not transparent, which some programs show black)
+  pdf.path([((box[0], box[1]),), ((box[2], box[1]),), ((box[2], box[3]),), ((box[0], box[3]),)], close=True)
+  pdf.paint(True, False)
   r = Renderer(canvas, pdf)
   for i in shown:
     r.draw(i)
