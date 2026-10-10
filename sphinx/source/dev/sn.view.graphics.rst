@@ -17,6 +17,7 @@ Submodules
    sn.view.graphics.animationToolbar
    sn.view.graphics.connectors
    sn.view.graphics.decorators
+   sn.view.graphics.expandDialog
    sn.view.graphics.guiApp
    sn.view.graphics.imageExport
    sn.view.graphics.labels

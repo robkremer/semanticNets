@@ -1763,11 +1763,13 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     :type menu: tk.Menu
     '''
     expMenu = tk.Menu()
-    expMenu.add_command(label="expand all, 1 level" , command=lambda: self.view.context.expand(self))
-    expMenu.add_command(label="expand all, 2 levels", command=lambda: self.view.context.expand(self, levels=1))
-    expMenu.add_command(label="expand all, 3 levels", command=lambda: self.view.context.expand(self, levels=2))
-    expMenu.add_command(label="expand all, 4 levels", command=lambda: self.view.context.expand(self, levels=3))
-    menu.add_cascade(menu=expMenu, label="expand")
+    expMenu.add_command(label="1 level" , command=lambda: self.view.context.expand(self))
+    expMenu.add_separator()
+    expMenu.add_command(label="2 levels", command=lambda: self.view.context.expand(self, levels=1))
+    expMenu.add_command(label="3 levels", command=lambda: self.view.context.expand(self, levels=2))
+    expMenu.add_command(label="4 levels", command=lambda: self.view.context.expand(self, levels=3))
+    menu.add_cascade(menu=expMenu, label=f"expand all ({len(self.expandableRelations())})")
+    menu.add_command(label="expand by relation...", command=self.expandByRelation)
     n = len(self.selectionOrSelf())
     menu.add_command(label="erase from view" + (f" ({n} selected)" if n > 1 else ""), accelerator="Delete",
                      command=lambda: self.view.doErase(self.selectionOrSelf()))
@@ -2126,14 +2128,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     if mo is None or _done.get(id(self), -1) >= expand:
       return
     _done[id(self)] = expand
-    # nothing in a hidden or erased category (see SNGView.visibility()): not
-    # the relation, nor what it leads to
-    def ok(rel:Relation) -> bool:
-      if self.view.isFiltered(rel):
-        return False
-      other = rel.localDst if rel.localSrc is mo else rel.localSrc
-      return not (other is not None and self.view.isFiltered(other)) and filter(self, rel)
-    rels:list[Relation] = removeDuplicates([r for r, _ in mo._getIncoming(filtr=ok)] + [r for r, _ in mo._getOutgoing(filtr=ok)])
+    rels = self.expandableRelations(filter)
             
     # show the ones that aren't shown (with what's at their other ends: see VRelation._resolveEnd())
     new = [r for r in rels if self.view.findViewObjectForGraphObject(r) is None]
@@ -2153,6 +2148,40 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         other = vRel.dst if vRel.src is self else vRel.src
         if other is not None and other is not self and other._isConnected():
           other.expand(filter=filter, expand=expand - 1, _done=_done)
+
+  def expandableRelations(self, filter:Callable[[Any, Relation], bool]=lambda _vo, _r: True) -> list[Relation]:
+    '''
+    :param filter: As for *expand()*.
+    :type filter: Callable[[Any, Relation], bool]
+    :returns: The relations *expand()* follows from this object: its own, in
+      and out (and symmetric ones both ways), that *filter* allows -- but not
+      any in a hidden or erased category (see *SNGView.visibility()*), nor any
+      that lead to something that is.
+    :rtype: list[Relation]
+    '''
+    mo = self.modelObject
+    if mo is None:
+      return []
+    def ok(rel:Relation) -> bool:
+      if self.view.isFiltered(rel):
+        return False
+      other = rel.localDst if rel.localSrc is mo else rel.localSrc
+      return not (other is not None and self.view.isFiltered(other)) and filter(self, rel)
+    return removeDuplicates([r for r, _ in mo._getIncoming(filtr=ok)] + [r for r, _ in mo._getOutgoing(filtr=ok)])
+
+  def expandByRelation(self) -> None:
+    '''
+    "expand by relation...": ask which of its relations to follow, and how
+    far (see *expandDialog*), then expand it so (one undo).
+    '''
+    from sn.view.graphics.expandDialog import ExpandDialog, relationChoices
+    mo = self.modelObject
+    if mo is None:
+      return
+    answer = ExpandDialog(self.canvas, f'Expand "{self.name}"', relationChoices(mo, self.expandableRelations())).show()
+    if answer is not None:
+      filt, levels = answer
+      self.view.context.expand(self, levels=levels - 1, _filter=filt)
 
   def strToShape(self, name):
     '''

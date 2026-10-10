@@ -11,8 +11,14 @@ What's shown
 - **view | show all** brings every object of the model into the view.
 - **view | show node** lists the model's objects that aren't in the view:
   choose one to bring it in.
-- **expand** (on an object's menu) brings in the objects related to it, to 1
-  to 4 levels out.
+- **expand all** (on an object's menu; it says how many relations the object
+  has) brings in everything related to it, 1 to 4 levels out.
+- **expand by relation...** asks which relations to follow: each type the
+  object's relations are, each way round -- *has-mother →* (its mother) or
+  *← has-mother* (its children) -- with how many there are; a type includes its
+  subtypes (*has-parent →* takes *has-father* and *has-mother* too). Or all
+  relations, all outgoing, or all incoming (which, at every level, follow
+  any relation that way). And how many **levels** out to go.
 - **erase from view** (on an object's menu) takes it out of the view.
 
 Hiding and erasing by category
