@@ -18,7 +18,10 @@ What's shown
   *← has-mother* (its children) -- with how many there are; a type includes its
   subtypes (*has-parent →* takes *has-father* and *has-mother* too). Or all
   relations, all outgoing, or all incoming (which, at every level, follow
-  any relation that way). And how many **levels** out to go.
+  any relation that way). And how many **levels** out to go. Relations in a
+  hidden or erased category (eg: isa links) are listed too, greyed and
+  marked *hidden*: ticked, they -- and what they lead to -- are shown anyway
+  (undo hides them again). "All" leaves them hidden.
 - **erase from view** (on an object's menu) takes it out of the view.
 
 Hiding and erasing by category

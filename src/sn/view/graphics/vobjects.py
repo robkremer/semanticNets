@@ -2102,7 +2102,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
   def expand(self, 
              filter:Callable[[Any, Relation], bool]=lambda _vn, _mr: True, 
              expand=0,
-             _done:dict[int, int]|None=None):
+             _done:dict[int, int]|None=None,
+             _exempted:list|None=None):
     """
     Show this object's relations that aren't shown yet (and so what's at their
     other ends) -- and, if *expand* > 0, expand each object at the other end of
@@ -2120,6 +2121,13 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       depth or less, as an expansion would otherwise grow exponentially with
       the depth (going back and forth along each relation, round each cycle).
     :type _done: dict[int, int] | None
+    :param _exempted: (Internal) If *filter* has a true "showsHidden" (see
+      *expandDialog.choiceFilter()*: relation types asked for by name), the
+      relations it follows are followed even in a hidden or erased category,
+      and they and what they lead to are shown anyway (see
+      *SNGView._exemptIfFiltered()*): each one shown so is added to this, so
+      it can be hidden again (eg: on an undo).
+    :type _exempted: list | None
     """
     from sn.view.graphics.vrelations import VRelation
     if _done is None:
@@ -2128,7 +2136,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     if mo is None or _done.get(id(self), -1) >= expand:
       return
     _done[id(self)] = expand
-    rels = self.expandableRelations(filter)
+    withHidden = bool(getattr(filter, "showsHidden", False))
+    rels = self.expandableRelations(filter, withHidden=withHidden)
             
     # show the ones that aren't shown (with what's at their other ends: see VRelation._resolveEnd())
     new = [r for r in rels if self.view.findViewObjectForGraphObject(r) is None]
@@ -2140,6 +2149,18 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         self.view.makeViewObjectForGraphObject(r, atPoint=(x,y))
         y += 50
 
+    if withHidden: # (asked for by name: shown, even in a hidden category -- and what they lead to)
+      for r in rels:
+        vRel = self.view.findViewObjectForGraphObject(r)
+        if not isinstance(vRel, VRelation):
+          continue
+        for vo in (vRel, vRel.src, vRel.dst):
+          if isinstance(vo, VObject) and vo._isConnected() and vo.modelObject is not None \
+              and not vo.categoryExempt and self.view.isFiltered(vo.modelObject):
+            self.view._exemptIfFiltered(vo)
+            if _exempted is not None:
+              _exempted.append(vo)
+
     if expand > 0: # and on to what's at their other ends
       for r in rels:
         vRel = self.view.findViewObjectForGraphObject(r)
@@ -2147,22 +2168,26 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
           continue
         other = vRel.dst if vRel.src is self else vRel.src
         if other is not None and other is not self and other._isConnected():
-          other.expand(filter=filter, expand=expand - 1, _done=_done)
+          other.expand(filter=filter, expand=expand - 1, _done=_done, _exempted=_exempted)
 
-  def expandableRelations(self, filter:Callable[[Any, Relation], bool]=lambda _vo, _r: True) -> list[Relation]:
+  def expandableRelations(self, filter:Callable[[Any, Relation], bool]=lambda _vo, _r: True, withHidden:bool=False) -> list[Relation]:
     '''
     :param filter: As for *expand()*.
     :type filter: Callable[[Any, Relation], bool]
+    :param withHidden: Those in hidden or erased categories too.
+    :type withHidden: bool
     :returns: The relations *expand()* follows from this object: its own, in
       and out (and symmetric ones both ways), that *filter* allows -- but not
-      any in a hidden or erased category (see *SNGView.visibility()*), nor any
-      that lead to something that is.
+      (unless *withHidden*) any in a hidden or erased category (see
+      *SNGView.visibility()*), nor any that lead to something that is.
     :rtype: list[Relation]
     '''
     mo = self.modelObject
     if mo is None:
       return []
     def ok(rel:Relation) -> bool:
+      if withHidden:
+        return filter(self, rel)
       if self.view.isFiltered(rel):
         return False
       other = rel.localDst if rel.localSrc is mo else rel.localSrc
@@ -2178,7 +2203,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     mo = self.modelObject
     if mo is None:
       return
-    answer = ExpandDialog(self.canvas, f'Expand "{self.name}"', relationChoices(mo, self.expandableRelations())).show()
+    hidden = lambda r: self.view.isFiltered(r) or any(e is not None and e is not mo and self.view.isFiltered(e) for e in (r.localSrc, r.localDst))
+    answer = ExpandDialog(self.canvas, f'Expand "{self.name}"', relationChoices(mo, self.expandableRelations(withHidden=True), hidden=hidden)).show()
     if answer is not None:
       filt, levels = answer
       self.view.context.expand(self, levels=levels - 1, _filter=filt)

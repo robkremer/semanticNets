@@ -689,6 +689,8 @@ class SNGContext(UIContext):
       self.levels:int = levels
       self.filter:Callable[[Any, Relation], bool] = _filter
       self.createdObjects:list[VObject] = []
+      self.exempted:list[VObject] = []
+      "What was shown though in a hidden category (see *VObject.expand()*): hidden again by an undo."
       self.originalDo:bool = True
             
     @override
@@ -699,12 +701,16 @@ class SNGContext(UIContext):
         self.createdObjects = []
         view:SNGView =self.obj.view
         detachCode = view.attachCallback(lambda com, tup: self.createdObjects.append(tup[1]) if com=='new' else 0) # (tup is (id, VObject))
-        self.obj.expand(filter=self.filter, expand=self.levels)
+        self.obj.expand(filter=self.filter, expand=self.levels, _exempted=self.exempted)
         view.detachCallback(detachCode)
       else: # redo: nodes first (see _Represent.do())
         for obj in sorted(self.createdObjects, key=lambda vo: isinstance(vo, VRelation)):
           if not obj._isConnected():
             obj._reconnect()
+        for obj in self.exempted:
+          if obj._isConnected() and not obj.categoryExempt:
+            obj.categoryExempt = True
+            obj._applyHidden()
   
     @override
     def undo(self):
@@ -712,6 +718,10 @@ class SNGContext(UIContext):
       for obj in reversed(self.createdObjects):
         if obj._isConnected():
           obj._disconnect()
+      for obj in self.exempted: # (in a hidden category again)
+        if obj._isConnected() and obj.categoryExempt:
+          obj.categoryExempt = False
+          obj._applyHidden()
         
     @override
     def delete(self): # (as _Represent's: the objects are out of the view already, if undone -- just let them go)

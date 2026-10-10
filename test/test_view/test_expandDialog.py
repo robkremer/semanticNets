@@ -76,6 +76,18 @@ class Test(unittest.TestCase):
     self.assertEqual(follows(choiceFilter("all incoming", [])), {"has-mother<", "has-sibling>"})
     self.assertEqual(len(follows(choiceFilter("all", []))), 4)
 
+  def test0300hidden(self):
+    'Relations in a hidden category are choices too, counted as hidden; a chosen type is followed even so.'
+    isas = [r for r in self.edna._outgoing if type(r).__name__ == "IsaIndividual"] # (edna isa person)
+    rels = self.rels + isas
+    choices = {(c.type.name, c.direction): c for c in relationChoices(self.edna, rels, hidden=lambda r: type(r).__name__ == "IsaIndividual")}
+    isa = choices[("isa", OUT)]
+    self.assertEqual((isa.count, isa.hidden), (1, 1))
+    self.assertIn("hidden", isa.label())
+    self.assertEqual(choices[("has-father", OUT)].hidden, 0)
+    self.assertTrue(getattr(choiceFilter("chosen", [isa]), "showsHidden", False))
+    self.assertFalse(getattr(choiceFilter("all", []), "showsHidden", False))     # (all: categories still apply)
+
 
 if __name__ == "__main__":
   unittest.main()

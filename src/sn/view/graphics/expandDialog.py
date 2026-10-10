@@ -11,6 +11,11 @@ choice too (eg: has-parent, when there are has-father and has-mother). Or:
 all of them, all outgoing, or all incoming -- which, unlike the types, follow
 any relation (that way) at every step, not just the types this object has.
 
+Relations in a hidden or erased category (see *SNGView.visibility()*: eg: isa
+links, often hidden) are choices too, greyed and marked "hidden": ticked, they
+and what they lead to are shown anyway (see *VObject.expand()*) -- they were
+asked for by name. "All", "all outgoing" and "all incoming" leave them hidden.
+
 Created on Oct 10, 2026
 
 .. codeauthor:: Rob Kremer <robkremer@me.com>
@@ -62,9 +67,16 @@ class Choice:
   direction:str
   count:int = 0
   "How many of the object's relations it follows."
+  hidden:int = 0
+  "How many of those are in a hidden or erased category (or lead to something that is)."
 
   def label(self) -> str:
-    return ARROWS[self.direction].format(self.type.name or "?") + f" ({self.count})"
+    what = ARROWS[self.direction].format(self.type.name or "?")
+    if self.hidden == 0:
+      return f"{what} ({self.count})"
+    if self.hidden == self.count:
+      return f"{what} ({self.count}, hidden)"
+    return f"{what} ({self.count}; {self.hidden} hidden)"
 
 def _types(rel:Relation) -> list[Relation]:
   '''
@@ -95,12 +107,14 @@ def follows(rel:Relation, mo:GraphObject, typ:Relation, direction:str) -> bool:
   d = _direction(rel, mo)
   return (d == direction or d == BOTH or direction == BOTH) and any(t is typ or t.isa(typ) for t in _types(rel))
 
-def relationChoices(mo:GraphObject, rels:list[Relation]) -> list[Choice]:
+def relationChoices(mo:GraphObject, rels:list[Relation], hidden:Callable[[Relation], bool]=lambda _r: False) -> list[Choice]:
   '''
   :param mo: The object being expanded.
   :type mo: GraphObject
   :param rels: Its relations (eg: those the view would follow: see *VObject.expandableRelations()*).
   :type rels: list[Relation]
+  :param hidden: Whether a relation is in a hidden or erased category, or leads to something that is (see *Choice.hidden*).
+  :type hidden: Callable[[Relation], bool]
   :returns: The choices for "expand by relation...": each type and way round
     that *rels* are, and each type that two or more of those types (the same
     way round) are kinds of -- but not the system's *relation* -- with how
@@ -124,7 +138,8 @@ def relationChoices(mo:GraphObject, rels:list[Relation]) -> list[Choice]:
           shared.setdefault((id(s), d), Choice(s, d))
   ret = list(direct.values()) + list(shared.values())
   for c in ret:
-    c.count = sum(1 for r in rels if follows(r, mo, c.type, c.direction))
+    mine = [r for r in rels if follows(r, mo, c.type, c.direction)]
+    c.count, c.hidden = len(mine), sum(1 for r in mine if hidden(r))
   return sorted(ret, key=lambda c: (c.type.name or "", [OUT, BOTH, IN].index(c.direction)))
 
 def choiceFilter(mode:str, chosen:list[Choice]) -> Callable[[Any, Relation], bool]:
@@ -135,6 +150,8 @@ def choiceFilter(mode:str, chosen:list[Choice]) -> Callable[[Any, Relation], boo
   :type chosen: list[Choice]
   :returns: A filter for *VObject.expand()*: whether to follow a relation
     from the object being expanded (at each step: the same choices again).
+    For "chosen", it has a true "showsHidden": the types were asked for by
+    name, so they're followed, and shown, even in a hidden category.
   :rtype: Callable[[Any, Relation], bool]
   '''
   def f(vo:Any, rel:Relation) -> bool:
@@ -147,6 +164,7 @@ def choiceFilter(mode:str, chosen:list[Choice]) -> Callable[[Any, Relation], boo
       d = _direction(rel, mo)
       return d == BOTH or d == (OUT if mode == "all outgoing" else IN)
     return any(follows(rel, mo, c.type, c.direction) for c in chosen)
+  f.showsHidden = mode == "chosen" #type: ignore[attr-defined]
   return f
 
 class ExpandDialog(tk.Toplevel):
@@ -183,8 +201,11 @@ class ExpandDialog(tk.Toplevel):
                         ("chosen", "these:")):
       ttk.Radiobutton(frame, text=text, value=value, variable=self.mode).grid(row=row, column=0, columnspan=2, sticky=tk.W, **pad)
       row += 1
+    style = ttk.Style(self)
+    style.configure("Hidden.TCheckbutton", foreground="gray50") # (in a hidden category: see Choice.hidden)
     for c, var in zip(choices, self.checks):
-      ttk.Checkbutton(frame, text=c.label(), variable=var, command=lambda: self.mode.set("chosen")) \
+      ttk.Checkbutton(frame, text=c.label(), variable=var, command=lambda: self.mode.set("chosen"),
+                      style="Hidden.TCheckbutton" if c.hidden == c.count and c.count else "TCheckbutton") \
         .grid(row=row, column=0, columnspan=2, sticky=tk.W, padx=(36, 10), pady=1)
       row += 1
     if not choices:
