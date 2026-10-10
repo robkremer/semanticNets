@@ -738,6 +738,35 @@ class TestRules(unittest.TestCase):
       text = Path(path).read_text(encoding="utf-8")
     self.assertNotIn("baseRules", text)
     self.assertIn("sn:/sn.xml", text)
+  def test1500disabled(self):
+    'A disabled rule, definition or requirement (its "disabled" attribute isn\'t false) is ignored; enabled again, it\'s back.'
+    m, p = self.m, self.p
+    self.likes["mirrored"] = True
+    self.rel(self.likes, p["alice"], p["bob"])
+    r = self.symmetryRule("mirrored")
+    brother = Relation(m, [m.RELATION], self.person, self.person, name="brother")
+    X, Y = self.var("?X"), self.var("?Y")
+    X2, Y2 = self.var("?X"), self.var("?Y"); Y2["constraints"] = "gender: male"
+    d = self.definition("brother", [self.rel(brother, X, Y)], [self.rel(self.sib, X2, Y2), Y2])
+    self.rel(brother, p["carol"], p["dave"])
+    P, X3 = self.var("?p", self.person), self.var("?x")
+    q = self.requirement("has a parent", [P], [self.rel(self.parent, self.var("?p"), X3)])
+    self.assertFalse(r.isDisabled())                              # (not, by default: a context's "disabled" is false)
+    res = self.reason()
+    self.assertIn(("bob", "alice"), self.pairs(res.inferred, self.likes))
+    self.assertIn(("carol", "dave"), self.pairs(res.holds, self.sib))
+    self.assertTrue(any(v.code == "has a parent" for v in res.violations))
+    for c in (r, d, q):
+      c["disabled"] = True
+    self.assertTrue(r.isDisabled())
+    res = self.reason()
+    self.assertNotIn(("bob", "alice"), self.pairs(res.inferred, self.likes))
+    self.assertNotIn(("carol", "dave"), self.pairs(res.holds, self.sib))
+    self.assertFalse(any(v.code == "has a parent" for v in res.violations))
+    r["disabled"] = "no"                                          # (coerced: false)
+    self.assertFalse(r.isDisabled())
+    self.assertIn(("bob", "alice"), self.pairs(self.reason().inferred, self.likes))
+
 
 if __name__ == "__main__":
   unittest.main()

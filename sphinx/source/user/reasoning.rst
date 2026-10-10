@@ -80,6 +80,15 @@ still inferred (where you've put them), adds new ones, and removes the
 rest. Typing ``reason`` (or ``clear reasoning``) in the terminal does the
 same as the button.
 
+Switching rules off
+-------------------
+
+To try a model without one of its rules, definitions, constraints or
+requirements, **disable** it: choose **disable** from its menu (or give it a
+``disabled`` attribute that's true -- every context has one, false to start
+with). The reasoner ignores it, and it's drawn with a red slash through it.
+**enable** (or undo) puts it back. Reason again to see the difference.
+
 Highlights
 ----------
 

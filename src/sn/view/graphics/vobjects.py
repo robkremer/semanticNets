@@ -76,12 +76,12 @@ from util.errorReportingObject import ErrorReportingObject
 import sn
 from sn import snPrefs
 from sn.model import GraphObject, Relation
-from sn.model.model import UP_ARROW, IsaIndividual
+from sn.model.model import UP_ARROW, IsaIndividual, Node
 from sn.model import names
 from sn.model.constraints import WHERE, CONSTRAINTS, CONSTRAINTS_NOTE, splitWhere, mergeConstraints, ConstraintError
 from util.attribute import Attribute, VAR
 from sn.view.graphics.decorators import WrappingText, Selected, Highlight, ContextFrame, MarkerContainer, NOMINAL_ASPECT,\
-  Decorator, ShadowDecorator
+  Decorator, ShadowDecorator, DisabledSlash
 
 import logging
 logger:sn.SNLogger = sn.getLogger(__name__)
@@ -1724,6 +1724,11 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       menu.add_command(label="answer query", command=self.answerQuery)
     if mo is not None and mo.isIndividual() and (mo.isa(mo.model.RULE) or mo.isa(mo.model.DEFINITION)):
       menu.add_command(label="show conclusions", command=self.showConclusions)
+    if "disabled" in self.decorators and mo is not None:
+      disabled = mo.isDisabled()
+      menu.add_command(label="enable" if disabled else "disable",
+                       state=tk.DISABLED if mo.model is not self.view.model or mo.model.writeLocked() else tk.NORMAL,
+                       command=lambda: self.view.context.set_attribute(mo, GraphObject.DISABLED, not disabled))
     if self.isContextWindow():
       menu.add_command(label="gather", command=lambda: self.view.gatherIntoWindow(self))
     if isinstance(self.decorators.get("text"), WrappingText):
@@ -1800,6 +1805,12 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     elif notIsIsa:
       self.decorators["text"] = WrappingText(self)
     self.decorators["markers"] = MarkerContainer(self)
+    mo = self.modelObject
+    try:
+      if mo is not None and mo.isIndividual() and isinstance(mo, Node) and mo.isa(mo.model.CONTEXT): # (it may be disabled: see GraphObject.isDisabled())
+        self.decorators["disabled"] = DisabledSlash(self)
+    except Exception: # (eg: half-built)
+      pass
     # shadow types only. The decorator is also drawn only while "gui/shadowTypes" is on (see ShadowDecorator.draw())
     if notIsIsa and self.modelObject is not None and self.modelObject.isType() and \
         snPrefs.get("gui/shadowTypes", storeDefault=True, storeType=bool): # (its note: see sn.PREFS)

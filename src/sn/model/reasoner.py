@@ -782,7 +782,8 @@ def rules(objects:list[GraphObject], kind:str="RULE") -> list[GraphObject]:
 def _contexts(objects:list[GraphObject]) -> dict[str, list[GraphObject]]:
   '''
   :returns: The rules, definitions and constraints among *objects*, in one
-    pass: "RULE" -> the rules, ... (see *rules()*).
+    pass: "RULE" -> the rules, ... (see *rules()*). Not disabled ones (see
+    *GraphObject.isDisabled()*): they're ignored.
   :param objects:
   :type objects: list[GraphObject]
   :rtype: dict[str, list[GraphObject]]
@@ -790,7 +791,7 @@ def _contexts(objects:list[GraphObject]) -> dict[str, list[GraphObject]]:
   ret:dict[str, list[GraphObject]] = {}
   for o in objects:
     try:
-      if o.isIndividual() and isinstance(o, Node) and o.isa(o.model.CONTEXT) and not o.isPatternElement():
+      if o.isIndividual() and isinstance(o, Node) and o.isa(o.model.CONTEXT) and not o.isPatternElement() and not o.isDisabled():
         for kind in ("RULE", "DEFINITION", "CONSTRAINT"):
           if o.isa(getattr(o.model, kind)):
             ret.setdefault(kind, []).append(o)

@@ -1091,6 +1091,57 @@ class Highlight(Decorator):
       self.id = None
 
 
+class DisabledSlash(Decorator):
+  '''
+  A red slash through a disabled context (a rule, definition, constraint, ...:
+  see *GraphObject.isDisabled()*), corner to corner of its window (or its
+  title bar, if it's collapsed), over what's in it. Drawn only while it's
+  disabled: whether it is is asked at each draw.
+  '''
+  COLOR = "red"
+  WIDTH = 3
+  "Its width (screen pixels)."
+
+  def __init__(self, owner):
+    '''
+    :param owner:
+    :type owner:
+    '''
+    super().__init__(owner, priority=20) # (after the frame and text)
+    self.id:int|None = None
+
+  @override
+  def draw(self, fast=False, **kwargs):
+    '''
+    :param fast:
+    :type fast:
+    :param kwargs:
+    :type kwargs:
+    '''
+    mo = self.owner.modelObject
+    if mo is None or not mo.isDisabled():
+      self._erase()
+      return
+    canvas = self.owner.canvas
+    x1, y1, x2, y2 = self.owner.view.viewToWindow(self.owner.boundingBox(fast=fast))
+    if self.id is None:
+      self.id = canvas.create_line(x1, y2, x2, y1, fill=self.COLOR, width=self.WIDTH, capstyle="round",
+                                   state="disabled", tags=[self.owner.tag, "disabled-slash"])
+    else:
+      canvas.coords(self.id, x1, y2, x2, y1)
+    canvas.tag_raise(self.id) # (over the window's contents, which are drawn after it)
+
+  def _erase(self):
+    if self.id is not None:
+      self.owner.canvas.delete(self.id)
+      self.id = None
+
+  @override
+  def delete(self):
+    if self.deleted: return
+    super().delete()
+    self._erase()
+
 class ShadowDecorator(Decorator):
   '''
   Draws a plain "duplicate shape, grey, one z-order lower" drop shadow behind

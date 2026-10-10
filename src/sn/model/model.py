@@ -69,7 +69,7 @@ from util.persistence.serialize import DEFAULT_STRATEGY
 from util.utils import removeDuplicates, delOne, extendsDoc
 from typing import override, cast, Generator, Callable, Optional,\
   Iterable, overload, Iterator, Any
-from util.attribute import AttributedObject, Attribute, NOVALUE
+from util.attribute import AttributedObject, Attribute, NOVALUE, coerceValue
 #from docutils.nodes import description
 from util.observer import Subject
 import sn
@@ -821,6 +821,30 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     self._individual = individual
     self.model.setDirty()
     self.notify(("mod individual", (individual,)))
+
+  DISABLED = "disabled"
+  "The attribute that switches a context (a rule, definition, constraint, ...) off: see *isDisabled()*."
+
+  def isDisabled(self) -> bool:
+    '''
+    :returns: True iff this has a "disabled" attribute (its own, or inherited)
+      that isn't false: eg: a rule that's switched off while experimenting.
+      The reasoner ignores a disabled rule, definition or constraint (see
+      *sn.model.reasoner.rules()*), and the view draws a red slash through it.
+      (A value that isn't a bool counts as true -- unless it's "false", "no",
+      "0", ... -- see *coerceValue()*.)
+    :rtype: bool
+    '''
+    try:
+      value = self.get(self.DISABLED, None)
+    except Exception:
+      return False
+    if value is None or value is NOVALUE or value is False:
+      return False
+    try:
+      return bool(coerceValue(bool, value))
+    except ValueError:
+      return True
 
   def isSystemObject(self) -> bool:
     '''

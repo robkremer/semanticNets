@@ -196,6 +196,9 @@ class TopModel(Model):
     self.NODE['vis/fillColor']      = "snow"
     
     self.CONTEXT['vis/titlebarColor'] = Attribute("grey", "color", VAR_DEFAULTED, "The background color of the title bar of contexts")
+    self.CONTEXT[GraphObject.DISABLED] = Attribute(False, bool, VAR_DEFAULTED,
+      "Switch it off: the reasoner ignores a disabled rule, definition, constraint or requirement (and it's "
+      "drawn with a red slash through it). Eg: to try a model without it, while experimenting.")
     self.QUERY['vis/titlebarColor'] = "LightBlue3"
     self.QUERY['vis/fillColor']     = "LightCyan2"
     self.RULE['vis/titlebarColor']  = "khaki3"
