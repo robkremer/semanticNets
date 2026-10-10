@@ -74,11 +74,15 @@ Removing things
 
 An object's menu has two kinds of removal:
 
-- **erase from view**: just stop showing it in this view (the model keeps it).
-- **delete from model** (or **remove from model**): delete it from the model
-  -- and so from every view of it.
+- **erase from view** (or the **Delete** key): just stop showing it in this
+  view (the model keeps it).
+- **remove from model** (or **Shift-Delete**, which asks first): delete it
+  from the model -- and so from every view of it.
 
-Both can be undone.
+If the object is one of several selected, they act on all of them (the menu
+says how many); the keys act on what's selected. What can't be removed here
+-- what the reasoner inferred, system objects, and objects of another model
+-- is left (with a message). Both can be undone, all at once.
 
 Cut, copy and paste
 -------------------

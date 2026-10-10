@@ -80,6 +80,10 @@ KEY_COPY =                  ('<Command-KeyPress-c>'       , 'Command-C')
 KEY_PASTE =                 ('<Command-KeyPress-v>'       , 'Command-V')
 KEY_COPY_IMAGE =            ('<Shift-Command-KeyPress-C>' , 'Shift-Command-C')
 KEY_SELECT_ALL =            ('<Command-KeyPress-a>'       , 'Command-A')
+KEY_ERASE =                 ('<KeyPress-BackSpace>', '<KeyPress-Delete>')
+"Erase what's selected from the view: the Mac's delete key (BackSpace), or forward delete."
+KEY_REMOVE =                ('<Shift-KeyPress-BackSpace>', '<Shift-KeyPress-Delete>')
+"Remove what's selected from the model (after asking)."
 KEY_CLEAR_HIGHLIGHTS =      ('<Escape>'                   , 'esc')
 KEY_VALIDATE =              ('<Command-KeyPress-v>'       , 'cmd+v')
 KEY_TOGGLE_FIELDS_LAYOUT =  ('<Command-KeyPress-f>'       , 'cmd+f')
@@ -2034,6 +2038,84 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         if vo._isConnected():
           vo.selected(True, _multi=True)
 
+  def onDeleteKey(self, event:tk.Event, fromModel:bool) -> str:
+    '''
+    Delete: erase what's selected from the view (see *doErase()*); Shift-Delete:
+    remove it from the model (see *doRemove()*), after asking.
+
+    :param event:
+    :type event: tk.Event
+    :param fromModel:
+    :type fromModel: bool
+    :returns: "break"
+    :rtype: str
+    '''
+    vos = [vo for vo in self.selected if vo._isConnected()]
+    if not vos:
+      return "break"
+    if fromModel:
+      self.doRemove(vos, confirm=True)
+    else:
+      self.doErase(vos)
+    return "break"
+
+  def doErase(self, vos:list[VObject]) -> None:
+    '''
+    Erase *vos* from this view (the model keeps their objects): one undo.
+
+    :param vos:
+    :type vos: list[VObject]
+    '''
+    vos = [vo for vo in vos if vo._isConnected()]
+    if not vos:
+      return
+    try:
+      with CompositeCommandMgr(self.context):
+        for vo in vos:
+          self.context.erase(vo)
+    except Exception as ex:
+      logger.error(f"Can't erase: {ex}")
+
+  def doRemove(self, vos:list[VObject], confirm:bool=False) -> None:
+    '''
+    Remove the model objects of *vos* from the model -- and so from every view
+    of it: one undo. What can't be removed here is left, with a message: what
+    the reasoner inferred (mark it asserted first), and what's in another
+    model, or a write-locked one, or is a system object.
+
+    :param vos:
+    :type vos: list[VObject]
+    :param confirm: Ask first (eg: for a key press, which is easily made by mistake).
+    :type confirm: bool
+    '''
+    from tkinter import messagebox
+    mos:list[GraphObject] = []
+    skipped:list[str] = []
+    for vo in vos:
+      mo = vo.modelObject
+      if mo is None or any(mo is m for m in mos):
+        continue
+      if vo.isInferred() or mo.model is not self.model or mo.model.writeLocked() or vo._systemLocked():
+        skipped.append(mo.name or type(mo).__name__)
+      else:
+        mos.append(mo)
+    if skipped:
+      logger.warning(f'Not removed (inferred, system, or in another model): {", ".join(skipped)}.')
+    if not mos:
+      return
+    if confirm:
+      what = f'"{mos[0].name}"' if len(mos) == 1 and mos[0].name else f"{len(mos)} objects"
+      if not messagebox.askokcancel("Remove from model",
+                                    f'Remove {what} from the model "{self.model.name}" -- and so from every view of it?\n\n(Undo puts {"it" if len(mos) == 1 else "them"} back.)',
+                                    parent=self.canvas.winfo_toplevel()):
+        return
+    try:
+      with CompositeCommandMgr(self.context):
+        for mo in mos:
+          self.context.remove(mo)
+    except Exception as ex:
+      logger.error(f"Can't remove: {ex}")
+
   PASTE_GAP = 40
   "The space (view units) left between pasted objects and what's beside them (see *_pasteOffset()*)."
 
@@ -2394,6 +2476,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     self.canvas.bind(KEY_PASTE[0], lambda e: self.onEditKey(e, "paste"))
     self.canvas.bind(KEY_COPY_IMAGE[0], lambda e: self.onEditKey(e, "copy image"))
     self.canvas.bind(KEY_SELECT_ALL[0], lambda e: self.onEditKey(e, "select all"))
+    for key in KEY_ERASE:
+      self.canvas.bind(key, lambda e: self.onDeleteKey(e, fromModel=False))
+    for key in KEY_REMOVE:
+      self.canvas.bind(key, lambda e: self.onDeleteKey(e, fromModel=True))
 
     # repaint
     self.canvas.bind(KEY_REPAINT[0], self.repaint)

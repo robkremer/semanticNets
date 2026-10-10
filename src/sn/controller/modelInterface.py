@@ -1170,16 +1170,21 @@ class ModelContext(CommandContext):
       super().__init__("remove")
       _refuseInferred("remove", object)
       self.object:GraphObject = object
+      self.removed:bool = False
+      "Whether *do()* took it out (not if it was gone already: eg: a relation removed with its end, when both are)."
     
     @override
     def do(self):
       super().do()
-      self.object._disconnect()
+      self.removed = self.object._isConnected()
+      if self.removed:
+        self.object._disconnect()
   
     @override
     def undo(self):
       super().undo()
-      self.object._reconnect()
+      if self.removed and not self.object._isConnected():
+        self.object._reconnect()
       
     @override
     def delete(self):

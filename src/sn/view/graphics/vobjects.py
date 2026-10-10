@@ -1483,12 +1483,23 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     if not (disabled or relInst):
       menu.add_cascade(label="make relation to...", menu=self._relationTypesMenu(menu))
     if not disabled:
-      menu.add_command(label="remove from model", state=tk.DISABLED if remote else tk.NORMAL, 
-                       command=lambda: self.view.context.remove(self.modelObject))
+      n = len(self.selectionOrSelf())
+      menu.add_command(label="remove from model" + (f" ({n} selected)" if n > 1 else ""), accelerator="Shift-Delete",
+                       state=tk.DISABLED if remote and n == 1 else tk.NORMAL,
+                       command=lambda: self.view.doRemove(self.selectionOrSelf()))
     menu.add_command(label="cut", state=tk.DISABLED if disabled or remote else tk.NORMAL, command=lambda: self.copySelection(cut=True))
     menu.add_command(label="copy", command=self.copySelection)
     menu.add_command(label="copy as picture", command=lambda: self.copySelection(picture=True))
     menu.add_separator()
+
+  def selectionOrSelf(self) -> list[VObject]:
+    '''
+    :returns: What a menu item acts on: everything selected, if this is; else just this.
+    :rtype: list[VObject]
+    '''
+    if self.selected():
+      return [vo for vo in self.view.selected if vo._isConnected()]
+    return [self]
 
   def copySelection(self, cut:bool=False, picture:bool=False) -> None:
     '''
@@ -1757,8 +1768,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     expMenu.add_command(label="expand all, 3 levels", command=lambda: self.view.context.expand(self, levels=2))
     expMenu.add_command(label="expand all, 4 levels", command=lambda: self.view.context.expand(self, levels=3))
     menu.add_cascade(menu=expMenu, label="expand")
-    menu.add_command(label="erase from view", 
-                     command=lambda slf=self: slf.view.context.erase(slf))
+    n = len(self.selectionOrSelf())
+    menu.add_command(label="erase from view" + (f" ({n} selected)" if n > 1 else ""), accelerator="Delete",
+                     command=lambda: self.view.doErase(self.selectionOrSelf()))
     mo = self.modelObject
     if mo is not None and mo.isa(mo.model.CONTEXT) and mo is not mo.model.CONTEXT:
       menu.add_command(label="answer query", command=self.answerQuery)
