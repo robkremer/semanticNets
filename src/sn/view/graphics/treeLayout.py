@@ -43,7 +43,7 @@ from sn.view.graphics.vnodes import VNode
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
 from sn.view.graphics.layout import (LayoutHeuristic, LayoutParameter, LayoutMoves, FindFree, Direction,
-                                     registerLayout, fitToText, STATIC, DYNAMIC)
+                                     registerLayout, layoutSize, STATIC, DYNAMIC)
 
 K = TypeVar("K", bound=Hashable)
 
@@ -238,12 +238,15 @@ class TreeLayout(LayoutHeuristic):
   they are, or put in rows after the trees (*others*).
 
   As a dynamic layout (see *adjust()*): after each command, the trees are
-  laid out again -- so they open up for what's added, and close up over what's
-  removed or hidden -- each from where its root is (the trees pushed apart
-  if they'd overlap); children in the order they are already, and new ones
-  after them, by name. A tree node the user drags (and drops) takes its
-  subtree with it: it's pinned there, as the root of a tree of its own,
-  until the next static tree layout.
+  laid out again, each from where its root is: children in the order they
+  are already, and new ones after them, by name. So a tree opens up for
+  what's added to it, and closes up over what's removed or hidden -- and
+  what's after it, across (the trees and the nodes in no tree alongside it),
+  moves along by as much (see *_keepPlaces()*). A tree node the user drags
+  (and drops) takes its subtree with it: it's pinned there, as the root of a
+  tree of its own (room is made for its subtree), until the next static
+  tree layout. Nothing's left on another node: what would be is pushed
+  further across.
   '''
   NAME = "tree"
   CATEGORIES = (STATIC, DYNAMIC)
@@ -413,8 +416,8 @@ class TreeLayout(LayoutHeuristic):
             if k in seen:
               continue
             seen.add(k)
-            bb = fitToText(parentRel[k]).boundingBox()
-            size = (bb[3] - bb[1]) if vertical else (bb[2] - bb[0])
+            w, h = layoutSize(parentRel[k])
+            size = h if vertical else w
             ret[d] = max(ret.get(d, MIN_LEVEL_GAP), size + MIN_LINE + 2 * LABEL_GAP)
             nxt.append((k, d + 1))
       level = nxt
@@ -440,8 +443,7 @@ class TreeLayout(LayoutHeuristic):
       # children, however wide, are the same way along their lines, and as far apart as the children)
       dx = cx if direction == "right" else cx + cw if direction == "left" else cx + cw / 2
       dy = cy if direction == "down" else cy + ch if direction == "up" else cy + ch / 2
-      bb = r.boundingBox()
-      lw, lh = bb[2] - bb[0], bb[3] - bb[1]
+      lw, lh = layoutSize(r)
       if direction in ("right", "left"):
         x = cx - LABEL_GAP - lw / 2 if direction == "right" else cx + cw + LABEL_GAP + lw / 2
         y = sy + (dy - sy) * (x - sx) / (dx - sx) if dx != sx else (sy + dy) / 2
@@ -451,10 +453,13 @@ class TreeLayout(LayoutHeuristic):
       ret[r] = (x - lw / 2, y - lh / 2)
     return ret
 
-  def compute(self, dynamic:bool) -> tuple[dict[VObject, tuple[float, float]], list[VRelation]]:
+  def compute(self, dynamic:bool, fresh:set[int]=set()) -> tuple[dict[VObject, tuple[float, float]], list[VRelation]]:
     '''
     :param dynamic: Whether it's for keeping things arranged (see the class doc).
     :type dynamic: bool
+    :param fresh: For *dynamic*: the ids of the nodes just pinned (dropped:
+      see *adjust()*): where each was dropped, room is made for its subtree.
+    :type fresh: set[int]
     :returns: Where everything arranged goes (its top left: nodes and tree
       relations' labels); and the tree's type of relations that aren't tree
       relations (see *structure()*).
@@ -464,8 +469,7 @@ class TreeLayout(LayoutHeuristic):
     nodes = [*roots, *(k for gs in children.values() for g in gs for k in g), *others]
     sizes:dict[VNode, tuple[float, float]] = {}
     for n in nodes:
-      bb = fitToText(n).boundingBox()
-      sizes[n] = (bb[2] - bb[0], bb[3] - bb[1])
+      sizes[n] = layoutSize(n)
     direction, spacing = self.params["direction"], float(self.params["spacing"])
     vertical = _vertical(direction)
     rel, trees = treePositions(roots, children, sizes, direction=direction, spacing=spacing,
@@ -480,6 +484,8 @@ class TreeLayout(LayoutHeuristic):
       for root, box in trees:
         dx = cursor - box[0] if vertical else x0 - box[0]
         dy = y0 - box[1] if vertical else cursor - box[1]
+        # (the root on whole units, as it'd be kept by the dynamic layout: the rest rounded the same way)
+        dx, dy = round(rel[root][0] + dx) - rel[root][0], round(rel[root][1] + dy) - rel[root][1]
         for n in treeMembers(root, children, rel):
           positions[n] = (rel[n][0] + dx, rel[n][1] + dy)
         cursor += (box[2] - box[0] if vertical else box[3] - box[1]) + gap
@@ -494,24 +500,101 @@ class TreeLayout(LayoutHeuristic):
           positions[n] = (cursor, y0 + along) if vertical else (x0 + along, cursor)
           along, lineSize = along + a + spacing, max(lineSize, c)
     else:
-      # each from where its root is; pushed apart (across) if they'd overlap
-      placed:list[list[float]] = []
-      for root, box in sorted(trees, key=lambda t: t[0].centerPt()[0] if vertical else t[0].centerPt()[1]):
-        rb = root.boundingBox()
-        dx, dy = rb[0] - rel[root][0], rb[1] - rel[root][1]
-        moved = [box[0] + dx, box[1] + dy, box[2] + dx, box[3] + dy]
-        for p in placed: # (in order across: so pushing past one can't run into one already passed)
-          if _overlaps(moved, p, gap):
-            push = (p[2] + gap - moved[0]) if vertical else (p[3] + gap - moved[1])
-            if push > 0:
-              dx, dy = (dx + push, dy) if vertical else (dx, dy + push)
-              moved = [box[0] + dx, box[1] + dy, box[2] + dx, box[3] + dy]
-        placed.append(moved)
-        for n in treeMembers(root, children, rel):
-          positions[n] = (rel[n][0] + dx, rel[n][1] + dy)
+      positions.update(self._keepPlaces(trees, children, rel, others, fresh, spacing))
+    # whole units, as things are: so it's the same next time (the labels placed from where the nodes will be)
+    positions = {n: (float(round(x)), float(round(y))) for n, (x, y) in positions.items()}
     ret:dict[VObject, tuple[float, float]] = {n: p for n, p in positions.items()}
-    ret.update(self._labelTargets(positions, sizes, parentRel))
+    ret.update({r: (float(round(x)), float(round(y))) for r, (x, y) in self._labelTargets(positions, sizes, parentRel).items()})
     return ret, loose
+
+  def _keepPlaces(self, trees:list[tuple[VNode, list[float]]], children:dict[VNode, list[list[VNode]]],
+                  rel:dict[VNode, tuple[float, float]], others:list[VNode], fresh:set[int],
+                  gap:float) -> dict[VNode, tuple[float, float]]:
+    '''
+    Dynamically: where the trees go -- each from where its root is -- and the
+    nodes in no tree. When a tree grows or shrinks across (eg: something's
+    added to it, or taken out), what's after it across, and alongside it (the
+    trees and the nodes in no tree), moves along by as much: so things open up,
+    and close up. (By the most, of the trees before it, if there's more than
+    one.) A tree just dropped (see *fresh*) is taken to have been just its
+    root, there: room is made for the rest. Then anything that would be on
+    (or within *gap* of) a node already placed -- trees in order across, then
+    the nodes in no tree -- is pushed further across, past it: node by node,
+    not by the trees' boxes, so a tree can be dropped in a gap in another.
+
+    :param trees: The trees, laid out on their own (see *treePositions()*), by root.
+    :type trees: list[tuple[VNode, list[float]]]
+    :param children: As for *treePositions()*.
+    :type children: dict[VNode, list[list[VNode]]]
+    :param rel: Where *treePositions()* put each node, in its own tree.
+    :type rel: dict[VNode, tuple[float, float]]
+    :param others: The nodes in no tree.
+    :type others: list[VNode]
+    :param fresh: The ids of the trees' roots just dropped.
+    :type fresh: set[int]
+    :param gap: The space kept between nodes of different trees (and those in no tree).
+    :type gap: float
+    :returns: Where they go (their top left): those that move.
+    :rtype: dict[VNode, tuple[float, float]]
+    '''
+    vertical = _vertical(self.params["direction"])
+    known = self.known
+    start = (lambda b: b[0]) if vertical else (lambda b: b[1])
+    end = (lambda b: b[2]) if vertical else (lambda b: b[3])
+    span = (lambda b: (b[1], b[3])) if vertical else (lambda b: (b[0], b[2]))
+    def union(bs:list[list[float]]) -> list[float]:
+      return [min(b[0] for b in bs), min(b[1] for b in bs), max(b[2] for b in bs), max(b[3] for b in bs)]
+    def shift(box:list[float], by:float) -> list[float]:
+      return [box[0] + by, box[1], box[2] + by, box[3]] if vertical else [box[0], box[1] + by, box[2], box[3] + by]
+    entries = []
+    for root, box in trees:
+      members = treeMembers(root, children, rel)
+      if root._id in fresh: # (just dropped: it was only its root, there)
+        old = list(root.boundingBox())
+      else:
+        old = union([m.boundingBox() for m in members if known is None or m._id in known] or [root.boundingBox()])
+      entries.append((root, box, members, old))
+    entries.sort(key=lambda e: start(e[3]))
+    changes:list[tuple[list[float], float]] = [] # (a tree's box before, how much further across it ends now)
+    def moveFor(box:list[float]) -> float:
+      lo, hi = span(box)
+      ds = [d for ob, d in changes if start(box) >= end(ob) - 1 and lo < span(ob)[1] and span(ob)[0] < hi]
+      return max(ds) if ds else 0.0
+    ret:dict[VNode, tuple[float, float]] = {}
+    placed:list[list[float]] = [] # (the boxes of the nodes placed so far)
+    def clear(boxes:list[list[float]]) -> float:
+      '''How far across to move *boxes* so none is on (or within *gap* of) a node placed so far.'''
+      total = 0.0
+      for _ in range(len(placed) + 1): # (each push clears at least one more)
+        push = max((end(p) + gap - start(b) for b in boxes for p in placed if _overlaps(b, p, gap)), default=0.0)
+        if push <= 0:
+          break
+        boxes = [shift(b, push) for b in boxes]
+        total += push
+      return total
+    for root, box, members, old in entries:
+      rb = root.boundingBox()
+      dx, dy = rb[0] - rel[root][0], rb[1] - rel[root][1]
+      by = moveFor(old)
+      dx, dy = (dx + by, dy) if vertical else (dx, dy + by)
+      boxes = []
+      for n in members:
+        w, h = layoutSize(n)
+        boxes.append([rel[n][0] + dx, rel[n][1] + dy, rel[n][0] + dx + w, rel[n][1] + dy + h])
+      push = clear(boxes) # (nodes, not the trees' boxes: a tree may be dropped in a gap in another)
+      dx, dy = (dx + push, dy) if vertical else (dx, dy + push)
+      placed.extend(shift(b, push) for b in boxes)
+      changes.append((old, end([box[0] + dx, box[1] + dy, box[2] + dx, box[3] + dy]) - end(old)))
+      for n in members:
+        ret[n] = (rel[n][0] + dx, rel[n][1] + dy)
+    for n in sorted(others, key=lambda n: start(n.boundingBox())):
+      b = list(n.boundingBox())
+      moved = shift(b, moveFor(b))
+      moved = shift(moved, clear([moved]))
+      placed.append(moved)
+      if moved != b:
+        ret[n] = (moved[0], moved[1])
+    return ret
 
   # ---- static ----------------------------------------------------------------------
 
@@ -582,7 +665,7 @@ class TreeLayout(LayoutHeuristic):
     oldPins, oldKnown = set(self.pins), self.known
     self.pins |= pinned # (for compute(): put back below, and done by the command)
     try:
-      targets, loose = self.compute(dynamic=True)
+      targets, loose = self.compute(dynamic=True, fresh=pinned)
     finally:
       self.pins = oldPins
     cmd = LayoutMoves(self.view, name, targets)
@@ -603,12 +686,15 @@ class TreeLayout(LayoutHeuristic):
   def activate(self) -> None:
     '''
     Made the view's dynamic layout: arrange things as it keeps them, as one
-    undoable command.
+    undoable command (if anything moves).
     '''
     self.known = None
     cmd = self._adjustment(f"keep arranged: {self.NAME}", set())
-    if not cmd.isEmpty():
+    if cmd.moves:
       self.view.context.doList.do(cmd)
+    else: # (nothing to move -- eg: just arranged by the static tree layout: no undo entry, just what it knows)
+      for do, _ in cmd.also:
+        do()
 
   @override
   def adjust(self, command:Command) -> LayoutMoves|None:

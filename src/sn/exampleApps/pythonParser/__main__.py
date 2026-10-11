@@ -88,7 +88,9 @@ def showPackages(view:SNGView, model:Model, showImports:str="given") -> None:
   no package with nothing in them (eg: the standard library's os and sys).
   The imports relations *showImports* says are shown too (their labels
   floating: midway): "none", "given" (those of the files given: at import
-  depth 0), or "all".
+  depth 0), or "all". The tree layout is then the view's dynamic layout (see
+  *SNGView.setDynamicLayout()*): it keeps the trees arranged -- eg: expanding
+  a module opens its tree up for the classes and functions it defines.
 
   Nothing is placed by the view (see *SNGView.localLayout*) as they're shown:
   the tree layout places everything.
@@ -112,8 +114,9 @@ def showPackages(view:SNGView, model:Model, showImports:str="given") -> None:
         view.makeViewObjectForGraphObject(r)
   finally:
     view.localLayout = localLayout
-  TreeLayout(view, relation=ontologyTypes(model)["includes"], parentEnd="source", direction="right",
-             others="rows").arrange(animate=False)
+  tree = dict(relation=ontologyTypes(model)["includes"], parentEnd="source", direction="right")
+  TreeLayout(view, others="rows", **tree).arrange(animate=False)
+  view.setDynamicLayout(TreeLayout(view, **tree)) # (kept arranged: expanding a module opens the tree up for what it defines)
 
 def convert(app:Application, paths:list[str], options:Options, parent:tk.Misc|None=None,
             progress:Callable[[str], None]|None=None) -> bool:

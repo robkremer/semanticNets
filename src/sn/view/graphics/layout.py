@@ -496,10 +496,30 @@ def fitToText(vo:VObject) -> VObject:
   :rtype: VObject
   '''
   from sn.view.graphics.decorators import WrappingText
+  if vo._shape is None or vo._shape.id is None: # (not drawn yet: its shape -- and so the room for its text -- isn't set up)
+    vo.view.freshPaint()
+    vo.draw()
   text = vo.decorators.get("text")
   if isinstance(text, WrappingText):
     text.fitOwner()
   return vo
+
+def layoutSize(vo:VObject) -> tuple[float, float]:
+  '''
+  :param vo: A node or relation (its label) in a view.
+  :type vo: VObject
+  :returns: Its (width, height) as it'll be when it's moved: fitted to its
+    text (see *fitToText()*), and at least the minimums a box is held to when
+    it's set (see *VObject.boundingBox()*: "vis/minSize", and *VObject.minHeight()*)
+    -- which a box first fitted to a little text may be smaller than.
+  :rtype: tuple[float, float]
+  '''
+  bb = fitToText(vo).boundingBox()
+  w, h = bb[2] - bb[0], bb[3] - bb[1]
+  try:
+    return max(w, float(vo.cache["vis/minSize"])), max(h, float(vo.minHeight()))
+  except Exception: # (eg: no such attribute)
+    return w, h
 "The old (misspelled) name."
 
 @registerLayout

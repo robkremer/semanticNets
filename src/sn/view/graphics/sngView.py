@@ -4486,6 +4486,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :type layout: LayoutHeuristic
     '''
     finishTween(self)
+    self.__dict__.pop("_pendingLayout", None) # (set before a read view's saved one was put back: this one wins)
     self.localLayout = layout
     if getattr(self, "_layoutVar", None) is not None:
       self._layoutVar.set(layout.NAME)
