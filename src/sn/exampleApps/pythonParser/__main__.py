@@ -38,12 +38,11 @@ from dataclasses import dataclass
 from typing import Any, Callable
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
-from sn.model.model import Model, Node, Relation, GraphObject
+from sn.model.model import Model, Node, Relation
 from sn.view.graphics.guiApp import Application
 from sn.view.graphics.sngView import SNGView
-from sn.view.graphics.vobjects import VObject
-from sn.view.graphics.decorators import WrappingText
-from sn.exampleApps.pythonParser.parser import PROJECT, buildModel, guessMain, ontologyTypes, outputPaths, readModules
+from sn.view.graphics.treeLayout import TreeLayout
+from sn.exampleApps.pythonParser.parser import buildModel, guessMain, ontologyTypes, outputPaths, readModules
 
 TITLE = "Python Parser"
 
@@ -51,22 +50,7 @@ MAX_DEPTH = 20
 "The most levels of imports the dialog offers to follow."
 
 MARGIN = 40
-"How far in from the view's top left the tree starts."
-
-COLUMN_GAP = 170
-"The space between one level of the tree and the next: room for the relations' labels."
-
-ROW_GAP = 20
-"The space between one leaf of the tree and the next."
-
-LABEL_GAP = 12
-"The space between a relation's label and what it goes to."
-
-ROOT_GAP = 30
-"The extra space between one tree and the next (eg: two top-level packages)."
-
-MIN_ROW_WIDTH = 600
-"The narrowest the rows of modules in no package are (see *showPackages()*): otherwise, as wide as the trees."
+"Where the view's objects are put before they're arranged."
 
 @dataclass
 class Options:
@@ -79,65 +63,35 @@ class Options:
   '''Which imports to show in the view: "none", "given" (those of the files
   given), or "all" (see *showPackages()*).'''
 
-def packageTree(model:Model) -> tuple[list[GraphObject], dict[GraphObject, list[GraphObject]], list[Relation], list[Relation]]:
+def packagesAndModules(model:Model) -> tuple[list[Node], list[Relation], list[Relation]]:
   '''
   :param model: A model made by *parser.buildModel()*.
   :type model: Model
-  :returns: Its packages and modules as a forest: the roots (those in no
-    package: the project's first); each one's sub-packages and modules
-    (packages first, then by name); the contains-module and has-subpackage
-    relations; and the imports relations.
-  :rtype: tuple[list[GraphObject], dict[GraphObject, list[GraphObject]], list[Relation], list[Relation]]
+  :returns: Its packages and modules; the relations between them that are
+    kinds of *includes* (contains-module and has-subpackage); and the imports
+    relations between them.
+  :rtype: tuple[list[Node], list[Relation], list[Relation]]
   '''
   T = ontologyTypes(model)
   mine = [o for o in model.values() if o.model is model and o.isIndividual()]
   nodes = [o for o in mine if isinstance(o, Node) and o.isa(T["module"])] # (a package is a module too)
-  def of(*types:str) -> list[Relation]:
-    return [r for r in mine if isinstance(r, Relation) and any(T[t] in r.getParents() for t in types)
-            and r.src is not None and r.dst is not None]
-  contains, imports = of("contains-module", "has-subpackage"), of("imports")
-  def key(o:GraphObject) -> tuple[bool, bool, str]:
-    return (o.get("origin", PROJECT) != PROJECT, not o.isa(T["package"]), str(o.name).lower())
-  children:dict[GraphObject, list[GraphObject]] = {o: [] for o in nodes}
-  contained:set[GraphObject] = set()
-  for r in contains:
-    children.setdefault(r.src, []).append(r.dst) #type: ignore[arg-type]
-    contained.add(r.dst) #type: ignore[arg-type]
-  for kids in children.values():
-    kids.sort(key=key)
-  roots:list[GraphObject] = sorted((o for o in nodes if o not in contained), key=key)
-  return roots, children, contains, imports
-
-def fitted(vo:VObject) -> VObject:
-  '''
-  :param vo: A node or relation just put in a view.
-  :type vo: VObject
-  :returns: It, sized to its name now (as it would be when it's first drawn:
-    see *WrappingText.fitOwner()*), so it can be placed by its size.
-  :rtype: VObject
-  '''
-  text = vo.decorators.get("text")
-  if isinstance(text, WrappingText):
-    text.fitOwner()
-  return vo
+  ids = {id(o) for o in nodes}
+  between = [r for r in mine if isinstance(r, Relation) and id(r.src) in ids and id(r.dst) in ids]
+  return nodes, [r for r in between if r.isa(T["includes"])], [r for r in between if T["imports"] in r.getParents()]
 
 def showPackages(view:SNGView, model:Model, showImports:str="given") -> None:
   '''
   Show the model's packages and modules, and the contains-module and
-  has-subpackage relations between them, as a tree (or several: one for each
-  top-level package, and each module in none -- the project's first), laid
-  out left to right: each level of packages in a column, each package level
-  with the middle of what it contains, and the modules down the right; and
-  below them, in rows, the modules and packages in no package with nothing
-  in them (eg: the standard library's os and sys). Each
-  of those relations' labels is fixed (not floating) on the straight line
-  between its ends, just before what it goes to: so the labels line up, and
-  the lines stay straight. The imports relations *showImports* says are
-  shown too (their labels floating: midway): "none", "given" (those of the
-  files given: at import depth 0), or "all".
+  has-subpackage relations between them, arranged as trees, left to right, by
+  the tree layout (see *treeLayout.TreeLayout*), following "includes" (which
+  those are kinds of); and below them, in rows, the modules and packages in
+  no package with nothing in them (eg: the standard library's os and sys).
+  The imports relations *showImports* says are shown too (their labels
+  floating: midway): "none", "given" (those of the files given: at import
+  depth 0), or "all".
 
-  Nothing is placed by the view (see *SNGView.localLayout*) meanwhile: this
-  places everything itself.
+  Nothing is placed by the view (see *SNGView.localLayout*) as they're shown:
+  the tree layout places everything.
 
   :param view: A view of *model*.
   :type view: SNGView
@@ -146,72 +100,20 @@ def showPackages(view:SNGView, model:Model, showImports:str="given") -> None:
   :param showImports: Which imports to show: "none", "given" or "all".
   :type showImports: str
   '''
-  roots, children, contains, imports = packageTree(model)
+  nodes, includes, imports = packagesAndModules(model)
   localLayout, view.localLayout = view.localLayout, None #type: ignore[assignment] # (None: none, for now)
   try:
-    shown = {o: fitted(view.makeViewObjectForGraphObject(o, atPoint=(MARGIN, MARGIN))) for o in children}
-    size = {o: (vo.boundingBox()[2] - vo.boundingBox()[0], vo.boundingBox()[3] - vo.boundingBox()[1])
-            for o, vo in shown.items()}
-    # the columns: as wide as the widest thing in them
-    widths:list[float] = []
-    def measure(o:GraphObject, depth:int, seen:set[GraphObject]) -> None:
-      if len(widths) <= depth:
-        widths.append(0)
-      widths[depth] = max(widths[depth], size[o][0])
-      for k in children[o]:
-        if k not in seen: # (a model edited by hand may have a cycle)
-          measure(k, depth + 1, seen | {k})
-    for r in roots:
-      measure(r, 0, {r})
-    columns = [float(MARGIN)]
-    for w in widths[:-1]:
-      columns.append(columns[-1] + w + COLUMN_GAP)
-    # the rows: each leaf below the last; each package level with the middle of its contents
-    nextY = float(MARGIN)
-    placed:set[GraphObject] = set()
-    def place(o:GraphObject, depth:int) -> float:
-      nonlocal nextY
-      placed.add(o)
-      w, h = size[o]
-      kids = [k for k in children[o] if k not in placed]
-      if kids:
-        centres = [place(k, depth + 1) for k in kids]
-        centre = (centres[0] + centres[-1]) / 2
-        nextY = max(nextY, centre + h / 2 + ROW_GAP)
-      else:
-        centre = nextY + h / 2
-        nextY += h + ROW_GAP
-      shown[o].moveTo(columns[depth], centre - h / 2, adjustPos=False)
-      return centre
-    for r in roots:
-      if children[r]:
-        place(r, 0)
-        nextY += ROOT_GAP
-    # the modules and packages in no package, with nothing in them: in rows below, across the trees' width
-    right = max(columns[-1] + widths[-1] if widths else 0, MIN_ROW_WIDTH)
-    x, rowHeight = float(MARGIN), 0.0
-    for r in roots:
-      if not children[r]:
-        w, h = size[r]
-        if x > MARGIN and x + w > right:
-          x, nextY, rowHeight = float(MARGIN), nextY + rowHeight + ROW_GAP, 0.0
-        shown[r].moveTo(x, nextY, adjustPos=False)
-        x, rowHeight = x + w + ROW_GAP, max(rowHeight, h)
-    # the tree's relations: each one's label anchored on the straight line between its ends (so the line
-    # stays straight), just before what it goes to (so they line up in a column)
-    for r in contains:
-      vr = fitted(view.makeViewObjectForGraphObject(r))
-      vr.floating(False) #type: ignore[attr-defined] # (a VRelation)
-      bb = vr.boundingBox()
-      (sx, sy), (dx, dy) = shown[r.src].centerPt(), shown[r.dst].centerPt() #type: ignore[index]
-      x = shown[r.dst].boundingBox()[0] - LABEL_GAP - (bb[2] - bb[0]) / 2 #type: ignore[index]
-      y = sy + (dy - sy) * (x - sx) / (dx - sx) if dx != sx else (sy + dy) / 2
-      vr.moveToCenterOn(x, y, adjustPos=False)
+    for o in nodes:
+      view.makeViewObjectForGraphObject(o, atPoint=(MARGIN, MARGIN))
+    for r in includes:
+      view.makeViewObjectForGraphObject(r)
     for r in imports:
       if showImports == "all" or (showImports == "given" and r.src.get("import-depth", -1) == 0): #type: ignore[union-attr]
         view.makeViewObjectForGraphObject(r)
   finally:
     view.localLayout = localLayout
+  TreeLayout(view, relation=ontologyTypes(model)["includes"], parentEnd="source", direction="right",
+             others="rows").arrange(animate=False)
 
 def convert(app:Application, paths:list[str], options:Options, parent:tk.Misc|None=None,
             progress:Callable[[str], None]|None=None) -> bool:

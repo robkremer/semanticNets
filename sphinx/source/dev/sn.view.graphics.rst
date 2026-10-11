@@ -25,6 +25,7 @@ Submodules
    sn.view.graphics.layoutDialog
    sn.view.graphics.shapes
    sn.view.graphics.sngView
+   sn.view.graphics.treeLayout
    sn.view.graphics.utils
    sn.view.graphics.vnodes
    sn.view.graphics.vobjects

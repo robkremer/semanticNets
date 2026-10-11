@@ -486,6 +486,20 @@ class LayoutHeuristic(ABC):
     return None
 
 LayoutHieristic = LayoutHeuristic
+
+def fitToText(vo:VObject) -> VObject:
+  '''
+  :param vo: A node or relation (its label) in a view: eg: just made.
+  :type vo: VObject
+  :returns: It, sized to its text now -- as it would be when it's next drawn
+    (see *decorators.WrappingText.fitOwner()*) -- so a layout can place it by its size.
+  :rtype: VObject
+  '''
+  from sn.view.graphics.decorators import WrappingText
+  text = vo.decorators.get("text")
+  if isinstance(text, WrappingText):
+    text.fitOwner()
+  return vo
 "The old (misspelled) name."
 
 @registerLayout
