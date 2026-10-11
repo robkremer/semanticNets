@@ -22,6 +22,7 @@ Submodules
    sn.view.graphics.imageExport
    sn.view.graphics.labels
    sn.view.graphics.layout
+   sn.view.graphics.layoutDialog
    sn.view.graphics.shapes
    sn.view.graphics.sngView
    sn.view.graphics.utils

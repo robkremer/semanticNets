@@ -1129,6 +1129,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     :returns:
     :rtype:
     """
+    from sn.view.graphics.layout import finishTween
+    finishTween(self.view) # (a layout's smooth move under way: done, before this is picked up)
     # A context window's collapse/expand triangle
     if self.toggleAt(self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)):
       self.view.addEventHandled(event)
@@ -1307,7 +1309,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
           for n in movedObjects:
             bb = n.boundingBox()
             startPos = self.dragStartPositions.get(n, bb)
-            self.view.context.move(n, bb[0], bb[1], _oldPos=startPos)
+            self.view.context.move(n, bb[0], bb[1], _oldPos=startPos, _drag=True)
           self.view._updateContainment(self.dragStartCenters, draggedAlong=self.dragAlong)
       else: # this was a click, not a drag: toggle the selection state
         s = event.state

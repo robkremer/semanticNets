@@ -29,6 +29,7 @@ from sn.model.model import Model, Node, Relation, Collection, IsaIndividual,\
   GraphObject, GORef
 from sn.controller.modelInterface import ModelContext
 
+from functools import partial
 from typing import cast, override, Any, Iterable, Callable, Optional
 from util.utils import bindRightMouse, fixURL, isValidURL, urlExists, expandRect,\
   flattenPairs, s_SHIFT, normalizeRect
@@ -41,7 +42,8 @@ from sn.view.textUserInterface import UIContext, SNTerminalWidget
 from util.command import Command
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
-from sn.view.graphics.layout import FindFree, Direction, gatherShifts, intoRect, freeSpotIn, clearOf
+from sn.view.graphics.layout import FindFree, Direction, gatherShifts, intoRect, freeSpotIn, clearOf, \
+                                    LayoutHeuristic, LayoutMoves, NoLayout, finishTween, layoutsFor, STATIC, DYNAMIC
 from sn.view.graphics.decorators import NOMINAL_ASPECT
 from util.commandParser import CompositeCommandMgr, CompositeCommand
 from util.command import DoList
@@ -128,7 +130,7 @@ class SNGContext(UIContext):
     self.defaults["view"] = self.view
     
   def move(self, obj:"VObject", x:int|float, y:int|float, _oldPos:list[int]|None=None, adjustPos:bool=True, _carry:bool=True, #type: ignore[name-defined]
-           _wasFloating:bool|None=None):
+           _wasFloating:bool|None=None, _drag:bool=False):
     '''
     This is a dummy graphic command.
 
@@ -146,12 +148,14 @@ class SNGContext(UIContext):
     :type _carry: bool
     :param _wasFloating:
     :type _wasFloating: bool | None
+    :param _drag:
+    :type _drag: bool
     '''
     print ("dummy graphic command")
-    
+
   class _Move(Command):
     def __init__(self, obj:"VObject", x:int|float, y:int|float, _oldPos:list[int]|None=None, adjustPos:bool=True, _carry:bool=True, #type: ignore[name-defined]
-                 _wasFloating:bool|None=None):
+                 _wasFloating:bool|None=None, _drag:bool=False):
       '''
       :param obj:
       :type obj: VObject
@@ -188,8 +192,14 @@ class SNGContext(UIContext):
         whether it floated (between its ends) before -- the move pins it (it
         no longer floats), and undoing it puts that back.
       :type _wasFloating: bool | None
+      :param _drag: [default=False] Whether it's the user dropping something they
+        dragged (see *VObject.onB1_ButtonRelease()*), not a program moving it:
+        eg: a tree layout pins a dragged node where it's dropped (see
+        *treeLayout.TreeLayout.adjust()*).
+      :type _drag: bool
       '''
       super().__init__("move")
+      self.drag:bool = _drag
       self.obj:VObject = obj
       self.oldPos:list[int]|None = list(_oldPos) if _oldPos is not None else None
       self.x, self.y = x, y
@@ -820,12 +830,40 @@ class _Bumped(CompositeCommand):
     '''
     return str(self.commands[0])
 
+class _Adjusted(CompositeCommand):
+  '''
+  A command, already done, and the view's dynamic layout's adjustment after
+  it (see *ViewDoList*, *layout.LayoutHeuristic.adjust()*): one entry on the
+  undo list, named as the command.
+  '''
+  def __init__(self, command:Command, adjustment:LayoutMoves):
+    '''
+    :param command:
+    :type command: Command
+    :param adjustment:
+    :type adjustment: LayoutMoves
+    '''
+    super().__init__([command, adjustment])
+    self.name = command.name
+    self.done = True
+
+  @override
+  def __str__(self):
+    '''
+    :returns: A readable string for this object.
+    :rtype:
+    '''
+    return str(self.commands[0])
+
 class ViewDoList(DoList):
   '''
   A view's undo list (see *SNGContext*). After each command that changes
   anything, whatever is left in a context window it doesn't belong in is
-  pushed out (see *SNGView.bumpIntruders()*) -- as part of the same undo
-  entry. (Not during a drag, which isn't a command until it's dropped.)
+  pushed out (see *SNGView.bumpIntruders()*), and then the view's dynamic
+  layout adjusts the rest (see *layout.LayoutHeuristic.adjust()*) -- as part
+  of the same undo entry. (Not during a drag, which isn't a command until
+  it's dropped; nor after a layout's own moves: see *layout.LayoutMoves*.) A
+  tweened move under way is finished first (see *layout.finishTween()*).
   '''
   def __init__(self, view:SNGView):
     '''
@@ -843,6 +881,7 @@ class ViewDoList(DoList):
     :returns:
     :rtype: Any
     '''
+    finishTween(self.view)
     ret = super().do(c)
     if c.mutatedData and 0 <= self.index < len(self.queue) and self.queue[self.index] is c:
       try:
@@ -852,7 +891,25 @@ class ViewDoList(DoList):
           self.queue[self.index] = _Bumped(c, bump)
       except Exception:
         logger.exception("couldn't bump objects out of the windows they don't belong in")
+      if not getattr(c, "isLayout", False) and self.view.localLayout is not None: # (None: a program's turned it off for now)
+        try:
+          adjustment = self.view.localLayout.adjust(c)
+          if adjustment is not None and not adjustment.isEmpty():
+            adjustment.do()
+            self.queue[self.index] = _Adjusted(self.queue[self.index], adjustment)
+        except Exception:
+          logger.exception(f'the view\'s dynamic layout ("{self.view.localLayout.NAME}") couldn\'t adjust it')
     return ret
+
+  @override
+  def undo(self) -> Any:
+    finishTween(self.view)
+    return super().undo()
+
+  @override
+  def redo(self) -> Any:
+    finishTween(self.view)
+    return super().redo()
 
 class _ContainCreated(Command):
   '''
@@ -995,7 +1052,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     'The set of currently selected VObjects.'
     self._suppressLocalLayout = False
     'Temporarily suppress automatic layout. Necessary during drag operations, etc.'
-    self.localLayout = FindFree(self)
+    self.localLayout:LayoutHeuristic = FindFree(self)
+    '''The view's dynamic layout (see *layout*: one of *layout.layoutsFor(DYNAMIC)*): it
+    places what's made or dropped, and adjusts things after each command (see
+    *ViewDoList*). Set it with *setDynamicLayout()*; it's saved with the view.'''
 
     self._eventHandled:Optional[tk.Event] = None
     "Set by a contained VObject/item-level handler (via addEventHandled()) to mark that it already handled a mouse event, so this canvas's own (separately-dispatched) widget-level binding for the same event -- e.g. onRightMouse() -- can skip its generic handling. See isEventHandled()/addEventHandled()/removeEventHandled()."
@@ -1043,7 +1103,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
           rel.connect()
       # (a full repaint first: it fits the objects to their text, as any later one would -- by
       # a pixel or so, if the file was saved with other font metrics -- so that isn't a change)
-      slf.canvas.after_idle(lambda slf=slf: [slf.applyVisibility(), slf._restoreAnimationState(), slf.repaint(), slf.resetScrollRegion(), slf.setDirty(False)]) # type: ignore[misc]
+      slf.canvas.after_idle(lambda slf=slf: [slf.applyVisibility(), slf._restoreAnimationState(), slf._restoreLayoutState(), slf.repaint(), slf.resetScrollRegion(), slf.setDirty(False)]) # type: ignore[misc]
     ret:InstantiationInfo = super().getInstantiationInfo()
     # ret.class_ = cls
     # (its model's URL relative to the view's file if they're side by side -- see PRDb.relativeURL() -- so
@@ -1066,6 +1126,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         lambda slf: cast(SNGView, slf)._animationState(),
         lambda slf, v: setattr(slf, "_pendingAnimation", str(v)), # (applied once the view is built: see _restoreAnimationState())
         optional=True))
+    ret.postconSetters.append(PropertyInfo("layout", str,
+        lambda slf: cast(SNGView, slf).localLayout.state() if cast(SNGView, slf).localLayout is not None else "",
+        lambda slf, v: setattr(slf, "_pendingLayout", str(v)), # (applied once the view is built: see _restoreLayoutState())
+        optional=True)) # optional: views saved before it existed still load (with "avoid overlaps")
     for p in ret.postconSetters: # (inferred objects aren't saved: see VObject.isInferred())
       if p.name == "_db":
         def assertedObjects(slf:Serializable) -> SerializableType:
@@ -1090,6 +1154,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :param format:
     :type format: str
     '''
+    finishTween(self) # (a layout's smooth move under way: saved where it's going)
     super().save(saveas=saveas, overwrite=overwrite, format=format)
     if saveas is None: # (saving a copy elsewhere doesn't save this: see PRDb.save())
       self.setDirty(False)
@@ -3902,8 +3967,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     viewMenu.add_separator()
     viewMenu.add_cascade(label="Zoom", menu=self.makeZoomMenu(viewMenu))
     viewMenu.add_command(label="reset scroll region", command=lambda: self.resetScrollRegion(shrink=True))
-    viewMenu.add_command(label="gather nodes", command=self.gatherNodes)
-    viewMenu.add_cascade(label="animation layout", menu=self._animationLayoutMenu(viewMenu))
+    viewMenu.add_cascade(label="layout", menu=self._layoutMenu(viewMenu))
     if snPrefs.get("gui/debugMenus", storeDefault=False, storeType=bool):
       viewMenu.add_command(label="repaint", command=self.repaint, accelerator=KEY_REPAINT[1])
     viewMenu.add_separator()
@@ -4325,12 +4389,125 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     Start (or, if it's running, stop) the animation layout: objects
     repel one another and relations pull them together, until things settle
     (see *animatedLayouts.FieldsLayout*). The whole run is one undoable command.
+    A dynamic layout that arranges things itself (eg: a tree) would undo what
+    it does, so the view's dynamic layout becomes "avoid overlaps" first.
     '''
     layout = self.animationLayout()
     if layout.active:
       layout.kill()
       return
+    if not isinstance(self.localLayout, (FindFree, NoLayout)):
+      logger.info(f'The animation layout: the dynamic layout is now "{FindFree.NAME}" (it was "{self.localLayout.NAME}").')
+      self.setDynamicLayout(FindFree(self))
     layout(autoOff=True)
+
+  # ---- layouts (see layout) ---------------------------------------------------------
+
+  def _layoutMenu(self, parent:tk.Menu) -> tk.Menu:
+    '''
+    The "layout" submenu: the layouts, by kind (see *layout.CATEGORIES*):
+    "arrange now" (static: done at once, as one undoable command), "keep
+    arranged" (dynamic: one at a time: the view's *localLayout*), and
+    "animate" (see *_animationLayoutMenu()*). A layout with parameters asks
+    for them (see *layout.LayoutHeuristic.askParameters()*).
+
+    :param parent: The menu it's a submenu of.
+    :type parent: tk.Menu
+    :returns: The submenu.
+    :rtype: tk.Menu
+    '''
+    menu = tk.Menu(parent)
+    arrange = tk.Menu(menu)
+    for cls in layoutsFor(STATIC):
+      asks = any(STATIC in p.categories for p in cls.PARAMETERS)
+      arrange.add_command(label=cls.NAME + ("..." if asks else ""), command=partial(self.arrangeWith, cls))
+    menu.add_cascade(label="arrange now", menu=arrange)
+    keep = tk.Menu(menu)
+    current = tk.StringVar(value=self.localLayout.NAME)
+    self._layoutVar = current # (keep it alive)
+    for cls in layoutsFor(DYNAMIC):
+      asks = any(DYNAMIC in p.categories for p in cls.PARAMETERS)
+      keep.add_radiobutton(label=cls.NAME + ("..." if asks else ""), variable=current, value=cls.NAME,
+                           command=partial(self.keepArrangedWith, cls))
+    menu.add_cascade(label="keep arranged", menu=keep)
+    menu.add_cascade(label="animate", menu=self._animationLayoutMenu(menu))
+    return menu
+
+  def _lastParameters(self, cls:type[LayoutHeuristic]) -> dict[str, Any]|None:
+    '''
+    :param cls: A kind of layout.
+    :type cls: type[LayoutHeuristic]
+    :returns: The parameters it was last used with in this view (or is being
+      used with, as its dynamic layout), if any.
+    :rtype: dict[str, Any] | None
+    '''
+    if isinstance(self.localLayout, cls):
+      return self.localLayout.parameters()
+    return self.__dict__.setdefault("_layoutParameters", {}).get(cls.NAME)
+
+  def arrangeWith(self, cls:type[LayoutHeuristic]) -> None:
+    '''
+    "arrange now": arrange the view with a static layout, once (asking for its
+    parameters, if it has any), as one undoable command.
+
+    :param cls: The kind of layout.
+    :type cls: type[LayoutHeuristic]
+    '''
+    kwargs = cls.askParameters(self, STATIC, self._lastParameters(cls), parent=self.window)
+    if kwargs is None:
+      return
+    self.__dict__.setdefault("_layoutParameters", {})[cls.NAME] = kwargs
+    cls(self, **kwargs).arrange()
+
+  def keepArrangedWith(self, cls:type[LayoutHeuristic]) -> None:
+    '''
+    "keep arranged": make a kind of layout the view's dynamic layout (asking for
+    its parameters, if it has any).
+
+    :param cls: The kind of layout.
+    :type cls: type[LayoutHeuristic]
+    '''
+    kwargs = cls.askParameters(self, DYNAMIC, self._lastParameters(cls), parent=self.window)
+    if kwargs is None: # (cancelled: the menu shows the one there still is)
+      if getattr(self, "_layoutVar", None) is not None:
+        self._layoutVar.set(self.localLayout.NAME)
+      return
+    self.__dict__.setdefault("_layoutParameters", {})[cls.NAME] = kwargs
+    self.setDynamicLayout(cls(self, **kwargs))
+
+  def setDynamicLayout(self, layout:LayoutHeuristic) -> None:
+    '''
+    Make *layout* the view's dynamic layout (*localLayout*), and let it arrange
+    things as it would keep them (see *layout.LayoutHeuristic.activate()*).
+    Saved with the view.
+
+    :param layout: A dynamic layout of this view.
+    :type layout: LayoutHeuristic
+    '''
+    finishTween(self)
+    self.localLayout = layout
+    if getattr(self, "_layoutVar", None) is not None:
+      self._layoutVar.set(layout.NAME)
+    self.setDirty()
+    layout.activate()
+
+  def _restoreLayoutState(self) -> None:
+    '''
+    Once a read view is built: put back the dynamic layout it was saved with
+    (see *layout.LayoutHeuristic.state()*), without arranging anything: it's
+    as it was saved.
+    '''
+    text = self.__dict__.pop("_pendingLayout", None)
+    if not text:
+      return
+    try:
+      layout = LayoutHeuristic.fromState(self, text)
+      if layout is None:
+        logger.warning(f'{self.url}: there\'s no layout "{text.split(";")[0]}": using "{self.localLayout.NAME}".')
+        return
+      self.localLayout = layout
+    except Exception:
+      logger.exception(f"{self.url}: couldn't restore the dynamic layout ({text})")
 
   def gatherNodes(self) -> None:
     '''

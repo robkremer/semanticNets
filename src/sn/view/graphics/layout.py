@@ -20,13 +20,39 @@
 # SOFTWARE.                                                                     #
 #################################################################################
 '''
+Layout heuristics: ways of arranging a view's objects. There are three kinds
+(see *CATEGORIES*), and a heuristic may be more than one:
+
+  - **static** (*STATIC*): chosen, and done all at once, as one undoable
+    command (see *LayoutHeuristic.arrange()*): eg: *TreeLayout* (in
+    *treeLayout*), "gather nodes".
+  - **dynamic** (*DYNAMIC*): the view's current one (*SNGView.localLayout*:
+    one at a time) keeps things arranged as they change: it places what's
+    made or dropped (see *LayoutHeuristic.placeNode()*), and after each
+    command that changes the view, adjusts the rest (see
+    *LayoutHeuristic.adjust()*), as part of the same undoable command: eg:
+    *FindFree* ("avoid overlaps": the default), *TreeLayout*, *NoLayout*.
+  - **animated** (*ANIMATED*): runs in the background until things settle:
+    eg: *animatedLayouts.FieldsLayout*.
+
+Each heuristic declares the parameters its constructor takes (see
+*LayoutParameter*): a program can construct one with them directly (eg:
+``TreeLayout(view, relation=r, direction="down").arrange()``), and the view's
+menus ask for them with a dialog made from them (see
+*LayoutHeuristic.askParameters()*). Heuristics are listed by name in *LAYOUTS*
+(see *registerLayout()*), which the view's "layout" menu is made from.
+
+Their moves are made by *LayoutMoves*: one undoable command, animated
+(tweened: see *tween()*) when it's first done.
+
   .. inheritance-diagram::
         Direction
         FindFree
-        LayoutHieristic
+        NoLayout
+        GatherLayout
+        LayoutHeuristic
       :parts: 3
       :private-bases:
-      :top-classes: util.commandParser.ParsableCommandDef, util.commandParser.ParsableQuery
 
 Created on Feb 15, 2025
 
@@ -37,14 +63,16 @@ Created on Feb 15, 2025
 
 import sn
 import logging
-from abc import ABC, abstractmethod
+from abc import ABC
+from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, override, Iterable
+from typing import Any, Optional, override, Iterable
 from sn.view.graphics.vnodes import VNode
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
 from util.utils import Point, expandRect
-from sn.model.model import GraphObject, Node
+from util.command import Command
+from sn.model.model import GraphObject, Model, Node, Relation
 from util.utils import removeDuplicates
 
 logger:sn.SNLogger = sn.getLogger(__name__)
@@ -97,23 +125,274 @@ def depth(obj:GraphObject) -> int:
   return i
   
   
-class LayoutHieristic(ABC):
-  '''
-  classdocs
-  '''
+STATIC, DYNAMIC, ANIMATED = "static", "dynamic", "animated"
+CATEGORIES = (STATIC, DYNAMIC, ANIMATED)
+"The kinds of layout heuristic: see the module doc."
 
+@dataclass(frozen=True)
+class LayoutParameter:
+  '''
+  A parameter of a layout heuristic: a keyword argument of its constructor,
+  asked for by its dialog (see *LayoutHeuristic.askParameters()*) and saved
+  with the view (see *LayoutHeuristic.state()*).
+  '''
+  name:str
+  "The keyword argument's name."
+  label:str
+  "What the dialog calls it."
+  kind:str
+  '''"relation" (a relation type: a *Relation*, or its name), "choice" (one
+  of *choices*), "int" or "bool".'''
+  default:Any = None
+  "Its value if none's given (a relation's name, for a relation)."
+  choices:tuple[str, ...] = ()
+  "For a choice: what it may be."
+  note:str = ""
+  "Said under it in the dialog, if anything."
+  categories:tuple[str, ...] = (STATIC, DYNAMIC)
+  "The kinds of use it matters for: the dialog for the others doesn't ask for it."
 
-  def __init__(self, view):
+LAYOUTS:dict[str, type["LayoutHeuristic"]] = {}
+"The layout heuristics, by name (see *registerLayout()*): the view's \"layout\" menu lists them."
+
+def registerLayout[T: type["LayoutHeuristic"]](cls:T) -> T:
+  '''
+  A class decorator: list the layout heuristic *cls* in *LAYOUTS*, by its *NAME*.
+
+  :param cls:
+  :type cls: type[LayoutHeuristic]
+  :returns: *cls*.
+  :rtype: type[LayoutHeuristic]
+  '''
+  LAYOUTS[cls.NAME] = cls
+  return cls
+
+def layoutsFor(category:str) -> list[type["LayoutHeuristic"]]:
+  '''
+  :param category: One of *CATEGORIES*.
+  :type category: str
+  :returns: The layout heuristics (in *LAYOUTS*) of that kind, in the order they were registered.
+  :rtype: list[type[LayoutHeuristic]]
+  '''
+  return [c for c in LAYOUTS.values() if category in c.CATEGORIES]
+
+def relationTypes(model:Model) -> list[Relation]:
+  '''
+  :param model: A model.
+  :type model: Model
+  :returns: The relation types a layout can follow: isa, then the model's
+    own and its super-models' (not the system's), by name.
+  :rtype: list[Relation]
+  '''
+  return [model.ISA] + sorted((r for r in model.values() if isinstance(r, Relation) and r.isType()
+                               and r is not model.ISA and not r.isSystemObject()), key=lambda r: str(r.name).lower())
+
+def relationNamed(model:Model, name:str) -> Relation|None:
+  '''
+  :param model: A model.
+  :type model: Model
+  :param name: A relation type's name.
+  :type name: str
+  :returns: The first of *relationTypes()* with that name, if any.
+  :rtype: Relation | None
+  '''
+  return next((r for r in relationTypes(model) if r.name == name), None)
+
+class LayoutHeuristic(ABC):
+  '''
+  A way of arranging a view's objects: static, dynamic, animated, or more
+  than one of those (see the module doc and *CATEGORIES*). A subclass says
+  which (*CATEGORIES*), what it's called (*NAME*), and the parameters its
+  constructor takes (*PARAMETERS*); and implements what its kinds need:
+
+    - static: *targets()* (where to move things; *arrange()* moves them), or
+      *arrange()* itself;
+    - dynamic: *placeNode()* (where something new, or dropped, goes) and
+      *adjust()* (what to move after a command); and *activate()*, if it
+      arranges things when it's made the view's dynamic layout.
+  '''
+  NAME:str = ""
+  "What it's called: in *LAYOUTS*, the menus, and the view's file."
+  CATEGORIES:tuple[str, ...] = ()
+  "The kinds of layout it is: of *CATEGORIES*."
+  PARAMETERS:tuple[LayoutParameter, ...] = ()
+  "The keyword arguments its constructor takes (besides the view)."
+
+  def __init__(self, view, **kwargs):
     '''
-    Constructor
-
-    :param view:
-    :type view:
+    :param view: The view it arranges.
+    :type view: SNGView
+    :param kwargs: Its parameters (see *PARAMETERS*): those not given are their defaults.
+    :raises TypeError: if a keyword isn't one of its parameters.
     '''
     from sn.view.graphics.sngView import SNGView
     assert isinstance(view, SNGView)
     self.view = view
-    
+    names = {p.name for p in self.PARAMETERS}
+    unknown = set(kwargs) - names
+    if unknown:
+      raise TypeError(f'{type(self).__name__}: unknown parameter(s): {", ".join(sorted(unknown))}.')
+    self.params:dict[str, Any] = {}
+    "Its parameters' values (see *PARAMETERS*): relations as *Relation*s."
+    for p in self.PARAMETERS:
+      v = kwargs.get(p.name, p.default)
+      if p.kind == "relation" and isinstance(v, str):
+        v = relationNamed(view.model, v) or (view.model.ISA if v == view.model.ISA.name else None)
+      self.params[p.name] = v
+
+  # ---- parameters -------------------------------------------------------------
+
+  @classmethod
+  def askParameters(cls, view, category:str, current:dict[str, Any]|None=None, parent=None) -> dict[str, Any]|None:
+    '''
+    Ask the user for this kind of layout's parameters (those that matter for
+    *category*: see *LayoutParameter.categories*), with a dialog made from
+    *PARAMETERS* (see *layoutDialog.LayoutDialog*) -- or, if it has none,
+    don't.
+
+    :param view: The view it's for.
+    :type view: SNGView
+    :param category: How it'll be used: *STATIC* or *DYNAMIC*.
+    :type category: str
+    :param current: The values to start with, if not the defaults.
+    :type current: dict[str, Any] | None
+    :param parent: The window the dialog's over.
+    :returns: The keyword arguments for its constructor, or None if the user cancelled.
+    :rtype: dict[str, Any] | None
+    '''
+    asked = [p for p in cls.PARAMETERS if category in p.categories]
+    values = {p.name: (current or {}).get(p.name, p.default) for p in cls.PARAMETERS}
+    if not asked:
+      return values
+    from sn.view.graphics.layoutDialog import LayoutDialog
+    title = f"{'arrange now' if category == STATIC else 'keep arranged'}: {cls.NAME}"
+    d = LayoutDialog(parent if parent is not None else view.window, title, cls, asked, values, view)
+    return d.result
+
+  @classmethod
+  def parameterChanged(cls, view, name:str, values:dict[str, Any]) -> dict[str, Any]:
+    '''
+    Called by the dialog when the user changes a parameter: eg: to change
+    another to suit it. By default, nothing does.
+
+    :param view: The view it's for.
+    :type view: SNGView
+    :param name: The parameter changed.
+    :type name: str
+    :param values: All the parameters' values, now.
+    :type values: dict[str, Any]
+    :returns: The values to show.
+    :rtype: dict[str, Any]
+    '''
+    return values
+
+  def parameters(self) -> dict[str, Any]:
+    '''
+    :returns: Its parameters' values: as keyword arguments for its constructor.
+    :rtype: dict[str, Any]
+    '''
+    return dict(self.params)
+
+  # ---- saving it with the view ---------------------------------------------------
+
+  def state(self) -> str:
+    '''
+    :returns: What's saved with the view about it, as its dynamic layout (see
+      *fromState()*): its name, parameters, and anything else it keeps (see
+      *extraState()*): eg: "name=tree;relation=includes;direction=right;pins=12,40".
+    :rtype: str
+    '''
+    parts = {"name": self.NAME}
+    for p in self.PARAMETERS:
+      v = self.params.get(p.name)
+      if v is None:
+        continue
+      parts[p.name] = str(v.name) if p.kind == "relation" else ("1" if v else "0") if p.kind == "bool" else str(v)
+    parts.update(self.extraState())
+    return ";".join(f"{k}={v}" for k, v in parts.items())
+
+  def extraState(self) -> dict[str, str]:
+    '''
+    :returns: Anything else it keeps that's saved with the view (see *state()*):
+      none, by default. (Values mustn't contain ";" or "=".)
+    :rtype: dict[str, str]
+    '''
+    return {}
+
+  def restoreExtraState(self, state:dict[str, str]) -> None:
+    '''
+    Put back what *extraState()* saved.
+
+    :param state: What was saved (and the parameters).
+    :type state: dict[str, str]
+    '''
+    pass
+
+  @staticmethod
+  def fromState(view, text:str) -> "LayoutHeuristic|None":
+    '''
+    :param view: A view, being read.
+    :type view: SNGView
+    :param text: What *state()* saved.
+    :type text: str
+    :returns: The layout it describes -- or None if there's no such layout.
+    :rtype: LayoutHeuristic | None
+    '''
+    state = dict(kv.split("=", 1) for kv in text.split(";") if "=" in kv)
+    cls = LAYOUTS.get(state.get("name", ""))
+    if cls is None:
+      return None
+    kwargs:dict[str, Any] = {}
+    for p in cls.PARAMETERS:
+      if p.name in state:
+        v = state[p.name]
+        kwargs[p.name] = int(v) if p.kind == "int" else (v == "1") if p.kind == "bool" else v
+    ret = cls(view, **kwargs)
+    ret.restoreExtraState(state)
+    return ret
+
+  # ---- static ---------------------------------------------------------------------
+
+  def targets(self) -> dict[VObject, tuple[float, float]]:
+    '''
+    :returns: Where to move things to arrange the view (their top left
+      corners): only what's to move. None, by default.
+    :rtype: dict[VObject, tuple[float, float]]
+    '''
+    return {}
+
+  def arrange(self, animate:bool=True) -> "LayoutMoves|None":
+    '''
+    Arrange the view (see *targets()*), as one undoable command.
+
+    :param animate: Whether to move things smoothly (see *tween()*), rather than at once.
+    :type animate: bool
+    :returns: The command, or None if nothing moved.
+    :rtype: LayoutMoves | None
+    '''
+    cmd = LayoutMoves(self.view, f"arrange: {self.NAME}", self.targets(), animate=animate)
+    self.arranged(cmd)
+    if cmd.isEmpty():
+      return None
+    self.view.context.doList.do(cmd)
+    return cmd
+
+  def arranged(self, cmd:"LayoutMoves") -> None:
+    '''
+    Called by *arrange()* with the command it's about to do: eg: to add to
+    what it undoes (see *LayoutMoves.also*). Nothing, by default.
+
+    :param cmd:
+    :type cmd: LayoutMoves
+    '''
+    pass
+
+  def placeAll(self) -> None:
+    "As *arrange()*."
+    self.arrange()
+
+  # ---- dynamic --------------------------------------------------------------------
+
   def _setDirection(self, node:VObject, referenceNode:Optional[VObject], loc:Optional[Point]=None):
     '''
     :param node:
@@ -150,52 +429,261 @@ class LayoutHieristic(ABC):
     
   def __call__(self, node:Optional[VObject]=None, **kwargs):
     '''
+    Place *node* (see *placeNode()*) -- or, if it's None, everything (see *placeAll()*).
+
     :param node:
     :type node: Optional[VObject]
-    :param kwargs:
-    :type kwargs:
+    :param kwargs: For *placeNode()*.
     '''
     if node is not None:
       self.placeNode(node, **kwargs)
     else:
       self.placeAll()
 
-  @abstractmethod
-  def placeNode(self, node:VObject, 
-                referenceNode:Optional[VObject]=None, 
-                direction:Direction=Direction.UNSPECIFIED, 
-                loc:Optional[Point]=None, **kwargs) -> Point:
+  def placeNode(self, node:VObject,
+                referenceNode:Optional[VObject]=None,
+                direction:Direction=Direction.UNSPECIFIED,
+                loc:Optional[Point]=None, **kwargs) -> Point|tuple[float, float]:
     '''
+    As the view's dynamic layout: put *node* -- just made (eg: below
+    *referenceNode*, its supertype), or dropped -- somewhere suitable. By
+    default, it stays where it is.
+
     :param node:
     :type node: VObject
-    :param referenceNode:
+    :param referenceNode: What it's to go near, if anything.
     :type referenceNode: Optional[VObject]
-    :param direction:
+    :param direction: Which way from *referenceNode*.
     :type direction: Direction
-    :param loc:
+    :param loc: Where to start looking, if not where it is.
     :type loc: Optional[Point]
-    :param kwargs:
-    :type kwargs:
-    :returns:
-    :rtype: Point
+    :param kwargs: Eg: "aggressive", "within" (see *FindFree.placeNode()*).
+    :returns: Where it's put (its top left).
+    :rtype: Point | tuple[float, float]
+    '''
+    bb = node.boundingBox()
+    return bb[0], bb[1]
+
+  def activate(self) -> None:
+    '''
+    Called when it's made the view's dynamic layout (see
+    *SNGView.setDynamicLayout()*): eg: to arrange things as it would keep them.
+    Nothing, by default.
     '''
     pass
-    
-  @abstractmethod
-  def placeAll(self):
-    pass
-    
+
+  def adjust(self, command:Command) -> "LayoutMoves|None":
+    '''
+    As the view's dynamic layout: called after each command that changed the
+    view (see *sngView.ViewDoList*), to say what else to move. The command
+    returned is done, and undone with *command*, as one.
+
+    :param command: The command just done.
+    :type command: Command
+    :returns: What to move (not done yet), or None for nothing (the default).
+    :rtype: LayoutMoves | None
+    '''
+    return None
+
+LayoutHieristic = LayoutHeuristic
+"The old (misspelled) name."
+
+@registerLayout
+class NoLayout(LayoutHeuristic):
+  '''
+  The dynamic layout that does nothing: things stay where they're made or dropped.
+  '''
+  NAME = "none"
+  CATEGORIES = (DYNAMIC,)
+
+@registerLayout
+class GatherLayout(LayoutHeuristic):
+  '''
+  Herd outlying objects back to the main pack (see *SNGView.gatherNodes()*).
+  '''
+  NAME = "gather nodes"
+  CATEGORIES = (STATIC,)
+
+  @override
+  def arrange(self, animate:bool=True) -> "LayoutMoves|None":
+    self.view.gatherNodes()
+    return None
+
+# ---- moving things ------------------------------------------------------------------
+
+TWEEN_STEPS = 8
+"How many steps a tweened move takes (see *tween()*)."
+
+TWEEN_INTERVAL = 25
+"Milliseconds between a tweened move's steps."
+
+TWEEN_MAX = 400
+"The most objects moved smoothly: more are moved at once (it'd be slow)."
+
+class _Tween:
+  '''
+  A tweened move under way (see *tween()*).
+  '''
+  def __init__(self, view, moves:list[tuple[VObject, tuple[float, float], tuple[float, float]]]):
+    self.view = view
+    self.moves = moves
+    self.step = 0
+    self.job = view.canvas.after(TWEEN_INTERVAL, self.next)
+
+  def next(self) -> None:
+    self.step += 1
+    if self.step >= TWEEN_STEPS:
+      self.finish()
+      return
+    t = self.step / TWEEN_STEPS
+    t = t * t * (3 - 2 * t) # (eased: slow, fast, slow)
+    for vo, (x0, y0), (x1, y1) in self.moves:
+      if vo._isConnected():
+        vo.moveTo(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, adjustPos=False, carry=False)
+    self.job = self.view.canvas.after(TWEEN_INTERVAL, self.next)
+
+  def finish(self) -> None:
+    '''Put everything where it's going, now.'''
+    try:
+      self.view.canvas.after_cancel(self.job)
+    except Exception:
+      pass
+    if self.view.__dict__.get("_tween") is self:
+      self.view._tween = None
+    for vo, _, (x1, y1) in self.moves:
+      if vo._isConnected():
+        vo.moveTo(x1, y1, adjustPos=False, carry=False)
+    self.view.repaintSoon()
+
+def finishTween(view) -> None:
+  '''
+  Finish the view's tweened move, if one's under way (see *tween()*): eg:
+  before anything else is done, undone or saved.
+
+  :param view:
+  :type view: SNGView
+  '''
+  t = view.__dict__.get("_tween")
+  if t is not None:
+    t.finish()
+
+def tween(view, moves:list[tuple[VObject, tuple[float, float], tuple[float, float]]]) -> None:
+  '''
+  Move things smoothly, from where they are to where they're going, over
+  *TWEEN_STEPS* steps -- in the view's event loop, not in the background: a
+  tweened move under way is finished (see *finishTween()*) before anything
+  else is done to the view. (At once if there are more than *TWEEN_MAX*, or
+  there's no window.)
+
+  :param view:
+  :type view: SNGView
+  :param moves: (object, from, to): top left corners.
+  :type moves: list[tuple[VObject, tuple[float, float], tuple[float, float]]]
+  '''
+  finishTween(view)
+  if not moves:
+    return
+  if not getattr(view, "canvas", None) or len(moves) > TWEEN_MAX:
+    for vo, _, (x1, y1) in moves:
+      vo.moveTo(x1, y1, adjustPos=False, carry=False)
+    view.repaintSoon()
+    return
+  view._tween = _Tween(view, moves)
+
+class LayoutMoves(Command):
+  '''
+  A layout's moves, as one undoable command: tweened (see *tween()*) when
+  first done, if asked; at once when redone or undone. A relation's label it
+  moves is pinned (no longer floats between its ends) -- and floats again
+  when it's undone, if it did before.
+  '''
+  isLayout = True
+  "So the view's dynamic layout doesn't adjust after it (see *sngView.ViewDoList*)."
+
+  def __init__(self, view, name:str, targets:dict[VObject, tuple[float, float]], animate:bool=True):
+    '''
+    :param view:
+    :type view: SNGView
+    :param name: What the undo menu calls it.
+    :type name: str
+    :param targets: Where things go (their top left corners): those already there are left out.
+    :type targets: dict[VObject, tuple[float, float]]
+    :param animate: Whether to move them smoothly when it's first done.
+    :type animate: bool
+    '''
+    super().__init__(name)
+    self.view = view
+    self.animate = animate
+    self.first = True
+    self.moves:list[tuple[VObject, tuple[float, float], tuple[float, float], bool|None]] = []
+    "(object, from, to, whether it floated: for a relation's label)"
+    for vo, (x, y) in targets.items():
+      bb = vo.boundingBox()
+      if abs(bb[0] - x) >= 0.5 or abs(bb[1] - y) >= 0.5:
+        self.moves.append((vo, (bb[0], bb[1]), (x, y), vo.floating() if isinstance(vo, VRelation) else None))
+    self.also:list[tuple[Any, Any]] = []
+    '''Other things it does and undoes: (do, undo) pairs of callables: eg: a
+    layout's own state (see *TreeLayout*'s pins).'''
+
+  def isEmpty(self) -> bool:
+    ":returns: Whether it does nothing."
+    return not self.moves and not self.also
+
+  @override
+  def do(self) -> None:
+    super().do()
+    finishTween(self.view)
+    for do, _ in self.also:
+      do()
+    for vo, _, _, floated in self.moves:
+      if floated is not None:
+        vo._floatingAnchor = False #type: ignore[attr-defined] # (directly: not recentred between its ends first)
+    if self.first and self.animate:
+      tween(self.view, [(vo, a, b) for vo, a, b, _ in self.moves if vo._isConnected()])
+    else:
+      for vo, _, (x, y), _ in self.moves:
+        if vo._isConnected():
+          vo.moveTo(x, y, adjustPos=False, carry=False)
+      self.view.repaintSoon()
+    self.first = False
+
+  @override
+  def undo(self) -> None:
+    super().undo()
+    finishTween(self.view)
+    for vo, (x, y), _, floated in reversed(self.moves):
+      if vo._isConnected():
+        vo.moveTo(x, y, adjustPos=False, carry=False)
+        if floated is not None:
+          vo.floating(floated) #type: ignore[attr-defined]
+    for _, undo in reversed(self.also):
+      undo()
+    self.view.repaintSoon()
+
+  @override
+  def delete(self) -> None:
+    super().delete()
+    self.moves, self.also = [], []
+
 UNBOUNDED = 10**9
 "A limit (view units) that's no limit: objects may be placed anywhere, at negative coordinates too."
 
-class FindFree(LayoutHieristic):
-  
-  def __init__(self, view):
+@registerLayout
+class FindFree(LayoutHeuristic):
+  '''
+  "avoid overlaps": the default dynamic layout. What's made, or dropped, is
+  put in the nearest free place (see *placeNode()*): where it doesn't overlap
+  anything else. Nothing else moves.
+  '''
+  NAME = "avoid overlaps"
+  CATEGORIES = (DYNAMIC,)
+
+  def __init__(self, view, **kwargs):
     '''
     :param view:
-    :type view:
+    :type view: SNGView
     '''
-    super().__init__(view)
+    super().__init__(view, **kwargs)
     self.quanta = 10
     'Used when searching for non-overlapping space'
     self.expandFactor_relations = 5
@@ -366,7 +854,7 @@ class FindFree(LayoutHieristic):
               
   @override
   def placeAll(self):
-    pass
+    pass # (not a static layout)
 
 
 def intoRect(box:list[float], rect:list[float], margin:float=0.0, topMargin:float|None=None) -> tuple[float, float]:
