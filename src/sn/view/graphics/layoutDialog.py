@@ -34,6 +34,7 @@ from functools import partial
 from typing import Any
 import tkinter as tk
 from tkinter import ttk, messagebox
+from util.utils import ownDialog
 from sn.view.graphics.layout import LayoutParameter, relationTypes
 
 MAX_INT = 10000
@@ -61,6 +62,7 @@ class LayoutDialog(tk.Toplevel):
     :type view: SNGView
     '''
     super().__init__(parent)
+    ownDialog(self, parent) # (over its parent's window, not full screen: see ownDialog())
     self.title(title)
     self.cls, self.view, self.asked = cls, view, asked
     self.values:dict[str, Any] = dict(values)
@@ -102,7 +104,6 @@ class LayoutDialog(tk.Toplevel):
     ttk.Button(buttons, text="Cancel", command=self.destroy).pack(side=tk.RIGHT, padx=6)
     self.bind("<Return>", lambda _e: self.ok())
     self.bind("<Escape>", lambda _e: self.destroy())
-    self.transient(parent) #type: ignore[call-overload] # (a window)
     self.update_idletasks()
     try:
       self.grab_set()

@@ -46,6 +46,7 @@ from dataclasses import dataclass
 from typing import Any, Callable
 import tkinter as tk
 from tkinter import ttk
+from util.utils import ownDialog
 from sn.model.model import GraphObject, Relation, IsaIndividual
 
 OUT, IN, BOTH = "out", "in", "both"
@@ -185,6 +186,7 @@ class ExpandDialog(tk.Toplevel):
     :type levels: int
     '''
     super().__init__(parent)
+    ownDialog(self, parent) # (over its parent's window, not full screen: see ownDialog())
     self.parent = parent
     self.title(title)
     self.choices = choices

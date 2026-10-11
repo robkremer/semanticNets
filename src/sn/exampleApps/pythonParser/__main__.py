@@ -38,6 +38,7 @@ from dataclasses import dataclass
 from typing import Any, Callable
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
+from util.utils import ownDialog
 from sn.model.model import Model, Node, Relation
 from sn.view.graphics.guiApp import Application
 from sn.view.graphics.sngView import SNGView
@@ -193,6 +194,7 @@ class ParserDialog(tk.Toplevel):
     :type onClose: Callable[[], None] | None
     '''
     super().__init__(app)
+    ownDialog(self, app) # (over the editor's window, if one's on screen -- not full screen: see ownDialog())
     self.app, self.onClose = app, onClose
     self.title(TITLE)
     self.paths:list[str] = []
