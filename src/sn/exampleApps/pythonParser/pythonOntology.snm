@@ -1,0 +1,829 @@
+<?xml version='1.0' encoding='utf-8'?>
+<object type="util.persistence.serialize.strdict">
+  <property key="header">
+    <object type="util.persistence.serialize.strdict">
+      <property key="application" type="str" value="-" />
+      <property key="applicaitonVersion" type="str" value="Unknown" />
+      <property key="serializationStrategyVersion" type="str" value="1.0" />
+      <property key="protocol" type="str" value="XML2" />
+      <property key="protocolVersion" type="str" value="1.0" />
+      <property key="protocolClass" type="str" value="util.persistence.serializeXML2.XML2SerializationStrategy" />
+      <property key="version" type="str" value="Unknown:1.0:1.0" />
+      <property key="filetype" type="str" value=".xml" />
+      <property key="url">
+        <object type="str" value="file:///Users/kremer/git/semanticNets/src/sn/exampleApps/pythonParser/pythonOntology.snm" />
+      </property>
+    </object>
+  </property>
+  <property key="root">
+    <object type="sn.model.model.Model" id="4448352112">
+      <property key="url">
+        <object type="str" value="file:///Users/kremer/git/semanticNets/src/sn/exampleApps/pythonParser/pythonOntology.snm" />
+      </property>
+      <property key="_reading" type="bool" value="True" />
+      <property key="nextID" type="int" value="301" />
+      <property key="superDBs">
+        <object type="list">
+          <object type="str" value="sn:/sn.xml" />
+        </object>
+      </property>
+      <property key="_db">
+        <object type="util.persistence.serialize.strdict">
+          <property key="258">
+            <object type="sn.model.model.Node">
+              <property key="db" ref="4448352112" />
+              <property key="individual" type="bool" value="False" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict">
+                  <property key="name">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="package" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/fillColor">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="#e57aff" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/shape">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="FileFolder" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/maxSize">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="int" value="150" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                </object>
+              </property>
+              <property key="inferred" type="bool" value="False" />
+            </object>
+          </property>
+          <property key="259">
+            <object type="sn.model.model.IsaIndividual">
+              <property key="db" ref="4448352112" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict" />
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#258" />
+              <property key="dst" type="str" value="#260" />
+            </object>
+          </property>
+          <property key="260">
+            <object type="sn.model.model.Node">
+              <property key="db" ref="4448352112" />
+              <property key="individual" type="bool" value="False" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict">
+                  <property key="name">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="directory" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/shape">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="FileFolder" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="path">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="" />
+                      <property key="type" type="str" value="str" />
+                      <property key="restriction" type="str" value="UNRESTRICTED:UNRESTRICTED" />
+                      <property key="note" type="str" value="Where the directory is." />
+                    </object>
+                  </property>
+                </object>
+              </property>
+              <property key="inferred" type="bool" value="False" />
+            </object>
+          </property>
+          <property key="261">
+            <object type="sn.model.model.IsaIndividual">
+              <property key="db" ref="4448352112" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict" />
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#260" />
+              <property key="dst" type="str" value="sn:/sn.xml#6" />
+            </object>
+          </property>
+          <property key="262">
+            <object type="sn.model.model.Node">
+              <property key="db" ref="4448352112" />
+              <property key="individual" type="bool" value="False" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict">
+                  <property key="name">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="file" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/shape">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="RightParallelogram" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="path">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="" />
+                      <property key="type" type="str" value="str" />
+                      <property key="restriction" type="str" value="UNRESTRICTED:UNRESTRICTED" />
+                      <property key="note" type="str" value="Where the file is." />
+                    </object>
+                  </property>
+                </object>
+              </property>
+              <property key="inferred" type="bool" value="False" />
+            </object>
+          </property>
+          <property key="263">
+            <object type="sn.model.model.IsaIndividual">
+              <property key="db" ref="4448352112" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict" />
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#262" />
+              <property key="dst" type="str" value="sn:/sn.xml#6" />
+            </object>
+          </property>
+          <property key="264">
+            <object type="sn.model.model.Node">
+              <property key="db" ref="4448352112" />
+              <property key="individual" type="bool" value="False" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict">
+                  <property key="name">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="module" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/fillColor">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="#c8bfff" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/maxSize">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="int" value="150" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                </object>
+              </property>
+              <property key="inferred" type="bool" value="False" />
+            </object>
+          </property>
+          <property key="265">
+            <object type="sn.model.model.IsaIndividual">
+              <property key="db" ref="4448352112" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict" />
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#264" />
+              <property key="dst" type="str" value="#262" />
+            </object>
+          </property>
+          <property key="266">
+            <object type="sn.model.model.Node">
+              <property key="db" ref="4448352112" />
+              <property key="individual" type="bool" value="False" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict">
+                  <property key="name">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="python-code-block" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="qualified-name">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="" />
+                      <property key="type" type="str" value="str" />
+                      <property key="restriction" type="str" value="UNRESTRICTED:UNRESTRICTED" />
+                      <property key="note" type="str" value="Its full dotted name: eg: &quot;sn.model.model.Node.getParents&quot;." />
+                    </object>
+                  </property>
+                  <property key="line">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="int" value="0" />
+                      <property key="type" type="str" value="int" />
+                      <property key="restriction" type="str" value="UNRESTRICTED:UNRESTRICTED" />
+                      <property key="note">
+                        <object type="str" value="The line it starts on in its module's file (0 for a whole module)." />
+                      </property>
+                    </object>
+                  </property>
+                </object>
+              </property>
+              <property key="inferred" type="bool" value="False" />
+            </object>
+          </property>
+          <property key="267">
+            <object type="sn.model.model.IsaIndividual">
+              <property key="db" ref="4448352112" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict" />
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#266" />
+              <property key="dst" type="str" value="sn:/sn.xml#6" />
+            </object>
+          </property>
+          <property key="268">
+            <object type="sn.model.model.Node">
+              <property key="db" ref="4448352112" />
+              <property key="individual" type="bool" value="False" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict">
+                  <property key="name">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="class" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/fillColor">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="#fff0a5" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="bases">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="" />
+                      <property key="type" type="str" value="str" />
+                      <property key="restriction" type="str" value="UNRESTRICTED:UNRESTRICTED" />
+                      <property key="note" type="str" value="The classes it's derived from, as written." />
+                    </object>
+                  </property>
+                </object>
+              </property>
+              <property key="inferred" type="bool" value="False" />
+            </object>
+          </property>
+          <property key="269">
+            <object type="sn.model.model.IsaIndividual">
+              <property key="db" ref="4448352112" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict" />
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#268" />
+              <property key="dst" type="str" value="#266" />
+            </object>
+          </property>
+          <property key="270">
+            <object type="sn.model.model.Node">
+              <property key="db" ref="4448352112" />
+              <property key="individual" type="bool" value="False" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict">
+                  <property key="name">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="function" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/fillColor">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="#ffd5ad" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="parameters">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="" />
+                      <property key="type" type="str" value="str" />
+                      <property key="restriction" type="str" value="UNRESTRICTED:UNRESTRICTED" />
+                      <property key="note" type="str" value="Its parameters, as written." />
+                    </object>
+                  </property>
+                </object>
+              </property>
+              <property key="inferred" type="bool" value="False" />
+            </object>
+          </property>
+          <property key="271">
+            <object type="sn.model.model.IsaIndividual">
+              <property key="db" ref="4448352112" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict" />
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#270" />
+              <property key="dst" type="str" value="#266" />
+            </object>
+          </property>
+          <property key="272">
+            <object type="sn.model.model.Node">
+              <property key="db" ref="4448352112" />
+              <property key="individual" type="bool" value="False" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict">
+                  <property key="name">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="method" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/fillColor">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="#ffbda7" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                </object>
+              </property>
+              <property key="inferred" type="bool" value="False" />
+            </object>
+          </property>
+          <property key="273">
+            <object type="sn.model.model.IsaIndividual">
+              <property key="db" ref="4448352112" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict" />
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#272" />
+              <property key="dst" type="str" value="#270" />
+            </object>
+          </property>
+          <property key="274">
+            <object type="sn.model.model.Node">
+              <property key="db" ref="4448352112" />
+              <property key="individual" type="bool" value="False" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict">
+                  <property key="name">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="class-method" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/borderColor">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="#0432ff" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                </object>
+              </property>
+              <property key="inferred" type="bool" value="False" />
+            </object>
+          </property>
+          <property key="275">
+            <object type="sn.model.model.IsaIndividual">
+              <property key="db" ref="4448352112" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict" />
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#274" />
+              <property key="dst" type="str" value="#272" />
+            </object>
+          </property>
+          <property key="276">
+            <object type="sn.model.model.Node">
+              <property key="db" ref="4448352112" />
+              <property key="individual" type="bool" value="False" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict">
+                  <property key="name">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="abstract-method" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/borderColor">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="#ff2600" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                </object>
+              </property>
+              <property key="inferred" type="bool" value="False" />
+            </object>
+          </property>
+          <property key="277">
+            <object type="sn.model.model.IsaIndividual">
+              <property key="db" ref="4448352112" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict" />
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#276" />
+              <property key="dst" type="str" value="#272" />
+            </object>
+          </property>
+          <property key="278">
+            <object type="sn.model.model.Node">
+              <property key="db" ref="4448352112" />
+              <property key="individual" type="bool" value="False" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict">
+                  <property key="name">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="overriding-method" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/borderWidth">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="int" value="2" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/borderColor">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="#ff2600" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                </object>
+              </property>
+              <property key="inferred" type="bool" value="False" />
+            </object>
+          </property>
+          <property key="279">
+            <object type="sn.model.model.IsaIndividual">
+              <property key="db" ref="4448352112" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict" />
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#278" />
+              <property key="dst" type="str" value="#272" />
+            </object>
+          </property>
+          <property key="282">
+            <object type="sn.model.model.Relation">
+              <property key="db" ref="4448352112" />
+              <property key="individual" type="bool" value="False" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict">
+                  <property key="name">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="contains-module" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/maxSize">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="int" value="40" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                </object>
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#258" />
+              <property key="dst" type="str" value="#264" />
+            </object>
+          </property>
+          <property key="283">
+            <object type="sn.model.model.IsaIndividual">
+              <property key="db" ref="4448352112" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict" />
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#282" />
+              <property key="dst" type="str" value="sn:/sn.xml#2" />
+            </object>
+          </property>
+          <property key="284">
+            <object type="sn.model.model.Relation">
+              <property key="db" ref="4448352112" />
+              <property key="individual" type="bool" value="False" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict">
+                  <property key="name">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="defines" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                </object>
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#266" />
+              <property key="dst" type="str" value="#266" />
+            </object>
+          </property>
+          <property key="285">
+            <object type="sn.model.model.IsaIndividual">
+              <property key="db" ref="4448352112" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict" />
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#284" />
+              <property key="dst" type="str" value="sn:/sn.xml#2" />
+            </object>
+          </property>
+          <property key="286">
+            <object type="sn.model.model.Relation">
+              <property key="db" ref="4448352112" />
+              <property key="individual" type="bool" value="False" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict">
+                  <property key="name">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="defines-method" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                </object>
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#268" />
+              <property key="dst" type="str" value="#272" />
+            </object>
+          </property>
+          <property key="287">
+            <object type="sn.model.model.IsaIndividual">
+              <property key="db" ref="4448352112" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict" />
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#286" />
+              <property key="dst" type="str" value="#284" />
+            </object>
+          </property>
+          <property key="289">
+            <object type="sn.model.model.Node">
+              <property key="db" ref="4448352112" />
+              <property key="individual" type="bool" value="False" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict">
+                  <property key="name">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="code" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/fillColor">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="#ffc0d5" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                </object>
+              </property>
+              <property key="inferred" type="bool" value="False" />
+            </object>
+          </property>
+          <property key="290">
+            <object type="sn.model.model.IsaIndividual">
+              <property key="db" ref="4448352112" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict" />
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#289" />
+              <property key="dst" type="str" value="#266" />
+            </object>
+          </property>
+          <property key="291">
+            <object type="sn.model.model.Relation">
+              <property key="db" ref="4448352112" />
+              <property key="individual" type="bool" value="False" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict">
+                  <property key="name">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="imports" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                </object>
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#264" />
+              <property key="dst" type="str" value="#264" />
+            </object>
+          </property>
+          <property key="292">
+            <object type="sn.model.model.IsaIndividual">
+              <property key="db" ref="4448352112" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict" />
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#291" />
+              <property key="dst" type="str" value="sn:/sn.xml#2" />
+            </object>
+          </property>
+          <property key="293">
+            <object type="sn.model.model.Node">
+              <property key="db" ref="4448352112" />
+              <property key="individual" type="bool" value="False" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict">
+                  <property key="name">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="text" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/shape">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="RoundedRectangle" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="text">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="" />
+                      <property key="type" type="str" value="mtext" />
+                      <property key="restriction" type="str" value="UNRESTRICTED:UNRESTRICTED" />
+                      <property key="note" type="str" value="The text." />
+                    </object>
+                  </property>
+                </object>
+              </property>
+              <property key="inferred" type="bool" value="False" />
+            </object>
+          </property>
+          <property key="294">
+            <object type="sn.model.model.IsaIndividual">
+              <property key="db" ref="4448352112" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict" />
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#293" />
+              <property key="dst" type="str" value="sn:/sn.xml#6" />
+            </object>
+          </property>
+          <property key="295">
+            <object type="sn.model.model.Node">
+              <property key="db" ref="4448352112" />
+              <property key="individual" type="bool" value="False" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict">
+                  <property key="name">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="doc-string" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/fillColor">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="#baffc8" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                </object>
+              </property>
+              <property key="inferred" type="bool" value="False" />
+            </object>
+          </property>
+          <property key="296">
+            <object type="sn.model.model.IsaIndividual">
+              <property key="db" ref="4448352112" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict" />
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#295" />
+              <property key="dst" type="str" value="#293" />
+            </object>
+          </property>
+          <property key="297">
+            <object type="sn.model.model.Relation">
+              <property key="db" ref="4448352112" />
+              <property key="individual" type="bool" value="False" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict">
+                  <property key="name">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="has-doc" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                </object>
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#266" />
+              <property key="dst" type="str" value="#295" />
+            </object>
+          </property>
+          <property key="298">
+            <object type="sn.model.model.IsaIndividual">
+              <property key="db" ref="4448352112" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict" />
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#297" />
+              <property key="dst" type="str" value="sn:/sn.xml#2" />
+            </object>
+          </property>
+          <property key="299">
+            <object type="sn.model.model.IsaIndividual">
+              <property key="db" ref="4448352112" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict" />
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#264" />
+              <property key="dst" type="str" value="#266" />
+            </object>
+          </property>
+          <property key="300">
+            <object type="sn.model.model.IsaIndividual">
+              <property key="db" ref="4448352112" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict" />
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#258" />
+              <property key="dst" type="str" value="#264" />
+            </object>
+          </property>
+        </object>
+      </property>
+      <property key="prefs">
+        <object type="sn.model.modelPrefs.ModelPrefs">
+          <property key="attributes">
+            <object type="util.persistence.serialize.strdict">
+              <property key="superModels">
+                <object type="util.attribute.Attribute">
+                  <property key="value">
+                    <object type="list" />
+                  </property>
+                  <property key="type" type="str" value="list[str]" />
+                  <property key="restriction" type="str" value="UNRESTRICTED:UNRESTRICTED" />
+                </object>
+              </property>
+            </object>
+          </property>
+        </object>
+      </property>
+      <property key="_">
+        <object type="NoneType" value="None" />
+      </property>
+      <property key="_">
+        <object type="NoneType" value="None" />
+      </property>
+      <property key="_">
+        <object type="NoneType" value="None" />
+      </property>
+    </object>
+  </property>
+</object>

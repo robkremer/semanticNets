@@ -14,3 +14,4 @@ Subpackages
    :maxdepth: 4
 
    sn.exampleApps.XMLreader
+   sn.exampleApps.pythonParser
