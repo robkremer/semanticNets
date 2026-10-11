@@ -16,12 +16,12 @@
     </object>
   </property>
   <property key="root">
-    <object type="sn.model.model.Model" id="4448352112">
+    <object type="sn.model.model.Model" id="4375773936">
       <property key="url">
         <object type="str" value="file:///Users/kremer/git/semanticNets/src/sn/exampleApps/pythonParser/pythonOntology.snm" />
       </property>
       <property key="_reading" type="bool" value="True" />
-      <property key="nextID" type="int" value="301" />
+      <property key="nextID" type="int" value="311" />
       <property key="superDBs">
         <object type="list">
           <object type="str" value="sn:/sn.xml" />
@@ -31,7 +31,7 @@
         <object type="util.persistence.serialize.strdict">
           <property key="258">
             <object type="sn.model.model.Node">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="individual" type="bool" value="False" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict">
@@ -70,7 +70,7 @@
           </property>
           <property key="259">
             <object type="sn.model.model.IsaIndividual">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict" />
               </property>
@@ -81,7 +81,7 @@
           </property>
           <property key="260">
             <object type="sn.model.model.Node">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="individual" type="bool" value="False" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict">
@@ -114,7 +114,7 @@
           </property>
           <property key="261">
             <object type="sn.model.model.IsaIndividual">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict" />
               </property>
@@ -125,7 +125,7 @@
           </property>
           <property key="262">
             <object type="sn.model.model.Node">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="individual" type="bool" value="False" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict">
@@ -158,7 +158,7 @@
           </property>
           <property key="263">
             <object type="sn.model.model.IsaIndividual">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict" />
               </property>
@@ -169,7 +169,7 @@
           </property>
           <property key="264">
             <object type="sn.model.model.Node">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="individual" type="bool" value="False" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict">
@@ -194,6 +194,26 @@
                       <property key="restriction" type="str" value="None" />
                     </object>
                   </property>
+                  <property key="origin">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="" />
+                      <property key="type" type="str" value="str" />
+                      <property key="restriction" type="str" value="UNRESTRICTED:UNRESTRICTED" />
+                      <property key="note">
+                        <object type="str" value="Where it comes from: &quot;project&quot;, &quot;standard library&quot;, &quot;installed&quot;, &quot;built-in&quot;, &quot;compiled&quot; (no Python source) or &quot;not found&quot;." />
+                      </property>
+                    </object>
+                  </property>
+                  <property key="import-depth">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="int" value="0" />
+                      <property key="type" type="str" value="int" />
+                      <property key="restriction" type="str" value="UNRESTRICTED:UNRESTRICTED" />
+                      <property key="note">
+                        <object type="str" value="How many imports away from the files given it is: 0 for one of them." />
+                      </property>
+                    </object>
+                  </property>
                 </object>
               </property>
               <property key="inferred" type="bool" value="False" />
@@ -201,7 +221,7 @@
           </property>
           <property key="265">
             <object type="sn.model.model.IsaIndividual">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict" />
               </property>
@@ -212,7 +232,7 @@
           </property>
           <property key="266">
             <object type="sn.model.model.Node">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="individual" type="bool" value="False" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict">
@@ -248,7 +268,7 @@
           </property>
           <property key="267">
             <object type="sn.model.model.IsaIndividual">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict" />
               </property>
@@ -259,7 +279,7 @@
           </property>
           <property key="268">
             <object type="sn.model.model.Node">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="individual" type="bool" value="False" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict">
@@ -292,7 +312,7 @@
           </property>
           <property key="269">
             <object type="sn.model.model.IsaIndividual">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict" />
               </property>
@@ -303,7 +323,7 @@
           </property>
           <property key="270">
             <object type="sn.model.model.Node">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="individual" type="bool" value="False" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict">
@@ -336,7 +356,7 @@
           </property>
           <property key="271">
             <object type="sn.model.model.IsaIndividual">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict" />
               </property>
@@ -347,7 +367,7 @@
           </property>
           <property key="272">
             <object type="sn.model.model.Node">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="individual" type="bool" value="False" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict">
@@ -372,7 +392,7 @@
           </property>
           <property key="273">
             <object type="sn.model.model.IsaIndividual">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict" />
               </property>
@@ -383,7 +403,7 @@
           </property>
           <property key="274">
             <object type="sn.model.model.Node">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="individual" type="bool" value="False" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict">
@@ -408,7 +428,7 @@
           </property>
           <property key="275">
             <object type="sn.model.model.IsaIndividual">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict" />
               </property>
@@ -419,7 +439,7 @@
           </property>
           <property key="276">
             <object type="sn.model.model.Node">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="individual" type="bool" value="False" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict">
@@ -444,7 +464,7 @@
           </property>
           <property key="277">
             <object type="sn.model.model.IsaIndividual">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict" />
               </property>
@@ -455,7 +475,7 @@
           </property>
           <property key="278">
             <object type="sn.model.model.Node">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="individual" type="bool" value="False" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict">
@@ -487,7 +507,7 @@
           </property>
           <property key="279">
             <object type="sn.model.model.IsaIndividual">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict" />
               </property>
@@ -498,7 +518,7 @@
           </property>
           <property key="282">
             <object type="sn.model.model.Relation">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="individual" type="bool" value="False" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict">
@@ -525,7 +545,7 @@
           </property>
           <property key="283">
             <object type="sn.model.model.IsaIndividual">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict" />
               </property>
@@ -536,7 +556,7 @@
           </property>
           <property key="284">
             <object type="sn.model.model.Relation">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="individual" type="bool" value="False" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict">
@@ -556,7 +576,7 @@
           </property>
           <property key="285">
             <object type="sn.model.model.IsaIndividual">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict" />
               </property>
@@ -567,7 +587,7 @@
           </property>
           <property key="286">
             <object type="sn.model.model.Relation">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="individual" type="bool" value="False" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict">
@@ -587,7 +607,7 @@
           </property>
           <property key="287">
             <object type="sn.model.model.IsaIndividual">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict" />
               </property>
@@ -598,7 +618,7 @@
           </property>
           <property key="289">
             <object type="sn.model.model.Node">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="individual" type="bool" value="False" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict">
@@ -623,7 +643,7 @@
           </property>
           <property key="290">
             <object type="sn.model.model.IsaIndividual">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict" />
               </property>
@@ -634,13 +654,34 @@
           </property>
           <property key="291">
             <object type="sn.model.model.Relation">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="individual" type="bool" value="False" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict">
                   <property key="name">
                     <object type="util.attribute.Attribute">
                       <property key="value" type="str" value="imports" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/lineColor">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="gray60" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/lineFillColor">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="gray60" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/textColor">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="gray50" />
                       <property key="type" type="str" value="None" />
                       <property key="restriction" type="str" value="None" />
                     </object>
@@ -654,7 +695,7 @@
           </property>
           <property key="292">
             <object type="sn.model.model.IsaIndividual">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict" />
               </property>
@@ -665,7 +706,7 @@
           </property>
           <property key="293">
             <object type="sn.model.model.Node">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="individual" type="bool" value="False" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict">
@@ -698,7 +739,7 @@
           </property>
           <property key="294">
             <object type="sn.model.model.IsaIndividual">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict" />
               </property>
@@ -709,7 +750,7 @@
           </property>
           <property key="295">
             <object type="sn.model.model.Node">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="individual" type="bool" value="False" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict">
@@ -734,7 +775,7 @@
           </property>
           <property key="296">
             <object type="sn.model.model.IsaIndividual">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict" />
               </property>
@@ -745,7 +786,7 @@
           </property>
           <property key="297">
             <object type="sn.model.model.Relation">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="individual" type="bool" value="False" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict">
@@ -765,7 +806,7 @@
           </property>
           <property key="298">
             <object type="sn.model.model.IsaIndividual">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict" />
               </property>
@@ -776,7 +817,7 @@
           </property>
           <property key="299">
             <object type="sn.model.model.IsaIndividual">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict" />
               </property>
@@ -787,13 +828,243 @@
           </property>
           <property key="300">
             <object type="sn.model.model.IsaIndividual">
-              <property key="db" ref="4448352112" />
+              <property key="db" ref="4375773936" />
               <property key="attributes">
                 <object type="util.persistence.serialize.strdict" />
               </property>
               <property key="inferred" type="bool" value="False" />
               <property key="src" type="str" value="#258" />
               <property key="dst" type="str" value="#264" />
+            </object>
+          </property>
+          <property key="301">
+            <object type="sn.model.model.Relation">
+              <property key="db" ref="4375773936" />
+              <property key="individual" type="bool" value="False" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict">
+                  <property key="name">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="has-subpackage" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/maxSize">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="int" value="40" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                </object>
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#258" />
+              <property key="dst" type="str" value="#258" />
+            </object>
+          </property>
+          <property key="302">
+            <object type="sn.model.model.IsaIndividual">
+              <property key="db" ref="4375773936" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict" />
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#301" />
+              <property key="dst" type="str" value="sn:/sn.xml#2" />
+            </object>
+          </property>
+          <property key="303">
+            <object type="sn.model.model.Node">
+              <property key="db" ref="4375773936" />
+              <property key="individual" type="bool" value="False" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict">
+                  <property key="name">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="static-method" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/borderColor">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="#008f00" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="note">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="A @staticmethod." />
+                      <property key="type" type="str" value="text" />
+                      <property key="restriction" type="str" value="UNRESTRICTED:UNRESTRICTED" />
+                    </object>
+                  </property>
+                </object>
+              </property>
+              <property key="inferred" type="bool" value="False" />
+            </object>
+          </property>
+          <property key="304">
+            <object type="sn.model.model.IsaIndividual">
+              <property key="db" ref="4375773936" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict" />
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#303" />
+              <property key="dst" type="str" value="#272" />
+            </object>
+          </property>
+          <property key="305">
+            <object type="sn.model.model.Node">
+              <property key="db" ref="4375773936" />
+              <property key="individual" type="bool" value="False" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict">
+                  <property key="name">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="property" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/borderColor">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="#9437ff" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="note">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="A @property (or its setter or deleter)." />
+                      <property key="type" type="str" value="text" />
+                      <property key="restriction" type="str" value="UNRESTRICTED:UNRESTRICTED" />
+                    </object>
+                  </property>
+                </object>
+              </property>
+              <property key="inferred" type="bool" value="False" />
+            </object>
+          </property>
+          <property key="306">
+            <object type="sn.model.model.IsaIndividual">
+              <property key="db" ref="4375773936" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict" />
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#305" />
+              <property key="dst" type="str" value="#272" />
+            </object>
+          </property>
+          <property key="307">
+            <object type="sn.model.model.Node">
+              <property key="db" ref="4375773936" />
+              <property key="individual" type="bool" value="False" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict">
+                  <property key="name">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="external-module" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/fillColor">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="#e4e4e4" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="note">
+                    <object type="util.attribute.Attribute">
+                      <property key="value">
+                        <object type="str" value="A module that's imported, but wasn't analysed: it's further away (in imports) than was asked for, it's in the standard library or an installed package (unless they were asked for), or it has no Python source." />
+                      </property>
+                      <property key="type" type="str" value="text" />
+                      <property key="restriction" type="str" value="UNRESTRICTED:UNRESTRICTED" />
+                    </object>
+                  </property>
+                </object>
+              </property>
+              <property key="inferred" type="bool" value="False" />
+            </object>
+          </property>
+          <property key="308">
+            <object type="sn.model.model.IsaIndividual">
+              <property key="db" ref="4375773936" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict" />
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#307" />
+              <property key="dst" type="str" value="#264" />
+            </object>
+          </property>
+          <property key="309">
+            <object type="sn.model.model.Relation">
+              <property key="db" ref="4375773936" />
+              <property key="individual" type="bool" value="False" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict">
+                  <property key="name">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="inherits-from" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/lineColor">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="#0432ff" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/lineFillColor">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="#0432ff" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="vis/textColor">
+                    <object type="util.attribute.Attribute">
+                      <property key="value" type="str" value="#0432ff" />
+                      <property key="type" type="str" value="None" />
+                      <property key="restriction" type="str" value="None" />
+                    </object>
+                  </property>
+                  <property key="note">
+                    <object type="util.attribute.Attribute">
+                      <property key="value">
+                        <object type="str" value="A class inherits from (is derived from) another: one of its bases." />
+                      </property>
+                      <property key="type" type="str" value="text" />
+                      <property key="restriction" type="str" value="UNRESTRICTED:UNRESTRICTED" />
+                    </object>
+                  </property>
+                </object>
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#268" />
+              <property key="dst" type="str" value="#268" />
+            </object>
+          </property>
+          <property key="310">
+            <object type="sn.model.model.IsaIndividual">
+              <property key="db" ref="4375773936" />
+              <property key="attributes">
+                <object type="util.persistence.serialize.strdict" />
+              </property>
+              <property key="inferred" type="bool" value="False" />
+              <property key="src" type="str" value="#309" />
+              <property key="dst" type="str" value="sn:/sn.xml#2" />
             </object>
           </property>
         </object>
