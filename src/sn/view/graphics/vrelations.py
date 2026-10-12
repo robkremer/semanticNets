@@ -327,7 +327,7 @@ class VRelation(VObject, AGRelation):
         else:
           pts, nearSpec, farSpec = (b, a), terms.source, terms.labelNear
         coords = self.view.viewToWindow([pts[0][0], pts[0][1], pts[1][0], pts[1][1]])
-        opts = dict(fill=lineColor, width=self.cache['vis/lineWidth'])
+        opts = dict(fill=lineColor, width=self.lineWidth())
         opts.update(_mergeArrowOptions(nearSpec, farSpec))
         if stubs.get(end) is None:
           stubs[end] = canvas.create_line(coords, tags=[self.tag, "stub"], **opts)
@@ -762,17 +762,50 @@ class VRelation(VObject, AGRelation):
             terminators, self.connectInfo, 
             lineColor=self.cache['vis/lineColor'], 
             fillColor=self.cache['vis/lineFillColor'], 
-            width=self.cache['vis/lineWidth'],
+            width=self.lineWidth(),
             tags=[self.tag], **self._inferredLine())
     else:
       self.connectInfo = drawSmoothConnector(self.src, self, self.dst, 
             terminators, self.connectInfo, 
             lineColor=self.cache['vis/lineColor'], 
             fillColor=self.cache['vis/lineFillColor'], 
-            width=self.cache['vis/lineWidth'],
+            width=self.lineWidth(),
             tags=[self.tag], **self._inferredLine())
     self._styleEnds()
     self._applyHidden()
+
+  def lineWidth(self) -> float:
+    '''
+    :returns: The width its line is drawn: "vis/lineWidth" -- or, while it's
+      selected, more than twice that (*selectedLineWidth()*), so it stands out
+      among many (eg: to follow it across a big graph).
+    :rtype: float
+    '''
+    width = float(self.cache['vis/lineWidth'])
+    return self.selectedLineWidth(width) if self.selected() else width
+
+  @staticmethod
+  def selectedLineWidth(width:float) -> float:
+    '''
+    :param width: A relation's line's width (see "vis/lineWidth").
+    :type width: float
+    :returns: Its width while it's selected: 2 * *width* + 1 (eg: 1 -> 3, 2 -> 5).
+    :rtype: float
+    '''
+    return 2 * width + 1
+
+  @override
+  def selected(self, val:Optional[bool]=None, _multi:bool=False) -> bool|None:
+    '''
+    As *VObject.selected()* -- and a change redraws its line, which is
+    thicker while it's selected (see *lineWidth()*).
+    '''
+    was = super().selected()
+    ret = super().selected(val, _multi)
+    if val is not None and bool(ret) != bool(was) and self.canvas and self._isConnected():
+      self.view.freshPaint()
+      self.draw()
+    return ret
 
   INFERRED_DASH = {"inferred": (6, 4), "inherited": (2, 3)}
   "The dash patterns of inferred relations' lines (see *GraphObject.inferred*): inferred ones dashed, inherited ones dotted."
