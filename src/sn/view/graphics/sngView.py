@@ -43,7 +43,8 @@ from util.command import Command
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
 from sn.view.graphics.layout import FindFree, Direction, gatherShifts, intoRect, freeSpotIn, clearOf, \
-                                    LayoutHeuristic, LayoutMoves, NoLayout, finishTween, layoutsFor, STATIC, DYNAMIC
+                                    LayoutHeuristic, LayoutMoves, NoLayout, finishTween, layoutsFor, STATIC, DYNAMIC, \
+                                    relationTypes, relationNamed
 import sn.view.graphics.treeLayout # (registers the tree layout: see layout.LAYOUTS)
 from sn.view.graphics.decorators import NOMINAL_ASPECT
 from util.commandParser import CompositeCommandMgr, CompositeCommand
@@ -1492,7 +1493,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       layout.flowDirection = None if direction == "none" else direction
       follows = state.get("follows")
       if follows and follows != self.model.ISA.name:
-        layout.flowRelation = next((r for r in self.model.values() if isinstance(r, Relation) and r.isType() and r.name == follows), None)
+        layout.flowRelation = relationNamed(self.model, follows)
       for k in self.ANIMATION_SETTINGS:
         if k in state:
           setattr(layout, k, float(state[k]))
@@ -4377,8 +4378,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     relation = tk.StringVar(value=(layout.flowRelation or self.model.ISA).name)
     self._flowVars["relation"] = relation
     relMenu = tk.Menu(menu)
-    types = [self.model.ISA] + sorted((r for r in self.model.values() if isinstance(r, Relation) and r.isType()
-                                       and r is not self.model.ISA and not r.isSystemObject()), key=lambda r: r.name.lower())
+    types = relationTypes(self.model) # (its super-models' too: eg: an ontology's)
     for t in types:
       relMenu.add_radiobutton(label=t.name, variable=relation, value=t.name,
                               command=lambda t=t: self.setAnimationSetting("flowRelation", None if t is self.model.ISA else t))

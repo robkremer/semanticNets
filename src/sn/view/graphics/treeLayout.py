@@ -519,8 +519,9 @@ class TreeLayout(LayoutHeuristic):
     one.) A tree just dropped (see *fresh*) is taken to have been just its
     root, there: room is made for the rest. Then anything that would be on
     (or within *gap* of) a node already placed -- trees in order across, then
-    the nodes in no tree -- is pushed further across, past it: node by node,
-    not by the trees' boxes, so a tree can be dropped in a gap in another.
+    the nodes in no tree -- is pushed further across, past it; but a tree just
+    dropped goes to the nearest clear place, either way. Node by node, not by
+    the trees' boxes, so a tree can be dropped in a gap in another.
 
     :param trees: The trees, laid out on their own (see *treePositions()*), by root.
     :type trees: list[tuple[VNode, list[float]]]
@@ -572,6 +573,16 @@ class TreeLayout(LayoutHeuristic):
         boxes = [shift(b, push) for b in boxes]
         total += push
       return total
+    def nearestClear(boxes:list[list[float]]) -> float:
+      '''How far across -- either way: the least -- to move *boxes* so none is on (or within *gap* of) a node placed so far.'''
+      lo, hi = min(span(b)[0] for b in boxes), max(span(b)[1] for b in boxes)
+      near = [p for p in placed if p[0 if not vertical else 1] < hi + gap and lo - gap < p[2 if not vertical else 3]] # (alongside them)
+      candidates = sorted({0.0} | {end(p) + gap - start(b) for b in boxes for p in near}
+                                | {start(p) - gap - end(b) for b in boxes for p in near}, key=abs)
+      for c in candidates:
+        if not any(_overlaps(shift(b, c), p, gap) for b in boxes for p in near):
+          return c
+      return clear(boxes)
     for root, box, members, old in entries:
       rb = root.boundingBox()
       dx, dy = rb[0] - rel[root][0], rb[1] - rel[root][1]
@@ -581,7 +592,9 @@ class TreeLayout(LayoutHeuristic):
       for n in members:
         w, h = layoutSize(n)
         boxes.append([rel[n][0] + dx, rel[n][1] + dy, rel[n][0] + dx + w, rel[n][1] + dy + h])
-      push = clear(boxes) # (nodes, not the trees' boxes: a tree may be dropped in a gap in another)
+      # (nodes, not the trees' boxes: a tree may be dropped in a gap in another; one just dropped goes to
+      # the nearest clear place, either way -- where it was put, if that's clear -- others further along)
+      push = nearestClear(boxes) if root._id in fresh else clear(boxes)
       dx, dy = (dx + push, dy) if vertical else (dx, dy + push)
       placed.extend(shift(b, push) for b in boxes)
       changes.append((old, end([box[0] + dx, box[1] + dy, box[2] + dx, box[3] + dy]) - end(old)))

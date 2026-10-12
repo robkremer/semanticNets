@@ -181,11 +181,22 @@ def relationTypes(model:Model) -> list[Relation]:
   :param model: A model.
   :type model: Model
   :returns: The relation types a layout can follow: isa, then the model's
-    own and its super-models' (not the system's), by name.
+    own and its super-models' (eg: an ontology it's built on: *values()* has
+    only its own), but not the system's or the base rules' (see
+    *Model.implicitSuperDBs()*), by name.
   :rtype: list[Relation]
   '''
-  return [model.ISA] + sorted((r for r in model.values() if isinstance(r, Relation) and r.isType()
-                               and r is not model.ISA and not r.isSystemObject()), key=lambda r: str(r.name).lower())
+  implicit = model.implicitSuperDBs()
+  models = [model] + [db for db in model.allSuperDBs() if isinstance(db, Model) and not any(db is i for i in implicit)]
+  seen:set[int] = set()
+  ret:list[Relation] = []
+  for m in models:
+    if id(m) in seen:
+      continue
+    seen.add(id(m))
+    ret += [r for r in m.values() if isinstance(r, Relation) and r.isType() and r.model is m
+            and r is not model.ISA and not r.isSystemObject()]
+  return [model.ISA] + sorted(ret, key=lambda r: str(r.name).lower())
 
 def relationNamed(model:Model, name:str) -> Relation|None:
   '''
@@ -237,7 +248,11 @@ class LayoutHeuristic(ABC):
     for p in self.PARAMETERS:
       v = kwargs.get(p.name, p.default)
       if p.kind == "relation" and isinstance(v, str):
-        v = relationNamed(view.model, v) or (view.model.ISA if v == view.model.ISA.name else None)
+        name = v
+        v = relationNamed(view.model, name)
+        if v is None:
+          logger.warning(f'{type(self).__name__}: there\'s no relation type "{name}" in {view.model.name} '
+                         f'or its super-models: its {p.name} is the default.')
       self.params[p.name] = v
 
   # ---- parameters -------------------------------------------------------------

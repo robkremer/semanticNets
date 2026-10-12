@@ -28,7 +28,11 @@ Created on Oct 10, 2026
 @author: robkremer
 '''
 import random
+import tempfile
 import unittest
+from pathlib import Path
+from sn.model.model import Model, Node, Relation
+from sn.view.graphics.layout import relationTypes, relationNamed
 from sn.view.graphics.treeLayout import treePositions, treeMembers
 
 def boxes(pos, sizes):
@@ -109,6 +113,26 @@ class Test(unittest.TestCase):
         self.assertEqual(len(pos), n)
         self.assertEqual(overlapping(boxes(pos, sizes)), [], f"{direction}: {groups}")
 
+  def test0900relationTypesFromSuperModels(self):
+    # a layout's relation (eg: "includes", in an ontology the model's built on) is found by name: a saved
+    # view's tree layout lost it, as Model.values() has only the model's own objects
+    with tempfile.TemporaryDirectory() as folder:
+      folder = str(Path(folder).resolve()) # (macOS: /var is /private/var)
+      Model._initCache()
+      base = Model(str(Path(folder, "base.snm")))
+      thing = Node(base, [base.NODE], name="thing")
+      includes = Relation(base, [base.RELATION], thing, thing, name="includes")
+      base.save()
+      m = Model(str(Path(folder, "main.snm")))
+      m.setSuperModels(["base.snm"])
+      local = Relation(m, [m.RELATION], thing, thing, name="likes")
+      names = [r.name for r in relationTypes(m)]
+      self.assertEqual(names[0], "isa")
+      self.assertIn("includes", names)
+      self.assertIn("likes", names)
+      self.assertNotIn("contains", names)                              # (the system's: not offered)
+      self.assertIs(relationNamed(m, "includes"), includes)
+      self.assertIs(relationNamed(m, "likes"), local)
 
 if __name__ == "__main__":
   unittest.main()
