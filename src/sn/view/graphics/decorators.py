@@ -120,7 +120,7 @@ class Text(Decorator):
     self.kwargs = kwargs
     if "justify" not in self.kwargs: self.kwargs["justify"] = "center"
     if "anchor"  not in self.kwargs: self.kwargs["anchor"]  = "center"
-    if "font"    not in self.kwargs: self.kwargs["font"]    = (self.owner.view._fontFace, int(self.owner.view._fontSize*self.owner.view._scale))
+    if "font"    not in self.kwargs: self.kwargs["font"]    = (self.owner.view._fontFace, self.owner.view.fontSize())
     if "fill"    not in self.kwargs: self.kwargs["fill"]    = "black"
 
   def updateKwargs(self):
@@ -168,7 +168,7 @@ class Text(Decorator):
     return text
           
   def setFontToScale(self):
-    self.kwargs["font"] = (self.owner.view._fontFace, int(self.owner.view._fontSize * self.owner.view._scale))
+    self.kwargs["font"] = (self.owner.view._fontFace, self.owner.view.fontSize())
 
   @override
   def delete(self):
@@ -521,7 +521,7 @@ class Marker:
       self.kwargs["tags"] = [self.owner.tag, 'text']
       if "justify" not in self.kwargs: self.kwargs["justify"] = "center"
       if "anchor"   not in self.kwargs: self.kwargs["anchor"]  = "center"
-      if "font"     not in self.kwargs: self.kwargs["font"]    = ("TkSmallCaptionFont", int(self.owner.view._fontSize * self.owner.view._scale))
+      if "font"     not in self.kwargs: self.kwargs["font"]    = ("TkSmallCaptionFont", self.owner.view.fontSize())
       self.kwargs["text"] = self.label if self.label != 'E' else str(len(self.owner.statusReport()))
       self.kwargs["fill"] = self.fg
       if "fill"     not in self.kwargs2: self.kwargs2["fill"]    = self.bg
@@ -546,7 +546,7 @@ class Marker:
                    at[0]+Marker.SIZE[0], 
                    at[1]+Marker.SIZE[1]]))
         self.owner.canvas.coords(self.id, self.owner.view.viewToWindow(at[0], at[1]))
-        self.kwargs["font"] = ("TkSmallCaptionFont", int(self.owner.view._fontSize * self.owner.view._scale))
+        self.kwargs["font"] = ("TkSmallCaptionFont", self.owner.view.fontSize())
         self.owner.canvas.itemconfigure(self.id, **self.kwargs)
         self.owner.canvas.itemconfigure(self.id2, **self.kwargs2)
     return True

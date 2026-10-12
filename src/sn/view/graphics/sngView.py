@@ -91,6 +91,10 @@ KEY_REMOVE =                ('<Shift-KeyPress-BackSpace>', '<Shift-KeyPress-Dele
 KEY_CLEAR_HIGHLIGHTS =      ('<Escape>'                   , 'esc')
 KEY_VALIDATE =              ('<Command-KeyPress-v>'       , 'cmd+v')
 KEY_TOGGLE_FIELDS_LAYOUT =  ('<Command-KeyPress-f>'       , 'cmd+f')
+KEY_ZOOM_IN =               ('<Command-KeyPress-equal>'   , 'Command-+') # (also <Command-KeyPress-plus>: shifted, on most keyboards)
+KEY_ZOOM_OUT =              ('<Command-KeyPress-minus>'   , 'Command--')
+KEY_ZOOM_NORMAL =           ('<Command-KeyPress-0>'       , 'Command-0')
+KEY_ZOOM_FIT =              ('<Command-KeyPress-9>'       , 'Command-9')
 
 class SNGContext(UIContext):
   #from sn.view.graphics.vobjects import VObject
@@ -1366,6 +1370,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
                       cascadePositions={"View": self._afterFileMenu() + 1}) # (after "Edit", made just above)
     addCheckToMenuBar("View|Reasoning toolbar", self._reasoningToolbarShown(),
                       lambda: self.showReasoningToolbar(self._reasoningToolbarShown().get()))
+    addToMenuBar("View|Zoom In", self.zoomIn, accelerator=KEY_ZOOM_IN[1], separatorBefore=True)
+    addToMenuBar("View|Zoom Out", self.zoomOut, accelerator=KEY_ZOOM_OUT[1])
+    addToMenuBar("View|Normal Size", lambda: self.zoomAbout(1.0), accelerator=KEY_ZOOM_NORMAL[1])
+    addToMenuBar("View|Zoom to Fit", self.zoomToFit, accelerator=KEY_ZOOM_FIT[1])
     bar = self.__dict__.get("_reasoningToolbar")
     if bar is not None:
       bar.refreshLock()
@@ -1398,6 +1406,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     removeFromMenuBar("File|Open super model")
     removeFromMenuBar("View|Animation toolbar")
     removeFromMenuBar("View|Reasoning toolbar")
+    for item in ("Zoom In", "Zoom Out", "Normal Size", "Zoom to Fit"):
+      removeFromMenuBar("View|" + item)
 
   SN_VIEW = "sn.snv"
   '''
@@ -2571,6 +2581,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
     # repaint
     self.canvas.bind(KEY_REPAINT[0], self.repaint)
+    for key, action in ((KEY_ZOOM_IN[0], self.zoomIn), ("<Command-KeyPress-plus>", self.zoomIn), (KEY_ZOOM_OUT[0], self.zoomOut),
+                        (KEY_ZOOM_NORMAL[0], lambda: self.zoomAbout(1.0)), (KEY_ZOOM_FIT[0], self.zoomToFit)):
+      self.canvas.bind(key, lambda _e, a=action: a())
 
     # abandon an elastic-line choice (or, if there's none, clear the highlights)
     self.canvas.bind(KEY_CLEAR_HIGHLIGHTS[0], self.cancelElasticLine)
@@ -4200,22 +4213,98 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
   def makeZoomMenu(self, superMenu:tk.Menu) -> tk.Menu:
     '''
+    The "Zoom" submenu: normal size, zoom in and out (about the middle of the
+    window: see *zoomAbout()*), zoom to fit (see *zoomToFit()*), and some
+    sizes; with their keys.
+
     :param superMenu:
     :type superMenu: tk.Menu
     :returns:
     :rtype: tk.Menu
     '''
     zoommenu = tk.Menu(superMenu)
-    zoommenu.add_command(label="Normal Size", command=self.zoom)
-    zoommenu.add_command(label="Zoom In", command=lambda: self.zoom(1.1, delta=True))
-    zoommenu.add_command(label="Zoom Out", command=lambda: self.zoom(0.9, delta=True))
+    zoommenu.add_command(label="Normal Size", command=lambda: self.zoomAbout(1.0), accelerator=KEY_ZOOM_NORMAL[1])
+    zoommenu.add_command(label="Zoom In", command=self.zoomIn, accelerator=KEY_ZOOM_IN[1])
+    zoommenu.add_command(label="Zoom Out", command=self.zoomOut, accelerator=KEY_ZOOM_OUT[1])
+    zoommenu.add_command(label="Zoom to Fit", command=self.zoomToFit, accelerator=KEY_ZOOM_FIT[1])
     zoommenu.add_separator()
-    zoommenu.add_command(label="200%", command=lambda: self.zoom(2.0))
-    zoommenu.add_command(label="150%", command=lambda: self.zoom(1.5))
-    zoommenu.add_command(label="75%", command=lambda: self.zoom(0.75))
-    zoommenu.add_command(label="50%", command=lambda: self.zoom(0.5))
-    zoommenu.add_command(label="25%", command=lambda: self.zoom(0.25))
+    for percent in (200, 150, 75, 50, 25):
+      zoommenu.add_command(label=f"{percent}%", command=partial(self.zoomAbout, percent / 100))
     return zoommenu
+
+  ZOOM_STEP = 1.25
+  "How much \"Zoom In\" zooms in (and \"Zoom Out\", out)."
+
+  MIN_ZOOM, MAX_ZOOM = 0.05, 8.0
+  "The least and most the view zooms to."
+
+  ZOOM_FIT_MARGIN = 20
+  "Screen pixels left around everything by \"Zoom to Fit\"."
+
+  def fontSize(self) -> int:
+    '''
+    :returns: The size of the view's text at its zoom: at least 1 (a size of 0
+      is Tk's default size: big, at a small zoom).
+    :rtype: int
+    '''
+    return max(1, int(self._fontSize * self._scale))
+
+  def zoomIn(self) -> None:
+    "Zoom in a step (*ZOOM_STEP*), about the middle of the window."
+    self.zoomAbout(self._scale * self.ZOOM_STEP)
+
+  def zoomOut(self) -> None:
+    "Zoom out a step (*ZOOM_STEP*), about the middle of the window."
+    self.zoomAbout(self._scale / self.ZOOM_STEP)
+
+  def _windowCentre(self) -> tuple[float, float]:
+    ":returns: The point (view units) at the middle of the window."
+    c = self.canvas
+    return tuple(self.windowToView(c.canvasx(c.winfo_width() / 2), c.canvasy(c.winfo_height() / 2))) #type: ignore[return-value]
+
+  def _centreOn(self, x:float, y:float) -> None:
+    '''
+    Scroll so the point (*x*, *y*) (view units) is at the middle of the window
+    (as near as the scroll region allows).
+    '''
+    c = self.canvas
+    wx, wy = self.viewToWindow(x, y)
+    sr = [float(v) for v in self.scrollRegion]
+    if sr[2] > sr[0]:
+      c.xview_moveto(max(0.0, (wx - c.winfo_width() / 2 - sr[0]) / (sr[2] - sr[0])))
+    if sr[3] > sr[1]:
+      c.yview_moveto(max(0.0, (wy - c.winfo_height() / 2 - sr[1]) / (sr[3] - sr[1])))
+
+  def zoomAbout(self, scale:float, centre:tuple[float, float]|None=None) -> None:
+    '''
+    Zoom to *scale* (kept between *MIN_ZOOM* and *MAX_ZOOM*) with the same
+    point at the middle of the window (not the view's top left, as *zoom()*
+    alone does: so things don't jump away).
+
+    :param scale: The zoom: 1 is normal size.
+    :type scale: float
+    :param centre: The point (view units) to have at the middle of the window,
+      if not the one there now.
+    :type centre: tuple[float, float] | None
+    '''
+    x, y = centre if centre is not None else self._windowCentre()
+    self.zoom(min(self.MAX_ZOOM, max(self.MIN_ZOOM, scale)))
+    self.resetScrollRegion()
+    self._centreOn(x, y)
+
+  def zoomToFit(self) -> None:
+    '''
+    "Zoom to Fit": zoom so everything shown fits in the window (with
+    *ZOOM_FIT_MARGIN* around it), in the middle of it.
+    '''
+    c = self.canvas
+    bb = c.bbox("all")
+    if bb is None:
+      return
+    x1, y1, x2, y2 = self.windowToView(*bb)
+    w, h = max(1, c.winfo_width() - 2 * self.ZOOM_FIT_MARGIN), max(1, c.winfo_height() - 2 * self.ZOOM_FIT_MARGIN)
+    scale = min(w / max(1.0, x2 - x1), h / max(1.0, y2 - y1))
+    self.zoomAbout(scale, ((x1 + x2) / 2, (y1 + y2) / 2))
 
   def isModelEditor(self) -> bool:
     '''
@@ -4239,7 +4328,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       self._scale = scale
     self.canvas.scale("all", 0, 0, self._scale / oldScale, self._scale / oldScale)
     for child_widget in self.canvas.find_withtag("text"):
-      self.canvas.itemconfigure(child_widget, font=(self._fontFace, int(self._fontSize * self._scale)))
+      self.canvas.itemconfigure(child_widget, font=(self._fontFace, self.fontSize()))
     try:
       bb = list(self.canvas.bbox("all"))
     except:
