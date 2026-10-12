@@ -857,6 +857,9 @@ class _Adjusted(CompositeCommand):
     '''
     return str(self.commands[0])
 
+RELATION_CATEGORY = "relations: "
+"How a relation type's category (for hiding or erasing its relations) is named: see *SNGView.relationCategory()*."
+
 class ViewDoList(DoList):
   '''
   A view's undo list (see *SNGContext*). After each command that changes
@@ -1118,7 +1121,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     ret.conKWArgs.append(ParamInfo("geometry", str, getter=lambda slf: cast(SNGView,slf).window.geometry()))
     ret.postconSetters.append(PropertyInfo("hides", str,
         lambda slf: ",".join(f"{k}={v}" for k, v in cast(SNGView, slf).hides.items()),
-        lambda slf, v: setattr(slf, "hides", dict(kv.split("=", 1) for kv in str(v).split(",") if "=" in kv)),
+        lambda slf, v: cast(SNGView, slf)._setHides(str(v)),
         optional=True)) # optional: views saved before it existed still load
     ret.postconSetters.append(PropertyInfo("reasoningToolbar", str,
         lambda slf: "1" if cast(SNGView, slf)._reasoningToolbarShown().get() else "0",
@@ -3290,7 +3293,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     '''
     A checkbox per category for *mode* ("hide" or "erase"): checking it sets
     that category to *mode* (so unchecks it in the other menu); unchecking it
-    shows the category again.
+    shows the category again. The relation types' categories (see
+    *relationCategory()*) are listed only while they're hidden or erased;
+    "relation types..." chooses them (see *chooseRelationCategories()*).
 
     :param mode:
     :type mode: str
@@ -3300,11 +3305,79 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     menu = tk.Menu(self.canvas)
     self._visibilityVars = getattr(self, "_visibilityVars", {}) # (keep the variables alive)
     for name in self.categories.keys():
+      if name.startswith(RELATION_CATEGORY) and name not in self.hides:
+        continue
       var = tk.BooleanVar(value=self.hides.get(name) == mode)
       self._visibilityVars[(mode, name)] = var
       menu.add_checkbutton(label=name, variable=var, onvalue=True, offvalue=False,
                            command=lambda n=name, v=var: self.context.visibility(n, mode if v.get() else "show")) #type: ignore[misc]
+    menu.add_separator()
+    menu.add_command(label="relation types...", command=lambda: self.chooseRelationCategories(mode))
     return menu
+
+  def relationCategory(self, typ:Relation|str) -> str:
+    '''
+    The category of the relations of a relation type, and of its subtypes
+    (not the type itself, nor isa links: see the "isa individuals" category),
+    for hiding or erasing (see *visibility()*): made the first time it's
+    asked for.
+
+    :param typ: The relation type, or its name.
+    :type typ: Relation | str
+    :returns: The category's name: *RELATION_CATEGORY* and the type's: eg: "relations: imports".
+    :rtype: str
+    '''
+    name = str(typ if isinstance(typ, str) else typ.name)
+    category = RELATION_CATEGORY + name
+    if category not in self.categories.keys():
+      found:dict[str, Relation|None] = {}
+      def test(mo:GraphObject) -> bool:
+        if "t" not in found: # (looked up when first needed: eg: a view read before its model's super-models)
+          found["t"] = typ if isinstance(typ, Relation) else relationNamed(self.model, name)
+        t = found["t"]
+        return t is not None and isinstance(mo, Relation) and not isinstance(mo, IsaIndividual) \
+               and mo.isIndividual() and mo.isa(t)
+      self.categories.addCategory(category, test)
+    return category
+
+  def _setHides(self, text:str) -> None:
+    '''
+    Put back the hidden and erased categories saved with the view (see
+    *hides*), making those of relation types (see *relationCategory()*).
+
+    :param text: What was saved: eg: "types=hide,relations: imports=erase".
+    :type text: str
+    '''
+    self.hides = dict(kv.split("=", 1) for kv in text.split(",") if "=" in kv)
+    for category in self.hides:
+      if category.startswith(RELATION_CATEGORY):
+        self.relationCategory(category[len(RELATION_CATEGORY):])
+
+  def chooseRelationCategories(self, mode:str) -> None:
+    '''
+    "relation types...": choose, in a dialog, the relation types whose
+    relations (and their subtypes') to hide or erase (*mode*); those
+    unchecked that were are shown again. Done as one undoable command.
+
+    :param mode: "hide" or "erase".
+    :type mode: str
+    '''
+    from sn.view.graphics.visibilityDialog import RelationTypesDialog
+    types = [t for t in relationTypes(self.model) if t is not self.model.ISA]
+    checked = {id(t) for t in types if self.hides.get(RELATION_CATEGORY + str(t.name)) == mode}
+    verb = "Hide" if mode == "hide" else "Erase"
+    chosen = RelationTypesDialog(self.canvas, f"{verb} relations", types, checked,
+                                 note=f"{verb} the relations of these types (and their subtypes). "
+                                      f"(Isa links: the \"isa individuals\" category.)").show()
+    if chosen is None:
+      return
+    changes = [(self.relationCategory(t), mode if id(t) in chosen else "show") for t in types
+               if (id(t) in chosen) != (id(t) in checked)]
+    if not changes:
+      return
+    with CompositeCommandMgr(self.context):
+      for category, m in changes:
+        self.context.visibility(category, m)
 
   def _askName(self, mo:GraphObject) -> None:
     '''
