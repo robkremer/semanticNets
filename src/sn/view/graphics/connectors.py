@@ -706,6 +706,18 @@ def _drawSingleSegment(label: VObject, other: VObject, otherIsSource: bool,
 # The connector-drawing functions
 # =============================================================================
 
+def _deleteItems(canvas, *ids:Optional[int]) -> None:
+  """
+  Delete canvas items: those that aren't None.
+
+  :param canvas: The canvas.
+  :param ids: Canvas item ids, or None.
+  """
+  for i in ids:
+    if i is not None:
+      canvas.delete(i)
+
+
 def drawSmoothConnector(source: Optional[VObject], label: VObject, destination: Optional[VObject],
                          terminators: Optional[ConnectorTerminators] = None,
                          ids: Optional[ConnectorIDs] = None, *,
@@ -833,11 +845,12 @@ def drawSmoothConnector(source: Optional[VObject], label: VObject, destination: 
     result.labelNearTerminatorID = _drawCircleTerminator(
         view, terminators.labelNear, q2, prior.labelNearTerminatorID, lineColor, fillColor, tagList)
   else:
-    # Boundary clip failed (logged already by _clippedArc) — leave whatever
-    # was there before untouched rather than losing track of its id.
-    result.sourceLineID = prior.sourceLineID
-    result.sourceTerminatorID = prior.sourceTerminatorID
-    result.labelNearTerminatorID = prior.labelNearTerminatorID
+    # Boundary clip failed (eg: the label overlaps both ends, side by side):
+    # that half isn't drawn, and what was drawn before is deleted -- kept, it
+    # stayed where the relation used to be (eg: after a layout moved
+    # everything), an arrowhead on its own. (Its ids stay None: the next draw
+    # that can draw it makes it afresh.)
+    _deleteItems(canvas, prior.sourceLineID, prior.sourceTerminatorID, prior.labelNearTerminatorID)
 
   if arcB is not None:
     q0, q1, q2 = arcB
@@ -852,10 +865,8 @@ def drawSmoothConnector(source: Optional[VObject], label: VObject, destination: 
         view, terminators.labelFar, q0, prior.labelFarTerminatorID, lineColor, fillColor, tagList)
     result.destTerminatorID = _drawCircleTerminator(
         view, terminators.destination, q2, prior.destTerminatorID, lineColor, fillColor, tagList)
-  else:
-    result.destLineID = prior.destLineID
-    result.labelFarTerminatorID = prior.labelFarTerminatorID
-    result.destTerminatorID = prior.destTerminatorID
+  else: # (likewise)
+    _deleteItems(canvas, prior.destLineID, prior.labelFarTerminatorID, prior.destTerminatorID)
 
   return result
 
