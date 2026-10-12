@@ -3353,6 +3353,94 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       if category.startswith(RELATION_CATEGORY):
         self.relationCategory(category[len(RELATION_CATEGORY):])
 
+  def _shownModelObjects(self) -> set[int]:
+    ":returns: The ids of the model objects shown in the view (not erased: hidden ones too)."
+    return {id(vo.modelObject) for vo in self.values() if vo is not None and vo._isConnected() and vo.modelObject is not None}
+
+  def showRelationsOfTypes(self) -> None:
+    '''
+    "show" > "relations...": choose relation types in a dialog, and show
+    their relations (and their subtypes') between the nodes in the view --
+    and, if asked, with the nodes at their other ends too. Shown even if
+    they're in a hidden or erased category (they were asked for by type: see
+    *_exemptIfFiltered()*). One undoable command (see *represent()*).
+    '''
+    from sn.view.graphics.visibilityDialog import TypesDialog
+    ENDS = "and the nodes at their other ends (if those aren't shown)"
+    types = [t for t in relationTypes(self.model) if t is not self.model.ISA]
+    d = TypesDialog(self.canvas, "Show relations", types, set(), options=[(ENDS, False)], # type: ignore[arg-type]
+                    note="Show the relations of these types (and their subtypes) between what's shown. (Isa links: "
+                         "the \"isa individuals\" category.)")
+    chosen = d.show()
+    if not chosen:
+      return
+    chosenTypes = [t for t in types if id(t) in chosen]
+    shown = self._shownModelObjects()
+    nodes:list[GraphObject] = []
+    rels:list[GraphObject] = []
+    for r in self.model.values():
+      if not isinstance(r, Relation) or isinstance(r, IsaIndividual) or not r.isIndividual() or id(r) in shown \
+         or not r._isConnected() or not any(r.isa(t) for t in chosenTypes):
+        continue
+      ends = [e for e in (r.src, r.dst) if e is not None]
+      missing = [e for e in ends if id(e) not in shown]
+      if missing and not d.options[ENDS]:
+        continue
+      for e in missing:
+        if e not in nodes:
+          nodes.append(e)
+      rels.append(r)
+    self._showObjects(nodes + rels, "relations of those types")
+
+  def showNodesOfTypes(self) -> None:
+    '''
+    "show" > "nodes...": choose node types in a dialog, and show their
+    individuals (and their subtypes') -- and, if asked (the default), their
+    relations to what's shown, and to each other (not those in a hidden or
+    erased category). The nodes are shown even if they're in a hidden or
+    erased category (they were asked for by type: see *_exemptIfFiltered()*).
+    One undoable command (see *represent()*).
+    '''
+    from sn.view.graphics.visibilityDialog import TypesDialog
+    from sn.view.graphics.layout import nodeTypes
+    RELATIONS = "and their relations to what's shown"
+    types = nodeTypes(self.model)
+    d = TypesDialog(self.canvas, "Show nodes", types, set(), options=[(RELATIONS, True)], # type: ignore[arg-type]
+                    note="Show the individuals of these types (and their subtypes).")
+    chosen = d.show()
+    if not chosen:
+      return
+    chosenTypes = [t for t in types if id(t) in chosen]
+    shown = self._shownModelObjects()
+    nodes:list[GraphObject] = [n for n in self.model.values() if isinstance(n, Node) and not isinstance(n, Relation)
+                               and n.isIndividual() and n._isConnected() and id(n) not in shown and any(n.isa(t) for t in chosenTypes)]
+    rels:list[GraphObject] = []
+    if d.options[RELATIONS] and nodes:
+      ends = shown | {id(n) for n in nodes}
+      new = {id(n) for n in nodes}
+      for r in self.model.values():
+        if isinstance(r, Relation) and not isinstance(r, IsaIndividual) and r.isIndividual() and r._isConnected() \
+           and id(r) not in shown and r.src is not None and r.dst is not None \
+           and id(r.src) in ends and id(r.dst) in ends and (id(r.src) in new or id(r.dst) in new) and not self.isFiltered(r):
+          rels.append(r)
+    self._showObjects(nodes + rels, "nodes of those types")
+
+  def _showObjects(self, objects:list[GraphObject], what:str) -> None:
+    '''
+    Show *objects* in the view, as one undoable command (see *represent()*) --
+    or, if there are none, say so.
+
+    :param objects: Model objects: nodes before relations.
+    :type objects: list[GraphObject]
+    :param what: What they are, for the message if there are none: eg: "relations of those types".
+    :type what: str
+    '''
+    if not objects:
+      from tkinter import messagebox
+      messagebox.showinfo("Show", f"There are no {what} to show: they're all shown already.", parent=self.window)
+      return
+    self.context.represent(objects)
+
   def chooseRelationCategories(self, mode:str) -> None:
     '''
     "relation types...": choose, in a dialog, the relation types whose
@@ -3362,11 +3450,11 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :param mode: "hide" or "erase".
     :type mode: str
     '''
-    from sn.view.graphics.visibilityDialog import RelationTypesDialog
+    from sn.view.graphics.visibilityDialog import TypesDialog
     types = [t for t in relationTypes(self.model) if t is not self.model.ISA]
     checked = {id(t) for t in types if self.hides.get(RELATION_CATEGORY + str(t.name)) == mode}
     verb = "Hide" if mode == "hide" else "Erase"
-    chosen = RelationTypesDialog(self.canvas, f"{verb} relations", types, checked,
+    chosen = TypesDialog(self.canvas, f"{verb} relations", types, checked, # type: ignore[arg-type]
                                  note=f"{verb} the relations of these types (and their subtypes). "
                                       f"(Isa links: the \"isa individuals\" category.)").show()
     if chosen is None:
@@ -4043,8 +4131,12 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     
     viewMenu = tk.Menu(self.canvas)
     bgMenu.add_cascade(label="view", menu=viewMenu)
-    viewMenu.add_command(label="show all", command=self.context.view.showAllModel)
-    viewMenu.add_cascade(label="show node", menu=makeShowMenu())
+    showMenu = tk.Menu(viewMenu)
+    showMenu.add_command(label="all", command=self.context.view.showAllModel)
+    showMenu.add_command(label="relations...", command=self.showRelationsOfTypes)
+    showMenu.add_command(label="nodes...", command=self.showNodesOfTypes)
+    showMenu.add_cascade(label="node", menu=makeShowMenu())
+    viewMenu.add_cascade(label="show", menu=showMenu)
     viewMenu.add_cascade(label="hide by category", menu=self._visibilityMenu("hide"))
     viewMenu.add_cascade(label="erase by category", menu=self._visibilityMenu("erase"))
     viewMenu.add_separator()

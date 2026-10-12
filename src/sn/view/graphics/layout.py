@@ -199,6 +199,27 @@ def relationTypes(model:Model) -> list[Relation]:
             and r is not model.ISA and not r.isSystemObject()]
   return [model.ISA] + sorted(ret, key=lambda r: str(r.name).lower())
 
+def nodeTypes(model:Model) -> list[Node]:
+  '''
+  :param model: A model.
+  :type model: Model
+  :returns: Its node types (not relation types): its own and its
+    super-models' (eg: an ontology it's built on), but not the system's or the
+    base rules' (see *relationTypes()*), by name.
+  :rtype: list[Node]
+  '''
+  implicit = model.implicitSuperDBs()
+  models = [model] + [db for db in model.allSuperDBs() if isinstance(db, Model) and not any(db is i for i in implicit)]
+  seen:set[int] = set()
+  ret:list[Node] = []
+  for m in models:
+    if id(m) in seen:
+      continue
+    seen.add(id(m))
+    ret += [n for n in m.values() if isinstance(n, Node) and not isinstance(n, Relation) and n.isType() and n.model is m
+            and not n.isSystemObject()]
+  return sorted(ret, key=lambda n: str(n.name).lower())
+
 def relationNamed(model:Model, name:str) -> Relation|None:
   '''
   :param model: A model.

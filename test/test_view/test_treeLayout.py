@@ -32,7 +32,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from sn.model.model import Model, Node, Relation
-from sn.view.graphics.layout import relationTypes, relationNamed
+from sn.view.graphics.layout import relationTypes, relationNamed, nodeTypes
 from sn.view.graphics.treeLayout import treePositions, treeMembers, placeNear
 
 def boxes(pos, sizes):
@@ -199,6 +199,8 @@ class Test(unittest.TestCase):
       self.assertNotIn("contains", names)                              # (the system's: not offered)
       self.assertIs(relationNamed(m, "includes"), includes)
       self.assertIs(relationNamed(m, "likes"), local)
+      person = Node(m, [thing], name="person")
+      self.assertEqual([n.name for n in nodeTypes(m)], ["person", "thing"]) # (the super-model's too; not the system's "node")
 
 if __name__ == "__main__":
   unittest.main()
