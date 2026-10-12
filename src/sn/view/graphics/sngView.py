@@ -1105,7 +1105,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
           rel.connect()
       # (a full repaint first: it fits the objects to their text, as any later one would -- by
       # a pixel or so, if the file was saved with other font metrics -- so that isn't a change)
-      slf.canvas.after_idle(lambda slf=slf: [slf.applyVisibility(), slf._restoreAnimationState(), slf._restoreLayoutState(), slf.repaint(), slf.resetScrollRegion(), slf.setDirty(False)]) # type: ignore[misc]
+      slf.canvas.after_idle(lambda slf=slf: [slf.applyVisibility(), slf._restoreAnimationState(), slf._restoreLayoutState(), slf.repaint(), slf.resetScrollRegion(), slf._restoreViewport(), slf.setDirty(False)]) # type: ignore[misc]
     ret:InstantiationInfo = super().getInstantiationInfo()
     # ret.class_ = cls
     # (its model's URL relative to the view's file if they're side by side -- see PRDb.relativeURL() -- so
@@ -1132,6 +1132,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         lambda slf: cast(SNGView, slf).localLayout.state() if cast(SNGView, slf).localLayout is not None else "",
         lambda slf, v: setattr(slf, "_pendingLayout", str(v)), # (applied once the view is built: see _restoreLayoutState())
         optional=True)) # optional: views saved before it existed still load (with "avoid overlaps")
+    ret.postconSetters.append(PropertyInfo("viewport", str,
+        lambda slf: cast(SNGView, slf)._viewportState(),
+        lambda slf, v: setattr(slf, "_pendingViewport", str(v)), # (applied once the view is built: see _restoreViewport())
+        optional=True)) # optional: views saved before it existed still load (at zoom 1, scrolled to the top left)
     ret.postconSetters.append(PropertyInfo("layoutParameters", str,
         lambda slf: cast(SNGView, slf)._layoutParametersState(),
         lambda slf, v: cast(SNGView, slf)._restoreLayoutParameters(str(v)), # (by name: relations are looked up when used)
@@ -4076,7 +4080,46 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     except:
       bb = [0, 0, 0, 0]
     bb = [bb[0] - 800, bb[1] - 600, bb[2] + 800, bb[3] + 600] # (the canvas extends every way: coordinates may be negative)
+    self.scrollRegion = tuple(bb) # (what resetScrollRegion() grows from -- in canvas units, which zooming changes)
     self.canvas.configure(scrollregion=bb) #type: ignore[call-overload]
+
+  def _viewportState(self) -> str:
+    '''
+    :returns: What's saved with the view about what's shown in its window (see
+      *_restoreViewport()*): its zoom, and the point at its top left, in view
+      units (as the view's objects are placed): eg: "zoom=0.8;x=120.0;y=-40.0".
+    :rtype: str
+    '''
+    try:
+      x, y = self.windowToView(self.canvas.canvasx(0), self.canvas.canvasy(0))
+    except Exception: # (no window)
+      return ""
+    return f"zoom={float(self._scale)!r};x={float(x)!r};y={float(y)!r}"
+
+  def _restoreViewport(self) -> None:
+    '''
+    Once a read view is built: zoom it as it was saved, and scroll it so the
+    same point is at its top left (see *_viewportState()*).
+    '''
+    text = self.__dict__.pop("_pendingViewport", None)
+    if not text:
+      return
+    try:
+      state = dict(kv.split("=", 1) for kv in text.split(";") if "=" in kv)
+      scale = float(state.get("zoom", 1.0))
+      if scale > 0 and abs(scale - self._scale) > 1e-9:
+        self.zoom(scale)
+        self.repaint()
+      self.resetScrollRegion()
+      if "x" in state and "y" in state:
+        x, y = self.viewToWindow(float(state["x"]), float(state["y"]))
+        sr = [float(c) for c in self.scrollRegion]
+        if sr[2] > sr[0]:
+          self.canvas.xview_moveto(max(0.0, (x - sr[0]) / (sr[2] - sr[0])))
+        if sr[3] > sr[1]:
+          self.canvas.yview_moveto(max(0.0, (y - sr[1]) / (sr[3] - sr[1])))
+    except Exception:
+      logger.exception(f"{self.url}: couldn't restore the zoom and scrolling ({text})")
 
   # ---- Utility ---------------------------------------------------------------
 
