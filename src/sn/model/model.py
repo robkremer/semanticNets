@@ -124,6 +124,22 @@ _supersInProgress:set[int] = set()
 _retracting:set[int] = set()
 "The objects *GraphObject.retract()* is working down from, just now: to stop at an isa cycle."
 _reportedSelfParents:set[int] = set()
+
+_isaGeneration:int = 0
+'''Bumped whenever a relation is connected, disconnected or reconnected, or has an
+end changed (see *isaStructureChanged()*): an object's cached parents (see
+*GraphObject.getParents()*) are good only for the generation they were found in.'''
+
+def isaStructureChanged() -> None:
+  '''
+  Say that relations -- perhaps isa links -- have changed: every object's
+  cached parents (see *GraphObject.getParents()*) are to be found again.
+  Cheap: called on every relation change (eg: thousands of times reading a
+  model); the parents are cached, and used, once things settle (eg: while a
+  view's objects are made and drawn, which asks for them millions of times).
+  '''
+  global _isaGeneration
+  _isaGeneration += 1
 "The objects whose isa link to themselves has been reported (see *GraphObject.getParents()*): it's said once."
 
 class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReportingObject):
@@ -166,7 +182,9 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     '''
     assert isinstance(db, Model)
 
-    self._parentsCache:list[GraphObject]|None = []
+    self._parentsCache:list[GraphObject]|None = None
+    "This object's parents, found in generation *_parentsGeneration* (see *getParents()*)."
+    self._parentsGeneration:int = -1
     
     self._individual = individual
     self.inferred:bool = inferred
@@ -333,6 +351,7 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     :type kwargs:
     '''
     super()._disconnect(**kwargs)
+    isaStructureChanged()
       
     for child in self.getChildren(): #TODO: could be more efficient by just fixing the parentCache's.
       child.retract()
@@ -353,6 +372,7 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     :type kwargs:
     '''
     super()._reconnect(**kwargs)
+    isaStructureChanged()
 
     for child in self.getChildren(): #TODO: could be more efficient by just fixing the parentCache's.
       child.retract()
@@ -381,6 +401,11 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     :returns: A list of all super types to this object in mro order.
     :rtype: list[GraphObject]
     '''
+    cacheable = not asTree and rmDups and not _supersInProgress # (whole answers only: not part-way round an isa cycle)
+    if cacheable:
+      cached = self.__dict__.get("_supersCache")
+      if cached is not None and cached[0] == _isaGeneration: # (good until relations change: see isaStructureChanged())
+        return list(cached[1])
     ret:list = []
     for parent in self.getParents(): #gather ancestors in mro order
       if parent not in ret: #TODO: this test will likely fail in the the "asTree" case...
@@ -397,6 +422,8 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
           _supersInProgress.discard(id(parent))
     if rmDups:
       ret = removeDuplicates(ret, asTree=asTree)
+    if cacheable:
+      self.__dict__["_supersCache"] = (_isaGeneration, list(ret))
     return ret
   
   @overload
@@ -433,8 +460,8 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
       in *self._getOutgoing()*.
     :rtype: list[GraphObject]
     '''
-    if self._parentsCache is not None and self.model._allowParentsCaching:
-      return self._parentsCache
+    if self._parentsCache is not None and getattr(self, "_parentsGeneration", -1) == _isaGeneration:
+      return list(self._parentsCache) # (a copy: a caller may change what it's given)
     
     ret = [other for _rel,other in self._getOutgoing(lambda r: isinstance(r, IsaIndividual)) if other is not None] 
     if ret == [] and type(self) is not GraphObject:
@@ -448,7 +475,7 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
       if ret == [] and type(self) is not GraphObject:
         raise LookupError("No parent found.")
 
-    self._parentsCache = ret
+    self._parentsCache, self._parentsGeneration = list(ret), _isaGeneration # (good until relations change: see isaStructureChanged())
     return ret   
 
   def selfIsaLinks(self) -> list[IsaIndividual]:
@@ -1863,6 +1890,7 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]): #type: ignore[misc]
     :param new:
     :type new: GraphObject | None
     '''
+    isaStructureChanged()
     self.notify((f"mod {end}", (old, new)))
     if self.isType():
       self._notifyInheritors(end)
@@ -2136,6 +2164,8 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]): #type: ignore[misc]
     :param destination: The :py:class:`GraphObject` for the *dst* link.
     :type destination: GraphObject
     '''
+    if (source is not None and self.localSrc is not source) or (destination is not None and self.localDst is not destination):
+      isaStructureChanged()
     if source is not None:
       if self.localSrc is not source: # don't do anything if it's already done.
         if self.localSrc is not None:

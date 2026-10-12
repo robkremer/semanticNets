@@ -4376,8 +4376,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       state = dict(kv.split("=", 1) for kv in text.split(";") if "=" in kv)
       scale = float(state.get("zoom", 1.0))
       if scale > 0 and abs(scale - self._scale) > 1e-9:
-        self.zoom(scale)
-        self.repaint()
+        self.zoom(scale) # (rescales what's drawn: no need to draw it all again)
       self.resetScrollRegion()
       if "x" in state and "y" in state:
         x, y = self.viewToWindow(float(state["x"]), float(state["y"]))
