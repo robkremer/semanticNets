@@ -63,6 +63,7 @@ Created on Feb 15, 2025
 
 import sn
 import logging
+import time
 from abc import ABC
 from dataclasses import dataclass
 from enum import Enum
@@ -605,6 +606,45 @@ TWEEN_INTERVAL = 25
 TWEEN_MAX = 400
 "The most objects moved smoothly: more are moved at once (it'd be slow)."
 
+TWEEN_MAX_RELATIONS = 400
+'''The most relations attached to the objects moved smoothly: with more, they're
+moved at once. Each step of a smooth move redraws every one of them (eg: a
+module with dozens of imports): a step could take seconds, and the whole
+move look like nothing's happening.'''
+
+TWEEN_SLOW_STEP = 0.08
+"Seconds: if a step of a smooth move takes longer, the rest is done at once."
+
+def _moveAll(view, moves:list[tuple[VObject, float, float]]) -> None:
+  '''
+  Move each object to (x, y) (its top left) at once -- without redrawing its
+  relations as it goes (see *VObject.moveTo()*'s *fast*) -- and then redraw
+  each relation of what moved, once (see *VRelation.reposition()*: a floating
+  label goes between its ends, wherever they've gone). Moving them one by
+  one redraws every relation of each as it moves -- one between two moved
+  objects twice -- which is slow with a lot of them (eg: a module's dozens
+  of imports).
+
+  :param view:
+  :type view: SNGView
+  :param moves: (object, x, y).
+  :type moves: list[tuple[VObject, float, float]]
+  '''
+  touched:dict[int, VRelation] = {}
+  for vo, x, y in moves:
+    if not vo._isConnected():
+      continue
+    vo.moveTo(x, y, adjustPos=False, carry=False, fast=True)
+    if isinstance(vo, VRelation):
+      touched[id(vo)] = vo
+    for r in (vo.relations or ()):
+      if isinstance(r, VRelation):
+        touched[id(r)] = r
+  view.freshPaint()
+  for r in touched.values():
+    if r._isConnected():
+      r.reposition(adjustPos=False)
+
 def _settled(view) -> None:
   '''
   A layout's moves are done: repaint the view once things are idle (see
@@ -634,11 +674,15 @@ class _Tween:
     if self.step >= TWEEN_STEPS:
       self.finish()
       return
+    began = time.perf_counter()
     t = self.step / TWEEN_STEPS
     t = t * t * (3 - 2 * t) # (eased: slow, fast, slow)
     for vo, (x0, y0), (x1, y1) in self.moves:
       if vo._isConnected():
         vo.moveTo(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, adjustPos=False, carry=False)
+    if time.perf_counter() - began > TWEEN_SLOW_STEP: # (too slow to look smooth: the rest at once)
+      self.finish()
+      return
     self.job = self.view.canvas.after(TWEEN_INTERVAL, self.next)
 
   def finish(self) -> None:
@@ -649,9 +693,7 @@ class _Tween:
       pass
     if self.view.__dict__.get("_tween") is self:
       self.view._tween = None
-    for vo, _, (x1, y1) in self.moves:
-      if vo._isConnected():
-        vo.moveTo(x1, y1, adjustPos=False, carry=False)
+    _moveAll(self.view, [(vo, x1, y1) for vo, _, (x1, y1) in self.moves])
     _settled(self.view)
 
 def finishTween(view) -> None:
@@ -671,8 +713,10 @@ def tween(view, moves:list[tuple[VObject, tuple[float, float], tuple[float, floa
   Move things smoothly, from where they are to where they're going, over
   *TWEEN_STEPS* steps -- in the view's event loop, not in the background: a
   tweened move under way is finished (see *finishTween()*) before anything
-  else is done to the view. (At once if there are more than *TWEEN_MAX*, or
-  there's no window.)
+  else is done to the view. At once if there are more than *TWEEN_MAX*, or
+  they have more than *TWEEN_MAX_RELATIONS* relations between them (each step
+  redraws them all: it'd be slow), or there's no window; and the rest at once
+  if a step takes longer than *TWEEN_SLOW_STEP*.
 
   :param view:
   :type view: SNGView
@@ -682,9 +726,9 @@ def tween(view, moves:list[tuple[VObject, tuple[float, float], tuple[float, floa
   finishTween(view)
   if not moves:
     return
-  if not getattr(view, "canvas", None) or len(moves) > TWEEN_MAX:
-    for vo, _, (x1, y1) in moves:
-      vo.moveTo(x1, y1, adjustPos=False, carry=False)
+  if not getattr(view, "canvas", None) or len(moves) > TWEEN_MAX \
+     or sum(sum(1 for _ in (getattr(vo, "relations", None) or ())) for vo, _, _ in moves) > TWEEN_MAX_RELATIONS:
+    _moveAll(view, [(vo, x1, y1) for vo, _, (x1, y1) in moves])
     _settled(view)
     return
   view._tween = _Tween(view, moves)
@@ -740,9 +784,7 @@ class LayoutMoves(Command):
     if self.first and self.animate:
       tween(self.view, [(vo, a, b) for vo, a, b, _ in self.moves if vo._isConnected()])
     else:
-      for vo, _, (x, y), _ in self.moves:
-        if vo._isConnected():
-          vo.moveTo(x, y, adjustPos=False, carry=False)
+      _moveAll(self.view, [(vo, x, y) for vo, _, (x, y), _ in self.moves])
       _settled(self.view)
     self.first = False
 
@@ -750,11 +792,10 @@ class LayoutMoves(Command):
   def undo(self) -> None:
     super().undo()
     finishTween(self.view)
-    for vo, (x, y), _, floated in reversed(self.moves):
-      if vo._isConnected():
-        vo.moveTo(x, y, adjustPos=False, carry=False)
-        if floated is not None:
-          vo.floating(floated) #type: ignore[attr-defined]
+    _moveAll(self.view, [(vo, x, y) for vo, (x, y), _, _ in reversed(self.moves)])
+    for vo, _, _, floated in self.moves:
+      if floated is not None and vo._isConnected():
+        vo.floating(floated) #type: ignore[attr-defined]
     for _, undo in reversed(self.also):
       undo()
     _settled(self.view)
