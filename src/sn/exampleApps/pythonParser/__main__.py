@@ -85,8 +85,10 @@ def showPackages(view:SNGView, model:Model, showImports:str="given") -> None:
   Show the model's packages and modules, and the contains-module and
   has-subpackage relations between them, arranged as trees, left to right, by
   the tree layout (see *treeLayout.TreeLayout*), following "includes" (which
-  those are kinds of); and below them, in rows, the modules and packages in
-  no package with nothing in them (eg: the standard library's os and sys).
+  those are kinds of), compact (subtrees tucked in beside each other); and
+  the modules and packages in no package with nothing in them (eg: the
+  standard library's os and sys) each near what imports it (see
+  *treeLayout.placeNear()*), or, if nothing shown does, in rows after the trees.
   The imports relations *showImports* says are shown too (their labels
   floating: midway): "none", "given" (those of the files given: at import
   depth 0), or "all". The tree layout is then the view's dynamic layout (see
@@ -115,8 +117,8 @@ def showPackages(view:SNGView, model:Model, showImports:str="given") -> None:
         view.makeViewObjectForGraphObject(r)
   finally:
     view.localLayout = localLayout
-  tree = dict(relation=ontologyTypes(model)["includes"], parentEnd="source", direction="right")
-  TreeLayout(view, others="rows", **tree).arrange(animate=False)
+  tree = dict(relation=ontologyTypes(model)["includes"], parentEnd="source", direction="right", compact=True)
+  TreeLayout(view, others="near", **tree).arrange(animate=False)
   view.setDynamicLayout(TreeLayout(view, **tree)) # (kept arranged: expanding a module opens the tree up for what it defines)
 
 def convert(app:Application, paths:list[str], options:Options, parent:tk.Misc|None=None,
