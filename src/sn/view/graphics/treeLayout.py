@@ -55,9 +55,21 @@ PARENT_ENDS = ("source", "destination")
 package includes its modules); the destination for "isa" (a subtype isa its
 type) and "has-parent" (a child has-parent its parent).'''
 
-OTHERS = ("leave", "rows")
+OTHERS = ("leave", "rows", "near")
 '''What a static tree layout does with the nodes in no tree: leaves them where
-they are, or puts them in rows (lines) after the trees.'''
+they are; puts them in rows (lines) after the trees; or puts each near the
+nodes it's related to, the way the trees grow (see *placeNear()*) -- and
+those related to none of them in rows after the trees.'''
+
+NEAR_BIAS = 4.0
+'''How much more it costs a node placed near its relations (see *placeNear()*)
+to move back against the way the trees grow than to move on, or across.'''
+
+NEAR_STEP = 10.0
+"The grid a node placed near its relations is put on (see *placeNear()*)."
+
+NEAR_MAX_RINGS = 400
+"How far out (in *NEAR_STEP*s) *placeNear()* looks for a free spot."
 
 LABEL_GAP = 12.0
 "The space between a tree relation's label and the child it goes to."
@@ -275,6 +287,122 @@ def treeMembers(root:K, children:dict[K, list[list[K]]], positions:dict[K, Any])
     i += 1
   return ret
 
+class _BoxIndex:
+  '''
+  Boxes, bucketed by where they are: for finding those near a place quickly.
+  '''
+  CELL = 100.0
+
+  def __init__(self, boxes:list[list[float]]=[]):
+    self.cells:dict[tuple[int, int], list[list[float]]] = {}
+    for b in boxes:
+      self.add(b)
+
+  def _cells(self, b:list[float]):
+    c = self.CELL
+    for i in range(int(b[0] // c), int(b[2] // c) + 1):
+      for j in range(int(b[1] // c), int(b[3] // c) + 1):
+        yield (i, j)
+
+  def add(self, b:list[float]) -> None:
+    for k in self._cells(b):
+      self.cells.setdefault(k, []).append(b)
+
+  def hits(self, b:list[float], gap:float) -> bool:
+    ''':returns: Whether *b* is on (or within *gap* of) one of the boxes.'''
+    g = [b[0] - gap, b[1] - gap, b[2] + gap, b[3] + gap]
+    return any(o[0] < g[2] and g[0] < o[2] and o[1] < g[3] and g[1] < o[3]
+               for k in self._cells(g) for o in self.cells.get(k, ()))
+
+def nearestFree(size:tuple[float, float], at:tuple[float, float], index:_BoxIndex, *, direction:str="right",
+                gap:float=20.0, bias:float=NEAR_BIAS, step:float=NEAR_STEP, maxRings:int=NEAR_MAX_RINGS) -> tuple[float, float]:
+  '''
+  :param size: A box's (width, height).
+  :type size: tuple[float, float]
+  :param at: Where it'd best go (its top left).
+  :type at: tuple[float, float]
+  :param index: The boxes it mustn't be on (or within *gap* of).
+  :type index: _BoxIndex
+  :param direction: Which way the trees grow (see *DIRECTIONS*): moving on
+    that way costs what the distance is; back, *bias* times as much; across,
+    the distance.
+  :type direction: str
+  :returns: The cheapest free place (its top left) on a *step* grid around *at*
+    (looking out *maxRings* steps) -- or *at*, if there's none.
+  :rtype: tuple[float, float]
+  '''
+  w, h = size
+  def cost(dx:float, dy:float) -> float:
+    along, across = {"right": (dx, dy), "left": (-dx, dy), "down": (dy, dx), "up": (-dy, dx)}[direction]
+    return (along if along >= 0 else -along * bias) + abs(across)
+  best:tuple[float, float]|None = None
+  bestCost = float("inf")
+  for k in range(maxRings + 1):
+    if k * step >= bestCost: # (nothing further out is cheaper: each costs at least its distance)
+      break
+    ring = [(i, j) for i in range(-k, k + 1) for j in ((-k, k) if abs(i) < k else range(-k, k + 1))] if k else [(0, 0)]
+    for c, (i, j) in sorted((cost(i * step, j * step), (i, j)) for i, j in ring):
+      if c >= bestCost:
+        break
+      x, y = at[0] + i * step, at[1] + j * step
+      if not index.hits([x, y, x + w, y + h], gap):
+        best, bestCost = (x, y), c
+        break
+  return best if best is not None else at
+
+def placeNear(items:list[K], sizes:dict[K, tuple[float, float]], related:dict[K, list[K]],
+              placed:dict[K, list[float]], obstacles:list[list[float]], *, direction:str="right",
+              spacing:float=20.0, beyond:float=MIN_LEVEL_GAP, bias:float=NEAR_BIAS) -> tuple[dict[K, tuple[float, float]], list[K]]:
+  '''
+  Put nodes (eg: those in no tree) near the nodes they're related to: each
+  just beyond the furthest of them the way the trees grow (*beyond* past it),
+  level (across) with the middle of them -- or, if that's taken, at the
+  cheapest free place near there (see *nearestFree()*: moving back, against
+  the way the trees grow, costs *bias* times as much as moving on). Those
+  related only to others of *items* are put once those are; those related to
+  nothing placed aren't put anywhere.
+
+  :param items: The nodes to put, in order.
+  :type items: list[K]
+  :param sizes: Their (width, height).
+  :type sizes: dict[K, tuple[float, float]]
+  :param related: What each is related to (any of *placed*, or of *items*).
+  :type related: dict[K, list[K]]
+  :param placed: Where the nodes already placed are: their boxes.
+  :type placed: dict[K, list[float]]
+  :param obstacles: Boxes to keep clear of too (*spacing*): eg: relations' labels.
+  :type obstacles: list[list[float]]
+  :returns: Where each of *items* put goes (its top left); and those not put.
+  :rtype: tuple[dict[K, tuple[float, float]], list[K]]
+  '''
+  boxes = dict(placed)
+  index = _BoxIndex([*boxes.values(), *obstacles])
+  ret:dict[K, tuple[float, float]] = {}
+  pending = list(items)
+  while pending:
+    ready = [n for n in pending if any(r in boxes for r in related.get(n, ()))]
+    if not ready:
+      break
+    ready.sort(key=lambda n: -sum(1 for r in related.get(n, ()) if r in boxes)) # (the best anchored first; stable)
+    for n in ready:
+      rs = [boxes[r] for r in related.get(n, ()) if r in boxes]
+      if not rs: # (can't happen: they only gain anchors)
+        continue
+      w, h = sizes[n]
+      if direction in ("right", "left"):
+        y = sum((b[1] + b[3]) / 2 for b in rs) / len(rs) - h / 2
+        x = max(b[2] for b in rs) + beyond if direction == "right" else min(b[0] for b in rs) - beyond - w
+      else:
+        x = sum((b[0] + b[2]) / 2 for b in rs) / len(rs) - w / 2
+        y = max(b[3] for b in rs) + beyond if direction == "down" else min(b[1] for b in rs) - beyond - h
+      x, y = nearestFree((w, h), (x, y), index, direction=direction, gap=spacing, bias=bias)
+      ret[n] = (x, y)
+      boxes[n] = [x, y, x + w, y + h]
+      index.add(boxes[n])
+    done = set(ready)
+    pending = [n for n in pending if n not in done]
+  return ret, pending
+
 def _overlaps(a:list[float], b:list[float], gap:float) -> bool:
   return a[0] < b[2] + gap and b[0] < a[2] + gap and a[1] < b[3] + gap and b[1] < a[3] + gap
 
@@ -300,7 +428,8 @@ class TreeLayout(LayoutHeuristic):
   As a static layout (see *arrange()*): the children are in order of name;
   the trees are put one after another (across the way they grow) from the
   top left of what's arranged; and the nodes in no tree are left where
-  they are, or put in rows after the trees (*others*).
+  they are, put in rows after the trees, or put near what they're related
+  to (*others*: see *OTHERS*).
 
   As a dynamic layout (see *adjust()*): after each command, the trees are
   laid out again, each from where its root is: children in the order they
@@ -326,7 +455,8 @@ class TreeLayout(LayoutHeuristic):
     LayoutParameter("compact", "Compact: subtrees tuck in beside each other", "bool", False,
                     note="Each subtree only as far along as the levels it shares with the one before need."),
     LayoutParameter("others", "Nodes in no tree", "choice", "leave", OTHERS,
-                    note='"rows": in rows after the trees.', categories=(STATIC,)),
+                    note='"rows": in rows after the trees. "near": each near what it\'s related to, the way the '
+                         'trees grow (those related to nothing there in rows).', categories=(STATIC,)),
   )
 
   def __init__(self, view, **kwargs):
@@ -556,10 +686,17 @@ class TreeLayout(LayoutHeuristic):
         for n in treeMembers(root, children, rel):
           positions[n] = (rel[n][0] + dx, rel[n][1] + dy)
         cursor += (box[2] - box[0] if vertical else box[3] - box[1]) + gap
-      if self.params["others"] == "rows" and others:
+      inRows = others if self.params["others"] == "rows" else []
+      if self.params["others"] == "near" and others:
+        near, inRows = self._placeNear(others, positions, sizes, parentRel)
+        positions.update(near)
+        if inRows: # (the rows after everything placed: the trees, and those near them)
+          ends = [(p[0] + sizes[n][0]) if vertical else (p[1] + sizes[n][1]) for n, p in positions.items()]
+          cursor = max([cursor - gap, *ends]) + gap
+      if inRows:
         length = max([MIN_ROW_LENGTH] + [(b[3] - b[1]) if vertical else (b[2] - b[0]) for _, b in trees])
         along, lineSize = 0.0, 0.0
-        for n in others:
+        for n in inRows:
           w, h = sizes[n]
           a, c = (h, w) if vertical else (w, h)
           if along > 0 and along + a > length:
@@ -573,6 +710,41 @@ class TreeLayout(LayoutHeuristic):
     ret:dict[VObject, tuple[float, float]] = {n: p for n, p in positions.items()}
     ret.update({r: (float(round(x)), float(round(y))) for r, (x, y) in self._labelTargets(positions, sizes, parentRel).items()})
     return ret, loose
+
+  def _placeNear(self, others:list[VNode], positions:dict[VNode, tuple[float, float]],
+                 sizes:dict[VNode, tuple[float, float]], parentRel:dict[VNode, VRelation]) -> tuple[dict[VNode, tuple[float, float]], list[VNode]]:
+    '''
+    For *others* "near": where each node in no tree goes, near the nodes it's
+    related to (by any relation shown), clear of the trees' nodes and their
+    relations' labels (see *placeNear()*).
+
+    :param others: The nodes in no tree.
+    :type others: list[VNode]
+    :param positions: Where the trees' nodes are going.
+    :type positions: dict[VNode, tuple[float, float]]
+    :param sizes: Everything's (width, height).
+    :type sizes: dict[VNode, tuple[float, float]]
+    :param parentRel: The tree relations (see *structure()*).
+    :type parentRel: dict[VNode, VRelation]
+    :returns: Where those put go; and those related to nothing placed (for the rows).
+    :rtype: tuple[dict[VNode, tuple[float, float]], list[VNode]]
+    '''
+    ids = {id(n) for n in [*positions, *others]}
+    related:dict[VNode, list[VNode]] = {n: [] for n in others}
+    for n in others:
+      for r in n.relations:
+        if not isinstance(r, VRelation) or not r._isConnected() or r.isHidden():
+          continue
+        other = r.dst if r.src is n else r.src
+        if isinstance(other, VNode) and other is not n and id(other) in ids and other not in related[n]:
+          related[n].append(other)
+    placed = {n: [x, y, x + sizes[n][0], y + sizes[n][1]] for n, (x, y) in positions.items()}
+    labels = []
+    for r, (x, y) in self._labelTargets(positions, sizes, parentRel).items():
+      w, h = layoutSize(r)
+      labels.append([x, y, x + w, y + h])
+    return placeNear(others, sizes, related, placed, labels, direction=self.params["direction"],
+                     spacing=float(self.params["spacing"]))
 
   def _keepPlaces(self, trees:list[tuple[VNode, list[float]]], children:dict[VNode, list[list[VNode]]],
                   rel:dict[VNode, tuple[float, float]], others:list[VNode], fresh:set[int],

@@ -33,7 +33,7 @@ import unittest
 from pathlib import Path
 from sn.model.model import Model, Node, Relation
 from sn.view.graphics.layout import relationTypes, relationNamed
-from sn.view.graphics.treeLayout import treePositions, treeMembers
+from sn.view.graphics.treeLayout import treePositions, treeMembers, placeNear
 
 def boxes(pos, sizes):
   return {n: (x, y, x + sizes[n][0], y + sizes[n][1]) for n, (x, y) in pos.items()}
@@ -146,6 +146,38 @@ class Test(unittest.TestCase):
         for depth in {loose[i][d] for i in range(n)}:
           level = [i for i in range(n) if loose[i][d] == depth]
           self.assertEqual(sorted(level, key=lambda i: loose[i][a]), sorted(level, key=lambda i: tight[i][a]))
+
+  def test0870nearBesideWhatItsRelatedTo(self):
+    placed = {"a": [0, 0, 60, 30], "b": [0, 100, 60, 130]}
+    sizes = {"x": (40, 20), "y": (40, 20)}
+    pos, left = placeNear(["x", "y"], sizes, {"x": ["a", "b"], "y": []}, placed, [], spacing=10, beyond=50)
+    self.assertEqual(pos["x"], (60 + 50, 65 - 10))                    # beyond them, level with their middle
+    self.assertEqual(left, ["y"])                                      # related to nothing placed
+    down, _ = placeNear(["x"], sizes, {"x": ["a"]}, {"a": placed["a"]}, [], direction="down", spacing=10, beyond=50)
+    self.assertEqual(down["x"], (10, 30 + 50))                         # below, under its middle
+
+  def test0880nearMovesOnRatherThanBack(self):
+    placed = {"a": [0, 0, 60, 30]}
+    sizes = {"x": (40, 20)}
+    blocker = [110, -20, 150, 50]                                      # just where x would go
+    pos, _ = placeNear(["x"], sizes, {"x": ["a"]}, placed, [blocker], spacing=10, beyond=50)
+    x, y = pos["x"]
+    box = [x, y, x + 40, y + 20]
+    self.assertFalse(box[0] < blocker[2] + 10 and blocker[0] < box[2] + 10 and box[1] < blocker[3] + 10 and blocker[1] < box[3] + 10)
+    self.assertGreaterEqual(x, 110)                                    # not back toward a: on, or across
+
+  def test0890nearChainsAndDoesntOverlap(self):
+    rnd = random.Random(5)
+    placed = {f"t{i}": [0, i * 40, 80, i * 40 + 30] for i in range(10)}
+    items = [f"n{i}" for i in range(30)]
+    sizes = {n: (rnd.randint(20, 90), rnd.randint(15, 40)) for n in items}
+    related = {n: [f"t{rnd.randrange(10)}"] for n in items[:20]}
+    related.update({n: [items[rnd.randrange(20)]] for n in items[20:]})  # (related only to others of them)
+    pos, left = placeNear(items, sizes, related, placed, [], spacing=5)
+    self.assertEqual(left, [])
+    self.assertEqual(sorted(pos), sorted(items))
+    allBoxes = {**{k: tuple(b) for k, b in placed.items()}, **{n: (x, y, x + sizes[n][0], y + sizes[n][1]) for n, (x, y) in pos.items()}}
+    self.assertEqual(overlapping(allBoxes), [])
 
   def test0900relationTypesFromSuperModels(self):
     # a layout's relation (eg: "includes", in an ontology the model's built on) is found by name: a saved
