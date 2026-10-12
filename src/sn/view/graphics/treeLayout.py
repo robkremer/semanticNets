@@ -439,7 +439,10 @@ class TreeLayout(LayoutHeuristic):
   moves along by as much (see *_keepPlaces()*). A tree node the user drags
   (and drops) takes its subtree with it: it's pinned there, as the root of a
   tree of its own (room is made for its subtree), until the next static
-  tree layout. Nothing's left on another node: what would be is pushed
+  tree layout. The nodes in no tree are left where they are, put in rows
+  after the trees, or put near what they're related to (*others*), again
+  each time -- except those the user drops somewhere, which are pinned
+  there too. Nothing's left on another node: what would be is pushed
   further across.
   '''
   NAME = "tree"
@@ -456,7 +459,8 @@ class TreeLayout(LayoutHeuristic):
                     note="Each subtree only as far along as the levels it shares with the one before need."),
     LayoutParameter("others", "Nodes in no tree", "choice", "leave", OTHERS,
                     note='"rows": in rows after the trees. "near": each near what it\'s related to, the way the '
-                         'trees grow (those related to nothing there in rows).', categories=(STATIC,)),
+                         'trees grow (those related to nothing there in rows). Kept arranged, one you move stays '
+                         'where you put it.'),
   )
 
   def __init__(self, view, **kwargs):
@@ -688,28 +692,66 @@ class TreeLayout(LayoutHeuristic):
         cursor += (box[2] - box[0] if vertical else box[3] - box[1]) + gap
       inRows = others if self.params["others"] == "rows" else []
       if self.params["others"] == "near" and others:
+        positions = {n: (float(round(x)), float(round(y))) for n, (x, y) in positions.items()} # (as kept arranged: the same)
         near, inRows = self._placeNear(others, positions, sizes, parentRel)
         positions.update(near)
         if inRows: # (the rows after everything placed: the trees, and those near them)
           ends = [(p[0] + sizes[n][0]) if vertical else (p[1] + sizes[n][1]) for n, p in positions.items()]
           cursor = max([cursor - gap, *ends]) + gap
       if inRows:
-        length = max([MIN_ROW_LENGTH] + [(b[3] - b[1]) if vertical else (b[2] - b[0]) for _, b in trees])
-        along, lineSize = 0.0, 0.0
-        for n in inRows:
-          w, h = sizes[n]
-          a, c = (h, w) if vertical else (w, h)
-          if along > 0 and along + a > length:
-            cursor, along, lineSize = cursor + lineSize + spacing, 0.0, 0.0
-          positions[n] = (cursor, y0 + along) if vertical else (x0 + along, cursor)
-          along, lineSize = along + a + spacing, max(lineSize, c)
+        positions.update(self._rows(inRows, sizes, cursor, x0, y0, trees))
     else:
-      positions.update(self._keepPlaces(trees, children, rel, others, fresh, spacing))
+      mode = self.params["others"]
+      # (in a fixed order -- by name -- so placing them again places them the same: not by where they are)
+      movable = [] if mode == "leave" else \
+                sorted((n for n in others if n._id not in self.pins), key=lambda n: (str(n.modelObject.name).lower(), n._id)) #type: ignore[union-attr]
+      stay = [n for n in others if n not in set(movable)] # (those the user's put somewhere: see adjust())
+      positions.update(self._keepPlaces(trees, children, rel, stay, fresh, spacing))
+      if movable:
+        positions = {n: (float(round(x)), float(round(y))) for n, (x, y) in positions.items()} # (as arranged now: the same)
+        base = dict(positions)
+        for n in stay:
+          if n not in base:
+            bb = n.boundingBox()
+            base[n] = (bb[0], bb[1])
+        inRows = movable
+        if mode == "near":
+          near, inRows = self._placeNear(movable, base, sizes, parentRel)
+          positions.update(near)
+          base.update(near)
+        if inRows: # (after everything else, across)
+          extents = [(p[0], p[1], p[0] + sizes[n][0], p[1] + sizes[n][1]) for n, p in base.items()]
+          x0, y0 = (min(b[0] for b in extents), min(b[1] for b in extents)) if extents else (40.0, 40.0)
+          cursor = (max(b[2] for b in extents) if vertical else max(b[3] for b in extents)) + gap if extents else (x0 if vertical else y0)
+          positions.update(self._rows(inRows, sizes, cursor, x0, y0, trees))
     # whole units, as things are: so it's the same next time (the labels placed from where the nodes will be)
     positions = {n: (float(round(x)), float(round(y))) for n, (x, y) in positions.items()}
     ret:dict[VObject, tuple[float, float]] = {n: p for n, p in positions.items()}
     ret.update({r: (float(round(x)), float(round(y))) for r, (x, y) in self._labelTargets(positions, sizes, parentRel).items()})
     return ret, loose
+
+  def _rows(self, nodes:list[VNode], sizes:dict[VNode, tuple[float, float]], cursor:float, x0:float, y0:float,
+            trees:list[tuple[VNode, list[float]]]) -> dict[VNode, tuple[float, float]]:
+    '''
+    For *others* "rows": put *nodes* in rows (lines along the way the trees
+    grow), starting *cursor* across, from *x0* or *y0* along: each row as long
+    as the trees are deep (at least *MIN_ROW_LENGTH*).
+
+    :returns: Where they go (their top left).
+    :rtype: dict[VNode, tuple[float, float]]
+    '''
+    vertical, spacing = _vertical(self.params["direction"]), float(self.params["spacing"])
+    length = max([MIN_ROW_LENGTH] + [(b[3] - b[1]) if vertical else (b[2] - b[0]) for _, b in trees])
+    ret:dict[VNode, tuple[float, float]] = {}
+    along, lineSize = 0.0, 0.0
+    for n in nodes:
+      w, h = sizes[n]
+      a, c = (h, w) if vertical else (w, h)
+      if along > 0 and along + a > length:
+        cursor, along, lineSize = cursor + lineSize + spacing, 0.0, 0.0
+      ret[n] = (cursor, y0 + along) if vertical else (x0 + along, cursor)
+      along, lineSize = along + a + spacing, max(lineSize, c)
+    return ret
 
   def _placeNear(self, others:list[VNode], positions:dict[VNode, tuple[float, float]],
                  sizes:dict[VNode, tuple[float, float]], parentRel:dict[VNode, VRelation]) -> tuple[dict[VNode, tuple[float, float]], list[VNode]]:
@@ -953,11 +995,15 @@ class TreeLayout(LayoutHeuristic):
     '''
     After a command: lay the trees out again (see *compute()*). A tree node
     the user dropped (see *SNGView._Move*) that has a parent is pinned where
-    it's dropped, as the root of a tree of its own (with its subtree).
+    it's dropped, as the root of a tree of its own (with its subtree); a
+    node in no tree the user dropped is pinned there too, so it's left
+    there, not put in rows or near what it's related to (see *others*).
     '''
     nodes, edges = self.scope()
     children = {id(self._ends(r)[1]) for r in edges}
-    pinned = {vo._id for vo in self._drops(command) if isinstance(vo, VNode) and id(vo) in children}
+    inTree = children | {id(self._ends(r)[0]) for r in edges}
+    pinned = {vo._id for vo in self._drops(command) if isinstance(vo, VNode)
+              and (id(vo) in children or id(vo) not in inTree)} # (a child, or in no tree: not a root -- it's kept where it is anyway)
     return self._adjustment(command.name, pinned)
 
   # ---- saving it with the view -----------------------------------------------------

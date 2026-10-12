@@ -117,9 +117,9 @@ def showPackages(view:SNGView, model:Model, showImports:str="given") -> None:
         view.makeViewObjectForGraphObject(r)
   finally:
     view.localLayout = localLayout
-  tree = dict(relation=ontologyTypes(model)["includes"], parentEnd="source", direction="right", compact=True)
-  TreeLayout(view, others="near", **tree).arrange(animate=False)
-  view.setDynamicLayout(TreeLayout(view, **tree)) # (kept arranged: expanding a module opens the tree up for what it defines)
+  tree = dict(relation=ontologyTypes(model)["includes"], parentEnd="source", direction="right", compact=True, others="near")
+  TreeLayout(view, **tree).arrange(animate=False)
+  view.setDynamicLayout(TreeLayout(view, **tree)) # (kept arranged: expanding a module opens the tree up for what it defines, and what it imports goes near it)
 
 def convert(app:Application, paths:list[str], options:Options, parent:tk.Misc|None=None,
             progress:Callable[[str], None]|None=None) -> bool:
