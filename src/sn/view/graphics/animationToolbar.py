@@ -218,12 +218,13 @@ class AnimationToolbar(ttk.Frame):
 
   def _relationTypes(self) -> list[Relation]:
     '''
-    :returns: The relation types the current can follow: "isa" first, then the model's own.
+    :returns: The relation types the current can follow: "isa" first, then the
+      model's own and its super-models' (eg: an ontology's), by name (see
+      *layout.relationTypes()*).
     :rtype: list[Relation]
     '''
-    m = self.view.model
-    return [m.ISA] + sorted((r for r in m.values() if isinstance(r, Relation) and r.isType()
-                             and r is not m.ISA and not r.isSystemObject()), key=lambda r: r.name.lower())
+    from sn.view.graphics.layout import relationTypes
+    return relationTypes(self.view.model)
 
   def _relationNames(self) -> None:
     'Fill the "follows" list (just before it drops down: the model may have changed).'
