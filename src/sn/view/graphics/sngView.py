@@ -1962,15 +1962,23 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
   # ---- Cut, copy and paste ---------------------------------------------------
 
-  def _selectedModelObjects(self) -> list[GraphObject]:
+  def _selectedModelObjects(self, orAll:bool=False) -> list[GraphObject]:
     '''
+    :param orAll: If nothing's selected, everything shown instead (as "select
+      all" would select: see *selectAll()*).
+    :type orAll: bool
     :returns: The model objects of what's selected, in the order they're drawn
       (top to bottom, left to right).
     :rtype: list[GraphObject]
     '''
-    vos = sorted((vo for vo in self.selected if vo._isConnected() and vo.modelObject is not None),
+    chosen = self.selected if self.selected or not orAll else self._shownObjects()
+    vos = sorted((vo for vo in chosen if vo._isConnected() and vo.modelObject is not None),
                  key=lambda vo: (vo.boundingBox()[1], vo.boundingBox()[0]))
     return [vo.modelObject for vo in vos] #type: ignore[misc]
+
+  def _shownObjects(self) -> list[VObject]:
+    ":returns: What's shown: what *selectAll()* selects (not what's hidden)."
+    return [vo for vo in self.values() if vo is not None and vo._isConnected() and not vo.isHidden()]
 
   def _geometryOf(self, objects:Iterable[GraphObject]) -> dict[int, dict[str, Any]]:
     '''
@@ -1997,17 +2005,19 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
   def doCopy(self, cut:bool=False) -> None:
     '''
-    Copy what's selected to the clipboard (see *ModelContext.copy()*), with how
-    this view shows it, so a paste shows the copies the same way (see
-    *showPasted()*). With *cut*, remove it from the model too (undoably).
+    Copy what's selected -- or, if nothing is, everything shown -- to the
+    clipboard (see *ModelContext.copy()*), with how this view shows it, so a
+    paste shows the copies the same way (see *showPasted()*). With *cut*,
+    remove it from the model too (undoably) -- only what's selected: not
+    everything, just because nothing is.
 
     :param cut:
     :type cut: bool
     '''
     from sn.model import copying
-    objs = self._selectedModelObjects()
+    objs = self._selectedModelObjects(orAll=not cut)
     if not objs:
-      logger.warning(f'Nothing is selected to {"cut" if cut else "copy"}.')
+      logger.warning("Nothing is selected to cut." if cut else "There's nothing to copy.")
       return
     geometry = self._geometryOf(copying.closure(objs)) # (now: once it's cut, it's not shown)
     try:
@@ -2065,8 +2075,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     Select everything that's shown: not what's hidden (eg: a hidden category,
     or what's in a collapsed window).
     '''
-    for vo in self.values():
-      if vo is not None and vo._isConnected() and not vo.isHidden() and not vo.selected():
+    for vo in self._shownObjects():
+      if not vo.selected():
         vo.selected(True, _multi=True)
 
   def onEditKey(self, event:tk.Event, action:str) -> str:
@@ -2088,9 +2098,12 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     '''
     :returns: What a picture of the selection shows (see *doCopyImage()*):
       what's selected, what's in any selected context windows (at any depth),
-      and the relations between any of those -- as far as they're shown.
+      and the relations between any of those -- as far as they're shown; or,
+      if nothing's selected, everything shown.
     :rtype: list[VObject]
     '''
+    if not self.selected:
+      return self._shownObjects()
     ret:list[VObject] = []
     def add(vo:VObject) -> None:
       if vo in ret or not vo._isConnected() or vo.isHidden():
@@ -2111,14 +2124,15 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
   def doCopyImage(self) -> None:
     '''
-    Put a picture of what's selected (see *pictureObjects()*), as it's drawn
-    (but without the selection's handles), on the system clipboard, as a PNG:
-    to paste into another program (see *imageExport*).
+    Put a picture of what's selected -- or, if nothing is, of everything
+    shown -- (see *pictureObjects()*), as it's drawn (but without the
+    selection's handles), on the system clipboard, as a PNG: to paste into
+    another program (see *imageExport*).
     '''
     from sn.view.graphics.imageExport import copyImage
     vos = self.pictureObjects()
     if not vos:
-      logger.warning("Nothing is selected to copy as a picture.")
+      logger.warning("There's nothing to copy as a picture.")
       return
     selected = list(self.selected)
     for vo in selected:
