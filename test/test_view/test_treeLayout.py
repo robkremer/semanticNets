@@ -113,6 +113,40 @@ class Test(unittest.TestCase):
         self.assertEqual(len(pos), n)
         self.assertEqual(overlapping(boxes(pos, sizes)), [], f"{direction}: {groups}")
 
+  def test0850compactTucksIn(self):
+    # a: one child with a deep, narrow chain; b: a leaf -- b tucks in beside a's chain
+    sizes = {n: (60, 30) for n in ["r", "a", "b", "a1", "a2", "a3", "a4"]}
+    kids = {"r": [["a", "b"]], "a": [["a1", "a2", "a3", "a4"]]}
+    loose, _ = treePositions(["r"], kids, sizes, spacing=10, levelGap=100)
+    tight, _ = treePositions(["r"], kids, sizes, spacing=10, levelGap=100, compact=True)
+    self.assertEqual(loose["b"][1], 4 * 40)                           # after all of a's leaves
+    self.assertEqual(tight["b"][1], loose["a"][1] + 40)               # just after a itself: its level is clear
+    self.assertEqual(overlapping(boxes(tight, sizes)), [])
+    self.assertEqual([tight[k][0] for k in kids["a"][0]], [loose[k][0] for k in kids["a"][0]]) # (the same depths)
+
+  def test0860compactRandomTrees(self):
+    rnd = random.Random(11)
+    for direction in ("right", "down", "left", "up"):
+      for _ in range(30):
+        n = rnd.randint(2, 80)
+        sizes = {i: (rnd.randint(20, 140), rnd.randint(15, 80)) for i in range(n)}
+        kids:dict = {}
+        for i in range(1, n):
+          kids.setdefault(rnd.randrange(i), []).append(i)
+        groups = {p: [ks[:len(ks) // 2], ks[len(ks) // 2:]] if len(ks) > 2 else [ks] for p, ks in kids.items()}
+        loose, lt = treePositions([0], groups, sizes, direction=direction, spacing=5, levelGap=40)
+        tight, tt = treePositions([0], groups, sizes, direction=direction, spacing=5, levelGap=40, compact=True)
+        self.assertEqual(len(tight), n)
+        self.assertEqual(overlapping(boxes(tight, sizes)), [], f"{direction}: {groups}")
+        across = (lambda b: b[2] - b[0]) if direction in ("down", "up") else (lambda b: b[3] - b[1])
+        self.assertLessEqual(across(tt[0][1]), across(lt[0][1]) + 1e-6)  # never bigger across
+        # each level's nodes are in the same order across as the loose layout's: the relations don't cross
+        a = 0 if direction in ("down", "up") else 1
+        d = 1 - a
+        for depth in {loose[i][d] for i in range(n)}:
+          level = [i for i in range(n) if loose[i][d] == depth]
+          self.assertEqual(sorted(level, key=lambda i: loose[i][a]), sorted(level, key=lambda i: tight[i][a]))
+
   def test0900relationTypesFromSuperModels(self):
     # a layout's relation (eg: "includes", in an ontology the model's built on) is found by name: a saved
     # view's tree layout lost it, as Model.values() has only the model's own objects

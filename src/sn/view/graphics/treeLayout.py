@@ -81,7 +81,7 @@ def _vertical(direction:str) -> bool:
 
 def treePositions(roots:list[K], children:dict[K, list[list[K]]], sizes:dict[K, tuple[float, float]], *,
                   direction:str="right", spacing:float=20.0, levelGaps:Optional[dict[int, float]]=None,
-                  levelGap:float=MIN_LEVEL_GAP) -> tuple[dict[K, tuple[float, float]], list[tuple[K, list[float]]]]:
+                  levelGap:float=MIN_LEVEL_GAP, compact:bool=False) -> tuple[dict[K, tuple[float, float]], list[tuple[K, list[float]]]]:
   '''
   Lay out some trees, each on its own: the root at depth 0, each node's
   children at the next depth -- the depths in lines (columns, for "right"),
@@ -105,6 +105,15 @@ def treePositions(roots:list[K], children:dict[K, list[list[K]]], sizes:dict[K, 
   :type levelGaps: dict[int, float] | None
   :param levelGap: The space between depths not in *levelGaps*.
   :type levelGap: float
+  :param compact: If False, each subtree is wholly after the one before it,
+    across (its leaves after the last of the one before's). If True, each is
+    only as far along as the depths they both have need: a subtree tucks in
+    beside the one before wherever that one's deeper levels leave room (each
+    depth's extent across -- its contour -- is kept, much as in the
+    Reingold-Tilford tree drawing). The depths are the same either way; and
+    either way, nothing overlaps, and the relations from parents to children
+    don't cross.
+  :type compact: bool
   :returns: Where each node goes (its top left), with each tree's root at
     (0, 0) -- or, growing left or up, with its root's far side at 0 -- and
     each tree's nodes, and their bounding box (x1, y1, x2, y2), by root.
@@ -147,6 +156,10 @@ def treePositions(roots:list[K], children:dict[K, list[list[K]]], sizes:dict[K, 
     level = [0.0]
     for d in range(deepest):
       level.append(level[-1] + extent[d] + gaps.get(d, levelGap))
+    if compact:
+      packed = _packed(root, kidsOf, depthOf, crossSize, spacing)
+      _record(ret, trees, root, order, packed, level, depthOf, depthSize, sizes, vertical, flip)
+      continue
     # across: each leaf after the last; each parent level with the middle of its children
     cross:dict[K, float] = {}
     nextC = 0.0
@@ -178,16 +191,66 @@ def treePositions(roots:list[K], children:dict[K, list[list[K]]], sizes:dict[K, 
       cross[n] = c
       nextC = max(nextC, c + crossSize(n) + spacing)
     place(root)
-    box = [float("inf"), float("inf"), float("-inf"), float("-inf")]
-    for n in order:
-      at = level[depthOf[n]]
-      at = -(at + depthSize(n)) if flip else at
-      x, y = (cross[n], at) if vertical else (at, cross[n])
-      ret[n] = (x, y)
-      w, h = sizes[n]
-      box = [min(box[0], x), min(box[1], y), max(box[2], x + w), max(box[3], y + h)]
-    trees.append((root, box))
+    _record(ret, trees, root, order, cross, level, depthOf, depthSize, sizes, vertical, flip)
   return ret, trees
+
+def _record(ret:dict, trees:list, root, order:list, cross:dict, level:list[float], depthOf:dict,
+            depthSize, sizes:dict, vertical:bool, flip:bool) -> None:
+  '''
+  For *treePositions()*: put a tree's nodes where they go -- at their depth's
+  level, and *cross* across -- in *ret*, and its root and box in *trees*.
+  '''
+  box = [float("inf"), float("inf"), float("-inf"), float("-inf")]
+  for n in order:
+    at = level[depthOf[n]]
+    at = -(at + depthSize(n)) if flip else at
+    x, y = (cross[n], at) if vertical else (at, cross[n])
+    ret[n] = (x, y)
+    w, h = sizes[n]
+    box = [min(box[0], x), min(box[1], y), max(box[2], x + w), max(box[3], y + h)]
+  trees.append((root, box))
+
+def _packed(root:K, kidsOf:dict[K, list[list[K]]], depthOf:dict[K, int], crossSize, spacing:float) -> dict[K, float]:
+  '''
+  For *treePositions()*, compact: where each of a tree's nodes goes across
+  (its near side): each subtree is laid out on its own, keeping its contour
+  -- each depth's extent across -- and each child's subtree is put as near
+  the ones before it as their contours allow, at the depths they both have
+  (*spacing* apart; another *spacing* between groups). Each parent is level
+  with the middle of its first and last children.
+
+  :returns: Each node's position across, the least 0.
+  :rtype: dict[K, float]
+  '''
+  def pack(n:K) -> tuple[dict[K, float], dict[int, list[float]]]:
+    d, size = depthOf[n], crossSize(n)
+    kids = kidsOf[n]
+    if not kids:
+      return {n: 0.0}, {d: [0.0, size]}
+    pos:dict[K, float] = {}
+    contour:dict[int, list[float]] = {}
+    for gi, g in enumerate(kids):
+      for ki, k in enumerate(g):
+        kp, kc = pack(k)
+        if pos:
+          gap = spacing * (2 if gi and not ki else 1) # (another spacing between groups)
+          off = max((contour[lv][1] + gap - kc[lv][0] for lv in kc if lv in contour), default=0.0)
+        else:
+          off = 0.0
+        for m, c in kp.items():
+          pos[m] = c + off
+        for lv, (top, bottom) in kc.items():
+          if lv in contour:
+            contour[lv] = [min(contour[lv][0], top + off), max(contour[lv][1], bottom + off)]
+          else:
+            contour[lv] = [top + off, bottom + off]
+    first, last = kids[0][0], kids[-1][-1]
+    pos[n] = (pos[first] + crossSize(first) / 2 + pos[last] + crossSize(last) / 2) / 2 - size / 2
+    contour[d] = [pos[n], pos[n] + size]
+    return pos, contour
+  pos, _ = pack(root)
+  low = min(pos.values())
+  return {n: c - low for n, c in pos.items()}
 
 def treeMembers(root:K, children:dict[K, list[list[K]]], positions:dict[K, Any]) -> list[K]:
   '''
@@ -222,7 +285,9 @@ class TreeLayout(LayoutHeuristic):
   each relation of one of those types (shown in the view) from a parent to a
   child -- which end's the parent is *parentEnd* -- puts the child one level
   out from the parent, the way the trees grow (*direction*). A node's
-  children are grouped by which of *relation*'s direct subtypes they're
+  children (laid out one after another across, or -- *compact* -- tucked in
+  beside each other where there's room: see *treePositions()*) are grouped
+  by which of *relation*'s direct subtypes they're
   related by (in the order those were made: eg: for "includes", a
   package's modules, then its sub-packages), and each group's in order. A
   node with more than one parent is put under the first; its other
@@ -258,6 +323,8 @@ class TreeLayout(LayoutHeuristic):
                          'the destination for "isa" (a subtype isa its type).'),
     LayoutParameter("direction", "Grows", "choice", "right", DIRECTIONS),
     LayoutParameter("spacing", "Space between neighbours", "int", 20),
+    LayoutParameter("compact", "Compact: subtrees tuck in beside each other", "bool", False,
+                    note="Each subtree only as far along as the levels it shares with the one before need."),
     LayoutParameter("others", "Nodes in no tree", "choice", "leave", OTHERS,
                     note='"rows": in rows after the trees.', categories=(STATIC,)),
   )
@@ -268,7 +335,7 @@ class TreeLayout(LayoutHeuristic):
     :type view: SNGView
     :param kwargs: See *PARAMETERS*: relation (a relation type, or its name),
       parentEnd ("source" or "destination"), direction (see *DIRECTIONS*),
-      spacing, others (see *OTHERS*: static only).
+      spacing, compact (see *treePositions()*), others (see *OTHERS*: static only).
     '''
     super().__init__(view, **kwargs)
     if self.params["relation"] is None:
@@ -473,7 +540,7 @@ class TreeLayout(LayoutHeuristic):
     direction, spacing = self.params["direction"], float(self.params["spacing"])
     vertical = _vertical(direction)
     rel, trees = treePositions(roots, children, sizes, direction=direction, spacing=spacing,
-                               levelGaps=self.levelGaps(children, parentRel, roots))
+                               levelGaps=self.levelGaps(children, parentRel, roots), compact=bool(self.params["compact"]))
     positions:dict[VNode, tuple[float, float]] = {}
     gap = 2 * spacing # (between trees)
     if not dynamic:
