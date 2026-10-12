@@ -1132,6 +1132,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         lambda slf: cast(SNGView, slf).localLayout.state() if cast(SNGView, slf).localLayout is not None else "",
         lambda slf, v: setattr(slf, "_pendingLayout", str(v)), # (applied once the view is built: see _restoreLayoutState())
         optional=True)) # optional: views saved before it existed still load (with "avoid overlaps")
+    ret.postconSetters.append(PropertyInfo("layoutParameters", str,
+        lambda slf: cast(SNGView, slf)._layoutParametersState(),
+        lambda slf, v: cast(SNGView, slf)._restoreLayoutParameters(str(v)), # (by name: relations are looked up when used)
+        optional=True)) # optional: views saved before it existed still load
     for p in ret.postconSetters: # (inferred objects aren't saved: see VObject.isInferred())
       if p.name == "_db":
         def assertedObjects(slf:Serializable) -> SerializableType:
@@ -4434,17 +4438,69 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     menu.add_cascade(label="animate", menu=self._animationLayoutMenu(menu))
     return menu
 
-  def _lastParameters(self, cls:type[LayoutHeuristic]) -> dict[str, Any]|None:
+  def lastLayoutParameters(self, cls:type[LayoutHeuristic]) -> dict[str, Any]|None:
     '''
     :param cls: A kind of layout.
     :type cls: type[LayoutHeuristic]
-    :returns: The parameters it was last used with in this view (or is being
-      used with, as its dynamic layout), if any.
+    :returns: The parameters it was last used with in this view (see
+      *rememberLayoutParameters()*: saved with the view) -- or, if it hasn't
+      been, those it's being used with as its dynamic layout -- if any: what
+      its dialog starts with.
     :rtype: dict[str, Any] | None
     '''
+    remembered = self.__dict__.setdefault("_layoutParameters", {}).get(cls.NAME)
+    if remembered is not None:
+      return dict(remembered)
     if isinstance(self.localLayout, cls):
       return self.localLayout.parameters()
-    return self.__dict__.setdefault("_layoutParameters", {}).get(cls.NAME)
+    return None
+
+  def rememberLayoutParameters(self, layout:LayoutHeuristic, category:str=STATIC) -> None:
+    '''
+    Remember the parameters *layout* is used with in this view, for its kind
+    of layout (see *lastLayoutParameters()*), whether chosen in its dialog or
+    given by a program (eg: pythonParser's tree layout, following
+    "includes"). Saved with the view. Only those that matter for how it's
+    used (*category*: see *layout.LayoutParameter.categories*) are changed:
+    eg: keeping a tree arranged leaves what "arrange now" does with the nodes
+    in no tree as it was.
+
+    :param layout: A layout of this view, being used.
+    :type layout: LayoutHeuristic
+    :param category: How it's used: *STATIC* or *DYNAMIC*.
+    :type category: str
+    '''
+    if not layout.PARAMETERS:
+      return
+    remembered = self.__dict__.setdefault("_layoutParameters", {})
+    params = dict(remembered.get(layout.NAME) or layout.parameters())
+    params.update({p.name: layout.params.get(p.name) for p in layout.PARAMETERS if category in p.categories})
+    remembered[layout.NAME] = params
+
+  def _layoutParametersState(self) -> str:
+    '''
+    :returns: What's saved with the view of the layouts' last parameters (see
+      *rememberLayoutParameters()*): each as *layout.LayoutHeuristic.encodeParameters()*
+      says, separated by "|".
+    :rtype: str
+    '''
+    from sn.view.graphics.layout import LAYOUTS
+    return "|".join(LAYOUTS[name].encodeParameters(params) for name, params in self.__dict__.get("_layoutParameters", {}).items()
+                    if name in LAYOUTS)
+
+  def _restoreLayoutParameters(self, text:str) -> None:
+    '''
+    Put back the layouts' last parameters saved with the view (see *_layoutParametersState()*).
+
+    :param text: What was saved.
+    :type text: str
+    '''
+    remembered = self.__dict__.setdefault("_layoutParameters", {})
+    for part in text.split("|"):
+      decoded = LayoutHeuristic.decodeParameters(part) if part.strip() else None
+      if decoded is not None:
+        cls, kwargs, _ = decoded
+        remembered[cls.NAME] = {p.name: kwargs.get(p.name, p.default) for p in cls.PARAMETERS} # (a relation by its name)
 
   def arrangeWith(self, cls:type[LayoutHeuristic]) -> None:
     '''
@@ -4454,11 +4510,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :param cls: The kind of layout.
     :type cls: type[LayoutHeuristic]
     '''
-    kwargs = cls.askParameters(self, STATIC, self._lastParameters(cls), parent=self.window)
+    kwargs = cls.askParameters(self, STATIC, self.lastLayoutParameters(cls), parent=self.window)
     if kwargs is None:
       return
-    self.__dict__.setdefault("_layoutParameters", {})[cls.NAME] = kwargs
-    cls(self, **kwargs).arrange()
+    cls(self, **kwargs).arrange() # (it remembers them: see layout.LayoutHeuristic.arrange())
 
   def keepArrangedWith(self, cls:type[LayoutHeuristic]) -> None:
     '''
@@ -4468,13 +4523,12 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :param cls: The kind of layout.
     :type cls: type[LayoutHeuristic]
     '''
-    kwargs = cls.askParameters(self, DYNAMIC, self._lastParameters(cls), parent=self.window)
+    kwargs = cls.askParameters(self, DYNAMIC, self.lastLayoutParameters(cls), parent=self.window)
     if kwargs is None: # (cancelled: the menu shows the one there still is)
       if getattr(self, "_layoutVar", None) is not None:
         self._layoutVar.set(self.localLayout.NAME)
       return
-    self.__dict__.setdefault("_layoutParameters", {})[cls.NAME] = kwargs
-    self.setDynamicLayout(cls(self, **kwargs))
+    self.setDynamicLayout(cls(self, **kwargs)) # (it remembers them)
 
   def setDynamicLayout(self, layout:LayoutHeuristic) -> None:
     '''
@@ -4488,6 +4542,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     finishTween(self)
     self.__dict__.pop("_pendingLayout", None) # (set before a read view's saved one was put back: this one wins)
     self.localLayout = layout
+    self.rememberLayoutParameters(layout, DYNAMIC)
     if getattr(self, "_layoutVar", None) is not None:
       self._layoutVar.set(layout.NAME)
     self.setDirty()

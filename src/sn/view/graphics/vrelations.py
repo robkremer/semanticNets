@@ -327,7 +327,7 @@ class VRelation(VObject, AGRelation):
         else:
           pts, nearSpec, farSpec = (b, a), terms.source, terms.labelNear
         coords = self.view.viewToWindow([pts[0][0], pts[0][1], pts[1][0], pts[1][1]])
-        opts = dict(fill=lineColor, width=self.lineWidth())
+        opts:dict[str, Any] = dict(fill=lineColor, width=self.lineWidth())
         opts.update(_mergeArrowOptions(nearSpec, farSpec))
         if stubs.get(end) is None:
           stubs[end] = canvas.create_line(coords, tags=[self.tag, "stub"], **opts)

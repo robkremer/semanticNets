@@ -317,14 +317,52 @@ class LayoutHeuristic(ABC):
       *extraState()*): eg: "name=tree;relation=includes;direction=right;pins=12,40".
     :rtype: str
     '''
-    parts = {"name": self.NAME}
-    for p in self.PARAMETERS:
-      v = self.params.get(p.name)
+    return self.encodeParameters(self.params, self.extraState())
+
+  @classmethod
+  def encodeParameters(cls, params:dict[str, Any], extra:dict[str, str]={}) -> str:
+    '''
+    :param params: Values of its parameters (see *PARAMETERS*): a relation as a
+      *Relation* or its name.
+    :type params: dict[str, Any]
+    :param extra: Anything else to say (see *extraState()*).
+    :type extra: dict[str, str]
+    :returns: Them as text: its name, then each parameter's value (see
+      *decodeParameters()*): eg: "name=tree;relation=includes;direction=right".
+    :rtype: str
+    '''
+    parts = {"name": cls.NAME}
+    for p in cls.PARAMETERS:
+      v = params.get(p.name)
       if v is None:
         continue
-      parts[p.name] = str(v.name) if p.kind == "relation" else ("1" if v else "0") if p.kind == "bool" else str(v)
-    parts.update(self.extraState())
+      parts[p.name] = str(getattr(v, "name", v)) if p.kind == "relation" else ("1" if v else "0") if p.kind == "bool" else str(v)
+    parts.update(extra)
     return ";".join(f"{k}={v}" for k, v in parts.items())
+
+  @staticmethod
+  def decodeParameters(text:str) -> "tuple[type[LayoutHeuristic], dict[str, Any], dict[str, str]]|None":
+    '''
+    :param text: What *encodeParameters()* made.
+    :type text: str
+    :returns: The kind of layout it's of, its parameters' values (keyword
+      arguments for its constructor: a relation by its name), and everything
+      said (eg: for *restoreExtraState()*) -- or None if there's no such layout.
+    :rtype: tuple[type[LayoutHeuristic], dict[str, Any], dict[str, str]] | None
+    '''
+    state = dict(kv.split("=", 1) for kv in text.split(";") if "=" in kv)
+    cls = LAYOUTS.get(state.get("name", ""))
+    if cls is None:
+      return None
+    kwargs:dict[str, Any] = {}
+    for p in cls.PARAMETERS:
+      if p.name in state:
+        v = state[p.name]
+        try:
+          kwargs[p.name] = int(v) if p.kind == "int" else (v == "1") if p.kind == "bool" else v
+        except ValueError: # (not a number: the default, then)
+          pass
+    return cls, kwargs, state
 
   def extraState(self) -> dict[str, str]:
     '''
@@ -353,15 +391,10 @@ class LayoutHeuristic(ABC):
     :returns: The layout it describes -- or None if there's no such layout.
     :rtype: LayoutHeuristic | None
     '''
-    state = dict(kv.split("=", 1) for kv in text.split(";") if "=" in kv)
-    cls = LAYOUTS.get(state.get("name", ""))
-    if cls is None:
+    decoded = LayoutHeuristic.decodeParameters(text)
+    if decoded is None:
       return None
-    kwargs:dict[str, Any] = {}
-    for p in cls.PARAMETERS:
-      if p.name in state:
-        v = state[p.name]
-        kwargs[p.name] = int(v) if p.kind == "int" else (v == "1") if p.kind == "bool" else v
+    cls, kwargs, state = decoded
     ret = cls(view, **kwargs)
     ret.restoreExtraState(state)
     return ret
@@ -385,6 +418,9 @@ class LayoutHeuristic(ABC):
     :returns: The command, or None if nothing moved.
     :rtype: LayoutMoves | None
     '''
+    remember = getattr(self.view, "rememberLayoutParameters", None)
+    if remember is not None: # (offered next time: see SNGView.lastLayoutParameters())
+      remember(self, STATIC)
     cmd = LayoutMoves(self.view, f"arrange: {self.NAME}", self.targets(), animate=animate)
     self.arranged(cmd)
     if cmd.isEmpty():
@@ -569,6 +605,20 @@ TWEEN_INTERVAL = 25
 TWEEN_MAX = 400
 "The most objects moved smoothly: more are moved at once (it'd be slow)."
 
+def _settled(view) -> None:
+  '''
+  A layout's moves are done: repaint the view once things are idle (see
+  *SNGView.repaintSoon()*) and then grow its scroll region to take in
+  everything (see *SNGView.resetScrollRegion()*) -- or what's been moved off
+  past its edge can't be scrolled to.
+
+  :param view:
+  :type view: SNGView
+  '''
+  view.repaintSoon()
+  if getattr(view, "canvas", None):
+    view.canvas.after_idle(view.resetScrollRegion) # (after the repaint: its after_idle was asked for first)
+
 class _Tween:
   '''
   A tweened move under way (see *tween()*).
@@ -602,7 +652,7 @@ class _Tween:
     for vo, _, (x1, y1) in self.moves:
       if vo._isConnected():
         vo.moveTo(x1, y1, adjustPos=False, carry=False)
-    self.view.repaintSoon()
+    _settled(self.view)
 
 def finishTween(view) -> None:
   '''
@@ -635,7 +685,7 @@ def tween(view, moves:list[tuple[VObject, tuple[float, float], tuple[float, floa
   if not getattr(view, "canvas", None) or len(moves) > TWEEN_MAX:
     for vo, _, (x1, y1) in moves:
       vo.moveTo(x1, y1, adjustPos=False, carry=False)
-    view.repaintSoon()
+    _settled(view)
     return
   view._tween = _Tween(view, moves)
 
@@ -693,7 +743,7 @@ class LayoutMoves(Command):
       for vo, _, (x, y), _ in self.moves:
         if vo._isConnected():
           vo.moveTo(x, y, adjustPos=False, carry=False)
-      self.view.repaintSoon()
+      _settled(self.view)
     self.first = False
 
   @override
@@ -707,7 +757,7 @@ class LayoutMoves(Command):
           vo.floating(floated) #type: ignore[attr-defined]
     for _, undo in reversed(self.also):
       undo()
-    self.view.repaintSoon()
+    _settled(self.view)
 
   @override
   def delete(self) -> None:
