@@ -25,7 +25,7 @@ import sn
 from sn.model import names
 from sn.model.constraints import WHERE, CONSTRAINTS, CONSTRAINTS_NOTE, splitWhere, mergeConstraints, ConstraintError
 from util.attribute import Attribute, VAR
-from sn.model.model import Model, Node, Relation, Collection, IsaIndividual,\
+from sn.model.model import Model, Node, Relation, Collection, IsaIndividual, SN_URL,\
   GraphObject, GORef
 from sn.controller.modelInterface import ModelContext
 
@@ -1951,7 +1951,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       # this model's types, then its super-models' (nearest first), then sn's
       implicit = self.model.implicitSuperDBs()
       supers = [db for db in self.model.allSuperDBs() if isinstance(db, Model) and not any(db is i for i in implicit)]
-      for v in [self.model, *supers, Model.AllDBs["sn:/sn.xml"]]:
+      for v in [self.model, *supers, Model.AllDBs[SN_URL]]:
         assert isinstance(v, Model)
         m = tk.Menu(self.canvas)
         for t in sorted((o for o in v.values() if isinstance(o, ptype) and o.isType()), key=lambda o: o.name):

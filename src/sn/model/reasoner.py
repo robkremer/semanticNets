@@ -89,8 +89,9 @@ import tempfile
 from typing import Any, ClassVar, Iterator
 from contextlib import contextmanager, ExitStack
 from util.observer import Subject
+from util.persistence.pRef import PRDb
 import sn
-from sn.model.model import Model, GraphObject, Node, Collection, Relation, IsaIndividual
+from sn.model.model import Model, GraphObject, Node, Collection, Relation, IsaIndividual, BASE_RULES_URL
 from util.attribute import Attribute, Restriction, coerceValue
 from sn.model.constraints import CONSTRAINTS, PRESENT, ValueVar, Not, constraintItems
 from sn.model import names
@@ -1021,6 +1022,36 @@ def baseRulesSource(model:Model) -> str|None:
       return Path(str(src)).as_uri()
   return None
 
+def _baseURL(src:str|Traversable) -> str:
+  '''
+  :param src: One of *BASE_RULES*.
+  :type src: str | Traversable
+  :returns: Its URL: package data's is that of a copy in a temporary folder,
+    made to refer to where it then is (made the first time).
+  :rtype: str
+  '''
+  if isinstance(src, str):
+    return src
+  path = _baseFiles.get(str(src), "")
+  if not path or not os.path.exists(path): # (eg: the first time)
+    if not _baseFolder:
+      _baseFolder.append(os.path.realpath(tempfile.mkdtemp(prefix="snBaseRules-")))
+      atexit.register(shutil.rmtree, _baseFolder[0], True)
+    folder = os.path.join(_baseFolder[0], str(len(_baseFiles))) # (a folder each: they may have the same name)
+    os.makedirs(folder, exist_ok=True)
+    path = _baseFiles[str(src)] = os.path.join(folder, src.name)
+    with open(path, "w", encoding="utf-8") as fd:
+      fd.write(src.read_text(encoding="utf-8").replace(BASE_RULES_PLACEHOLDER, Path(folder).as_uri()))
+  return Path(path).as_uri()
+
+def _baseURLOfModel(src:str|Traversable) -> str:
+  '''
+  :returns: The URL of *src*, one of *BASE_RULES* -- read (see
+    *baseRuleModels()*), so it's there when the URL's used.
+  '''
+  baseRuleModels()
+  return _baseURL(src)
+
 def baseRuleModels() -> list[Model]:
   '''
   :returns: The models of *BASE_RULES*, read (and write-locked) if need be.
@@ -1033,21 +1064,12 @@ def baseRuleModels() -> list[Model]:
   if _readingBase:
     return []
   ret:list[Model] = []
-  for src in BASE_RULES:
-    if isinstance(src, str):
-      url = src
-    else:
-      path = _baseFiles.get(str(src), "")
-      if not path or not os.path.exists(path): # (eg: the first time)
-        if not _baseFolder:
-          _baseFolder.append(os.path.realpath(tempfile.mkdtemp(prefix="snBaseRules-")))
-          atexit.register(shutil.rmtree, _baseFolder[0], True)
-        folder = os.path.join(_baseFolder[0], str(len(_baseFiles))) # (a folder each: they may have the same name)
-        os.makedirs(folder, exist_ok=True)
-        path = _baseFiles[str(src)] = os.path.join(folder, src.name)
-        with open(path, "w", encoding="utf-8") as fd:
-          fd.write(src.read_text(encoding="utf-8").replace(BASE_RULES_PLACEHOLDER, Path(folder).as_uri()))
-      url = Path(path).as_uri()
+  for i, src in enumerate(BASE_RULES):
+    url = _baseURL(src)
+    if not isinstance(src, str): # (named -- "sn:/baseRules", ... -- as written in the models that build on it)
+      name = BASE_RULES_URL if i == 0 else f"{BASE_RULES_URL}{i + 1}"
+      PRDb.namedURLs.setdefault(name, lambda src=src: _baseURLOfModel(src)) # type: ignore[misc]
+      PRDb._namesOf[url] = name
     _readingBase.append(True)
     try:
       m = Model.getDB(url, mode="")

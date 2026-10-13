@@ -1150,6 +1150,24 @@ def _isPackagedBaseRules(url:str) -> bool:
   except Exception:
     return False
 
+SN_URL = "sn:/sn"
+'''The system model's URL: a name ("sn:" is for models in memory -- see
+*PRDb.namedURLs*), not a file. (Its old names are aliases for it: see
+*PRDb.aliases*.)'''
+
+PRDb.aliases.update({old: SN_URL for old in ("sn:/sn.xml", "sn:///sn", "sn:///sn.xml", "sn:sn")})
+
+BASE_RULES_URL = "sn:/baseRules"
+'''The base rules' name (see *sn.model.reasoner.BASE_RULES*): they're read from
+a temporary copy of a file that comes with the program, so models refer to
+them by this (see *PRDb.namedURLs*).'''
+
+def _baseRulesURL() -> str:
+  from sn.model import reasoner
+  return reasoner._baseURLOfModel(reasoner.BASE_RULES[0])
+
+PRDb.namedURLs[BASE_RULES_URL] = _baseRulesURL
+
 class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
   '''
   .. Note::
@@ -1182,7 +1200,7 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     '''
     PRDb._initCache()
     from sn.model import TopModel  # @UnresolvedImport -- deferred to dodge the sn.model/model.py circular import; see sn/model/__init__.py
-    model = TopModel("sn:///sn", mode="", _reading=False) # creates a model in memory cache
+    model = TopModel(SN_URL, mode="", _reading=False) # creates a model in memory cache
     model._writeLocked = True
     
   def __new__(cls, url:str, mode:str="w", _reading:bool=False):
@@ -1291,13 +1309,6 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
               ret[str(k)] = v
           return ret
         p.getter = assertedObjects
-      if p.name == "superDBs":
-        def superDBURLs(slf:Serializable) -> SerializableType: # (as PRDb's)
-          m = cast(Model, slf)
-          skip = [db for db in m.implicitSuperDBs() if db is not m.TOP.model]
-          return [PRDb.relativeURL(db.url) for db in m.superDBs if not any(db is s for s in skip)] \
-               + list(m._missingSuperDBs)
-        p.getter = superDBURLs
     ret.postconSetters.append(PropertyInfo("prefs", ModelPrefs, lambda slf: cast(Model, slf).prefs, setPrefs,
                                            optional=True)) # optional: older files don't have it
     ret.finalSetters.append(PropertyInfo("_", bool, setter=lambda slf,_t:cast(Model,slf).setDirty(False))) #type: ignore[arg-type]
@@ -1377,7 +1388,7 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     :rtype: Model
     '''
     if url in ("sn","$sn"):
-      url = "sn:/sn.xml"
+      url = SN_URL
       mode = ""
     ret = super().getDB(url, mode=mode)
     if not isinstance(ret, Model):
@@ -1389,8 +1400,9 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     :returns: The super-models every model has, first: the system model
       (sn), and the base rules (see *sn.model.reasoner.BASE_RULES*) -- but
       not the base rules themselves, while they're being read (see
-      *sn.model.reasoner.baseRuleModels()*). They can't be removed, and only
-      sn is saved with a model (the base rules are added when it's read).
+      *sn.model.reasoner.baseRuleModels()*). They can't be removed. They're
+      saved with a model by name ("sn:/sn", "sn:/baseRules": see
+      *PRDb.namedURLs*), as its first super-models.
     :rtype: list[Model]
     '''
     from sn.model.reasoner import baseRuleModels

@@ -48,8 +48,12 @@ file. A model builds on other models -- its *super-models*, at least the
 system model -- and can use their objects (as types, or as ends of
 relations); a reference to another model's object carries that model's URL.
 
-The **system model**, :py:class:`~sn.model.TopModel` (``sn:///sn``), is made
-in memory at start-up and is write-locked. It defines the objects everything
+The **system model**, :py:class:`~sn.model.TopModel` (``sn:/sn``), is made
+in memory at start-up and is write-locked. ``sn:`` URLs are names of models in
+memory, not files: the base rules, read from a temporary copy of a file that
+comes with the program, are ``sn:/baseRules``, and models refer to both by
+these names (see ``PRDb.namedURLs``; the old names, eg: ``sn:/sn.xml``, are
+read as aliases: see ``PRDb.aliases``). It defines the objects everything
 else depends on, and the code refers to them by attribute (``model.ISA``,
 ``model.RULE``, ...):
 

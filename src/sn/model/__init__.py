@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE #
 # SOFTWARE.                                                                     #
 #################################################################################
-from sn.model.model import Model, GraphObject, Node, Collection, Relation, IsaIndividual
+from sn.model.model import Model, GraphObject, Node, Collection, Relation, IsaIndividual, SN_URL
 from util.attribute import Attribute, VAR_DEFAULTED, TYPENAME, VAR, CONST, LOCAL
 from util.persistence.pRef import PRDb
 import sys
@@ -220,7 +220,7 @@ class TopModel(Model):
     self.REQUIREMENT['vis/titlebarColor'] = "PaleVioletRed3"
     self.REQUIREMENT['vis/fillColor'] = "LavenderBlush"
         
-model = TopModel("sn:///sn", mode="", _reading=False) # creates a model in memory cache
+model = TopModel(SN_URL, mode="", _reading=False) # creates a model in memory cache
 model._writeLocked = True
 
     

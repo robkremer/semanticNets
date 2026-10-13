@@ -16,7 +16,9 @@ opens the models it uses.
 A model's **super-models** are the models it builds on: their contents are
 used as though they were its own -- the reasoner reasons over them too, and
 their rules apply -- though they aren't changed through it. The system model
-is always one, and comes first. Set them in **Edit | Model preferences...**
+(``sn:/sn``) and the base rules (``sn:/baseRules``: the meaning of symmetric,
+transitive, ...) are always the first two; they're written in the file under
+those names. Set them in **Edit | Model preferences...**
 (*superModels*: **Add file...** chooses a model file, **Add URL...** takes the
 URL of one -- eg: an ontology on the web, which is read-only here -- and the
 arrows set the order

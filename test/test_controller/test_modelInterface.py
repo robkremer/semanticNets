@@ -90,7 +90,7 @@ class Test(unittest.TestCase):
     #print("-------")
     #printx('context.show("#1")')
     x = context.parser.parseLine("show 1 --d")
-    self.assertIn('GraphObject(top, sn:/sn.xml#1, <type>)', x) # names that are identifiers aren't quoted
+    self.assertIn('GraphObject(top, sn:/sn#1, <type>)', x) # names that are identifiers aren't quoted
     
     # this are in /sn now.
     # self.assertIn(f"/{FILE2}#1", x)

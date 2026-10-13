@@ -327,7 +327,7 @@ def pathOf(url:str) -> str|None:
   :param url:
   :type url: str
   :returns: The path of the file at *url*, if it's a file URL; else None (eg:
-    the system model, "sn:/sn.xml").
+    the system model, "sn:/sn").
   :rtype: str | None
   '''
   u = urlparse(url)
@@ -549,7 +549,7 @@ class Directory:
           model = scanFile(path, onPath=False)
         elif urlparse(url).scheme in ("http", "https"):
           model = scanURL(url, onPath=False)
-        else: # (eg: the system model, "sn:/sn.xml": no file)
+        else: # (eg: the system model, "sn:/sn": no file)
           model = Entry(path="", kind="model", url=url, onPath=False)
         model.url = url
         self.entries[url] = model

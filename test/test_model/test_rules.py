@@ -736,8 +736,18 @@ class TestRules(unittest.TestCase):
       path = str(Path(folder, "m.xml"))
       self.m.save(saveas=path)
       text = Path(path).read_text(encoding="utf-8")
-    self.assertNotIn("baseRules", text)
-    self.assertIn("sn:/sn.xml", text)
+    self.assertIn('value="sn:/sn"', text)          # saved by name: not its file, which is a temporary copy
+    self.assertIn('value="sn:/baseRules"', text)
+    self.assertNotIn("snBaseRules-", text)
+    # read back -- and a file written with the old name -- it has the same super-models
+    from util.persistence.pRef import PRDb
+    for old, written in ((False, text), (True, text.replace('value="sn:/sn"', 'value="sn:/sn.xml"'))):
+      with tempfile.TemporaryDirectory() as folder:
+        path = str(Path(folder, "m2.xml"))
+        Path(path).write_text(written, encoding="utf-8")
+        m2 = PRDb.readFile(Path(path).as_uri())
+        self.assertEqual(m2.superDBs[:2], self.m.implicitSuperDBs(), f"old name: {old}")
+        m2.unload()
   def test1500disabled(self):
     'A disabled rule, definition or requirement (its "disabled" attribute isn\'t false) is ignored; enabled again, it\'s back.'
     m, p = self.m, self.p
