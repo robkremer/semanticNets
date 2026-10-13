@@ -1111,8 +1111,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         if isinstance(rel, VRelation):
           rel.connect()
       # (a full repaint first: it fits the objects to their text, as any later one would -- by
-      # a pixel or so, if the file was saved with other font metrics -- so that isn't a change)
-      slf.canvas.after_idle(lambda slf=slf: [slf.applyVisibility(), slf._restoreAnimationState(), slf._restoreLayoutState(), slf.repaint(), slf.resetScrollRegion(), slf._restoreViewport(), slf.setDirty(False)]) # type: ignore[misc]
+      # a pixel or so, if the file was saved with other font metrics -- so that isn't a change.
+      # It's the objects' first drawing too: theirs, queued as they were made, are put off till then.)
+      slf.__dict__["_firstDrawsDeferred"] = True
+      slf.canvas.after_idle(lambda slf=slf: [slf.applyVisibility(), slf._restoreAnimationState(), slf._restoreLayoutState(), slf._drawAllAfterRead(), slf.resetScrollRegion(), slf._restoreViewport(), slf.setDirty(False)]) # type: ignore[misc]
     ret:InstantiationInfo = super().getInstantiationInfo()
     # ret.class_ = cls
     # (its model's URL relative to the view's file if they're side by side -- see PRDb.relativeURL() -- so
@@ -4448,6 +4450,28 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       if not getattr(self, "_closed", False):
         self.repaint()
     self.canvas.after_idle(go)
+
+  def _drawAllAfterRead(self) -> None:
+    '''
+    Once a read view is built: draw everything -- nodes first, then
+    relations, so each relation is drawn once its ends are where (and the
+    size) they'll be. The objects' own first drawings, queued as they were
+    made, were put off till now (see *VObject._firstDraw()*): each was a
+    redrawing of all of a node's relations as it was fitted to its text, and
+    then this drew them all again.
+    '''
+    self.__dict__.pop("_firstDrawsDeferred", None)
+    self.freshPaint()
+    objects = [o for o in self.context.view.values() if o is not None]
+    for obj in objects:
+      if not isinstance(obj, VRelation):
+        obj.draw()
+    for obj in objects:
+      if isinstance(obj, VRelation):
+        obj.draw()
+    for obj in objects: # (now they're drawn)
+      if obj.__dict__.pop("_bindingsPending", False) and obj._isConnected():
+        obj.makeBindings()
 
   def repaint(self, event=None):
     '''

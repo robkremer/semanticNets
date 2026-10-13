@@ -391,6 +391,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       self.__dict__["_firstDrawPending"] = True
       return
     self.__dict__["_firstDrawPending"] = False
+    if self.view.__dict__.get("_firstDrawsDeferred"): # (a view being read draws everything at once, when it's built: see SNGView._drawAllAfterRead())
+      self.__dict__["_bindingsPending"] = True # (they need its shape: made when it's drawn)
+      return
     self.view.freshPaint()
     self.draw()
     self.makeBindings()
@@ -1898,9 +1901,12 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         self.boundingBox([x1, y1, x1 + self.WINDOW_DEFAULT[0], y1 + self.WINDOW_DEFAULT[1]])
       elif x2 - x1 < self.WINDOW_MIN[0] or y2 - y1 < self.WINDOW_MIN[1]:
         self.boundingBox([x1, y1, x1 + max(x2 - x1, self.WINDOW_MIN[0]), y1 + max(y2 - y1, self.WINDOW_MIN[1])])
-    # size the box to its text first, so the shape is drawn at the new size
+    # size the box to its text first, so the shape is drawn at the new size -- for the shape it'll be
+    # drawn as (the room for the text depends on it): eg: its type's "vis/shape", when it's first drawn
     text = self.decorators.get("text")
     if not fast and isinstance(text, WrappingText):
+      if self._shape is not None:
+        self._shape.checkShape()
       text.fitOwner()
     self._shape.draw(fast=fast, **kwargs) #self["boundingBox"])#rect)
     self.markerDecoratorOffset=0

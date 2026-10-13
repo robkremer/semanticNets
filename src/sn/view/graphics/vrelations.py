@@ -152,7 +152,9 @@ class VRelation(VObject, AGRelation):
     # self._redrawExecuting = False
     
     # (not if it's been taken out of the view meanwhile: that would draw it again -- see VObject._firstDraw())
-    self.canvas.after(0, lambda slf=self: slf.reposition(aggressive=True) if slf._isConnected() else None) #type: ignore[misc]
+    # (nor while a view's being read: its label is where it was saved; if an end's size changes as it's first drawn, it repositions this then)
+    self.canvas.after(0, lambda slf=self: slf.reposition(aggressive=True)
+                      if slf._isConnected() and not slf.view.__dict__.get("_firstDrawsDeferred") else None) #type: ignore[misc]
     # self.canvas.freshPaint()
     # self.draw()
     self.connectInfo:ConnectorIDs|None = None
