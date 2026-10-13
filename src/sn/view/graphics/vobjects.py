@@ -376,6 +376,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     
     self.validate()
     
+    if view.__dict__.get("_firstDrawsDeferred"): # (read with its view: drawn with it -- see _firstDraw() -- or when it's put back, if it's been taken out)
+      self.__dict__["_firstDrawPending"] = True
     self.canvas.after(0, self._firstDraw)
 
   def _firstDraw(self) -> None:
@@ -387,13 +389,12 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     canvas, though it isn't in the view -- but when it's put back (see
     *_reconnect()*).
     '''
+    if self.view.__dict__.get("_firstDrawsDeferred") or self.__dict__.get("_drawnWithView"):
+      return # (a view being read draws everything at once, when it's built -- whether that's before or after this: see SNGView._drawAllAfterRead())
     if not self._isConnected():
       self.__dict__["_firstDrawPending"] = True
       return
     self.__dict__["_firstDrawPending"] = False
-    if self.view.__dict__.get("_firstDrawsDeferred"): # (a view being read draws everything at once, when it's built: see SNGView._drawAllAfterRead())
-      self.__dict__["_bindingsPending"] = True # (they need its shape: made when it's drawn)
-      return
     self.view.freshPaint()
     self.draw()
     self.makeBindings()

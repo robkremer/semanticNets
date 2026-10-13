@@ -55,6 +55,8 @@ from util.persistence.serialize import InstantiationInfo, PropertyInfo,\
   ParamInfo, Serializable, SerializableType
 from util.persistence.serialize import DEFAULT_STRATEGY
 from sn.view.graphics.guiApp import Application, AppWindow
+from sn.view.graphics import progress
+from sn.view.graphics.directoryWindow import noteSaved
 import os
 import threading
 from pathlib import Path
@@ -1021,6 +1023,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
     PRDb.__init__(self, url, memoryResident=False, _reading=_reading)
     Dirtyable.__init__(self)
+    if _reading: # (its objects' first drawings are put off till it's all read: see _drawAllAfterRead() -- even if
+      self.__dict__["_firstDrawsDeferred"] = True # the event loop's run meanwhile, eg: to show progress)
           
     self.model:Model = model
 
@@ -1177,6 +1181,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     super().save(saveas=saveas, overwrite=overwrite, format=format)
     if saveas is None: # (saving a copy elsewhere doesn't save this: see PRDb.save())
       self.setDirty(False)
+      noteSaved(self.url)
 
   def doSaveView(self) -> None:
     '''
@@ -1209,6 +1214,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       return
     model.save()
     logger.info(f'Saved "{model.url}".')
+    noteSaved(model.url)
 
   def _saveCopy(self, what:str, db:Any, extension:str, filetypes:list[tuple[str, str]]) -> None:
     '''
@@ -1234,9 +1240,11 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
                                             initialfile=f"{os.path.splitext(os.path.basename(path))[0]} copy{extension}" if path else "")
     if not filename:
       return
-    if fixURL(filename, extension, replaceExt=None, mode="w")[0] == current: # (its own file: just save it)
+    copyURL = fixURL(filename, extension, replaceExt=None, mode="w")[0]
+    if copyURL == current: # (its own file: just save it)
       db.save(overwrite=True)
       logger.info(f'Saved "{current}".')
+      noteSaved(current)
       return
     try:
       db.save(saveas=filename, overwrite=True) # (the dialog has asked about replacing an existing file)
@@ -1245,6 +1253,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       return
     logger.warning(f'Saved a copy of the {what} as "{filename}". This window is still on the original, '
                    f'"{current}", and further changes go there.')
+    noteSaved(copyURL)
     self.terminal.flash()
 
   def doSaveViewAs(self) -> None:
@@ -4505,14 +4514,19 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     self.__dict__.pop("_firstDrawsDeferred", None)
     self.freshPaint()
     objects = [o for o in self.context.view.values() if o is not None]
-    for obj in objects:
-      if not isinstance(obj, VRelation):
-        obj.draw()
-    for obj in objects:
-      if isinstance(obj, VRelation):
-        obj.draw()
-    for obj in objects: # (now they're drawn)
-      if obj.__dict__.pop("_bindingsPending", False) and obj._isConnected():
+    with progress.task(f'Drawing "{os.path.basename(self.url.partition("://")[2]) or self.url}"...', len(objects)):
+      done = 0
+      for relations in (False, True):
+        for obj in objects:
+          if isinstance(obj, VRelation) == relations:
+            obj.draw()
+            done += 1
+            if done % 100 == 0:
+              progress.step(done)
+    for obj in objects: # (now they're drawn: their own first drawings, whenever they come, are skipped -- see VObject._firstDraw())
+      obj.__dict__["_drawnWithView"] = True
+      obj.__dict__["_firstDrawPending"] = False
+      if obj._isConnected():
         obj.makeBindings()
 
   def repaint(self, event=None):

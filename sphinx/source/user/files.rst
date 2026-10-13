@@ -50,6 +50,37 @@ there again.
   asked about each one. **File | Save model** (or the terminal's ``save``
   command) saves a model at any time.
 
+The model directory
+-------------------
+
+**Window | Model Directory** shows the models and views in the folders it
+searches: each model with its views under it, with their folders and when they
+were last changed and created. Select one to see its full location, about how
+many objects it has, and its size. It's the app's main window: it's shown when
+the app starts with nothing to open, and while it's showing, closing the last
+other window doesn't quit (closing it then does).
+
+- **Open** (or double-click) opens a view, or a model in its default view.
+- **Open Read-only** opens it with its model write-locked: it can't be changed
+  or saved (the pencil at the right of the reasoning toolbar is crossed out).
+  Not if the model's open already: it's opened as it is then.
+- **Move to Trash** moves a model or view to the Trash (the Finder's **Put
+  Back** restores it) -- and, for a model, its views too, if you say so.
+  Nothing that's open is moved: close it first.
+- **Folders...** sets the folders searched, one per line. End a folder with
+  ``/**`` to search the folders below it, too. The folders of the models and
+  views you open, make or save are added by themselves. (The ``gui/directoryPath``
+  setting holds them, separated by ``:``.) **Rescan** looks through them again.
+
+Only the start of each file is read, so even a large folder of large models is
+listed quickly. A model that a listed view uses, in a folder that isn't
+searched, is listed too (in grey).
+
+While a model or view is being opened -- and its window drawn -- a progress bar
+at the bottom of the directory says how far it's got. (If the directory's
+hidden, it's shown for an open that takes more than half a second, and hidden
+again afterwards.)
+
 Copying and moving files
 ------------------------
 
@@ -92,6 +123,7 @@ setting                                          controls
 ``gui/showConstraintMarker``
 ``gui/shadowTypes``                              whether types are drawn with a shadow
 ``gui/recentFiles``                              how many views **File | Open Recent** lists
+``gui/directoryPath``                            the folders the model directory searches
 ``gui/NodeMinSize``,                             the default size and shape of a node
 ``gui/NodeAspectRatio``
 ``gui/highlightColor``                           the colour of highlights (eg: a query's

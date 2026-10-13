@@ -66,6 +66,9 @@ from util.utils import showExceptionDialog, fixURL, urlExists,\
 from util.terminal import terminalRegistry, installGlobalIORouting,\
   TerminalWidget, TerminalRegistry
 from sn.model.model import Model
+from sn.view.graphics import progress
+from sn.view.graphics.directoryWindow import DirectoryPane, ReadProgress, noteFolderOf, seedSearchPath
+from sn.model.directory import Entry, pathOf
 
 logger:sn.SNLogger = sn.getLogger(__name__)
 
@@ -80,21 +83,30 @@ class Application(tk.Tk):
   :type appName: str
   """
 
+  current:Application|None = None
+  "The application (there's just the one)."
+
   def __init__(self):
     super().__init__()
     self.withdraw()  # hide before it can ever flash visible
+    Application.current = self
     self.title(sn.NAME)
     self.defaultChildLocation:tuple[int, int] = (20, 60)
 
     self.windows: dict[str, AppWindow] = {}
     self.terminalRegistry = terminalRegistry  # shared across all windows
+    self.directoryPane:DirectoryPane|None = None
+    "The model directory, once it's been shown: it fills this (the main) window (see *showDirectory()*)."
+    self._directoryShown = tk.BooleanVar(self, value=False) # (the Window menu's check mark)
+    self._directoryShownForProgress = False
+    progress.listener = self._onProgress
 
     installGlobalIORouting(self.terminalRegistry)  # install exactly once, here
     self._installSettingsMenu()
     self._installQuitHandler()
     self.menubar = self._installMenubar()
 
-    self.protocol("WM_DELETE_WINDOW", self._noOp)  # root itself is never closed by the user
+    self.protocol("WM_DELETE_WINDOW", self._onDirectoryClose) # (it's the model directory, when it's shown)
 
   def _noOp(self) -> None:
     """Root window has no close button the user can reach, but guard anyway.
@@ -218,6 +230,9 @@ class Application(tk.Tk):
 
     self.windowmenu = tk.Menu(menubar, name="window")  # macOS auto-fills this (window list, Move & Resize, ...)
     menubar.add_cascade(menu=self.windowmenu, label="Window")
+    self.windowmenu.add_checkbutton(label="Model Directory", variable=self._directoryShown,
+                                    command=lambda: self.showDirectory(self._directoryShown.get()))
+    self.windowmenu.add_separator()
 
     self.helpmenu = tk.Menu(menubar, name="help")  # macOS auto-fills this (search field, "Python Help", ...)
     menubar.add_cascade(menu=self.helpmenu, label="Help")
@@ -311,6 +326,8 @@ class Application(tk.Tk):
         ret = SNGView(url, model=model, mode="w")
       return ret
     
+    reading = ReadProgress()
+    PRDb.readProgress = reading
     try:
       model:Model|None = None
       view:SNGView|None = None
@@ -369,12 +386,14 @@ class Application(tk.Tk):
       
       name = view.url    
       self.noteRecent(view.url, view.model.url)
+      self.noteFile(view.url, view.model.url)
       if name in self.windows:
         self.windows[name].lift()
         return self.windows[name]
   
       self.defaultChildLocation = (self.defaultChildLocation[0] + 40, self.defaultChildLocation[1] + 40)
       self.windows[name] = view.window
+      self._refreshDirectory()
       return view.window
     
     except Exception:
@@ -385,6 +404,9 @@ class Application(tk.Tk):
       except Exception:
         logger.error('While displaying exception dialog', exc_info=True)
       return None
+    finally:
+      PRDb.readProgress = None
+      reading.finish()
 
 
   def openViewOn(self, model:Model, viewURL:str) -> tk.Toplevel|None:
@@ -415,6 +437,146 @@ class Application(tk.Tk):
     self.defaultChildLocation = (self.defaultChildLocation[0] + 40, self.defaultChildLocation[1] + 40)
     self.windows[view.url] = view.window
     return view.window
+
+  # ── The model directory ──────────────────────────────────────────────────
+
+  DIRECTORY_PREF = ".directory"
+  '''The model directory's geometry, if it was shown when the app last quit
+  (see *rememberOpenWindows()*); else "". (Hidden from Settings: see
+  *OPEN_WINDOWS_PREF*.)'''
+
+  DIRECTORY_GEOMETRY = "860x520+40+60"
+  "Where the model directory's first shown."
+
+  PROGRESS_DELAY = 0.5
+  "Seconds a job (eg: opening a file) goes on before the directory's shown, if it's hidden, for its progress bar."
+
+  def directoryShown(self) -> bool:
+    '''
+    :returns: Whether the model directory is shown (see *showDirectory()*).
+    :rtype: bool
+    '''
+    return self.directoryPane is not None and self.state() != "withdrawn"
+
+  def showDirectory(self, show:bool=True, geometry:str|None=None) -> None:
+    '''
+    Show (or hide) the model directory (see *DirectoryPane*): the models and
+    views in the search path's folders. It's this, the app's main window --
+    hidden while it isn't shown. (Window | Model Directory.)
+
+    :param show:
+    :type show: bool
+    :param geometry: Its size and position, if not as it was.
+    :type geometry: str | None
+    '''
+    if show:
+      if self.directoryPane is None:
+        examples = os.path.expanduser(os.path.join(self.EXAMPLES_FOLDER, "x.snm"))
+        seedSearchPath([u for e in self.recentFiles() for u in (e.get("view", ""), e.get("model", "")) if u] + [examples])
+        self.title(f"{sn.NAME}: Model Directory")
+        self.directoryPane = DirectoryPane(self)
+        self.directoryPane.pack(fill=tk.BOTH, expand=True)
+        self.geometry(geometry or self.DIRECTORY_GEOMETRY)
+        self.directoryPane.rescan()
+      elif geometry:
+        self.geometry(geometry)
+      self.deiconify()
+      self.lift()
+    else:
+      self.withdraw()
+    self._directoryShown.set(show)
+    self._directoryShownForProgress = False
+
+  def _onDirectoryClose(self) -> None:
+    '''
+    The model directory's close button: hide it -- and if there are no other
+    windows, quit, as closing the last window does.
+    '''
+    self.showDirectory(False)
+    if not self.windows:
+      self.onQuit()
+
+  def _refreshDirectory(self) -> None:
+    "Show what's open, and what isn't, in the model directory (if it's been shown)."
+    if self.directoryPane is not None:
+      self.directoryPane.refresh()
+
+  def noteFile(self, *urls:str) -> None:
+    '''
+    Models or views at *urls* have been opened, made or saved: add their
+    folders to the search path (if they aren't in it), and show them in the
+    model directory as they are now.
+
+    :param urls:
+    :type urls: str
+    '''
+    added = [noteFolderOf(url) for url in urls]
+    pane = self.directoryPane
+    if pane is None:
+      return
+    if any(added):
+      pane.rescan()
+      return
+    for url in urls:
+      path = pathOf(url)
+      if path:
+        pane.directory.update(path)
+    pane.refresh()
+
+  def openEntry(self, entry:Entry, readOnly:bool=False) -> tk.Toplevel|None:
+    '''
+    Open a model directory entry: a view, or a model in its default view (see
+    *openWindow()*).
+
+    :param entry:
+    :type entry: Entry
+    :param readOnly: Whether to write-lock its model, so it can't be changed
+      (nor saved). Not if the model's open already, and not locked: it's
+      opened as it is then (and the user's told).
+    :type readOnly: bool
+    :returns: Its window.
+    :rtype: tk.Toplevel | None
+    '''
+    modelURL = entry.url if entry.kind == "model" else entry.modelURL
+    already = PRDb.AllDBs.get(modelURL) if modelURL else None
+    if readOnly and already is not None and not already.writeLocked():
+      messagebox.showinfo(sn.NAME, f'"{os.path.basename(entry.path)}" isn\'t opened read-only: its model, '
+                          f'"{_fileName(already.url)}", is already open, and can be changed.', parent=self)
+      readOnly = False
+    window = self.openWindow(entry.path)
+    view = getattr(window, "view", None)
+    if readOnly and view is not None and already is None:
+      view.model._writeLocked = True
+      bar = view.__dict__.get("_reasoningToolbar")
+      if bar is not None:
+        bar.refreshLock()
+      logger.info(f'"{view.model.url}" is open read-only (write-locked): it can\'t be changed or saved.')
+      self._refreshDirectory()
+    return window
+
+  def _onProgress(self, label:str|None, done:int, total:int|None) -> None:
+    '''
+    Show how a job's going (see *progress*) in the model directory -- showing
+    it, if it's hidden, once the job's gone on for *PROGRESS_DELAY* seconds
+    (and hiding it again when it's done).
+    '''
+    import time
+    if label is None:
+      self.__dict__.pop("_progressSince", None)
+      if self._directoryShownForProgress: # (hidden once the event loop's back: hiding it now could run what's queued, mid-job)
+        self.after(100, self._hideAfterProgress)
+    elif not self.directoryShown():
+      since = self.__dict__.setdefault("_progressSince", time.monotonic())
+      if time.monotonic() - since >= self.PROGRESS_DELAY:
+        self.showDirectory()
+        self._directoryShownForProgress = True
+    if self.directoryPane is not None and self.directoryShown():
+      self.directoryPane._showProgress(label, done, total)
+
+  def _hideAfterProgress(self) -> None:
+    "Hide the model directory, if it was shown just for a job's progress (see *_onProgress()*), and no job's under way now."
+    if self._directoryShownForProgress and not progress.busy():
+      self.showDirectory(False)
 
   RECENT_PREF = ".recentFiles"
   '''The preference listing the views opened most recently, most recent first
@@ -516,6 +678,8 @@ class Application(tk.Tk):
         logger.warning(f'Couldn\'t record window "{window.title()}" for reopening.', exc_info=True)
     snPrefs[self.OPEN_WINDOWS_PREF] = Attribute(entries, list, VAR_DEFAULTED,
       "The windows open when the app last quit (view, model, size and position), reopened when it next starts.")
+    snPrefs[self.DIRECTORY_PREF] = Attribute(self.geometry() if self.directoryShown() else "", str, VAR_DEFAULTED,
+      "The model directory's size and position, if it was shown when the app last quit (it's shown again when it next starts).")
 
   def reopenWindows(self) -> int:
     '''
@@ -551,8 +715,9 @@ class Application(tk.Tk):
   def startUp(self, files:list[str]) -> None:
     '''
     Open a window on each of *files* (views, .snv, or models, .snm); with none,
-    reopen the windows open when the app last quit (see *reopenWindows()*);
-    and if there were none, ask for a file to open.
+    reopen the windows open when the app last quit (see *reopenWindows()*) --
+    and the model directory, if it was shown then -- and if there were none,
+    show the model directory (see *showDirectory()*).
 
     :param files: Files named on the command line.
     :type files: list[str]
@@ -561,11 +726,16 @@ class Application(tk.Tk):
     files = [f for f in files if not f.startswith("-psn_")] # (a process serial number some macOS versions pass to an app)
     for f in files:
       self.openWindow(f)
-    if files or getattr(self, "_openedDocuments", False) or self.reopenWindows() > 0:
+    if files or getattr(self, "_openedDocuments", False):
+      return
+    geometry = snPrefs.get(self.DIRECTORY_PREF, "")
+    if isinstance(geometry, str) and geometry:
+      self.showDirectory(geometry=geometry)
+    if self.reopenWindows() > 0:
       return
     if not snPrefs.get(self.EXAMPLES_PREF, False) and self.installExamples():
       return
-    self.doOpen()
+    self.showDirectory()
 
   EXAMPLES_PREF = ".examplesInstalled"
   "True once the example models have been installed (see *installExamples()*): it's only done once. (Hidden from Settings: see *OPEN_WINDOWS_PREF*.)"
@@ -672,7 +842,8 @@ class Application(tk.Tk):
       model.unload()
     except RuntimeError: # (eg: a view of it that isn't in a window: it stays in memory, as before)
       logger.warning(f'Couldn\'t forget model "{model.url}".', exc_info=True)
-    if not self.windows:
+    self._refreshDirectory()
+    if not self.windows and not self.directoryShown():
       self.rememberOpenWindows() # (none: it was closed on purpose, so it isn't reopened next time)
       self.quit()
 
@@ -717,7 +888,7 @@ class Application(tk.Tk):
     :type askToSave: bool
     :rtype: None
     """
-    if quitIfLast and list(self.windows) == [name]: # closing the last window quits: remember it for next time
+    if quitIfLast and list(self.windows) == [name] and not self.directoryShown(): # closing the last window quits: remember it for next time
       self.rememberOpenWindows()
     window = self.windows.pop(name, None)
     if window is not None:
@@ -742,8 +913,9 @@ class Application(tk.Tk):
       self.terminalRegistry.unregisterWindow(window)
       window.destroy()
 
-    if quitIfLast and not self.windows:
-      self.quit()  # or: leave the (invisible) root running headless, your choice
+    self._refreshDirectory()
+    if quitIfLast and not self.windows and not self.directoryShown(): # (with the directory shown, the app carries on)
+      self.quit()
 
   def quit(self) -> None:
     """Tear down the entire application, including the hidden root.

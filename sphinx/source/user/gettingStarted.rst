@@ -39,8 +39,9 @@ Open **Semantic Nets** as you would any app, or double-click a model
   made to them.
 - **After that**, it reopens the windows that were open when you last quit, at
   the same size and place -- as they were last saved: changes you chose not to
-  save, and the undo history, are gone. If there were none, it asks you for a
-  file to open.
+  save, and the undo history, are gone -- and the model directory, if it was
+  showing. If there were none, it shows the model directory (see
+  :doc:`files`).
 
 The **Help** menu has this guide.
 
@@ -100,7 +101,8 @@ The menu bar has:
 - **Edit**: **Model preferences...** (the window's model's own settings, eg:
   its super-models: see :doc:`files`).
 - **View**: **Animation toolbar** (see :doc:`animation`).
-- **Window** and **Help**.
+- **Window**: **Model Directory** (see :doc:`files`), and the open windows.
+- **Help**.
 
 A first network
 ---------------
