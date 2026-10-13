@@ -1107,6 +1107,57 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     
 
   @override
+  def _wasRead(self, url:str) -> None:
+    '''
+    Once it's read: say which of its objects' model objects couldn't be found
+    (if any: eg, deleted from an ontology it uses). They're shown as missing
+    (see *VObject.validate()*: their status reports say why, and offer to
+    erase them).
+
+    :param url:
+    :type url: str
+    '''
+    super()._wasRead(url)
+    unresolved = self.__dict__.pop("_unresolved", [])
+    if unresolved:
+      shown = unresolved[:Model.UNRESOLVED_SHOWN]
+      more = f"\n  ... and {len(unresolved) - len(shown)} more" if len(unresolved) > len(shown) else ""
+      logger.warning(f'"{url}": {len(unresolved)} of its objects\' model objects couldn\'t be found (they\'re shown as '
+                     f'missing):\n  ' + "\n  ".join(f"{ref}: {why}" for ref, why in shown) + more)
+
+  def modelObjectsReplaced(self, old:Model, new:Model) -> int:
+    '''
+    Its model has put *new* in *old*'s place (see *Model.replaceSuperModel()*):
+    its objects showing objects of *old* show the same objects of *new*.
+
+    :param old:
+    :type old: Model
+    :param new:
+    :type new: Model
+    :returns: How many of its objects were changed.
+    :rtype: int
+    '''
+    count = 0
+    for vo in list(self._db.values()):
+      mo = getattr(vo, "_modelObject", None)
+      if mo is None or mo.db is not old:
+        continue
+      target = new._db.get(mo._id)
+      if not isinstance(target, GraphObject):
+        continue
+      mo.detach(vo)
+      vo._modelObject = target
+      target.attach(vo)
+      vo.cache.clear() # (its look, from its model object: got afresh -- see Cache)
+      vo.cache["name"] = target.name
+      count += 1
+    if count:
+      self.__dict__.pop("_byModelObject", None) # (see viewObjectsFor())
+      self.setDirty()
+      self.repaint()
+    return count
+
+  @override
   def serializationHeader(self) -> dict[str, Any]:
     '''
     :returns: What's in the head of its file (see *PRDb.serializationHeader()*;
@@ -1297,6 +1348,42 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     except Exception:
       return 1
 
+  def doReplaceSuperModel(self) -> None:
+    '''
+    "Edit | Replace super-model...": put another model in place of one of this
+    view's model's super-models -- or of a model its objects refer to that
+    isn't one (see *Model.unlistedModels()*) -- eg: an ontology's copy on the
+    web in place of the local one (see *Model.replaceSuperModel()*); and show
+    the same objects of the new one in its open views.
+
+    :rtype: None
+    '''
+    from tkinter import messagebox
+    from sn.view.graphics.replaceModelDialog import ReplaceModelDialog
+    model = self.model
+    if model.writeLocked():
+      messagebox.showinfo("Replace super-model", f'"{model.url}" is write-locked: it can\'t be changed.', parent=self.window)
+      return
+    answer = ReplaceModelDialog(self.window, model).show()
+    if answer is None:
+      return
+    old, where = answer
+    try:
+      new = Model.getDB(PRDb.absoluteURL(where, base=model.url))
+      count = model.replaceSuperModel(old, new)
+    except Exception as ex:
+      messagebox.showerror("Replace super-model", f'Nothing was changed:\n\n{ex}', parent=self.window)
+      return
+    shown = 0
+    for window in list(Application.current.windows.values()) if Application.current else [self.window]:
+      view = getattr(window, "view", None)
+      if view is not None and view.model is model:
+        shown += view.modelObjectsReplaced(old, new)
+    logger.warning(f'{model.name}: "{new.url}" is in place of "{old.url}": {count} reference{"s" if count != 1 else ""} '
+                   f'changed, and {shown} object{"s" if shown != 1 else ""} in open views. Save the model (and the views) '
+                   f'to keep it; its other views take it into account when they\'re opened.')
+    self.terminal.flash()
+
   def doModelPreferences(self) -> None:
     '''
     "Edit | Model preferences...": edit this view's model's preferences (see
@@ -1393,6 +1480,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     addToMenuBar("Edit|Copy as picture", lambda: self._editAction("copy image"), accelerator=KEY_COPY_IMAGE[1])
     addToMenuBar("Edit|Select All", lambda: self._editAction("select all"), accelerator=KEY_SELECT_ALL[1])
     addToMenuBar("Edit|Model preferences...", self.doModelPreferences, separatorBefore=True)
+    addToMenuBar("Edit|Replace super-model...", self.doReplaceSuperModel)
     addCheckToMenuBar("View|Animation toolbar", self._animationToolbarShown(), self._onAnimationToolbarItem,
                       cascadePositions={"View": self._afterFileMenu() + 1}) # (after "Edit", made just above)
     addCheckToMenuBar("View|Reasoning toolbar", self._reasoningToolbarShown(),
@@ -1429,6 +1517,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     removeFromMenuBar("Edit|Copy as picture")
     removeFromMenuBar("Edit|Select All")
     removeFromMenuBar("Edit|Model preferences...")
+    removeFromMenuBar("Edit|Replace super-model...")
     removeFromMenuBar("File|Close model")
     removeFromMenuBar("File|Open super model")
     removeFromMenuBar("View|Animation toolbar")

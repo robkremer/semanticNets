@@ -225,6 +225,9 @@ FIRST_ID = {"model": 256, "view": 1}
 PEEKED = ("url", "model", "nextID")
 "The properties of the object in a file that *peekFile()* reads (if they're there)."
 
+CACHED = "X-Cached-Copy"
+"In *peekURL()*'s headers: the path of the copy read, if the server couldn't be reached."
+
 REMOTE_TIMEOUT = 10
 "How long (seconds) to wait for a remote model or view (see *peekURL()*)."
 
@@ -272,7 +275,12 @@ def peekURL(url:str) -> tuple[dict[str, str], dict[str, str]]:
       raise FileNotFoundError(url) from e
     raise ValueError(f'Can\'t fetch "{url}": {e}') from e
   except (URLError, OSError) as e:
-    raise ValueError(f'Can\'t fetch "{url}": {getattr(e, "reason", e)}') from e
+    from util.utils import cachedCopy
+    copy = cachedCopy(url) # (the server can't be reached: the copy kept when it was last read -- see fetchURL())
+    if copy is None:
+      raise ValueError(f'Can\'t fetch "{url}": {getattr(e, "reason", e)}') from e
+    with open(copy, "rb") as f:
+      return _peek(f, url), {CACHED: copy}
 
 HEAD_KEYS = {"type": "type", "url": "url", "model": "model", "objects": "objects", "previousURL": "previousURL"}
 "What's taken from a document's head (see *_fromHead()*): its keys -> *peekFile()*'s."
@@ -373,6 +381,8 @@ class Entry:
   (from its nextID: see *FIRST_ID*). Fewer if some have been deleted -- it
   can't be known without reading the whole file -- unless it says how many
   (see *objectsExact*).'''
+  cached:bool = False
+  "Whether it's remote, and was read from the copy kept of it, as its server couldn't be reached (see *fetchURL()*)."
   objectsExact:bool = False
   "Whether *objects* is exactly how many objects are in it: its head says (see *XML3SerializationStrategy*)."
   created:float|None = None
@@ -463,6 +473,11 @@ def scanURL(url:str, onPath:bool=True) -> Entry:
     entry.error = str(e)
     return entry
   _fromPeek(entry, peeked)
+  if CACHED in headers: # (offline: from its copy)
+    entry.cached = True
+    st = os.stat(headers[CACHED])
+    entry.size, entry.modified = st.st_size, st.st_mtime
+    return entry
   try:
     entry.size = int(headers["Content-Length"]) if "Content-Length" in headers else None
   except ValueError:

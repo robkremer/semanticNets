@@ -109,6 +109,41 @@ refers to isn't next to the copy, it's looked for where the original was.
 Each file also records where it was last saved, and where it was before
 that; when you open a copy, the program notices it has moved and says so.
 
+Models on the web: shared ontologies
+------------------------------------
+
+A model can build on one kept on the web -- eg: an ontology shared by many
+models of family data, on this computer or on other web sites: make its URL
+one of the model's super-models (**Edit | Model preferences...**, **Add
+URL...**). Models on the web are read-only here.
+
+- **Offline**: a copy of each model (or view) read from the web is kept, in
+  ``~/.sn/cache/``. If its server can't be reached, the copy is used instead
+  (you're told, once), and the model directory shows it as *offline*.
+- **Replacing a super-model** (**Edit | Replace super-model...**): put another
+  model in place of one of the model's super-models -- eg: an ontology's copy
+  on the web in place of the local file it was copied from. Every reference
+  the model's objects make to the old one becomes a reference to the same
+  object (the same id) in the new one; nothing is changed unless they're all
+  there. The model's open views follow at once; its other views do when
+  they're opened. Save the model (and the views) to keep it.
+- **Mixed references**: when a model is read, it's checked that its objects
+  refer only to its own super-models; if some refer to a model that isn't one
+  (eg: the local copy of an ontology, when the web one is the super-model),
+  you're told which, and how many -- **Replace super-model...** puts that
+  right.
+- **Moved models**: if a model (or a whole folder of them, eg: a web site)
+  moves, list where it was and where it is now in the ``model/urlAliases``
+  setting -- ``old -> new``, one per line; an ``old`` ending in ``/`` moves
+  everything under it -- and references to it where it was are taken to be to
+  it where it is now.
+- **Deleted objects**: an ontology's objects are never renumbered, but one may
+  be deleted. A reference to one that's gone (or to a model that isn't there)
+  is reported when the model is read -- which object, what it referred to, and
+  why it couldn't be found -- and the object referring to it is marked with
+  the problem (eg: *Its type couldn't be found*). A view's object for a model
+  object that's gone is shown as missing, and offers to erase it.
+
 File format
 -----------
 
@@ -126,7 +161,8 @@ Settings
 --------
 
 **Settings...** (in the application menu) shows the
-program's settings, and lets you change them. They're kept in ``~/.sn.xml``.
+program's settings, and lets you change them. They're kept in ``~/.sn/prefs.xml``
+(before, in ``~/.sn.xml``: it's moved there the first time).
 Among them:
 
 ===============================================  ==========================================
@@ -142,6 +178,7 @@ setting                                          controls
 ``gui/shadowTypes``                              whether types are drawn with a shadow
 ``gui/recentFiles``                              how many views **File | Open Recent** lists
 ``gui/directoryPath``                            the folders the model directory searches
+``model/urlAliases``                             where models have moved (``old -> new``)
 ``gui/NodeMinSize``,                             the default size and shape of a node
 ``gui/NodeAspectRatio``
 ``gui/highlightColor``                           the colour of highlights (eg: a query's

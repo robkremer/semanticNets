@@ -197,6 +197,10 @@ PREFS:dict[str, tuple[Any, Any, str]] = {
     "The terminal pane's background colour."),
   "gui/recentFiles": (int, 10,
     "How many of the views (or models) opened most recently File | Open Recent lists (0 for none)."),
+  "model/urlAliases": ("list[str]", [],
+    "Where models (and views) have moved to, so that references to them where they were are taken to be to them "
+    "where they are now -- eg: an ontology moved to another web site. Each is \"old -> new\": two URLs (or paths). "
+    "One ending in \"/\" moves everything under it: eg, \"http://old.org/onto/ -> https://new.org/ontologies/\"."),
   "gui/directoryPath": (str, "",
     "Where the model directory (Window | Model Directory) looks for models and views, separated by \";\": folders "
     "(paths or \"file:\" URLs) -- one ending in \"/**\" includes the folders below it -- and the URLs of models "
@@ -289,7 +293,35 @@ def initPrefs(prefs:Prefs) -> None:
       attr.note = note
       attr.userNote = False
 
-prefsfilename = f'{os.path.expanduser("~")}/.{SHORT_NAME}.xml'
+SN_FOLDER = os.path.join(os.path.expanduser("~"), f".{SHORT_NAME}")
+'''Where the program keeps its own files: the preferences (*prefs.xml*), the
+copies of models and views read from the web (*cache/*: see
+*SerializationStrategy.cacheFolder*), ...'''
+
+def snFolder(*parts:str) -> str:
+  '''
+  :param parts: A path within *SN_FOLDER* (eg: "cache").
+  :type parts: str
+  :returns: It -- made, if it isn't there.
+  :rtype: str
+  '''
+  path = os.path.join(SN_FOLDER, *parts)
+  os.makedirs(path, exist_ok=True)
+  return path
+
+import util.utils
+util.utils.webCacheFolder = os.path.join(SN_FOLDER, "cache") # (copies of what's read from the web: used when it can't be reached)
+
+prefsfilename = os.path.join(SN_FOLDER, "prefs.xml")
+_oldPrefs = os.path.join(os.path.expanduser("~"), f".{SHORT_NAME}.xml") # (where they were kept before SN_FOLDER)
+if not os.path.exists(prefsfilename) and os.path.exists(_oldPrefs):
+  try:
+    snFolder()
+    os.replace(_oldPrefs, prefsfilename)
+    logger.info(f'The preferences have moved: from "{_oldPrefs}" to "{prefsfilename}".')
+  except OSError:
+    logger.warning(f'Couldn\'t move the preferences from "{_oldPrefs}" to "{prefsfilename}": using them where they are.', exc_info=True)
+    prefsfilename = _oldPrefs
 try:
   snPrefs:Prefs = SNPrefs.read(prefsfilename)
 except:
@@ -297,6 +329,54 @@ except:
   SNPrefs.prefsFileName = prefsfilename
 renamePrefs(snPrefs) # (first: a renamed preference's value is kept, not replaced by its default)
 initPrefs(snPrefs)
+
+_userAliases:list[str] = []
+"The aliases added from the \"model/urlAliases\" preference (see *applyURLAliases()*)."
+
+def applyURLAliases(entries:Any) -> list[str]:
+  '''
+  Make the aliases in *entries* -- the "model/urlAliases" preference: each
+  "old -> new" -- the URL aliases (see *PRDb.aliases*), in place of those it
+  made before.
+
+  :param entries:
+  :type entries: Any
+  :returns: The entries that couldn't be made sense of.
+  :rtype: list[str]
+  '''
+  from util.persistence.pRef import PRDb
+  from util.utils import fixURL
+  def url(text:str) -> str:
+    text = text.strip()
+    if "://" in text or text.startswith(("sn:", "file:")):
+      return text
+    folder = text.endswith("/")
+    ret = fixURL(os.path.expanduser(text), replaceExt=None, mode="")[0]
+    return ret + "/" if folder and not ret.endswith("/") else ret
+  for old in _userAliases:
+    PRDb.aliases.pop(old, None)
+  _userAliases.clear()
+  bad:list[str] = []
+  for entry in entries if isinstance(entries, list) else []:
+    old, arrow, new = str(entry).partition("->")
+    if not arrow or not old.strip() or not new.strip():
+      bad.append(str(entry))
+      continue
+    try:
+      o, n = url(old), url(new)
+    except Exception:
+      bad.append(str(entry))
+      continue
+    PRDb.aliases[o] = n
+    _userAliases.append(o)
+  for b in bad:
+    logger.warning(f'The URL alias "{b}" (in the model/urlAliases setting) isn\'t "old -> new": it\'s ignored.')
+  return bad
+
+applyURLAliases(snPrefs.get("model/urlAliases", []))
+def _onURLAliases(_key:str, value:Any) -> None:
+  applyURLAliases(value)
+snPrefs.addCallback("model/urlAliases", _onURLAliases)
 snPrefs.addCallback("loggingLevel", lambda key, level: (logger.setLevel(logging.getLevelNamesMapping()[level.upper()]), # type: ignore[func-returns-value,arg-type]
                                                            logger.info(f'Updated {key} to {level} ({logging.getLevelName(logger.getEffectiveLevel())}={logger.getEffectiveLevel()})') # type: ignore[attr-defined]
                                                           ))

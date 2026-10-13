@@ -26,6 +26,7 @@ Submodules
    sn.view.graphics.layoutDialog
    sn.view.graphics.progress
    sn.view.graphics.reasoningToolbar
+   sn.view.graphics.replaceModelDialog
    sn.view.graphics.shapes
    sn.view.graphics.sngView
    sn.view.graphics.treeLayout

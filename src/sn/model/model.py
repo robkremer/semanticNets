@@ -288,11 +288,24 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
       if not isinstance(rel, IsaIndividual) and filtr(rel) and rel.isSymmetric():
         yield rel, rel.localDst if localOnly else rel.dst
         
+  def _validateTypesFound(self) -> None:
+    '''
+    Report (in its status report) a type of its that couldn't be found when it
+    was read (eg: deleted from an ontology it uses): its isa link to it is
+    left unconnected (see *Relation.getInstantiationInfo()*), and it's taken
+    to be of no type.
+    '''
+    for isa in self._outgoing:
+      if isinstance(isa, IsaIndividual) and isa.localDst is None and isa.statusReport():
+        why = next((str(x) for x in isa.statusReport() if "couldn't be found" in str(x)), "")
+        self.assertToStatusReport(False, f'Its type couldn\'t be found{": " + why.split(": ", 2)[-1] if why else ""}', "E")
+
   def validate(self) -> list[str]:        
     '''
     :returns:
     :rtype: list[str]
     '''
+    self._validateTypesFound()
     if type(self) is GraphObject:
       self.assertToStatusReport(self.id == 1, 
             'The only GraphObject should be top', 'E')
@@ -1245,6 +1258,26 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
                   '(they\'re made by tools/makeBaseRules.py).')
     return ret
 
+  def unlistedModels(self) -> dict[Model, int]:
+    '''
+    :returns: The models this one's objects refer to (by relations' ends,
+      eg: an isa link to a type) that aren't among its super-models (see
+      *allSuperDBs()*): each with how many references there are to it. There
+      should be none -- eg: an ontology moved to the web, but some objects
+      still referring to the local copy (see *replaceSuperModel()*).
+    :rtype: dict[Model, int]
+    '''
+    allowed = {id(self), *(id(db) for db in self.allSuperDBs())}
+    ret:dict[Model, int] = {}
+    for obj in list(self._db.values()):
+      if not isinstance(obj, Relation):
+        continue
+      for end in (obj.localSrc, obj.localDst):
+        db = getattr(end, "db", None)
+        if isinstance(db, Model) and id(db) not in allowed:
+          ret[db] = ret.get(db, 0) + 1
+    return ret
+
   UNRESOLVED_SHOWN = 10
   "The most references that couldn't be followed listed when a model's read (see *_wasRead()*)."
 
@@ -1268,6 +1301,14 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
       logger.warning(f'"{url}": {len(unresolved)} reference{"s" if len(unresolved) > 1 else ""} to objects couldn\'t be '
                      f'followed (the relations are left unconnected at that end):\n  '
                      + "\n  ".join(f"{what}: {why}" for what, why in shown) + more)
+    unlisted = self.unlistedModels()
+    if unlisted:
+      supers = ", ".join(f'"{PRDb.relativeURL(db.url, base=self.url)}"' for db in self.superDBs) or "none"
+      logger.warning(f'"{url}": its objects refer to objects in models that aren\'t among its super-models '
+                     f'(they are: {supers}):\n  '
+                     + "\n  ".join(f'"{db.url}": {n} reference{"s" if n > 1 else ""}' for db, n in unlisted.items())
+                     + '\nMake each one of its super-models (Edit | Model preferences...), or put the right one in its place '
+                       '(Edit | Replace super-model...).')
     if _isRemote(url) and not self._writeLocked:
       self._writeLocked = True
       logger.info(f'"{url}" is on the web: it\'s read-only here.')
@@ -1295,6 +1336,10 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
         self.superDBs.append(db) #type: ignore[arg-type]
 
     from sn.model.modelPrefs import ModelPrefs, initModelPrefs
+    self.replacedModels:dict[str, str] = {}
+    '''Models replaced by others as this one's super-models (see *replaceSuperModel()*):
+    old URL -> new URL. Its views' references to objects in the old ones are taken to be to
+    the same objects in the new ones when they're read.'''
     self.prefs:ModelPrefs = ModelPrefs()
     "This model's own preferences (see *sn.model.modelPrefs*): saved with it."
     initModelPrefs(self.prefs)
@@ -1345,6 +1390,9 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
               ret[str(k)] = v
           return ret
         p.getter = assertedObjects
+    ret.postconSetters.append(PropertyInfo("replacedModels", dict, lambda slf: dict(cast(Model, slf).replacedModels) or None,
+                                           lambda slf, v: setattr(slf, "replacedModels", dict(cast(dict, v or {}))),
+                                           omitIfNone=True, inHead=True)) # (references to other files: in the head)
     ret.postconSetters.append(PropertyInfo("prefs", ModelPrefs, lambda slf: cast(Model, slf).prefs, setPrefs,
                                            optional=True)) # optional: older files don't have it
     ret.finalSetters.append(PropertyInfo("_", bool, setter=lambda slf,_t:cast(Model,slf).setDirty(False))) #type: ignore[arg-type]
@@ -1469,6 +1517,86 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     implicit = self.implicitSuperDBs()
     return [PRDb.relativeURL(db.url, base=self.url) for db in self.superDBs if not any(db is i for i in implicit)] \
          + list(self._missingSuperDBs)
+
+  def replacedRef(self, ref:str) -> str:
+    '''
+    :param ref: A reference to an object, as read (eg: from one of this
+      model's views): eg, "familyOntology.snm#256" (relative to the file being
+      read).
+    :type ref: str
+    :returns: *ref*, or -- if it's to an object in a model this one's replaced
+      (see *replaceSuperModel()*) -- a reference to the same object in the
+      model that replaced it.
+    :rtype: str
+    '''
+    where, hash_, which = ref.rpartition("#")
+    if not hash_ or not where or not self.replacedModels:
+      return ref
+    try:
+      url = PRDb.resolveURL(where)
+    except Exception:
+      return ref
+    new = self.replacedModels.get(url)
+    return f"{new}#{which}" if new else ref
+
+  def replaceSuperModel(self, old:Model, new:Model) -> int:
+    '''
+    Put *new* in *old*'s place: as a super-model (in the same position; or
+    added, if *old* wasn't one -- see *unlistedModels()*), and as what this
+    model's objects refer to -- each reference to one of *old*'s objects
+    becomes a reference to the object with the same id in *new* (eg: *new*
+    is a copy of *old*, moved to the web). Recorded (see *replacedModels*), so
+    the model's views, when they're read, are taken to refer to *new* too.
+    Nothing is changed unless every object referred to is in *new*.
+
+    :param old: A model this one's objects refer to.
+    :type old: Model
+    :param new: The model to refer to instead.
+    :type new: Model
+    :returns: How many references were changed.
+    :rtype: int
+    :raises ValueError: If it can't be done -- eg: an object referred to isn't
+      in *new*, or it has a different name there -- listing why; or *new* is
+      this model, or builds on it.
+    '''
+    if new is self or self in new.allSuperDBs():
+      raise ValueError(f'"{new.url}" can\'t be a super-model of "{self.url}": it is, or builds on, it.')
+    if any(old is m for m in self.implicitSuperDBs()):
+      raise ValueError(f'"{old.url}" is built in: it can\'t be replaced.')
+    changes:list[tuple[Relation, bool, GraphObject]] = []
+    problems:list[str] = []
+    for obj in list(self._db.values()):
+      if not isinstance(obj, Relation):
+        continue
+      for isSource, end in ((True, obj.localSrc), (False, obj.localDst)):
+        if end is None or end.db is not old:
+          continue
+        target = new._db.get(end._id)
+        if not isinstance(target, GraphObject):
+          problems.append(f'#{end._id} ({end.name}): not in "{new.url}"')
+        elif type(target) is not type(end) or str(target.name) != str(end.name):
+          problems.append(f'#{end._id} ({end.name}): in "{new.url}", it\'s {type(target).__name__} "{target.name}"')
+        else:
+          changes.append((obj, isSource, target))
+    if problems:
+      raise ValueError(f'"{new.url}" isn\'t a copy of "{old.url}" (as far as this model is concerned):\n  '
+                       + "\n  ".join(sorted(set(problems))))
+    for rel, isSource, target in changes:
+      rel.connect(source=target) if isSource else rel.connect(destination=target)
+    supers = [new if db is old else db for db in self.superDBs]
+    if not any(db is new for db in supers):
+      supers.append(new)
+    kept:list[PRDb] = []
+    for db in supers: # (new may have been one already: once, where it first is)
+      if not any(db is k for k in kept):
+        kept.append(db)
+    self.superDBs[:] = kept #type: ignore[assignment]
+    for k, v in list(self.replacedModels.items()): # (anything replaced by old is now replaced by new)
+      if v == old.url:
+        self.replacedModels[k] = new.url
+    self.replacedModels[old.url] = new.url
+    self.setDirty()
+    return len(changes)
 
   def setSuperModels(self, paths:list[str]) -> None:
     '''
@@ -2149,6 +2277,7 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]): #type: ignore[misc]
       self.assertToStatusReport(self in self.localSrc._outgoing, f'src end is not registered with src object, {self.localSrc}', 'E')
     if self.localDst is not None:
       self.assertToStatusReport(self in self.localDst._incoming, f'dst end is not registered with dst object, {self.localDst}', 'E')
+    self._validateTypesFound()
     self._validateSelfIsa()
     return self.statusReport()
     

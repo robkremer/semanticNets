@@ -357,13 +357,17 @@ class DirectoryPane(ttk.Frame):
     if entry.error:
       tags.append("missing")
       return ("missing" if entry.error == "missing" else "unreadable"), tuple(tags)
+    idle = "" # (what's said of one that isn't open)
+    if entry.cached:
+      tags.append("elsewhere")
+      idle = "offline"
     if entry.kind == "view":
       if entry.url in self.app.windows:
         return "open", (*tags, "open")
-      return "", tuple(tags)
+      return idle, tuple(tags)
     model = PRDb.AllDBs.get(entry.url)
     if model is None:
-      return ("system" if entry.url.startswith("sn:") else ""), tuple(tags)
+      return ("system" if entry.url.startswith("sn:") else idle), tuple(tags)
     shown = any(w.view is not None and w.view.model is model for w in self.app.windows.values())
     status = "read-only" if model.writeLocked() else "open" if shown else "" # (else just in memory: see deleteSelected())
     return status, (*tags, "open") if shown else tuple(tags)
@@ -397,7 +401,7 @@ class DirectoryPane(ttk.Frame):
       details.append(f"at most {entry.objects:,} objects (as many as have been made in it: fewer if some were deleted -- "
                      "saving it again makes it say exactly)")
     if entry.remote:
-      details.append("remote: opened read-only")
+      details.append("remote: opened read-only" + (" -- its server can't be reached: this is the copy kept of it" if entry.cached else ""))
     if not entry.onPath and entry.kind == "model":
       details.append("not in the searched folders: a view there refers to it")
     if details:

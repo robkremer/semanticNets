@@ -289,10 +289,14 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     assert isinstance(view, SNGView), f'Expecting SNGView type, got {type(SNGView)}'
     if isinstance(modelObject, str):
       self.readModelObjectRef:str = modelObject
+      ref = view.model.replacedRef(modelObject) if hasattr(view.model, "replacedRef") else modelObject # (see Model.replaceSuperModel())
       try:
-        obj = PReference[GraphObject](modelObject)(relativeTo=view.model)
-      except KeyError:
+        obj = PReference[GraphObject](ref)(relativeTo=view.model)
+      except Exception as ex: # (eg: its model's gone, or it's been deleted from it: see validate())
+        from sn.model.model import unresolvedReason
         obj = None
+        self.__dict__["_missingReason"] = reason = unresolvedReason(ref, ex)
+        view.__dict__.setdefault("_unresolved", []).append((ref, reason))
       modelObject = obj # type: ignore[assignment]
     assert isinstance(modelObject, (GraphObject,NoneType))
     assert isinstance(shape, (Shape,str)), f'Expected Shape or str, but got "{shape.__class__.__name__}"'
@@ -982,7 +986,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     '''
     try:
       self.assertToStatusReport(self.modelObject is not None, 
-        f'Model object is missing from Model: {self.readModelObjectRef if hasattr(self, "readModelObjectRef") else ""}', "E", 
+        f'Model object is missing from Model: {self.readModelObjectRef if hasattr(self, "readModelObjectRef") else ""}'
+        + (f' ({self.__dict__["_missingReason"]})' if self.__dict__.get("_missingReason") else ""), "E", 
         actions={"erase view object": lambda: [self._disconnect(), self.view.setDirty(), self.delete(), None][-1]}) #check model object is there.
       if self.modelObject is not None:
         model:GraphObject = self.modelObject

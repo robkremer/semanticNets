@@ -45,7 +45,7 @@ Open **Semantic Nets** as you would any app, or double-click a model
 
 The **Help** menu has this guide.
 
-The program keeps its settings in *~/.sn.xml* (see :doc:`files`), and its log
+The program keeps its settings in *~/.sn/prefs.xml* (see :doc:`files`), and its log
 -- worth a look if something goes wrong -- in *~/Library/Logs/Semantic Nets*.
 
 Other ways to run it
@@ -100,7 +100,7 @@ The menu bar has:
   **Save view as...** and **Save model as...** (a copy of either: see
   :doc:`files`), and **Close model** (its model, and all the windows on it).
 - **Edit**: **Model preferences...** (the window's model's own settings, eg:
-  its super-models: see :doc:`files`).
+  its super-models) and **Replace super-model...** (see :doc:`files`).
 - **View**: **Animation toolbar** (see :doc:`animation`).
 - **Window**: **Model Directory** (see :doc:`files`), and the open windows.
 - **Help**.

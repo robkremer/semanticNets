@@ -43,7 +43,7 @@ Packages
 
 ``sn``
   The package's ``__init__``: the logger, the preferences (``snPrefs``, kept
-  in ``~/.sn.xml``), and the offer to save modified models at exit.
+  in ``~/.sn/prefs.xml``: ``sn.SN_FOLDER`` holds the program's own files, eg: the web cache), and the offer to save modified models at exit.
 
 ``sn.model``
   The data: :py:class:`~sn.model.model.Model` (a database of
