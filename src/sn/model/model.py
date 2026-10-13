@@ -1119,6 +1119,29 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     return ret
     
     
+def unresolvedReason(ref:str, ex:Exception) -> str:
+  '''
+  :param ref: A reference to an object -- eg: "#12", or "http://.../ontology.snm#256" --
+    that couldn't be followed.
+  :type ref: str
+  :param ex: Why not.
+  :type ex: Exception
+  :returns: Why not, in plain words: eg, there's no model at that URL, or the
+    model there has no such object.
+  :rtype: str
+  '''
+  where, _, which = ref.rpartition("#")
+  cause:BaseException|None = ex
+  while cause is not None:
+    if isinstance(cause, FileNotFoundError) or (isinstance(cause, OSError) and getattr(cause, "errno", None) == 2):
+      return f'there\'s no model at "{where}"' if where else str(cause)
+    cause = cause.__cause__ or cause.__context__
+  if isinstance(ex, KeyError):
+    return f'"{where or "this model"}" has no object #{which}' if which else f'no such object ({ex})'
+  if isinstance(ex, LookupError) and "No strategy succeeded" in str(ex):
+    return f'"{where}" couldn\'t be read as a model'
+  return f'{type(ex).__name__}: {ex}'
+
 def _isRemote(url:str) -> bool:
   '''
   :returns: Whether *url* is on the web (eg: "https://..."): a model there can
@@ -1222,16 +1245,29 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
                   '(they\'re made by tools/makeBaseRules.py).')
     return ret
 
+  UNRESOLVED_SHOWN = 10
+  "The most references that couldn't be followed listed when a model's read (see *_wasRead()*)."
+
   @override
   def _wasRead(self, url:str) -> None:
     '''
-    A model read from the web (eg: an ontology, or a super-model) is
-    write-locked: it can't be saved there.
+    Once it's read: say which references to objects couldn't be followed (if
+    any: eg, to an object in a model at a URL where there's nothing -- the
+    relations are left unconnected at that end, and say why in their status
+    reports); and, if it's from the web (eg: an ontology, or a super-model),
+    write-lock it: it can't be saved there.
 
     :param url:
     :type url: str
     '''
     super()._wasRead(url)
+    unresolved = self.__dict__.pop("_unresolved", [])
+    if unresolved:
+      shown = unresolved[:self.UNRESOLVED_SHOWN]
+      more = f"\n  ... and {len(unresolved) - len(shown)} more" if len(unresolved) > len(shown) else ""
+      logger.warning(f'"{url}": {len(unresolved)} reference{"s" if len(unresolved) > 1 else ""} to objects couldn\'t be '
+                     f'followed (the relations are left unconnected at that end):\n  '
+                     + "\n  ".join(f"{what}: {why}" for what, why in shown) + more)
     if _isRemote(url) and not self._writeLocked:
       self._writeLocked = True
       logger.info(f'"{url}" is on the web: it\'s read-only here.')
@@ -1824,22 +1860,24 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]): #type: ignore[misc]
     def connectSrc(slf:Relation, source:str, isSource:bool):
       if source is not None and source!="None":
         sideText = "src" if isSource else "dst"
+        problem:str|None = None
+        obj:Any = None
         try:
-          obj:Any = GORef.eval(source, slf.db)
+          obj = GORef.eval(source, slf.db)
           assert isinstance(obj, GraphObject)
           if isSource:
             slf.connect(source=obj)
           else:
             slf.connect(destination=obj) 
-        except KeyError:
-          slf.assertToStatusReport(False, f'Unexpected read fault on {sideText} for Relation {slf}: "{source}"', "E", 
-                                   actions={"remove relation from model": lambda: [slf.model.setDirty(), slf._disconnect(), slf.model.setDirty(), None][-1]}) #type: ignore[func-returns-value]
         except AssertionError:
-          slf.assertToStatusReport(False, f'Unexpected type for read on {sideText} for Relation {slf}: {type(obj)}', "E",
-                                   actions={"remove relation from model": lambda: [slf.model.setDirty(), slf._disconnect(), slf.model.setDirty(), None][-1]}) #type: ignore[func-returns-value]
+          problem = f'it isn\'t an object of a model (it\'s a {type(obj).__name__})'
         except Exception as ex:
-          slf.assertToStatusReport(False, f'Unexpected error on reading {sideText} for Relation {slf}: {ex.__class__.__name__}: {ex}', "E", 
+          problem = unresolvedReason(source, ex)
+        if problem is not None:
+          described = slf.describeEnd(isSource, source)
+          slf.assertToStatusReport(False, f'Its {sideText} couldn\'t be found: {described}: {problem}.', "E",
                                    actions={"remove relation from model": lambda: [slf.model.setDirty(), slf._disconnect(), slf.model.setDirty(), None][-1]}) #type: ignore[func-returns-value]
+          slf.db.__dict__.setdefault("_unresolved", []).append((described, problem))
         
     ret = GraphObject.getInstantiationInfo()
     return InstantiationInfo(
@@ -1855,6 +1893,27 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]): #type: ignore[misc]
                                         lambda slf: GORef.formatForURL(slf.localDst, slf.db), #type: ignore[attr-defined]
                                         lambda slf, source: connectSrc(slf, source, isSource=False))]  #type: ignore[arg-type]
             )
+
+  def describeEnd(self, isSource:bool, ref:str) -> str:
+    '''
+    :param isSource: Whether it's this relation's source (else its destination) that's described.
+    :type isSource: bool
+    :param ref: The reference to it, as it was read (eg: "http://.../ontology.snm#256").
+    :type ref: str
+    :returns: This relation as its source, its name and *ref* -- eg: "Fred isa
+      → http://.../ontology.snm#256" -- for a message saying *ref* couldn't
+      be found (see *getInstantiationInfo()*).
+    :rtype: str
+    '''
+    def name(o:Any, depth:int=0) -> str:
+      try:
+        if isinstance(o, Relation) and depth == 0: # (eg: a relation whose type is missing: by its ends)
+          return f'({name(o.localSrc, 1)} \u2192 {name(o.localDst, 1)})'
+        return str(o.name) if o is not None else "?"
+      except Exception:
+        return "?"
+    other = name(self.localDst if isSource else self.localSrc)
+    return f'{ref} \u2192 {name(self, 1)} \u2192 {other}' if isSource else f'{other} {name(self, 1)} \u2192 {ref}'
 
   @property
   def dst(self, localOnly:bool=False) -> GraphObject|None: #GraphObject|None:
