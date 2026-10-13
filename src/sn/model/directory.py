@@ -5,7 +5,7 @@ them: only each file's header and the first few properties of the object in it
 (its type, URL, and -- for a view -- its model) are read (see *peekFile()*).
 
 The search path is a string of folders separated by ":" (*os.pathsep*), or by
-new lines. A folder ending in "/**" includes all the folders below it, too
+new lines. A folder ending in ``/**`` includes all the folders below it, too
 (see *parsePath()*). The window showing the directory is
 *sn.view.graphics.directoryWindow.DirectoryWindow*.
 
@@ -119,7 +119,7 @@ def _localPath(part:str) -> str:
 def parsePath(text:str) -> list[Folder]:
   '''
   :param text: A search path: its parts separated by ";" or new lines (see
-    *SEPARATORS*). Each is a folder -- a path or a "file:" URL, ending in "/**"
+    *SEPARATORS*). Each is a folder -- a path or a "file:" URL, ending in ``/**``
     if the folders below it are included too; "~" is the home folder -- or the
     URL of a model or view somewhere else (eg: "https://..."). Blank parts are
     ignored, and so are repeats.
@@ -274,12 +274,34 @@ def peekURL(url:str) -> tuple[dict[str, str], dict[str, str]]:
   except (URLError, OSError) as e:
     raise ValueError(f'Can\'t fetch "{url}": {getattr(e, "reason", e)}') from e
 
+HEAD_KEYS = {"type": "type", "url": "url", "model": "model", "objects": "objects", "previousURL": "previousURL"}
+"What's taken from a document's head (see *_fromHead()*): its keys -> *peekFile()*'s."
+
+def _fromHead(events:Iterator[tuple[str, ET.Element]], name:str) -> dict[str, str]:
+  '''
+  :param events: The parse of a document with a head (see
+    *XML3SerializationStrategy*), as far as the start of its top tag.
+  :returns: What *peekFile()* does, from its head (only that is read). Its
+    object count ("objects") is exact.
+  '''
+  from util.persistence.serializeXML3 import XML3SerializationStrategy
+  for event, elem in events:
+    if event == "end" and elem.tag == "head":
+      head = XML3SerializationStrategy._head(elem)
+      return {mine: str(head[key]) for key, mine in HEAD_KEYS.items() if key in head and isinstance(head[key], (str, int))}
+    if event == "start" and elem.tag == "object": # (no head)
+      break
+  raise ValueError(f'"{name}" has no head.')
+
 def _peek(stream, name:str) -> dict[str, str]:
   '''The work of *peekFile()* and *peekURL()*: *stream* is read as far as need be.'''
   ret:dict[str, str] = {}
   stack:list[ET.Element] = []
   try:
-    for event, elem in ET.iterparse(stream, events=("start", "end")):
+    events = ET.iterparse(stream, events=("start", "end"))
+    for event, elem in events:
+      if event == "start" and not stack and elem.tag == "document": # (a document with a head: see XML3SerializationStrategy)
+        return _fromHead(events, name)
       if event == "start":
         stack.append(elem)
         depth = len(stack)
@@ -344,12 +366,15 @@ class Entry:
   "Its URL."
   modelURL:str|None = None
   "A view's model's URL (made absolute)."
-  type:str = ""
+  className:str = ""
   "The class of the object in it (its fully qualified name)."
   objects:int|None = None
   '''At most how many objects are in it: as many as have ever been made in it
   (from its nextID: see *FIRST_ID*). Fewer if some have been deleted -- it
-  can't be known without reading the whole file.'''
+  can't be known without reading the whole file -- unless it says how many
+  (see *objectsExact*).'''
+  objectsExact:bool = False
+  "Whether *objects* is exactly how many objects are in it: its head says (see *XML3SerializationStrategy*)."
   created:float|None = None
   "When the file was created (seconds since the epoch)."
   modified:float|None = None
@@ -452,13 +477,15 @@ def scanURL(url:str, onPath:bool=True) -> Entry:
 
 def _fromPeek(entry:Entry, peeked:dict[str, str]) -> None:
   "Fill in *entry* from what was peeked at (see *peekFile()*)."
-  entry.type = peeked["type"]
-  kind = _kindOf(entry.type)
+  entry.className = peeked["type"]
+  kind = _kindOf(entry.className)
   if kind is not None:
     entry.kind = kind
   try:
-    first = FIRST_ID.get(entry.kind, 1)
-    entry.objects = max(0, int(peeked["nextID"]) - first) if "nextID" in peeked else None
+    if "objects" in peeked: # (from its head: exact)
+      entry.objects, entry.objectsExact = int(peeked["objects"]), True
+    elif "nextID" in peeked:
+      entry.objects = max(0, int(peeked["nextID"]) - FIRST_ID.get(entry.kind, 1))
   except ValueError:
     pass
   if entry.kind == "view" and peeked.get("model"):

@@ -202,6 +202,24 @@ class Test(unittest.TestCase):
     self.assertEqual([v.name for v in byName["zoo"].views], ["zoo"])
     self.assertEqual(byName["zoo"].error, "missing")
 
+  def test0920withHead(self):
+    '''A file with a head (XML3): what's in it is read from there, and how many objects it has is exact.'''
+    d = self.dir
+    path = write(f"{d}/v.snv", '''<?xml version='1.0' encoding='utf-8'?>
+<document>
+  <head>
+    <property key="format" value="XML3" />
+    <property key="type" value="sn.view.graphics.sngView.SNGView" />
+    <property key="url" value="file:///old/v.snv" />
+    <property key="model" value="m.snm" />
+    <property key="objects" type="int" value="12" />
+  </head>
+  <object type="sn.view.graphics.sngView.SNGView" id="1"><property key="nextID" type="int" value="999" />''') # (and no more: only the head's read)
+    self.assertEqual(peekFile(path), {"type": "sn.view.graphics.sngView.SNGView", "url": "file:///old/v.snv",
+                                      "model": "m.snm", "objects": "12"})
+    entry = scanFile(path)
+    self.assertEqual((entry.objects, entry.objectsExact, entry.kind), (12, True, "view"))
+
   def test0950urlProblem(self):
     d = self.dir
     m, v = model(f"{d}/m.snm"), view(f"{d}/v.snv", "m.snm")

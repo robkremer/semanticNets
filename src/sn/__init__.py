@@ -33,6 +33,15 @@ from util import setupLogger
 NAME = "Semantic Nets"
 SHORT_NAME = "sn"
 VERSION = "1.0"
+"The program's version: written in the files it saves (see *SerializationStrategy.appVersion*)."
+
+SCHEMA = "sn"
+SCHEMA_VERSION = "1"
+'''The version of the structures of models and views, as they're saved:
+written in their files' heads ("schema", "schemaVersion": see
+*Model.serializationHeader()*), so that a file saved with older ones can be
+recognised and brought up to date when it's read. Change it whenever they
+change (eg: a property's renamed, or its meaning changes).'''
 
 class SNLogger(logging.Logger):
   def print(self, *args, **kwargs):
@@ -55,6 +64,8 @@ class SNLogger(logging.Logger):
 setupLogger(SNLogger, SHORT_NAME)
 
 import util.observer as observer
+from util.persistence.serialize import SerializationStrategy
+SerializationStrategy.appName, SerializationStrategy.appVersion = NAME, VERSION # (an application built on it says what it is itself, after importing sn)
 from util.prefs import Prefs
 from util.attribute import Attribute, VAR_DEFAULTED
 

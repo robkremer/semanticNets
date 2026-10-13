@@ -1107,6 +1107,16 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     
 
   @override
+  def serializationHeader(self) -> dict[str, Any]:
+    '''
+    :returns: What's in the head of its file (see *PRDb.serializationHeader()*;
+      its model's URL is there too: see *getInstantiationInfo()*), and the
+      version of the structures it's saved in (see *sn.SCHEMA_VERSION*).
+    :rtype: dict[str, Any]
+    '''
+    return {**super().serializationHeader(), "schema": sn.SCHEMA, "schemaVersion": sn.SCHEMA_VERSION}
+
+  @override
   @classmethod
   def getInstantiationInfo(cls) -> InstantiationInfo:
     def finalize(slf:Serializable, _:SerializableType):
@@ -1127,7 +1137,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       db = PRDb.AllDBs.get(str(m))
       return db if isinstance(db, Model) else Model(cast(str, m))
     ret.conArgs.append(ParamInfo("model", str, getter=lambda slf: PRDb.relativeURL(cast(SNGView,slf).model.url),
-                                 setter=readModel))
+                                 setter=readModel, inHead=True))
     ret.conKWArgs.append(ParamInfo("geometry", str, getter=lambda slf: cast(SNGView,slf).window.geometry()))
     ret.postconSetters.append(PropertyInfo("hides", str,
         lambda slf: ",".join(f"{k}={v}" for k, v in cast(SNGView, slf).hides.items()),

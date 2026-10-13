@@ -1299,7 +1299,7 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
         cast(Model, slf).prefs = prefs
         initModelPrefs(prefs) # (any added since it was saved; and their notes)
     from sn.model.modelPrefs import ModelPrefs
-    for p in ret.postconSetters: # the implicit super-models other than sn aren't saved: they're always there (and the base rules' file may be a temporary copy)
+    for p in ret.postconSetters:
       if p.name == "_db": # (inferred objects aren't saved: see GraphObject.inferred)
         def assertedObjects(slf:Serializable) -> SerializableType:
           from util.persistence.serialize import strdict
@@ -1395,6 +1395,20 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
       raise TypeError(f'Database "{url}" is of type {ret.__class__.__name__}; expected type Model."')
     return ret
       
+  @override
+  def serializationHeader(self) -> dict[str, Any]:
+    '''
+    :returns: What's in the head of its file (see *PRDb.serializationHeader()*),
+      and the version of the structures it's saved in (see *sn.SCHEMA_VERSION*).
+    :rtype: dict[str, Any]
+    '''
+    return {**super().serializationHeader(), "schema": sn.SCHEMA, "schemaVersion": sn.SCHEMA_VERSION}
+
+  @override
+  def objectCount(self) -> int:
+    ''':returns: How many of its objects are saved: not those inferred (see *GraphObject.inferred*).'''
+    return sum(1 for k, v in self._db.items() if k != 0 and not getattr(v, "inferred", False))
+
   def implicitSuperDBs(self) -> list[Model]:
     '''
     :returns: The super-models every model has, first: the system model

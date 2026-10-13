@@ -158,11 +158,16 @@ References between objects are saved as
 
 The file format is chosen by a
 :py:class:`~util.persistence.serialize.SerializationStrategy`. The default is
-``XML2`` (:py:mod:`util.persistence.serializeXML2`), a compact XML: simple
+``XML3`` (:py:mod:`util.persistence.serializeXML3`), a compact XML: simple
 values and references are written as XML attributes rather than as elements
-of their own. Files are read by trying the strategies in turn -- the
-preferred ones, and those for the file's extension, first -- so the older
-formats are still read.
+of their own. Each file is a head, then the model or view: the head says what
+it is, its URL, its model (a view's) or super-models (a model's), how many
+objects are in it, and the versions of the format, of the program, and of
+the structures it's saved in (``sn.SCHEMA_VERSION``: change it when they
+change). The head can be read without the rest (eg: by the model directory:
+see :py:mod:`sn.model.directory`). Files are read by trying the strategies in
+turn -- those that recognise the file's start, the preferred ones, and those
+for the file's extension, first -- so the older formats are still read.
 
 Copied and moved files
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -170,7 +175,7 @@ Copied and moved files
 References to other files are written relative to the file being written,
 when the target is close by (in the same folder, below it, or at most
 ``PRDb.MAX_UP`` folders up): a folder of models and views can then be moved
-or copied as a block. Each file's header records the URL it was saved to,
+or copied as a block. Each file's head records the URL it was saved to,
 and the one before that. When a file is read from somewhere else
 (:py:meth:`~util.persistence.pRef.PRDb.readFile`), it's noticed and
 reported, and a relative reference that isn't found next to the copy is

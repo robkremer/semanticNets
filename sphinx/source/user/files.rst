@@ -112,10 +112,13 @@ that; when you open a copy, the program notices it has moved and says so.
 File format
 -----------
 
-Files are XML. The current format is compact (simple values are written as
-attributes, references to other objects by id); older files, in the original
-more verbose XML format, are still read, and are written in the new format
-the next time they're saved. Because they're XML, they're readable, and can
+Files are XML. Each starts with a short **head** saying what it is -- a model
+or a view, where it was saved, its model or super-models, how many objects are
+in it, and which versions of the program and the format wrote it -- so it can
+be listed without reading the rest (as the model directory does). The rest is
+compact (simple values are written as attributes, references to other objects
+by id). Older files, in the earlier formats, are still read, and are written
+in the current one the next time they're saved. Because they're XML, they're readable, and can
 be compared or merged with ordinary tools -- but edit them by hand only with
 care.
 

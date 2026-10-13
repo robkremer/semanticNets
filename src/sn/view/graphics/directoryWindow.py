@@ -340,7 +340,7 @@ class DirectoryPane(ttk.Frame):
     name = entry.name if entry.url else "(no model)"
     def when(t:float|None) -> str:
       return time.strftime(TIME_FORMAT, time.localtime(t)) if t else ""
-    objects = f"\u2264 {entry.objects:,}" if entry.objects is not None else ""
+    objects = "" if entry.objects is None else f"{entry.objects:,}" if entry.objectsExact else f"\u2264 {entry.objects:,}"
     self.tree.insert(parent, tk.END, iid=iid, text=name, tags=(*tags, entry.kind),
                      values=(status, objects, sizeText(entry.size), entry.location, when(entry.modified), when(entry.created)))
     self._rowEntries[iid] = entry
@@ -391,8 +391,11 @@ class DirectoryPane(ttk.Frame):
     details = []
     if entry.error:
       details.append(entry.error if entry.error != "missing" else "the file's missing")
-    if entry.objects is not None:
-      details.append(f"at most {entry.objects:,} objects (as many as have been made in it: fewer if some were deleted)")
+    if entry.objects is not None and entry.objectsExact:
+      details.append(f"{entry.objects:,} objects")
+    elif entry.objects is not None:
+      details.append(f"at most {entry.objects:,} objects (as many as have been made in it: fewer if some were deleted -- "
+                     "saving it again makes it say exactly)")
     if entry.remote:
       details.append("remote: opened read-only")
     if not entry.onPath and entry.kind == "model":
@@ -527,7 +530,7 @@ class DirectoryPane(ttk.Frame):
 
 class FoldersDialog(tk.Toplevel):
   '''
-  The search path: one folder per line, each ending in "/**" if the folders
+  The search path: one folder per line, each ending in ``/**`` if the folders
   below it are included too. Modal: *show()* returns the folders, if OK'd.
   '''
 
@@ -601,7 +604,8 @@ class ReadProgress:
         path = pathOf(url)
         if path:
           try:
-            total = int(peekFile(path).get("nextID", 0)) or None
+            peeked = peekFile(path)
+            total = int(peeked.get("objects") or peeked.get("nextID") or 0) or None # (its head says how many; an old file, about how many)
           except (ValueError, OSError):
             pass
         self._totals[url] = total

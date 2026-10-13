@@ -44,6 +44,11 @@ from sn.view.graphics.guiApp import Application
 from sn.view.graphics.sngView import SNGView
 from sn.view.graphics.treeLayout import TreeLayout
 from sn.exampleApps.pythonParser.parser import buildModel, guessMain, ontologyTypes, outputPaths, readModules
+from util.persistence.serialize import SerializationStrategy
+
+NAME = "pythonParser"
+VERSION = "1.0"
+SerializationStrategy.appName, SerializationStrategy.appVersion = f"{NAME} ({sn.NAME} {sn.VERSION})", VERSION # (in the files it saves)
 
 TITLE = "Python Parser"
 

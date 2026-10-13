@@ -546,7 +546,7 @@ class Application(tk.Tk):
     *openWindow()*).
 
     :param entry:
-    :type entry: Entry
+    :type entry: sn.model.directory.Entry
     :param readOnly: Whether to write-lock its model, so it can't be changed
       (nor saved). Not if the model's open already, and not locked: it's
       opened as it is then (and the user's told).
