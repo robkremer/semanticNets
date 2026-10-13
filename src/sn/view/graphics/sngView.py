@@ -1647,7 +1647,14 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     assert isinstance(value, VObject), \
         f'Models are restricted to containing only GraphObject subtypes; got a {value.__class__.__name__} type.'
     self.setDirty()
+    index = self.__dict__.get("_byModelObject") if self.__dict__.get("_byModelObjectOf") is self._db else None
+    replacing = _id is not None and self._db.get(_id) is not None
     ret = super()._register(value, _id)
+    if index is not None:
+      if replacing: # (not expected: start the index afresh)
+        del self.__dict__["_byModelObject"]
+      elif value.modelObject is not None:
+        index.setdefault(id(value.modelObject), []).append(value)
     return ret
     
   @override
@@ -1660,7 +1667,15 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :param _id:
     :type _id: int
     '''
+    obj = self._db.get(_id)
     super()._unregister(_id)
+    index = self.__dict__.get("_byModelObject") if self.__dict__.get("_byModelObjectOf") is self._db else None
+    if index is not None and obj is not None and obj.modelObject is not None:
+      objs = index.get(id(obj.modelObject), [])
+      for i, o in enumerate(objs):
+        if o is obj:
+          del objs[i]
+          break
     self.setDirty()
     
   @override
@@ -2442,15 +2457,42 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :rtype: VObject | None
     '''
     if isinstance(mObject, GraphObject):
-      for obj in self.values():
-        if obj is not None and obj.modelObject is mObject:  # already displayed?
-          return obj
+      found = self.viewObjectsFor(mObject)
+      return found[0] if found else None
     else:
       for obj in self.values():
         if obj is not None and mObject(obj):  # already displayed?
           return obj
     # raise AttributeError(f'Expected a param of type GraphObject, but got type {mObject.__class__.__name__}')
     return None
+
+  def viewObjectsFor(self, mObject:GraphObject) -> list[VObject]:
+    '''
+    :param mObject: A model object.
+    :type mObject: GraphObject
+    :returns: The view objects in the display representing *mObject* (normally
+      at most one), in the view's order. Looked up in an index, made when first
+      needed and kept up to date as objects come and go (see *_register()*,
+      *_unregister()*).
+    :rtype: list[VObject]
+    '''
+    index = self._viewObjectIndex()
+    return [o for o in index.get(id(mObject), ()) if o.modelObject is mObject]
+
+  def _viewObjectIndex(self) -> dict[int, list[VObject]]:
+    '''
+    :returns: The view's objects by (the id of) their model objects.
+    :rtype: dict[int, list[VObject]]
+    '''
+    index = self.__dict__.get("_byModelObject")
+    if index is None or self.__dict__.get("_byModelObjectOf") is not self._db: # (reading replaces the dict: see PRDb)
+      index = {}
+      for obj in self.values():
+        if obj is not None and obj.modelObject is not None:
+          index.setdefault(id(obj.modelObject), []).append(obj)
+      self.__dict__["_byModelObject"] = index
+      self.__dict__["_byModelObjectOf"] = self._db
+    return index
 
   def validate(self, refresh:bool=False) -> int:
     '''

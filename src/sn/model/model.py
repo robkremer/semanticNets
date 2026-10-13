@@ -2172,7 +2172,7 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]): #type: ignore[misc]
           delOne(self.localSrc._outgoing, self)
         self._src = source
         source._outgoing.append(self)
-        assert self in source._outgoing
+        assert source._outgoing[-1] is self # (not "self in ...": that compares by == along what can be a long list)
         self.setDirty()
     if destination is not None:
       if self.localDst is not destination: # don't do anything if it's already done.
@@ -2180,7 +2180,7 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]): #type: ignore[misc]
           delOne(self.localDst._incoming, self)
         self._dst = destination
         destination._incoming.append(self)
-        assert self in destination._incoming
+        assert destination._incoming[-1] is self
         self.setDirty()
   # _disconnect()/_reconnect() of the src/dst ends are inherited from AGRelation.
 

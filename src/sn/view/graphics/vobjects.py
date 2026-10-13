@@ -985,8 +985,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         actions={"erase view object": lambda: [self._disconnect(), self.view.setDirty(), self.delete(), None][-1]}) #check model object is there.
       if self.modelObject is not None:
         model:GraphObject = self.modelObject
-        for n in self.view.values(): # check for other objects referencing this one's model object
-          if n is not self and n.modelObject is self.modelObject: # (the message only when it's needed: it's costly, and this is done for every object in the view)
+        for n in self.view.viewObjectsFor(model): # check for other objects referencing this one's model object
+          if n is not self: # (the message only when it's needed: it's costly, and this is done for every object in the view)
             self.assertToStatusReport(False,
               f'View objects {self} and {n} both reference the same model object {self.modelObject}.', 'E', dict())
         model.clearStatusReport()
