@@ -103,6 +103,15 @@ class Test(unittest.TestCase):
     self.assertEqual(parsePath(formatPath(folders)), folders)
     self.assertEqual(parsePath(""), [])
 
+  def test0150urlsInThePath(self):
+    folders = parsePath("file:///a/My%20Models/**; https://example.org/onto/animals.snm\n/b")
+    self.assertEqual(folders, [Folder("/a/My Models", True), Folder("https://example.org/onto/animals.snm"), Folder("/b")])
+    self.assertTrue(folders[1].remote)
+    self.assertEqual(str(folders[0]), "file:///a/My Models/**")
+    self.assertEqual(parsePath(formatPath(folders)), folders)
+    self.assertFalse(covered(folders, "/onto"))
+    self.assertEqual(list(filesIn([folders[1]])), ["https://example.org/onto/animals.snm"])
+
   def test0200covered(self):
     folders = parsePath("/a/b:/c/**")
     self.assertTrue(covered(folders, "/a/b"))
@@ -111,7 +120,7 @@ class Test(unittest.TestCase):
     self.assertTrue(covered(folders, "/c/d/e"))
     self.assertFalse(covered(folders, "/cd"))       # not just a prefix of the name
     self.assertIsNone(withFolder("/a/b:/c/**", "/c/x"))
-    self.assertEqual(withFolder("/a/b", "/e"), f"/a/b{os.pathsep}/e")
+    self.assertEqual(withFolder("/a/b", "/e"), "file:///a/b;file:///e")
 
   def test0300filesIn(self):
     d = self.dir
@@ -130,6 +139,7 @@ class Test(unittest.TestCase):
     self.assertEqual(peeked["type"], "sn.view.graphics.sngView.SNGView")
     self.assertEqual(peeked["model"], "m.snm")  # (not the one further in)
     self.assertEqual(peeked["nextID"], "42")
+    self.assertEqual(scanFile(v).objects, 41)  # (a view's first id is 1)
     self.assertEqual(peeked["url"], "file://" + v)
 
   def test0500peekXML(self):
@@ -180,7 +190,8 @@ class Test(unittest.TestCase):
     self.assertEqual([v.name for v in byName["zoo"].views], ["zoo", "zoo2"])
     self.assertFalse(byName["other"].onPath)
     self.assertIsNone(byName["other"].error)
-    self.assertEqual(byName["zoo"].objects, 42)
+    self.assertEqual(byName["zoo"].objects, 0)  # (a model's first id is 256: its nextID's 42 here)
+    self.assertEqual(byName["zoo"].location, f"file://{d}/lib/")
     self.assertEqual([v.name for v in byName["sn.xml"].views], ["sys"])
     # a view gone: its entry goes; a model gone that a view refers to stays, missing
     os.remove(f"{d}/lib/zoo2.snv")
@@ -190,6 +201,36 @@ class Test(unittest.TestCase):
     byName = {m.name: m for m in directory.models()}
     self.assertEqual([v.name for v in byName["zoo"].views], ["zoo"])
     self.assertEqual(byName["zoo"].error, "missing")
+
+  def test1000remote(self):
+    import threading, functools
+    from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
+    d = self.dir
+    class Quiet(SimpleHTTPRequestHandler):
+      def log_message(self, *args): pass
+    server = ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(Quiet, directory=f"{d}/web"))
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+      base = f"http://127.0.0.1:{server.server_address[1]}"
+      model(f"{d}/web/onto/animals.snm")
+      view(f"{d}/local/zoo.snv", f"{base}/onto/animals.snm")  # a local view of a model on the web
+      directory = Directory()
+      list(directory.scan(parsePath(f"{d}/local;{base}/onto/animals.snm;{base}/onto/gone.snv")))
+      byName = {m.name: m for m in directory.models()}
+      animals = byName["animals"]
+      self.assertTrue(animals.remote)
+      self.assertTrue(animals.onPath)
+      self.assertIsNone(animals.error)
+      self.assertEqual(animals.objects, 0)
+      self.assertEqual(animals.size, os.path.getsize(f"{d}/web/onto/animals.snm"))
+      self.assertIsNotNone(animals.modified)
+      self.assertEqual(animals.location, f"{base}/onto/")
+      self.assertEqual([v.name for v in animals.views], ["zoo"])
+      gone = [e for e in directory.entries.values() if e.url.endswith("gone.snv")][0]
+      self.assertEqual(gone.error, "missing")
+    finally:
+      server.shutdown()
+      server.server_close()
 
 
 if __name__ == "__main__":

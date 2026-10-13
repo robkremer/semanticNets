@@ -119,6 +119,28 @@ def seedSearchPath(urls:list[str]) -> None:
     if path and os.path.isdir(os.path.dirname(path)):
       noteFolderOf(url if "://" in url else "file://" + path)
 
+def sizeText(size:int|None) -> str:
+  '''
+  :param size: A number of bytes.
+  :type size: int | None
+  :returns: It, readably: eg, "12 KB", "3.4 MB".
+  :rtype: str
+  '''
+  if size is None:
+    return ""
+  for unit, scale in (("GB", 1e9), ("MB", 1e6), ("KB", 1e3)):
+    if size >= scale:
+      value = size / scale
+      return f"{value:.1f} {unit}" if value < 10 else f"{value:.0f} {unit}"
+  return f"{size} B"
+
+def isDark(widget:tk.Misc) -> bool:
+  ":returns: Whether macOS is in dark mode (never, elsewhere)."
+  try:
+    return bool(widget.tk.call("tk::unsupported::MacWindowStyle", "isdark", widget.winfo_toplevel()))
+  except tk.TclError:
+    return False
+
 def noteSaved(url:str) -> None:
   '''
   A model or view has been saved at *url*: add its folder to the search path
@@ -156,7 +178,11 @@ class DirectoryPane(ttk.Frame):
   scanned, opened or drawn).
   '''
 
-  COLUMNS = (("status", "", 80), ("folder", "Folder", 280), ("modified", "Modified", 130), ("created", "Created", 130))
+  MODEL_SHADE = ("#e9eef5", "#2e3540")
+  "The background of the models' rows (setting them off from their views'): in light mode, and dark."
+
+  COLUMNS = (("status", "", 72), ("objects", "Objects", 72), ("size", "Size", 72), ("location", "Location", 300),
+             ("modified", "Modified", 125), ("created", "Created", 125))
   "The list's columns, after the name: (id, heading, width)."
 
   def __init__(self, app:Application):
@@ -192,7 +218,7 @@ class DirectoryPane(ttk.Frame):
     self.tree.column("#0", width=220, stretch=True)
     for cid, heading, width in self.COLUMNS:
       self.tree.heading(cid, text=heading)
-      self.tree.column(cid, width=width, stretch=cid == "folder")
+      self.tree.column(cid, width=width, stretch=cid == "location", anchor=tk.E if cid in ("objects", "size") else tk.W)
     scroll = ttk.Scrollbar(listFrame, orient=tk.VERTICAL, command=self.tree.yview)
     self.tree.configure(yscrollcommand=scroll.set)
     self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -200,6 +226,7 @@ class DirectoryPane(ttk.Frame):
     self.tree.tag_configure("missing", foreground="gray55")
     self.tree.tag_configure("elsewhere", foreground="gray35")
     self.tree.tag_configure("open", font=("TkDefaultFont", 0, "bold"))
+    self.tree.tag_configure("model", background=self.MODEL_SHADE[1 if isDark(self) else 0])
     self.tree.bind("<<TreeviewSelect>>", lambda _e: self._selectionChanged())
     self.tree.bind("<Double-1>", lambda _e: self.openSelected())
     self.tree.bind("<Return>", lambda _e: self.openSelected())
@@ -282,8 +309,9 @@ class DirectoryPane(ttk.Frame):
     name = entry.name if entry.url else "(no model)"
     def when(t:float|None) -> str:
       return time.strftime(TIME_FORMAT, time.localtime(t)) if t else ""
-    self.tree.insert(parent, tk.END, iid=iid, text=name, tags=tags,
-                     values=(status, entry.folder, when(entry.modified), when(entry.created)))
+    objects = f"\u2264 {entry.objects:,}" if entry.objects is not None else ""
+    self.tree.insert(parent, tk.END, iid=iid, text=name, tags=(*tags, entry.kind),
+                     values=(status, objects, sizeText(entry.size), entry.location, when(entry.modified), when(entry.created)))
     self._rowEntries[iid] = entry
     return iid
 
@@ -318,10 +346,10 @@ class DirectoryPane(ttk.Frame):
     if self._scanning is not None: # (see _scanSome())
       return
     entry = self.selectedEntry()
-    openable = entry is not None and not entry.error and bool(entry.path)
+    openable = entry is not None and not entry.error and bool(entry.path or entry.remote)
     for b in (self.openButton, self.openReadOnlyButton):
       b.state(["!disabled"] if openable else ["disabled"])
-    self.deleteButton.state(["!disabled"] if openable else ["disabled"])
+    self.deleteButton.state(["!disabled"] if openable and entry is not None and entry.path else ["disabled"]) # (not a remote one)
     if entry is None:
       folders = searchPath()
       self.infoLabel.configure(text=f"{len(self.directory.entries)} models and views in {len(folders)} folder"
@@ -332,10 +360,10 @@ class DirectoryPane(ttk.Frame):
     details = []
     if entry.error:
       details.append(entry.error if entry.error != "missing" else "the file's missing")
-    if entry.objects:
-      details.append(f"about {entry.objects:,} objects")
-    if entry.size is not None:
-      details.append(f"{entry.size / 1e6:.1f} MB" if entry.size >= 100_000 else f"{entry.size / 1e3:.1f} KB")
+    if entry.objects is not None:
+      details.append(f"at most {entry.objects:,} objects (as many as have been made in it: fewer if some were deleted)")
+    if entry.remote:
+      details.append("remote: opened read-only")
     if not entry.onPath and entry.kind == "model":
       details.append("not in the searched folders: a view there refers to it")
     if details:
@@ -352,7 +380,7 @@ class DirectoryPane(ttk.Frame):
     :type readOnly: bool
     '''
     entry = self.selectedEntry()
-    if entry is None or entry.error or not entry.path:
+    if entry is None or entry.error or not (entry.path or entry.remote):
       return
     self.app.openEntry(entry, readOnly=readOnly)
 
@@ -481,8 +509,9 @@ class FoldersDialog(tk.Toplevel):
     frame = ttk.Frame(self, padding=8)
     frame.pack(fill=tk.BOTH, expand=True)
     ttk.Label(frame, foreground="gray35", wraplength=460, justify=tk.LEFT,
-              text='One folder per line. End a folder with "/**" to search the folders below it too. '
-                   'The folders of the models and views you open, make or save are added.').pack(anchor=tk.W, pady=(0, 6))
+              text='One per line: a folder (a path, or a "file:" URL) -- ending in "/**" to search the folders below '
+                   'it too -- or the URL of a model or view elsewhere (eg: "https://..."). The folders of the models '
+                   'and views you open, make or save are added.').pack(anchor=tk.W, pady=(0, 6))
     self.text = tk.Text(frame, width=64, height=10, wrap=tk.NONE, undo=True)
     self.text.pack(fill=tk.BOTH, expand=True)
     self.text.insert("1.0", "\n".join(str(f) for f in folders))
@@ -499,7 +528,7 @@ class FoldersDialog(tk.Toplevel):
     folder = filedialog.askdirectory(parent=self, title="Add a folder to search for models and views", mustexist=True)
     if folder:
       text = self.text.get("1.0", tk.END).rstrip("\n")
-      line = folder + ("/**" if self.subfolders.get() else "")
+      line = str(Folder(folder, self.subfolders.get()))
       self.text.delete("1.0", tk.END)
       self.text.insert("1.0", (text + "\n" if text else "") + line)
 

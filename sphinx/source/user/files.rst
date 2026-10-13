@@ -54,9 +54,11 @@ The model directory
 -------------------
 
 **Window | Model Directory** shows the models and views in the folders it
-searches: each model with its views under it, with their folders and when they
-were last changed and created. Select one to see its full location, about how
-many objects it has, and its size. It's the app's main window: it's shown when
+searches: each model (shaded) with its views under it, with how many objects
+they have, their size, their location (the URL of their folder), and when they
+were last changed and created. The number of objects is at most that many: as
+many as have ever been made in it (fewer if some have been deleted -- only
+reading the whole file would tell). Select one to see its full URL. It's the app's main window: it's shown when
 the app starts with nothing to open, and while it's showing, closing the last
 other window doesn't quit (closing it then does).
 
@@ -67,14 +69,19 @@ other window doesn't quit (closing it then does).
 - **Move to Trash** moves a model or view to the Trash (the Finder's **Put
   Back** restores it) -- and, for a model, its views too, if you say so.
   Nothing that's open is moved: close it first.
-- **Folders...** sets the folders searched, one per line. End a folder with
-  ``/**`` to search the folders below it, too. The folders of the models and
-  views you open, make or save are added by themselves. (The ``gui/directoryPath``
-  setting holds them, separated by ``:``.) **Rescan** looks through them again.
+- **Folders...** sets the folders searched, one per line: a path or a
+  ``file:`` URL. End a folder with ``/**`` to search the folders below it, too.
+  A line can also be the URL of a model or view elsewhere, eg:
+  ``https://example.org/ontologies/animals.snm`` (a folder on the web can't be
+  looked through). The folders of the models and views you open, make or save
+  are added by themselves. (The ``gui/directoryPath`` setting holds them,
+  separated by ``;``.) **Rescan** looks through them again.
 
 Only the start of each file is read, so even a large folder of large models is
-listed quickly. A model that a listed view uses, in a folder that isn't
-searched, is listed too (in grey).
+listed quickly -- and only the start of a remote one is fetched. A model that a
+listed view uses, in a folder that isn't searched (or on the web), is listed too
+(in grey). Remote models and views open read-only: they can't be saved there,
+nor moved to the Trash.
 
 While a model or view is being opened -- and its window drawn -- a progress bar
 at the bottom of the directory says how far it's got. (If the directory's

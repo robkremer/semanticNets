@@ -68,7 +68,7 @@ from util.terminal import terminalRegistry, installGlobalIORouting,\
 from sn.model.model import Model
 from sn.view.graphics import progress
 from sn.view.graphics.directoryWindow import DirectoryPane, ReadProgress, noteFolderOf, seedSearchPath
-from sn.model.directory import Entry, pathOf
+from sn.model.directory import Entry, pathOf, isRemote
 
 logger:sn.SNLogger = sn.getLogger(__name__)
 
@@ -305,7 +305,8 @@ class Application(tk.Tk):
     assert isinstance(viewSpec, (Model,SNGView,str,NoneType))
     
     def makeViewFromModel(model:Model) -> SNGView:
-      url = fixURL(model.url, ".snv", replaceExt=True, mode='w')[0]
+      remote = isRemote(model.url) # (eg: on the web: its view there is read, not written -- "Save view as..." saves a copy)
+      url = fixURL(model.url, ".snv", replaceExt=True, mode="" if remote else 'w')[0]
       if url in self.windows:
         # This model's view already has an open window -- hand back its live
         # SNGView as-is rather than re-decoding the .snv file from disk. This
@@ -320,10 +321,10 @@ class Application(tk.Tk):
         assert isinstance(existingView, SNGView)
         return existingView
       if urlExists(url):
-        ret = PRDb.readFile(url)
+        ret = PRDb.readFile(url, mode="r" if remote else "w")
         assert isinstance(ret, SNGView)
       else:
-        ret = SNGView(url, model=model, mode="w")
+        ret = SNGView(url, model=model, mode="" if remote else "w")
       return ret
     
     reading = ReadProgress()
@@ -347,17 +348,18 @@ class Application(tk.Tk):
             # PRDb.AllDBs registration, no side effects at all -- so we only
             # ever construct the one object we actually end up wanting, and
             # only via the single readx() call below meant for it.
-            peekedType = SerializationStrategy.peekTypex(viewSpec, replaceExt=None)
+            readMode = "r" if isRemote(viewSpec) else "w" # (on the web, say: it can be read, not written)
+            peekedType = SerializationStrategy.peekTypex(viewSpec, replaceExt=None, mode=readMode)
             if issubclass(peekedType, SNGView): # it's a view -- if it's already open, we're done.
               if viewSpec in self.windows:
                 view = cast(SNGView, self.windows[viewSpec].view)
               else:
-                obj = PRDb.readFile(viewSpec)
+                obj = PRDb.readFile(viewSpec, mode=readMode)
                 if not isinstance(obj, SNGView):
                   raise TypeError(f'Expected type Model in "{viewSpec}", but got type {type(obj)}.')
                 view = obj
             elif issubclass(peekedType, Model): # it's a model -- read it, then find/create its view.
-              modelOrView = Model(viewSpec)
+              modelOrView = PRDb.readFile(viewSpec, mode=readMode) if isRemote(viewSpec) else Model(viewSpec)
               assert isinstance(modelOrView, Model)
               view = makeViewFromModel(modelOrView)
             else: # it's something we didn't expect
@@ -537,13 +539,15 @@ class Application(tk.Tk):
     :returns: Its window.
     :rtype: tk.Toplevel | None
     '''
+    if entry.remote: # (it can't be saved there)
+      readOnly = True
     modelURL = entry.url if entry.kind == "model" else entry.modelURL
     already = PRDb.AllDBs.get(modelURL) if modelURL else None
     if readOnly and already is not None and not already.writeLocked():
-      messagebox.showinfo(sn.NAME, f'"{os.path.basename(entry.path)}" isn\'t opened read-only: its model, '
+      messagebox.showinfo(sn.NAME, f'"{entry.name}" isn\'t opened read-only: its model, '
                           f'"{_fileName(already.url)}", is already open, and can be changed.', parent=self)
       readOnly = False
-    window = self.openWindow(entry.path)
+    window = self.openWindow(entry.path or entry.url)
     view = getattr(window, "view", None)
     if readOnly and view is not None and already is None:
       view.model._writeLocked = True

@@ -50,18 +50,44 @@ EXTENSIONS = {".snm": "model", ".snv": "view"}
 SUBFOLDERS = "/**"
 "Ending a folder in the search path: and all the folders below it."
 
+SEPARATORS = ";\n"
+'''What separates the parts of a search path. (Not ":", as in the shell's
+PATH: URLs have them. A search path with no URLs in it may use ":" too.)'''
+
 # ── The search path ─────────────────────────────────────────────────────────
+
+_SCHEME = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
+
+def isRemote(url:str) -> bool:
+  '''
+  :param url:
+  :type url: str
+  :returns: Whether *url* is somewhere other than this computer's files (eg:
+    "https://..."): not a path, nor a "file:" URL.
+  :rtype: bool
+  '''
+  return bool(_SCHEME.match(url)) and not url.lower().startswith("file:")
 
 @dataclass(frozen=True)
 class Folder:
-  '''A folder in the search path.'''
+  '''
+  A part of the search path: a folder on this computer, or a model or view
+  somewhere else (eg: on the web: a folder there can't be looked through).
+  '''
   path:str
-  "Its (absolute, user-expanded) path."
+  "The folder's (absolute, user-expanded) path; or a remote model's or view's URL."
   subfolders:bool = False
   "Whether the folders below it are included too."
 
+  @property
+  def remote(self) -> bool:
+    "Whether it's a model or view somewhere else (see *isRemote()*), not a folder."
+    return isRemote(self.path)
+
   def __str__(self) -> str:
-    return self.path + (SUBFOLDERS if self.subfolders else "")
+    if self.remote:
+      return self.path
+    return "file://" + self.path + (SUBFOLDERS if self.subfolders else "")
 
   def covers(self, folder:str) -> bool:
     '''
@@ -70,6 +96,8 @@ class Folder:
     :returns: Whether the files in *folder* are in this part of the search path.
     :rtype: bool
     '''
+    if self.remote:
+      return False
     folder = _norm(folder)
     if folder == self.path:
       return True
@@ -78,24 +106,41 @@ class Folder:
 def _norm(path:str) -> str:
   return os.path.normpath(os.path.abspath(os.path.expanduser(path)))
 
+def _localPath(part:str) -> str:
+  ":returns: The path *part* -- a path, or a \"file:\" URL -- is of."
+  if part.lower().startswith("file:"):
+    part = unquote(part[len("file:"):])
+    if part.startswith("//"):
+      part = part[2:]
+      if not part.startswith("/"): # ("file://localhost/...")
+        part = part[part.find("/"):] if "/" in part else "/"
+  return part
+
 def parsePath(text:str) -> list[Folder]:
   '''
-  :param text: A search path: folders separated by ":" (*os.pathsep*) or new
-    lines; each ending in "/**" if the folders below it are included too. "~"
-    is the home folder. Blank parts are ignored, and so are repeats.
+  :param text: A search path: its parts separated by ";" or new lines (see
+    *SEPARATORS*). Each is a folder -- a path or a "file:" URL, ending in "/**"
+    if the folders below it are included too; "~" is the home folder -- or the
+    URL of a model or view somewhere else (eg: "https://..."). Blank parts are
+    ignored, and so are repeats.
   :type text: str
-  :returns: Its folders, in order.
+  :returns: Its parts, in order.
   :rtype: list[Folder]
   '''
+  text = text or ""
+  separators = SEPARATORS if "://" in text else SEPARATORS + os.pathsep
   ret:list[Folder] = []
-  for part in re.split(rf"[{re.escape(os.pathsep)}\n]", text or ""):
+  for part in re.split(f"[{re.escape(separators)}]", text):
     part = part.strip()
     if not part:
       continue
-    subfolders = part.endswith(SUBFOLDERS) or part == "**"
-    if subfolders:
-      part = part[:-len(SUBFOLDERS)] if part.endswith(SUBFOLDERS) else ""
-    folder = Folder(_norm(part or os.sep), subfolders)
+    if isRemote(part):
+      folder = Folder(part)
+    else:
+      subfolders = part.endswith(SUBFOLDERS) or part == "**"
+      if subfolders:
+        part = part[:-len(SUBFOLDERS)] if part.endswith(SUBFOLDERS) else ""
+      folder = Folder(_norm(_localPath(part) or os.sep), subfolders)
     if folder not in ret:
       ret.append(folder)
   return ret
@@ -104,10 +149,10 @@ def formatPath(folders:list[Folder]) -> str:
   '''
   :param folders:
   :type folders: list[Folder]
-  :returns: *folders* as a search path (see *parsePath()*).
+  :returns: *folders* as a search path (see *parsePath()*): folders as "file:" URLs.
   :rtype: str
   '''
-  return os.pathsep.join(str(f) for f in folders)
+  return SEPARATORS[0].join(str(f) for f in folders)
 
 def covered(folders:list[Folder], folder:str) -> bool:
   '''
@@ -141,7 +186,8 @@ def filesIn(folders:list[Folder]) -> Iterator[str]:
   :type folders: list[Folder]
   :returns: The paths of the models and views in *folders* (see
     *EXTENSIONS*), each once; not in hidden folders, nor hidden files. Folders
-    that aren't there are skipped.
+    that aren't there are skipped. Remote parts of the search path are given
+    as they are: their URLs.
   :rtype: Iterator[str]
   '''
   seen:set[str] = set()
@@ -160,7 +206,11 @@ def filesIn(folders:list[Folder]) -> Iterator[str]:
           seen.add(real)
           yield full
   for f in folders:
-    if f.subfolders:
+    if f.remote:
+      if f.path not in seen:
+        seen.add(f.path)
+        yield f.path
+    elif f.subfolders:
       for top, dirs, _ in os.walk(f.path):
         dirs[:] = sorted(d for d in dirs if not d.startswith("."))
         yield from inFolder(top)
@@ -169,8 +219,14 @@ def filesIn(folders:list[Folder]) -> Iterator[str]:
 
 # ── Peeking into a file ─────────────────────────────────────────────────────
 
+FIRST_ID = {"model": 256, "view": 1}
+"The id given to the first object made in a model, and a view (see *Model.__init__()*): ids count up from there."
+
 PEEKED = ("url", "model", "nextID")
 "The properties of the object in a file that *peekFile()* reads (if they're there)."
+
+REMOTE_TIMEOUT = 10
+"How long (seconds) to wait for a remote model or view (see *peekURL()*)."
 
 def peekFile(path:str) -> dict[str, str]:
   '''
@@ -185,39 +241,73 @@ def peekFile(path:str) -> dict[str, str]:
   :rtype: dict[str, str]
   :raises ValueError: If it isn't a file of that kind (or can't be read).
   '''
+  try:
+    with open(path, "rb") as f:
+      return _peek(f, path)
+  except OSError as e:
+    raise ValueError(f'Can\'t read "{path}": {e}') from e
+
+def peekURL(url:str) -> tuple[dict[str, str], dict[str, str]]:
+  '''
+  Like *peekFile()*, for a model or view at a URL (eg: on the web): only the
+  start of it is fetched.
+
+  :param url:
+  :type url: str
+  :returns: What *peekFile()* does; and the response's headers (eg:
+    "Content-Length", "Last-Modified").
+  :rtype: tuple[dict[str, str], dict[str, str]]
+  :raises FileNotFoundError: If there's nothing there.
+  :raises ValueError: If it isn't a model or view (or can't be fetched).
+  '''
+  from urllib.request import urlopen, Request
+  from urllib.error import HTTPError, URLError
+  try:
+    with urlopen(Request(url, headers={"Accept": "application/xml, text/xml, */*"}), timeout=REMOTE_TIMEOUT) as response:
+      headers = {k: v for k, v in response.headers.items()}
+      return _peek(response, url), headers
+  except HTTPError as e:
+    e.close()
+    if e.code in (404, 410):
+      raise FileNotFoundError(url) from e
+    raise ValueError(f'Can\'t fetch "{url}": {e}') from e
+  except (URLError, OSError) as e:
+    raise ValueError(f'Can\'t fetch "{url}": {getattr(e, "reason", e)}') from e
+
+def _peek(stream, name:str) -> dict[str, str]:
+  '''The work of *peekFile()* and *peekURL()*: *stream* is read as far as need be.'''
   ret:dict[str, str] = {}
   stack:list[ET.Element] = []
   try:
-    with open(path, "rb") as f:
-      for event, elem in ET.iterparse(f, events=("start", "end")):
-        if event == "start":
-          stack.append(elem)
-          depth = len(stack)
-          # depth 1: the top strdict; 2: its "header"/"root" properties; 3: their
-          # objects; 4: those objects' properties.
-          if depth == 3 and elem.tag == "object" and stack[1].get("key") == "root":
-            ret["type"] = elem.get("type", "")
-          elif depth == 4 and elem.tag == "property" and stack[1].get("key") == "root" and elem.get("key") == "_db":
-            break # (the objects in it: no further)
-          continue
-        stack.pop()
-        depth = len(stack) + 1
-        if depth == 4 and elem.tag == "property":
-          section, key = stack[1].get("key"), elem.get("key")
-          if (section == "root" and key in PEEKED) or (section == "header" and key == "previousURL"):
-            value = elem.get("value")
-            if value is None and len(elem) == 1: # (the XML format: the value's in an object in it)
-              value = elem[0].get("value")
-            if value is not None:
-              ret[key] = value
-        elif depth == 3 and stack[1].get("key") == "root":
-          break # (the end of the object)
-        if depth == 4:
-          elem.clear() # (and what's in it: only the start of the file is kept in memory)
-  except (ET.ParseError, OSError) as e:
-    raise ValueError(f'Can\'t read "{path}": {e}') from e
+    for event, elem in ET.iterparse(stream, events=("start", "end")):
+      if event == "start":
+        stack.append(elem)
+        depth = len(stack)
+        # depth 1: the top strdict; 2: its "header"/"root" properties; 3: their
+        # objects; 4: those objects' properties.
+        if depth == 3 and elem.tag == "object" and stack[1].get("key") == "root":
+          ret["type"] = elem.get("type", "")
+        elif depth == 4 and elem.tag == "property" and stack[1].get("key") == "root" and elem.get("key") == "_db":
+          break # (the objects in it: no further)
+        continue
+      stack.pop()
+      depth = len(stack) + 1
+      if depth == 4 and elem.tag == "property":
+        section, key = stack[1].get("key"), elem.get("key")
+        if (section == "root" and key in PEEKED) or (section == "header" and key == "previousURL"):
+          value = elem.get("value")
+          if value is None and len(elem) == 1: # (the XML format: the value's in an object in it)
+            value = elem[0].get("value")
+          if value is not None:
+            ret[key] = value
+      elif depth == 3 and stack[1].get("key") == "root":
+        break # (the end of the object)
+      if depth == 4:
+        elem.clear() # (and what's in it: only the start of the file is kept in memory)
+  except ET.ParseError as e:
+    raise ValueError(f'Can\'t read "{name}": {e}') from e
   if "type" not in ret:
-    raise ValueError(f'"{path}" isn\'t a model or view file.')
+    raise ValueError(f'"{name}" isn\'t a model or view file.')
   return ret
 
 # ── The directory's entries ─────────────────────────────────────────────────
@@ -257,7 +347,9 @@ class Entry:
   type:str = ""
   "The class of the object in it (its fully qualified name)."
   objects:int|None = None
-  "About how many objects are in it (its nextID)."
+  '''At most how many objects are in it: as many as have ever been made in it
+  (from its nextID: see *FIRST_ID*). Fewer if some have been deleted -- it
+  can't be known without reading the whole file.'''
   created:float|None = None
   "When the file was created (seconds since the epoch)."
   modified:float|None = None
@@ -273,14 +365,23 @@ class Entry:
 
   @property
   def name(self) -> str:
-    "The file's name, without its extension."
+    "The file's name, without its extension (or the last part of its URL)."
     if self.path:
       return os.path.splitext(os.path.basename(self.path))[0]
-    return self.url.rsplit("/", 1)[-1]
+    last = unquote(urlparse(self.url).path.rstrip("/").rsplit("/", 1)[-1]) or self.url
+    return os.path.splitext(last)[0] if os.path.splitext(last)[1] in EXTENSIONS else last
 
   @property
-  def folder(self) -> str:
-    return os.path.dirname(self.path) if self.path else ""
+  def location(self) -> str:
+    "Where it is: the URL of its folder (made readable: \"%20\" is a space, ...)."
+    if not self.url or "/" not in self.url.partition(":")[2]:
+      return ""
+    return unquote(self.url.rsplit("/", 1)[0] + "/")
+
+  @property
+  def remote(self) -> bool:
+    "Whether it's somewhere other than this computer's files (see *isRemote()*)."
+    return isRemote(self.url)
 
 def scanFile(path:str, onPath:bool=True) -> Entry:
   '''
@@ -310,17 +411,58 @@ def scanFile(path:str, onPath:bool=True) -> Entry:
   except ValueError as e:
     entry.error = str(e)
     return entry
+  _fromPeek(entry, peeked)
+  return entry
+
+def scanURL(url:str, onPath:bool=True) -> Entry:
+  '''
+  Like *scanFile()*, for a model or view at a URL (eg: on the web): read with
+  *peekURL()*. When it was changed and its size are what the server says (if
+  it does); when it was made isn't known.
+
+  :param url:
+  :type url: str
+  :param onPath:
+  :type onPath: bool
+  :returns:
+  :rtype: Entry
+  '''
+  ext = os.path.splitext(urlparse(url).path)[1]
+  entry = Entry(path="", kind=EXTENSIONS.get(ext, "model"), url=url, onPath=onPath)
+  try:
+    peeked, headers = peekURL(url)
+  except FileNotFoundError:
+    entry.error = "missing"
+    return entry
+  except ValueError as e:
+    entry.error = str(e)
+    return entry
+  _fromPeek(entry, peeked)
+  try:
+    entry.size = int(headers["Content-Length"]) if "Content-Length" in headers else None
+  except ValueError:
+    pass
+  if "Last-Modified" in headers:
+    from email.utils import parsedate_to_datetime
+    try:
+      entry.modified = parsedate_to_datetime(headers["Last-Modified"]).timestamp()
+    except (TypeError, ValueError):
+      pass
+  return entry
+
+def _fromPeek(entry:Entry, peeked:dict[str, str]) -> None:
+  "Fill in *entry* from what was peeked at (see *peekFile()*)."
   entry.type = peeked["type"]
   kind = _kindOf(entry.type)
   if kind is not None:
     entry.kind = kind
   try:
-    entry.objects = int(peeked["nextID"]) if "nextID" in peeked else None
+    first = FIRST_ID.get(entry.kind, 1)
+    entry.objects = max(0, int(peeked["nextID"]) - first) if "nextID" in peeked else None
   except ValueError:
     pass
   if entry.kind == "view" and peeked.get("model"):
     entry.modelURL = modelURLOf(entry.url, peeked["model"], peeked.get("url"))
-  return entry
 
 def _kindOf(typeName:str) -> str|None:
   '''
@@ -357,7 +499,7 @@ def modelURLOf(viewURL:str, model:str, storedURL:str|None=None) -> str:
   if not PRDb.isRelativeURL(model):
     return model
   ret = urljoin(viewURL, model)
-  if storedURL and storedURL != viewURL and not urlExists(ret):
+  if storedURL and storedURL != viewURL and not isRemote(ret) and not urlExists(ret):
     alt = urljoin(storedURL, model)
     if urlExists(alt):
       return alt
@@ -386,7 +528,7 @@ class Directory:
     '''
     self.entries = {}
     for path in filesIn(folders):
-      entry = scanFile(path)
+      entry = scanURL(path) if isRemote(path) else scanFile(path)
       self.entries[entry.url] = entry
       yield entry
     yield from self.addReferencedModels()
@@ -394,7 +536,7 @@ class Directory:
   def addReferencedModels(self) -> Iterator[Entry]:
     '''
     Add the models the views refer to that aren't in the directory (eg: in a
-    folder that isn't in the search path), if they're files.
+    folder that isn't in the search path, or on the web).
 
     :returns: Those added.
     :rtype: Iterator[Entry]
@@ -403,7 +545,12 @@ class Directory:
       url = entry.modelURL
       if entry.kind == "view" and url and url not in self.entries:
         path = pathOf(url)
-        model = scanFile(path, onPath=False) if path else Entry(path="", kind="model", url=url, onPath=False)
+        if path:
+          model = scanFile(path, onPath=False)
+        elif urlparse(url).scheme in ("http", "https"):
+          model = scanURL(url, onPath=False)
+        else: # (eg: the system model, "sn:/sn.xml": no file)
+          model = Entry(path="", kind="model", url=url, onPath=False)
         model.url = url
         self.entries[url] = model
         yield model
@@ -449,8 +596,8 @@ class Directory:
                               error=None if url else "the view doesn't say what its model is")
         models[url].views.append(e)
     for m in models.values():
-      m.views.sort(key=lambda v: (v.name.lower(), v.path))
-    return sorted(models.values(), key=lambda m: (m.name.lower(), m.path))
+      m.views.sort(key=lambda v: (v.name.lower(), v.url))
+    return sorted(models.values(), key=lambda m: (m.name.lower(), m.url))
 
 # ── Deleting ────────────────────────────────────────────────────────────────
 

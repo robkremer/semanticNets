@@ -187,9 +187,9 @@ PREFS:dict[str, tuple[Any, Any, str]] = {
   "gui/recentFiles": (int, 10,
     "How many of the views (or models) opened most recently File | Open Recent lists (0 for none)."),
   "gui/directoryPath": (str, "",
-    "The folders the model directory (Window | Model Directory) lists the models and views in, separated by \":\" "
-    "(like PATH). A folder ending in \"/**\" includes the folders below it. The folders of the models and views "
-    "opened, made or saved are added."),
+    "Where the model directory (Window | Model Directory) looks for models and views, separated by \";\": folders "
+    "(paths or \"file:\" URLs) -- one ending in \"/**\" includes the folders below it -- and the URLs of models "
+    "and views elsewhere (eg: \"https://...\"). The folders of the models and views opened, made or saved are added."),
   "gui/backgroundColor": ("color", "grey95",
     "The canvas's background colour."),
   "gui/highlightColor": ("color", "#ffd966",
