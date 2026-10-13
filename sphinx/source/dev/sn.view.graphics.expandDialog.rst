@@ -1,5 +1,5 @@
 sn.view.graphics.expandDialog module
-=====================================
+====================================
 
 .. automodule:: sn.view.graphics.expandDialog
    :members:

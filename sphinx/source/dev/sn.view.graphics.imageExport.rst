@@ -1,5 +1,5 @@
 sn.view.graphics.imageExport module
-====================================
+===================================
 
 .. automodule:: sn.view.graphics.imageExport
    :members:

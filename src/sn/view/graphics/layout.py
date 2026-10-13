@@ -266,7 +266,7 @@ class LayoutHeuristic(ABC):
     if unknown:
       raise TypeError(f'{type(self).__name__}: unknown parameter(s): {", ".join(sorted(unknown))}.')
     self.params:dict[str, Any] = {}
-    "Its parameters' values (see *PARAMETERS*): relations as *Relation*s."
+    "Its parameters' values (see *PARAMETERS*): relations as *Relation* objects."
     for p in self.PARAMETERS:
       v = kwargs.get(p.name, p.default)
       if p.kind == "relation" and isinstance(v, str):
