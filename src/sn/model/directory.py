@@ -599,6 +599,27 @@ class Directory:
       m.views.sort(key=lambda v: (v.name.lower(), v.url))
     return sorted(models.values(), key=lambda m: (m.name.lower(), m.url))
 
+def urlProblem(url:str, kinds:tuple[str, ...]=("model", "view")) -> str|None:
+  '''
+  :param url: Where a model or view should be (eg: typed by the user).
+  :type url: str
+  :param kinds: What it should be: "model", "view", or either.
+  :type kinds: tuple[str, ...]
+  :returns: What's wrong with it -- there's nothing there, or it isn't one of
+    *kinds* -- or None if it's all right. Only its start is read (see
+    *scanFile()*, *scanURL()*).
+  :rtype: str | None
+  '''
+  path = pathOf(url)
+  entry = scanFile(path) if path is not None else scanURL(url)
+  if entry.error == "missing":
+    return f'There\'s nothing at "{url}".'
+  if entry.error:
+    return entry.error
+  if entry.kind not in kinds:
+    return f'That\'s a {entry.kind}, not a {" or ".join(kinds)}.'
+  return None
+
 # ── Deleting ────────────────────────────────────────────────────────────────
 
 def moveToTrash(path:str) -> None:

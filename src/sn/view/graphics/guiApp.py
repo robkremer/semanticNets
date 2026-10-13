@@ -67,7 +67,7 @@ from util.terminal import terminalRegistry, installGlobalIORouting,\
   TerminalWidget, TerminalRegistry
 from sn.model.model import Model
 from sn.view.graphics import progress
-from sn.view.graphics.directoryWindow import DirectoryPane, ReadProgress, noteFolderOf, seedSearchPath
+from sn.view.graphics.directoryWindow import DirectoryPane, ReadProgress, noteFolderOf, seedSearchPath, askModelURL
 from sn.model.directory import Entry, pathOf, isRemote
 
 logger:sn.SNLogger = sn.getLogger(__name__)
@@ -216,6 +216,7 @@ class Application(tk.Tk):
     self.filemenu = tk.Menu(menubar, name="file")
     self.filemenu.add_command(label="New...", command=self.doNew)
     self.filemenu.add_command(label="Open...", command=self.doOpen)
+    self.filemenu.add_command(label="Open URL...", command=self.doOpenURL)
     self.recentMenu = tk.Menu(self.filemenu, name="recent")
     self.filemenu.add_cascade(label="Open Recent", menu=self.recentMenu)
     self._fillRecentMenu()
@@ -280,6 +281,20 @@ class Application(tk.Tk):
     if filename:
       self.openWindow(filename)
   
+  def doOpenURL(self) -> None:
+    '''
+    Respond to the "Open URL..." menu item: open a view, or a model in its
+    default view, at a URL (eg: on the web: opened read-only -- see
+    *openEntry()*).
+    '''
+    from sn.model.directory import scanFile, scanURL
+    url = askModelURL(self.focus_get() or self, "Open URL",
+                      prompt='The URL of a view (.snv), or a model (.snm) to open in its default view -- '
+                             'eg: "https://example.org/ontologies/animals.snm":')
+    if url:
+      path = pathOf(url)
+      self.openEntry(scanFile(path) if path is not None else scanURL(url))
+
   def doNew(self, ): 
     'Respond to the "New..." menu item.'
     filename = filedialog.asksaveasfilename(

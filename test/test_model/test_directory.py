@@ -31,7 +31,7 @@ import os
 import tempfile
 import unittest
 from sn.model.directory import Folder, parsePath, formatPath, covered, withFolder, filesIn, peekFile, \
-  scanFile, Directory, modelURLOf, urlOf
+  scanFile, Directory, modelURLOf, urlOf, urlProblem
 
 XML2 = '''<?xml version='1.0' encoding='utf-8'?>
 <object type="util.persistence.serialize.strdict">
@@ -201,6 +201,14 @@ class Test(unittest.TestCase):
     byName = {m.name: m for m in directory.models()}
     self.assertEqual([v.name for v in byName["zoo"].views], ["zoo"])
     self.assertEqual(byName["zoo"].error, "missing")
+
+  def test0950urlProblem(self):
+    d = self.dir
+    m, v = model(f"{d}/m.snm"), view(f"{d}/v.snv", "m.snm")
+    self.assertIsNone(urlProblem(urlOf(m), ("model",)))
+    self.assertIn("view, not a model", urlProblem(urlOf(v), ("model",)))
+    self.assertIsNone(urlProblem(urlOf(v)))
+    self.assertIn("nothing at", urlProblem(f"file://{d}/gone.snm"))
 
   def test1000remote(self):
     import threading, functools

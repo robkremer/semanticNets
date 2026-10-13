@@ -1292,7 +1292,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     "Edit | Model preferences...": edit this view's model's preferences (see
     *sn.model.modelPrefs*) -- just their values (their notes are their names'
     tooltips). Its super-models are shown as its *superDBs* are (see
-    *Model.superModelPaths()*), "Add..." choosing a model file, and set from
+    *Model.superModelPaths()*), "Add file..." choosing a model file, "Add URL..."
+    taking its URL (eg: on the web: see *askModelURL()*), and set from
     the edited list (see *Model.setSuperModels()*): if that can't be done,
     nothing is changed, and the reasons are shown.
 
@@ -1314,10 +1315,15 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
                                         filetypes=[("Model files", "*.snm"), ("All files", "*.*")],
                                         initialdir=os.path.dirname(modelFile) or None)
       return PRDb.relativeURL(Path(path).as_uri(), base=model.url) if path else None
+    def chooseModelURL(parent:tk.Misc) -> str|None:
+      from sn.view.graphics.directoryWindow import askModelURL
+      url = askModelURL(parent, "A model this one builds on", kinds=("model",),
+                        prompt="The URL of a model this one builds on (eg: an ontology on the web):")
+      return PRDb.relativeURL(url, base=model.url) if url else None
     updates = editAttrsBox(self.window, model.prefs, title=f"Preferences of {model.name}",
                            displayValues={SUPER_MODELS: model.superModelPaths()},
                            hideColumns=("type", "qualifiers", "note"),
-                           listItemMakers={SUPER_MODELS: chooseModel})
+                           listItemMakers={SUPER_MODELS: {"Add file...": chooseModel, "Add URL...": chooseModelURL}})
     if not updates:
       return
     for key, attr in updates.items():

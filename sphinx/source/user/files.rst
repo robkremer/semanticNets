@@ -17,7 +17,9 @@ A model's **super-models** are the models it builds on: their contents are
 used as though they were its own -- the reasoner reasons over them too, and
 their rules apply -- though they aren't changed through it. The system model
 is always one, and comes first. Set them in **Edit | Model preferences...**
-(*superModels*: **Add...** chooses a model file, and the arrows set the order
+(*superModels*: **Add file...** chooses a model file, **Add URL...** takes the
+URL of one -- eg: an ontology on the web, which is read-only here -- and the
+arrows set the order
 -- a name that could mean objects in more than one model is looked up in the
 first first), or with the terminal's ``super models`` command (``--add file``,
 ``--remove file``). They're saved with the model, relative to its file where
@@ -26,6 +28,10 @@ found when the model is opened is reported, and kept in the list for when it's
 there again.
 
 - **File | Open...** opens a view -- or a model, with a default view of it.
+- **File | Open URL...** does the same for one at a URL, eg: on the web
+  (``https://...``). It's checked before it's taken; recent URLs are offered.
+  A model or view on the web is read-only: it can't be saved there, but
+  **Save view as...** and **Save model as...** save a copy.
 - **File | Open Recent** lists the views you've opened most recently, newest
   first (how many: the ``gui/recentFiles`` setting, 10 to start with). One
   that was never saved opens as its model's default view; one that's gone is

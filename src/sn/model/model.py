@@ -1119,6 +1119,15 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     return ret
     
     
+def _isRemote(url:str) -> bool:
+  '''
+  :returns: Whether *url* is on the web (eg: "https://..."): a model there can
+    be read, but not saved there, so it's write-locked once it's read (see
+    *Model._wasRead()*).
+  '''
+  from urllib.parse import urlparse
+  return urlparse(url).scheme in ("http", "https")
+
 def _isPackagedBaseRules(url:str) -> bool:
   '''
   :param url: A model's URL.
@@ -1194,6 +1203,20 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
       logger.info(f'"{ret.url}" is the base rules that come with the program: it\'s read-only here '
                   '(they\'re made by tools/makeBaseRules.py).')
     return ret
+
+  @override
+  def _wasRead(self, url:str) -> None:
+    '''
+    A model read from the web (eg: an ontology, or a super-model) is
+    write-locked: it can't be saved there.
+
+    :param url:
+    :type url: str
+    '''
+    super()._wasRead(url)
+    if _isRemote(url) and not self._writeLocked:
+      self._writeLocked = True
+      logger.info(f'"{url}" is on the web: it\'s read-only here.')
     
 
   def __init__(self, url:str, mode:str="w", _reading:bool=False):

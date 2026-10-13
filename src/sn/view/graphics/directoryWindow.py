@@ -141,6 +141,37 @@ def isDark(widget:tk.Misc) -> bool:
   except tk.TclError:
     return False
 
+RECENT_URLS_PREF = ".recentURLs"
+"The URLs typed most recently (see *askModelURL()*): offered again. (Hidden from Settings: it starts with \".\".)"
+
+def askModelURL(parent:tk.Misc, title:str, kinds:tuple[str, ...]=("model", "view"), prompt:str="") -> str|None:
+  '''
+  Ask for the URL of a model or view -- eg: on the web -- offering the URLs
+  typed recently, and checking there's one of *kinds* there before it's taken
+  (see *sn.model.directory.urlProblem()*).
+
+  :param parent:
+  :type parent: tk.Misc
+  :param title:
+  :type title: str
+  :param kinds: "model", "view", or both.
+  :type kinds: tuple[str, ...]
+  :param prompt:
+  :type prompt: str
+  :returns: The URL, or None if cancelled.
+  :rtype: str | None
+  '''
+  from util.urlDialog import askURL
+  from sn.model.directory import urlProblem
+  recent = snPrefs.get(RECENT_URLS_PREF, [])
+  recent = [u for u in recent if isinstance(u, str)] if isinstance(recent, list) else []
+  url = askURL(parent, title, prompt=prompt or f'The URL of a {" or ".join(kinds)} (eg: "https://..."):',
+               recent=recent, check=lambda u: urlProblem(u, kinds))
+  if url:
+    snPrefs[RECENT_URLS_PREF] = Attribute([url, *[u for u in recent if u != url]][:20], list, VAR_DEFAULTED,
+                                          "The URLs typed most recently (for models and views).")
+  return url
+
 def noteSaved(url:str) -> None:
   '''
   A model or view has been saved at *url*: add its folder to the search path
