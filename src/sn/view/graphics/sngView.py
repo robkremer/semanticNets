@@ -696,12 +696,16 @@ class SNGContext(UIContext):
       '''
       return f'{super().__str__()} {self.category} {self.mode}'
 
-  def expand(self, object:GraphObject):
+  def expand(self, object:VObject, *, levels:int=0, _filter:Callable[[Any, Relation], bool]=lambda _vn, _mr: True):
     '''
-    This is a dummy graphic command.
+    This is a dummy graphic command (the command is *_Expand*).
 
     :param object:
-    :type object: GraphObject
+    :type object: VObject
+    :param levels:
+    :type levels: int
+    :param _filter:
+    :type _filter: Callable[[Any, Relation], bool]
     '''
     print ("dummy graphic command")
     
@@ -1019,13 +1023,13 @@ def keptWith[T](keep:Iterable[T], objects:Iterable[T], ends:Callable[[T], tuple[
     kept.update((id(c), c) for c in more)
     windows += [c for c in more if id(c) in inside]
   while True:
-    more = {id(e): e for o in kept.values() for e in endsOf.get(id(o), ()) if e is not None and id(e) not in kept}
-    more.update((id(o), o) for o in objects if id(o) not in kept and
-                ((id(o) in endsOf and all(e is not None and id(e) in kept for e in endsOf[id(o)]))
-                 or any(id(c) in kept for c in inside.get(id(o), ()))))
-    if not more:
+    found = {id(e): e for o in kept.values() for e in endsOf.get(id(o), ()) if e is not None and id(e) not in kept}
+    found.update((id(o), o) for o in objects if id(o) not in kept and
+                 ((id(o) in endsOf and all(e is not None and id(e) in kept for e in endsOf[id(o)]))
+                  or any(id(c) in kept for c in inside.get(id(o), ()))))
+    if not found:
       return list(kept.values())
-    kept.update(more)
+    kept.update(found)
 
 class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   '''
@@ -1274,7 +1278,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       if p.name == "_db":
         def assertedObjects(slf:Serializable) -> SerializableType:
           from util.persistence.serialize import strdict
-          ret = strdict()
+          ret:strdict[Any] = strdict()
           for k, v in cast(SNGView, slf)._db.items():
             if not (isinstance(v, VObject) and v.isInferred()):
               ret[str(k)] = v
@@ -1484,7 +1488,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         if attr is None:
           continue
         try:
-          model.setSuperModels(list(attr.value or []))
+          model.setSuperModels(list(attr.value or [])) # type: ignore[arg-type]
           logger.info(f'{model.name}: super-models now {["sn"] + model.superModelPaths()}.')
         except ValueError as ex:
           messagebox.showerror("Model preferences", f"The super-models weren't changed:\n\n{ex}", parent=self.window)
@@ -1609,7 +1613,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         label = f"{os.path.splitext(db.name)[0]} (base rules)"
       else:
         label = PRDb.relativeURL(db.url, base=self.model.url)
-      menu.add_command(label=label, command=lambda db=db: self.openSuperModel(db))
+      menu.add_command(label=label, command=lambda db=db: self.openSuperModel(db)) # type: ignore[misc]
     if not supers:
       menu.add_command(label="(none)", state=tk.DISABLED)
     if old is not None:
@@ -1647,7 +1651,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :param model: The super-model.
     :type model: Model
     '''
-    app = self.window._root()
+    app = self.window._root() # type: ignore[attr-defined]
     src, viewURL = self.superModelView(model)
     if src and src != model.url and not urlExists(viewURL): # (the base rules: a view of the file they come from)
       model = Model(src)
@@ -1848,7 +1852,6 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
           break
     self.setDirty()
     
-  @override
   def detachFromModel(self) -> None:
     '''
     The view's window is closing: stop observing the model, and stop each of
@@ -2097,11 +2100,11 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         self._newAt = (int(at[0]), int(at[1]), t)
       new = self.context.new_node if ptype is Node else self.context.new_relation
       if into is None:
-        new(t, name="", individual=individual, type=not individual)
+        new(t, name="", individual=individual, type=not individual) # type: ignore[arg-type]
         return
       win, pane = into
       with CompositeCommandMgr(self.context) as mgr:
-        new(t, name="", individual=individual, type=not individual)
+        new(t, name="", individual=individual, type=not individual) # type: ignore[arg-type]
         if mgr.commands and win.modelObject is not None:
           mgr._addCommand(_ContainCreated(self.model, self._paneType(pane), win.modelObject, mgr.commands[-1]))
     def typesMenu(individual:bool, ptype:type) -> tk.Menu:
@@ -2634,8 +2637,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         continue
       try:
         changed = False
+        rel = cast(Relation, r.modelObject)
         for end in ("src", "dst"):
-          own = r.modelObject.localSrc if end == "src" else r.modelObject.localDst
+          own = rel.localSrc if end == "src" else rel.localDst
           if own is vo.modelObject and getattr(r, end) is None:
             setattr(r, end, vo)
             changed = True
@@ -2847,7 +2851,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     self.canvas.bind(KEY_REPAINT[0], self.repaint)
     for key, action in ((KEY_ZOOM_IN[0], self.zoomIn), ("<Command-KeyPress-plus>", self.zoomIn), (KEY_ZOOM_OUT[0], self.zoomOut),
                         (KEY_ZOOM_NORMAL[0], lambda: self.zoomAbout(1.0)), (KEY_ZOOM_FIT[0], self.zoomToFit)):
-      self.canvas.bind(key, lambda _e, a=action: a())
+      self.canvas.bind(key, lambda _e, a=action: a()) # type: ignore[misc]
 
     # abandon an elastic-line choice (or, if there's none, clear the highlights)
     self.canvas.bind(KEY_CLEAR_HIGHLIGHTS[0], self.cancelElasticLine)
@@ -3487,9 +3491,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     if not pending and self.canvas:
       self.canvas.after_idle(self._reportExempt)
     label = vo.name or type(mo).__name__
-    ends = [getattr(mo, "localSrc", None), getattr(mo, "localDst", None)]
-    if all(e is not None for e in ends): # (a relation: by its ends, eg: "isa (tom → person)")
-      label = f"{label} ({ends[0].name} → {ends[1].name})"
+    src, dst = getattr(mo, "localSrc", None), getattr(mo, "localDst", None)
+    if src is not None and dst is not None: # (a relation: by its ends, eg: "isa (tom → person)")
+      label = f"{label} ({src.name} → {dst.name})"
     for c in cats:
       pending.setdefault(c, []).append(label)
     vo._applyHidden()
@@ -3903,7 +3907,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         memo[id(vo)] = homeOf(vo)
       return memo[id(vo)]
     def between(vo:VRelation) -> tuple[VObject, str]|None: # (a relation whose ends belong in the same window)
-      if vo.modelObject.isa(m.CONTAINS) or not all(isinstance(e, VObject) and e._isConnected() for e in (vo.src, vo.dst)):
+      if vo.modelObject.isa(m.CONTAINS) or not all(isinstance(e, VObject) and e._isConnected() for e in (vo.src, vo.dst)): # type: ignore[union-attr]
         return None
       hs, hd = home(vo.src), home(vo.dst) #type: ignore[arg-type]
       if hs is None or hd is None or hs[0] is not hd[0]:
@@ -4092,7 +4096,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         continue
       old = list(vo.boundingBox())
       if floats(vo):
-        vo.reposition(adjustPos=False) # (back between its ends -- out of the window: see VRelation.placedLabel())
+        cast(VRelation, vo).reposition(adjustPos=False) # (back between its ends -- out of the window: see VRelation.placedLabel())
       else:
         carried = set(vo.carriedContents()) if isWindow(vo) else set()
         near = expandRect(old, 400)
@@ -4934,7 +4938,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       for r, other in [*node._getOutgoing(lambda r: r.inferred and not isinstance(r, IsaIndividual)),
                        *node._getIncoming(lambda r: r.inferred and not isinstance(r, IsaIndividual))]:
         if shown(other):
-          x1, y1, x2, y2 = self.findViewObjectForGraphObject(other).boundingBox()
+          x1, y1, x2, y2 = self.findViewObjectForGraphObject(other).boundingBox() # type: ignore[union-attr, arg-type]
           show(node, (x2 + 60, y1))
           break
     rels = list(_inferredRelations(self.model).values()) \
@@ -4986,14 +4990,14 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     dirMenu = tk.Menu(menu)
     for name in ["none", *FLOW_DIRECTIONS]:
       dirMenu.add_radiobutton(label=name, variable=direction, value=name,
-                              command=lambda n=name: self.setAnimationSetting("flowDirection", None if n == "none" else n))
+                              command=lambda n=name: self.setAnimationSetting("flowDirection", None if n == "none" else n)) # type: ignore[misc]
     menu.add_cascade(label="current direction", menu=dirMenu)
     strength = tk.DoubleVar(value=layout.flowStrength)
     self._flowVars["strength"] = strength
     strMenu = tk.Menu(menu)
     for label, value in (("weak", 3.0), ("medium", 6.0), ("strong", 10.0)):
       strMenu.add_radiobutton(label=label, variable=strength, value=value,
-                              command=lambda v=value: self.setAnimationSetting("flowStrength", v))
+                              command=lambda v=value: self.setAnimationSetting("flowStrength", v)) # type: ignore[misc]
     menu.add_cascade(label="current strength", menu=strMenu)
     relation = tk.StringVar(value=(layout.flowRelation or self.model.ISA).name)
     self._flowVars["relation"] = relation
@@ -5001,7 +5005,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     types = relationTypes(self.model) # (its super-models' too: eg: an ontology's)
     for t in types:
       relMenu.add_radiobutton(label=t.name, variable=relation, value=t.name,
-                              command=lambda t=t: self.setAnimationSetting("flowRelation", None if t is self.model.ISA else t))
+                              command=lambda t=t: self.setAnimationSetting("flowRelation", None if t is self.model.ISA else t)) # type: ignore[misc]
     menu.add_cascade(label="current follows", menu=relMenu)
     return menu
 
@@ -5267,7 +5271,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     # Plan it all first (the commands only run when the composite ends): where each goes, and how
     # big the window must be.
     moving = set(toMove)
-    labels = [o.boundingBox() for o in self.values() if o is not None and floats(o) and (o.src in moving or o.dst in moving)]
+    labels = [o.boundingBox() for o in self.values() if o is not None and floats(o) and (o.src in moving or o.dst in moving)] # type: ignore[attr-defined]
     gap = (max([margin, *((b[2] - b[0]) + 2 * margin for b in labels)]), # (room between things for the labels between them)
            max([margin, *((b[3] - b[1]) + 2 * margin for b in labels)]))
     W = list(w.fullBoundingBox()) # (as expanded, if it's collapsed)
@@ -5278,7 +5282,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     for o in self.values():
       if o is None or o is w or o in moving or not o._isConnected() or o.isHidden():
         continue
-      if floats(o) and any(e in moving for e in (o.src, o.dst)):
+      if floats(o) and any(e in moving for e in (o.src, o.dst)): # type: ignore[attr-defined]
         continue # (it'll follow its ends)
       b = list(o.boundingBox())
       if not isinstance(o, VRelation) and o.isContextWindow() and b[0] <= W[0] and b[1] <= W[1] and W[2] <= b[2] and W[3] <= b[3]:

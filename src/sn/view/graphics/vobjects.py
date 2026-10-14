@@ -51,7 +51,7 @@ Visual Attributes
 '''
 from __future__ import annotations
 from typing import Any, Optional, Union, Iterable, Callable, override, cast,\
-  Iterator
+  Iterator, TYPE_CHECKING
 from types import NoneType
 import tkinter as tk
 import weakref
@@ -84,6 +84,10 @@ from sn.model.constraints import WHERE, CONSTRAINTS, CONSTRAINTS_NOTE, splitWher
 from util.attribute import Attribute, VAR
 from sn.view.graphics.decorators import WrappingText, Selected, Highlight, ContextFrame, MarkerContainer, NOMINAL_ASPECT,\
   Decorator, ShadowDecorator, DisabledSlash
+
+if TYPE_CHECKING:
+  from sn.view.graphics.sngView import SNGView
+  from sn.view.graphics.vrelations import VRelation
 
 import logging
 logger:sn.SNLogger = sn.getLogger(__name__)
@@ -149,14 +153,14 @@ class Cache(dict[str,Any]):
         
     Update *attr* from the model object.
     '''
-    if self._owner() is None: return
-    owner:VObject = self._owner()
-    if owner.modelObject is None: return
+    owner:VObject|None = self._owner()
+    if owner is None: return
+    mo = owner.modelObject
+    if mo is None: return
     
     def refreshAttr(attr:str):
-      assert owner is not None
       try:
-        self[attr] = owner.modelObject[attr]
+        self[attr] = mo[attr]
       except:
         self[attr] = self.allkeys[attr]
       
@@ -203,10 +207,10 @@ class Cache(dict[str,Any]):
     assert key in self.allkeys
     super().__setitem__(key, val)
     
-  def __contains__(self, key:str) -> bool:
+  def __contains__(self, key:object) -> bool:
     '''
     :param key:
-    :type key: str
+    :type key: object
     :returns:
     :rtype: bool
     '''
@@ -344,13 +348,13 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     assert isinstance(y1, int) and not isinstance(y1, bool)
       
     self._drawVersion:int = -1
-    self._boundingBox = [x, y, x1, y1]
+    self._boundingBox:list = [x, y, x1, y1]
 
     self.canvas:tk.Canvas = view.canvas
     self._updatingFromAttrs = False
-    self.tooltip = None
+    self.tooltip:CreateToolTip|None = None
     self.markerDecoratorOffset=0
-    self.dragInfo = None
+    self.dragInfo:tuple|None = None
     self._deleted = False
     self._hidden = False
     self.userSized:bool = False
@@ -435,7 +439,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
                                          optional=True),
                             PropertyInfo("expandedHeight", int,
                                          lambda slf: int(getattr(slf, "expandedHeight", None) or 0),
-                                         lambda slf, v: setattr(slf, "expandedHeight", int(v) or None),
+                                         lambda slf, v: setattr(slf, "expandedHeight", int(v) or None), # type: ignore[arg-type]
                                          optional=True)],
             finalSetters=[]
             )
@@ -473,10 +477,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     return self._modelObject
   
   @property
-  def relations(self) -> Iterator[VObject]:
+  def relations(self) -> Iterator[VRelation]:
     '''
     :returns:
-    :rtype: Iterator[VObject]
+    :rtype: Iterator[VRelation]
     '''
     for vo in self._incoming + self._outgoing:
       yield vo
@@ -488,9 +492,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     self._deleted = True
     
     # # this check is necessary because the node being deleted might be a label for an relation
-    if self in self.canvas.nodes():
-      self.canvas.remove(self._id)
-    count = self.modelObject.detach(self) # remove self from observers of the model object
+    if self in self.canvas.nodes(): # type: ignore[attr-defined] # (legacy: tk.Canvas has no nodes())
+      self.canvas.remove(self._id) # type: ignore[attr-defined]
+    count = self.modelObject.detach(self) # type: ignore[union-attr] # remove self from observers of the model object
     assert count > 0
 
     # remove all decorators
@@ -501,26 +505,26 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       except: pass
 
     # notify all VRelations
-    for r in self.relations.copy():
+    for r in self.relations.copy(): # type: ignore[attr-defined]
       try: r.notifyNodeDeletion(self)
       except: pass
-    self.relations = None
+    self.relations = None # type: ignore[misc, assignment]
       
     if self._shape.id is not None:
       self.killBindings()
       self._shape.delete()
 
-    self._shape = None
-    self.decorators = None
+    self._shape = None # type: ignore[assignment]
+    self.decorators = None # type: ignore[assignment]
     self.dragInfo = None
 
-    if self in self.canvas.values():
-      self.canvas.remove(self._id)
+    if self in self.canvas.values(): # type: ignore[attr-defined]
+      self.canvas.remove(self._id) # type: ignore[attr-defined]
       
-    self.cache = None
+    self.cache = None # type: ignore[assignment]
 #    super().delete()
 
-  def boundingBox(self, rect:list[int]=None, fast=False) -> list:
+  def boundingBox(self, rect:list[int]|None=None, fast=False) -> list:
     '''
     Returns or sets the bounding box for the *VObject* in [minX, minY, maxX, maxY]
     form.  Checks *rect* for sanity (coordinates may be negative: the canvas
@@ -559,7 +563,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         # vis/maxSize and near vis/aspectRatio is WrappingText.fitOwner()'s job,
         # and a box deliberately sized otherwise (eg: resized by the user) must
         # be allowed to keep its shape.
-        bb = self._boundingBox
+        bb:list = self._boundingBox
         minX = self.cache['vis/minSize']
         if bb[2]-bb[0] < minX:
           bb[2] = bb[0]+minX
@@ -603,10 +607,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       self._hidden = hide
       if hide and self.selected():
         self.selected(False)
-      dependents = [r for r in self.relations if r is not self]
+      dependents:list[VObject] = [r for r in self.relations if r is not self]
       if self.isContextWindow():
         dependents += self.windowContents()
-      c.after_idle(lambda: [d._applyHidden() for d in dependents if d._isConnected()])
+      c.after_idle(lambda: [d._applyHidden() for d in dependents if d._isConnected()]) # type: ignore[func-returns-value]
 
   def _hideItems(self) -> None:
     '''
@@ -929,7 +933,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       ret = max(ret, text.lineHeight())
     return ret
 
-  def shape(self, c:str=None):
+  def shape(self, c:str|None=None):
     '''
     :param c: [str, default=None] The name of the new shape.
     :type c: str
@@ -946,7 +950,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       try:
         newShape = self.strToShape(c)
       except Exception as ex:
-        self.canvas.logger.write(f'Shape "{c}" is not known.', level="warning", exception=ex)
+        self.canvas.logger.write(f'Shape "{c}" is not known.', level="warning", exception=ex) # type: ignore[attr-defined]
       if newShape is not None:
         self.killBindings()
         oldShape = self._shape
@@ -1049,7 +1053,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       trace = traceback.format_exc()
       self.assertToStatusReport(False, 
           f'Unexpected exception during valication: {ex.__class__.__name__}: {ex}', 'E',
-          {"view trace": lambda trace=trace, ex=ex: showExceptionDialog(self.canvas.winfo_toplevel(), name=ex.__class__.__name__, text=trace)})
+          {"view trace": lambda trace=trace, ex=ex: showExceptionDialog(self.canvas.winfo_toplevel(), name=ex.__class__.__name__, text=trace)}) # type: ignore[misc, call-arg]
     return self.statusReport()
     
   def _addReasonerFindings(self) -> None:
@@ -1067,7 +1071,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         _t, obj, required = v.args
         if obj.isIndividual() or not obj.isa(required):
           actions[f'make "{obj.name}" a "{required.name}"'] = \
-            lambda o=obj, c=required: self.view.context.new_relation([self.view.model.ISA], individual=True,
+            lambda o=obj, c=required: self.view.context.new_relation([self.view.model.ISA], individual=True, # type: ignore[misc]
                                                                       source=o, destination=c, model=self.view.model)
       if v.code == "variable_kind": # args: (the kind its name says, ...): make it that kind, or rename it for the kind it is
         actions.update(self._variableKindFixes(str(v.args[0]) == "individual"))
@@ -1089,6 +1093,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     from sn.model import names
     mo = self.modelObject
     ret:dict[str, Callable[[], None]] = {}
+    if mo is None or mo.model.writeLocked():
+      return ret
     def then(fix:Callable[[], Any]) -> Callable[[], None]:
       def go() -> None:
         try:
@@ -1098,8 +1104,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
           return
         self.view.reasonSilently()
       return go
-    if mo is None or mo.model.writeLocked():
-      return ret
     if mo.individualChangeProblem(namedIndividual) is None:
       ret[f'make it {"an individual" if namedIndividual else "a type"}'] = \
         then(lambda: self.view.context.set_kind(mo, "individual" if namedIndividual else "type"))
@@ -1124,7 +1128,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
   # self.tooltip = CreateToolTip(self.canvas, self.tooltipFunc, bindObj, 
     #                              waitTime=1000, wrapLength=250, background="#FFFFC0")
     self.tooltip = CreateToolTip(self.canvas, self.tooltipFunc, self._shape.id, 
-                                 waitTime=1000, wrapLength=self.tooltipWrap, background="#FFFFC0",
+                                 waitTime=1000, wrapLength=self.tooltipWrap, background="#FFFFC0", # type: ignore[arg-type] # (CreateToolTip takes a callable too)
                                  font=self.tooltipFont)
     
   def killBindings(self):
@@ -1230,7 +1234,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     # where the moved objects, and the relations they drag along, were -- to
     # tell what's been dropped into or dragged out of a context window (see
     # SNGView._updateContainment())
-    self.dragStartCenters:dict["VObject", tuple] = {}
+    self.dragStartCenters:dict["VObject", tuple[float,float]|None] = {}
     self.dragAlong:set["VObject"] = set()
     "The relations that only move because their ends do."
     for n in movedSet:
@@ -1484,14 +1488,18 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     if len(self._statusReport)>0:
       def show(slf):
         pass
-      m.add_command(label='show error report', command=lambda slf=self: [slf.clearStatusReport(), self.validate(), slf.showErrorActionDialog(slf.canvas.winfo_toplevel())])
+      m.add_command(label='show error report', command=lambda slf=self: [slf.clearStatusReport(), self.validate(), slf.showErrorActionDialog(slf.canvas.winfo_toplevel())]) # type: ignore[misc]
     if snPrefs.get("debug", False):
       m.add_separator()
-      m.add_command(label="validate", command=lambda o=self: \
-                                                (n := len(o.validate()), \
-                                                 logger.info(f'"{o.name}": No errors detected.') if n==0 else logger.warning(f'"{o.modelObject.name}": detected {n} errors.'), \
-                                                 o.view.freshPaint(), 
-                                                 o.draw()))
+      def validate(o:VObject=self) -> None:
+        n = len(o.validate())
+        if n == 0:
+          logger.info(f'"{o.name}": No errors detected.')
+        else:
+          logger.warning(f'"{o.modelObject.name}": detected {n} errors.') # type: ignore[union-attr]
+        o.view.freshPaint()
+        o.draw()
+      m.add_command(label="validate", command=validate)
       m.add_command(label="refresh cache", command=lambda: self.cache.refresh(verbose=True))
     return m
     
@@ -1529,23 +1537,24 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     :param menu:
     :type menu: tk.Menu
     '''
-    if self.modelObject is None:
+    mo = self.modelObject
+    if mo is None:
       return
     if self.isInferred(): # (the reasoner's: it can only be looked at, or made asserted -- see GraphObject.inferred)
       menu.add_command(label="show attributes", command=lambda: self.onEditAttributes(disabled=True))
-      locked = self.modelObject.model.writeLocked()
+      locked = mo.model.writeLocked()
       menu.add_command(label="mark as asserted" + (" (the model is write-locked)" if locked else ""),
                        state=tk.DISABLED if locked else tk.NORMAL,
-                       command=lambda: self.view.context.mark_asserted(self.modelObject))
+                       command=lambda: self.view.context.mark_asserted(mo))
       menu.add_separator()
       return
     disabled = self._systemLocked()
-    relInst =  self.modelObject.isIndividual() and isinstance(self.modelObject, Relation)
-    remote = self.view.model != self.modelObject.model
+    relInst =  mo.isIndividual() and isinstance(mo, Relation)
+    remote = self.view.model != mo.model
     readOnly = self.attributesReadOnly()
     menu.add_command(label=f"{'show' if readOnly else 'edit'} attributes",
                      command=lambda: self.onEditAttributes(disabled=readOnly))
-    if self.modelObject.isType():
+    if mo.isType():
       menu.add_command(label='make new instance', command=lambda: self.makeModelObjectSubtype(individual=True))
       menu.add_command(label='make new subtype', command=lambda: self.makeModelObjectSubtype(individual=False))
     if not (disabled or relInst):
@@ -1610,7 +1619,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       key = self.MENU_PREFIX + path
       parent.add_command(label=label or path,
                          state=tk.NORMAL if hooks.resolve(ref) is not None else tk.DISABLED,
-                         command=lambda r=ref, k=key: hooks.call(r, mo, self.hookContext(k)))
+                         command=lambda r=ref, k=key: hooks.call(r, mo, self.hookContext(k))) # type: ignore[misc]
     return bool(found)
 
   def selectionOrSelf(self) -> list[VObject]:
@@ -1649,7 +1658,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     :returns: Whether it's highlighted.
     :rtype: bool
     '''
-    if on is True and "highlight" in self.decorators and self.decorators["highlight"].negative != negative:
+    if on is True and "highlight" in self.decorators and cast(Highlight, self.decorators["highlight"]).negative != negative:
       self.decorators["highlight"].delete() # (the other colour)
     if on is True and "highlight" not in self.decorators:
       self.decorators["highlight"] = Highlight(self, negative=negative)
@@ -1668,12 +1677,14 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     '''
     from sn.model.reasoner import Reasoner, queryWarnings, reportedAnswers
     from sn.model import names
+    mo = self.modelObject
+    assert mo is not None
     if self.view.reasoning is None: # (so what the rules conclude exists is in the model, for the answers to show)
       self.view.reasonSilently()
-    for w in queryWarnings(self.modelObject):
+    for w in queryWarnings(mo):
       logger.warning(w)
     try:
-      rows = Reasoner.create(self.view.model).answer(self.modelObject)
+      rows = Reasoner.create(self.view.model).answer(mo)
     except Exception as ex:
       logger.error(f'Can\'t answer "{self.name}": {ex}')
       return
@@ -1708,9 +1719,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     byName = {k.name: v for k, v in row.items()}
     value = lambda x: byName.get(x.name) if x is not None and x.isVariable() else x
     ret:list[Relation] = []
+    assert self.modelObject is not None
     for t, s, d in patternOf(self.modelObject).triples:
       T, S, D = value(t), value(s), value(d)
-      if not all(isinstance(o, GraphObject) for o in (T, S, D)): # (an open end, or an object only the reasoner knows of)
+      if not (isinstance(T, GraphObject) and isinstance(S, GraphObject) and isinstance(D, GraphObject)): # (an open end, or an object only the reasoner knows of)
         continue
       ret += [r for r, other in S._getOutgoing(lambda r: r.isIndividual() and r.isa(T)) if other is D and r not in ret]
     return ret
@@ -1753,7 +1765,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       return sorted((r for r in model.values() if isinstance(r, Relation) and r.isType() and not r.isVariable()), # (a pattern's ?r isn't a type to make)
                     key=lambda r: r.name.lower())
     def add(menu:tk.Menu, r:Relation) -> None:
-      menu.add_command(label=r.name, command=lambda r=r: self.view.makeRelationFrom(self, r))
+      menu.add_command(label=r.name, command=lambda r=r: self.view.makeRelationFrom(self, r)) # type: ignore[misc]
     model = self.view.model
     ancestors:list = []
     pending = list(model.superDBs)
@@ -1918,6 +1930,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     :type disabled: bool
     '''
     mo = self.modelObject
+    assert mo is not None
     edits = editAttrsBox(self.canvas, mo, title=str(mo), disabled=disabled)
     if not disabled and edits is not None:
       nameEdit = edits.get("name") # (the editor returns Attributes)
@@ -1951,6 +1964,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     :rtype: dict
     '''
     mo = self.modelObject
+    assert mo is not None
     name, text = splitWhere(typed)
     ret = {k: v for k, v in edits.items() if k != "name"}
     if not names.isVariableName(name):
@@ -1959,7 +1973,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     base = edits.get(CONSTRAINTS)
     base = (base.value if isinstance(base, Attribute) else base) if CONSTRAINTS in edits else mo.getLocal(CONSTRAINTS, None)
     try:
-      merged = mergeConstraints(base, text or "")
+      merged = mergeConstraints(base, text or "") # type: ignore[arg-type]
     except ConstraintError as ex:
       logger.error(f'"{typed}": the constraints can\'t be read ({ex}). The name wasn\'t changed.')
       return ret
@@ -2194,11 +2208,11 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       layout(self, aggressive=aggressive)
       for r in self.relations:
         layout(r, aggressive=aggressive)
-    r = self.boundingBox(fast=fast)
+    rect = self.boundingBox(fast=fast)
     
-    return r[0], r[1]
+    return rect[0], rect[1]
     
-  def overlaps(self, bb:list=None, others:Iterable=None, spacing:Optional[list]=None) -> list: #list[VObject]:
+  def overlaps(self, bb:list|None=None, others:Iterable|None=None, spacing:Optional[list]=None) -> list: #list[VObject]:
     '''
     :param bb:
     :type bb: list
@@ -2212,11 +2226,11 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     if bb is None:
       bb = self.boundingBox() if spacing is None else expandRect(self.boundingBox(), spacing)
     if others is None:
-      others = list(self.canvas.values()) #self.canvas.nodes + self.canvas.relations
+      others = list(self.canvas.values()) # type: ignore[attr-defined] # (legacy: tk.Canvas has no values()) #self.canvas.nodes + self.canvas.relations
       others.remove(self)
     else:
       if self in others:
-        others = others.copy()
+        others = list(others)
         others.remove(self)
     ret = []
     for n in others:
@@ -2395,7 +2409,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     '''
     try:
       wrap = self.modelObject.get("vis/tooltipWrap", None) if self.modelObject is not None else None
-      return max(0, int(wrap)) if wrap is not None and not isinstance(wrap, bool) else 250
+      return max(0, int(wrap)) if wrap is not None and not isinstance(wrap, bool) else 250 # type: ignore[arg-type]
     except (ReferenceError, ValueError, TypeError):
       return 250
 
@@ -2580,7 +2594,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     """
     for r in self.relations:
       if r == relation:
-        self.relations.remove(r)
+        self.relations.remove(r) # type: ignore[attr-defined] # (legacy: relations is an iterator)
         break
         
   # ---- Debugging support -----------------------------------------------------

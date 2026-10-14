@@ -36,7 +36,9 @@ Implements VNode and all its supporting classes:
 import tkinter as tk
 from sn.model.model import IsaIndividual, GraphObject
 from sn.view.graphics.vobjects import VObject
-from typing import Optional, Any, override
+from typing import Optional, Any, override, no_type_check, TYPE_CHECKING
+if TYPE_CHECKING:
+  from sn.view.graphics.sngView import SNGView
 
 class VNode(VObject):
   '''
@@ -149,6 +151,7 @@ class VNode(VObject):
 
   ### ATTRIBUTES #######################################################################
 
+  @no_type_check # (legacy: not called; it predates VObject.modelObject)
   def updateFromAttrs(self, attrs:Optional[list]=None):
     '''
     :param attrs:
@@ -615,6 +618,7 @@ class VNode(VObject):
   #     menu.add_command(label=f"contract all ({total[1]})", command=self.contract)
   #     menu.add_cascade(menu=conMenu, label='contract')
   
+  @no_type_check # (legacy: not called; it predates VObject.modelObject)
   def addDeletionMenuItems(self, menu:tk.Menu):
     '''
     :param menu:
@@ -624,6 +628,7 @@ class VNode(VObject):
     if not self.model.system and self.view.isModelEditor:
       menu.add_command(label="delete from model", command=self.model.delete)
   
+  @no_type_check # (legacy: not called; it predates VObject.modelObject)
   def makeMakeRelationMenu(self, menu:tk.Menu):
     '''
     :param menu:
@@ -643,6 +648,7 @@ class VNode(VObject):
 
   ### Event handling ###################################################################
 
+  @no_type_check # (legacy: not called; it predates VObject.modelObject)
   def setMakingRelation(self, val=True, typ=None):
     '''
     :param val:
@@ -718,6 +724,7 @@ class VNode(VObject):
   #     return 'break'
   #     # TODO: add updating the boundingBox.
       
+  @no_type_check # (legacy: not called; it predates VObject.modelObject)
   def notifyModelChanged(self, modelObj, modelOperation:str, info:Optional[any]=None):
 #     if modelObj != self.model: # it must be that a IsaIndividual-ancestor of the model changed,
 #       self.canvas.logger.write(f'VNode.notifyModelChanged({modelObj}[NOT self.model], "{modelOperation}", info={info}) [{self}]', level="debug")

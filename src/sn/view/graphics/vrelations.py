@@ -37,7 +37,7 @@ Implements VRelation and VIsa classes.
 import tkinter as tk
 from ast import literal_eval
 from typing import Any, Optional, Union, Tuple, List, Iterable, \
-  override
+  override, Literal, no_type_check, TYPE_CHECKING
 from types import NoneType
 
 
@@ -51,6 +51,9 @@ from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.connectors import drawSmoothConnector, ConnectorIDs,\
   drawStraightConnector, ConnectorTerminators
 
+if TYPE_CHECKING:
+  from sn.view.graphics.sngView import SNGView
+
 logger:sn.SNLogger = sn.getLogger(__name__)
   
 ROLE_VATTRIBUTES = {'vis/lineColor': 'black',
@@ -61,7 +64,7 @@ ROLE_VATTRIBUTES = {'vis/lineColor': 'black',
                     }
 
     
-class VRelation(VObject, AGRelation):
+class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconnect()/_reconnect() take AGRelation's keep/kept as kwargs)
   '''
   Implements the visual representation of model *Relation*. The roles are taken
   for the *Relation* object exclusively.  
@@ -73,10 +76,14 @@ class VRelation(VObject, AGRelation):
   '''
 
   granularity = 1  # the accuracy to which we should calculate endpoints
+
+  if TYPE_CHECKING: # (it's always a Relation's: see __init__())
+    @property
+    def modelObject(self) -> Relation|None: ...
   
   ### CONSTRUCTOR AND HELPERS ##########################################################
 
-  def __init__(self, view:SNGView, # type: ignore[name-defined] # @UndefinedVariable
+  def __init__(self, view:SNGView,
         modelObject:Relation|str, 
         typ:Relation|None=None,
         shape:Union[Any, str]="Oval",
@@ -235,6 +242,7 @@ class VRelation(VObject, AGRelation):
     :rtype: VObject | None
     '''
     mo = self.modelObject
+    assert mo is not None
     local = mo.localSrc if end == "src" else mo.localDst
     self.inheritedEnds[end] = local is None
     if local is not None:
@@ -932,7 +940,7 @@ class VRelation(VObject, AGRelation):
     d = view.awayFromWindows(self, [x - w / 2, y - h / 2, x + w / 2, y + h / 2], homes, gap=self.PANE_MARGIN)
     return (x, y) if d is None else (x + d[0], y + d[1])
 
-  def gapMidpoint(self, a:VObject, b:VObject) -> list[float]:
+  def gapMidpoint(self, a:VObject, b:VObject) -> tuple[float, float]:
     '''
     Where a floating label between *a* and *b* goes: midway along the visible
     part of the line between their centres -- from where it leaves *a*'s edge
@@ -946,7 +954,7 @@ class VRelation(VObject, AGRelation):
     :param b:
     :type b: VObject
     :returns:
-    :rtype: list[float]
+    :rtype: tuple[float, float]
     '''
     ca, cb = a.centerPt(), b.centerPt()
     if a is b or ca == cb or a.containsPt(cb) or b.containsPt(ca):
@@ -1030,7 +1038,7 @@ class VRelation(VObject, AGRelation):
       one entry in the *VObject.relations list* for each connecting role.
     '''
     for n in self._getConnectedVObjects():
-      n.relations.remove(self)
+      n.relations.remove(self) # type: ignore[attr-defined] # (legacy: relations is an iterator now)
       n.cache.refresh()
       
   def _addSelfToConnectedNodes(self):
@@ -1042,7 +1050,7 @@ class VRelation(VObject, AGRelation):
       one entry in the *VObject.relations list* for each connecting role.
     '''
     for n in self._getConnectedVObjects():
-      n.relations.append(self)
+      n.relations.append(self) # type: ignore[attr-defined] # (legacy: relations is an iterator now)
       n.cache.refresh()
   
   ### MENUS ############################################################################
@@ -1069,7 +1077,7 @@ class VRelation(VObject, AGRelation):
     # Never offered for system relations (those in the always-in-memory sn model), or inferred ones.
     if self.modelObject is None or self.modelObject.isSystemObject() or self.isInferred():
       return
-    state = tk.NORMAL if self._endpointsEditable() else tk.DISABLED
+    state:Literal["normal", "disabled"] = tk.NORMAL if self._endpointsEditable() else tk.DISABLED
     menu.add_command(label="reset src", state=state, command=lambda: self.chooseNewEndpoint("src"))
     menu.add_command(label="reset dst", state=state, command=lambda: self.chooseNewEndpoint("dst"))
 
@@ -1186,6 +1194,7 @@ class VRelation(VObject, AGRelation):
     isa = isinstance(self.modelObject, IsaIndividual)
     isaParent = end == "dst" and isa
     mo = self.modelObject
+    assert mo is not None
     def cycle(n:VObject) -> bool: # (an isa link from a type to itself, or that makes an isa cycle: see GraphObject.parentProblem())
       if not isa or mo is None or n.modelObject is None:
         return False
@@ -1198,14 +1207,14 @@ class VRelation(VObject, AGRelation):
              and not cycle(n)
     def chosen(_origin:VObject, sel:VObject) -> None:
       if end == "src":
-        self.view.context.reconnect(self.modelObject, source=sel.modelObject)
+        self.view.context.reconnect(mo, source=sel.modelObject)
       else:
-        self.view.context.reconnect(self.modelObject, destination=sel.modelObject)
+        self.view.context.reconnect(mo, destination=sel.modelObject)
     def cleared(_origin:VObject) -> None: # dropped on empty space: the relation no longer has this end of its own
       if end == "src":
-        self.view.context.reconnect(self.modelObject, clear_source=True)
+        self.view.context.reconnect(mo, clear_source=True)
       else:
-        self.view.context.reconnect(self.modelObject, clear_destination=True)
+        self.view.context.reconnect(mo, clear_destination=True)
     color = self.cache['vis/lineColor'] or "green"
     self.view.elasticLineChoice(self, chosen, filter=acceptable,
                                 arrowHeads=1 if end == "src" else 2, color=color,
