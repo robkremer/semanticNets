@@ -38,6 +38,10 @@ class Test(unittest.TestCase):
   relations take them from their immediate types.
   '''
 
+  m:Model
+  person:Node; ann:Node; bob:Node
+  sibling:Relation; brother:Relation; sib1:Relation; bro1:Relation
+
   @classmethod
   def setUpClass(cls):
     Path("temp_relprops.xml").unlink(missing_ok=True)
@@ -119,7 +123,7 @@ class Test(unittest.TestCase):
     self.assertIs(self.sib1.localDst, self.bob)
     self.assertTrue(self.sib1.hasLocalDst())
     with self.assertRaises(AttributeError):                    # read-only: set src/dst instead
-      sub.localSrc = self.ann
+      sub.localSrc = self.ann # type: ignore[misc]
 
   def test0800inheritorsNotified(self):
     from util.observer import Observer

@@ -28,16 +28,28 @@ import unittest
 import sn
 from pathlib import Path
 from sn.model.model import Model, Node, Relation
-from sn.model.reasoner import Reasoner
+from sn.model.reasoner import Reasoner, Inferences
 from sn.model.clingoReasoner import ClingoReasoner
+from typing import TYPE_CHECKING, cast
+
+if TYPE_CHECKING: # (the spec is a mixin, so only the type checker sees it as a TestCase)
+  _SpecBase = unittest.TestCase
+else:
+  _SpecBase = object
 
 
-class ReasonerSpec:
+class ReasonerSpec(_SpecBase):
   '''
   The engine-independent specification of reasoner semantics. Every engine
   gets a subclass that also inherits *unittest.TestCase* and sets *ENGINE*.
   '''
   ENGINE:type[Reasoner]
+  m:Model
+  thing:Node; person:Node; car:Node; dog:Node; fred:Node; mary:Node; ann:Node; rex:Node; car1:Node
+  tail:Node; puppy:Node; spot:Node; tail12:Node
+  has:Relation; owns:Relation; ancestor:Relation; sibling:Relation; brother:Relation
+  reasoner:Reasoner
+  result:Inferences
 
   @classmethod
   def setUpClass(cls):
@@ -281,14 +293,14 @@ class TestClingo(ReasonerSpec, unittest.TestCase):
     try:
       reason(self.m, "clingo")
       first = self.m.inferredObjects()
-      rels = [r for r in first if r.isa(self.has) and r.localSrc is self.rex and r.localDst is self.tail]
+      rels = [r for r in first if isinstance(r, Relation) and r.isa(self.has) and r.localSrc is self.rex and r.localDst is self.tail]
       self.assertEqual(len(rels), 1)                                     # the inherited rex -has-> tail, as a relation
       self.assertTrue(all(r.inferred for r, _ in rels[0]._getOutgoing()))  # and its isa link
       self.assertEqual(self.m.isDirty(), dirty)                          # not something to save
       reason(self.m, "clingo")
       self.assertEqual({id(o) for o in self.m.inferredObjects()}, {id(o) for o in first}) # kept, not remade
       info = type(self.m).getInstantiationInfo()
-      saved = next(p for p in info.postconSetters if p.name == "_db").getter(self.m)
+      saved = cast(dict, next(p for p in info.postconSetters if p.name == "_db").getter(self.m))
       self.assertFalse(any(getattr(o, "inferred", False) for o in saved.values()))       # not saved
       self.m._writeLocked = True
       try:
@@ -307,7 +319,7 @@ class TestClingo(ReasonerSpec, unittest.TestCase):
     ctx = ModelContext(self.m)
     try:
       reason(self.m, "clingo")
-      rel = next(r for r in self.m.inferredObjects() if r.isa(self.has) and r.localSrc is self.rex and r.localDst is self.tail)
+      rel = next(r for r in self.m.inferredObjects() if isinstance(r, Relation) and r.isa(self.has) and r.localSrc is self.rex and r.localDst is self.tail)
       with self.assertRaises(PermissionError):                           # the reasoner's: not to be edited
         rel["note"] = "mine"
       with self.assertRaises(PermissionError):
@@ -323,10 +335,10 @@ class TestClingo(ReasonerSpec, unittest.TestCase):
       self.assertFalse(rel.inferred)
       self.assertFalse(any(r.inferred for r, _ in rel._getOutgoing()))  # its isa link too
       self.assertTrue(self.m.isDirty())                                  # a change to save
-      saved = next(p for p in type(self.m).getInstantiationInfo().postconSetters if p.name == "_db").getter(self.m)
+      saved = cast(dict, next(p for p in type(self.m).getInstantiationInfo().postconSetters if p.name == "_db").getter(self.m))
       self.assertIn(rel, list(saved.values()))
       reason(self.m, "clingo")                                           # not inferred again (it's asserted now)
-      self.assertEqual([r for r in self.m.inferredObjects() if r.isa(self.has) and r.localSrc is self.rex and r.localDst is self.tail], [])
+      self.assertEqual([r for r in self.m.inferredObjects() if isinstance(r, Relation) and r.isa(self.has) and r.localSrc is self.rex and r.localDst is self.tail], [])
       ctx.undo()                                                         # inferred again
       self.assertTrue(rel.inferred)
     finally:

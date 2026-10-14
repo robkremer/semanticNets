@@ -35,6 +35,12 @@ class Test(unittest.TestCase):
   Contexts (rules, ...): what a context contains is a pattern, not data.
   '''
 
+  m:Model
+  person:Node; head:Node; fred:Node; mary:Node; rule:Node; x:Node; y:Node; z:Node
+  parent:Relation; child:Relation; has:Relation; real:Relation; ante:Relation; cons:Relation
+  fredPattern:Relation
+  containers:list[Relation]
+
   @classmethod
   def setUpClass(cls):
     Path("temp_context.xml").unlink(missing_ok=True) # (saved at exit by an earlier run)
@@ -102,6 +108,11 @@ class TestQueries(unittest.TestCase):
   Answering queries: a context's pattern matched against the model (and what
   the reasoner infers).
   '''
+
+  m:Model
+  person:Node; dog:Node; alice:Node; bob:Node; carol:Node; fred:Node; mary:Node; rex:Node
+  sib:Relation; parent:Relation
+  reasoner:ClingoReasoner
 
   @classmethod
   def setUpClass(cls):

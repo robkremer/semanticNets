@@ -39,6 +39,8 @@ class Recorder(Observer):
 
 
 class Test(unittest.TestCase):
+  m:Model
+  a:Node; b:Node; c:Node
 
   @classmethod
   def setUpClass(cls):
@@ -102,7 +104,7 @@ class Test(unittest.TestCase):
 
   def test0400notARelation(self):
     with self.assertRaises(TypeError):
-      ModelContext._Reconnect(self.a, destination=self.b)
+      ModelContext._Reconnect(self.a, destination=self.b) # type: ignore[arg-type]
 
   def test0900noIsaCycles(self):
     'An isa link can\'t make a type its own type, directly or not: not by making one, re-pointing one, or asserting one.'
