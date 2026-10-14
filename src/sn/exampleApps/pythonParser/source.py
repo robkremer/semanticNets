@@ -154,7 +154,7 @@ def _byName(tree:ast.Module, names:list[str], near:int) -> ast.stmt|None:
       matches = [s for s in body if _isMainBlock(s)]
     else:
       kinds = (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef) if last else (ast.ClassDef,)
-      matches = [s for s in body if isinstance(s, kinds) and s.name == name]
+      matches = [s for s in body if isinstance(s, kinds) and s.name == name] # type: ignore[attr-defined]
     if not matches:
       return None
     found = min(matches, key=lambda s: abs(s.lineno - near)) if last else matches[0]

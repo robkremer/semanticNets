@@ -89,7 +89,7 @@ def showTypesAndExpand(view:SNGView, model:Model) -> None:
   '''
   types = [o for o in model.values() if isinstance(o, Node) and not o.isIndividual() and model.NODE in o.getParents()]
   levels = expandLevels(model)
-  localLayout, view.localLayout = view.localLayout, None
+  localLayout, view.localLayout = view.localLayout, None # type: ignore[assignment] # (none while it's laid out)
   try:
     x = 50
     shown = []

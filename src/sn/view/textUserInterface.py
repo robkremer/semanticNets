@@ -320,7 +320,7 @@ class SNAbstractTerminal:
         
     # initialize the parser
     if context is None:
-      self.context:UIContext = UIContext(model)
+      self.context:ModelContext = UIContext(model)
     else:
       assert isinstance(context, ModelContext)
       assert context.defaults["model"] == model
@@ -352,7 +352,7 @@ class SNAbstractTerminal:
   
 class SNTerminalWidget(SNAbstractTerminal, TerminalWidget):
   def __init__(self, model:Model|str,
-                     master: tk.Widget,
+                     master: tk.Misc,
                      context:ModelContext|None=None,
                      registry:TerminalRegistry|None=None,
                      stderrfg:str="red",
@@ -405,7 +405,7 @@ class SNTerminalWidget(SNAbstractTerminal, TerminalWidget):
     if "wrap" not in kwargs:
       kwargs["wrap"] = tk.WORD if snPrefs.get("text/wrap", storeDefault=False, storeType=bool) else tk.NONE
     TerminalWidget.__init__(self, master, self.context.parser.parseLine, self.getPrompt, #type: ignore[arg-type]
-                            resultToStringFun=lambda obj: printLists(obj, contextModel=self.context.defaults["model"]), 
+                            resultToStringFun=lambda obj: printLists(obj, contextModel=self.context.defaults["model"]), # type: ignore[arg-type, return-value]
                             registry=registry, 
                             bg=bg, fg=fg, stderrfg=stderrfg, queryfg=queryfg,
                             stdoutfg=stdoutfg, promptfg=promptfg, resultfg=resultfg,
@@ -443,7 +443,7 @@ class SNPlainTextTerminal(SNAbstractTerminal, PlainTextTerminal):
     '''
     SNAbstractTerminal.__init__(self, model, context=context)
     PlainTextTerminal.__init__(self, self.context.parser.parseLine, prompt=self.getPrompt, #type: ignore[arg-type]
-                              resultToStringFun=lambda obj: printLists(obj, contextModel=self.context.defaults["model"]), 
+                              resultToStringFun=lambda obj: printLists(obj, contextModel=self.context.defaults["model"]), # type: ignore[arg-type, return-value]
                               stderrfg=stderrfg, queryfg=queryfg,
                               stdoutfg=stdoutfg, promptfg=promptfg, resultfg=resultfg, **kwargs) 
   

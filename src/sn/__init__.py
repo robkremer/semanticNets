@@ -160,7 +160,7 @@ logger = getLogger(__name__)
 class SNPrefs(Prefs):
 
   @override
-  def getSupers[T:AttributedObject](self)->list[T]:
+  def getSupers[T:AttributedObject](self)->list[T]: # type: ignore[override]
     '''
     :returns:
     :rtype: list[T]
@@ -399,11 +399,11 @@ def _onURLAliases(_key:str, value:Any) -> None:
   applyURLAliases(value)
 snPrefs.addCallback("model/urlAliases", _onURLAliases)
 snPrefs.addCallback("loggingLevel", lambda key, level: (logger.setLevel(logging.getLevelNamesMapping()[level.upper()]), # type: ignore[func-returns-value,arg-type]
-                                                           logger.info(f'Updated {key} to {level} ({logging.getLevelName(logger.getEffectiveLevel())}={logger.getEffectiveLevel()})') # type: ignore[attr-defined]
+                                                           logger.info(f'Updated {key} to {level} ({logging.getLevelName(logger.getEffectiveLevel())}={logger.getEffectiveLevel()})') # type: ignore[attr-defined, func-returns-value]
                                                           ))
 logger.setLevel(logging.getLevelNamesMapping()[snPrefs.get("loggingLevel", 
                                                            storeDefault="DEBUG", 
-                                                           storeType='choices[DEBUG,INFO,WARNING,ERROR,CRITICAL]').upper()
+                                                           storeType='choices[DEBUG,INFO,WARNING,ERROR,CRITICAL]').upper() # type: ignore[union-attr]
                                               ])
 
 # # insure PYTHONPATH includes Tygra's directory (required to resolve classes at runtime, eg: Roles as types in Attributes)
@@ -539,7 +539,7 @@ def saveAtExit():
   # reliable way to find the ones currently open is via the live
   # Application's own window registry (tk._default_root is that Application,
   # the same lookup SNGView.__init__() itself uses).
-  root = tk._default_root
+  root = tk._default_root # type: ignore[attr-defined]
   if isinstance(root, Application):
     for url, window in root.windows.items():
       if window.view is not None:
