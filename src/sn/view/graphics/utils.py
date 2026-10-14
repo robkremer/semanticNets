@@ -87,20 +87,6 @@ CHAR_CMD   = u'\u2318'
 ########## GRAPHIC UtiLItiES #############################################################
 ##########################################################################################
 
-def pointInRect(pt:Sequence[float], rect:Sequence[float]) -> bool:
-  """
-  :param pt: (x,y) 
-  :type pt: Sequence[float]
-  :param rect: (x,y,x1,y1)
-  :type rect: Sequence[float]
-  :return: *True* iff the give *pt* lies inside *rect*.
-  :rtype: bool
-  """
-  corners:list = [(rect[0], rect[1]), # (pairs, though pointInPoly() wants a flat list: not called)
-              (rect[2], rect[1]),
-              (rect[2], rect[3]),
-              (rect[0], rect[3])]
-  return pointInPoly(pt, corners)
               
 def shiftRectToPoint(rect:Sequence[float], point:Sequence[float]) -> list[float]:
   """

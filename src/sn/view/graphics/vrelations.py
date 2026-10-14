@@ -37,7 +37,7 @@ Implements VRelation and VIsa classes.
 import tkinter as tk
 from ast import literal_eval
 from typing import Any, Optional, Union, Tuple, List, Iterable, \
-  override, Literal, no_type_check, TYPE_CHECKING
+  override, Literal, TYPE_CHECKING
 from types import NoneType
 
 
@@ -402,29 +402,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
 
   ### DESTRUCTOR ########################################################################
 
-  def _delete(self):
-    """ Low-level delete that doesn't take care of notifications."""
-    # for roleinfoList in self.roles.values():
-    #   for r in roleinfoList:
-    #     r.eraseView(self.canvas.canvas)
-    if self.connectInfo:
-      self.connectInfo.deleteAll(self.canvas)
-    super().delete()
-
-  def delete(self):
-    """
-    Removes this Relation:
-      remove it from the display
-      removing it from canvas's list
-      notify the relevant nodes
-    """
-    for node in (self.src, self.dst):
-      try:
-        if node is not None:
-          node.notifyRelationDeletion(self)
-      except:
-        pass
-    self._delete()
     
   def _getConnectedVObjects(self) -> List[VObject]:
     '''
@@ -1016,42 +993,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     '''
     self.reposition(adjustPos=adjustPos)
     
-  def notifyNodeDeletion(self, node):
-    '''
-    Recieve notice that *node* is deleting, so we delete the whole relation, being
-    careful not to renotify *node*
-
-    :param node:
-    :type node:
-    '''
-    for n in self._getConnectedVObjects():
-      if n is not node:
-        n.notifyRelationDeletion(self) 
-    self._delete()
-    
-  def _removeSelfFromConnectedNodes(self):
-    '''
-    Removes the reference to *self* from all objects this relation connects.
-    Useful when making this relation hidden.
-    
-    :note: This should be used with caution as the system depends on exactly
-      one entry in the *VObject.relations list* for each connecting role.
-    '''
-    for n in self._getConnectedVObjects():
-      n.relations.remove(self) # type: ignore[attr-defined] # (legacy: relations is an iterator now)
-      n.cache.refresh()
-      
-  def _addSelfToConnectedNodes(self):
-    '''
-    Appends a reference to *self* to all objects this relation connects.
-    Useful when making this relation hidden.
-    
-    :note: This should be used with caution as the system depends on exactly
-      one entry in the *VObject.relations list* for each connecting role.
-    '''
-    for n in self._getConnectedVObjects():
-      n.relations.append(self) # type: ignore[attr-defined] # (legacy: relations is an iterator now)
-      n.cache.refresh()
   
   ### MENUS ############################################################################
 

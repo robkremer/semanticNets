@@ -50,7 +50,7 @@ Visual Attributes
 ----------
 '''
 from __future__ import annotations
-from typing import Any, Optional, Union, Iterable, Callable, override, cast,\
+from typing import Any, Optional, Union, Callable, override, cast,\
   Iterator, TYPE_CHECKING
 from types import NoneType
 import tkinter as tk
@@ -64,7 +64,7 @@ from util.commandParser import CompositeCommandMgr
 from util.persistence.pRef import PRObject, PRDb, PReference #, DeletedObjectError
 from util.observer import Observer, Subject
 from util.utils import removeDuplicates, tag_bindRightMouse, tag_unbindRightMouse, s_CMD, s_SHIFT,\
-  expandRect, overlaps, pointInPoly, showExceptionDialog
+  pointInPoly, showExceptionDialog
 from util.tooltip import CreateToolTip
 from util.command import CommandWrapper
 from util.attributeEditor import getEditedAttrsCommandObj, applyEditAttrsBox,\
@@ -484,45 +484,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     '''
     for vo in self._incoming + self._outgoing:
       yield vo
-        
-  def delete(self):
-    """Removes this Node from the display, removing it from canvas's list."""
-    if self._deleted:
-      return
-    self._deleted = True
-    
-    # # this check is necessary because the node being deleted might be a label for an relation
-    if self in self.canvas.nodes(): # type: ignore[attr-defined] # (legacy: tk.Canvas has no nodes())
-      self.canvas.remove(self._id) # type: ignore[attr-defined]
-    count = self.modelObject.detach(self) # type: ignore[union-attr] # remove self from observers of the model object
-    assert count > 0
-
-    # remove all decorators
-    keys = []
-    for k in self.decorators: keys.append(k)
-    for k in keys: 
-      try: self.removeDecorator(key=k)
-      except: pass
-
-    # notify all VRelations
-    for r in self.relations.copy(): # type: ignore[attr-defined]
-      try: r.notifyNodeDeletion(self)
-      except: pass
-    self.relations = None # type: ignore[misc, assignment]
-      
-    if self._shape.id is not None:
-      self.killBindings()
-      self._shape.delete()
-
-    self._shape = None # type: ignore[assignment]
-    self.decorators = None # type: ignore[assignment]
-    self.dragInfo = None
-
-    if self in self.canvas.values(): # type: ignore[attr-defined]
-      self.canvas.remove(self._id) # type: ignore[attr-defined]
-      
-    self.cache = None # type: ignore[assignment]
-#    super().delete()
 
   def boundingBox(self, rect:list[int]|None=None, fast=False) -> list:
     '''
@@ -1011,11 +972,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
           self.cache.refresh()
           self.view._exemptIfFiltered(self)
           vChanged = True
-        elif topicName == "rm":
-          #self.canvas.remove(self._id)
-          self.delete()
-          rm = False
-          break
         else:
           logger.warning(f'{self.name}: Unknown update({self.modelObject.name}, {topic})')
         
@@ -1038,7 +994,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       self.assertToStatusReport(self.modelObject is not None, 
         f'Model object is missing from Model: {self.readModelObjectRef if hasattr(self, "readModelObjectRef") else ""}'
         + (f' ({self.__dict__["_missingReason"]})' if self.__dict__.get("_missingReason") else ""), "E", 
-        actions={"erase view object": lambda: [self._disconnect(), self.view.setDirty(), self.delete(), None][-1]}) #check model object is there.
+        actions={"erase view object": lambda: [self._disconnect(), self.view.setDirty(), None][-1]}) #check model object is there.
       if self.modelObject is not None:
         model:GraphObject = self.modelObject
         for n in self.view.viewObjectsFor(model): # check for other objects referencing this one's model object
@@ -2212,32 +2168,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     
     return rect[0], rect[1]
     
-  def overlaps(self, bb:list|None=None, others:Iterable|None=None, spacing:Optional[list]=None) -> list: #list[VObject]:
-    '''
-    :param bb:
-    :type bb: list
-    :param others:
-    :type others: Iterable
-    :param spacing:
-    :type spacing: Optional[list]
-    :returns:
-    :rtype: list
-    '''
-    if bb is None:
-      bb = self.boundingBox() if spacing is None else expandRect(self.boundingBox(), spacing)
-    if others is None:
-      others = list(self.canvas.values()) # type: ignore[attr-defined] # (legacy: tk.Canvas has no values()) #self.canvas.nodes + self.canvas.relations
-      others.remove(self)
-    else:
-      if self in others:
-        others = list(others)
-        others.remove(self)
-    ret = []
-    for n in others:
-      nBB = n.boundingBox() if spacing is None else expandRect(n.boundingBox(), spacing)
-      if overlaps(bb, nBB):
-        ret.append(n)
-    return ret
 
   def expand(self, 
              filter:Callable[[Any, Relation], bool]=lambda _vn, _mr: True, 
@@ -2585,17 +2515,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
   #   self.relations.append(relation) #(relation, direction))
   #   #  relation.model.addObserver(self) # observer the relation MODEL
 
-  def notifyRelationDeletion(self, relation):
-    """
-    This is the notification from removal of a relation VIEW.
-
-    :param relation:
-    :type relation:
-    """
-    for r in self.relations:
-      if r == relation:
-        self.relations.remove(r) # type: ignore[attr-defined] # (legacy: relations is an iterator)
-        break
         
   # ---- Debugging support -----------------------------------------------------
   

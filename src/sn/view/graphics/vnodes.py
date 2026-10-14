@@ -33,10 +33,9 @@ Implements VNode and all its supporting classes:
 ----
 """
 
-import tkinter as tk
-from sn.model.model import IsaIndividual, GraphObject
+from sn.model.model import GraphObject
 from sn.view.graphics.vobjects import VObject
-from typing import Optional, Any, override, no_type_check, TYPE_CHECKING
+from typing import Optional, Any, override, TYPE_CHECKING
 if TYPE_CHECKING:
   from sn.view.graphics.sngView import SNGView
 
@@ -151,27 +150,6 @@ class VNode(VObject):
 
   ### ATTRIBUTES #######################################################################
 
-  @no_type_check # (legacy: not called; it predates VObject.modelObject)
-  def updateFromAttrs(self, attrs:Optional[list]=None):
-    '''
-    :param attrs:
-    :type attrs: Optional[list]
-    '''
-    def update(name):
-      if name in attrs and attrsInfo[name]() != self.model.attrs[name]:
-        attrsInfo[name](self.model.attrs[name])
-        
-    attrsInfo = {'vis/shape':self.shape, 'vis/fillColor':self.fillColor, 'vis/borderColor':self.borderColor, \
-        'vis/textColor':self.textColor, "label":self.label, "type":self.typ, \
-        'vis/lineColor':self.lineColor, 'vis/minSize':self.minSize, 'vis/aspectRatio':self.aspectRatio}
-    #TODO: get this implemented or get rid of it.
-    # if self._updatingFromAttrs: return
-    # self._updatingFromAttrs = True
-    # if attrs is None: attrs = list(attrsInfo.keys())    
-    # for name in attrs:
-    #   update(name)
-    # self._updatingFromAttrs = False
-    
 
   # def notifyAttrChanged(self, attrsObj:Attributes, name:str, value:Any):
   #   try:
@@ -618,46 +596,10 @@ class VNode(VObject):
   #     menu.add_command(label=f"contract all ({total[1]})", command=self.contract)
   #     menu.add_cascade(menu=conMenu, label='contract')
   
-  @no_type_check # (legacy: not called; it predates VObject.modelObject)
-  def addDeletionMenuItems(self, menu:tk.Menu):
-    '''
-    :param menu:
-    :type menu: tk.Menu
-    '''
-    menu.add_command(label="remove from view", command=self.delete)
-    if not self.model.system and self.view.isModelEditor:
-      menu.add_command(label="delete from model", command=self.model.delete)
   
-  @no_type_check # (legacy: not called; it predates VObject.modelObject)
-  def makeMakeRelationMenu(self, menu:tk.Menu):
-    '''
-    :param menu:
-    :type menu: tk.Menu
-    :returns:
-    :rtype:
-    '''
-    m = tk.Menu(menu)
-    types = []
-    for t in (t for t in self.view.model.relations if t.isType()):
-        types.append(t)
-    # TODO: sort menu?
-    for t in types:
-      m.add_command(label=t.name, 
-        command=lambda t=t: self.setMakingRelation(typ=t))
-    return m
 
   ### Event handling ###################################################################
 
-  @no_type_check # (legacy: not called; it predates VObject.modelObject)
-  def setMakingRelation(self, val=True, typ=None):
-    '''
-    :param val:
-    :type val:
-    :param typ:
-    :type typ:
-    '''
-    self.canvas.makeRelationFrom(self, typ=typ)
-    #self.dragInfo = None
 
   # def onRightMouse(self, event):
   #   """Creates and displays the node specific menu at the clicked location."""
@@ -724,59 +666,5 @@ class VNode(VObject):
   #     return 'break'
   #     # TODO: add updating the boundingBox.
       
-  @no_type_check # (legacy: not called; it predates VObject.modelObject)
-  def notifyModelChanged(self, modelObj, modelOperation:str, info:Optional[any]=None):
-#     if modelObj != self.model: # it must be that a IsaIndividual-ancestor of the model changed,
-#       self.canvas.logger.write(f'VNode.notifyModelChanged({modelObj}[NOT self.model], "{modelOperation}", info={info}) [{self}]', level="debug")
-#       self.updateFromAttrs([info[0]])
-    '''
-    :param modelObj:
-    :type modelObj:
-    :param modelOperation:
-    :type modelOperation: str
-    :param info:
-    :type info: Optional[any]
-    '''
-    unhandled = False
-    if modelOperation == 'del': 
-      if modelObj is self.model:
-        self.delete()
-      elif modelObj in self.relations:
-        for r in self.relations:
-          if r.model is modelObj:
-            self.relations.remove(r)
-            if isinstance(modelObj, IsaIndividual):
-              self.draw()
-            break
-    elif modelOperation == 'mod attr':
-      assert info[1] is not None
-      if modelObj == self.model:
-        self.notifyAttrChanged(self.model.attrs, info[0], info[1])
-      self.draw()
-
-    elif modelOperation == 'add rel':
-      # the model is telling us about a added relation, but we rely on the VRelation's model to handle any added relations.
-      pass
-#       if not hasattr(self, "addrel123"):
-#         unhandled = True
-#         self.addrel123 = True
-    elif modelOperation == 'del rel':
-      done = False
-      if modelObj is not self.model: # the model is telling us about a deleted relation, but we rely on the VRelation's model to handle any deleted relations.
-        for r in self.relations:
-          if r.model is modelObj:
-            r.model.removeObserver(self)
-            r.delete()
-            done = True
-            break
-        if not done:
-          self.canvas.logger.write(f'Got a "del rel" operation for "{modelObj}" that isn\'t one of my relations {self.relations}.', level='warning')
-#       if not hasattr(self, "delrel123"):
-#         unhandled = True
-#         self.delrel123 = True
-    else:
-      raise NotImplementedError(f'VNode.notifyModelChanged(): operation "{modelOperation}" not implemented.') 
-    if unhandled:
-      self.canvas.logger.write(f'operation "{modelOperation}" not implemented.', level='warning') 
 
     
