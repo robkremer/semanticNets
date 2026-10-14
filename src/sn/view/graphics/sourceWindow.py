@@ -11,6 +11,14 @@ whatever's in the path, it's only ever the file to open (and never an
 option: it's always an absolute path). Empty, or if it can't be run, the
 built-in window's used.
 
+Eg (and see the preference's note, in *sn.PREFS*): for an Eclipse that's
+running, on a Mac -- its launcher would start another, which finds the
+workspace in use -- an AppleScript sends it the file as "path:line", which
+Eclipse takes apart (giving its own app's path; the first time, macOS asks
+whether this may control Eclipse)::
+
+  osascript -e "on run a" -e "tell application \\"/Applications/Eclipse.app\\" to open (POSIX file (item 1 of a))" -e "end run" {path}:{line}
+
 Created on Oct 14, 2026
 
 .. codeauthor:: Rob Kremer <robkremer@me.com>

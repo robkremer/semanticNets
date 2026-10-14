@@ -233,7 +233,9 @@ PREFS:dict[str, tuple[Any, Any, str]] = {
     "  BBEdit's command line tools:  bbedit +{line} {path}\n"
     "  VS Code:  code -g {path}:{line}\n"
     "  Sublime Text:  subl {path}:{line}\n"
-    "  Eclipse (to try: it takes path:line):  .../Eclipse.app/Contents/MacOS/eclipse --launcher.openFile {path}:{line}"),
+    "  Eclipse (on a Mac: the Eclipse that's running; give its own app's path; the first time, macOS asks if "
+    "this may control Eclipse):\n"
+    "    osascript -e \"on run a\" -e \"tell application \\\"/Applications/Eclipse.app\\\" to open (POSIX file (item 1 of a))\" -e \"end run\" {path}:{line}"),
   "gui/NodeMinSize": (int, 30,
     "The width (before zooming) of a new node's shape, unless its vis/minSize says otherwise."),
   "gui/NodeAspectRatio": (float, 1.5,

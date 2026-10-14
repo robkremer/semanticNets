@@ -45,6 +45,16 @@ class Test(unittest.TestCase):
     self.assertEqual(editorCommand("ed +{line} {path}", "x.py", 0)[1:], ["+1", os.path.abspath("x.py")]) # (absolute: never an option)
     self.assertEqual(editorCommand("echo {{literal}} {path}", "/x.py", 1), ["echo", "{literal}", "/x.py"])
 
+  def test0150eclipseExample(self):
+    # the Eclipse example in the preference's note: an AppleScript, given "path:line" as its one argument
+    import sn
+    note = sn.PREFS[EDITOR_PREF][2]
+    template = next(l.strip() for l in note.split("\n") if l.strip().startswith("osascript"))
+    self.assertEqual(editorCommand(template, "/a/b c.py", 12),
+                     ["osascript", "-e", "on run a",
+                      "-e", 'tell application "/Applications/Eclipse.app" to open (POSIX file (item 1 of a))',
+                      "-e", "end run", "/a/b c.py:12"])
+
   def test0200malformed(self):
     for t in ["", "   ", 'open "unclosed', "ed {file}", "ed {0}", "ed {path"]:
       with self.assertRaises(EditorCommandError, msg=t):

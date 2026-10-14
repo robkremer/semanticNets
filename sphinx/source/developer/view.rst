@@ -165,6 +165,13 @@ A hook that shows a file at a line (eg: a function's source) calls
 preference -- a command with ``{path}``, ``{line}`` and ``{url}`` filled in,
 run without a shell -- or, if that's empty or can't be run, a read-only
 ``SourceWindow`` here, scrolled to the line and highlighting the lines asked for.
+Eg, to open it at the line in an Eclipse that's running, on a Mac (Eclipse's
+launcher would start a second Eclipse, which finds the workspace in use; this
+sends the running one the file as "path:line", which it takes apart -- give
+your Eclipse app's own path; the first time, macOS asks whether this may
+control Eclipse)::
+
+  osascript -e "on run a" -e "tell application \"/Applications/Eclipse.app\" to open (POSIX file (item 1 of a))" -e "end run" {path}:{line}
 
 Reasoning results
 -----------------
