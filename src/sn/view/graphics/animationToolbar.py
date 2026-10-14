@@ -134,7 +134,7 @@ class AnimationToolbar(ttk.Frame):
       g = self._group()
       label = ttk.Label(g, text=text)
       label.pack(side=tk.LEFT)
-      scale = ttk.Scale(g, from_=lo, to=hi, length=70, command=lambda v, a=attr: self._setSlider(a, float(v)))
+      scale = ttk.Scale(g, from_=lo, to=hi, length=70, command=lambda v, a=attr: self._setSlider(a, float(v)))  # type: ignore[misc]
       scale.pack(side=tk.LEFT, padx=(3, 0))
       value = ttk.Label(g, width=6)
       value.pack(side=tk.LEFT, padx=(2, 0))

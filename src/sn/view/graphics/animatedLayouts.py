@@ -36,7 +36,7 @@ Created on Nov 19, 2025
 
 import logging
 import weakref
-from typing import Optional, Generator, override, Tuple, TYPE_CHECKING, Any
+from typing import Optional, Generator, override, Tuple, TYPE_CHECKING, Any, no_type_check
 from time import monotonic_ns
 from math import sqrt, acos, pi
 from random import random
@@ -110,7 +110,7 @@ class Snapshot:
     homes = view.containmentHomes()
     self.objects:list[VObject] = [vo for vo in view.values() if vo is not None and (isEligible(vo) or self._placed(vo, homes))]
     index = {id(vo): i for i, vo in enumerate(self.objects)}
-    self.pinned:set[int] = {i for i, vo in enumerate(self.objects) if isinstance(vo, VRelation) and vo.modelObject.isIndividual() and vo.floating()}
+    self.pinned:set[int] = {i for i, vo in enumerate(self.objects) if isinstance(vo, VRelation) and vo.modelObject.isIndividual() and vo.floating()} # type: ignore[union-attr]
     "The relations' labels (by index) that float now, but are placed in their panes: moving them pins them (see *_placed()*)."
     self.owners:list[int|None] = [None] * len(self.objects)
     "The window (by index) each object is in (see *SNGView.containmentHomes()*), or None for one out on the canvas."
@@ -160,7 +160,8 @@ class Snapshot:
     for vo, (cx, cy) in zip(self.objects, self.positions):
       x1, y1, x2, y2 = vo.boundingBox()
       text = None if isinstance(vo, VRelation) else vo.decorators.get("text")
-      tb = view.canvas.bbox(text.id) if text is not None and getattr(text, "id", None) is not None else None
+      textId = getattr(text, "id", None) if text is not None else None
+      tb = view.canvas.bbox(textId) if textId is not None else None
       if tb: # (window coordinates -> view coordinates)
         tx1, ty1, tx2, ty2 = view.windowToView(*tb)
         x1, y1, x2, y2 = min(x1, tx1), min(y1, ty1), max(x2, tx2), max(y2, ty2)
@@ -173,24 +174,25 @@ class Snapshot:
         links[(min(i, j), max(i, j))] = max(weight, links.get((min(i, j), max(i, j)), 0.0))
     for vo in self.objects:
       for rel in vo.relations:
-        if not isinstance(rel, VRelation) or rel.modelObject is None or not rel._isConnected():
+        rmo = rel.modelObject if isinstance(rel, VRelation) else None
+        if rmo is None or not rel._isConnected():
           continue
-        weight = float(relationWeights.get(rel.modelObject.name, default))
-        if rel.modelObject.isType() or id(rel) in index: # (a relation type, or a placed label, is a body itself: attached to it)
+        weight = float(relationWeights.get(rmo.name, default))
+        if rmo.isType() or id(rel) in index: # (a relation type, or a placed label, is a body itself: attached to it)
           link(vo, rel, weight)
         else: # (an individual relation: its ends attract one another)
           other = rel.dst if rel.src is vo else rel.src
           link(vo, other, weight)
       if isinstance(vo, VRelation): # (a relation type, or a placed label: attracted to its ends)
-        weight = float(relationWeights.get(vo.modelObject.name, default))
+        weight = float(relationWeights.get(vo.modelObject.name, default)) # type: ignore[union-attr]
         for end in (vo.src, vo.dst):
           link(vo, end, weight)
     lifted:dict[tuple[int, int], float] = {}
-    for (i, j), w in links.items():
+    for (i, j), weight in links.items():
       pair = self.siblings(i, j)
       if pair is not None:
         key = (min(pair), max(pair))
-        lifted[key] = max(w, lifted.get(key, 0.0))
+        lifted[key] = max(weight, lifted.get(key, 0.0))
     self.links:list[tuple[int, int, float]] = [(i, j, w) for (i, j), w in lifted.items()]
     '''
     (i, j, weight): pairs of objects (by index) attracted to one another: always
@@ -200,17 +202,19 @@ class Snapshot:
     "(src, dst): the objects (by index) at the ends of each relation of the flow relation type."
     if flowRelation is not None:
       seen:set[tuple[int, int]] = set()
-      for rel in view.values():
-        mo = rel.modelObject if isinstance(rel, VRelation) else None
-        if mo is None or not mo.isIndividual() or not rel._isConnected():
+      for vr in view.values():
+        if not isinstance(vr, VRelation):
+          continue
+        mo = vr.modelObject
+        if mo is None or not mo.isIndividual() or not vr._isConnected():
           continue
         try:
           if not mo.isa(flowRelation):
             continue
         except Exception:
           continue
-        i, j = index.get(id(rel.src)), index.get(id(rel.dst))
-        pair = self.siblings(i, j) if i is not None and j is not None else None
+        a, b = index.get(id(vr.src)), index.get(id(vr.dst))
+        pair = self.siblings(a, b) if a is not None and b is not None else None
         # (only out on the canvas: the current layers the canvas, not inside windows)
         if pair is not None and self.owners[pair[0]] is None and pair not in seen:
           seen.add(pair)
@@ -747,8 +751,8 @@ class FieldsLayout():
         if vo._isConnected():
           self._start.setdefault(id(vo), (vo, list(vo.boundingBox())))
           if id(vo) in self._pins: # (a floating label placed in its pane: pinned there -- see Snapshot._placed())
-            self._wasFloating.setdefault(id(vo), vo.floating())
-            vo._floatingAnchor = False
+            self._wasFloating.setdefault(id(vo), vo.floating()) # type: ignore[attr-defined]
+            vo._floatingAnchor = False # type: ignore[attr-defined]
           vo.moveBy(dx, dy, adjustPos=False, carry=False) # (a window's contents have moves of their own)
       moved = len(changes) > 0
       self._cool(sum(abs(dx) + abs(dy) for _, (dx, dy) in changes))
@@ -930,6 +934,7 @@ except ImportError:
 #     self.relationWeights:dict[str, float] = relationWeights
 #     self.defaultWeight = self.relationWeights["*"] if "*" in self.relationWeights else 0.5
     
+@no_type_check # (legacy: needs the "bones" engine, which isn't installed)
 def makeBonesGraph(view:SNView, defaultWeight:float=0.5, relationWeights:dict[str,float]=dict()):
   
   '''
@@ -942,7 +947,7 @@ def makeBonesGraph(view:SNView, defaultWeight:float=0.5, relationWeights:dict[st
   :returns:
   :rtype:
   '''
-  nodes:dict[id, BNode] = dict()
+  nodes:dict[id, BNode] = dict() # type: ignore[valid-type]
   
   def addNode(vnode:VObject) -> ID:
     if not isEligible(vnode):
@@ -961,7 +966,7 @@ def makeBonesGraph(view:SNView, defaultWeight:float=0.5, relationWeights:dict[st
         if rel.modelObject.isType():
           other:VObject = rel
         else:
-          other:VObject = rel.roles["src"][0].vobject()
+          other:VObject = rel.roles["src"][0].vobject() # type: ignore[no-redef]
           if vnode is other:
             other = rel.roles["dst"][0].vobject()
           if vnode is other: #self-reference, ignore it
@@ -1043,7 +1048,7 @@ class FieldsLayout_threadPool(FieldsLayout):
     self._view = weakref.ref(view)
     self._killFlag = False # the global killflag
     #self.pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="fields", initializer=fieldLayout.init)
-    self.pool = ProcessPoolExecutor(max_workers=1, initializer=fieldLayout.init)
+    self.pool = ProcessPoolExecutor(max_workers=1, initializer=fieldLayout.init) # type: ignore[name-defined]
     print("ProcessPoolExecutor initialized")
     self.waiting:bool = False # used in self._resubmit to handle a suppressLocalLayout state
 
@@ -1061,10 +1066,10 @@ class FieldsLayout_threadPool(FieldsLayout):
     self.waiting = False
     graph = makeBonesGraph(self.view)
     print(f"Animation on ({len(graph)})")
-    self.job = self.pool.submit(fieldLayout.call, "newFrame", 
+    self.job = self.pool.submit(fieldLayout.call, "newFrame", # type: ignore[name-defined]
                                 graph=graph, 
                                 obj=obj._id if obj is not None else None)
-    self.job.add_done_callback(lambda future: self.view.after(self._updateFromBones, future))
+    self.job.add_done_callback(lambda future: self.view.after(self._updateFromBones, future)) # type: ignore[attr-defined]
 
   def newNode(self, id:ID, pos:Point):
     '''
@@ -1073,7 +1078,7 @@ class FieldsLayout_threadPool(FieldsLayout):
     :param pos:
     :type pos: Point
     '''
-    self.pool.submit(fieldLayout.worker.newNode, id=id, pos=pos)
+    self.pool.submit(fieldLayout.worker.newNode, id=id, pos=pos) # type: ignore[name-defined]
                                        
   def newRel(self, id1:ID, id2:ID, weight:float):
     '''
@@ -1084,14 +1089,14 @@ class FieldsLayout_threadPool(FieldsLayout):
     :param weight:
     :type weight: float
     '''
-    self.pool.submit(fieldLayout.worker.newRel, id1=id1, id2=id2, weight=weight)
+    self.pool.submit(fieldLayout.worker.newRel, id1=id1, id2=id2, weight=weight) # type: ignore[name-defined]
                                        
   def delNode(self, id:ID):
     '''
     :param id:
     :type id: ID
     '''
-    self.pool.submit(fieldLayout.worker.delNode, id=id)
+    self.pool.submit(fieldLayout.worker.delNode, id=id) # type: ignore[name-defined]
                                        
   def delRel(self, id1:ID, id2:ID):
     '''
@@ -1100,7 +1105,7 @@ class FieldsLayout_threadPool(FieldsLayout):
     :param id2:
     :type id2: ID
     '''
-    self.pool.submit(fieldLayout.worker.delRel, id1=id1, id2=id2)
+    self.pool.submit(fieldLayout.worker.delRel, id1=id1, id2=id2) # type: ignore[name-defined]
                                        
   def updatePos(self, id:ID, pos:Point):
     '''
@@ -1109,7 +1114,7 @@ class FieldsLayout_threadPool(FieldsLayout):
     :param pos:
     :type pos: Point
     '''
-    self.pool.submit(fieldLayout.worker.updatePos, id=id, pos=pos)
+    self.pool.submit(fieldLayout.worker.updatePos, id=id, pos=pos) # type: ignore[name-defined]
                                        
   def updateWeight(self, id1:ID, id2:ID, weight:float):
     '''
@@ -1120,7 +1125,7 @@ class FieldsLayout_threadPool(FieldsLayout):
     :param weight:
     :type weight: float
     '''
-    self.pool.submit(fieldLayout.worker.updateWeight, id1=id1, id2=id2, weight=weight)
+    self.pool.submit(fieldLayout.worker.updateWeight, id1=id1, id2=id2, weight=weight) # type: ignore[name-defined]
     
   def updateSettings(self, **kwargs) -> Future: # A future object
     '''
@@ -1132,20 +1137,20 @@ class FieldsLayout_threadPool(FieldsLayout):
     '''
     print("FieldsLayout_threadPool.updateSettings()")
     if len(kwargs) == 0:
-      job = self.pool.submit(fieldLayout.worker.updateSettings)
+      job = self.pool.submit(fieldLayout.worker.updateSettings) # type: ignore[name-defined]
       return job # a future object
     for k,v in kwargs.items():
       assert k in FIELD_LAYOUT_PARAMS
     print(f'updating settings {str(kwargs)}')
     try:
-      job = self.pool.submit(fieldLayout.worker.updateSettings, **kwargs)
+      job = self.pool.submit(fieldLayout.worker.updateSettings, **kwargs) # type: ignore[name-defined]
       print("done submit")
     except:
       logger.exception("FieldsLayout_threadPool.updateSettings():")
     return job
     
                                        
-  def _updateFromBones(self, future:Future)->bool:
+  def _updateFromBones(self, future:Future)->bool: # type: ignore[return]
     '''
     This is the callback from the *ThreadPoolExecutor* after the layout job has
     completed. Schedule the result into *tkinter's* mainloop (*self._drawFromBones()*).
@@ -1159,7 +1164,7 @@ class FieldsLayout_threadPool(FieldsLayout):
     '''
     try:
       bones = future.result(timeout=2)
-      self.view.canvas.winfo_toplevel().after(100, lambda bones=bones: self._drawFromBones(bones))
+      self.view.canvas.winfo_toplevel().after(100, lambda bones=bones: self._drawFromBones(bones)) # type: ignore[misc]
     except:
       logger.exception("Animation raised an exception.")
     
@@ -1204,9 +1209,9 @@ class FieldsLayout_threadPool(FieldsLayout):
       self.view.canvas.winfo_toplevel().after(500, self._resubmit)
     else:
       print("submitting")
-      self.job = self.pool.submit(fieldLayout.call, "newFrame")
+      self.job = self.pool.submit(fieldLayout.call, "newFrame") # type: ignore[name-defined]
       #self.job.add_done_callback(self._updateFromBones)
-      self.job.add_done_callback(lambda future: self.view.after(self._updateFromBones, future))
+      self.job.add_done_callback(lambda future: self.view.after(self._updateFromBones, future)) # type: ignore[attr-defined]
   
 # def testBones(view:SNView):
 #   bg = BonesGraph()

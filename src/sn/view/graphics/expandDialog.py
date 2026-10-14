@@ -194,7 +194,7 @@ class ExpandDialog(tk.Toplevel):
     self.mode = tk.StringVar(value="chosen" if choices else "all")
     self.checks:list[tk.BooleanVar] = [tk.BooleanVar(value=False) for _ in choices]
     self.levels = tk.IntVar(value=levels)
-    pad = dict(padx=10, pady=2)
+    pad:dict[str, Any] = dict(padx=10, pady=2)
     frame = ttk.Frame(self, padding=8)
     frame.pack(fill=tk.BOTH, expand=True)
     ttk.Label(frame, text="Follow:").grid(row=0, column=0, sticky=tk.W, **pad)
