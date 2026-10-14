@@ -33,7 +33,7 @@ Created on Jan 18, 2025
 import logging
 import tkinter as tk
 from tkinter import ttk
-from typing import Optional, Iterable, Callable
+from typing import Any, Optional, Iterable, Callable, Sequence
 import subprocess
 
 logger:sn.SNLogger = sn.getLogger(__name__)
@@ -87,27 +87,28 @@ CHAR_CMD   = u'\u2318'
 ########## GRAPHIC UtiLItiES #############################################################
 ##########################################################################################
 
-def pointInRect(pt:Iterable[float], rect:Iterable[float]) -> bool:
+def pointInRect(pt:Sequence[float], rect:Sequence[float]) -> bool:
   """
   :param pt: (x,y) 
-  :type pt: Iterable[float]
+  :type pt: Sequence[float]
   :param rect: (x,y,x1,y1)
-  :type rect: Iterable[float]
+  :type rect: Sequence[float]
   :return: *True* iff the give *pt* lies inside *rect*.
   :rtype: bool
   """
-  return pointInPoly(pt, [(rect[0], rect[1]),
+  corners:list = [(rect[0], rect[1]), # (pairs, though pointInPoly() wants a flat list: not called)
               (rect[2], rect[1]),
               (rect[2], rect[3]),
-              (rect[0], rect[3])])
+              (rect[0], rect[3])]
+  return pointInPoly(pt, corners)
               
-def shiftRectToPoint(rect:Iterable[float], point:Iterable[float]) -> list[float]:
+def shiftRectToPoint(rect:Sequence[float], point:Sequence[float]) -> list[float]:
   """
   :param pt: (x,y) 
   :param rect: (x,y,x1,y1)
-  :type rect: Iterable[float]
+  :type rect: Sequence[float]
   :param point:
-  :type point: Iterable[float]
+  :type point: Sequence[float]
   :return: A new rectangle if the same size and aspect ratio as *rect*, but with the 
     upper left corner at *pt*.
   :rtype: list[float]
@@ -115,12 +116,12 @@ def shiftRectToPoint(rect:Iterable[float], point:Iterable[float]) -> list[float]
   
   return [point[0], point[1], point[0]+rect[2]-rect[0], point[1]+rect[3]-rect[1]]
                     
-def overlaps(rect1:Iterable[float], rect2:Iterable[float]) -> bool:
+def overlaps(rect1:Sequence[float], rect2:Sequence[float]) -> bool:
   """
   :param rect1: (x,y,x1,y1)
-  :type rect1: Iterable[float]
+  :type rect1: Sequence[float]
   :param rect2: (x,y,x1,y1)
-  :type rect2: Iterable[float]
+  :type rect2: Sequence[float]
   :return: *True* iff the two rectangles overlap.
   :rtype: bool
   """
@@ -129,12 +130,12 @@ def overlaps(rect1:Iterable[float], rect2:Iterable[float]) -> bool:
   return overlapDim(rect1[0], rect1[2], rect2[0], rect2[2]) and \
           overlapDim(rect1[1], rect1[3], rect2[1], rect2[3])
 
-def pointInPoly(pt:Iterable[float], poly:Iterable[float]) -> bool:
+def pointInPoly(pt:Sequence[float], poly:Sequence[float]) -> bool:
   """
   :param pt: (x,y) 
-  :type pt: Iterable[float]
+  :type pt: Sequence[float]
   :param poly: (x,y [,x1,y1]...)
-  :type poly: Iterable[float]
+  :type poly: Sequence[float]
   :return: *True* iff the give *pt* lies inside *poly*.
   :rtype: bool
   """
@@ -145,25 +146,25 @@ def pointInPoly(pt:Iterable[float], poly:Iterable[float]) -> bool:
     arr.append((poly[i], poly[i+1]))
   #bbPath = mplPath.Path(np.array(arr))
   bbPath = mplPath.Path(arr)
-  return bbPath.contains_point(pt)
+  return bbPath.contains_point(pt) # type: ignore[arg-type]
 
-def midpoint(pt1:Iterable[float], pt2:Iterable[float]) -> list[float]:
+def midpoint(pt1:Sequence[float], pt2:Sequence[float]) -> tuple[float, float]:
   """
   :param pt1: (x,y)
-  :type pt1: Iterable[float]
+  :type pt1: Sequence[float]
   :param pt2: (x,y)
-  :type pt2: Iterable[float]
+  :type pt2: Sequence[float]
   :return: The point midway between the two points.
-  :rtype: list[float]
+  :rtype: tuple[float, float]
   """
   return ((pt1[0]+pt2[0])/2, (pt1[1]+pt2[1])/2)
   
-def expandRect(rect:Iterable[float], spacing:Iterable[float]) -> list[float]:
+def expandRect(rect:Sequence[float], spacing:Sequence[float]) -> list[float]:
   """
   :param rect: The rectangle to expand.
-  :type rect: Iterable[float]
+  :type rect: Sequence[float]
   :param spacing: The vector of points to expand *rect* as [left, top, right, bottom].
-  :type spacing: Iterable[float]
+  :type spacing: Sequence[float]
   :return: A new rectangle representing the expansion of *rect*.
   :rtype: list[float]
   """ 
@@ -172,13 +173,13 @@ def expandRect(rect:Iterable[float], spacing:Iterable[float]) -> list[float]:
        rect[2]+spacing[2],
        rect[3]+spacing[3]]
   
-def normalizeRect(rect:Iterable[float]) -> list[float]:
+def normalizeRect(rect:Sequence[float]) -> list[float]:
   """
   Fix up a rect (x,y,x1,y1) such that x<x1 and y<y1, in conformance to tk rules.
   
   :param: rect:
   :param rect:
-  :type rect: Iterable[float]
+  :type rect: Sequence[float]
   :return: A new rectangle same as *rect*, but s/t x<x1 and y<y1.
   :rtype: list[float]
   """
@@ -271,7 +272,7 @@ def getSubMenu(menu:tk.Menu, name:str, makeIfNone:int|str|None=tk.END) -> Option
   submenu = None
   try:
     index = menu.index(name)
-    assert menu.type(index) == "cascade"
+    assert index is not None and menu.type(index) == "cascade"
     submenu = menu.entrycget(index,'menu')
     submenu = menu.winfo_toplevel().nametowidget(submenu)
   except Exception as ex:
@@ -402,20 +403,21 @@ def addToMenuBar(path:str, command:Optional[Callable]=None, *, menu:Optional[tk.
       f'addToMenuBar(): no default menu bar could be resolved (no default root, or it has no menu configured).'
   for seg in segments[:-1]:
     target = getSubMenu(target, seg, makeIfNone=(cascadePositions or {}).get(seg, tk.END))
+    assert target is not None # (made if it isn't there)
   label = segments[-1]
-  kwargs = {} if accelerator is None else {"accelerator": accelerator}
+  kwargs:dict[str, Any] = {} if accelerator is None else {"accelerator": accelerator}
   wantType = "command" if command is not None else "cascade"
-  index, existingType = _findEntry(target, label)
-  if index is not None and existingType != wantType:
-    target.delete(index)  # entry exists but as the other kind -- replace it in place
-  elif index is None:
-    index = tk.END
+  found, existingType = _findEntry(target, label)
+  if found is not None and existingType != wantType:
+    target.delete(found)  # entry exists but as the other kind -- replace it in place
+  index:int|str = tk.END if found is None else found
   if command is not None:
     if existingType == wantType:
       target.entryconfig(index, command=command, state=tk.NORMAL, **kwargs)
     else:
       target.insert_command(index, label=label, command=command, state=tk.NORMAL, **kwargs)
   else:
+    assert menu is not None
     if existingType == wantType:
       target.entryconfig(index, menu=menu, state=tk.NORMAL, **kwargs)
     else:
@@ -451,14 +453,14 @@ def addCheckToMenuBar(path:str, variable:tk.Variable, command:Optional[Callable]
       f'addCheckToMenuBar(): no default menu bar could be resolved (no default root, or it has no menu configured).'
   for seg in segments[:-1]:
     target = getSubMenu(target, seg, makeIfNone=(cascadePositions or {}).get(seg, tk.END))
+    assert target is not None # (made if it isn't there)
   label = segments[-1]
-  index, existingType = _findEntry(target, label)
-  if index is not None:
-    target.delete(index) # (rebuilt: a check item's variable can't be rebound by entryconfig on every platform)
-  else:
-    index = tk.END
+  found, _existingType = _findEntry(target, label)
+  if found is not None:
+    target.delete(found) # (rebuilt: a check item's variable can't be rebound by entryconfig on every platform)
+  index:int|str = tk.END if found is None else found
   target.insert_checkbutton(index, label=label, variable=variable, onvalue=True, offvalue=False,
-                            command=command, state=tk.NORMAL)
+                            command=command, state=tk.NORMAL) # type: ignore[arg-type] # (command=None: tkinter leaves it out)
   _separate(target, label, separatorBefore)
 
 def removeFromMenuBar(path:str) -> None:
@@ -570,7 +572,7 @@ class VerticalScrolledFrame(ttk.Frame):
         def _configure_interior(event):
             # Update the scrollbars to match the size of the inner frame.
             size = (interior.winfo_reqwidth(), interior.winfo_reqheight())
-            canvas.config(scrollregion="0 0 %s %s" % size)
+            canvas.config(scrollregion="0 0 %s %s" % size) # type: ignore[call-overload]
             if interior.winfo_reqwidth() != canvas.winfo_width():
                 # Update the canvas's width to fit the inner frame.
                 canvas.config(width=interior.winfo_reqwidth())
