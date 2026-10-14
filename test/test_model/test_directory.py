@@ -224,9 +224,9 @@ class Test(unittest.TestCase):
     d = self.dir
     m, v = model(f"{d}/m.snm"), view(f"{d}/v.snv", "m.snm")
     self.assertIsNone(urlProblem(urlOf(m), ("model",)))
-    self.assertIn("view, not a model", urlProblem(urlOf(v), ("model",)))
+    self.assertIn("view, not a model", urlProblem(urlOf(v), ("model",)) or "")
     self.assertIsNone(urlProblem(urlOf(v)))
-    self.assertIn("nothing at", urlProblem(f"file://{d}/gone.snm"))
+    self.assertIn("nothing at", urlProblem(f"file://{d}/gone.snm") or "")
 
   def test1000remote(self):
     import threading, functools

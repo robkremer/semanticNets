@@ -100,8 +100,8 @@ class Test(unittest.TestCase):
     global context
     global m
     # create fred isa person
-    person = context.new_node(m["node"], "person", type=True)
-    fred = context.new_node(m["person"], "fred", individual=True)
+    person = context.new_node(m["node"], "person", type=True) # type: ignore[arg-type]
+    fred = context.new_node(m["person"], "fred", individual=True) # type: ignore[arg-type]
     self.assertTrue(context.query(["person", "fred"]))
     with self.assertRaises(KeyError):
       context.query(["fred", "person"]) # "fred" isn't a type

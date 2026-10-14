@@ -69,9 +69,9 @@ class Test(unittest.TestCase):
     
   def test0200disconnect(self):
     model = Model.getDB("temp.xml") # already in memory from the first test
-    fred:Node = model["fred"]
+    fred:Node = model["fred"] # type: ignore[assignment]
     self.assertFalse(fred.validate())
-    person:Node = model["person"]
+    person:Node = model["person"] # type: ignore[assignment]
     self.assertFalse(person.validate())
     self.assertIs(model["fred"], fred)
     self.assertTrue(fred.isa(person))

@@ -70,6 +70,7 @@ class Test(unittest.TestCase):
     c.copy([self.rule])
     made = c.paste()
     new = set(m.keys()) - before
+    assert copying.clipboard is not None
     self.assertEqual(len(made), len(copying.clipboard.entries))
     self.assertEqual({o.id for o in made}, new)                  # all new ids
     rule2 = made[0]

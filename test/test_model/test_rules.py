@@ -320,14 +320,14 @@ class TestRules(unittest.TestCase):
     self.assertTrue(attr is not None and attr.inferred and attr.value == "male")
     self.assertFalse(m.isDirty())                                 # not a change
     saved = next(q for q in AttributedObject.getInstantiationInfo().postconSetters if q.name == "attributes").getter(dave)
-    self.assertNotIn("gender", saved)                             # not saved
+    self.assertNotIn("gender", saved) # type: ignore[arg-type]   # not saved
     reason(m)
     self.assertIs(dave.getLocalAttr("gender"), attr)              # kept (and the reasoner didn't read it as given)
     dave["gender"] = "male"                                       # given now
-    self.assertFalse(dave.getLocalAttr("gender").inferred)
+    self.assertFalse(dave.getLocalAttr("gender").inferred) # type: ignore[union-attr]
     self.assertTrue(m.isDirty())
     reason(m)
-    self.assertFalse(dave.getLocalAttr("gender").inferred)        # given beats inferred
+    self.assertFalse(dave.getLocalAttr("gender").inferred) # type: ignore[union-attr] # given beats inferred
     del dave["gender"]
     reason(m)
     clearReasoning(m)
@@ -348,8 +348,8 @@ class TestRules(unittest.TestCase):
     reason(m)
     fred = p["fred"]
     self.assertEqual(fred["vis/borderColor"], "blue")
-    self.assertTrue(fred.getLocalAttr("vis/borderColor").inferred)
-    self.assertEqual(fred.getAttr("vis/borderColor").type, "color")  # (the type's)
+    self.assertTrue(fred.getLocalAttr("vis/borderColor").inferred) # type: ignore[union-attr]
+    self.assertEqual(fred.getAttr("vis/borderColor").type, "color") # type: ignore[union-attr] # (the type's)
     self.assertEqual(fred["height"], 2.0)
     self.assertIsInstance(fred["height"], float)
     self.assertEqual(p["alice"]["vis/borderColor"], "black")       # (not male)
@@ -658,9 +658,9 @@ class TestRules(unittest.TestCase):
     ctx.undo()
     self.assertTrue(X.isType())
     # refused: what it is already; a type with instances; a relation
-    self.assertIn("already", X.individualChangeProblem(False))
-    self.assertIn("instances or subtypes", self.person.individualChangeProblem(True))
-    self.assertIn("relation", self.likes.individualChangeProblem(True))
+    self.assertIn("already", X.individualChangeProblem(False) or "")
+    self.assertIn("instances or subtypes", self.person.individualChangeProblem(True) or "")
+    self.assertIn("relation", self.likes.individualChangeProblem(True) or "")
     with self.assertRaises(ValueError):
       self.person.setIndividual(True)
     self.assertTrue(self.person.isType())
@@ -712,7 +712,7 @@ class TestRules(unittest.TestCase):
     shown = ClingoReasoner(self.m, showSysRules=True).run()
     self.assertIn(("bob", "alice"), self.pairs(hidden.inferred, self.sib))
     self.assertEqual(hidden.fired, [])
-    self.assertIn(("bob", "alice"), {(s.name, d.name) for r, t, s, d in shown.fired if r.name == "symmetric"})
+    self.assertIn(("bob", "alice"), {(s.name, d.name) for r, t, s, d in shown.fired if r.name == "symmetric"}) # type: ignore[union-attr]
     self.assertEqual(self.pairs(hidden.holds, self.sib), self.pairs(shown.holds, self.sib))
 
   def test0940baseRulesSuperModel(self):

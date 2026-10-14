@@ -69,6 +69,7 @@ def attrs(text, *names):
   'The attributes the parser keeps for the chunk *names* of *text* (see chunkAttrs()), and its line.'
   tree = ast.parse(text)
   node = source._byName(tree, list(names), 0)
+  assert node is not None
   return node.lineno, chunkAttrs(node, text.split("\n"))
 
 class Test(unittest.TestCase):
@@ -137,7 +138,7 @@ class Test(unittest.TestCase):
   def test0800noFile(self):
     loc = locate(os.path.join(self.folder.name, "nope.py"), ["f"], 3)
     self.assertFalse(loc.found)
-    self.assertIn("can't be read", loc.problem)
+    self.assertIn("can't be read", loc.problem or "")
     self.assertEqual(loc.text, "")
 
   def test0900fromAModel(self):
@@ -156,10 +157,12 @@ class Test(unittest.TestCase):
     with open(os.path.join(pkg, "shapes.py"), "w") as f:
       f.write("# moved down\n" + ORIGINAL)
     loc = source.locateNode(area)
+    assert loc is not None
     self.assertEqual((loc.how, loc.line, loc.changed), (NAME, 16, False))
-    self.assertEqual(source.locateNode(nodes["pkg.shapes.__main__"]).line, 26)
+    self.assertEqual(source.locateNode(nodes["pkg.shapes.__main__"]).line, 26) # type: ignore[union-attr]
     self.assertIsNone(source.locateNode(nodes["pkg.shapes"]))       # (a module: no chunk)
     loc = source.locateNode(nodes["pkg.top"])                      # (in a package's __init__.py)
+    assert loc is not None
     self.assertEqual((loc.how, loc.line, os.path.basename(loc.path)), (NAME, 1, "__init__.py"))
 
 if __name__ == "__main__":

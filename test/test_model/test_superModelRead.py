@@ -35,8 +35,8 @@ class Test(unittest.TestCase):
       m = Model.getDB(Path(mainPath).as_uri())
       base = Model.getDB(Path(basePath).as_uri())
       self.assertIn(base, m.superDBs)
-      person, hasMother = base["person"], base["has-mother"]
-      fred, barney = m["fred"], m["barney"]
+      person, hasMother = base["person"], base["has-mother"] # type: ignore[assignment]
+      fred, barney = m["fred"], m["barney"] # type: ignore[assignment]
       self.assertIn(person, fred.getSupers())
       self.assertIn(person, barney.getSupers())
       [rel] = [o for o in m.values() if isinstance(o, Relation) and o.isIndividual() and o.isa(hasMother)]
