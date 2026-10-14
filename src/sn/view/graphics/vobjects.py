@@ -611,27 +611,50 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     Hide all this one's canvas items, noting each one's state first (some are
     deliberately "disabled"), for *_showItems()*. The note is kept here, not
     as canvas tags: redraws reset items' tags (eg: connectors.\\_upsertLine()).
+    Put off to the end, within *SNGView.batchedItemStates()*.
+    '''
+    pending = self.view.__dict__.get("_pendingItemStates")
+    if pending is not None:
+      pending[id(self)] = (self, True)
+      return
+    for i in self.canvas.find_withtag(self.tag):
+      self._hideItem(i)
+
+  def _hideItem(self, i:int) -> None:
+    '''
+    :param i: One of its canvas items: hidden, noting its state (see *_hideItems()*).
+    :type i: int
     '''
     c = self.canvas
-    prior:dict[int, str] = self.__dict__.setdefault("_priorStates", {})
-    for i in c.find_withtag(self.tag):
-      state = c.itemcget(i, "state")
-      if state != "hidden":
-        prior[i] = state
-        c.itemconfigure(i, state="hidden")
+    state = c.itemcget(i, "state")
+    if state != "hidden":
+      self.__dict__.setdefault("_priorStates", {})[i] = state
+      c.itemconfigure(i, state="hidden")
 
   def _showItems(self) -> None:
     '''
     Undo *_hideItems()*: every hidden item of this one's goes back to its noted
     state (items made while hidden were noted when they were hidden). Nothing
-    else hides a VObject's items, so all of them are shown.
+    else hides a VObject's items, so all of them are shown. Put off to the
+    end, within *SNGView.batchedItemStates()*.
+    '''
+    pending = self.view.__dict__.get("_pendingItemStates")
+    if pending is not None:
+      pending[id(self)] = (self, False)
+      return
+    for i in self.canvas.find_withtag(self.tag):
+      self._showItem(i)
+    self.__dict__.get("_priorStates", {}).clear()
+
+  def _showItem(self, i:int) -> None:
+    '''
+    :param i: One of its canvas items: shown again, as it was (see *_showItems()*).
+    :type i: int
     '''
     c = self.canvas
     prior:dict[int, str] = self.__dict__.get("_priorStates", {})
-    for i in c.find_withtag(self.tag):
-      if c.itemcget(i, "state") == "hidden":
-        c.itemconfigure(i, state=prior.get(i, ""))
-    prior.clear()
+    if c.itemcget(i, "state") == "hidden":
+      c.itemconfigure(i, state=prior.pop(i, ""))
 
   def labelText(self) -> str:
     '''
@@ -1784,6 +1807,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     n = len(self.selectionOrSelf())
     menu.add_command(label="erase from view" + (f" ({n} selected)" if n > 1 else ""), accelerator="Delete",
                      command=lambda: self.view.doErase(self.selectionOrSelf()))
+    menu.add_command(label="erase everything else" + (" (keep the selection)" if n > 1 else ""),
+                     command=lambda: self.view.doEraseOthers(self.selectionOrSelf()))
     mo = self.modelObject
     if mo is not None and mo.isa(mo.model.CONTEXT) and mo is not mo.model.CONTEXT:
       menu.add_command(label="answer query", command=self.answerQuery)

@@ -29,8 +29,9 @@ from sn.model.model import Model, Node, Relation, Collection, IsaIndividual, SN_
   GraphObject, GORef
 from sn.controller.modelInterface import ModelContext
 
+from contextlib import contextmanager
 from functools import partial
-from typing import cast, override, Any, Iterable, Callable, Optional
+from typing import cast, override, Any, Iterable, Iterator, Callable, Optional
 from util.utils import bindRightMouse, fixURL, isValidURL, urlExists, expandRect,\
   flattenPairs, s_SHIFT, normalizeRect
 from sn.view.graphics.utils import eventEqual, addToMenuBar, addCheckToMenuBar, removeFromMenuBar
@@ -493,40 +494,52 @@ class SNGContext(UIContext):
 
 
   # This is just a signature -- the behaviour is in class _New_node.
-  def erase(self, object:VObject): # pylint: disable=redefined-builtin
+  def erase(self, object:VObject, others:list[VObject]|None=None): # pylint: disable=redefined-builtin
     '''
     Delete a *GraphObject*.
     
     :param object: The *VObject* to delete from the view.
     :type object: VObject
+    :param others: More to delete with it, in the same command (see *SNGView.doErase()*).
+    :type others: list[VObject] | None
     '''
     pass
     
   class _Erase(Command):
-    def __init__(self, object:VObject): # pylint: disable=redefined-builtin
+    def __init__(self, object:VObject, others:list[VObject]|None=None): # pylint: disable=redefined-builtin
       '''
       Delete a object from it's model.
       
       :param object: The object to delete from the view.
       :type object: VObject
+      :param others: More to delete with it -- else, if *object* is selected,
+        the rest of the selection.
+      :type others: list[VObject] | None
       '''
       # param checking...
       super().__init__("remove")
-      self.objects:list[VObject] = list(object.view.selected) if object.selected() else [object]
+      if others is not None:
+        self.objects:list[VObject] = [object] + [o for o in others if o is not object]
+      else:
+        self.objects = list(object.view.selected) if object.selected() else [object]
     
     @override
     def do(self):
       super().do()
-      for obj in self.objects:
-        if obj._isConnected():
-          obj._disconnect()
+      self.erased:list[VObject] = [] # (not those taken out with another: eg: a node's relations -- it puts them back)
+      with self.objects[0].view.batchedItemStates():
+        for obj in self.objects:
+          if obj._isConnected():
+            obj._disconnect()
+            self.erased.append(obj)
   
     @override
     def undo(self):
       super().undo()
-      for obj in self.objects:
-        if not obj._isConnected():
-          obj._reconnect()
+      with self.objects[0].view.batchedItemStates():
+        for obj in reversed(self.erased): # (the ends of relations before the relations)
+          if not obj._isConnected():
+            obj._reconnect()
       
     @override
     def delete(self):
@@ -970,6 +983,49 @@ class _ContainCreated(Command):
     if self.relation is not None:
       self.relation._disconnect()
     return self.relation
+
+def keptWith[T](keep:Iterable[T], objects:Iterable[T], ends:Callable[[T], tuple[T|None, T|None]|None],
+                contents:Callable[[T], Iterable[T]]) -> list[T]:
+  '''
+  What stays in a view when everything but *keep* is erased (see
+  *SNGView.doEraseOthers()*): *keep*, what's in the context windows in *keep*
+  (and in the windows in those, ...), and, as long as there's more --
+
+    - the ends of a kept relation (it can't be shown without them);
+    - a relation between two kept objects (or from a kept object to itself);
+    - a context window with a kept object in it (so a kept object in a rule
+      is still seen to be in the rule) -- but not the rest of what's in it.
+
+  :param keep: The objects to keep.
+  :type keep: Iterable[T]
+  :param objects: Everything in the view.
+  :type objects: Iterable[T]
+  :param ends: An object's ends (src, dst), if it's a relation (an end may
+    be None: eg: a relation type's, dangling); else None.
+  :type ends: Callable[[T], tuple[T | None, T | None] | None]
+  :param contents: What's in an object's window, if it's a context window; else nothing.
+  :type contents: Callable[[T], Iterable[T]]
+  :returns: Those to keep, in no particular order (each once).
+  :rtype: list[T]
+  '''
+  # (by id(): view objects' own hashing is slow -- and *objects* can be many)
+  objects = list(objects)
+  endsOf = {id(o): e for o in objects if (e := ends(o)) is not None}
+  inside = {id(o): c for o in objects if (c := list(contents(o)))}
+  kept:dict[int, T] = {id(o): o for o in keep}
+  windows = [o for o in kept.values() if id(o) in inside]
+  while windows:
+    more = [c for c in inside[id(windows.pop())] if id(c) not in kept]
+    kept.update((id(c), c) for c in more)
+    windows += [c for c in more if id(c) in inside]
+  while True:
+    more = {id(e): e for o in kept.values() for e in endsOf.get(id(o), ()) if e is not None and id(e) not in kept}
+    more.update((id(o), o) for o in objects if id(o) not in kept and
+                ((id(o) in endsOf and all(e is not None and id(e) in kept for e in endsOf[id(o)]))
+                 or any(id(c) in kept for c in inside.get(id(o), ()))))
+    if not more:
+      return list(kept.values())
+    kept.update(more)
 
 class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   '''
@@ -2313,11 +2369,34 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     if not vos:
       return
     try:
-      with CompositeCommandMgr(self.context):
-        for vo in vos:
-          self.context.erase(vo)
+      self.context.erase(vos[0], others=vos[1:])
     except Exception as ex:
       logger.error(f"Can't erase: {ex}")
+
+  def doEraseOthers(self, keep:list[VObject]) -> None:
+    '''
+    Erase everything but *keep* from this view (the model keeps their
+    objects): one undo. Also kept are what *keep* needs to make sense (see
+    *keptWith()*): the relations among the kept objects, the ends of the kept
+    relations, and the context windows the kept objects are in. For working
+    on a small part of a big view.
+
+    :param keep:
+    :type keep: list[VObject]
+    '''
+    from sn.view.graphics.vrelations import VRelation
+    keep = [vo for vo in keep if vo._isConnected()]
+    if not keep:
+      return
+    everything = [vo for vo in self.values() if vo is not None and vo._isConnected()]
+    kept = {id(vo) for vo in keptWith(keep, everything,
+                                      lambda vo: (vo.src, vo.dst) if isinstance(vo, VRelation) else None,
+                                      lambda vo: vo.windowContents())}
+    for vo in [vo for vo in self.selected if id(vo) not in kept]: # (out of the selection: else erasing one erases them all)
+      vo.selected(False)
+    # (the relations first: erasing a node takes its relations with it, so they'd be undone with it rather than on their own)
+    self.doErase([vo for vo in everything if id(vo) not in kept and isinstance(vo, VRelation)] +
+                 [vo for vo in everything if id(vo) not in kept and not isinstance(vo, VRelation)])
 
   def doRemove(self, vos:list[VObject], confirm:bool=False) -> None:
     '''
@@ -3689,6 +3768,32 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     mo["name"] = name
     if merged:
       mo.setAttr(CONSTRAINTS, Attribute(merged, str, VAR, CONSTRAINTS_NOTE))
+
+  @contextmanager
+  def batchedItemStates(self) -> Iterator[None]:
+    '''
+    Within it, objects' hiding and showing their canvas items (see
+    *VObject._hideItems()*, *VObject._showItems()*) is put off, and done at
+    the end in one pass over the canvas -- instead of a search of the whole
+    canvas for each object's items, which is slow for many objects in a big
+    view (eg: *doEraseOthers()*). Nested, only the outermost does it.
+    '''
+    if self.__dict__.get("_pendingItemStates") is not None:
+      yield
+      return
+    self.__dict__["_pendingItemStates"] = {}
+    try:
+      yield
+    finally:
+      pending:dict[int, tuple[VObject, bool]] = self.__dict__.pop("_pendingItemStates")
+      if pending:
+        byTag = {vo.tag: (vo, hide) for vo, hide in pending.values()}
+        c = self.canvas
+        for i in c.find_all():
+          for t in c.gettags(i):
+            if t in byTag:
+              vo, hide = byTag[t]
+              vo._hideItem(i) if hide else vo._showItem(i)
 
   def structureChanged(self) -> None:
     '''
