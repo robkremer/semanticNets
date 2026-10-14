@@ -2048,6 +2048,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         assert isinstance(aspectRatio, (float,int))
         sizey = int(sizex * (aspectRatio or NOMINAL_ASPECT)) # vis/aspectRatio is height/width; 0 means free
         under:VObject|None = None
+        nextGridPoint = self.__dict__.get("_nextGridPoint")
+        if atPoint is None and nextGridPoint is not None: # (within showAllModel())
+          atPoint = nextGridPoint()
         if atPoint is None:
           x, y, under = self._newObjectLocation(mObject)
         else:
@@ -2731,20 +2734,30 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     numNodes = len(self.model) - len(self)
     gridCount = int(sqrt(numNodes)) if numNodes>0 else 0
     blockSize = gridCount * grid[1] + y
-    for mnode in self.model.values():
-      # if self.categories.isCategory(mnode, self.hiddenCategories):
-      #   continue
-      if self.isFiltered(mnode):
-        continue
-      vObj = self.findViewObjectForGraphObject(mnode)
-      if vObj is None:
-        n = self.makeViewObjectForGraphObject(mnode, atPoint=(x, y))
-        if y < blockSize:
-          y += grid[1]
-        else:
-          x += grid[0]
-          y = 10
-        self.localLayout(n)
+    def nextPoint() -> tuple[int, int]:
+      nonlocal x, y
+      p = (x, y)
+      if y < blockSize:
+        y += grid[1]
+      else:
+        x += grid[0]
+        y = 10
+      return p
+    # what's made along the way (eg: a relation's end from a super-model) goes on the grid too: not to the
+    # nearest free place (see _placeNew()), a search that's very slow in a crowded big view
+    self.__dict__["_nextGridPoint"] = nextPoint
+    try:
+      for mnode in self.model.values():
+        # if self.categories.isCategory(mnode, self.hiddenCategories):
+        #   continue
+        if self.isFiltered(mnode):
+          continue
+        vObj = self.findViewObjectForGraphObject(mnode)
+        if vObj is None:
+          n = self.makeViewObjectForGraphObject(mnode, atPoint=nextPoint())
+          self.localLayout(n)
+    finally:
+      del self.__dict__["_nextGridPoint"]
     # for mrel in self.model.relations:
     #   if self.categories.isCategory(mrel, self.hiddenCategories) or \
     #       all(map(lambda obj: self.categories.isCategory(obj, self.hiddenCategories), 
@@ -3794,6 +3807,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
             if t in byTag:
               vo, hide = byTag[t]
               vo._hideItem(i) if hide else vo._showItem(i)
+        for vo, hide in byTag.values():
+          if not hide:
+            vo.__dict__["_itemsHidden"] = False
 
   def structureChanged(self) -> None:
     '''

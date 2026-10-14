@@ -613,6 +613,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     as canvas tags: redraws reset items' tags (eg: connectors.\\_upsertLine()).
     Put off to the end, within *SNGView.batchedItemStates()*.
     '''
+    self.__dict__["_itemsHidden"] = True # (for _showItems())
     pending = self.view.__dict__.get("_pendingItemStates")
     if pending is not None:
       pending[id(self)] = (self, True)
@@ -637,11 +638,17 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     state (items made while hidden were noted when they were hidden). Nothing
     else hides a VObject's items, so all of them are shown. Put off to the
     end, within *SNGView.batchedItemStates()*.
+    If none of its items was ever hidden (the usual case: eg: every redraw of
+    a relation), it's skipped: looking its items up searches the whole canvas,
+    which made showing all of a big model quadratic.
     '''
     pending = self.view.__dict__.get("_pendingItemStates")
+    if not self.__dict__.get("_itemsHidden") and (pending is None or id(self) not in pending):
+      return
     if pending is not None:
       pending[id(self)] = (self, False)
       return
+    self.__dict__["_itemsHidden"] = False
     for i in self.canvas.find_withtag(self.tag):
       self._showItem(i)
     self.__dict__.get("_priorStates", {}).clear()
