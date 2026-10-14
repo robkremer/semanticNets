@@ -225,6 +225,15 @@ PREFS:dict[str, tuple[Any, Any, str]] = {
   "gui/tooltipMaxLines": (int, 40,
     "The most lines a tooltip shows: a longer one (eg: a long function's source) is cut short, saying how many "
     "more lines there are (0: no limit)."),
+  "gui/editorCommand": (str, "",
+    "The command that opens a file at a line in your editor -- eg, to show a class or function's source "
+    "(pythonParser) -- with {path}, {line} and {url} (the file's file: URL) filled in. Empty: it's shown in a "
+    "window here instead (as it is if the command can't be run). Eg:\n"
+    "  BBEdit (or TextMate):  open \"txmt://open?url={url}&line={line}\"\n"
+    "  BBEdit's command line tools:  bbedit +{line} {path}\n"
+    "  VS Code:  code -g {path}:{line}\n"
+    "  Sublime Text:  subl {path}:{line}\n"
+    "  Eclipse (to try: it takes path:line):  .../Eclipse.app/Contents/MacOS/eclipse --launcher.openFile {path}:{line}"),
   "gui/NodeMinSize": (int, 30,
     "The width (before zooming) of a new node's shape, unless its vis/minSize says otherwise."),
   "gui/NodeAspectRatio": (float, 1.5,

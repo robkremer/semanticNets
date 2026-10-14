@@ -160,6 +160,12 @@ objects: eg: one set on a type for its instances is left off the type's own
 menu. The attributes start with ``.``, so the attribute editor doesn't show
 them.
 
+A hook that shows a file at a line (eg: a function's source) calls
+:py:func:`sn.view.graphics.sourceWindow.openSource`: the ``gui/editorCommand``
+preference -- a command with ``{path}``, ``{line}`` and ``{url}`` filled in,
+run without a shell -- or, if that's empty or can't be run, a read-only
+``SourceWindow`` here, scrolled to the line and highlighting the lines asked for.
+
 Reasoning results
 -----------------
 
