@@ -38,8 +38,11 @@ Each module, class and function has its full dotted name as its
 "qualified-name" (eg: sn.exampleApps.pythonParser.parser.buildModel); a
 module or package its file or folder as its "path", where it's from as its
 "origin" (see *ORIGINS*), and how many imports away from the files given it
-is as its "import-depth"; a class or function the line it starts on as its
-"line"; a class its "bases"; and a function its "parameters" (as written).
+is as its "import-depth"; a class or function (or ``__main__`` block) the
+lines it starts and ends on as its "line" and "end-line", and -- hidden --
+its first line as written and a hash of its text, so that it can be found
+again in its file after the file's changed (see *source*); a class its
+"bases"; and a function its "parameters" (as written).
 
 A file that isn't valid Python is still a module (with a note saying so), but
 with nothing in it.
@@ -51,6 +54,7 @@ Created on Oct 10, 2026
 from __future__ import annotations
 import ast
 import glob
+import importlib.util
 import os
 import site
 import sys
@@ -60,6 +64,7 @@ from dataclasses import dataclass, field
 from typing import Callable
 from urllib.parse import unquote, urlparse
 from sn.model.model import Model, Node, Relation, GraphObject
+from sn.exampleApps.pythonParser.source import chunkAttrs
 
 ONTOLOGY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pythonOntology.snm")
 "The model the models made build on: the types of things in Python programs (package, module, class, ...)."
@@ -112,6 +117,8 @@ class SourceModule:
   "Its syntax tree, if it's been parsed."
   error:str|None = None
   "Why it couldn't be parsed, if it couldn't."
+  lines:list[str] = field(default_factory=list)
+  "Its file's lines, if it's been parsed (see *source.chunkAttrs()*)."
   imported:list[str] = field(default_factory=list)
   "The dotted names of the modules it imports (see *importedModules()*)."
 
@@ -134,7 +141,9 @@ class SourceModule:
     self.analysed = True
     try:
       with open(self.path or "", "rb") as f: # (bytes: ast honours the file's own encoding declaration)
-        self.tree = ast.parse(f.read(), filename=self.path or "")
+        data = f.read()
+      self.tree = ast.parse(data, filename=self.path or "")
+      self.lines = importlib.util.decode_source(data).split("\n")
     except (SyntaxError, ValueError, OSError) as ex:
       self.error = f"{ex.__class__.__name__}: {ex}"
 
@@ -602,11 +611,12 @@ def buildModel(modelPath:str, modules:list[SourceModule]) -> Model:
         relate("defines", owner, classNode(mod, stmt, mod.name, node, relate, doc, classes, classNodes))
       elif isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
         f = node(["function"], stmt.name, qualified_name=f"{mod.name}.{stmt.name}", line=stmt.lineno,
-                 parameters=ast.unparse(stmt.args))
+                 parameters=ast.unparse(stmt.args), **chunkAttrs(stmt, mod.lines))
         doc(f, stmt)
         relate("defines", owner, f)
       elif isMainBlock(stmt):
-        relate("defines", owner, node(["code"], "__main__", qualified_name=f"{mod.name}.__main__", line=stmt.lineno))
+        relate("defines", owner, node(["code"], "__main__", qualified_name=f"{mod.name}.__main__", line=stmt.lineno,
+                                      **chunkAttrs(stmt, mod.lines)))
 
   # the classes' bases (now: they may be defined later, or in a module read later)
   for q, n in classNodes.items():
@@ -773,14 +783,14 @@ def classNode(mod:SourceModule, c:ast.ClassDef, prefix:str, node, relate, doc, c
   '''
   q = f"{prefix}.{c.name}"
   cls = node(["class"], c.name, qualified_name=q, line=c.lineno,
-             bases=", ".join(ast.unparse(b) for b in c.bases + c.keywords)) #type: ignore[operator]
+             bases=", ".join(ast.unparse(b) for b in c.bases + c.keywords), **chunkAttrs(c, mod.lines)) #type: ignore[operator]
   classNodes.setdefault(q, cls)
   doc(cls, c)
   inherited = classes.inheritedMethods(q) if q in classes.classes else set()
   for s in c.body:
     if isinstance(s, (ast.FunctionDef, ast.AsyncFunctionDef)):
       f = node(methodKinds(s, inherited), s.name, qualified_name=f"{q}.{s.name}", line=s.lineno,
-               parameters=ast.unparse(s.args))
+               parameters=ast.unparse(s.args), **chunkAttrs(s, mod.lines))
       doc(f, s)
       relate("defines-method", cls, f)
     elif isinstance(s, ast.ClassDef):
