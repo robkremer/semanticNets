@@ -77,5 +77,19 @@ class Test(unittest.TestCase):
       p, show = self.openWith("ed {file}")
     p.assert_not_called(); show.assert_called_once()
 
+  def test0500anAppNotAProgram(self):
+    # an app bundle is a folder: running it is "permission denied" -- said plainly
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+      app = os.path.join(d, "Editor.app")
+      os.mkdir(app)
+      with mock.patch.object(sourceWindow.snPrefs, "get", side_effect=lambda k, dflt=None, **kw: f'"{app}" {{path}}' if k == EDITOR_PREF else dflt), \
+           mock.patch.object(sourceWindow, "showSource") as show, \
+           self.assertLogs("sn.view.graphics.sourceWindow", "WARNING") as logs:
+        openSource("/a/b.py", 5)
+    self.assertIn("is a folder, not a program -- an app: name the program in it", logs.output[0])
+    self.assertIn(os.path.join(app, "Contents", "MacOS"), logs.output[0])
+    show.assert_called_once()
+
 if __name__ == "__main__":
   unittest.main()

@@ -106,8 +106,13 @@ def openSource(path:str, line:int=1, end:int|None=None, parent:Any=None) -> None
                        start_new_session=True)
       return
     except (EditorCommandError, OSError) as ex:
+      why = str(ex)
+      if isinstance(ex, OSError) and os.path.isdir(os.path.expanduser(cmd[0])):
+        why = (f'{cmd[0]} is a folder, not a program' +
+               (f' -- an app: name the program in it (eg: {os.path.join(cmd[0], "Contents", "MacOS", "...")}), '
+                f'or use "open -a"' if cmd[0].rstrip("/").endswith(".app") else ""))
       logger.warning(f'Couldn\'t open {os.path.basename(path)} in the editor (the "{EDITOR_PREF}" setting): '
-                     f'{ex}. Showing it here instead.')
+                     f'{why}. Showing it here instead.')
   showSource(path, line, end, parent)
 
 _windows:dict[str, SourceWindow] = {}
