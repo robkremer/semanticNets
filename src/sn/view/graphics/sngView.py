@@ -1435,8 +1435,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       view = getattr(window, "view", None)
       if view is not None and view.model is model:
         shown += view.modelObjectsReplaced(old, new)
-    logger.warning(f'{model.name}: "{new.url}" is in place of "{old.url}": {count} reference{"s" if count != 1 else ""} '
-                   f'changed, and {shown} object{"s" if shown != 1 else ""} in open views. Save the model (and the views) '
+    logger.warning(f'{model.name}: "{new.url}" is in place of "{old.url}": {count} reference{"" if count == 1 else "s"} '
+                   f'changed, and {shown} object{"" if shown == 1 else "s"} in open views. Save the model (and the views) '
                    f'to keep it; its other views take it into account when they\'re opened.')
     self.terminal.flash()
 

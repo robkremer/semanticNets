@@ -1301,10 +1301,11 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     if self.modelObject is None or self.toggleAt(self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)):
       return 'break'
     ref = self.modelObject.get(self.DOUBLE_CLICK, None)
-    if hooks.isReference(ref) and hooks.resolve(ref) is not None \
-       and hooks.applies(ref, self.modelObject, context := self.hookContext(self.DOUBLE_CLICK)):
-      hooks.call(ref, self.modelObject, context)
-      return 'break'
+    if hooks.isReference(ref) and hooks.resolve(ref) is not None:
+      context = self.hookContext(self.DOUBLE_CLICK)
+      if hooks.applies(ref, self.modelObject, context):
+        hooks.call(ref, self.modelObject, context)
+        return 'break'
     self.onEditAttributes(disabled=self.attributesReadOnly())
     return 'break'
 

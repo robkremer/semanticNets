@@ -231,7 +231,7 @@ class ClingoReasoner(Reasoner, engine="clingo"):
       if neg:
         value = value.value
       if key in PROPERTIES:           # a relational property: a tag on a relation type
-        body.append(f"{'not ' if (value is False) != neg else ''}prop({term(v)},{key})")
+        body.append(f"{'not ' if (value is False) ^ neg else ''}prop({term(v)},{key})")
       elif value is PRESENT:
         body.append(f"{'not ' if neg else ''}attr({term(v)},{_str(key)},_)")
       elif isinstance(value, ValueVar): # (a negated one is bound by the same one, unnegated: see patternOf())

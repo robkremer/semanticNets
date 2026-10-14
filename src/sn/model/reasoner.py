@@ -1107,7 +1107,7 @@ class Reasoner(ABC):
   language:ClassVar[str|None] = None
   "The name of the language :py:meth:`query` accepts, or None if it has none."
 
-  def __init_subclass__(cls, engine:str|None=None, **kwargs):
+  def __init_subclass__(cls, engine:str|None=None, **kwargs): # @NoSelf (implicitly a classmethod)
     '''
     :param engine:
     :type engine: str | None

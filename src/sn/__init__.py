@@ -67,7 +67,7 @@ import util.observer as observer
 from util.persistence.serialize import SerializationStrategy
 SerializationStrategy.appName, SerializationStrategy.appVersion = NAME, VERSION # (an application built on it says what it is itself, after importing sn)
 from util.prefs import Prefs
-from util.attribute import Attribute, VAR_DEFAULTED
+from util.attribute import Attribute, AttributedObject, VAR_DEFAULTED
 
 observer.alwaysLater = True
 
