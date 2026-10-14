@@ -119,6 +119,10 @@ attribute                   controls
 ``vis/titlebarColor``       a context window's title bar (rules, queries
                             and definitions each have their own)
 ``vis/label``               what its label says (below)
+``vis/tooltip``             what its tooltip says (below)
+``vis/tooltipFont``         its tooltip's font (eg: ``TkFixedFont``, for code)
+``vis/tooltipWrap``         the width its tooltip wraps at, in pixels
+                            (0: no wrapping)
 ==========================  =============================================
 
 Labels
@@ -127,15 +131,18 @@ Labels
 What an object's label says is set by a **template**: text with
 substitutions, in the style of the shell's:
 
-====================  =================================================
-in a template         gives
-====================  =================================================
-``$key``, ``${key}``  the value of *key*
-``${key:+text}``      *text* if *key* has a value, else nothing
-``${key:-text}``      *key*'s value, or *text* if it has none
-``$$``                a ``$``
-``\n``                a line break
-====================  =================================================
+========================  =====================================================
+in a template             gives
+========================  =====================================================
+``$key``, ``${key}``      the value of *key*
+``${key:+text}``          *text* if *key* has a value, else nothing
+``${key:-text}``          *key*'s value, or *text* if it has none
+``$$``                    a ``$``
+``\n``                    a line break
+``$(module:function)``    what a *hook* returns: a function, provided by a
+                          program that made the model (eg: an object's source
+                          code); ``${(module:function):+text}`` likewise
+========================  =====================================================
 
 *text* can contain substitutions itself. A *key* is any of the object's
 attributes, or one of:
@@ -157,3 +164,8 @@ constraints in braces if there are any. ``$type${name:+: $name}`` gives the
 The template is the object's ``vis/label`` attribute, if it has one (set it
 on a type for all its instances); otherwise the ``gui/label`` setting
 (``gui/relationLabel`` for relations).
+
+Tooltips are templates too: the object's ``vis/tooltip`` attribute, or else the
+``gui/tooltip`` setting -- by default, the name, and then the note if there is
+one. A tooltip longer than the ``gui/tooltipMaxLines`` setting (40 lines) is cut
+short.

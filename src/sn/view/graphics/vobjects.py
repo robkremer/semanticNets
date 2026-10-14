@@ -684,10 +684,24 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       pref = "gui/relationLabel" if isinstance(mo, Relation) else "gui/label"
       template = snPrefs.get(pref, storeDefault=DEFAULT_LABEL, storeType=str) # (its note: see sn.PREFS)
     try:
-      return expand(str(template), labelLookup(mo)).strip()
+      return expand(str(template), labelLookup(mo), self.templateCall("vis/label")).strip()
     except TemplateError as ex:
       logger.warning(f'{mo.name}: bad label template: {ex}')
       return (mo.name or "").strip()
+
+  def templateCall(self, key:str) -> Callable[[str], str]:
+    '''
+    :param key: The attribute (or preference) the template's from: eg: "vis/tooltip".
+    :type key: str
+    :returns: The *call* for *labels.expand()*: what a hook returns, called on
+      its model object (see *sn.hooks*), as a string ("" for None, or if it
+      can't be called).
+    :rtype: Callable[[str], str]
+    '''
+    def call(ref:str) -> str:
+      ret = hooks.call(ref, self.modelObject, HookContext(key=key, vobject=self, view=self.view))
+      return "" if ret is None else str(ret)
+    return call
 
   categoryExempt:bool = False
   '''
@@ -1110,7 +1124,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
   # self.tooltip = CreateToolTip(self.canvas, self.tooltipFunc, bindObj, 
     #                              waitTime=1000, wrapLength=250, background="#FFFFC0")
     self.tooltip = CreateToolTip(self.canvas, self.tooltipFunc, self._shape.id, 
-                                 waitTime=1000, wrapLength=250, background="#FFFFC0")
+                                 waitTime=1000, wrapLength=self.tooltipWrap, background="#FFFFC0",
+                                 font=self.tooltipFont)
     
   def killBindings(self):
     bindObj = self.tag #bindObj
@@ -2358,27 +2373,67 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
           self.view.selected.discard(self)
     return "selected" in self.decorators if self.decorators is not None else None
 
+  def tooltipFont(self) -> Any:
+    '''
+    :returns: The font its tooltip's in: its model object's "vis/tooltipFont"
+      (eg: "TkFixedFont", for code; or "Menlo 11"), if it has one; else None
+      (Tk's default).
+    :rtype: Any
+    '''
+    try:
+      font = self.modelObject.get("vis/tooltipFont", None) if self.modelObject is not None else None
+    except ReferenceError:
+      return None
+    return font if isinstance(font, str) and font.strip() else None
+
+  def tooltipWrap(self) -> int:
+    '''
+    :returns: The width its tooltip wraps at, in pixels: its model object's
+      "vis/tooltipWrap" (0: no wrapping: eg, for code), if it has one; else 250.
+    :rtype: int
+    '''
+    try:
+      wrap = self.modelObject.get("vis/tooltipWrap", None) if self.modelObject is not None else None
+      return max(0, int(wrap)) if wrap is not None and not isinstance(wrap, bool) else 250
+    except (ReferenceError, ValueError, TypeError):
+      return 250
+
   def tooltipFunc(self) -> str:
     '''
+    What its tooltip says: its tooltip template (see *labels*) expanded -- its
+    model object's "vis/tooltip" attribute if it has one (eg: set on its type),
+    else the "gui/tooltip" preference -- cut short at "gui/tooltipMaxLines"
+    lines. (When debugging: its id too, and its cached drawing attributes.)
+
     :returns:
     :rtype: str
     '''
+    from sn.view.graphics.labels import expand, labelLookup, DEFAULT_TOOLTIP, TemplateError
     tip = ""
-    line = "\u2594"*18
     try:
-      tip = self.name
+      mo = self.modelObject
+      tip = self.name or ""
+      if mo is not None:
+        template = mo.get("vis/tooltip", None)
+        if not isinstance(template, str) or not template:
+          template = snPrefs.get("gui/tooltip", storeDefault=DEFAULT_TOOLTIP, storeType=str) # (its note: see sn.PREFS)
+        try:
+          tip = expand(str(template), labelLookup(mo), self.templateCall("vis/tooltip")).strip("\n")
+        except TemplateError as ex:
+          logger.warning(f'{mo.name}: bad tooltip template: {ex}')
+      maxLines = snPrefs.get("gui/tooltipMaxLines", storeDefault=40, storeType=int)
+      lines = tip.split("\n")
+      if isinstance(maxLines, int) and 0 < maxLines < len(lines):
+        tip = "\n".join(lines[:maxLines]) + f"\n\u2026 ({len(lines) - maxLines} more lines)"
       if snPrefs.get("debug", storeDefault=False):
-        tip += f' ({self._id})'
-      note = self.modelObject.get("note", None) if self.modelObject is not None else None
-      if note is not None:
-        #tip += f'\n{line*2}NOTE:{line*13}\n{note.value}'
-        tip += f'\n{line}\nNOTE:\n{note}'
+        first, nl, rest = tip.partition("\n")
+        tip = f'{first} ({self._id}){nl}{rest}'
     except ReferenceError:
       return ""
     if snPrefs.get("debug", storeDefault=False) and snPrefs.get("debug_popupCache", storeDefault=True):
       if len(tip)>0 and tip[-1]!='\n':
         tip += "\n"
-      #tip += f'\n{line*2}CACHE:{line*12}'
+      line = "\u2594"*18
       tip += f'{line}\nCACHE:'
       for name in VATTRIBUTES:
         if name in self.cache:

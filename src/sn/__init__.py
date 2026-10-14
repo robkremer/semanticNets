@@ -175,7 +175,7 @@ class SNPrefs(Prefs):
     '''
     return False
   
-from sn.view.graphics.labels import DEFAULT_LABEL, LABEL_NOTE # (a plain module: nothing of sn's)
+from sn.view.graphics.labels import DEFAULT_LABEL, LABEL_NOTE, DEFAULT_TOOLTIP, TOOLTIP_NOTE # (a plain module: nothing of sn's)
 
 PREFS:dict[str, tuple[Any, Any, str]] = {
   # key: (type, default, note)
@@ -220,6 +220,11 @@ PREFS:dict[str, tuple[Any, Any, str]] = {
     "The label template for nodes, unless one has a vis/label of its own. " + LABEL_NOTE),
   "gui/relationLabel": (str, DEFAULT_LABEL,
     "The label template for relations, unless one has a vis/label of its own. " + LABEL_NOTE),
+  "gui/tooltip": (str, DEFAULT_TOOLTIP,
+    "The tooltip template, unless an object has a vis/tooltip of its own. " + TOOLTIP_NOTE),
+  "gui/tooltipMaxLines": (int, 40,
+    "The most lines a tooltip shows: a longer one (eg: a long function's source) is cut short, saying how many "
+    "more lines there are (0: no limit)."),
   "gui/NodeMinSize": (int, 30,
     "The width (before zooming) of a new node's shape, unless its vis/minSize says otherwise."),
   "gui/NodeAspectRatio": (float, 1.5,

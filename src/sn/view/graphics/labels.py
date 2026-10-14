@@ -7,8 +7,10 @@ Label templates: what an object's label says, as a string with shell-style
   ``${key:-text}``          *key*'s value, or *text* if it has none
   ``$$``                    a "$"
   ``\\n``                    a line break
+  ``$(module:function)``    what a hook returns (see *sn.hooks*): eg: source code
 
-*text* may itself contain substitutions. Keys (see *labelLookup()*) are any
+*text* may itself contain substitutions, and *key* may be a hook's call:
+``${(module:function):+text}`` is *text* if the hook returns something. Keys (see *labelLookup()*) are any
 attribute of the object (its effective value), and:
 
   ``name``         its name
@@ -22,7 +24,9 @@ Eg: ``$name${constraints:+ {$constraints}}`` gives "fred" or "?p {alive}";
 
 The template is the object's "vis/label" attribute if it has one (eg: set on a
 type, for all its instances), else the "gui/label" preference ("gui/relationLabel"
-for relations).
+for relations). Tooltips are templates too: "vis/tooltip", else "gui/tooltip"
+(see *DEFAULT_TOOLTIP*). A hook is called each time the template is expanded
+-- for a label, each time it's drawn -- so a slow one is better in a tooltip.
 
 Created on Sep 29, 2026
 
@@ -56,12 +60,23 @@ from typing import Any, Callable
 DEFAULT_LABEL = "$name${constraints:+ {$constraints}}"
 "The default label template, for nodes and relations alike."
 
+DEFAULT_TOOLTIP = "$name${note:+\\n" + "\u2594"*18 + "\\nNOTE:\\n$note}"
+"The default tooltip template: the name, and then the note, if there is one."
+
+TOOLTIP_NOTE = '''What an object's tooltip says: a template, as labels are (see the
+gui/label setting), eg: "$name${note:+\\n---\\n$note}". An object's
+"vis/tooltip" attribute (eg: on its type) overrides this; "vis/tooltipFont"
+(eg: TkFixedFont, for code) and "vis/tooltipWrap" (the width it wraps at, in
+pixels; 0: none) set how it's shown.'''
+"The note on the tooltip template preference: shown as its tooltip."
+
 LABEL_NOTE = '''What an object's label says: text with substitutions --
   $key or ${key}   the value of key
   ${key:+text}     text, if key has a value (else nothing)
   ${key:-text}     key's value, or text if it has none
   $$               a "$"
   \\n               a line break
+  $(module:function)  what a hook (a function a program provides) returns
 The text in ${...} may itself contain substitutions.
 Keys: any attribute, and
   name             its name
@@ -76,25 +91,54 @@ An object's "vis/label" attribute (eg: on its type) overrides this.'''
 "The note on the label template preferences (and \"vis/label\"): shown as its tooltip."
 
 _NAME = re.compile(r"[A-Za-z_]\w*")
+_REF = re.compile(r"[A-Za-z_]\w*(\.[A-Za-z_]\w*)*:[A-Za-z_]\w*(\.[A-Za-z_]\w*)*")
+"A hook's reference: module:function (as *sn.hooks.isReference()*: not imported here, as this is a plain module)."
 
 class TemplateError(ValueError):
   'A label template that can\'t be expanded.'
 
-def expand(template:str, lookup:Callable[[str], str]) -> str:
+def expand(template:str, lookup:Callable[[str], str], call:Callable[[str], str]|None=None) -> str:
   '''
   :param template:
   :type template: str
   :param lookup:
   :type lookup: Callable[[str], str]
+  :param call: Gives what a hook returns, for ``$(module:function)`` (see
+    *sn.hooks*): *call(reference)* ("" for nothing). None: the template can't
+    call hooks (``$(...)`` is a *TemplateError*).
+  :type call: Callable[[str], str] | None
   :returns: *template* with its substitutions made (see the module doc);
     *lookup(key)* gives a key's value ("" for none).
   :rtype: str
   :raises TemplateError: If *template* is malformed (eg: an unclosed "${").
   '''
-  out, i = _expand(template, 0, lookup, closer=None)
+  out, i = _expand(template, 0, lookup, call, closer=None)
   return out
 
-def _expand(t:str, i:int, lookup:Callable[[str], str], closer:str|None) -> tuple[str, int]:
+def _call(t:str, i:int, call:Callable[[str], str]|None) -> tuple[str, int]:
+  '''
+  A hook's call, "(module:function)", starting at the "(": (what it returns, the index after its ")").
+
+  :param t:
+  :type t: str
+  :param i:
+  :type i: int
+  :param call:
+  :type call: Callable[[str], str] | None
+  :returns:
+  :rtype: tuple[str, int]
+  '''
+  j = t.find(")", i)
+  if j < 0:
+    raise TemplateError(f'unclosed "$(" in {t!r}')
+  ref = t[i+1:j].strip()
+  if not _REF.fullmatch(ref):
+    raise TemplateError(f'expected a hook ("module:function") in "$({ref})" in {t!r}')
+  if call is None:
+    raise TemplateError(f'"$({ref})": hooks can\'t be called here')
+  return call(ref), j + 1
+
+def _expand(t:str, i:int, lookup:Callable[[str], str], call:Callable[[str], str]|None, closer:str|None) -> tuple[str, int]:
   '''
   Expand *t* from *i* up to (not including) an unnested *closer*: (text, index of the closer or end).
 
@@ -104,6 +148,8 @@ def _expand(t:str, i:int, lookup:Callable[[str], str], closer:str|None) -> tuple
   :type i: int
   :param lookup:
   :type lookup: Callable[[str], str]
+  :param call:
+  :type call: Callable[[str], str] | None
   :param closer:
   :type closer: str | None
   :returns:
@@ -126,7 +172,10 @@ def _expand(t:str, i:int, lookup:Callable[[str], str], closer:str|None) -> tuple
       if nxt == "$":
         out.append("$"); i += 2
       elif nxt == "{":
-        text, i = _braced(t, i + 2, lookup)
+        text, i = _braced(t, i + 2, lookup, call)
+        out.append(text)
+      elif nxt == "(":
+        text, i = _call(t, i + 1, call)
         out.append(text)
       elif (m := _NAME.match(t, i + 1)):
         out.append(lookup(m.group())); i = m.end()
@@ -138,9 +187,10 @@ def _expand(t:str, i:int, lookup:Callable[[str], str], closer:str|None) -> tuple
     raise TemplateError(f'unclosed "${{" in {t!r}')
   return "".join(out), i
 
-def _braced(t:str, i:int, lookup:Callable[[str], str]) -> tuple[str, int]:
+def _braced(t:str, i:int, lookup:Callable[[str], str], call:Callable[[str], str]|None) -> tuple[str, int]:
   '''
   A ${...} starting just after the "${": (its expansion, the index after its "}").
+  Its key may be a hook's call: ${(module:function):+...}.
 
   :param t:
   :type t: str
@@ -148,20 +198,29 @@ def _braced(t:str, i:int, lookup:Callable[[str], str]) -> tuple[str, int]:
   :type i: int
   :param lookup:
   :type lookup: Callable[[str], str]
+  :param call:
+  :type call: Callable[[str], str] | None
   :returns:
   :rtype: tuple[str, int]
   '''
-  m = re.compile(r"[A-Za-z_][\w/.-]*").match(t, i)
-  if not m:
-    raise TemplateError(f'expected a key after "${{" in {t!r}')
-  key, i = m.group(), m.end()
-  value = lookup(key)
+  if t[i:i+1] == "(":
+    key = t[i:t.find(")", i) + 1]
+    value, i = _call(t, i, call)
+  else:
+    m = re.compile(r"[A-Za-z_][\w/.-]*").match(t, i)
+    if not m:
+      raise TemplateError(f'expected a key after "${{" in {t!r}')
+    key, i = m.group(), m.end()
+    value = lookup(key)
   if t[i:i+1] == "}":
     return value, i + 1
   op = t[i:i+2]
   if op not in (":+", ":-"):
     raise TemplateError(f'expected "}}", ":+" or ":-" after "${{{key}" in {t!r}')
-  alt, j = _expand(t, i + 2, lookup, closer="}")
+  used = bool(value) if op == ":+" else not value
+  if not used: # (only parsed, for its "}": its keys aren't looked up, nor its hooks called)
+    lookup, call = (lambda _k: ""), (None if call is None else (lambda _r: ""))
+  alt, j = _expand(t, i + 2, lookup, call, closer="}")
   if op == ":+":
     return (alt if value else ""), j + 1
   return (value if value else alt), j + 1

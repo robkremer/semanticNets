@@ -126,6 +126,13 @@ expansion, with nested braces; :py:func:`~sn.view.graphics.labels.labelLookup`
 supplies the values (attributes, plus ``name``, ``type``, ``constraints``,
 ...). The template comes from the object's ``vis/label`` attribute, so a type
 can set it for all its instances, or else from the preferences.
+Tooltips are templates too (``VObject.tooltipFunc()``): ``vis/tooltip``, else
+the ``gui/tooltip`` preference, shown in ``vis/tooltipFont`` and wrapped at
+``vis/tooltipWrap``. ``$(module:function)`` in a template is replaced by what
+a hook returns (see below): ``expand()`` is given a *call* for it
+(``VObject.templateCall()``); :py:mod:`~sn.view.graphics.labels` itself knows
+nothing of hooks. A hook in a label runs each time the label's drawn; in a
+tooltip, only when it's shown.
 
 Hooks: menu items and double-clicks
 -----------------------------------
