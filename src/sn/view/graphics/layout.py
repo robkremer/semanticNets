@@ -67,7 +67,7 @@ import time
 from abc import ABC
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional, override, Iterable
+from typing import Any, Optional, override, Iterable, Sequence
 from sn.view.graphics.vnodes import VNode
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
@@ -482,15 +482,15 @@ class LayoutHeuristic(ABC):
     if referenceNode is None: # and loc is None
       return Direction.LATERAL
     else: #referenceNode is not None and loc is None
-      if node.modelObject.isa(referenceNode.modelObject):
+      if node.modelObject.isa(referenceNode.modelObject): # type: ignore[union-attr, arg-type]
         return Direction.SUB
       elif referenceNode:
         return Direction.SUPER
     
-  def findOverlapping(self, rect:list[int], exclude:list[int]=[]) -> list[int]:
+  def findOverlapping(self, rect:Sequence[float], exclude:list[int]=[]) -> list[int]:
     '''
     :param rect:
-    :type rect: list[int]
+    :type rect: Sequence[float]
     :param exclude:
     :type exclude: list[int]
     :return: The (possible zero-length) list of 'vis/shape'-tagged tk.Canvas object ids
@@ -863,7 +863,7 @@ class FindFree(LayoutHeuristic):
                 loc:Optional[Point]=None,
                 aggressive:bool=False, 
                 within:Optional[list[float]]=None,
-                **kwargs) -> Point:
+                **kwargs) -> Point|tuple[float, float]:
     '''
     :param node:
     :type node: VObject
@@ -880,7 +880,7 @@ class FindFree(LayoutHeuristic):
     :param kwargs:
     :type kwargs:
     :returns:
-    :rtype: Point
+    :rtype: Point | tuple[float, float]
     '''
     from sn.view.graphics.vrelations import VRelation
     expandFactor = self.expandFactor_relations \
@@ -896,9 +896,9 @@ class FindFree(LayoutHeuristic):
       #   else:
       #     direction = Direction.SUB
       elif referenceNode is not None:
-        if node.modelObject.isa(referenceNode.modelObject):
+        if node.modelObject.isa(referenceNode.modelObject): # type: ignore[union-attr, arg-type]
           direction = Direction.SUB
-        elif referenceNode.modelObject.isa(node.modelObject):
+        elif referenceNode.modelObject.isa(node.modelObject): # type: ignore[union-attr, arg-type]
           direction = Direction.SUPER
         else:
           direction = Direction.LATERAL
@@ -952,6 +952,7 @@ class FindFree(LayoutHeuristic):
     # not rel._id, the view object's id, a different numbering altogether)
     exclude = [node._shape.id] + [rel._shape.id for rel in node.relations if rel._shape is not None and rel._shape.id is not None]
     
+    leftLimit:float; topLimit:float; rightLimit:float; bottomLimit:float
     leftLimit, topLimit, rightLimit, bottomLimit = self.limit
     if within is not None: # (room for its whole box)
       w, h = rect[2] - rect[0], rect[3] - rect[1]
@@ -1018,16 +1019,16 @@ class FindFree(LayoutHeuristic):
     pass # (not a static layout)
 
 
-def intoRect(box:list[float], rect:list[float], margin:float=0.0, topMargin:float|None=None) -> tuple[float, float]:
+def intoRect(box:Sequence[float], rect:Sequence[float], margin:float=0.0, topMargin:float|None=None) -> tuple[float, float]:
   '''
   How far to move *box* to put it inside *rect*, *margin* in from its edges
   (*topMargin* from its top, if given) -- the least move that does it; centred
   in an axis it's too big for.
 
   :param box: [x1, y1, x2, y2].
-  :type box: list[float]
+  :type box: Sequence[float]
   :param rect: [x1, y1, x2, y2].
-  :type rect: list[float]
+  :type rect: Sequence[float]
   :param margin: The space to leave inside *rect*'s edges.
   :type margin: float
   :param topMargin: The space to leave at its top (default: *margin*).
@@ -1064,7 +1065,7 @@ def _median(values:list[float]) -> float:
   n = len(s)
   return s[n//2] if n % 2 else (s[n//2 - 1] + s[n//2]) / 2
 
-def gatherAxisShifts(intervals:list[tuple[float, float]], *,
+def gatherAxisShifts(intervals:Sequence[tuple[float, float]], *,
                      gapFactor:float=6.0, minGap:float=300.0) -> list[float]:
   '''
   One axis of :py:func:`gatherShifts`: how far to shift each interval so that
@@ -1088,7 +1089,7 @@ def gatherAxisShifts(intervals:list[tuple[float, float]], *,
   differences.
 
   :param intervals: (low, high) extents along one axis.
-  :type intervals: list[tuple[float, float]]
+  :type intervals: Sequence[tuple[float, float]]
   :param gapFactor: How many times the typical spacing a gap must exceed to
     count as stranding what lies beyond it.
   :type gapFactor: float
@@ -1169,7 +1170,7 @@ def gatherShifts(boxes:list[list[float]], *, gapFactor:float=6.0, minGap:float=3
 
 # ---- Gathering into a context window -----------------------------------------
 
-def freeSpotIn(box:list[float], rect:list[float], obstacles:Iterable[list[float]], *,
+def freeSpotIn(box:Sequence[float], rect:Sequence[float], obstacles:Iterable[Sequence[float]], *,
                margin:float=10.0, topMargin:float|None=None, gap:float|tuple[float, float]=10.0, step:float=10.0,
                rows:bool=False) -> tuple[float, float]|None:
   '''
@@ -1181,11 +1182,11 @@ def freeSpotIn(box:list[float], rect:list[float], obstacles:Iterable[list[float]
   brought from far away are set out tidily).
 
   :param box: [x1, y1, x2, y2].
-  :type box: list[float]
+  :type box: Sequence[float]
   :param rect: [x1, y1, x2, y2].
-  :type rect: list[float]
+  :type rect: Sequence[float]
   :param obstacles: Boxes to keep clear of.
-  :type obstacles: Iterable[list[float]]
+  :type obstacles: Iterable[Sequence[float]]
   :returns: (dx, dy) -- or None if there's no room.
   :rtype: tuple[float, float] | None
   '''
@@ -1215,8 +1216,8 @@ def freeSpotIn(box:list[float], rect:list[float], obstacles:Iterable[list[float]
 
 # ---- Keeping out of context windows ------------------------------------------
 
-def clearOf(box:list[float], keepOut:list[list[float]], obstacles:list[list[float]]=[], *,
-            within:list[float]|None=None, gap:float=10.0) -> tuple[float, float]|None:
+def clearOf(box:Sequence[float], keepOut:Sequence[Sequence[float]], obstacles:Sequence[Sequence[float]]=[], *,
+            within:Sequence[float]|None=None, gap:float=10.0) -> tuple[float, float]|None:
   '''
   How far to move *box* -- as little as can be -- so it's *gap* clear of every
   rect in *keepOut* (eg: windows it doesn't belong in), clear of *obstacles*
@@ -1226,25 +1227,25 @@ def clearOf(box:list[float], keepOut:list[list[float]], obstacles:list[list[floa
   is the nearest one there is, but not necessarily the very nearest point.
 
   :param box: [x1, y1, x2, y2].
-  :type box: list[float]
+  :type box: Sequence[float]
   :param keepOut: Rects to stay out of.
-  :type keepOut: list[list[float]]
+  :type keepOut: Sequence[Sequence[float]]
   :param obstacles: Rects not to land on (if that can be helped: if there's
     no such place, they're ignored).
-  :type obstacles: list[list[float]]
+  :type obstacles: Sequence[Sequence[float]]
   :param within: A rect to stay in.
-  :type within: list[float] | None
+  :type within: Sequence[float] | None
   :param gap: The clearance.
   :type gap: float
   :returns: (dx, dy), (0, 0) if it's fine where it is -- or None if there's no place.
   :rtype: tuple[float, float] | None
   '''
   w, h = box[2] - box[0], box[3] - box[1]
-  def hits(x:float, y:float, rects:list[list[float]], g:float) -> bool:
+  def hits(x:float, y:float, rects:Sequence[Sequence[float]], g:float) -> bool:
     return any(x < r[2] + g and r[0] - g < x + w and y < r[3] + g and r[1] - g < y + h for r in rects)
   def inside(x:float, y:float) -> bool:
     return within is None or (within[0] <= x and within[1] <= y and x + w <= within[2] and y + h <= within[3])
-  def search(rects:list[list[float]]) -> tuple[float, float]|None:
+  def search(rects:Sequence[Sequence[float]]) -> tuple[float, float]|None:
     xs, ys = {box[0]}, {box[1]}
     for r, g in [*((r, gap) for r in keepOut), *((r, gap / 2) for r in rects)]:
       xs |= {r[0] - g - w, r[2] + g}

@@ -49,7 +49,7 @@ import tempfile
 import zlib
 import tkinter as tk
 import tkinter.font as tkfont
-from typing import Iterable
+from typing import Iterable, Sequence
 
 Point = tuple[float, float]
 
@@ -164,10 +164,10 @@ def _quad(s:Point, c:Point, e:Point) -> tuple[Point, Point, Point]:
   return ((s[0] + 2 * (c[0] - s[0]) / 3, s[1] + 2 * (c[1] - s[1]) / 3),
           (e[0] + 2 * (c[0] - e[0]) / 3, e[1] + 2 * (c[1] - e[1]) / 3), e)
 
-def splineSegments(pts:list[Point], smooth:str, closed:bool) -> list[tuple[Point, ...]]:
+def splineSegments(pts:Sequence[Point], smooth:str, closed:bool) -> list[tuple[Point, ...]]:
   '''
   :param pts: An item's points.
-  :type pts: list[Point]
+  :type pts: Sequence[Point]
   :param smooth: Its "smooth" option: "raw" (the points are a cubic Bezier
     curve's: end, control, control, end, ...), something true (a Tk spline:
     the quadratic B-spline through the midpoints of the points' segments, and

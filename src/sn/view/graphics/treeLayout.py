@@ -35,7 +35,7 @@ Created on Oct 10, 2026
 # SOFTWARE.                                                                     #
 #################################################################################
 from __future__ import annotations
-from typing import Any, Hashable, Optional, TypeVar, override
+from typing import Any, Hashable, Iterable, Mapping, Optional, Sequence, TypeVar, override
 from util.command import Command
 from util.utils import Point
 from sn.model.model import GraphObject, IsaIndividual, Relation
@@ -91,7 +91,7 @@ def _vertical(direction:str) -> bool:
   ":returns: Whether trees grow along y (down, up)."
   return direction in ("down", "up")
 
-def treePositions(roots:list[K], children:dict[K, list[list[K]]], sizes:dict[K, tuple[float, float]], *,
+def treePositions(roots:list[K], children:dict[K, list[list[K]]], sizes:Mapping[K, tuple[float, float]], *,
                   direction:str="right", spacing:float=20.0, levelGaps:Optional[dict[int, float]]=None,
                   levelGap:float=MIN_LEVEL_GAP, compact:bool=False) -> tuple[dict[K, tuple[float, float]], list[tuple[K, list[float]]]]:
   '''
@@ -108,7 +108,7 @@ def treePositions(roots:list[K], children:dict[K, list[list[K]]], sizes:dict[K, 
     parent it's met under (a node met again is left out there).
   :type children: dict[K, list[list[K]]]
   :param sizes: Each node's (width, height).
-  :type sizes: dict[K, tuple[float, float]]
+  :type sizes: Mapping[K, tuple[float, float]]
   :param direction: Which way the trees grow: one of *DIRECTIONS*.
   :type direction: str
   :param spacing: The space between neighbouring nodes across a level.
@@ -207,7 +207,7 @@ def treePositions(roots:list[K], children:dict[K, list[list[K]]], sizes:dict[K, 
   return ret, trees
 
 def _record(ret:dict, trees:list, root, order:list, cross:dict, level:list[float], depthOf:dict,
-            depthSize, sizes:dict, vertical:bool, flip:bool) -> None:
+            depthSize, sizes:Mapping, vertical:bool, flip:bool) -> None:
   '''
   For *treePositions()*: put a tree's nodes where they go -- at their depth's
   level, and *cross* across -- in *ret*, and its root and box in *trees*.
@@ -293,22 +293,22 @@ class _BoxIndex:
   '''
   CELL = 100.0
 
-  def __init__(self, boxes:list[list[float]]=[]):
-    self.cells:dict[tuple[int, int], list[list[float]]] = {}
+  def __init__(self, boxes:Iterable[Sequence[float]]=[]):
+    self.cells:dict[tuple[int, int], list[Sequence[float]]] = {}
     for b in boxes:
       self.add(b)
 
-  def _cells(self, b:list[float]):
+  def _cells(self, b:Sequence[float]):
     c = self.CELL
     for i in range(int(b[0] // c), int(b[2] // c) + 1):
       for j in range(int(b[1] // c), int(b[3] // c) + 1):
         yield (i, j)
 
-  def add(self, b:list[float]) -> None:
+  def add(self, b:Sequence[float]) -> None:
     for k in self._cells(b):
       self.cells.setdefault(k, []).append(b)
 
-  def hits(self, b:list[float], gap:float) -> bool:
+  def hits(self, b:Sequence[float], gap:float) -> bool:
     ''':returns: Whether *b* is on (or within *gap* of) one of the boxes.'''
     g = [b[0] - gap, b[1] - gap, b[2] + gap, b[3] + gap]
     return any(o[0] < g[2] and g[0] < o[2] and o[1] < g[3] and g[1] < o[3]
@@ -350,8 +350,8 @@ def nearestFree(size:tuple[float, float], at:tuple[float, float], index:_BoxInde
         break
   return best if best is not None else at
 
-def placeNear(items:list[K], sizes:dict[K, tuple[float, float]], related:dict[K, list[K]],
-              placed:dict[K, list[float]], obstacles:list[list[float]], *, direction:str="right",
+def placeNear(items:list[K], sizes:Mapping[K, tuple[float, float]], related:dict[K, list[K]],
+              placed:Mapping[K, Sequence[float]], obstacles:Sequence[Sequence[float]], *, direction:str="right",
               spacing:float=20.0, beyond:float=MIN_LEVEL_GAP, bias:float=NEAR_BIAS) -> tuple[dict[K, tuple[float, float]], list[K]]:
   '''
   Put nodes (eg: those in no tree) near the nodes they're related to: each
@@ -365,13 +365,13 @@ def placeNear(items:list[K], sizes:dict[K, tuple[float, float]], related:dict[K,
   :param items: The nodes to put, in order.
   :type items: list[K]
   :param sizes: Their (width, height).
-  :type sizes: dict[K, tuple[float, float]]
+  :type sizes: Mapping[K, tuple[float, float]]
   :param related: What each is related to (any of *placed*, or of *items*).
   :type related: dict[K, list[K]]
   :param placed: Where the nodes already placed are: their boxes.
-  :type placed: dict[K, list[float]]
+  :type placed: Mapping[K, Sequence[float]]
   :param obstacles: Boxes to keep clear of too (*spacing*): eg: relations' labels.
-  :type obstacles: list[list[float]]
+  :type obstacles: Sequence[Sequence[float]]
   :returns: Where each of *items* put goes (its top left); and those not put.
   :rtype: tuple[dict[K, tuple[float, float]], list[K]]
   '''
@@ -782,8 +782,8 @@ class TreeLayout(LayoutHeuristic):
           related[n].append(other)
     placed = {n: [x, y, x + sizes[n][0], y + sizes[n][1]] for n, (x, y) in positions.items()}
     labels = []
-    for r, (x, y) in self._labelTargets(positions, sizes, parentRel).items():
-      w, h = layoutSize(r)
+    for label, (x, y) in self._labelTargets(positions, sizes, parentRel).items():
+      w, h = layoutSize(label)
       labels.append([x, y, x + w, y + h])
     return placeNear(others, sizes, related, placed, labels, direction=self.params["direction"],
                      spacing=float(self.params["spacing"]))

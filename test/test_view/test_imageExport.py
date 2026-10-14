@@ -67,7 +67,7 @@ class Test(unittest.TestCase):
     self.assertTrue(data.startswith(b"%PDF-1.4"))
     self.assertIn(b"/MediaBox [0 0 200.00 100.00]", data)
     self.assertIn(b"/BaseFont /Helvetica", data)
-    start = int(re.search(rb"startxref\n(\d+)", data).group(1))       # the cross-reference table is where it says
+    start = int(re.search(rb"startxref\n(\d+)", data).group(1)) # type: ignore[union-attr]       # the cross-reference table is where it says
     self.assertTrue(data[start:].startswith(b"xref"))
     for n, off in enumerate(re.findall(rb"(\d{10}) 00000 n", data), 1): # and so is each object
       self.assertTrue(data[int(off):].startswith(f"{n} 0 obj".encode()))

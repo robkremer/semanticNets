@@ -99,14 +99,14 @@ class Test(unittest.TestCase):
 
   def test1100nearestEdge(self):
     'Outside, with nothing in the way: just inside the nearest edge (as intoRect()).'
-    dx, dy = freeSpotIn([500, 50, 560, 80], [0, 0, 400, 300], [])
+    dx, dy = freeSpotIn([500, 50, 560, 80], [0, 0, 400, 300], []) # type: ignore[misc]
     self.assertEqual((500 + dx + 60, 50 + dy), (390, 50))
 
   def test1200avoidsObstacles(self):
     rect = [0, 0, 400, 300]
     obstacles = [[320, 30, 390, 90]]                                       # where intoRect() would put it
     box = [500, 50, 560, 80]
-    dx, dy = freeSpotIn(box, rect, obstacles, gap=10)
+    dx, dy = freeSpotIn(box, rect, obstacles, gap=10) # type: ignore[misc]
     b = [box[0] + dx, box[1] + dy, box[2] + dx, box[3] + dy]
     self.assertTrue(10 <= b[0] and b[2] <= 390 and 10 <= b[1] and b[3] <= 290)  # inside, margin in
     o = obstacles[0]
@@ -119,10 +119,11 @@ class Test(unittest.TestCase):
 
   def test1400manyFit(self):
     'Gathering several, one after another, each clear of those before.'
-    rect, placed = [0, 0, 400, 300], []
+    rect = [0, 0, 400, 300]
+    placed:list[list[float]] = []
     for i in range(12):
       box = [1000 + 70 * i, 2000, 1060 + 70 * i, 2030]
-      dx, dy = freeSpotIn(box, rect, placed, topMargin=22)
+      dx, dy = freeSpotIn(box, rect, placed, topMargin=22) # type: ignore[misc]
       placed.append([box[0] + dx, box[1] + dy, box[2] + dx, box[3] + dy])
     for i, a in enumerate(placed):
       self.assertTrue(10 <= a[0] and a[2] <= 390 and 22 <= a[1] and a[3] <= 290)
@@ -136,12 +137,12 @@ class Test(unittest.TestCase):
 
   def test2100leastWayOut(self):
     'Just inside the left edge: out to the left, clear by the gap.'
-    dx, dy = clearOf([105, 150, 125, 170], [[100, 100, 300, 300]], gap=10)
+    dx, dy = clearOf([105, 150, 125, 170], [[100, 100, 300, 300]], gap=10) # type: ignore[misc]
     self.assertEqual((105 + dx + 20, dy), (90, 0))
 
   def test2200avoidsObstaclesOutside(self):
     'The nearest way out is taken (by something else): the next nearest.'
-    dx, dy = clearOf([105, 150, 125, 170], [[100, 100, 300, 300]], [[60, 140, 89, 180]], gap=10)
+    dx, dy = clearOf([105, 150, 125, 170], [[100, 100, 300, 300]], [[60, 140, 89, 180]], gap=10) # type: ignore[misc]
     b = [105 + dx, 150 + dy, 125 + dx, 170 + dy]
     self.assertFalse(b[0] < 310 and 90 < b[2] and b[1] < 310 and 90 < b[3])         # out of the window
     self.assertFalse(b[0] < 94 and 55 < b[2] and b[1] < 185 and 135 < b[3])        # off the obstacle
@@ -149,7 +150,7 @@ class Test(unittest.TestCase):
   def test2300staysWithin(self):
     'In its own pane, out of a window nested in it: it stays in the pane.'
     pane, inner = [0, 0, 400, 300], [100, 100, 380, 280]
-    dx, dy = clearOf([300, 150, 320, 170], [inner], within=pane, gap=10)
+    dx, dy = clearOf([300, 150, 320, 170], [inner], within=pane, gap=10) # type: ignore[misc]
     b = [300 + dx, 150 + dy, 320 + dx, 170 + dy]
     self.assertTrue(pane[0] <= b[0] and pane[1] <= b[1] and b[2] <= pane[2] and b[3] <= pane[3])
     self.assertFalse(b[0] < 390 and 90 < b[2] and b[1] < 290 and 90 < b[3])
