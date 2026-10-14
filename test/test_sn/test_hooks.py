@@ -48,6 +48,14 @@ def greet(obj, context):
 def broken(obj, context):
   raise RuntimeError("oops")
 
+@hook(appliesTo=lambda obj, context: obj.startswith("f"))
+def fOnly(obj, context):
+  return "f"
+
+@hook(appliesTo=lambda obj, context: 1/0)
+def badTest(obj, context):
+  return "bad"
+
 def notAHook(obj, context):
   return "should never be called"
 
@@ -177,6 +185,19 @@ class Test(unittest.TestCase):
                              "Show source": hooks.reference(greet),
                              "Source/Open": "hookfixtures.good:shout"})
     self.assertEqual(list(found), sorted(found))
+
+  def test1000appliesTo(self):
+    self.assertEqual(fOnly("fred", None), "f") # (the decorator gives back the function itself)
+    self.assertTrue(hooks.applies(hooks.reference(fOnly), "fred"))
+    self.assertFalse(hooks.applies(hooks.reference(fOnly), "ann"))
+    self.assertTrue(hooks.applies(hooks.reference(greet), "ann")) # (no test: applies to all)
+    self.assertTrue(hooks.applies("os:system", "ann"))            # (can't be called: shown, but disabled)
+    with self.assertLogs("sn.hooks", "WARNING"):
+      self.assertFalse(hooks.applies(hooks.reference(badTest), "ann"))
+
+  def test1100selectionInContext(self):
+    self.assertEqual(HookContext().selection, [])
+    self.assertEqual(HookContext(selection=["a", "b"]).selection, ["a", "b"])
 
 if __name__ == "__main__":
   unittest.main()

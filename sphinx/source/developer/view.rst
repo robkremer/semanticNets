@@ -127,6 +127,32 @@ supplies the values (attributes, plus ``name``, ``type``, ``constraints``,
 ...). The template comes from the object's ``vis/label`` attribute, so a type
 can set it for all its instances, or else from the preferences.
 
+Hooks: menu items and double-clicks
+-----------------------------------
+
+A program that makes a model (eg: pythonParser) can give its objects
+behaviour that lasts when the model's saved and read back, through
+attributes naming *hooks* (:py:mod:`sn.hooks`): functions, as
+``module:function``, made hooks by the ``@hook`` decorator. Only those can be
+called, and a hook's module is imported only if it's sn's own or listed in the
+``hooks/trustedModules`` preference -- models can come from the web.
+
+- Each ``.menu/<path>`` attribute an object has (its own, or one it inherits:
+  eg: set on a type, for all its instances) adds an item to its menu
+  (``VObject.addHookMenuItems()``), in a section of their own at the top,
+  sorted by path; a ``/`` in the path makes a submenu (eg: ``.menu/Source/Open
+  in editor``). An item whose hook can't be called is there, but disabled.
+- A ``.doubleClick`` attribute names a hook run on a double-click, instead of
+  showing the attributes.
+
+A hook is called as ``fn(obj, context)``: the model object, and a
+:py:class:`~sn.hooks.HookContext` -- the attribute that named it, the view
+object and view, and what the menu item acts on (the selection, if the object
+is selected). ``@hook(appliesTo=...)`` makes one that only applies to some
+objects: eg: one set on a type for its instances is left off the type's own
+menu. The attributes start with ``.``, so the attribute editor doesn't show
+them.
+
 Reasoning results
 -----------------
 

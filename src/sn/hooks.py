@@ -90,11 +90,18 @@ class HookContext:
   "The object on the canvas it's used from (a *VObject*), if any."
   view:Any = None
   "The view it's used in (an *SNGView*), if any."
+  selection:list[Any] = field(default_factory=list)
+  '''What a menu item acts on (see *VObject.selectionOrSelf()*): the
+  selected view objects, if the object it's on is one of them; else just
+  that one. Empty if it isn't from a menu.'''
   extra:dict[str, Any] = field(default_factory=dict)
   "Anything else whatever calls it wants to say."
 
 _hooks:dict[str, Hook] = {}
 "The hooks: reference -> function."
+
+_appliesTo:dict[str, Callable[[Any, HookContext], bool]] = {}
+"The hooks that apply only to some objects: reference -> the test (see *hook()*, *applies()*)."
 
 _problems:dict[str, str] = {}
 '''Why references can't be called (see *problem()*), so that a module isn't
@@ -113,23 +120,36 @@ def reference(fn:Callable) -> str:
   '''
   return f"{fn.__module__}:{fn.__qualname__}"
 
-def hook[F:Callable](fn:F) -> F:
+def hook[F:Callable](fn:F|None=None, *, appliesTo:Callable[[Any, HookContext], bool]|None=None) -> Any:
   '''
   A decorator: makes *fn* a hook, so that attributes can name it (by its
   *reference()*). It should be in a module that's imported by its name (not a
   program's __main__, which is named "__main__" whatever the program is), so
   that it can be found again when its module's imported later on.
 
+  Used as ``@hook``, or ``@hook(appliesTo=...)`` for one that only makes
+  sense for some objects (see *applies()*): eg: a menu item set on a type for
+  its instances, that means nothing on the type itself.
+
   :param fn: The function.
-  :type fn: F
-  :returns: *fn* itself.
-  :rtype: F
+  :type fn: F | None
+  :param appliesTo: Whether it applies to an object (used as *context* says):
+    called as ``appliesTo(obj, context)``. Default: it applies to everything.
+  :type appliesTo: Callable[[Any, HookContext], bool] | None
+  :returns: *fn* itself; or, without *fn*, a decorator that makes it a hook.
+  :rtype: Any
   '''
+  if fn is None:
+    return lambda f: hook(f, appliesTo=appliesTo)
   ref = reference(fn)
   if fn.__module__ == "__main__":
     logger.warning(f'The hook {ref} is in a program\'s __main__ module: models can\'t name it after the program\'s '
                    'ended (by its module\'s name, which is "__main__" for any program). Put it in a module of its own.')
   _hooks[ref] = fn
+  if appliesTo is not None:
+    _appliesTo[ref] = appliesTo
+  else:
+    _appliesTo.pop(ref, None)
   _problems.clear() # (its module may have failed to import before)
   _reported.discard(ref)
   return fn
@@ -243,6 +263,31 @@ def call(ref:str, obj:Any, context:HookContext|None=None, default:Any=None) -> A
   except Exception:
     logger.warning(f'The hook "{ref.strip()}" failed (on {getattr(obj, "name", obj)!r}).', exc_info=True)
     return default
+
+def applies(ref:str, obj:Any, context:HookContext|None=None) -> bool:
+  '''
+  :param ref: A reference: ``module:function``.
+  :type ref: str
+  :param obj: A model object.
+  :type obj: Any
+  :param context: How it'd be used.
+  :type context: HookContext | None
+  :returns: Whether the hook applies to *obj*: its *appliesTo* test (see
+    *hook()*) says so, or it hasn't one. One that can't be called applies (to
+    be shown, but disabled: see *resolve()*); one whose test fails doesn't
+    (logged).
+  :rtype: bool
+  '''
+  if resolve(ref) is None:
+    return True
+  test = _appliesTo.get(ref.strip())
+  if test is None:
+    return True
+  try:
+    return bool(test(obj, context if context is not None else HookContext()))
+  except Exception:
+    logger.warning(f'The hook "{ref.strip()}"\'s appliesTo test failed (on {getattr(obj, "name", obj)!r}).', exc_info=True)
+    return False
 
 def hookAttributes(obj:Any, prefix:str) -> dict[str, str]:
   '''

@@ -70,6 +70,8 @@ from util.command import CommandWrapper
 from util.attributeEditor import getEditedAttrsCommandObj, applyEditAttrsBox,\
   editAttrsBox
 from util.abstractGraph import AGObject
+from sn import hooks
+from sn.hooks import HookContext
 from util.dirtyable import Dirtyable
 from util.errorReportingObject import ErrorReportingObject
 
@@ -1268,7 +1270,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
 
   def onDouble_1(self, event):
     '''
-    A double-click: its attributes, in the attribute editor -- as "edit
+    A double-click: the hook its model object's *DOUBLE_CLICK* attribute
+    names (eg: set on its type), if it has one that can be called, and applies
+    to it (see *sn.hooks*); else its attributes, in the attribute editor -- as "edit
     attributes" (or "show attributes": see *attributesReadOnly()*) on its
     menu. (Not on a context window's collapse triangle: that's two toggles.)
 
@@ -1280,6 +1284,11 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     self.view.addEventHandled(event)
     self.dragInfo = None
     if self.modelObject is None or self.toggleAt(self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)):
+      return 'break'
+    ref = self.modelObject.get(self.DOUBLE_CLICK, None)
+    if hooks.isReference(ref) and hooks.resolve(ref) is not None \
+       and hooks.applies(ref, self.modelObject, context := self.hookContext(self.DOUBLE_CLICK)):
+      hooks.call(ref, self.modelObject, context)
       return 'break'
     self.onEditAttributes(disabled=self.attributesReadOnly())
     return 'break'
@@ -1442,6 +1451,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         mtitle = f'#{self.modelObject.id}?name="{self.modelObject.name}"'
       m.add_command(label=f'#{self._id} -> {mtitle}', state=tk.DISABLED)
       m.add_separator()
+    if self.addHookMenuItems(m):
+      m.add_separator()
     editable = self.view.isModelEditor()
     if editable:
       self.addModelEditingMenuItems(m)
@@ -1532,6 +1543,59 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     menu.add_command(label="copy", command=self.copySelection)
     menu.add_command(label="copy as picture", command=lambda: self.copySelection(picture=True))
     menu.add_separator()
+
+  MENU_PREFIX = ".menu/"
+  '''The start of the attributes that add items to an object's menu (see
+  *addHookMenuItems()*): eg: ".menu/Show source", or ".menu/Source/Open" (in a
+  "Source" submenu).'''
+
+  DOUBLE_CLICK = ".doubleClick"
+  "The attribute naming a hook run on a double-click, instead of showing the attributes (see *onDouble_1()*)."
+
+  def hookContext(self, key:str) -> HookContext:
+    '''
+    :param key: The attribute naming the hook: eg: ".menu/Show source".
+    :type key: str
+    :returns: How a hook's used from this object (see *sn.hooks*).
+    :rtype: HookContext
+    '''
+    return HookContext(key=key, vobject=self, view=self.view, selection=self.selectionOrSelf())
+
+  def addHookMenuItems(self, menu:tk.Menu) -> bool:
+    '''
+    Add an item to *menu* for each of its model object's *MENU_PREFIX*
+    attributes -- its own, and those it inherits (eg: from a type, for all its
+    instances) -- calling the hook its value names (see *sn.hooks*), sorted
+    by path: a "/" in the path makes a submenu. One whose hook doesn't apply to
+    it (see *sn.hooks.applies()*: eg: one meant for a type's instances, on the
+    type) is left out; one whose hook can't be called (eg: its module isn't
+    trusted) is there, but disabled (why is logged).
+
+    :param menu:
+    :type menu: tk.Menu
+    :returns: Whether it added any.
+    :rtype: bool
+    '''
+    mo = self.modelObject
+    if mo is None:
+      return False
+    found = {path: ref for path, ref in hooks.hookAttributes(mo, self.MENU_PREFIX).items()
+             if hooks.applies(ref, mo, self.hookContext(self.MENU_PREFIX + path))}
+    submenus:dict[str, tk.Menu] = {}
+    for path, ref in found.items():
+      *folders, label = [p.strip() for p in path.split("/")]
+      parent, sofar = menu, ""
+      for f in folders:
+        sofar += "/" + f
+        if sofar not in submenus:
+          submenus[sofar] = tk.Menu(parent)
+          parent.add_cascade(label=f, menu=submenus[sofar])
+        parent = submenus[sofar]
+      key = self.MENU_PREFIX + path
+      parent.add_command(label=label or path,
+                         state=tk.NORMAL if hooks.resolve(ref) is not None else tk.DISABLED,
+                         command=lambda r=ref, k=key: hooks.call(r, mo, self.hookContext(k)))
+    return bool(found)
 
   def selectionOrSelf(self) -> list[VObject]:
     '''
