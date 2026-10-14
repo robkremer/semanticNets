@@ -950,7 +950,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       try:
         newShape = self.strToShape(c)
       except Exception as ex:
-        self.canvas.logger.write(f'Shape "{c}" is not known.', level="warning", exception=ex) # type: ignore[attr-defined]
+        logger.warning(f'Shape "{c}" is not known: {ex}')
       if newShape is not None:
         self.killBindings()
         oldShape = self._shape
@@ -1053,7 +1053,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       trace = traceback.format_exc()
       self.assertToStatusReport(False, 
           f'Unexpected exception during valication: {ex.__class__.__name__}: {ex}', 'E',
-          {"view trace": lambda trace=trace, ex=ex: showExceptionDialog(self.canvas.winfo_toplevel(), name=ex.__class__.__name__, text=trace)}) # type: ignore[misc, call-arg]
+          {"view trace": lambda trace=trace, ex=ex: showExceptionDialog(self.canvas.winfo_toplevel(), title=ex.__class__.__name__, text=trace)}) # type: ignore[misc]
     return self.statusReport()
     
   def _addReasonerFindings(self) -> None:
