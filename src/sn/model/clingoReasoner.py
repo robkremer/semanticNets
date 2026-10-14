@@ -394,19 +394,19 @@ class ClingoReasoner(Reasoner, engine="clingo"):
       term = lambda x: var[x.name] if isinstance(x, GraphObject) and x.isVariable() else self._term(x)
       subject, *args = spec.report
       out.append(f'violation0({self._term(spec.code)},{spec.severity},{term(subject)},({"".join(term(a) + "," for a in args)})) :- {", ".join(body)}.')
-    for spec in rules:
-      r = spec.rule
-      out += [warn(r, code, args) for code, args in spec.warnings] # (it's still used)
-      if spec.problems:
-        for code, args in spec.problems:
-          out.append(f'violation0({code},warning,{self._term(r)},({"".join(self._term(a) + "," for a in args)})).')
+    for rspec in rules:
+      r = rspec.rule
+      out += [warn(r, code, rargs) for code, rargs in rspec.warnings] # (it's still used)
+      if rspec.problems:
+        for code, rargs in rspec.problems:
+          out.append(f'violation0({code},warning,{self._term(r)},({"".join(self._term(a) + "," for a in rargs)})).')
         continue
-      if not (spec.heads or spec.assertions or spec.isas or spec.new):
+      if not (rspec.heads or rspec.assertions or rspec.isas or rspec.new):
         continue
-      var = self._varNames(spec.pattern)
-      body = self._patternBody(spec.pattern, var, forRule=bool(spec.new)) # (a rule that creates nothing can't run away: it ranges over all the data)
-      matched = [n for n in var if n in {v.name for v in spec.pattern.variables}] # (not value variables)
-      newTerms = {x.name: self._newTerm(r, x.name, matched, var) for x in spec.new}
+      var = self._varNames(rspec.pattern)
+      body = self._patternBody(rspec.pattern, var, forRule=bool(rspec.new)) # (a rule that creates nothing can't run away: it ranges over all the data)
+      matched = [n for n in var if n in {v.name for v in rspec.pattern.variables}] # (not value variables)
+      newTerms = {x.name: self._newTerm(r, x.name, matched, var) for x in rspec.new}
       def term(x:GraphObject|None) -> str:
         if x is not None and x.isVariable():
           return newTerms.get(x.name) or var[x.name]
@@ -414,18 +414,18 @@ class ClingoReasoner(Reasoner, engine="clingo"):
       tail = f" :- {', '.join(body)}." if body else "."
       newTail = tail # (for conclusions about new objects: only if the data doesn't already have them)
       if newTerms:
-        sat, satLit = self._satisfied(spec, var, len(out))
+        sat, satLit = self._satisfied(rspec, var, len(out))
         if sat:
           out.append(sat)
           newTail = f" :- {', '.join(body + [f'not {satLit}'])}."
       isNew = lambda *xs: any(x is not None and x.isVariable() and x.name in newTerms for x in xs)
       for n in newTerms.values():
         out.append(f"rule_new({n}){newTail}")
-      for x, t in spec.isas:
+      for x, t in rspec.isas:
         out.append(f"rule_isa({self._term(r)},{term(x)},{term(t)}){newTail if isNew(x) else tail}")
-      for t, s, d in spec.heads:
+      for t, s, d in rspec.heads:
         out.append(f"fired({self._term(r)},{term(t)},{term(s)},{term(d)}){newTail if isNew(s, d) else tail}")
-      for x, key, value in spec.assertions:
+      for x, key, value in rspec.assertions:
         v = "true" if value is PRESENT else var[value] if isinstance(value, ValueVar) else self._term(value)
         out.append(f"rule_attr({self._term(r)},{term(x)},{_str(key)},{v}){newTail if isNew(x) else tail}")
     return "\n".join(out)

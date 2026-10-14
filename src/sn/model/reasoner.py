@@ -690,8 +690,8 @@ class RuleSpec:
   rule:GraphObject
   pattern:Pattern
   "The antecedent (see *patternOf()*)."
-  heads:list[tuple[GraphObject, GraphObject, GraphObject]] = field(default_factory=list)
-  "(relation type, src, dst): what the rule concludes holds."
+  heads:list[tuple[GraphObject, GraphObject|None, GraphObject|None]] = field(default_factory=list)
+  "(relation type, src, dst): what the rule concludes holds (an end None: a problem -- see *problems*)."
   assertions:list[tuple[GraphObject, str, Any]] = field(default_factory=list)
   "(variable, key, value): attributes the rule concludes -- the constraints of the consequent's own variables."
   isas:list[tuple[GraphObject, GraphObject]] = field(default_factory=list)
@@ -1704,7 +1704,7 @@ def mergeSame(ret:Inferences) -> None:
   ret.fired = unique([(r, t, f(s), f(d)) for r, t, s, d in ret.fired])
   ret.ruleAttrs = unique([(r, f(x), k, v) for r, x, k, v in ret.ruleAttrs])
   ret.ruleIsa = unique([(r, f(x), t) for r, x, t in ret.ruleIsa])
-  ret.newObjects = [n for (n,) in unique([(n,) for n in ret.newObjects]) if f(n) is n or (isinstance(f(n), NewObject) and _newObjectKey(f(n)) == _newObjectKey(n))]
+  ret.newObjects = [n for (n,) in unique([(n,) for n in ret.newObjects]) if f(n) is n or (isinstance(f(n), NewObject) and _newObjectKey(f(n)) == _newObjectKey(n))] # type: ignore[arg-type]
 
 def _newObjectKey(n:NewObject) -> tuple:
   '''
@@ -1778,11 +1778,11 @@ def materialize(model:Model, inferences:Inferences, models:list[Model]) -> None:
     if isinstance(s, GraphObject) and isinstance(d, GraphObject) and isinstance(t, Relation):
       key = (id(t), id(s), id(d))
       want[key], kinds[key] = (t, s, d), "inherited" if key in inherited else "inferred"
-  for _, x, t in inferences.ruleIsa:
-    if isinstance(x, GraphObject) and isinstance(t, GraphObject) and \
-       not any(p is t for _, p in x._getOutgoing(lambda r: isinstance(r, IsaIndividual) and not r.inferred)): # (not asserted already)
-      key = (id(model.ISA), id(x), id(t))
-      want[key], kinds[key] = (model.ISA, x, t), "inferred"
+  for _, x, typ in inferences.ruleIsa:
+    if isinstance(x, GraphObject) and isinstance(typ, GraphObject) and \
+       not any(p is typ for _, p in x._getOutgoing(lambda r: isinstance(r, IsaIndividual) and not r.inferred)): # (not asserted already)
+      key = (id(model.ISA), id(x), id(typ))
+      want[key], kinds[key] = (model.ISA, x, typ), "inferred"
   # the new objects: kept by what identifies them (see _newObjectKey())
   newOnes = {_newObjectKey(n): n for n in inferences.newObjects}
   haveNodes = {o.inferredKey: o for o in model.inferredObjects()
@@ -1834,29 +1834,29 @@ def materialize(model:Model, inferences:Inferences, models:list[Model]) -> None:
       except Exception as ex:
         logger.warning(f"Couldn't give {x.name} the inferred {k}={v}: {type(ex).__name__}: {ex}")
     real = lambda o: nodes.get(_newObjectKey(o)) if isinstance(o, NewObject) else o
-    for _, t, s, d in inferences.fired: # (the relations the rules gave the new objects)
-      if isinstance(s, NewObject) or isinstance(d, NewObject):
-        rs, rd = real(s), real(d)
-        if isinstance(t, Relation) and isinstance(rs, GraphObject) and isinstance(rd, GraphObject):
-          key = (id(t), id(rs), id(rd))
-          want[key], kinds[key] = (t, rs, rd), "rule"
-    for key, obj in have.items():
-      if key not in want and obj._isConnected():
-        obj._disconnect()
+    for _, ft, fs, fd in inferences.fired: # (the relations the rules gave the new objects)
+      if isinstance(fs, NewObject) or isinstance(fd, NewObject):
+        rs, rd = real(fs), real(fd)
+        if isinstance(ft, Relation) and isinstance(rs, GraphObject) and isinstance(rd, GraphObject):
+          key = (id(ft), id(rs), id(rd))
+          want[key], kinds[key] = (ft, rs, rd), "rule"
+    for key, old in have.items():
+      if key not in want and old._isConnected():
+        old._disconnect()
     for key, node in haveNodes.items():
       if key not in nodes and node._isConnected():
         node._disconnect()
-    for key, (t, s, d) in want.items():
+    for key, (rt, s, d) in want.items():
       try:
         obj = have.get(key)
         if obj is None or not obj._isConnected():
-          if t is model.ISA and (problem := s.parentProblem(d)) is not None: # (a rule concluded an isa cycle)
+          if rt is model.ISA and (problem := s.parentProblem(d)) is not None: # (a rule concluded an isa cycle)
             logger.warning(f"Not adding the inferred isa from {s.name} to {d.name}: {problem}")
             continue
-          obj = IsaIndividual(model, s, d, inferred=True) if t is model.ISA else Relation(model, [t], s, d, individual=True, inferred=True)
+          obj = IsaIndividual(model, s, d, inferred=True) if rt is model.ISA else Relation(model, [rt], s, d, individual=True, inferred=True)
         obj.inferredKind = kinds[key] # (for how it's drawn)
       except Exception as ex:
-        logger.warning(f"Couldn't add the inferred {t.name} from {s.name} to {d.name}: {type(ex).__name__}: {ex}")
+        logger.warning(f"Couldn't add the inferred {rt.name} from {s.name} to {d.name}: {type(ex).__name__}: {ex}")
 
 def reasoningFor(model:Model|None) -> Inferences|None:
   '''

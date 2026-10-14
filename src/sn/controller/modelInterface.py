@@ -310,7 +310,7 @@ class ModelContext(CommandContext):
       if not url:
         continue
       try:
-        db = PRDb.getDB(url) # (an existing one only: from memory, or read from its file)
+        db:PRDb[Any] = PRDb.getDB(url) # (an existing one only: from memory, or read from its file)
         if not isinstance(db, Model):
           raise ValueError(f'"{url}" isn\'t a model.')
         if adding:

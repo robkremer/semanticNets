@@ -150,6 +150,11 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     its container object pointer (*Model*) is subtype of the its parent's pointer
     (*PRDb*).
   '''
+
+  inferredKey:tuple
+  "An object the reasoner made: what identifies it (set only on those: see *sn.model.reasoner.materialize()*)."
+  inferredKind:str
+  "An inferred object: how it came to be, eg: \"new\", \"rule\" (set only on those: see *sn.model.reasoner.materialize()*)."
   
   def __init__(self, db:Model, parents:Iterable[GraphObject]=[], individual:bool=False, name:Optional[str]=None,
                inferred:bool=False, **kwargs):
@@ -506,7 +511,7 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     '''
     for r in self.selfIsaLinks():
       self.assertToStatusReport(False, f'"{self.name}" has an isa link to itself (ignored).', "E",
-                                actions={"remove the isa link to itself": lambda r=r: [r._disconnect(), r.model.setDirty(), None][-1]}) #type: ignore[func-returns-value]
+                                actions={"remove the isa link to itself": lambda r=r: [r._disconnect(), r.model.setDirty(), None][-1]}) #type: ignore[func-returns-value, misc]
 
   def parentProblem(self, parent:GraphObject|None) -> str|None:
     '''
@@ -841,7 +846,7 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
         seen = [] if ret == [] else list(list(zip(*ret))[1])
         if r.isTransitive() and other is not self:
           # add in any transitives, filtering out anything we already refer to
-          ret += [ret2 for ret2 in other.getRelatedFrom(inferred=inferred, _snapshot=False) if ret2[1] not in seen and filtr(r)]
+          ret += [ret2 for ret2 in other.getRelatedFrom(inferred=inferred, _snapshot=False) if ret2[1] not in seen and filtr(r)] # type: ignore[call-overload] # (_snapshot: internal)
     if inferred and _snapshot:
       self._addNew(ret, self._inferredRelated(rel, outgoing=False), byObjectOnly=rel is not None)
     if rel is not None: # and not _returnPairs:
@@ -1219,6 +1224,9 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     
   '''
 
+  _inferringDepth:int
+  "While inside *inferring()* (set only then): how deeply."
+
   @override
   @classmethod
   def _initCache(cls):
@@ -1384,7 +1392,7 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
       if p.name == "_db": # (inferred objects aren't saved: see GraphObject.inferred)
         def assertedObjects(slf:Serializable) -> SerializableType:
           from util.persistence.serialize import strdict
-          ret = strdict()
+          ret:strdict[Any] = strdict()
           for k, v in cast(Model, slf)._db.items():
             if not getattr(v, "inferred", False):
               ret[str(k)] = v
@@ -1622,7 +1630,7 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
         missing.append(p)
         continue
       try:
-        db = PRDb.getDB(PRDb.absoluteURL(p, base=self.url))
+        db:PRDb[Any] = PRDb.getDB(PRDb.absoluteURL(p, base=self.url))
       except Exception as ex:
         problems.append(f'"{p}": {ex}')
         continue
