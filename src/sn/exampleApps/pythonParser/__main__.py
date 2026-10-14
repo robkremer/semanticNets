@@ -20,6 +20,13 @@ left to right -- and the imports asked for (see
 *showPackages()*). The rest of the model (classes, functions, ...) is there
 to be brought into the view (eg: a module's "expand").
 
+Its code can be seen from the view (see *hooks*): a module, class or
+function's menu has "Show source" (in a window here), "Open in editor" (the
+"gui/editorCommand" setting's editor) and "Reveal in Finder"; a class or
+function's tooltip is its code, and a double-click opens it in the editor.
+It's found in its file as it is now -- after the file's been edited -- by its
+name (see *source*).
+
 The model is named after the files' main module -- the best guess at it: see
 *parser.guessMain()* -- with "_py" (eg: "XMLreader_py.snm" and
 "XMLreader_py.snv"), next to it (see *parser.outputPaths()*), asking first if

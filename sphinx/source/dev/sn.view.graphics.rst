@@ -29,6 +29,7 @@ Submodules
    sn.view.graphics.replaceModelDialog
    sn.view.graphics.shapes
    sn.view.graphics.sngView
+   sn.view.graphics.sourceWindow
    sn.view.graphics.treeLayout
    sn.view.graphics.utils
    sn.view.graphics.visibilityDialog

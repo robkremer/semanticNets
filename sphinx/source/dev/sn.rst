@@ -26,3 +26,4 @@ Submodules
    :maxdepth: 4
 
    sn.__main__
+   sn.hooks

@@ -14,4 +14,6 @@ Submodules
    :maxdepth: 4
 
    sn.exampleApps.pythonParser.__main__
+   sn.exampleApps.pythonParser.hooks
    sn.exampleApps.pythonParser.parser
+   sn.exampleApps.pythonParser.source
