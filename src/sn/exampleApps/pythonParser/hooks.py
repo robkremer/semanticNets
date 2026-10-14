@@ -130,7 +130,7 @@ def sourceTip(obj:Any, _context:HookContext) -> str:
   if fileOf(obj) is None:
     return ""
   loc = source.locateNode(obj)
-  if loc is None or not loc.found or loc.how == source.GUESS:
+  if loc is None or loc.how is None or loc.how == source.GUESS: # (how is None: not found)
     return ""
   notes = []
   if loc.how != source.NAME:

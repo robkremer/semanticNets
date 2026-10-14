@@ -63,7 +63,7 @@ from __future__ import annotations
 import importlib
 import re
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any, Callable, TypeGuard
 import sn
 from sn import snPrefs
 
@@ -154,7 +154,7 @@ def hook[F:Callable](fn:F|None=None, *, appliesTo:Callable[[Any, HookContext], b
   _reported.discard(ref)
   return fn
 
-def isReference(text:Any) -> bool:
+def isReference(text:Any) -> TypeGuard[str]:
   '''
   :param text: An attribute's value.
   :type text: Any

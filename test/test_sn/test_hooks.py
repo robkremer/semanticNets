@@ -52,7 +52,7 @@ def broken(obj, context):
 def fOnly(obj, context):
   return "f"
 
-@hook(appliesTo=lambda obj, context: 1/0)
+@hook(appliesTo=lambda obj, context: 1/0) # type: ignore[arg-type, return-value]
 def badTest(obj, context):
   return "bad"
 
@@ -60,6 +60,8 @@ def notAHook(obj, context):
   return "should never be called"
 
 class Test(unittest.TestCase):
+  folder:tempfile.TemporaryDirectory
+  pkg:Path
 
   @classmethod
   def setUpClass(cls):
@@ -154,7 +156,7 @@ class Test(unittest.TestCase):
   def test0600importsTrusted(self):
     self.assertEqual(hooks.call("hookfixtures.good:shout", "fred"), "FRED")
     self.assertEqual(self.imports("good"), 1)
-    self.assertIn("no such hook", hooks.problem("hookfixtures.good:plain"))
+    self.assertIn("no such hook", hooks.problem("hookfixtures.good:plain") or "")
 
   def test0700untrustedNotImported(self):
     with self.assertLogs("sn.hooks", "WARNING") as logs:
