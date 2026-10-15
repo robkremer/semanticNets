@@ -88,23 +88,6 @@ class TopModel(Model):
     self.NODE:Node = Node(self, [self.TOP]) #6,7
     self.NODE.setAttr("name", Attribute("node", None, VAR, NAME_NOTE)) # can't do this until AFTER ISA exists.
 
-    # add it the basic relation types
-    # self.REFLEXIVE:Relation         = Relation(self, [self.RELATION], individual=False, name="reflexive") #8,9
-    # self.REFLEXIVE["reflexive"]     = Attribute(True, bool, CONST, "Object is a reflexive relation")
-    # self.IRREFLEXIVE:Relation       = Relation(self, [self.RELATION], individual=False, name="irreflexive") #10,11
-    # self.IRREFLEXIVE["irreflexive"] = Attribute(True, bool, CONST, "Object is a irreflexive relation")
-    # self.SYMMETRIC:Relation         = Relation(self, [self.RELATION], individual=False, name="symmetric") #12,13
-    # self.SYMMETRIC["symmetric"]     = Attribute(True, bool, CONST, "Object is a symmetric relation")
-    # self.TRANSITIVE:Relation        = Relation(self, [self.RELATION], individual=False, name="transitive") #14,15
-    # self.TRANSITIVE["transitive"]   = Attribute(True, bool, CONST, "Object is a transitive relation")
-
-    # # fix up the ISA relation type so it inherits from REFLEXIVE and TRANSITIVE
-    # assert isinstance(isaisa, IsaIndividual)
-    # isaisa.connect(destination=self.TRANSITIVE)
-    # IsaIndividual(self, self.ISA, self.REFLEXIVE) #16
-
-    # self.EQUALITY:Relation = Relation(self, [self.REFLEXIVE, self.SYMMETRIC, self.TRANSITIVE], name="equality") #17,18,19,20
-
     # add in a base context node
     self.COLLECTION:Collection = Collection(self, [self.NODE], [], individual=False, name="collection") #21,22
 

@@ -29,6 +29,7 @@ import os
 import sys
 
 from util import setupLogger
+from util.utils import askYesNo
 
 NAME = "Semantic Nets"
 SHORT_NAME = "sn"
@@ -478,32 +479,6 @@ def _displayPath(url:str) -> str:
   path = unquote(parsed.path)
   home = os.path.expanduser("~")
   return "~" + path[len(home):] if path.startswith(home + os.sep) else path
-
-def askYesNo(question:str, title:str) -> bool:
-  '''
-  Ask the user a yes-or-no question: in a Yes/No dialog over the focused
-  window, if the GUI is running; otherwise (eg: the terminal interface, or
-  once the windows are gone at exit) as text (see *util.utils.askUser()*).
-
-  :param question:
-  :type question: str
-  :param title: The dialog's title.
-  :type title: str
-  :returns: True iff the answer is yes.
-  :rtype: bool
-  '''
-  import tkinter as tk
-  root = tk._default_root # type: ignore[attr-defined]
-  if root is not None:
-    from tkinter import messagebox
-    try:
-      focused = root.focus_get()
-    except KeyError: # (eg: a menu's popdown, which isn't a Python widget)
-      focused = None
-    return bool(messagebox.askyesno(title, question, parent=focused.winfo_toplevel() if focused is not None else root))
-  from util.utils import askUser
-  ans = askUser(f'{question}\n(Y/N):', title)
-  return ans is not None and ans.strip().upper() in ("Y", "YES", "T", "TRUE")
 
 _savedAtExit = False
 "Set once saveAtExit() has run, so the atexit call after an explicit one doesn't ask again."
