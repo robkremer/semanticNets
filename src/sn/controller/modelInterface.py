@@ -94,6 +94,60 @@ class ConvertingDict(dict[str, Any]):
     else:
       return super().__setitem__(key, value)
 
+HELP_DESCRIPTION = """
+Semantic Nets' command language. A command is a few words, then its arguments
+(eg: "assert person fred"); options start with "--" (eg: "--type").
+
+Objects (<obj>, <type>, <rel-type> below) are referred to by:
+
+    fred           its name (quoted if it has spaces: "big dog")
+    #21            its id in the default model
+    pets.snm#fred  its name (or #id) in another model
+
+A name is looked for in the default model, then in its super-models. The
+default model is the one the terminal (or window) works on.
+
+The assert (also: !) and query (also: ?) commands take short expressions,
+whose meaning depends on how many objects they have:
+
+    assert <type> <obj> [--type]       make <obj> (if need be) an instance, or
+                                       with --type a subtype, of <type>
+    assert <src> <rel-type> <dst>      relate <src> to <dst> by <rel-type>
+                                       (--type: make <rel-type> if need be)
+
+    query <obj>                        <obj> itself
+    query <type> <obj>                 True iff <obj> isa <type>
+    query <obj> <rel-type> <obj>       True iff they're related by <rel-type>
+                                       (or a subtype of it)
+
+  In a query, any of the objects can be "?" or "*", and the answer is what
+  fits: eg: "query ? isa person", "query fred likes ?", "query * fred". In a
+  type expression, "?" goes one level (direct types or instances and
+  subtypes), and "*" all the way. A relation query takes in what the last
+  "reason" inferred (eg: through transitive relations).
+
+Every model includes the system model, whose types are:
+
+  top                  everything inherits from top
+    node               things and kinds of things
+      context          a node that contains others ("contains" relations)
+        rule           antecedent => consequent (see "reason")
+        query          a pattern to answer (see "answer query")
+        definition     definiendum <=> definiens
+        constraint     a pattern that must not match
+          requirement  wherever the condition matches, the required must too
+      collection       a node with members
+    relation           relations between objects: make your own subtypes of
+                       it (eg: "assert relation likes --type")
+      isa              the type hierarchy (made by "assert" and "new")
+      contains         what a context contains
+      distinct         in patterns: the ends must be different objects
+
+A relation type can be tagged symmetric, asymmetric, reflexive, irreflexive or
+transitive by giving it an attribute of that name (eg: "set attribute
+has-sibling symmetric yes"); "reason" draws the conclusions.
+"""
+
 def _refuseInferred(doing:str, *objects:Any) -> None:
   '''
   :param doing: What would be done, for the message, eg: "remove".
@@ -126,6 +180,35 @@ def _decodeObjects(objects:list[Any]|GraphObject|str, model:Model|None) -> list[
         raise ValueError(f'"{o}" isn\'t an object\'s name.')
       o = found
     ret.append(o)
+  return ret
+
+def _parentsOf(parent:Any, kind:type, model:Model|None) -> list[Any]:
+  '''
+  :param parent: The parent or parents of a new object, as decoded from the
+    command line: any that wouldn't decode are still the strs typed.
+  :type parent: Any
+  :param kind: What each parent must be (*Node* or *Relation*).
+  :type kind: type
+  :param model: The model to look names up in.
+  :type model: Model | None
+  :returns: The parents.
+  :rtype: list[Any]
+  :raises ValueError: If a parent isn't an object of type *kind*.
+  '''
+  ret:list[Any] = []
+  for p in parent if isinstance(parent, list) else [parent]:
+    if isinstance(p, str):
+      try: # (parents are types: an individual relation has its type's name too)
+        p = GORef.eval(p, model, filtr=lambda o: o.isType()) #type: ignore[call-overload, attr-defined]
+      except (KeyError, ValueError):
+        raise ValueError(f'There\'s no object "{p}" to be the parent.') from None
+      except Exception as ex: # eg: the name is ambiguous
+        raise ValueError(f'"{p}" can\'t be the parent: {ex}') from None
+    if not isinstance(p, kind):
+      raise ValueError(f'The parent must be a {kind.__name__.lower()}: "{getattr(p, "name", p)}" is a {p.__class__.__name__.lower()}.')
+    ret.append(p)
+  if len(ret) == 0:
+    raise ValueError("There must be at least one parent.")
   return ret
 
 def _describe(clip:copying.Clip) -> str:
@@ -170,7 +253,7 @@ class ModelContext(CommandContext):
     }
   
   commandHelp:dict[str,str] = CommandContext.commandHelp | {
-    "new": "Create a new graphic object in the default model or another model",
+    "new": "Make a new node, relation or model.",
     "set": "Sets the values of or creates various entities like object attributes.",
     "get": "Returns the values of various entities like object attributes.",
     }
@@ -180,7 +263,7 @@ class ModelContext(CommandContext):
     :param model:
     :type model: Model
     '''
-    super().__init__(TopCommandParser("sn", defaults=ConvertingDict(self)))
+    super().__init__(TopCommandParser("sn", defaults=ConvertingDict(self), description=HELP_DESCRIPTION))
     assert isinstance(self.parser, TopCommandParser)
     self.defaults["model"] = model
     
@@ -852,12 +935,10 @@ class ModelContext(CommandContext):
                         Create an instance of person, "fred", assuming object
                         "fred does not already exist. If "fred" doesn exist,
                         then only the IsaInstance is created.
-      - assert transitive sibling --type -> Relation("sibling", #23, <type>, #? -> #?)
-                        {and IsaInstance("isa", #24, <individual>, #23 -> #?)}
-                        Create a relation type "sibling" inheriting from "transitive".
-      - assert symmetric sibling     -> Relation("sibling", #23, <type>, #? -> #?) (same one) 
-                        {and IsaInstance("isa", #25, <individual>, #23 -> #?)}
-                        Create only the IsaInstance since "sibling" already exists.
+      - assert relation sibling --type -> Relation("sibling", #23, <type>, #1 -> #1)
+                        {and IsaInstance("isa", #24, <individual>, #23 -> #2)}
+                        Create a relation type "sibling". (To make it symmetric,
+                        "set attribute sibling symmetric yes".)
       - assert person sibling person -> Relation("sibling", #23, <type>, #19 -> #?19) (same one)
                         Since "sibling" exists and person is a type, modify the src and dst
                         both to be "person".
@@ -1093,11 +1174,7 @@ class ModelContext(CommandContext):
       # param checking...
       assert model is not None, "There is no Model specified."
       assert not (type and individual), "An GraphObject cannot be both an individual and a type."
-      parents:list[GraphObject] = [parent] if not isinstance(parent, list) else parent
-      self.parents:list[Node] = []
-      for p in parents:
-        assert isinstance(p, Node)
-        self.parents.append(p)
+      self.parents:list[Node] = _parentsOf(parent, Node, model)
         
       super().__init__("new node")
       _refuseInferred("make an instance or subtype of", *self.parents)
@@ -1614,12 +1691,8 @@ class ModelContext(CommandContext):
       # param checking...
       assert model is not None, "There is no Model specified."
       assert not (type and individual), "An GraphObject cannot be both an individual and a type."
-      parents:list[GraphObject] = [parent] if not isinstance(parent, list) else parent
-      self.parents:list[Relation] = []
-      for p in parents:
-        assert isinstance(p, Relation), f'Expected Relation, got type {p.__class__.__name__}.'
-        self.parents.append(p)
-      if len(self.parents) > 1 and self.model.ISA in self.parents:
+      self.parents:list[Relation] = _parentsOf(parent, Relation, model)
+      if len(self.parents) > 1 and model.ISA in self.parents:
         raise TypeError("Multiple parents cannot include the ISA relation.")
       if self.parents == [model.ISA] and source is not None and (problem := source.parentProblem(destination)) is not None:
         raise ValueError(problem)

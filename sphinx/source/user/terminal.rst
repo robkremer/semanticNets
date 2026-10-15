@@ -18,8 +18,8 @@ window changed, whatever has happened since in the other.
 Commands
 --------
 
-A command is a few words, then its arguments (eg: ``assert person fred``).
-Arguments that are options start with ``--`` (eg: ``--type``). Typing
+A command is a few words, then its arguments (eg: ``new node person --name
+fred``). Arguments that are options start with ``--`` (eg: ``--name``). Typing
 ``help`` lists the commands; adding ``-h`` to a command (eg: ``new node -h``)
 describes it and its arguments.
 
