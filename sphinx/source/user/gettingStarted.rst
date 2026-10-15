@@ -69,8 +69,9 @@ From the source
     The graphical editor, as above: a window on each file named, or else as
     when the app starts.
 
-  ``./sn [file]``
-    The terminal (text) interface only. See :doc:`terminal`.
+  ``./sn [-m file]``
+    The terminal (text) interface only, on the model *file* (by default, the
+    one it used last). See :doc:`terminal`.
 
 The window
 ----------
@@ -89,7 +90,7 @@ Each window shows one view of one model. It has two parts:
 Most things are done from the right-click menus: on an object for things to
 do with it, and on the background for everything else. The background menu
 has three submenus -- **model** (making objects, validating), **view** (what's
-shown and how it's arranged) and **reasoning** -- and **Zoom**.
+shown, zooming, and how it's arranged) and **reasoning**.
 
 The menu bar has:
 
@@ -101,7 +102,8 @@ The menu bar has:
   :doc:`files`), and **Close model** (its model, and all the windows on it).
 - **Edit**: **Model preferences...** (the window's model's own settings, eg:
   its super-models) and **Replace super-model...** (see :doc:`files`).
-- **View**: **Animation toolbar** (see :doc:`animation`).
+- **View**: **Animation toolbar** (see :doc:`animation`) and **Reasoning
+  toolbar** (see :doc:`reasoning`).
 - **Window**: **Model Directory** (see :doc:`files`), and the open windows.
 - **Help**.
 
@@ -124,6 +126,9 @@ A first network
    right-click the background: **reasoning | reason**). The report appears in
    the terminal pane, and what the reasoner inferred is shown on the canvas,
    faded, with dashed lines.
+
+For more -- arranging it as a tree as it grows, and letting the reasoner
+work out what follows -- see :doc:`tutorial`.
 
 Undo and redo are **Cmd-Z** and **Shift-Cmd-Z**; nearly everything can be
 undone, including moves, layouts and edits. Each window has its own undo

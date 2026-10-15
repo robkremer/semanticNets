@@ -3,12 +3,14 @@ Animation Layout
 ================
 
 The **animation layout** arranges a view for you, and you watch it happen.
+(For layouts that arrange a view at once, or keep it arranged as it
+changes, see :doc:`layouts`.)
 It treats the drawing as a physical system: objects push one another apart,
 like charged particles, and relations pull the objects they connect together,
 like elastic bands. The objects move a little at a time until things settle
 down, and then it stops by itself.
 
-Start it from **view | animation layout | start** on the background menu, or
+Start it from **view | layout | animate | start** on the background menu, or
 with the play button on the animation toolbar. Start it again (or press the
 button) to stop it early. A whole run is a single command: **Cmd-Z** puts
 everything back where it was.
@@ -81,7 +83,7 @@ Reset           put the sliders back to their defaults
 ==============  ==========================================================
 
 Changes take effect immediately, even while it runs. The current's settings
-are also on the **view | animation layout** menu (**current direction**,
+are also on the **view | layout | animate** menu (**current direction**,
 **current strength**, **current follows**). They're saved with the view, as
 is **place labels**.
 

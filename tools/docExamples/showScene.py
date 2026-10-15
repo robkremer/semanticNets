@@ -22,6 +22,19 @@ screenshots taken of them:
   animals      the taxonomy laid out with an isa current, and the animation
                toolbar: animation-class-diagram.png (the toolbar and the
                diagram)
+  tree, balloon, radial
+               the taxonomy arranged by that layout (by isa):
+               layout-tree.png, layout-balloon.png, layout-radial.png (what's
+               drawn)
+  hubs         the XMLreader's books.xml arranged round hubs:
+               layout-hubs.png (what's drawn)
+  xmlreader    the XMLreader's books.xml, as it comes: xmlreader-books.png
+               (what's drawn)
+  pythonparser the pythonParser's model of the XMLreader's own code (no
+               imports followed): pythonparser-xmlreader.png (what's drawn)
+  familytree   the User Guide's worked example: a family tree by has-parent
+               (a subtype of the transitive has-ancestor), kept arranged,
+               after reasoning: tutorial-family-tree.png (what's drawn)
 
 With --capture, it takes the scene's screenshots itself (see *CAPTURES*),
 into the given folder (eg: sphinx/source/images/user), and quits:
@@ -43,7 +56,10 @@ from the background.
 import os, sys, tempfile, subprocess
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-SCENES = ("overview", "query", "collapsed", "attributes", "animals", "requirement")
+SCENES = ("overview", "query", "collapsed", "attributes", "animals", "requirement",
+          "tree", "balloon", "radial", "hubs", "xmlreader", "pythonparser", "familytree")
+LAYOUT_SCENES = ("tree", "balloon", "radial", "hubs")
+"The scenes that arrange a view with a static layout (see *arrange()*)."
 TITLE_BAR = 28
 "The height (points) of a macOS window's title bar, above the window's content."
 CAPTURES:dict[str, list[tuple[str, str, float]]] = {
@@ -51,14 +67,23 @@ CAPTURES:dict[str, list[tuple[str, str, float]]] = {
   "query":    [("query-answer.png", "left", 1.0)],
   "animals":  [("animation-class-diagram.png", "diagram", 1.0)],
   "requirement": [("requirement-window.png", "context:siblings have parents", 1.0)],
+  "tree":     [("layout-tree.png", "drawing", 0.5)],
+  "balloon":  [("layout-balloon.png", "drawing", 0.5)],
+  "radial":   [("layout-radial.png", "drawing", 0.5)],
+  "hubs":     [("layout-hubs.png", "drawing", 0.5)],
+  "xmlreader": [("xmlreader-books.png", "drawing", 0.5)],
+  "pythonparser": [("pythonparser-xmlreader.png", "drawing", 0.5)],
+  "familytree": [("tutorial-family-tree.png", "drawing", 0.5)],
 }
 """
 Each scene's screenshots, for --capture: (file name, what's in it, scale --
 of the screen's pixels: 0.5 halves a Retina screen's). What's in it:
 "window" is the whole window, title bar and all; "left" its left part, from
 the canvas to the terminal pane (without the reasoning toolbar below); and
-"diagram" the animation toolbar and the canvas below it; and "context:<name>" the
-context window of that name (and a few points around it).
+"diagram" the animation toolbar and the canvas below it; "drawing" what's
+drawn on the canvas (as much as is in the window, and a little around it);
+and "context:<name>" the context window of that name (and a few points
+around it).
 """
 CAPTURE_DELAY = 4000
 "How long (ms) to let a scene settle (eg: reasoning, answering) before it's captured."
@@ -86,6 +111,16 @@ def region(win, what:str) -> tuple[int, int, int, int]:
     if drawn:
       bottom = min(bottom, c.winfo_rooty() + int(drawn[3] - c.canvasy(0)) + 30)
     return x, bar.winfo_rooty(), w, bottom - bar.winfo_rooty()
+  if what == "drawing":
+    c = win.view.canvas
+    drawn = c.bbox("all")
+    pad = 12
+    left, top = c.winfo_rootx(), c.winfo_rooty()
+    x1 = max(left, left + int(drawn[0] - c.canvasx(0)) - pad)
+    y1 = max(top, top + int(drawn[1] - c.canvasy(0)) - pad)
+    x2 = min(left + c.winfo_width(), left + int(drawn[2] - c.canvasx(0)) + pad)
+    y2 = min(top + c.winfo_height(), top + int(drawn[3] - c.canvasy(0)) + pad)
+    return x1, y1, x2 - x1, y2 - y1
   if what.startswith("context:"):
     c = win.view.canvas
     [o] = [o for o in win.view.values() if o is not None and o.modelObject is not None and o.modelObject.name == what[len("context:"):]]
@@ -139,15 +174,74 @@ def main() -> None:
   sn.snPrefs["loggingLevel"] = "WARNING" # (so the terminal pane shows the program's output, not its INFO log)
   from sn.view.graphics.guiApp import Application
   app = Application()
-  name = "animals.snv" if scene == "animals" else "family.snv"
+  name = "animals.snv" if scene in ("animals", "tree", "balloon", "radial") else "family.snv"
 
   def vo(v, name:str, n:int=0):
     return sorted([o for o in v.values() if o is not None and o.modelObject is not None and o.modelObject.name == name],
                   key=lambda o: o.modelObject._id)[n]
 
+  def openWindow():
+    """
+    :returns: The scene's window: on the examples -- or, for the example
+      apps' scenes, on what they make of their own examples (copied here).
+    """
+    if scene in ("hubs", "xmlreader"): # (the model as the XMLreader makes it; arranged below)
+      import shutil
+      from sn.exampleApps.XMLreader import __main__ as xmlReader
+      from sn.exampleApps.XMLreader.reader import buildModel, outputPaths
+      xml = shutil.copy(os.path.join(ROOT, "src", "sn", "exampleApps", "XMLreader", "examples", "books.xml"), folder)
+      modelPath = outputPaths(xml)[0]
+      model = buildModel(xml, modelPath)
+      model.save()
+      win = app.openWindow(modelPath)
+      win.view.context.visibility("system objects", "hide")
+      xmlReader.showTypesAndExpand(win.view, model)
+      return win
+    if scene == "pythonparser": # (the XMLreader's code, its imports not followed)
+      import shutil
+      from sn.exampleApps.pythonParser.__main__ import Options, convert
+      code = os.path.join(folder, "XMLreader")
+      shutil.copytree(os.path.join(ROOT, "src", "sn", "exampleApps", "XMLreader"), code,
+                      ignore=shutil.ignore_patterns("examples", "__pycache__", "*.log"))
+      before = set(app.windows)
+      convert(app, [code], Options(depth=0))
+      [url] = set(app.windows) - before
+      return app.windows[url]
+    if scene == "familytree": # (as the worked example makes it: see sphinx/source/user/tutorial.rst)
+      from sn.model.model import Model, Node, Relation
+      m = Model(os.path.join(folder, "tree.snm"))
+      assert m.url.startswith("file://" + folder), m.url
+      person = Node(m, [m.NODE], name="person")
+      hasAncestor = Relation(m, [m.RELATION], name="has-ancestor")
+      hasAncestor["transitive"] = True
+      hasParent = Relation(m, [hasAncestor], name="has-parent")
+      p = {n: Node(m, [person], individual=True, name=n) for n in ("alice", "bob", "carol", "dave", "erin")}
+      for child, parent in (("carol", "alice"), ("dave", "carol"), ("alice", "bob"), ("erin", "alice")):
+        Relation(m, [hasParent], p[child], p[parent], individual=True)
+      m.save()
+      win = app.openWindow(os.path.join(folder, "tree.snm"))
+      win.view.context.view.showAllModel()
+      return win
+    return app.openWindow(os.path.join(folder, name))
+
+  def arrange(v) -> None:
+    "Arrange *v* with the scene's layout, at once (see *LAYOUT_SCENES*)."
+    from sn.view.graphics.treeLayout import TreeLayout
+    from sn.view.graphics.balloonLayout import BalloonLayout, RadialLayout, HubLayout
+    if scene == "tree":
+      TreeLayout(v, relation="isa", direction="down").arrange(animate=False)
+    elif scene == "balloon":
+      BalloonLayout(v, relation="isa").arrange(animate=False)
+    elif scene == "radial":
+      RadialLayout(v, relation="isa").arrange(animate=False)
+    elif scene == "hubs":
+      HubLayout(v).arrange(animate=False)
+
   def setUp() -> None:
-    win = app.openWindow(os.path.join(folder, name))
+    win = openWindow()
     v = win.view
+    if scene in (*LAYOUT_SCENES, "xmlreader", "pythonparser", "familytree"): # (room for all of it)
+      win.geometry("1500x1000+40+40")
     def roomForToolbar() -> None: # (the window grows by the reasoning toolbar's height: the canvas is as big as it was)
       bar = v.__dict__.get("_reasoningToolbar")
       if bar is None or not bar.winfo_ismapped(): # (not yet: the window's still being made)
@@ -166,8 +260,30 @@ def main() -> None:
       v.context.collapse(vo(v, "uncle rule"), True)
     elif scene == "attributes":
       app.after(500, lambda: vo(v, "?b", 1).onEditAttributes()) # (the definiens' ?b: its constraints, and its inherited look)
+    elif scene in LAYOUT_SCENES:
+      app.after(1000, lambda: arrange(v))
+    elif scene == "familytree": # (kept arranged as a tree, then reasoned over)
+      from sn.view.graphics.treeLayout import TreeLayout
+      def keep() -> None:
+        v.context.visibility("system objects", "hide")
+        v.context.visibility("isa individuals", "hide")
+        v.doErase([vo(v, "has-ancestor"), vo(v, "has-parent")]) # (the relation types: their labels float between their ends, which are the same)
+        v.setDynamicLayout(TreeLayout(v, relation="has-parent", parentEnd="destination", direction="down", spacing=60, others="rows"))
+      app.after(1000, keep)
+      app.after(2000, lambda: (toTerminal(), v.reason()))
+      app.after(3500, v.zoomToFit) # (it's taller than the window)
+    settled = [scene != "xmlreader"]
+    if scene == "xmlreader": # (as the XMLreader does: the animation layout, until it settles)
+      from sn.exampleApps.XMLreader import __main__ as xmlReader
+      app.after(1000, lambda: xmlReader.startLayout(v, lambda: (xmlReader.separateNodes(v), settled.__setitem__(0, True))))
     if into is not None:
       def shoot() -> None:
+        if not settled[0]:
+          app.after(500, shoot)
+          return
+        if scene != "familytree": # (zoomed to fit: it's scrolled to suit)
+          v.canvas.xview_moveto(0); v.canvas.yview_moveto(0)
+        win.update()
         capture(win, scene, into)
         os._exit(0)
       app.after(CAPTURE_DELAY, shoot)

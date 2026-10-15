@@ -61,6 +61,9 @@ property            means
 **transitive**      *a -R-> b* and *b -R-> c* imply *a -R-> c* (eg: *ancestor*)
 ==================  ===================================================
 
+To tag a relation type, give it an attribute of that name (in the attribute
+editor, **Add New Attribute**; at the terminal, eg: ``set attribute
+has-sibling symmetric yes``): it's there or it isn't, whatever its value.
 These tags belong to the relation type they're set on, and are *not*
 inherited: *has-brother* isa *has-sibling*, but only *has-sibling* need be
 symmetric.

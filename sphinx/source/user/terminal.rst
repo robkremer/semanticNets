@@ -4,7 +4,7 @@ The Terminal
 
 Everything in *Semantic Nets* can also be done by typing commands: in the
 terminal pane at the bottom of each window, or in a terminal of its own
-(``./sn``). In a window, the commands work on that window's model and view,
+(``./sn``, from the source: ``./sn -m pets.snm`` works on *pets.snm*). In a window, the commands work on that window's model and view,
 and what they change is drawn at once -- the canvas and the terminal are two
 ways of doing the same things, and share one undo history.
 
@@ -18,7 +18,7 @@ window changed, whatever has happened since in the other.
 Commands
 --------
 
-A command is a few words, then its arguments (eg: ``new node person``).
+A command is a few words, then its arguments (eg: ``assert person fred``).
 Arguments that are options start with ``--`` (eg: ``--type``). Typing
 ``help`` lists the commands; adding ``-h`` to a command (eg: ``new node -h``)
 describes it and its arguments.
@@ -91,3 +91,6 @@ Saving and leaving:
 ``save``               save the model (``--url`` to save it elsewhere)
 ``exit``               leave the program (in ``./sn``)
 =====================  =======================================================
+
+For a terminal session from start to finish -- making a small model, asking
+about it, and reasoning over it -- see :doc:`tutorial`.

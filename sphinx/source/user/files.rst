@@ -8,7 +8,8 @@ Models and views
 A **model** (``.snm``) holds the network itself: its objects, their
 attributes and relations, and its rules, definitions and queries. A **view**
 (``.snv``) holds one way of looking at a model: which objects are shown,
-where, how big, what's hidden, and the animation layout's settings. A view
+where, how big, what's hidden, its zoom and scroll position, the layout that
+keeps it arranged, and the layouts' settings (see :doc:`layouts`). A view
 refers to its model, and a model to the models it builds on (always including
 the system model, *sn*), so opening a view opens its model, and the model
 opens the models it uses.
@@ -176,6 +177,16 @@ setting                                          controls
 ``gui/showRemoteTags``,
 ``gui/showConstraintMarker``
 ``gui/shadowTypes``                              whether types are drawn with a shadow
+``gui/tooltip``                                  the default tooltip template (see
+                                                 :doc:`viewing`)
+``gui/tooltipMaxLines``                          the most lines a tooltip shows (40; 0 for
+                                                 no limit)
+``gui/editorCommand``                            the command that opens a file at a line in
+                                                 your editor (eg: a function's source, from
+                                                 the pythonParser: see :doc:`exampleApps`)
+``hooks/trustedModules``                         the programs (Python modules) besides
+                                                 *Semantic Nets* itself whose functions
+                                                 models may call (see :doc:`exampleApps`)
 ``gui/recentFiles``                              how many views **File | Open Recent** lists
 ``gui/directoryPath``                            the folders the model directory searches
 ``model/urlAliases``                             where models have moved (``old -> new``)

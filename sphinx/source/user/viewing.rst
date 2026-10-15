@@ -8,8 +8,14 @@ it's arranged. Nothing here changes the model.
 What's shown
 ------------
 
-- **view | show all** brings every object of the model into the view.
-- **view | show node** lists the model's objects that aren't in the view:
+- **view | show | all** brings every object of the model into the view.
+- **view | show | relations...** asks which relation types to show (each
+  includes its subtypes): their relations between the nodes in the view
+  are brought in -- and, if you tick it, the nodes at their other ends.
+- **view | show | nodes...** asks which node types to show: their
+  individuals (and their subtypes') are brought in, with -- unless you
+  untick it -- their relations to what's shown, and to each other.
+- **view | show | node** lists the model's objects that aren't in the view:
   choose one to bring it in.
 - **expand all** (on an object's menu; it says how many relations the object
   has) brings in everything related to it, 1 to 4 levels out.
@@ -22,7 +28,16 @@ What's shown
   hidden or erased category (eg: isa links) are listed too, greyed and
   marked *hidden*: ticked, they -- and what they lead to -- are shown anyway
   (undo hides them again). "All" leaves them hidden.
-- **erase from view** (on an object's menu) takes it out of the view.
+- **erase from view** (on an object's menu, or the **Delete** key) takes it
+  out of the view.
+- **erase everything else** (on an object's menu) takes everything *but* it
+  -- or, if it's selected, but the selection -- out of the view: eg: to look
+  at one corner of a big model, then **expand** from there. (It keeps what
+  they need, too: the relations between them, the ends of their relations,
+  and the windows they're in.)
+
+All of these are one command each: **Cmd-Z** takes back what they brought in,
+or puts back what they erased.
 
 Hiding and erasing by category
 ------------------------------
@@ -46,6 +61,11 @@ constraints                 constraints
 inferred objects            what the reasoner inferred (see :doc:`reasoning`)
 ==========================  ====================================================
 
+Each menu also has **relation types...**, which asks which relation types to
+hide (or erase): their relations, and their subtypes', are hidden like a
+category -- eg: *has-sibling*, to see a family tree's lines of descent by
+themselves.
+
 Checking a category in the **hide** menu stops drawing those objects (they
 stay in the view, with their positions); in the **erase** menu, takes them
 out of the view. Unchecking it shows them again. Relations to or from hidden
@@ -63,15 +83,30 @@ Arranging
 ---------
 
 - **Drag** objects to where you want them (see :doc:`editing`).
-- **view | animation layout** (or the **animation toolbar**): let the
-  program arrange things. See :doc:`animation`.
-- **view | gather nodes** pulls objects that have strayed far from the rest
-  back toward them.
+- **view | layout**: let the program arrange things, once or as the view
+  changes -- as trees, balloons, round hubs, or with the animation layout.
+  See :doc:`layouts` and :doc:`animation`.
 - **view | float all relations** puts every relation's label back midway
   between its ends.
-- **view | Zoom**: zoom in and out, or to a fixed size. The canvas scrolls
-  with the scroll wheel (**Shift** for sideways); **view | reset scroll
-  region** fits the scrollable area to the drawing.
+
+Zooming and scrolling
+---------------------
+
+**view | Zoom** (or the keys) zooms about the middle of the window:
+
+==============  ======================================
+key             zooms
+==============  ======================================
+**Cmd-+**       in
+**Cmd--**       out
+**Cmd-0**       to normal size
+**Cmd-9**       to fit: everything shown, in the window
+==============  ======================================
+
+The menu also has fixed sizes (eg: 50%). The canvas scrolls with the
+scroll wheel or trackpad (**Shift** for sideways); **view | reset scroll
+region** fits the scrollable area to the drawing. A view saves its zoom and
+where it was scrolled to.
 
 Markers
 -------
