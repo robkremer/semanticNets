@@ -901,6 +901,35 @@ class ViewDoList(DoList):
     '''
     super().__init__()
     self.view:SNGView = view
+    self._adjustingAgain = False
+
+  def adjustAgain(self) -> None:
+    '''
+    Once the view objects the last command made are drawn (they're made
+    after it's done, when the model says what it made: see
+    *SNGView._placeNew()*), let the view's dynamic layout adjust again (see
+    *layout.LayoutHeuristic.adjust()*) -- as part of the same undo entry.
+    Called for each new object: it adjusts once, when they all are.
+    '''
+    if self._adjustingAgain or not self.view.canvas:
+      return
+    self._adjustingAgain = True
+    def again() -> None:
+      self._adjustingAgain = False
+      layout = self.view.localLayout
+      if layout is None or not 0 <= self.index < len(self.queue):
+        return
+      c = self.queue[self.index]
+      if getattr(c, "isLayout", False):
+        return
+      try:
+        adjustment = layout.adjust(c)
+        if adjustment is not None and not adjustment.isEmpty():
+          adjustment.do()
+          self.queue[self.index] = _Adjusted(c, adjustment)
+      except Exception:
+        logger.exception(f'the view\'s dynamic layout ("{layout.NAME}") couldn\'t adjust it')
+    self.view.canvas.after_idle(again)
 
   @override
   def do(self, c:Command) -> Any:
@@ -2134,7 +2163,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   def _placeNew(self, vo:VObject, under:VObject|None) -> None:
     '''
     Move a newly made view object to the nearest free place (see *FindFree*):
-    below *under* (its supertype), if that's given.
+    below *under* (its supertype), if that's given -- or wherever the view's
+    dynamic layout puts it -- and then let that layout adjust the rest (see
+    *ViewDoList.adjustAgain()*).
 
     :param vo:
     :type vo: VObject
@@ -2153,6 +2184,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     cx, cy = vo.centerPt()
     within = seen if c.winfo_width() > 1 and seen[0] <= cx <= seen[2] and seen[1] <= cy <= seen[3] else None # (on screen: kept there)
     self.localLayout(vo, referenceNode=under, direction=Direction.SUB if under is not None else Direction.NEAREST, within=within)
+    if isinstance(self.context.doList, ViewDoList): # (the layout keeps it arranged with the rest, now it's here)
+      self.context.doList.adjustAgain()
 
   # ---- Cut, copy and paste ---------------------------------------------------
 
