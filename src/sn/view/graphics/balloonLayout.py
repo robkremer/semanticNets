@@ -1,5 +1,5 @@
 '''
-Round layouts (static: "arrange now"): a view's nodes arranged in circles.
+Round layouts ("arrange now", and "keep arranged"): a view's nodes arranged in circles.
 
   - *BalloonLayout* ("balloon"): trees, by a relation type, as balloons: each
     node's children in a ring around it, each child's subtree a balloon of its
@@ -19,6 +19,10 @@ as its box's diagonal (so nothing overlaps, however it's turned). A node's
 children's subtrees go round it each in its own wedge: the angle its nodes'
 circles take up, seen from the node -- so none overlap, nor do the relations
 from parents to children cross.
+
+Kept arranged (see *_RoundLayout*), each group's laid out again after each
+command, where it is (*groupOffset()*), and moved off any other
+(*separateGroups()*).
 
 Created on Oct 14, 2026
 
@@ -48,11 +52,14 @@ Created on Oct 14, 2026
 from __future__ import annotations
 import math
 from collections import deque
-from typing import Any, Callable, Generic, Hashable, Mapping, Optional, Sequence, TypeVar, override
+from typing import Any, Callable, Collection, Generic, Hashable, Mapping, Optional, Sequence, TypeVar, override
+from util.command import Command
+from util.utils import Point
 from sn.view.graphics.vnodes import VNode
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
-from sn.view.graphics.layout import LayoutHeuristic, LayoutParameter, registerLayout, layoutSize, STATIC
+from sn.view.graphics.layout import (LayoutHeuristic, LayoutParameter, LayoutMoves, FindFree, Direction,
+                                     registerLayout, layoutSize, STATIC, DYNAMIC)
 from sn.view.graphics.treeLayout import TreeLayout, PARENT_ENDS, NEAR_BIAS, _BoxIndex, nearestFree
 
 K = TypeVar("K", bound=Hashable)
@@ -366,8 +373,8 @@ def radialPositions(roots:list[K], children:Mapping[K, Sequence[K]], sizes:Mappi
     trees.append((root, order, max(rho[depth[n]] + radius(sizes[n]) for n in order)))
   return ret, trees
 
-def hubForest(nodes:Sequence[K], neighbours:Mapping[K, Sequence[K]],
-              minSpokes:int=3) -> tuple[list[tuple[list[K], dict[K, list[K]]]], list[K]]:
+def hubForest(nodes:Sequence[K], neighbours:Mapping[K, Sequence[K]], minSpokes:int=3,
+              pinned:Collection[K]=()) -> tuple[list[tuple[list[K], dict[K, list[K]]]], list[K]]:
   '''
   Find the hubs of a graph, and their spokes: in each connected group of
   nodes, the hubs are those with at least *minSpokes* neighbours (or, if
@@ -375,6 +382,9 @@ def hubForest(nodes:Sequence[K], neighbours:Mapping[K, Sequence[K]],
   spoke of the hub nearest it (the first of those as near), under the node
   next nearer it. The hubs are in order round a ring: each after the one
   most related to the one before (the relations between their spokes too).
+  A *pinned* node (eg: one the user's put somewhere) that's a spoke, or one
+  of a ring's hubs, is cut out of its group (with the spokes under it) as
+  the only hub of a group of its own.
 
   :param nodes: The nodes, in order.
   :type nodes: Sequence[K]
@@ -382,9 +392,12 @@ def hubForest(nodes:Sequence[K], neighbours:Mapping[K, Sequence[K]],
   :type neighbours: Mapping[K, Sequence[K]]
   :param minSpokes: The least neighbours a hub has.
   :type minSpokes: int
+  :param pinned: The nodes cut out of their groups.
+  :type pinned: Collection[K]
   :returns: Each connected group of more than one node (in the order of
-    *nodes*): its hubs, in order round its ring, and each node's children
-    (the hubs the roots); and the nodes related to nothing.
+    *nodes*; one cut out right after the group it's cut from): its hubs, in
+    order round its ring, and each node's children (the hubs the roots); and
+    the nodes related to nothing.
   :rtype: tuple[list[tuple[list[K], dict[K, list[K]]]], list[K]]
   '''
   index = {n: i for i, n in enumerate(nodes)}
@@ -438,6 +451,17 @@ def hubForest(nodes:Sequence[K], neighbours:Mapping[K, Sequence[K]],
       ring.append(nxt)
       rest.remove(nxt)
     groups.append((ring, kids))
+    for p in comp: # (in the order met: a pinned node under another goes with neither)
+      if p not in pinned:
+        continue
+      if p in ring:
+        if len(ring) == 1:
+          continue # (it's on its own already)
+        ring.remove(p)
+      else:
+        parent = next(n for n in comp if p in kids[n])
+        kids[parent].remove(p)
+      groups.append(([p], kids)) # (the same children: each group's only its hubs' subtrees)
   return groups, isolated
 
 def hubPositions(hubs:list[K], children:Mapping[K, Sequence[K]], sizes:Mapping[K, tuple[float, float]], *,
@@ -556,18 +580,314 @@ def placeNearGroups(items:list[K], sizes:Mapping[K, tuple[float, float]], relate
     pending = [n for n in pending if n not in done]
   return pending
 
+def topLefts(centres:Mapping[K, tuple[float, float]], sizes:Mapping[K, tuple[float, float]]) -> dict[K, tuple[float, float]]:
+  ":returns: Where each node's top left is, from its centre: on whole units."
+  return {n: (float(round(x - sizes[n][0] / 2)), float(round(y - sizes[n][1] / 2))) for n, (x, y) in centres.items()}
+
+def groupOffset(group:Mapping[K, tuple[float, float]], refs:Sequence[K], known:Mapping[K, tuple[float, float]],
+                current:Mapping[K, tuple[float, float]]) -> tuple[float, float]|None:
+  '''
+  Where a group laid out on its own (eg: a tree, from its root) goes, to stay
+  where it is: so its *refs* (eg: its root, or its hubs) are -- on average --
+  where they are now (in *known*); or, if none of them is known, so its
+  nodes that are known are; or else its *refs*, or nodes, where they are
+  (*current*: eg: just made).
+
+  :param group: Where its nodes go (their top left), on its own.
+  :type group: Mapping[K, tuple[float, float]]
+  :param refs: Which of them it's anchored by.
+  :type refs: Sequence[K]
+  :param known: Where the nodes it knows are (their top left).
+  :type known: Mapping[K, tuple[float, float]]
+  :param current: Where all the nodes are (their top left).
+  :type current: Mapping[K, tuple[float, float]]
+  :returns: How far to move it (on whole units: so, if *group*'s on whole
+    units, and as it was, it doesn't move); or None if none of its nodes is anywhere.
+  :rtype: tuple[float, float] | None
+  '''
+  for where, among in ((known, refs), (known, group), (current, refs), (current, group)):
+    ns = [n for n in among if n in where and n in group]
+    if ns:
+      return (float(round(sum(where[n][0] - group[n][0] for n in ns) / len(ns))),
+              float(round(sum(where[n][1] - group[n][1] for n in ns) / len(ns))))
+  return None
+
+def separateGroups(groups:Sequence[Mapping[K, tuple[float, float]]], offsets:Sequence[tuple[float, float]],
+                   sizes:Mapping[K, tuple[float, float]], *, gap:float=20.0) -> list[tuple[float, float]]:
+  '''
+  Move groups (eg: trees, each where it's anchored: see *groupOffset()*) so
+  no node of one is on (or within *gap* of) a node of one before it: each, in
+  order, the least distance it needs to (straight across, or up or down), or,
+  if that won't do, below the rest. Node by node, not by the groups' boxes,
+  so a group may be in a gap in another.
+
+  :param groups: Where each group's nodes go (their top left), on its own.
+  :type groups: Sequence[Mapping[K, tuple[float, float]]]
+  :param offsets: How far each is moved, to start with.
+  :type offsets: Sequence[tuple[float, float]]
+  :param sizes: Each node's (width, height).
+  :type sizes: Mapping[K, tuple[float, float]]
+  :param gap: The least space between groups.
+  :type gap: float
+  :returns: How far each is moved (on whole units, if *offsets* are).
+  :rtype: list[tuple[float, float]]
+  '''
+  index = _BoxIndex()
+  placed:list[list[float]] = []
+  ret:list[tuple[float, float]] = []
+  for g, (dx, dy) in zip(groups, offsets):
+    boxes = [[x + dx, y + dy, x + dx + sizes[n][0], y + dy + sizes[n][1]] for n, (x, y) in g.items()]
+    sx, sy = _nearestClear(boxes, index, placed, gap) if boxes else (0.0, 0.0)
+    ret.append((dx + sx, dy + sy))
+    for b in boxes:
+      b = [b[0] + sx, b[1] + sy, b[2] + sx, b[3] + sy]
+      index.add(b)
+      placed.append(b)
+  return ret
+
+def _nearestClear(boxes:list[list[float]], index:_BoxIndex, placed:list[list[float]], gap:float) -> tuple[float, float]:
+  ":returns: The least move (see *separateGroups()*) that puts none of *boxes* on (or within *gap* of) one in *index*."
+  def clearBy(sx:float, sy:float) -> bool:
+    return not any(index.hits([b[0] + sx, b[1] + sy, b[2] + sx, b[3] + sy], gap) for b in boxes)
+  if clearBy(0.0, 0.0):
+    return 0.0, 0.0
+  x0, y0 = min(b[0] for b in boxes), min(b[1] for b in boxes)
+  x1, y1 = max(b[2] for b in boxes), max(b[3] for b in boxes)
+  w, h = x1 - x0 + gap, y1 - y0 + gap
+  near = [p for p in placed if p[0] < x1 + w and x0 - w < p[2] and p[1] < y1 + h and y0 - h < p[3]]
+  candidates:set[tuple[float, float]] = set()
+  for b in boxes:
+    for p in near: # (just clear of it, each way)
+      candidates.update(((float(math.ceil(p[2] + gap - b[0])), 0.0), (float(math.floor(p[0] - gap - b[2])), 0.0),
+                         (0.0, float(math.ceil(p[3] + gap - b[1]))), (0.0, float(math.floor(p[1] - gap - b[3])))))
+  for sx, sy in sorted(candidates, key=lambda c: (math.hypot(*c), c)):
+    if clearBy(sx, sy):
+      return sx, sy
+  return 0.0, float(math.ceil(max(p[3] for p in placed) + gap - y0)) # (below everything)
+
+def _byName(vo:VObject) -> tuple[str, int]:
+  return (str(vo.modelObject.name).lower() if vo.modelObject is not None else "", vo._id)
+
+class _Laid:
+  '''
+  What a round layout arranges, laid out (see *_RoundLayout._lay()*): each
+  group on its own, and the nodes in none.
+  '''
+  def __init__(self, groups:list[dict[VNode, tuple[float, float]]], refs:list[list[VNode]],
+               edges:list[tuple[VNode, VNode, VRelation]], sizes:dict[VNode, tuple[float, float]],
+               rows:list[VNode], stay:list[VNode]):
+    self.groups = groups
+    "Where each group's nodes' centres go, on its own (those put near it too: see *placeNearGroups()*)."
+    self.refs = refs
+    "Which of each group's nodes it's anchored by, kept arranged (see *groupOffset()*): its root, or its hubs."
+    self.edges = edges
+    "(parent, child, relation): the relations from parents to children."
+    self.sizes = sizes
+    "Every node's (width, height)."
+    self.rows = rows
+    "The nodes in no group to put in rows after them."
+    self.stay = stay
+    "The nodes in no group left where they are."
+
 class _RoundLayout(LayoutHeuristic):
   '''
   What the round layouts share: putting their groups (trees, or hubs' groups)
   in rows, the nodes they don't arrange in rows after them (see *OTHERS*, *HUB_OTHERS*),
   and the labels of the relations from parents to children between them.
+
+  As a dynamic layout (see *adjust()*): after each command, each group is
+  laid out again where it is -- its root (or its hubs, on average) where it
+  is (see *groupOffset()*) -- and, if it would be on one before it (from the
+  top), moved to the nearest clear place (see *separateGroups()*). A node
+  the user drags (and drops) that isn't a group's root (or its only hub) is
+  pinned there, as the root (only hub) of a group of its own, with what's
+  under it, until the next static round layout; dropping a root moves its
+  group. The nodes in no group are put as by the static layout, each time --
+  except those the user drops somewhere, which are pinned there.
   '''
-  CATEGORIES = (STATIC,)
+  CATEGORIES = (STATIC, DYNAMIC)
+
+  def __init__(self, view, **kwargs):
+    super().__init__(view, **kwargs)
+    self.pins:set[int] = set()
+    "The ids (*VObject._id*) of the nodes the user has dropped, pinned as roots of their own (see *adjust()*)."
+    self.known:set[int]|None = None
+    "The ids of the nodes it laid out last time (None: all those there are): a new one doesn't anchor its group."
+    self._fallback = FindFree(view)
+    "What places what it doesn't arrange (see *placeNode()*)."
+    self._treeLayout:TreeLayout|None = None
 
   def _tree(self) -> TreeLayout:
     ":returns: A tree layout with its parameters: for what's arranged, and its trees."
-    kw = {k: v for k, v in self.params.items() if k in ("relation", "parentEnd", "spacing")}
-    return TreeLayout(self.view, **kw)
+    if self._treeLayout is None:
+      kw = {k: v for k, v in self.params.items() if k in ("relation", "parentEnd", "spacing")}
+      self._treeLayout = TreeLayout(self.view, **kw)
+    return self._treeLayout
+
+  def _lay(self, dynamic:bool) -> _Laid:
+    '''
+    :param dynamic: Whether it's for keeping things arranged: the pinned
+      nodes roots of their own (see *pins*).
+    :type dynamic: bool
+    :returns: What's arranged, each group laid out on its own.
+    :rtype: _Laid
+    '''
+    raise NotImplementedError
+
+  def _pinnable(self, drops:list[VNode]) -> set[int]:
+    ":returns: The ids of those of *drops* (dropped by the user) to pin: not the roots of their groups."
+    raise NotImplementedError
+
+  def _staysPut(self, node:VObject) -> bool:
+    ":returns: Whether *node* (just made) is put in place by *adjust()*: else it's put somewhere free (see *placeNode()*)."
+    raise NotImplementedError
+
+  def _withLabels(self, positions:dict[VNode, tuple[float, float]], sizes:dict[VNode, tuple[float, float]],
+                  edges:list[tuple[VNode, VNode, VRelation]]) -> dict[VObject, tuple[float, float]]:
+    ":returns: *positions*, and where the labels of the relations between them go (see *_labelTargets()*, *_otherLabels()*)."
+    ret:dict[VObject, tuple[float, float]] = {n: p for n, p in positions.items()}
+    ret.update(self._labelTargets(positions, sizes, edges))
+    ret.update(self._otherLabels(positions, sizes, edges))
+    return ret
+
+  @override
+  def targets(self) -> dict[VObject, tuple[float, float]]:
+    laid = self._lay(dynamic=False)
+    positions = self._arrangeGroups(self._tree(), laid.groups, laid.sizes, laid.rows + laid.stay)
+    return self._withLabels(positions, laid.sizes, laid.edges)
+
+  @override
+  def arranged(self, cmd:LayoutMoves) -> None:
+    '''
+    If the view's dynamic layout is a round layout, the static one starts it
+    afresh: its pins are let go (see *adjust()*), and what it knows is what
+    this arranges. (Undone with *cmd*.)
+    '''
+    dyn = self.view.localLayout
+    if isinstance(dyn, _RoundLayout) and dyn is not self:
+      oldPins, oldKnown = set(dyn.pins), dyn.known
+      newKnown = {vo._id for vo in self._tree().scope()[0]}
+      def do() -> None:
+        dyn.pins, dyn.known = set(), set(newKnown)
+      def undo() -> None:
+        dyn.pins, dyn.known = set(oldPins), oldKnown
+      cmd.also.append((do, undo))
+
+  # ---- dynamic ---------------------------------------------------------------------
+
+  def compute(self, fresh:set[int]=set()) -> dict[VObject, tuple[float, float]]:
+    '''
+    Kept arranged (see the class doc): where everything arranged goes.
+
+    :param fresh: The ids of the nodes just pinned (dropped: see *adjust()*):
+      their groups go to the nearest clear place after the rest (from where they were dropped).
+    :type fresh: set[int]
+    :returns: Where each node, and relation's label, goes (its top left).
+    :rtype: dict[VObject, tuple[float, float]]
+    '''
+    laid = self._lay(dynamic=True)
+    sizes, spacing, known = laid.sizes, float(self.params["spacing"]), self.known
+    current:dict[VNode, tuple[float, float]] = {}
+    for n in [*(n for g in laid.groups for n in g), *laid.stay]:
+      bb = n.boundingBox()
+      current[n] = (bb[0], bb[1])
+    knownAt = {n: p for n, p in current.items() if known is None or n._id in known}
+    rels = [topLefts(g, sizes) for g in laid.groups]
+    offsets = [groupOffset(rel, refs, knownAt, current) or (0.0, 0.0) for rel, refs in zip(rels, laid.refs)]
+    isFresh = [any(n._id in fresh for n in refs) for refs in laid.refs]
+    def top(i:int) -> tuple[float, float]:
+      return min(y for _, y in rels[i].values()) + offsets[i][1], min(x for x, _ in rels[i].values()) + offsets[i][0]
+    order = sorted((i for i in range(len(rels)) if not isFresh[i]), key=top) + [i for i in range(len(rels)) if isFresh[i]]
+    singles = [{n: current[n]} for n in laid.stay]
+    shifts = separateGroups([rels[i] for i in order] + singles, [offsets[i] for i in order] + [(0.0, 0.0)] * len(singles),
+                            sizes, gap=spacing)
+    positions:dict[VNode, tuple[float, float]] = {}
+    for g, (dx, dy) in zip([rels[i] for i in order] + singles, shifts):
+      for n, (x, y) in g.items():
+        positions[n] = (x + dx, y + dy)
+    if laid.rows: # (after the rest, below)
+      x0 = min((x for x, _ in positions.values()), default=40.0)
+      cursor = max((y + sizes[n][1] for n, (_, y) in positions.items()), default=40.0 - 2 * spacing) + 2 * spacing
+      width = max([ROW_LENGTH] + [x + sizes[n][0] - x0 for n, (x, _) in positions.items()])
+      rows = self._tree()._rows(laid.rows, sizes, cursor, x0, cursor, [(None, [x0, cursor, x0 + width, cursor])]) #type: ignore[list-item]
+      positions.update({n: (float(round(x)), float(round(y))) for n, (x, y) in rows.items()})
+    return self._withLabels(positions, sizes, laid.edges)
+
+  @override
+  def placeNode(self, node:VObject, referenceNode:Optional[VObject]=None, direction:Direction=Direction.UNSPECIFIED,
+                loc:Optional[Point]=None, **kwargs) -> Point|tuple[float, float]:
+    '''
+    What it arranges is put in place by *adjust()*, after the command that
+    made or moved it: it stays where it is for now. Anything else goes in the
+    nearest free place (see *FindFree*).
+    '''
+    if self._staysPut(node):
+      bb = node.boundingBox()
+      return bb[0], bb[1]
+    return self._fallback.placeNode(node, referenceNode, direction, loc, **kwargs)
+
+  def _adjustment(self, name:str, pinned:set[int]) -> LayoutMoves:
+    '''
+    :param name: What the undo menu calls it.
+    :type name: str
+    :param pinned: Ids of nodes to pin now (see *pins*).
+    :type pinned: set[int]
+    :returns: The moves that keep things arranged (see *compute()*), with
+      *pinned* pinned, and what it knows updated: not done yet.
+    :rtype: LayoutMoves
+    '''
+    oldPins, oldKnown = set(self.pins), self.known
+    self.pins |= pinned # (for compute(): put back below, and done by the command)
+    try:
+      targets = self.compute(fresh=pinned)
+    finally:
+      self.pins = oldPins
+    cmd = LayoutMoves(self.view, name, targets)
+    newPins = oldPins | pinned
+    newKnown = {vo._id for vo in self._tree().scope()[0]}
+    def do() -> None:
+      self.pins, self.known = set(newPins), set(newKnown)
+    def undo() -> None:
+      self.pins, self.known = set(oldPins), (set(oldKnown) if oldKnown is not None else None)
+    if newPins != oldPins or newKnown != oldKnown:
+      cmd.also.append((do, undo))
+    return cmd
+
+  @override
+  def activate(self) -> None:
+    '''
+    Made the view's dynamic layout: arrange things as it keeps them, as one
+    undoable command (if anything moves).
+    '''
+    self.known = None
+    cmd = self._adjustment(f"keep arranged: {self.NAME}", set())
+    if cmd.moves:
+      self.view.context.doList.do(cmd)
+    else: # (nothing to move: no undo entry, just what it knows)
+      for do, _ in cmd.also:
+        do()
+
+  @override
+  def adjust(self, command:Command) -> LayoutMoves|None:
+    '''
+    After a command: lay the groups out again (see *compute()*). A node the
+    user dropped (see *SNGView._Move*) that isn't the root of its group is
+    pinned where it's dropped (see *_pinnable()*).
+    '''
+    drops = [vo for vo in self._tree()._drops(command) if isinstance(vo, VNode)]
+    return self._adjustment(command.name, self._pinnable(drops) if drops else set())
+
+  # ---- saving it with the view -----------------------------------------------------
+
+  @override
+  def extraState(self) -> dict[str, str]:
+    return {"pins": ",".join(str(i) for i in sorted(self.pins))} if self.pins else {}
+
+  @override
+  def restoreExtraState(self, state:dict[str, str]) -> None:
+    self.pins = {int(i) for i in state.get("pins", "").split(",") if i.strip().isdigit()}
+
+  # ---- static ----------------------------------------------------------------------
 
   def _arrangeGroups(self, tree:TreeLayout, groups:list[dict[VNode, tuple[float, float]]],
                      sizes:dict[VNode, tuple[float, float]], others:list[VNode]) -> dict[VNode, tuple[float, float]]:
@@ -721,22 +1041,44 @@ class _TreeRoundLayout(_RoundLayout):
     raise NotImplementedError
 
   @override
-  def targets(self) -> dict[VObject, tuple[float, float]]:
+  def _lay(self, dynamic:bool) -> _Laid:
     tree = self._tree()
-    roots, children, parentRel, others, _ = tree.structure(dynamic=False)
+    tree.pins = set(self.pins) if dynamic else set()
+    roots, children, parentRel, others, _ = tree.structure(dynamic=dynamic)
+    if dynamic: # (in order of name, as arranged: not where they are)
+      roots, others = sorted(roots, key=_byName), sorted(others, key=_byName)
+      children = {p: [sorted(g, key=_byName) for g in gs] for p, gs in children.items()}
     kids = {p: [k for g in gs for k in g] for p, gs in children.items()}
     nodes = [*roots, *(k for ks in kids.values() for k in ks), *others]
     sizes = {n: layoutSize(n) for n in nodes}
     edges = [(tree._ends(r)[0], k, r) for k, r in parentRel.items()]
     centres, trees = self.positions(roots, kids, sizes, self._edgeRoom(edges))
     groups = [{n: centres[n] for n in members} for _, members, _ in trees]
-    if others and self.params["others"] == "near":
-      others = self._placeNear(groups, others, sizes, edges)
-    positions = self._arrangeGroups(tree, groups, sizes, others)
-    ret:dict[VObject, tuple[float, float]] = {n: p for n, p in positions.items()}
-    ret.update(self._labelTargets(positions, sizes, edges))
-    ret.update(self._otherLabels(positions, sizes, edges))
-    return ret
+    mode = self.params["others"]
+    stay = [n for n in others if mode == "leave" or (dynamic and n._id in self.pins)]
+    staying = set(stay)
+    rows = [n for n in others if n not in staying]
+    if rows and mode == "near":
+      rows = self._placeNear(groups, rows, sizes, edges)
+    return _Laid(groups, [[root] for root, _, _ in trees], edges, sizes, rows, stay)
+
+  @override
+  def _pinnable(self, drops:list[VNode]) -> set[int]:
+    "As *TreeLayout.adjust()*: a tree's child, or a node in no tree (not a root: it's kept where it is anyway)."
+    tree = self._tree()
+    _, edges = tree.scope()
+    children = {id(tree._ends(r)[1]) for r in edges}
+    inTree = children | {id(tree._ends(r)[0]) for r in edges}
+    return {vo._id for vo in drops if id(vo) in children or id(vo) not in inTree}
+
+  @override
+  def _staysPut(self, node:VObject) -> bool:
+    "As *TreeLayout.placeNode()*: a tree's node, or a tree relation's label."
+    tree = self._tree()
+    if isinstance(node, VRelation):
+      return tree._isEdge(node.modelObject)
+    return isinstance(node, VNode) and node.modelObject is not None and \
+           any(isinstance(r, VRelation) and tree._isEdge(r.modelObject) for r in node.relations)
 
   def _placeNear(self, groups:list[dict[VNode, tuple[float, float]]], others:list[VNode],
                  sizes:dict[VNode, tuple[float, float]], edges:list[tuple[VNode, VNode, VRelation]]) -> list[VNode]:
@@ -796,7 +1138,7 @@ class BalloonLayout(_TreeRoundLayout):
   (and with their tree: those related to no tree in rows after the trees); in
   rows after the trees; or left where they are (*others*). Each tree
   relation's label goes on its line, between its ends; the others' midway
-  between their ends.
+  between their ends. Kept arranged: see *_RoundLayout*.
   '''
   NAME = "balloon"
 
@@ -810,7 +1152,7 @@ class RadialLayout(_TreeRoundLayout):
   Arrange nodes radially (see *radialPositions()*): trees by a relation type
   (*relation*) and its subtypes (as *TreeLayout* finds them), each root in
   the middle of its tree, each depth on a circle round it, each subtree in
-  its own wedge. Otherwise as *BalloonLayout*.
+  its own wedge. Otherwise (kept arranged too) as *BalloonLayout*.
   '''
   NAME = "radial"
 
@@ -830,7 +1172,8 @@ class HubLayout(_RoundLayout):
   top left of what's arranged; the nodes related to nothing in rows after
   them, or left where they are (*others*). The label of the relation from
   each spoke's hub (or the spoke it's under) goes on its line, between its
-  ends; the others' are left between their ends.
+  ends; the others' are left between their ends. Kept arranged: see
+  *_RoundLayout* (a node dropped is cut out of its group: see *hubForest()*).
 
   Nodes in a context window (or that are one) aren't arranged.
   '''
@@ -875,20 +1218,42 @@ class HubLayout(_RoundLayout):
         neighbours[b].append(a) #type: ignore[index, arg-type]
     return nodes, {n: sorted(ns, key=name) for n, ns in neighbours.items()}, between
 
-  @override
-  def targets(self) -> dict[VObject, tuple[float, float]]:
+  def _forest(self, dynamic:bool) -> tuple[list[VNode], list[tuple[list[VNode], dict[VNode, list[VNode]]]], list[VNode],
+                                            dict[tuple[VNode, VNode], VRelation]]:
+    ":returns: What's arranged (see *graph()*), its groups and the nodes related to nothing (see *hubForest()*), and the relations."
     nodes, neighbours, between = self.graph()
-    groups, isolated = hubForest(nodes, neighbours, max(1, int(self.params["minSpokes"])))
+    pinned = [n for n in nodes if n._id in self.pins] if dynamic else []
+    groups, isolated = hubForest(nodes, neighbours, max(1, int(self.params["minSpokes"])), pinned)
+    return nodes, groups, isolated, between
+
+  @override
+  def _lay(self, dynamic:bool) -> _Laid:
+    nodes, groups, isolated, between = self._forest(dynamic)
     sizes = {n: layoutSize(n) for n in nodes}
     spacing = float(self.params["spacing"])
     centres:list[dict[VNode, tuple[float, float]]] = []
     edges:list[tuple[VNode, VNode, VRelation]] = []
     for hubs, kids in groups:
       es = [(p, k, between[(p, k)]) for p, ks in kids.items() for k in ks]
-      edges += es
-      centres.append(hubPositions(hubs, kids, sizes, spacing=spacing, edgeRoom=self._edgeRoom(es))[0])
-    positions = self._arrangeGroups(self._tree(), centres, sizes, isolated)
-    ret:dict[VObject, tuple[float, float]] = {n: p for n, p in positions.items()}
-    ret.update(self._labelTargets(positions, sizes, edges))
-    ret.update(self._otherLabels(positions, sizes, edges))
-    return ret
+      out = hubPositions(hubs, kids, sizes, spacing=spacing, edgeRoom=self._edgeRoom(es))[0]
+      centres.append(out)
+      edges += [e for e in es if e[0] in out] # (a group's kids are its whole connected group's: see hubForest())
+    stay = [n for n in isolated if self.params["others"] == "leave" or (dynamic and n._id in self.pins)]
+    staying = set(stay)
+    return _Laid(centres, [hubs for hubs, _ in groups], edges, sizes, [n for n in isolated if n not in staying], stay)
+
+  @override
+  def _pinnable(self, drops:list[VNode]) -> set[int]:
+    "Any node arranged but a group's only hub (it's kept where it is anyway)."
+    nodes, groups, _, _ = self._forest(dynamic=True)
+    inScope = set(nodes)
+    sole = {hubs[0] for hubs, _ in groups if len(hubs) == 1}
+    return {vo._id for vo in drops if vo in inScope and vo not in sole}
+
+  @override
+  def _staysPut(self, node:VObject) -> bool:
+    "A node related to another, or a relation between two nodes."
+    if isinstance(node, VRelation):
+      return isinstance(node.src, VNode) and isinstance(node.dst, VNode) and node.src is not node.dst
+    return isinstance(node, VNode) and node.modelObject is not None and \
+           any(isinstance(r, VRelation) and r.src is not r.dst for r in node.relations)
