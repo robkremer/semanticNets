@@ -30,7 +30,7 @@ Created on Oct 14, 2026
 import math
 import random
 import unittest
-from sn.view.graphics.balloonLayout import balloonPositions, radialPositions, hubForest, hubPositions, radius
+from sn.view.graphics.balloonLayout import balloonPositions, radialPositions, hubForest, hubPositions, radius, placeNearGroups
 
 def boxes(centres, sizes):
   return {n: (x - sizes[n][0] / 2, y - sizes[n][1] / 2, x + sizes[n][0] / 2, y + sizes[n][1] / 2) for n, (x, y) in centres.items()}
@@ -199,6 +199,50 @@ class Test(unittest.TestCase):
       self.assertLess(pos[k][1], pos["p"][1])                             # p's spokes above it: away from the middle
     for k in "cd":
       self.assertGreater(pos[k][1], pos["q"][1])
+
+  def test1200nearGoesOutBeyond(self):
+    sizes = {n: (60, 30) for n in "rabcxyz"}
+    pos, _ = balloonPositions(["r"], {"r": ["a", "b", "c"]}, sizes, spacing=10)
+    group = dict(pos)
+    left = placeNearGroups(["x", "y", "z"], sizes, {"x": ["b"], "y": ["x"], "z": []}, [group], spacing=10)
+    self.assertEqual(left, ["z"])                                         # related to nothing placed: not put
+    self.assertIn("x", group)
+    self.assertIn("y", group)                                             # (via x: once x's put)
+    out = lambda n: math.hypot(*group[n])
+    self.assertGreater(out("x"), out("b"))                                # beyond b, away from the middle
+    cos = (group["x"][0] * group["b"][0] + group["x"][1] * group["b"][1]) / (out("x") * out("b"))
+    self.assertGreater(cos, 0.9)                                          # the same way out as b
+    self.assertGreater(out("y"), out("x"))
+    self.assertEqual(overlapping(boxes(group, sizes)), [])
+
+  def test1300nearRoomForTheLabel(self):
+    sizes = {n: (60, 30) for n in "rax"}
+    group = {"r": (0.0, 0.0), "a": (0.0, -100.0)}
+    placeNearGroups(["x"], sizes, {"x": ["a"]}, [group], spacing=10, room=lambda n, r: 150)
+    gap = math.hypot(group["x"][0] - group["a"][0], group["x"][1] - group["a"][1]) - 2 * radius((60, 30))
+    self.assertGreaterEqual(gap, 150 - 1e-6)
+
+  def test1400nearTheGroupMostRelated(self):
+    sizes = {n: (60, 30) for n in ["p", "q", "p1", "q1", "q2", "x"]}
+    g1 = {"p": (0.0, 0.0), "p1": (0.0, 80.0)}
+    g2 = {"q": (0.0, 0.0), "q1": (80.0, 0.0), "q2": (-80.0, 0.0)}
+    placeNearGroups(["x"], sizes, {"x": ["p1", "q1", "q2"]}, [g1, g2], spacing=10)
+    self.assertIn("x", g2)
+    self.assertNotIn("x", g1)
+
+  def test1500nearRandomDontOverlap(self):
+    rnd = random.Random(13)
+    for _ in range(30):
+      n = rnd.randint(3, 50)
+      sizes, kids = randomTree(rnd, n)
+      pos, _ = balloonPositions([0], kids, sizes, spacing=5)
+      group = dict(pos)
+      extra = list(range(n, n + rnd.randint(1, 20)))
+      sizes.update({i: (rnd.randint(20, 140), rnd.randint(15, 80)) for i in extra})
+      related = {i: [rnd.randrange(i)] for i in extra}
+      left = placeNearGroups(extra, sizes, related, [group], spacing=5)
+      self.assertEqual(left, [])
+      self.assertEqual(overlapping(boxes(group, sizes)), [])
 
 if __name__ == "__main__":
   unittest.main()

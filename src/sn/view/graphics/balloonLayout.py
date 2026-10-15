@@ -48,19 +48,24 @@ Created on Oct 14, 2026
 from __future__ import annotations
 import math
 from collections import deque
-from typing import Any, Generic, Hashable, Mapping, Optional, Sequence, TypeVar, override
+from typing import Any, Callable, Generic, Hashable, Mapping, Optional, Sequence, TypeVar, override
 from sn.view.graphics.vnodes import VNode
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
 from sn.view.graphics.layout import LayoutHeuristic, LayoutParameter, registerLayout, layoutSize, STATIC
-from sn.view.graphics.treeLayout import TreeLayout, PARENT_ENDS
+from sn.view.graphics.treeLayout import TreeLayout, PARENT_ENDS, NEAR_BIAS, _BoxIndex, nearestFree
 
 K = TypeVar("K", bound=Hashable)
 
-OTHERS = ("rows", "leave")
-'''What a round layout does with the nodes it doesn't arrange (in no tree; for
-the hubs, related to nothing): puts them in rows after the rest; or leaves
-them where they are.'''
+OTHERS = ("near", "rows", "leave")
+'''What the balloon and radial layouts do with the nodes in no tree: put each
+near the tree nodes it's related to, out beyond them, away from the middle of
+their tree (see *placeNearGroups()*: those related to no tree in rows after
+the trees); put them in rows after the trees; or leave them where they are.'''
+
+HUB_OTHERS = ("rows", "leave")
+'''What the hub layout does with the nodes related to nothing: puts them in
+rows after the rest; or leaves them where they are.'''
 
 PARENT_GAP = math.pi / 2
 '''The wedge (radians) a balloon's node keeps clear of its children, toward
@@ -477,10 +482,84 @@ def hubPositions(hubs:list[K], children:Mapping[K, Sequence[K]], sizes:Mapping[K
       b.place(h, (d * math.cos(a), d * math.sin(a)), a, out)
   return out, max(math.hypot(x, y) + radius(sizes[n]) for n, (x, y) in out.items())
 
+def placeNearGroups(items:list[K], sizes:Mapping[K, tuple[float, float]], related:Mapping[K, Sequence[K]],
+                    groups:list[dict[K, tuple[float, float]]], obstacles:Optional[list[list[Sequence[float]]]]=None, *,
+                    spacing:float=20.0, room:Optional[Callable[[K, K], float]]=None,
+                    bias:float=NEAR_BIAS) -> list[K]:
+  '''
+  Put nodes (eg: those in no tree) near the nodes they're related to, in
+  laid-out groups (eg: trees, or hubs' groups): each in the group it's most
+  related to (the first of those as much), out beyond the nodes it's related
+  to there -- away from the group's middle (its (0, 0): eg: its root), from
+  the middle of them, far enough for the relation's label (*room*) -- or, if
+  that's taken, at the cheapest free place near there (see
+  *treeLayout.nearestFree()*: moving back, toward the group's middle, costs
+  *bias* times as much as moving on). Those related only to others of
+  *items* are put once those are; those related to nothing placed aren't
+  put anywhere.
+
+  :param items: The nodes to put, in order.
+  :type items: list[K]
+  :param sizes: Every node's (width, height).
+  :type sizes: Mapping[K, tuple[float, float]]
+  :param related: What each of *items* is related to (in a group, or of *items*).
+  :type related: Mapping[K, Sequence[K]]
+  :param groups: Where each group's nodes' centres are, from its middle: those
+    put are added to the group they go in.
+  :type groups: list[dict[K, tuple[float, float]]]
+  :param obstacles: For each group, boxes to keep clear of too (eg: relations' labels).
+  :type obstacles: list[list[Sequence[float]]] | None
+  :param spacing: The least space between a node put and anything else.
+  :type spacing: float
+  :param room: The space wanted between a node put and one it's related to
+    (their circles: see *radius()*), if not *spacing*: eg: for the label of
+    the relation between them.
+  :type room: Callable[[K, K], float] | None
+  :returns: Those not put (related to nothing placed).
+  :rtype: list[K]
+  '''
+  roomFor = room or (lambda n, r: spacing)
+  def box(n, c) -> list[float]:
+    w, h = sizes[n]
+    return [c[0] - w / 2, c[1] - h / 2, c[0] + w / 2, c[1] + h / 2]
+  where = {n: gi for gi, g in enumerate(groups) for n in g}
+  indexes = [_BoxIndex([box(n, c) for n, c in g.items()] + list((obstacles or [])[gi] if obstacles else []))
+             for gi, g in enumerate(groups)]
+  pending = list(items)
+  while pending:
+    ready = [n for n in pending if any(r in where for r in related.get(n, ()))]
+    if not ready:
+      break
+    ready.sort(key=lambda n: -sum(1 for r in related.get(n, ()) if r in where)) # (the best anchored first; stable)
+    for n in ready:
+      rs = [r for r in related.get(n, ()) if r in where]
+      counts:dict[int, int] = {}
+      for r in rs:
+        counts[where[r]] = counts.get(where[r], 0) + 1
+      gi = max(counts, key=lambda i: (counts[i], -i))
+      g = groups[gi]
+      rs = [r for r in rs if where[r] == gi]
+      ax, ay = sum(g[r][0] for r in rs) / len(rs), sum(g[r][1] for r in rs) / len(rs)
+      length = math.hypot(ax, ay)
+      if length < 1.0: # (at the middle: eg: related to the root -- straight down, then)
+        ux, uy = 0.0, 1.0
+      else:
+        ux, uy = ax / length, ay / length
+      out = max(radius(sizes[r]) + roomFor(n, r) for r in rs) + radius(sizes[n])
+      w, h = sizes[n]
+      x, y = nearestFree((w, h), (ax + ux * out - w / 2, ay + uy * out - h / 2), indexes[gi],
+                         direction=(ux, uy), gap=spacing, bias=bias)
+      g[n] = (x + w / 2, y + h / 2)
+      where[n] = gi
+      indexes[gi].add([x, y, x + w, y + h])
+    done = set(ready)
+    pending = [n for n in pending if n not in done]
+  return pending
+
 class _RoundLayout(LayoutHeuristic):
   '''
   What the round layouts share: putting their groups (trees, or hubs' groups)
-  in rows, the nodes they don't arrange in rows after them (see *OTHERS*),
+  in rows, the nodes they don't arrange in rows after them (see *OTHERS*, *HUB_OTHERS*),
   and the labels of the relations from parents to children between them.
   '''
   CATEGORIES = (STATIC,)
@@ -503,7 +582,7 @@ class _RoundLayout(LayoutHeuristic):
     :type others: list[VNode]
     :returns: Where they go (their top left): the groups one after another
       in rows (see *ROW_LENGTH*), from the top left of what's arranged, and
-      *others* in rows after them (or left where they are: see *OTHERS*).
+      *others* in rows after them (unless they're to be left where they are: see *OTHERS*, *HUB_OTHERS*).
     :rtype: dict[VNode, tuple[float, float]]
     '''
     spacing = float(self.params["spacing"])
@@ -526,7 +605,7 @@ class _RoundLayout(LayoutHeuristic):
       for n, (px, py) in t.items():
         ret[n] = (px - b[0] + x, py - b[1] + y)
       x, rowHeight = x + w + gap, max(rowHeight, h)
-    if others and self.params["others"] == "rows":
+    if others and self.params["others"] in ("rows", "near"): # (near: those related to nothing placed)
       cursor = y + rowHeight + gap if groups else y0
       ret.update(tree._rows(others, sizes, cursor, x0, y0, [(None, [x0, y0, x0 + limit, y0])])) #type: ignore[list-item]
     return {n: (float(round(px)), float(round(py))) for n, (px, py) in ret.items()}
@@ -610,8 +689,9 @@ class _TreeRoundLayout(_RoundLayout):
                     note='Eg: the source for "includes" (a package includes its modules); '
                          'the destination for "isa" (a subtype isa its type).'),
     LayoutParameter("spacing", "Space between neighbours", "int", 20),
-    LayoutParameter("others", "Nodes in no tree", "choice", "rows", OTHERS,
-                    note='"rows": in rows after the trees.'),
+    LayoutParameter("others", "Nodes in no tree", "choice", "near", OTHERS,
+                    note='"near": each near what it\'s related to, out beyond it (those related to nothing '
+                         'there in rows). "rows": in rows after the trees.'),
   )
 
   def __init__(self, view, **kwargs):
@@ -650,11 +730,59 @@ class _TreeRoundLayout(_RoundLayout):
     edges = [(tree._ends(r)[0], k, r) for k, r in parentRel.items()]
     centres, trees = self.positions(roots, kids, sizes, self._edgeRoom(edges))
     groups = [{n: centres[n] for n in members} for _, members, _ in trees]
+    if others and self.params["others"] == "near":
+      others = self._placeNear(groups, others, sizes, edges)
     positions = self._arrangeGroups(tree, groups, sizes, others)
     ret:dict[VObject, tuple[float, float]] = {n: p for n, p in positions.items()}
     ret.update(self._labelTargets(positions, sizes, edges))
     ret.update(self._otherLabels(positions, sizes, edges))
     return ret
+
+  def _placeNear(self, groups:list[dict[VNode, tuple[float, float]]], others:list[VNode],
+                 sizes:dict[VNode, tuple[float, float]], edges:list[tuple[VNode, VNode, VRelation]]) -> list[VNode]:
+    '''
+    For *others* "near": put each node in no tree near the tree nodes it's
+    related to (by any relation shown), in their tree, clear of its nodes and
+    its relations' labels, with room for the label of the relation between
+    them (see *placeNearGroups()*).
+
+    :param groups: Where each tree's nodes' centres go, from its root: those put are added.
+    :type groups: list[dict[VNode, tuple[float, float]]]
+    :param others: The nodes in no tree.
+    :type others: list[VNode]
+    :param sizes: Every node's (width, height).
+    :type sizes: dict[VNode, tuple[float, float]]
+    :param edges: The tree relations (parent, child, relation).
+    :type edges: list[tuple[VNode, VNode, VRelation]]
+    :returns: Those not put (related to no tree): for the rows.
+    :rtype: list[VNode]
+    '''
+    spacing = float(self.params["spacing"])
+    ids = {id(n) for n in [*(n for g in groups for n in g), *others]}
+    related:dict[VNode, list[VNode]] = {n: [] for n in others}
+    between:dict[tuple[int, int], VRelation] = {}
+    for n in others:
+      for r in sorted((r for r in n.relations if isinstance(r, VRelation)), key=lambda r: r._id):
+        if not r._isConnected() or r.isHidden():
+          continue
+        other = r.dst if r.src is n else r.src
+        if isinstance(other, VNode) and other is not n and id(other) in ids:
+          if other not in related[n]:
+            related[n].append(other)
+          between.setdefault((id(n), id(other)), r)
+          between.setdefault((id(other), id(n)), r)
+    def room(n:VNode, r:VNode) -> float:
+      rel = between.get((id(n), id(r)))
+      return (2 * radius(layoutSize(rel)) if rel is not None else 0.0) + spacing
+    obstacles = []
+    for g in groups: # (the tree relations' labels, where they'll be)
+      tops = {n: (cx - sizes[n][0] / 2, cy - sizes[n][1] / 2) for n, (cx, cy) in g.items()}
+      boxes:list[Sequence[float]] = []
+      for label, (x, y) in self._labelTargets(tops, sizes, edges).items():
+        w, h = layoutSize(label)
+        boxes.append([x, y, x + w, y + h])
+      obstacles.append(boxes)
+    return placeNearGroups(others, sizes, related, groups, obstacles, spacing=spacing, room=room)
 
 @registerLayout
 class BalloonLayout(_TreeRoundLayout):
@@ -663,9 +791,12 @@ class BalloonLayout(_TreeRoundLayout):
   type (*relation*) and its subtypes (as *TreeLayout* finds them), each
   node's children in a ring round it, each child's subtree a balloon of its
   own, spread round the way away from its parent. The trees are put one
-  after another in rows, from the top left of what's arranged; the nodes in
-  no tree in rows after them, or left where they are (*others*). Each tree
-  relation's label goes on its line, between its ends.
+  after another in rows, from the top left of what's arranged. The nodes in
+  no tree are put near the tree nodes they're related to, out beyond them
+  (and with their tree: those related to no tree in rows after the trees); in
+  rows after the trees; or left where they are (*others*). Each tree
+  relation's label goes on its line, between its ends; the others' midway
+  between their ends.
   '''
   NAME = "balloon"
 
@@ -708,7 +839,7 @@ class HubLayout(_RoundLayout):
     LayoutParameter("minSpokes", "A hub has at least this many relations", "int", 3,
                     note="In a group with no such node, the one with the most is its hub."),
     LayoutParameter("spacing", "Space between neighbours", "int", 20),
-    LayoutParameter("others", "Nodes related to nothing", "choice", "rows", OTHERS,
+    LayoutParameter("others", "Nodes related to nothing", "choice", "rows", HUB_OTHERS,
                     note='"rows": in rows after the rest.'),
   )
 
@@ -716,11 +847,11 @@ class HubLayout(_RoundLayout):
     '''
     :param view:
     :type view: SNGView
-    :param kwargs: See *PARAMETERS*: minSpokes, spacing, others (see *OTHERS*).
+    :param kwargs: See *PARAMETERS*: minSpokes, spacing, others (see *HUB_OTHERS*).
     '''
     super().__init__(view, **kwargs)
-    if self.params["others"] not in OTHERS:
-      raise ValueError(f'HubLayout: others must be one of {", ".join(OTHERS)}, not "{self.params["others"]}".')
+    if self.params["others"] not in HUB_OTHERS:
+      raise ValueError(f'HubLayout: others must be one of {", ".join(HUB_OTHERS)}, not "{self.params["others"]}".')
 
   def graph(self) -> tuple[list[VNode], dict[VNode, list[VNode]], dict[tuple[VNode, VNode], VRelation]]:
     '''

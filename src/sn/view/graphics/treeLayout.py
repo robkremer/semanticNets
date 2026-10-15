@@ -314,7 +314,7 @@ class _BoxIndex:
     return any(o[0] < g[2] and g[0] < o[2] and o[1] < g[3] and g[1] < o[3]
                for k in self._cells(g) for o in self.cells.get(k, ()))
 
-def nearestFree(size:tuple[float, float], at:tuple[float, float], index:_BoxIndex, *, direction:str="right",
+def nearestFree(size:tuple[float, float], at:tuple[float, float], index:_BoxIndex, *, direction:str|tuple[float, float]="right",
                 gap:float=20.0, bias:float=NEAR_BIAS, step:float=NEAR_STEP, maxRings:int=NEAR_MAX_RINGS) -> tuple[float, float]:
   '''
   :param size: A box's (width, height).
@@ -323,17 +323,20 @@ def nearestFree(size:tuple[float, float], at:tuple[float, float], index:_BoxInde
   :type at: tuple[float, float]
   :param index: The boxes it mustn't be on (or within *gap* of).
   :type index: _BoxIndex
-  :param direction: Which way the trees grow (see *DIRECTIONS*): moving on
-    that way costs what the distance is; back, *bias* times as much; across,
-    the distance.
-  :type direction: str
+  :param direction: Which way the trees grow (see *DIRECTIONS*), or a unit
+    vector (x, y): moving on that way costs what the distance is; back,
+    *bias* times as much; across, the distance.
+  :type direction: str | tuple[float, float]
   :returns: The cheapest free place (its top left) on a *step* grid around *at*
     (looking out *maxRings* steps) -- or *at*, if there's none.
   :rtype: tuple[float, float]
   '''
   w, h = size
   def cost(dx:float, dy:float) -> float:
-    along, across = {"right": (dx, dy), "left": (-dx, dy), "down": (dy, dx), "up": (-dy, dx)}[direction]
+    if isinstance(direction, tuple):
+      along, across = dx * direction[0] + dy * direction[1], dy * direction[0] - dx * direction[1]
+    else:
+      along, across = {"right": (dx, dy), "left": (-dx, dy), "down": (dy, dx), "up": (-dy, dx)}[direction]
     return (along if along >= 0 else -along * bias) + abs(across)
   best:tuple[float, float]|None = None
   bestCost = float("inf")
