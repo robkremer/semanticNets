@@ -730,6 +730,37 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
       return [(rel, o) for o in others]
     return []
 
+  def _chain(self, types:list[Relation], filtr:Callable[[Relation], bool], seen:set[int], outgoing:bool) -> list[tuple[Relation,GraphObject]]:
+    '''
+    What this object is related to (*outgoing*) or from by chains of relations
+    of the transitive relation *types* (or their subtypes; see
+    *Relation._transitiveTypes()*): eg: by *has-ancestor* and *has-parent* relations,
+    if *has-parent* isa *has-ancestor*, which is transitive.
+
+    :param types: Transitive relation types.
+    :type types: list[Relation]
+    :param filtr: Which relations may be followed.
+    :type filtr: Callable[[Relation], bool]
+    :param seen: The ids of objects not to go through again (eg: where the chain starts).
+    :type seen: set[int]
+    :param outgoing:
+    :type outgoing: bool
+    :returns: (relation, object) pairs.
+    :rtype: list[tuple[Relation, GraphObject]]
+    '''
+    ret:list[tuple[Relation,GraphObject]] = []
+    todo:list[GraphObject] = [self]
+    while todo:
+      o = todo.pop(0)
+      if o.id in seen:
+        continue
+      seen.add(o.id)
+      for q, x in (o._getOutgoing if outgoing else o._getIncoming)(lambda q: filtr(q) and any(q.isa(t) for t in types)):
+        if x is not None:
+          ret.append((q, x))
+          todo.append(x)
+    return ret
+
   @staticmethod
   def _addNew(pairs:list[tuple[Relation,GraphObject]], more:list[tuple[Relation,GraphObject]], byObjectOnly:bool) -> None:
     '''
@@ -781,9 +812,9 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     for r,other in self._getOutgoing(filtr):
       if other is not None:
         ret.append((r, other))
-        if r.isTransitive() and other is not self:
-          # add in any transitives, filtering out anything we already refer to
-          ret += [ret2 for ret2 in other.getRelatedTo(_seen=seen, inferred=inferred) if filtr(r)]
+        if other is not self and (chainTypes := r._transitiveTypes(rel)):
+          # add in what *other* is related to by the same transitive relation (or subtypes of it)
+          ret += other._chain(chainTypes, filtr, {self.id}, outgoing=True)
         if r.isReflexive() and other is not self and self not in seen:
           ret.append((r, self))
     if inferred and _seen is None: # the outermost call only
@@ -792,7 +823,7 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
       return []
       
     if rel is not None: # and not _returnPairs:
-      ret2:list[GraphObject] = list(list(zip(*ret))[1]) # return only the objects
+      ret2:list[GraphObject] = list({id(o): o for _, o in ret}.values()) # return only the objects (each once)
       if rel.isIrreflexive():
         return [x for x in ret2 if x is not self]
       return ret2
@@ -843,14 +874,13 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     for r,other in self._getIncoming(filtr):
       if other is not None:
         ret.append((r, other))
-        seen = [] if ret == [] else list(list(zip(*ret))[1])
-        if r.isTransitive() and other is not self:
-          # add in any transitives, filtering out anything we already refer to
-          ret += [ret2 for ret2 in other.getRelatedFrom(inferred=inferred, _snapshot=False) if ret2[1] not in seen and filtr(r)] # type: ignore[call-overload] # (_snapshot: internal)
+        if other is not self and (chainTypes := r._transitiveTypes(rel)):
+          # add in what's related to *other* by the same transitive relation (or subtypes of it)
+          ret += other._chain(chainTypes, filtr, {self.id}, outgoing=False)
     if inferred and _snapshot:
       self._addNew(ret, self._inferredRelated(rel, outgoing=False), byObjectOnly=rel is not None)
     if rel is not None: # and not _returnPairs:
-      return [o for _, o in ret] # return only the objects
+      return list({id(o): o for _, o in ret}.values()) # return only the objects (each once)
     return ret # return the rel/object pairs
 
 
@@ -2338,6 +2368,26 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]): #type: ignore[misc]
     '''
     return self._hasRelationalProperty("asymmetric")
   
+  def _transitiveTypes(self, within:Relation|None=None) -> list[Relation]:
+    '''
+    The transitive relation types (see *isTransitive()*) this relation is one
+    of: eg: a *has-parent* is a *has-ancestor*, so where *has-ancestor* is
+    transitive, chains of them (and of *has-parent* relations) give
+    *has-ancestor* relations, though *has-parent* itself isn't transitive.
+
+    :param within: If given, only the types that are *within* or below it (a
+      query about *has-parent* doesn't chain through *has-ancestor*).
+    :type within: Relation | None
+    :returns:
+    :rtype: list[Relation]
+    '''
+    try:
+      types = self.isa()
+    except (LookupError, AttributeError): # eg: during initialization
+      return []
+    return [t for t in types if isinstance(t, Relation) and t.isType() and dict.__contains__(t, "transitive")
+            and (within is None or t.isa(within))]
+
   def isTransitive(self) -> bool:
     '''
     :returns:
