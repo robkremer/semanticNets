@@ -47,6 +47,7 @@ from sn.view.graphics.layout import FindFree, Direction, gatherShifts, intoRect,
                                     LayoutHeuristic, LayoutMoves, NoLayout, finishTween, layoutsFor, STATIC, DYNAMIC, \
                                     relationTypes, relationNamed
 import sn.view.graphics.treeLayout # (registers the tree layout: see layout.LAYOUTS)
+import sn.view.graphics.balloonLayout # (registers the balloon, radial and hub layouts)
 from sn.view.graphics.decorators import NOMINAL_ASPECT
 from util.commandParser import CompositeCommandMgr, CompositeCommand
 from util.command import DoList
