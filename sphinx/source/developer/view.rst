@@ -158,7 +158,7 @@ object and view, and what the menu item acts on (the selection, if the object
 is selected). ``@hook(appliesTo=...)`` makes one that only applies to some
 objects: eg: one set on a type for its instances is left off the type's own
 menu. The attributes start with ``.``, so the attribute editor doesn't show
-them.
+them. (A worked example: :doc:`extending`.)
 
 A hook that shows a file at a line (eg: a function's source) calls
 :py:func:`sn.view.graphics.sourceWindow.openSource`: the ``gui/editorCommand``

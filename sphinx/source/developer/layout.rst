@@ -1,23 +1,222 @@
-
 Layout
 ======
 
-There are two kinds of layout: small, local heuristics that place one object
-(:py:mod:`sn.view.graphics.layout`), and the animation layout, which
-arranges the whole view (:py:mod:`sn.view.graphics.animatedLayouts`).
+A layout arranges a view's objects. They're all in
+:py:mod:`sn.view.graphics`, built on one framework,
+:py:class:`~sn.view.graphics.layout.LayoutHeuristic`
+(:py:mod:`~sn.view.graphics.layout`), and come in three kinds -- a layout may
+be more than one:
 
-Local layout
-------------
+**static** (``STATIC``)
+  Done once, at once, as one undoable command: the **arrange now** menu.
+  Eg: :py:class:`~sn.view.graphics.treeLayout.TreeLayout`, "gather nodes".
 
-:py:class:`~sn.view.graphics.layout.FindFree` finds a clear spot for a new
-object, near where it was asked for, and nudges a dropped object off
-whatever it landed on. :py:func:`~sn.view.graphics.layout.gatherShifts`
-(the **gather nodes** command) finds outliers, axis by axis -- gaps between
-clusters far wider than is typical of the drawing -- and works out how far
-to shift them back.
+**dynamic** (``DYNAMIC``)
+  The view's current layout (``SNGView.localLayout``: one at a time), which
+  keeps it arranged as it changes: the **keep arranged** menu. It places
+  what's made or dropped, and after each command adjusts the rest -- in the
+  same undo entry. The default is
+  :py:class:`~sn.view.graphics.layout.FindFree` ("avoid overlaps").
+
+**animated** (``ANIMATED``)
+  Runs in the background until things settle:
+  :py:class:`~sn.view.graphics.animatedLayouts.FieldsLayout`, the animation
+  layout (below).
+
+.. graphviz::
+
+   digraph layouts {
+     rankdir=BT;
+     node [shape=box, style=rounded, fontname="Helvetica", fontsize=10];
+     edge [arrowhead=empty];
+     LayoutHeuristic [label="LayoutHeuristic\n(layout)"];
+     FindFree [label="FindFree\n\"avoid overlaps\": dynamic"];
+     NoLayout [label="NoLayout\n\"none\": dynamic"];
+     GatherLayout [label="GatherLayout\n\"gather nodes\": static"];
+     TreeLayout [label="TreeLayout\n\"tree\": static, dynamic\n(treeLayout)"];
+     Round [label="_RoundLayout\n(balloonLayout)"];
+     TreeRound [label="_TreeRoundLayout"];
+     Balloon [label="BalloonLayout\n\"balloon\""];
+     Radial [label="RadialLayout\n\"radial\""];
+     Hub [label="HubLayout\n\"hubs\""];
+     FindFree -> LayoutHeuristic; NoLayout -> LayoutHeuristic; GatherLayout -> LayoutHeuristic;
+     TreeLayout -> LayoutHeuristic; Round -> LayoutHeuristic;
+     TreeRound -> Round; Hub -> Round; Balloon -> TreeRound; Radial -> TreeRound;
+   }
+
+The framework
+-------------
+
+A subclass says what it is, and implements what its kinds need:
+
+``NAME``
+  What it's called: in the menus, in :py:data:`~sn.view.graphics.layout.LAYOUTS`,
+  and in the view's file.
+
+``CATEGORIES``
+  The kinds it is: of ``STATIC``, ``DYNAMIC``, ``ANIMATED``.
+
+``PARAMETERS``
+  The keyword arguments its constructor takes, as
+  :py:class:`~sn.view.graphics.layout.LayoutParameter`\ s: each one's name,
+  label, kind (``"relation"``, ``"choice"``, ``"int"`` or ``"bool"``),
+  default, choices and note, and which kinds of use it matters for. A
+  program constructs a layout with them directly (eg:
+  ``TreeLayout(view, relation="includes", parentEnd="source")``: a relation
+  can be given by name); the menus ask for them with a dialog made from the
+  list (:py:meth:`~sn.view.graphics.layout.LayoutHeuristic.askParameters`,
+  :py:mod:`~sn.view.graphics.layoutDialog`), which
+  :py:meth:`~sn.view.graphics.layout.LayoutHeuristic.parameterChanged` can
+  adjust as the user changes it (eg: the tree layout's parent end, when a
+  relation type is chosen).
+
+static: ``targets()``
+  Where to move things: each object's new top left corner.
+  :py:meth:`~sn.view.graphics.layout.LayoutHeuristic.arrange` makes them a
+  :py:class:`~sn.view.graphics.layout.LayoutMoves` command and does it. (Or
+  override ``arrange()`` itself, as "gather nodes" does.)
+
+dynamic: ``placeNode()``, ``adjust()``, ``activate()``
+  ``placeNode()`` says where something new, or dropped, goes. ``adjust()``
+  is called after each command that changed the view, with the command, and
+  returns a *LayoutMoves* of what else to move (not done yet), or None.
+  ``activate()`` is called when it's made the view's layout
+  (``SNGView.setDynamicLayout()``): eg: to arrange things as it will keep
+  them.
+
+:py:func:`~sn.view.graphics.layout.registerLayout` (a class decorator) adds
+it to *LAYOUTS*, from which the **layout** menu is made, so a program's own
+layout is offered with the rest once its module's imported. (See the
+Developer Guide's example, :doc:`extending`, for one.)
+
+Moving things
+~~~~~~~~~~~~~
+
+:py:class:`~sn.view.graphics.layout.LayoutMoves` is one undoable command of
+moves: each object from where it was to where it's going. The first time
+it's done, it *tweens* (:py:func:`~sn.view.graphics.layout.tween`): the
+objects glide there in a few steps (``TWEEN_STEPS``), unless there are too
+many of them, or of their relations, or a step is slow -- then they're moved
+at once. Redone or undone, they're moved at once. A tween under way is
+finished (:py:func:`~sn.view.graphics.layout.finishTween`) before anything
+else is done, undone or saved. A relation label a layout moves is pinned
+(stops floating), and floats again when it's undone. ``LayoutMoves.also``
+holds anything else it does and undoes -- eg: a tree layout's pins.
+
+Keeping a view arranged
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The view's undo list, :py:class:`~sn.view.graphics.sngView.ViewDoList`, is
+where a dynamic layout gets its say: after each command that changes the
+view, it pushes out of context windows whatever doesn't belong in them, and
+then asks the view's layout to ``adjust()`` -- and adds the moves to the same
+undo entry, so one undo takes back both. Not during a drag (it isn't a
+command until it's dropped), nor after a layout's own moves
+(``LayoutMoves.isLayout``).
+
+One thing complicates it: the view objects a command makes are drawn *after*
+the command is done -- when the model announces what it made
+(``SNGView._placeNew()``) -- so at ``adjust()`` time they aren't there yet.
+``ViewDoList.adjustAgain()``, called for each new one, lets the layout adjust
+once more, when they all are, into the same undo entry.
+
+Saved with the view
+~~~~~~~~~~~~~~~~~~~
+
+A view saves its dynamic layout (its ``layout`` property:
+:py:meth:`~sn.view.graphics.layout.LayoutHeuristic.state`, read back by
+:py:meth:`~sn.view.graphics.layout.LayoutHeuristic.fromState`) -- its name,
+its parameters, and anything else it keeps
+(:py:meth:`~sn.view.graphics.layout.LayoutHeuristic.extraState`: eg: a tree
+layout's pins) -- as text: ``name=tree;relation=includes;direction=right;pins=12,40``.
+It also saves the parameters each layout was last used with
+(``layoutParameters``), which the dialogs start from
+(``SNGView.lastLayoutParameters()``).
+
+Placing one object
+------------------
+
+:py:class:`~sn.view.graphics.layout.FindFree`, the default dynamic layout,
+finds a clear spot for a new object, near where it was asked for (or below
+its supertype), and nudges a dropped object off whatever it landed on.
+:py:func:`~sn.view.graphics.layout.gatherShifts` (**gather nodes**) finds
+outliers, axis by axis -- gaps between clusters far wider than is typical of
+the drawing -- and works out how far to shift them back.
+
+Trees
+-----
+
+:py:class:`~sn.view.graphics.treeLayout.TreeLayout` arranges nodes as trees
+by a relation type and its subtypes (``relation``; ``parentEnd`` says which
+end's the parent). ``structure()`` finds the trees in the view: the roots,
+each node's children (grouped by which of the relation's direct subtypes
+they're related by), the relation to each child, and the nodes in no tree.
+A node with two parents goes under the first; a relation that would make a
+cycle is left out. The geometry is a pure function,
+:py:func:`~sn.view.graphics.treeLayout.treePositions`, of the trees and the
+nodes' sizes: each depth in a line, each parent level with the middle of its
+children -- or, *compact*, each subtree tucked in beside the one before
+wherever its contour leaves room (much as in Reingold-Tilford). The nodes in
+no tree are left, put in rows, or put near what they're related to
+(:py:func:`~sn.view.graphics.treeLayout.placeNear`: the nearest free spot,
+costing more against the way the trees grow).
+
+Kept arranged, it lays the trees out again after each command, each from
+where its root is, keeping children in the order they're in (new ones after,
+by name) -- so a tree opens up for what's added, and closes up over what's
+removed, and what's beside it moves along by as much. A node the user drops
+is *pinned* (``pins``, saved with the view): the root of a tree of its own,
+until the next static tree layout clears them.
+
+Round layouts: balloon, radial and hubs
+---------------------------------------
+
+:py:mod:`~sn.view.graphics.balloonLayout` has three, sharing
+``_RoundLayout``: their groups (trees, or a hub's group) in rows, the nodes
+they don't arrange after them, and the labels of the relations from parents
+to children on the lines between them. Each group's geometry is again a pure
+function:
+
+:py:func:`~sn.view.graphics.balloonLayout.balloonPositions`
+  Each node's children on a ring round it, each child's subtree a balloon of
+  its own, in its own wedge, spread away from its parent (keeping
+  ``PARENT_GAP`` clear toward it).
+
+:py:func:`~sn.view.graphics.balloonLayout.radialPositions`
+  Each root in the middle, each depth on a circle round it, each subtree in
+  its own wedge.
+
+:py:func:`~sn.view.graphics.balloonLayout.hubForest` and :py:func:`~sn.view.graphics.balloonLayout.hubPositions`
+  For a graph that isn't a tree: in each connected group, the nodes with at
+  least ``minSpokes`` neighbours are hubs, each other node a spoke of the
+  nearest; the hubs on a ring, each one's spokes in a balloon round it.
+
+Balloon and radial find their trees with a *TreeLayout* (``structure()``).
+Kept arranged, each group is laid out again where it is -- its root (or its
+hubs, on average) where it is (:py:func:`~sn.view.graphics.balloonLayout.groupOffset`)
+-- and moved off any group before it to the nearest clear place
+(:py:func:`~sn.view.graphics.balloonLayout.separateGroups`); a dropped node
+that isn't a root is pinned as the root of a group of its own.
+
+Writing a layout
+----------------
+
+Keep the geometry apart from the view: a function from plain data (nodes,
+their sizes, their relations) to positions, which can be tested without a
+window (as ``test_view/test_treeLayout.py`` and ``test_balloonLayout.py``
+do); and a *LayoutHeuristic* that gathers that data from the view
+(:py:func:`~sn.view.graphics.layout.layoutSize` gives the size a node will be
+drawn at) and turns the positions into ``targets()``. Arrange only the nodes
+shown (not hidden), and not those in context windows, which keep their own
+arrangement. A dynamic layout should be cheap: ``adjust()`` runs after
+every command.
 
 The animation layout
 --------------------
+
+The animated kind has one layout, which is older than the framework above,
+and isn't (yet) a *LayoutHeuristic*: the **animate** menu is its own, and
+the view keeps its settings separately (its ``animation`` property).
 
 :py:class:`~sn.view.graphics.animatedLayouts.FieldsLayout` is a
 force-directed layout, animated: each step moves every object a little, and
@@ -96,7 +295,7 @@ Settings
 The layout's parameters are attributes of the FieldsLayout (eg:
 ``flowDirection``, ``flowStrength``, ``e`` (repulsion), ``k`` (springs),
 ``heat``). The view changes them through ``SNGView.setAnimationSetting``,
-which both the **view | animation layout** menu and the
+which both the **view | layout | animate** menu and the
 :py:class:`~sn.view.graphics.animationToolbar.AnimationToolbar` use, and
 saves the current settings with the view (its ``animation`` property). The
 toolbar polls the layout to show its phase and temperature.

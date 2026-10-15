@@ -16,4 +16,5 @@ docstrings) for the details.
    reasoner
    view
    layout
+   extending
    conventions

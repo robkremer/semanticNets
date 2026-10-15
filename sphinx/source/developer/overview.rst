@@ -35,9 +35,12 @@ Packages
      controller [label="sn.controller\nModelContext: the commands"];
      view [label="sn.view\nUIContext, terminals"];
      graphics [label="sn.view.graphics\nApplication, SNGView, VObjects,\ndecorators, shapes, layouts"];
+     apps [label="sn.exampleApps\nXMLreader, pythonParser"];
+     hooks [label="sn.hooks"];
      util [label="util (pythonUtils)", style="rounded,dashed"];
      graphics -> view -> controller -> model -> sn;
-     graphics -> model;
+     graphics -> model; graphics -> hooks -> sn;
+     apps -> graphics; apps -> model;
      {model controller view graphics} -> util [style=dotted];
    }
 
@@ -64,7 +67,16 @@ Packages
   The graphical editor: the application and its windows, the view
   (:py:class:`~sn.view.graphics.sngView.SNGView`) and its objects
   (:py:class:`~sn.view.graphics.vobjects.VObject`), their decorations and
-  shapes, and the layouts.
+  shapes, and the layouts (see :doc:`layout`).
+
+``sn.hooks``
+  Functions named by models' attributes (``module:function``), for menu
+  items, tooltips and double-clicks that last when a model's saved: see
+  :doc:`view` and :doc:`extending`.
+
+``sn.exampleApps``
+  Programs built on the rest: the XMLreader and the pythonParser (see
+  :doc:`extending`).
 
 Running it
 ----------
@@ -74,8 +86,9 @@ From the project's top directory:
 ``./sng [file]``
   The graphical editor: ``python3.14 -m sn.view.graphics.guiApp``.
 
-``./sn [file]``
-  The text interface: ``python3.14 -m sn.view.textUserInterface``.
+``./sn [-m file]``
+  The text interface: ``python3.14 -m sn.view.textUserInterface``, on the
+  model *file* (``--model``; by default, the one it used last).
 
 Both need ``src`` and ``../pythonUtils/src`` on ``PYTHONPATH`` (the scripts
 set it up).
@@ -174,11 +187,19 @@ changes:
   and saves their views (off screen), and installs them in
   ``src/sn/examples/``.
 
-``showScene.py <scene>``
+``showScene.py <scene> [--capture <folder>]``
   Shows one of the scenes the screenshots are of (eg: ``overview``, the
-  family after reasoning), set up from the examples; its documentation lists
-  which screenshots come from which scene. The screenshots themselves are
-  taken by hand: macOS doesn't let a script capture the screen.
+  family after reasoning; ``tree``, the animals arranged by the tree layout;
+  ``pythonparser``, what the pythonParser makes of the XMLreader's code), set
+  up from the examples; its documentation lists which screenshots come from
+  which scene. With ``--capture``, it takes the scene's screenshots itself
+  (with ``screencapture``: it needs screen recording permission) into the
+  folder (``sphinx/source/images/user``), and quits. A few (eg: the
+  attribute editor's) are still taken by hand.
+
+``checkPetsapp.py``
+  Runs the Developer Guide's example program, ``petsapp/`` (see
+  :doc:`extending`), and checks that it does what the guide says.
 
 Both run as a temporary user, on copies, so they never touch your own files
 or preferences.

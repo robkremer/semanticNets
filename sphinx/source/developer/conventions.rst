@@ -10,7 +10,15 @@ Code style
   commands are the exception: ``new_node`` and the like, because their names
   are the command-line words.)
 - Type hints throughout, checked with mypy; ``@override`` on overriding
-  methods.
+  methods. From the project directory:
+
+  .. code-block:: bash
+
+     MYPYPATH=../pythonUtils/src python3.14 -m mypy src/sn
+
+  Keep *sn*'s own modules free of errors (those it reports in pythonUtils'
+  modules are that project's). Where a check can't be satisfied, a ``#
+  type: ignore[code]`` names the error it ignores.
 - A leading underscore marks what's private to a class or module -- and, on
   a context, keeps a method from becoming a command.
 - Imports that would be circular (eg: the view classes, from each other) are
@@ -74,3 +82,13 @@ new objects, and examples such as *brother*, *bachelor* and
 Tests that save models must save them somewhere of their own: build the
 model under a fresh temporary directory, and check its URL is there before
 calling ``save()`` -- never save to a path that could be a real file.
+
+The documentation's examples
+----------------------------
+
+The User Guide's screenshots, the example models, and the Developer Guide's
+example program are made or checked by the scripts in ``tools/docExamples/``
+(see :doc:`overview`). When a change alters what they show, rerun them --
+``makeExamples.py``, ``showScene.py <scene> --capture
+sphinx/source/images/user``, ``checkPetsapp.py`` -- rather than editing the
+pictures or the guide's code by hand.
