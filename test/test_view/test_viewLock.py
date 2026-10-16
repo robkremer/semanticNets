@@ -43,6 +43,11 @@ class FakeModel:
 class FakeWindow:
   def bell(self): pass
 
+class FakeVar:
+  def __init__(self): self.value = False
+  def get(self): return self.value
+  def set(self, value): self.value = value
+
 class FakeView:
   def __init__(self, writeLocked:bool=False):
     self.model = FakeModel(writeLocked)
@@ -52,6 +57,10 @@ class FakeView:
     self.dirty = False
   def setDirty(self, dirty:bool=True): self.dirty = dirty
   def bumpIntruders(self): return []
+  def _editLockedVar(self): # (what "Edit | Lock view" shows: no Tk here)
+    if not hasattr(self, "var"):
+      self.var = FakeVar()
+    return self.var
   isModelEditor = SNGView.isModelEditor
   lockedReason = SNGView.lockedReason
   editLocked = SNGView.editLocked
@@ -99,6 +108,7 @@ class Test(unittest.TestCase):
     self.assertTrue(view.setEditLocked(True))
     self.assertFalse(view.isModelEditor())
     self.assertTrue(view.dirty) # (it's saved with the view)
+    self.assertTrue(view.var.get()) # ("Edit | Lock view" is checked)
     self.assertIn("pencil", view.lockedReason())
     self.assertTrue(view.setEditLocked(False))
     self.assertTrue(view.isModelEditor())
@@ -108,6 +118,7 @@ class Test(unittest.TestCase):
     self.assertFalse(view.isModelEditor())
     self.assertFalse(view.editLocked())
     self.assertFalse(view.setEditLocked(False)) # (it can't be unlocked)
+    self.assertTrue(view.var.get()) # ("Edit | Lock view" stays checked)
     self.assertIn("write-locked", view.lockedReason())
 
   def test0400lockedViewRefusesModelChanges(self):

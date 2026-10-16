@@ -30,7 +30,8 @@ same, without adding what it infers to the views: see
 away. At its right, a pencil says whether the view's model can be edited --
 crossed out if it can't: the view's locked, or the model's write-locked (eg:
 the system model, or the base rules). Clicking it locks or unlocks the view
-(see *SNGView.setEditLocked()*), except a write-locked model's. Next to it is
+(see *SNGView.setEditLocked()*), except a write-locked model's, as "Edit |
+Lock view" does. Next to it is
 the view's zoom (see *SNGView.zoom()*). Shown and hidden with
 "View | Reasoning toolbar" (see *SNGView.showReasoningToolbar()*).
 

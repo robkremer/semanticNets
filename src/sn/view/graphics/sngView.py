@@ -1601,6 +1601,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     addToMenuBar("Edit|Find...", self.openSearchDialog, accelerator=KEY_FIND[1], separatorBefore=True)
     addToMenuBar("Edit|Model preferences...", self.doModelPreferences, separatorBefore=True)
     addToMenuBar("Edit|Replace super-model...", self.doReplaceSuperModel)
+    self._editLockedVar().set(not self.isModelEditor()) # (the model may have been write-locked since)
+    addCheckToMenuBar("Edit|Lock view", self._editLockedVar(), self._onLockViewItem, separatorBefore=True)
     addCheckToMenuBar("View|Animation toolbar", self._animationToolbarShown(), self._onAnimationToolbarItem,
                       cascadePositions={"View": self._afterFileMenu() + 1}) # (after "Edit", made just above)
     addCheckToMenuBar("View|Reasoning toolbar", self._reasoningToolbarShown(),
@@ -1639,6 +1641,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     removeFromMenuBar("Edit|Find...")
     removeFromMenuBar("Edit|Model preferences...")
     removeFromMenuBar("Edit|Replace super-model...")
+    removeFromMenuBar("Edit|Lock view")
     removeFromMenuBar("File|Close model")
     removeFromMenuBar("File|Open super model")
     removeFromMenuBar("View|Animation toolbar")
@@ -4776,6 +4779,27 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     '''
     return self.__dict__.get("_editLocked", False)
 
+  def _editLockedVar(self) -> tk.BooleanVar:
+    '''
+    :returns: Whether the model can't be changed in this view (see
+      *isModelEditor()*) -- what "Edit | Lock view" shows (and sets: see
+      *_onLockViewItem()*).
+    :rtype: tk.BooleanVar
+    '''
+    var = self.__dict__.get("_editLockedVarObj")
+    if var is None:
+      var = self._editLockedVarObj = tk.BooleanVar(self.canvas, value=not self.isModelEditor())
+    return var
+
+  def _onLockViewItem(self) -> None:
+    '''
+    "Edit | Lock view" was chosen: lock or unlock the view, as the pencil in
+    the reasoning toolbar does (see *setEditLocked()*) -- not a write-locked
+    model's.
+    '''
+    if not self.setEditLocked(self._editLockedVar().get()):
+      self.window.bell()
+
   def setEditLocked(self, locked:bool=True) -> bool:
     '''
     Lock this view, so it can't change the model (see *isModelEditor()*) --
@@ -4789,10 +4813,12 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     '''
     if not locked and self.model.writeLocked():
       logger.warning(self.lockedReason())
+      self._editLockedVar().set(True)
       return False
     if locked != self.editLocked():
       self._editLocked = locked
       self.setDirty() # (saved with the view)
+    self._editLockedVar().set(not self.isModelEditor())
     bar = self.__dict__.get("_reasoningToolbar")
     if bar is not None:
       bar.refreshLock()
