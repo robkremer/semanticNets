@@ -28,8 +28,9 @@ same, without adding what it infers to the views: see
 *sn.model.reasoner.clearReasoning()*), and a line saying what the last
 "reason" found. Reasoning isn't redone as the model is edited, so it's a click
 away. At its right, a pencil says whether the view's model can be edited --
-crossed out if it's write-locked (eg: the system model, or the base rules). Shown and hidden with "View | Reasoning toolbar" (see
-*SNGView.showReasoningToolbar()*).
+crossed out if it's write-locked (eg: the system model, or the base rules),
+and next to it, the view's zoom (see *SNGView.zoom()*). Shown and hidden with
+"View | Reasoning toolbar" (see *SNGView.showReasoningToolbar()*).
 
 Created on Oct 5, 2026
 
@@ -53,6 +54,7 @@ TIPS:dict[str, str] = {
   "writable": "The model can be edited (and saved).",
   "locked": "The model is read-only: it can't be changed here (eg: the system model, or the base rules). "
             "Its views can still be arranged and saved.",
+  "zoom": "The view's zoom (View | Zoom).",
 }
 "Tooltips for the toolbar's controls."
 
@@ -97,6 +99,9 @@ class ReasoningToolbar(ttk.Frame):
     self.lockIcon.create_text(size / 2, size / 2, text="\u270e", font=("Arial", int(size * 0.75)), fill="gray25") # (a pencil)
     self.lockIcon.create_line(3, size - 3, size - 3, 3, fill="red3", width=2, tags=("slash",))
     tip(lockFrame, lambda: TIPS["locked" if self.view.model.writeLocked() else "writable"])
+    self.zoomLabel = ttk.Label(self, foreground="gray35", width=5, anchor=tk.E) # (wide enough for "800%": doesn't jiggle as it changes)
+    self.zoomLabel.pack(side=tk.RIGHT, padx=(10, 4))
+    tip(self.zoomLabel, TIPS["zoom"])
     self.refresh()
 
   def refresh(self) -> None:
@@ -108,9 +113,16 @@ class ReasoningToolbar(ttk.Frame):
     self.status.configure(text=summary or "not reasoned")
     self.retractButton.state(["!disabled"] if summary else ["disabled"])
     self.refreshLock()
+    self.refreshZoom()
 
   def refreshLock(self) -> None:
     '''
     Show whether the view's model is write-locked: the pencil crossed out, or not.
     '''
     self.lockIcon.itemconfigure("slash", state=tk.NORMAL if self.view.model.writeLocked() else tk.HIDDEN)
+
+  def refreshZoom(self) -> None:
+    '''
+    Show the view's zoom, as a percentage (eg: "150%").
+    '''
+    self.zoomLabel.configure(text=f"{round(self.view._scale * 100)}%")

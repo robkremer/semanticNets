@@ -4746,6 +4746,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     bb = [bb[0] - 800, bb[1] - 600, bb[2] + 800, bb[3] + 600] # (the canvas extends every way: coordinates may be negative)
     self.scrollRegion = tuple(bb) # (what resetScrollRegion() grows from -- in canvas units, which zooming changes)
     self.canvas.configure(scrollregion=bb) #type: ignore[call-overload]
+    bar = self.__dict__.get("_reasoningToolbar") # (it shows the zoom)
+    if bar is not None:
+      bar.refreshZoom()
 
   def _viewportState(self) -> str:
     '''
