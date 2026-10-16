@@ -126,5 +126,42 @@ class Test(unittest.TestCase):
     self.assertEqual(self.line("query dave has-ancestor ?"), [carol, alice, bob])
     self.assertCountEqual(self.line("query ? has-ancestor bob"), [alice, carol, dave])
 
+  def _searchModel(self) -> tuple:
+    self.line("new node node --type --name person")
+    fred = self.line("new node person --name fred")
+    alfred = self.line('new node person --name "Alfred the Great"')
+    parent = self.line("new relation relation --type --name has-parent")
+    r = self.line(f"new relation has-parent --source fred --destination {alfred.getPRef().tostring(self.m)}") # (by #id: a name with spaces doesn't resolve)
+    return fred, alfred, parent, r
+
+  def test0700modelSearch(self):
+    fred, alfred, parent, r = self._searchModel()
+    m = self.m
+    self.assertEqual(m.search("fred"), [fred, alfred])
+    self.assertEqual(m.search("fred", wholeWord=True), [fred])
+    self.assertEqual(m.search("Fred", matchCase=True), [])
+    self.assertEqual(m.search("FRED", wholeWord=True), [fred])
+    self.assertEqual(m.search("parent", wholeWord=True), [parent, r]) # ("-" separates words)
+    self.assertEqual(m.search("^(fred|alfred)", regex=True), [fred, alfred])
+    self.assertEqual(m.search("isa"), []) # (not isa links)
+    self.assertEqual(m.search("^contains$", regex=True), [])
+    self.assertEqual([o.name for o in m.search("^contains$", regex=True, superModels=True)][:1], ["contains"])
+    with self.assertRaises(Exception):
+      m.search("(", regex=True)
+
+  def test0800searchCommand(self):
+    self._searchModel()
+    out = self.line("search fred")
+    self.assertIn("Nodes (2):", out)
+    self.assertNotIn("Relations", out)
+    self.assertIn('"Alfred the Great"#', out)
+    out = self.line("find parent -w")
+    self.assertIn("Relations (2):", out)
+    self.assertIn("fred#", out.splitlines()[-1]) # (a relation shows its ends)
+    self.assertIn("Nothing", self.line("search Fred --match-case"))
+    self.assertIn("Relations", self.line("search ^contains$ -r -s"))
+    with self.assertRaisesRegex(ValueError, "regular expression"):
+      self.line('search "(" --regex')
+
 if __name__ == "__main__":
   unittest.main()

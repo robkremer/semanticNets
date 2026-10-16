@@ -227,6 +227,7 @@ def _describe(clip:copying.Clip) -> str:
 class ModelContext(CommandContext):
   commandSynonyms:dict[str, Iterable[str]] = {
     "query"          :["?"],
+    "search"         :["find"],
     "assert"         :["!", "declare"],
     "save"           :["write"]}
   
@@ -250,6 +251,11 @@ class ModelContext(CommandContext):
                        "astree"    : ["-t"],
                        "keepdups"  : ["-k"]},
     "validate"       :{"model"     : ["-m"]},
+    "search"         :{"word"      : ["-w", "--whole-word"],
+                       "case"      : ["-c", "--match-case"],
+                       "regex"     : ["-r", "--regular-expression"],
+                       "supers"    : ["-s", "--super-models"],
+                       "model"     : ["-m"]},
     }
   
   commandHelp:dict[str,str] = CommandContext.commandHelp | {
@@ -474,6 +480,51 @@ class ModelContext(CommandContext):
     def cell(v:Any) -> str:
       return v.tostring(relativeTo=model, format="friendly") if isinstance(v, GraphObject) else str(v)
     return "\n".join(", ".join(cell(v) for v in row) for row in rows) if rows else "(no answers)"
+
+  def search(self, pattern:str, /, word:bool=False, case:bool=False, regex:bool=False, supers:bool=False,
+             model:Model|None=None) -> str:
+    '''
+    List the nodes and relations whose names have *pattern* in them (not isa
+    links), each as its name and #id, so later commands can refer to it.
+
+    :param pattern: The text to look for (quoted if it has spaces).
+    :type pattern: str
+    :param word: Match whole words only: not part of a longer one.
+    :type word: bool
+    :param case: Match upper and lower case exactly.
+    :type case: bool
+    :param regex: The pattern is a regular expression (eg: "^has-").
+    :type regex: bool
+    :param supers: Look in the model's super-models too.
+    :type supers: bool
+    :param model: The model to look in. By default, the default model.
+    :type model: Model
+    :returns:
+    :rtype: str
+    '''
+    import re
+    from sn.model.model import makeRelationArrow
+    if model is None:
+      model = self.defaults["model"]
+    assert model is not None
+    try:
+      found = model.search(pattern, wholeWord=word, matchCase=case, regex=regex, superModels=supers)
+    except re.error as ex:
+      raise ValueError(f'"{pattern}" isn\'t a good regular expression: {ex}') from None
+    name = lambda o: o.tostring(relativeTo=model, format="friendly") if o is not None else "?"
+    def line(o:GraphObject) -> str:
+      kind = f'{"type" if o.isType() else "individual"}{", inferred" if o.inferred else ""}'
+      if isinstance(o, Relation):
+        return f'  {name(o)}: {name(o.src)} {makeRelationArrow(o)} {name(o.dst)}  ({kind})'
+      return f'  {name(o)}  ({kind})'
+    if not found:
+      return f'Nothing in {model.name}{" or its super-models" if supers else ""} has a name matching "{pattern}".'
+    lines:list[str] = []
+    for title, group in (("Nodes", [o for o in found if not isinstance(o, Relation)]),
+                         ("Relations", [o for o in found if isinstance(o, Relation)])):
+      if group:
+        lines += [f'{title} ({len(group)}):'] + [line(o) for o in group]
+    return "\n".join(lines)
 
   def show(self, object:GraphObject|Model|None=None, /, model:Model|None=None, detail:bool=False, format:str|None=None) -> str:
     '''

@@ -117,6 +117,30 @@ def makeRelationArrow(rel:Relation) -> str:
     ret = REL_REFLEXIVE + ret
   return ret
 
+def nameMatcher(pattern:str, wholeWord:bool=False, matchCase:bool=False, regex:bool=False) -> Callable[[str], bool]:
+  '''
+  :param pattern: What to look for in a name: plain text, or with *regex* a
+    regular expression (see the *re* module).
+  :type pattern: str
+  :param wholeWord: Only where it's a whole word (or words) of the name: not
+    part of a longer one. As in a text editor, "-" and spaces separate words
+    ("parent" is a whole word of "has-parent"); "_" doesn't.
+  :type wholeWord: bool
+  :param matchCase: Upper and lower case are different.
+  :type matchCase: bool
+  :param regex: *pattern* is a regular expression.
+  :type regex: bool
+  :returns: Whether a name matches: it has *pattern* in it anywhere.
+  :rtype: Callable[[str], bool]
+  :raises re.error: If *pattern* isn't a good regular expression.
+  '''
+  import re
+  body = pattern if regex else re.escape(pattern)
+  if wholeWord:
+    body = rf'(?<!\w)(?:{body})(?!\w)'
+  compiled = re.compile(body, 0 if matchCase else re.IGNORECASE)
+  return lambda name: compiled.search(name) is not None
+
 GORef = PReference["GraphObject"]
 
 _supersInProgress:set[int] = set()
@@ -1722,7 +1746,37 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
       if res:
         ret.append((go, res))
     return ret
-  
+
+  def search(self, pattern:str, wholeWord:bool=False, matchCase:bool=False, regex:bool=False,
+             superModels:bool=False) -> list[GraphObject]:
+    '''
+    :param pattern: What to look for in names (see *nameMatcher()*).
+    :type pattern: str
+    :param wholeWord: See *nameMatcher()*.
+    :type wholeWord: bool
+    :param matchCase: See *nameMatcher()*.
+    :type matchCase: bool
+    :param regex: See *nameMatcher()*.
+    :type regex: bool
+    :param superModels: Look in its super-models too (see *PRDb.allSuperDBs()*).
+    :type superModels: bool
+    :returns: The nodes and relations (types and individuals, asserted and
+      inferred) whose names match: this model's, in order, then each
+      super-model's, nearest first. Not isa links: they're all "isa".
+    :rtype: list[GraphObject]
+    :raises re.error: If *regex* and *pattern* isn't a good regular expression.
+    '''
+    matches = nameMatcher(pattern, wholeWord=wholeWord, matchCase=matchCase, regex=regex)
+    ret:list[GraphObject] = []
+    for db in [self] + (self.allSuperDBs() if superModels else []):
+      if not isinstance(db, Model):
+        continue
+      for go in db.values():
+        if isinstance(go, GraphObject) and not isinstance(go, (IsaIndividual, AllModelCollection)) \
+           and matches(str(go.name)):
+          ret.append(go)
+    return ret
+
   def dependents(self) -> list[tuple[str, str]]:
     '''
     :returns: What still uses this model, as (kind, URL) pairs: ("view", ...)

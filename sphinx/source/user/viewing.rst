@@ -89,6 +89,34 @@ Arranging
 - **view | float all relations** puts every relation's label back midway
   between its ends.
 
+Finding things
+--------------
+
+**Edit | Find...** (**Cmd-F**, or **view | find...**) opens a find dialog:
+type part of a name and press **Return** (or **Find**), and every node and
+relation in the view whose name has it in it is highlighted -- not isa
+links, nor anything hidden -- and the view scrolls to show them. The dialog
+stays open, to search again; **Escape** closes it, and in the window clears
+the highlights (as does **Clear highlights**).
+
+==========================  ===================================================
+option                      finds
+==========================  ===================================================
+Whole word                  the text only as a whole word: *parent* finds
+                            *has-parent*, but not *parents*
+Match case                  upper and lower case as typed
+Regular expression          names matching a regular expression (Python's),
+                            eg: ``^has-`` (names starting with *has-*)
+Whole model                 also what's in the model but not in the view: it's
+                            added to the view (in one step, which **Cmd-Z**
+                            undoes -- after asking, if there are a lot), even
+                            if it's in a hidden or erased category
+Include super-models        with *Whole model*: in the super-models too
+==========================  ===================================================
+
+The terminal's ``search`` command does the same, listing what it finds
+(see :doc:`terminal`).
+
 Zooming and scrolling
 ---------------------
 

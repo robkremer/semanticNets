@@ -94,7 +94,8 @@ KEY_REMOVE =                ('<Shift-KeyPress-BackSpace>', '<Shift-KeyPress-Dele
 "Remove what's selected from the model (after asking)."
 KEY_CLEAR_HIGHLIGHTS =      ('<Escape>'                   , 'esc')
 KEY_VALIDATE =              ('<Command-KeyPress-v>'       , 'cmd+v')
-KEY_TOGGLE_FIELDS_LAYOUT =  ('<Command-KeyPress-f>'       , 'cmd+f')
+KEY_TOGGLE_FIELDS_LAYOUT =  ('<Command-KeyPress-f>'       , 'cmd+f') # (not bound: see KEY_FIND)
+KEY_FIND =                  ('<Command-KeyPress-f>'       , 'Command-F')
 KEY_ZOOM_IN =               ('<Command-KeyPress-equal>'   , 'Command-+') # (also <Command-KeyPress-plus>: shifted, on most keyboards)
 KEY_ZOOM_OUT =              ('<Command-KeyPress-minus>'   , 'Command--')
 KEY_ZOOM_NORMAL =           ('<Command-KeyPress-0>'       , 'Command-0')
@@ -1569,6 +1570,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     addToMenuBar("Edit|Paste", lambda: self._editAction("paste"), accelerator=KEY_PASTE[1])
     addToMenuBar("Edit|Copy as picture", lambda: self._editAction("copy image"), accelerator=KEY_COPY_IMAGE[1])
     addToMenuBar("Edit|Select All", lambda: self._editAction("select all"), accelerator=KEY_SELECT_ALL[1])
+    addToMenuBar("Edit|Find...", self.openSearchDialog, accelerator=KEY_FIND[1], separatorBefore=True)
     addToMenuBar("Edit|Model preferences...", self.doModelPreferences, separatorBefore=True)
     addToMenuBar("Edit|Replace super-model...", self.doReplaceSuperModel)
     addCheckToMenuBar("View|Animation toolbar", self._animationToolbarShown(), self._onAnimationToolbarItem,
@@ -1606,6 +1608,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     removeFromMenuBar("Edit|Paste")
     removeFromMenuBar("Edit|Copy as picture")
     removeFromMenuBar("Edit|Select All")
+    removeFromMenuBar("Edit|Find...")
     removeFromMenuBar("Edit|Model preferences...")
     removeFromMenuBar("Edit|Replace super-model...")
     removeFromMenuBar("File|Close model")
@@ -2889,6 +2892,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
     # abandon an elastic-line choice (or, if there's none, clear the highlights)
     self.canvas.bind(KEY_CLEAR_HIGHLIGHTS[0], self.cancelElasticLine)
+
+    # find objects by name
+    self.canvas.bind(KEY_FIND[0], lambda _e: self.openSearchDialog())
     
     # # validate
     # self.canvas.bind(KEY_VALIDATE[0], lambda _x: self.validate(refresh=True))
@@ -3242,6 +3248,79 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     for vo in list(self._db.values()):
       if vo is not None and getattr(vo, "decorators", None) is not None:
         vo.highlight(False)
+
+  def search(self, pattern:str, wholeWord:bool=False, matchCase:bool=False, regex:bool=False,
+             wholeModel:bool=False, superModels:bool=False,
+             confirm:Callable[[int], bool]|None=None) -> tuple[list[VObject], int]:
+    '''
+    Highlight the nodes and relations in the view whose names match *pattern*
+    (see *sn.model.model.nameMatcher()*) -- not isa links, nor those not drawn
+    just now (see *VObject.isHidden()*) -- replacing any earlier highlights,
+    and scroll to show them. With *wholeModel*, those in the model (and, with
+    *superModels*, its super-models) that aren't in the view are shown first
+    (one undoable command: see *represent()*), even if they're in a hidden or
+    erased category; and so are any of those in the view in such a category.
+
+    :param pattern: What to look for in names.
+    :type pattern: str
+    :param wholeWord: See *nameMatcher()*.
+    :type wholeWord: bool
+    :param matchCase: See *nameMatcher()*.
+    :type matchCase: bool
+    :param regex: See *nameMatcher()*.
+    :type regex: bool
+    :param wholeModel: Look in the model too, and show what's found.
+    :type wholeModel: bool
+    :param superModels: With *wholeModel*: in its super-models too.
+    :type superModels: bool
+    :param confirm: With *wholeModel*: asked, with how many objects would be
+      shown, whether to show them (eg: there are a lot); None: they are.
+    :type confirm: Callable[[int], bool] | None
+    :returns: The view objects highlighted, and how many were shown.
+    :rtype: tuple[list[VObject], int]
+    :raises re.error: If *regex* and *pattern* isn't a good regular expression.
+    '''
+    from sn.model.model import nameMatcher
+    matches = nameMatcher(pattern, wholeWord=wholeWord, matchCase=matchCase, regex=regex)
+    found:list[GraphObject] = []
+    brought = 0
+    if wholeModel:
+      found = self.model.search(pattern, wholeWord=wholeWord, matchCase=matchCase, regex=regex, superModels=superModels)
+      shown = self._shownModelObjects()
+      missing = sorted((o for o in found if id(o) not in shown), key=lambda o: isinstance(o, Relation)) # (nodes first)
+      if missing and (confirm is None or confirm(len(missing))):
+        self.context.represent(missing)
+        brought = len(missing)
+    self.clearHighlights()
+    ret:list[VObject] = []
+    for vo in list(self.values()):
+      mo = vo.modelObject if vo is not None else None
+      if mo is None or isinstance(mo, IsaIndividual) or not vo._isConnected() or not matches(str(mo.name)):
+        continue
+      if wholeModel and vo.isHidden():
+        self._exemptIfFiltered(vo)
+      if not vo.isHidden():
+        vo.highlight(True)
+        ret.append(vo)
+    if ret and self.canvas:
+      def show() -> None: # (once anything just shown is placed: see makeViewObjectForGraphObject())
+        boxes = [vo.boundingBox() for vo in ret if vo._isConnected()]
+        if boxes:
+          self.scrollToShow([min(b[0] for b in boxes), min(b[1] for b in boxes), max(b[2] for b in boxes), max(b[3] for b in boxes)])
+      self.canvas.after_idle(show)
+    return ret, brought
+
+  def openSearchDialog(self) -> None:
+    '''
+    "Edit | Find...": open this view's search dialog (see
+    *sn.view.graphics.searchDialog.SearchDialog*), or bring it to the front.
+    '''
+    from sn.view.graphics.searchDialog import SearchDialog
+    d = self.__dict__.get("_searchDialog")
+    if d is not None and d.winfo_exists():
+      d.bringToFront()
+    else:
+      self.__dict__["_searchDialog"] = SearchDialog(self)
 
   def onB1_ButtonRelease(self, event:tk.Event) -> None:
     """
@@ -4495,6 +4574,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     reasonMenu = tk.Menu(self.canvas)
     bgMenu.add_cascade(label="reasoning", menu=reasonMenu)
     reasonMenu.add_command(label="clear highlights", command=self.clearHighlights, accelerator=KEY_CLEAR_HIGHLIGHTS[1])
+    viewMenu.add_command(label="find...", command=self.openSearchDialog, accelerator=KEY_FIND[1])
     reasonMenu.add_command(label="reason", command=self.reason)
     reasonMenu.add_command(label="reason silently", command=self.reasonSilently)
     reasonMenu.add_command(label="clear reasoning", command=self.clearReasoning,

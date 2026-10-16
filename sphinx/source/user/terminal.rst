@@ -59,6 +59,13 @@ Looking at things:
                        likes ?`` (whom *fred* likes), ``query * fred``
                        (*fred* and all its types). ``?`` goes one level, ``*``
                        all the way
+``search``             list the nodes and relations whose names have some
+                       text in them (also: ``find``): ``search parent``;
+                       options ``--whole-word`` (``-w``), ``--match-case``
+                       (``-c``), ``--regular-expression`` (``-r``: eg:
+                       ``search "^has-" -r``), and ``--super-models``
+                       (``-s``: look in them too). Each is listed with its
+                       id (eg: ``has-parent#276``), to use in later commands
 ``validate``           check an object, or the model
 ``format``             set how objects are printed
 ``cache``              list the models in memory
