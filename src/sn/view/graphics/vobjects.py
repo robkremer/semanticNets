@@ -1049,7 +1049,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     from sn.model import names
     mo = self.modelObject
     ret:dict[str, Callable[[], None]] = {}
-    if mo is None or mo.model.writeLocked():
+    if mo is None or not self.view.isModelEditor():
       return ret
     def then(fix:Callable[[], Any]) -> Callable[[], None]:
       def go() -> None:
@@ -1438,8 +1438,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     if editable:
       self.addModelEditingMenuItems(m)
       m.add_separator()
-    else:
-      m.add_command(label='<not a model editor>', state=tk.DISABLED)
+    elif self.modelObject is not None:
+      m.add_command(label="show attributes", command=lambda: self.onEditAttributes(disabled=True))
+      m.add_command(label="(the model can't be changed in this view)", state=tk.DISABLED)
+      m.add_separator()
     self.addViewMenuItems(m)
     # m.add_separator()
     # self.addDeletionMenuItems(m)
@@ -1877,7 +1879,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     if "disabled" in self.decorators and mo is not None:
       disabled = mo.isDisabled()
       menu.add_command(label="enable" if disabled else "disable",
-                       state=tk.DISABLED if mo.model is not self.view.model or mo.model.writeLocked() else tk.NORMAL,
+                       state=tk.DISABLED if mo.model is not self.view.model or not self.view.isModelEditor() else tk.NORMAL,
                        command=lambda: self.view.context.set_attribute(mo, GraphObject.DISABLED, not disabled))
     if self.isContextWindow():
       menu.add_command(label="gather", command=lambda: self.view.gatherIntoWindow(self))

@@ -27,7 +27,7 @@ from sn.model.constraints import WHERE, CONSTRAINTS, CONSTRAINTS_NOTE, splitWher
 from util.attribute import Attribute, VAR
 from sn.model.model import Model, Node, Relation, Collection, IsaIndividual, SN_URL,\
   GraphObject, GORef
-from sn.controller.modelInterface import ModelContext
+from sn.controller.modelInterface import ModelContext, changesModel
 
 from contextlib import contextmanager
 from functools import partial
@@ -932,6 +932,22 @@ class ViewDoList(DoList):
         logger.exception(f'the view\'s dynamic layout ("{layout.NAME}") couldn\'t adjust it')
     self.view.canvas.after_idle(again)
 
+  def _refuses(self, c:Command, doing:str) -> bool:
+    '''
+    :param c: The command about to be done, undone or redone.
+    :type c: Command
+    :param doing: What's being done with it, for the message: eg, "undo".
+    :type doing: str
+    :returns: Whether it's refused (with a warning): it changes the model, and
+      the view can't (see *SNGView.isModelEditor()*).
+    :rtype: bool
+    '''
+    if self.view.isModelEditor() or not changesModel(c):
+      return False
+    logger.warning(f'Can\'t {doing} "{c.name}". {self.view.lockedReason()}')
+    self.view.window.bell()
+    return True
+
   @override
   def do(self, c:Command) -> Any:
     '''
@@ -939,8 +955,12 @@ class ViewDoList(DoList):
     :type c: Command
     :returns:
     :rtype: Any
+    :raises PermissionError: If *c* changes the model, and the view can't (see
+      *SNGView.isModelEditor()*).
     '''
     finishTween(self.view)
+    if not self.view.isModelEditor() and changesModel(c):
+      raise PermissionError(self.view.lockedReason())
     ret = super().do(c)
     if c.mutatedData and 0 <= self.index < len(self.queue) and self.queue[self.index] is c:
       try:
@@ -963,11 +983,15 @@ class ViewDoList(DoList):
   @override
   def undo(self) -> Any:
     finishTween(self.view)
+    if 0 <= self.index < len(self.queue) and self._refuses(self.queue[self.index], "undo"):
+      return None
     return super().undo()
 
   @override
   def redo(self) -> Any:
     finishTween(self.view)
+    if 0 <= self.index + 1 < len(self.queue) and self._refuses(self.queue[self.index + 1], "redo"):
+      return None
     return super().redo()
 
 class _ContainCreated(Command):
@@ -1301,6 +1325,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         lambda slf: cast(SNGView, slf)._viewportState(),
         lambda slf, v: setattr(slf, "_pendingViewport", str(v)), # (applied once the view is built: see _restoreViewport())
         optional=True)) # optional: views saved before it existed still load (at zoom 1, scrolled to the top left)
+    ret.postconSetters.append(PropertyInfo("editLocked", str,
+        lambda slf: "1" if cast(SNGView, slf).editLocked() else "0",
+        lambda slf, v: setattr(slf, "_editLocked", str(v) == "1"),
+        optional=True)) # optional: views saved before it existed still load (unlocked)
     ret.postconSetters.append(PropertyInfo("layoutParameters", str,
         lambda slf: cast(SNGView, slf)._layoutParametersState(),
         lambda slf, v: cast(SNGView, slf)._restoreLayoutParameters(str(v)), # (by name: relations are looked up when used)
@@ -1452,8 +1480,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     from tkinter import messagebox
     from sn.view.graphics.replaceModelDialog import ReplaceModelDialog
     model = self.model
-    if model.writeLocked():
-      messagebox.showinfo("Replace super-model", f'"{model.url}" is write-locked: it can\'t be changed.', parent=self.window)
+    if not self.isModelEditor():
+      messagebox.showinfo("Replace super-model", self.lockedReason(), parent=self.window)
       return
     answer = ReplaceModelDialog(self.window, model).show()
     if answer is None:
@@ -1494,8 +1522,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     model = self.model
     if model is None or not hasattr(model, "prefs"):
       return
-    if model.writeLocked():
-      messagebox.showinfo("Model preferences", f'"{model.url}" is write-locked: its preferences can\'t be changed.', parent=self.window)
+    if not self.isModelEditor():
+      messagebox.showinfo("Model preferences", self.lockedReason(), parent=self.window)
       return
     modelFile = model.url[len("file://"):] if model.url.startswith("file://") else ""
     def chooseModel(parent:tk.Misc) -> str|None:
@@ -2454,6 +2482,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :type confirm: bool
     '''
     from tkinter import messagebox
+    if not self.isModelEditor():
+      logger.warning(f"Nothing's removed. {self.lockedReason()}")
+      return
     mos:list[GraphObject] = []
     skipped:list[str] = []
     for vo in vos:
@@ -4388,6 +4419,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :param draggedAlong:
     :type draggedAlong: Iterable[VObject]
     '''
+    if not self.isModelEditor(): # (containment's in the model: a locked view just moves things)
+      return
     along = set(draggedAlong)
     def endsIn(r:VRelation, w:VObject) -> int: # how many of relation r's ends are in w's window
       return sum(1 for e in (r.src, r.dst) if isinstance(e, VObject) and w.paneAt(e.centerPt()) is not None)
@@ -4718,9 +4751,51 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
   def isModelEditor(self) -> bool:
     '''
-    :returns:
+    :returns: Whether the model can be changed in this view: it isn't locked
+      (see *setEditLocked()*), and the model isn't write-locked. Either way,
+      the view itself can be (eg: moving things, or erasing them from view).
     :rtype: bool
     '''
+    return not self.__dict__.get("_editLocked", False) and not self.model.writeLocked()
+
+  def lockedReason(self) -> str:
+    '''
+    :returns: Why the model can't be changed in this view (see
+      *isModelEditor()*), for a message.
+    :rtype: str
+    '''
+    if self.model.writeLocked():
+      return f'"{self.model.name}" is write-locked: it can\'t be changed here.'
+    return "This view is locked: it can't change the model. Click the pencil (bottom right) to unlock it."
+
+  def editLocked(self) -> bool:
+    '''
+    :returns: Whether the user's locked this view, so it can't change the
+      model (see *setEditLocked()*).
+    :rtype: bool
+    '''
+    return self.__dict__.get("_editLocked", False)
+
+  def setEditLocked(self, locked:bool=True) -> bool:
+    '''
+    Lock this view, so it can't change the model (see *isModelEditor()*) --
+    only how it's shown -- or unlock it. Not other views of the model. It's
+    saved with the view. A write-locked model's view can't be unlocked.
+
+    :param locked:
+    :type locked: bool
+    :returns: Whether it's done (unlocking a write-locked model's view isn't).
+    :rtype: bool
+    '''
+    if not locked and self.model.writeLocked():
+      logger.warning(self.lockedReason())
+      return False
+    if locked != self.editLocked():
+      self._editLocked = locked
+      self.setDirty() # (saved with the view)
+    bar = self.__dict__.get("_reasoningToolbar")
+    if bar is not None:
+      bar.refreshLock()
     return True
   
   def zoom(self, scale:float=1.0, delta=False):

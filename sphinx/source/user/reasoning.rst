@@ -19,8 +19,13 @@ summary is printed: eg: so that queries find what the rules conclude without
 cluttering the canvas. (Hover over a button to see what it does.) The toolbar also
 says what the last reason found -- how many relations and new objects it
 inferred, and how many problems -- and, at its right, whether the model can
-be edited: a pencil, crossed out in red if the model is read-only (eg: the
-system model, or the base rules). (**View | Reasoning toolbar** hides it, or
+be edited: a pencil, crossed out in red if it can't be here. Click the pencil
+to lock the view, so it can't change the model -- not even by dragging the
+end of an arc to another object -- but can still be arranged (moving things,
+erasing them from view, layouts) and saved; click it again to unlock it. The
+lock is saved with the view, and other views of the model aren't locked. A
+read-only model's view (eg: the system model, or the base rules) can't be
+unlocked. (**View | Reasoning toolbar** hides it, or
 shows it again.) The report goes to the terminal pane, in sections:
 
 **Violations**

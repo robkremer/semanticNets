@@ -28,8 +28,10 @@ same, without adding what it infers to the views: see
 *sn.model.reasoner.clearReasoning()*), and a line saying what the last
 "reason" found. Reasoning isn't redone as the model is edited, so it's a click
 away. At its right, a pencil says whether the view's model can be edited --
-crossed out if it's write-locked (eg: the system model, or the base rules),
-and next to it, the view's zoom (see *SNGView.zoom()*). Shown and hidden with
+crossed out if it can't: the view's locked, or the model's write-locked (eg:
+the system model, or the base rules). Clicking it locks or unlocks the view
+(see *SNGView.setEditLocked()*), except a write-locked model's. Next to it is
+the view's zoom (see *SNGView.zoom()*). Shown and hidden with
 "View | Reasoning toolbar" (see *SNGView.showReasoningToolbar()*).
 
 Created on Oct 5, 2026
@@ -51,7 +53,10 @@ TIPS:dict[str, str] = {
                     "are marked), and print just a summary -- eg: so that queries find what the rules conclude.",
   "retract": "Retract: take what the reasoner inferred back out of the model (and its views).",
   "status": "What the last \"reason\" found: the objects it inferred, and the problems (violations) it found.",
-  "writable": "The model can be edited (and saved).",
+  "writable": "The model can be edited in this view (and saved). "
+              "Click to lock the view, so it can't change the model (it can still be arranged).",
+  "viewLocked": "This view is locked: it can't change the model, though it can still be arranged and saved. "
+                "Click to unlock it.",
   "locked": "The model is read-only: it can't be changed here (eg: the system model, or the base rules). "
             "Its views can still be arranged and saved.",
   "zoom": "The view's zoom (View | Zoom).",
@@ -67,7 +72,7 @@ class ReasoningToolbar(ttk.Frame):
   ICON_WIDTH = 2
   "The width (characters) of the toolbar's icon buttons."
   LOCK_SIZE = 18
-  "The width and height (pixels) of the pencil that says whether the model's write-locked."
+  "The width and height (pixels) of the pencil that says whether the model can be changed in the view."
 
   def __init__(self, master:tk.Misc, view:SNGView):
     '''
@@ -98,7 +103,8 @@ class ReasoningToolbar(ttk.Frame):
     self.lockIcon.pack()
     self.lockIcon.create_text(size / 2, size / 2, text="\u270e", font=("Arial", int(size * 0.75)), fill="gray25") # (a pencil)
     self.lockIcon.create_line(3, size - 3, size - 3, 3, fill="red3", width=2, tags=("slash",))
-    tip(lockFrame, lambda: TIPS["locked" if self.view.model.writeLocked() else "writable"])
+    self.lockIcon.bind("<Button-1>", lambda _event: self.toggleLock())
+    tip(lockFrame, lambda: TIPS["locked" if self.view.model.writeLocked() else "viewLocked" if self.view.editLocked() else "writable"])
     self.zoomLabel = ttk.Label(self, foreground="gray35", width=5, anchor=tk.E) # (wide enough for "800%": doesn't jiggle as it changes)
     self.zoomLabel.pack(side=tk.RIGHT, padx=(10, 4))
     tip(self.zoomLabel, TIPS["zoom"])
@@ -117,9 +123,20 @@ class ReasoningToolbar(ttk.Frame):
 
   def refreshLock(self) -> None:
     '''
-    Show whether the view's model is write-locked: the pencil crossed out, or not.
+    Show whether the model can be changed in the view (see
+    *SNGView.isModelEditor()*): the pencil, or the pencil crossed out. It's a
+    button unless the model's write-locked.
     '''
-    self.lockIcon.itemconfigure("slash", state=tk.NORMAL if self.view.model.writeLocked() else tk.HIDDEN)
+    self.lockIcon.itemconfigure("slash", state=tk.HIDDEN if self.view.isModelEditor() else tk.NORMAL)
+    self.lockIcon.configure(cursor="" if self.view.model.writeLocked() else "hand2")
+
+  def toggleLock(self) -> None:
+    '''
+    The pencil's clicked: lock the view so it can't change the model, or
+    unlock it (see *SNGView.setEditLocked()*) -- not a write-locked model's.
+    '''
+    if self.view.model.writeLocked() or not self.view.setEditLocked(not self.view.editLocked()):
+      self.bell()
 
   def refreshZoom(self) -> None:
     '''

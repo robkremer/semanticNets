@@ -148,6 +148,22 @@ transitive by giving it an attribute of that name (eg: "set attribute
 has-sibling symmetric yes"); "reason" draws the conclusions.
 """
 
+class ModelCommand(Command):
+  '''
+  A command that changes a model -- not just how a view shows it. A view
+  that can't change its model refuses them (see *SNGView.isModelEditor()*).
+  '''
+
+def changesModel(c:Command) -> bool:
+  '''
+  :param c:
+  :type c: Command
+  :returns: Whether *c* changes a model: it's a *ModelCommand*, or a
+    composite command with one in it.
+  :rtype: bool
+  '''
+  return isinstance(c, ModelCommand) or any(changesModel(x) for x in getattr(c, "commands", ()))
+
 def _refuseInferred(doing:str, *objects:Any) -> None:
   '''
   :param doing: What would be done, for the message, eg: "remove".
@@ -743,7 +759,7 @@ class ModelContext(CommandContext):
     '''
     pass
     
-  class _Set_attribute(Command): 
+  class _Set_attribute(ModelCommand): 
     def __init__(self, object:GraphObject, key:str, value:Any, /, 
                  model:Model|None=None, type:str|None=None, restriction:str|None=None):
       '''
@@ -841,7 +857,7 @@ class ModelContext(CommandContext):
     '''
     pass
     
-  class _Delete_attribute(Command): 
+  class _Delete_attribute(ModelCommand): 
     def __init__(self, object:GraphObject, key:str, /, 
                  model:Model|None=None):
       '''
@@ -1075,7 +1091,7 @@ class ModelContext(CommandContext):
     '''
     pass
 
-  class _Assert_(Command):
+  class _Assert_(ModelCommand):
     def __init__(self, objects:list[str|GraphObject], /, type:bool=False, model:Optional[Model]=None):
       '''
       Assert a predicate in the model; ie: create an object of some type,
@@ -1267,7 +1283,7 @@ class ModelContext(CommandContext):
     '''
     pass
     
-  class _New_node(Command):
+  class _New_node(ModelCommand):
     def __init__(self, parent:str|GraphObject|list[str|GraphObject], /, name:Optional[str]=None, individual:bool=False, type:bool=False, model:Optional[Model]=None):
       '''
       Create a new Node object.
@@ -1353,7 +1369,7 @@ class ModelContext(CommandContext):
     '''
     pass
     
-  class _Remove(Command):
+  class _Remove(ModelCommand):
     def __init__(self, object:GraphObject):
       '''
       Delete a object from it's model.
@@ -1426,7 +1442,7 @@ class ModelContext(CommandContext):
     '''
     pass
 
-  class _Cut(Command):
+  class _Cut(ModelCommand):
     def __init__(self, objects:list[GraphObject], /, model:Model|None=None):
       '''
       Copy objects to the clipboard, and remove them from the model -- a
@@ -1486,7 +1502,7 @@ class ModelContext(CommandContext):
     '''
     pass
 
-  class _Paste(Command):
+  class _Paste(ModelCommand):
     def __init__(self, /, model:Model|None=None):
       '''
       Make new objects in the model, copying what was last cut or copied.
@@ -1549,7 +1565,7 @@ class ModelContext(CommandContext):
     '''
     pass
 
-  class _Set_kind(Command):
+  class _Set_kind(ModelCommand):
     def __init__(self, object:GraphObject, kind:str):
       '''
       Make an object an individual, or a type.
@@ -1602,7 +1618,7 @@ class ModelContext(CommandContext):
     '''
     pass
 
-  class _Mark_asserted(Command):
+  class _Mark_asserted(ModelCommand):
     def __init__(self, object:GraphObject):
       '''
       Make an inferred object asserted.
@@ -1676,7 +1692,7 @@ class ModelContext(CommandContext):
     '''
     pass
 
-  class _Reconnect(Command):
+  class _Reconnect(ModelCommand):
     def __init__(self, relation:GraphObject, /, source:GraphObject|None=None, destination:GraphObject|None=None,
                  clear_source:bool=False, clear_destination:bool=False):
       '''
@@ -1778,7 +1794,7 @@ class ModelContext(CommandContext):
     '''
     pass
     
-  class _New_relation(Command):
+  class _New_relation(ModelCommand):
     def __init__(self, parent:str|GraphObject|list[str|GraphObject], /, 
                  name:Optional[str]=None, 
                  individual:bool=False, type:bool=False, 
