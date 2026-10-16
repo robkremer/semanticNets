@@ -205,10 +205,10 @@ class Test(unittest.TestCase):
                          ("set kind likes type", "object"),
                          ("mark asserted likes", "object")):
       with self.subTest(line=line):
-        with self.assertRaisesRegex(ValueError, f'^--{option}: .*"#likes" resolves to multiple objects') as cm:
+        with self.assertRaisesRegex(ValueError, f'^{option}: .*"#likes" resolves to multiple objects') as cm:
           self.line(line)
         self.assertIsInstance(cm.exception.__cause__, DuplicateNameError)
-    with self.assertRaisesRegex(ValueError, '^--relation: There\'s no object named "nobody"'):
+    with self.assertRaisesRegex(ValueError, '^relation: There\'s no object named "nobody"'):
       self.line("reconnect nobody")
 
 if __name__ == "__main__":
