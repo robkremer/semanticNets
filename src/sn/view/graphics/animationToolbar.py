@@ -44,7 +44,7 @@ from util.tooltip import CreateToolTip
 if TYPE_CHECKING:
   from sn.view.graphics.sngView import SNGView
 
-DEFAULTS:dict[str, float] = {"flowStrength": 6.0, "e": 1000.0, "k": 0.005, "heat": 6.0, "cooling": 0.7, "leaps": 0.0}
+DEFAULTS:dict[str, float] = {"flowStrength": 6.0, "e": 1000.0, "k": 0.005, "heat": 6.0, "cooling": 0.7, "leaps": 0.05}
 "The settings *Reset* puts back (the animation layout's own defaults)."
 
 def coolingLoss(cooling:float) -> str:

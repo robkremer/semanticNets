@@ -642,7 +642,7 @@ class FieldsLayout():
     (scaled by *temperature*, so it fades as the layout cools) -- to shake the
     layout out of dead ends, eg: a tree pointing straight against the current.
     '''
-    self.leaps:float = 0.0
+    self.leaps:float = 0.05
     '''
     The chance, in a step, of a leap (see *leap()*): an object whose relations
     are stretched -- eg: held off behind a wall of other objects -- jumps right

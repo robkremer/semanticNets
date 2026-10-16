@@ -1728,7 +1728,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     '''
     :returns: What's saved with the view about its animation layout: whether
       the animation toolbar is shown, and the settings it shows -- eg:
-      "toolbar=1;direction=down;follows=isa;labels=1;flowStrength=6.0;e=1000.0;k=0.005;heat=6.0;cooling=0.7;leaps=0.0".
+      "toolbar=1;direction=down;follows=isa;labels=1;flowStrength=6.0;e=1000.0;k=0.005;heat=6.0;cooling=0.7;leaps=0.05".
     :rtype: str
     '''
     layout = self.animationLayout()

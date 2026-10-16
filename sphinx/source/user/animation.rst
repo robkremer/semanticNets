@@ -82,7 +82,7 @@ leaps           the chance, in a step, that an object stuck away from what
                 it's related to (eg: behind a wall of other objects) jumps
                 right across to land beside it -- like tunnelling. The more
                 stretched its relations, the likelier it is to go. Leaps fade
-                as the layout cools; 0% (the default) for none. The status
+                as the layout cools; 5% by default, 0% for none. The status
                 shows how many there have been
 place labels    whether a run ends by finding free places for the relations'
                 labels (which can take a while in a crowded view). Ticked
@@ -104,7 +104,7 @@ Tips
 - If a tree won't turn the right way up, raise **heat** a little and run it
   again.
 - If parts of the graph get stuck behind others, far from what they're
-  related to, raise **leaps** (eg: to 5--10%), and run it again.
+  related to, raise **leaps** (eg: to 10--20%), and run it again.
 - For a big or tangled view, slide **cooling** to the left and leave it to
   run (eg: while you get a coffee): the longer it stays warm, the more it
   explores before it settles. Press the button to stop it whenever you like.
