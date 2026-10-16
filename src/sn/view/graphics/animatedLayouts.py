@@ -604,9 +604,14 @@ class FieldsLayout():
     off, eg: while starting run after run, the labels just stay between their
     ends (see *settleLabels()* to place them later).
     '''
-    self._killFlag = False
     self.active = False
     'Indicates the animation is running.'
+    self._run = 0
+    '''
+    Counts the runs, and the stops: each step is queued for the run it belongs
+    to (see *_later()*), and dropped if that run has been stopped since -- so a
+    stop takes effect at once, whatever's pending (even a thread's step).
+    '''
     self._start:dict[int, tuple[VObject, list[int]]] = {} # id(vo) -> (vo, its bounding box when the run started): for the undo
     self._wasFloating:dict[int, bool] = {} # id(label) -> whether it floated when the run started, for the labels it pinned: for the undo
     self._pins:set[int] = set() # id(label) of the floating labels this step places (see Snapshot.pinned)
@@ -635,23 +640,69 @@ class FieldsLayout():
     '''
     if self.active:
       return
-    self._killFlag = False
+    try:
+      view = self.view
+    except WeakrefError:
+      return
     self._start, self._wasFloating = {}, {}
     self.temperature, self._best, self._stalled = 1.0, float("inf"), 0
     self._misalignment, self._bestMisalignment, self._arranged = None, float("inf"), False
     self._straightening, self._straightened = 0, False
+    # (nothing's being dragged if it's being started: a drag that was never put
+    # back -- see VObject.onButton_1() -- would leave the layout standing still)
+    view.suppressLocalLayout(False)
     self.active = True
+    self._run += 1
     logger.info("FieldsLayout animation on")
-    self._call(autoOff)
+    self._step(self._run, lambda: self._call(autoOff))
 
   def kill(self, obj:Optional[VObject]=None):
     '''
-    Stop the animation (after the current step).
+    Stop the animation, now: the steps are made between Tk events, so the last
+    one is done; whatever's queued (or being worked out in a thread) is
+    dropped (see *_run*), and the run ends (see *_finish()*).
 
     :param obj: Ignored.
     :type obj: Optional[VObject]
     '''
-    self._killFlag = True
+    if self.active:
+      self._run += 1
+      self._finish()
+
+  def _later(self, ms:int, step:Any) -> None:
+    '''
+    Queue the next step of this run, in *ms* (see *_step()*).
+
+    :param ms: When (ms from now).
+    :type ms: int
+    :param step: What it does.
+    :type step: Callable[[], None]
+    :raises WeakrefError: If the view has gone.
+    '''
+    run = self._run
+    self.view.canvas.winfo_toplevel().after(ms, lambda: self._step(run, step))
+
+  def _step(self, run:int, step:Any) -> None:
+    '''
+    Do a step of run *run* -- unless it's been stopped since (see *_run*). A
+    step that fails ends the run (logging why), rather than leaving it
+    running with no next step queued: stuck, with nothing to stop.
+
+    :param run: The run it's for (see *_run*).
+    :type run: int
+    :param step: What it does.
+    :type step: Callable[[], None]
+    '''
+    if run != self._run or not self.active:
+      return
+    try:
+      step()
+    except WeakrefError: # (the view has gone)
+      self.active = False
+    except Exception:
+      logger.exception("Exception during FieldsLayout processing: the animation stops.")
+      self._run += 1
+      self._finish()
 
   def setRelationWeight(self, relationName:str, weight:float=0.5):
     '''
@@ -682,9 +733,23 @@ class FieldsLayout():
     :returns: (object, (dx, dy)) for the objects that should move this step.
     :rtype: list[tuple[VObject, tuple[float, float]]]
     '''
+    ret, self._misalignment, self._pins = self._work(snap)
+    return ret
+
+  def _work(self, snap:Snapshot) -> tuple[list[tuple[VObject, tuple[float, float]]], float|None, set[int]]:
+    '''
+    What *_forces()* works out, without keeping any of it: safe in a thread
+    (see *FieldsLayout_threaded*) -- even one whose run has been stopped, and
+    another started (see *_run*).
+
+    :param snap: The graph.
+    :type snap: Snapshot
+    :returns: The moves (see *_forces()*), the misalignment (see *_cool()*), and the pins (see *_pins*).
+    :rtype: tuple[list[tuple[VObject, tuple[float, float]]], float|None, set[int]]
+    '''
     flow = FLOW_DIRECTIONS.get(self.flowDirection or "")
     # (how far, in all, the current's relations are from in line: see _cool(); None while there's no current)
-    self._misalignment = misalignment(snap, flow) if flow is not None else None
+    misaligned = misalignment(snap, flow) if flow is not None else None
     # (once arranged, while settling, the layers are straightened: the pull to them
     # stiffens, and doesn't fade as it cools -- the cooling step limit still ends the run)
     settling = flow is not None and self._arranged
@@ -695,7 +760,7 @@ class FieldsLayout():
                    layerGain=self.settleLayerGain if settling else self.layerGain, straighten=straighten,
                    flowSpacing=self.flowSpacing, heat=(self.heat * self.temperature) if flow is not None and not straighten else 0.0,
                    arranging=flow is not None and not self._arranged)
-    self._pins = {id(snap.objects[i]) for i in snap.pinned}
+    pins = {id(snap.objects[i]) for i in snap.pinned}
     # (an object moves if it moves enough -- or if its window does: it mustn't be left behind)
     moving:set[int] = set()
     ret:list[tuple[VObject, tuple[float, float]]] = []
@@ -705,7 +770,7 @@ class FieldsLayout():
         moving.add(i)
         ret.append((snap.objects[i], (dx, dy)))
         ret += [(vo, (dx, dy)) for vo in snap.passengers.get(i, ())]
-    return ret
+    return ret, misaligned, pins
 
   def _call(self, autoOff:bool):
     '''
@@ -716,8 +781,8 @@ class FieldsLayout():
     '''
     try:
       changes = self._forces(self._snapshot())
-    except WeakrefError: # (the view has gone)
-      return
+    except WeakrefError: # (the view has gone: the run ends -- see _step())
+      raise
     except Exception:
       logger.exception("Exception during FieldsLayout processing.")
       changes = []
@@ -733,10 +798,7 @@ class FieldsLayout():
     :param autoOff: As for *__call__()*.
     :type autoOff: bool
     '''
-    try:
-      view = self.view
-    except WeakrefError:
-      return
+    view = self.view # (gone: the run ends -- see _step())
     if view.suppressLocalLayout(): # (something's being dragged: don't fight the user -- try again later)
       changes = []
       moved = True
@@ -751,14 +813,14 @@ class FieldsLayout():
       moved = len(changes) > 0
       self._cool(sum(abs(dx) + abs(dy) for _, (dx, dy) in changes))
       # (settled, with a current: straighten its layers before stopping -- see *straightenSteps*)
-      if self.flowDirection in FLOW_DIRECTIONS and not self._killFlag and (not moved or self.temperature < 0.1):
+      if self.flowDirection in FLOW_DIRECTIONS and (not moved or self.temperature < 0.1):
         if self._straightening == 0 and not self._straightened:
           self._straightening, self._straightened, moved = self.straightenSteps, True, True
         elif self._straightening > 0:
           self._straightening -= 1
           moved = self._straightening > 0 and moved
-    if (moved or not autoOff) and not self._killFlag:
-      view.canvas.winfo_toplevel().after(self.dtime, lambda: self._call(autoOff))
+    if moved or not autoOff:
+      self._later(self.dtime, lambda: self._call(autoOff))
     else:
       self._finish()
 
@@ -846,15 +908,18 @@ class FieldsLayout():
       view = self.view
     except WeakrefError:
       return
-    if self.placeLabels:
-      self._settleLabels(view)
-    moved = [(vo, bb) for vo, bb in start.values() if vo._isConnected() and list(vo.boundingBox()) != bb]
-    if moved:
-      from util.commandParser import CompositeCommandMgr
-      with CompositeCommandMgr(view.context):
-        for vo, bb in moved:
-          now = vo.boundingBox()
-          view.context.move(vo, now[0], now[1], _oldPos=bb, adjustPos=False, _carry=False, _wasFloating=wasFloating.get(id(vo)))
+    try:
+      if self.placeLabels:
+        self._settleLabels(view)
+      moved = [(vo, bb) for vo, bb in start.values() if vo._isConnected() and list(vo.boundingBox()) != bb]
+      if moved:
+        from util.commandParser import CompositeCommandMgr
+        with CompositeCommandMgr(view.context):
+          for vo, bb in moved:
+            now = vo.boundingBox()
+            view.context.move(vo, now[0], now[1], _oldPos=bb, adjustPos=False, _carry=False, _wasFloating=wasFloating.get(id(vo)))
+    except Exception: # (stopped all the same: see _step())
+      logger.exception("FieldsLayout: couldn't finish the run (its moves may not be undoable)")
 
 class FieldsLayout_threaded(FieldsLayout):
   '''
@@ -877,37 +942,30 @@ class FieldsLayout_threaded(FieldsLayout):
     :param autoOff: As for *FieldsLayout.__call__()*.
     :type autoOff: bool
     '''
-    try:
-      snap = self._snapshot()
-      top = self.view.canvas.winfo_toplevel()
-    except WeakrefError:
-      return
+    snap = self._snapshot() # (on failing, the run ends: see _step())
     result:queue.SimpleQueue = queue.SimpleQueue()
     def work():
       try:
-        result.put((self._forces(snap), None))
+        result.put((self._work(snap), None))
       except Exception:
-        result.put(([], format_exc()))
+        result.put((([], None, set()), format_exc()))
     Thread(target=work, daemon=True).start()
-    top.after(self.POLL_MS, lambda: self._poll(result, autoOff))
+    self._later(self.POLL_MS, lambda: self._poll(result, autoOff))
 
   def _poll(self, result:queue.SimpleQueue, autoOff:bool):
     '''
     On the GUI thread: if the thread's step is done, make its moves (see
     *_commitChanges()*); otherwise check again shortly.
 
-    :param result: Where the thread leaves (changes, error).
+    :param result: Where the thread leaves ((changes, misalignment, pins), error): see *_work()*.
     :type result: queue.SimpleQueue
     :param autoOff: As for *FieldsLayout.__call__()*.
     :type autoOff: bool
     '''
     try:
-      changes, error = result.get_nowait()
+      (changes, self._misalignment, self._pins), error = result.get_nowait()
     except queue.Empty:
-      try:
-        self.view.canvas.winfo_toplevel().after(self.POLL_MS, lambda: self._poll(result, autoOff))
-      except WeakrefError:
-        pass
+      self._later(self.POLL_MS, lambda: self._poll(result, autoOff))
       return
     if error:
       logger.error(f"Exception during FieldsLayout processing: {error}")
