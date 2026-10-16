@@ -3132,15 +3132,14 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     # plain Button1 down: multi-select box
     for s in self.selected.copy():  # unselect everything
       s.selected(False)
-    # 0:rect, 1:event-x, 2:event-y, 3:activated
-
-    rect = self.viewToWindow(self.canvas.canvasx(event.x), self.canvas.canvasy(event.y), self.canvas.canvasx(event.x), self.canvas.canvasy(event.y))
-    #rect = self.windowToView(self.canvas.canvasx(event.x), self.canvas.canvasy(event.y), self.canvas.canvasx(event.x), self.canvas.canvasy(event.y))
-    #rect = [self.canvas.canvasx(event.x), self.canvas.canvasy(event.y), self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)]
+    # 0:rect, 1:canvas-x, 2:canvas-y, 3:activated
+    # (canvasx()/canvasy() already give canvas coordinates -- scrolled and zoomed,
+    # like the drawn items -- so no viewToWindow() here: that zoomed it twice)
+    x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
     self._selectionBoxInfo = [
-        self.canvas.create_rectangle(rect, fill="", width=3, outline="blue", dash=(1,6)), 
-        rect[0], #event.x, 
-        rect[1], #event.y, 
+        self.canvas.create_rectangle(x, y, x, y, fill="", width=3, outline="blue", dash=(1,6)),
+        x,
+        y,
         False]
 
   def onB1_Motion(self, event):
@@ -3183,7 +3182,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       # adjust selection box
       if self._selectionBoxInfo is not None:
         self._selectionBoxInfo[3] = True # activated
-        bb = self.viewToWindow(normalizeRect([self._selectionBoxInfo[1], self._selectionBoxInfo[2], self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)]))
+        bb = normalizeRect([self._selectionBoxInfo[1], self._selectionBoxInfo[2], self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)])
         self.canvas.coords(self._selectionBoxInfo[0], bb)
     except:
       logger.exception("SNView.onB1_Motion()")
@@ -3430,7 +3429,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
           if n is not None and n._shape.id == _id:
             n.selected(True, _multi=True)
       self.canvas.delete(self._selectionBoxInfo[0])
-      self.selectionBoxInfo = None
+      self._selectionBoxInfo = None
 
   def onMouseWheel(self, event):
     """
