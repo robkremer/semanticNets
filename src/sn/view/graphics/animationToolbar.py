@@ -36,18 +36,38 @@ Created on Oct 1, 2026
 from __future__ import annotations
 import tkinter as tk
 from tkinter import ttk
-from typing import Any, TYPE_CHECKING
+from math import log10
+from typing import Any, Callable, TYPE_CHECKING
 from sn.model.model import Relation
 from sn.view.graphics.animatedLayouts import FLOW_DIRECTIONS
 from util.tooltip import CreateToolTip
 if TYPE_CHECKING:
   from sn.view.graphics.sngView import SNGView
 
-DEFAULTS:dict[str, float] = {"flowStrength": 6.0, "e": 1000.0, "k": 0.005, "heat": 6.0}
+DEFAULTS:dict[str, float] = {"flowStrength": 6.0, "e": 1000.0, "k": 0.005, "heat": 6.0, "cooling": 0.7}
 "The settings *Reset* puts back (the animation layout's own defaults)."
 
-SLIDERS:list[tuple[str, str, float, float, str, str]] = [
-  # (label, layout attribute, from, to, value format, tooltip)
+def coolingLoss(cooling:float) -> str:
+  '''
+  :param cooling: The layout's *cooling*: what the temperature is multiplied by at each cool-down.
+  :type cooling: float
+  :returns: How it's shown: the share of the temperature lost, eg: "30%".
+  :rtype: str
+  '''
+  return f"{(1.0 - cooling) * 100:.2g}%"
+
+SCALED:dict[str, tuple[Callable[[float], float], Callable[[float], float]]] = {
+  # (layout attribute: (its value -> the slider's position, the slider's position -> its value))
+  "cooling": (lambda c: log10(max(1e-6, 1.0 - c)), lambda pos: round(1.0 - 10.0 ** pos, 6)),
+}
+'''
+The sliders that aren't the layout's attribute itself. *cooling* is on a log
+scale of the share of the temperature lost at each cool-down -- from 50%
+down to 0.1%, where a run goes on for half an hour or more.
+'''
+
+SLIDERS:list[tuple[str, str, float, float, str|Callable[[float], str], str]] = [
+  # (label, layout attribute, from, to (the slider's: see SCALED), value format, tooltip)
   ("strength",  "flowStrength", 0.0,    15.0,  "{:.1f}",
    "How hard the current pulls things into their layers (the most it moves an object in a step)."),
   ("repulsion", "e",            100.0,  3000.0, "{:.0f}",
@@ -57,6 +77,10 @@ SLIDERS:list[tuple[str, str, float, float, str, str]] = [
   ("heat",      "heat",         0.0,    15.0,  "{:.1f}",
    "With a current: random jiggling, which fades as the layout settles. It shakes the layout out of dead ends "
    "(eg: a tree pointing against the current). More heat: livelier, but slower to settle."),
+  ("cooling",   "cooling",      log10(0.001), log10(0.5), coolingLoss,
+   "How fast it cools: how much of the temperature (T) it loses each time it stops making progress. "
+   "Slide it left for a run that goes on a long time -- down at 0.1%, with a current, an hour or so -- "
+   "exploring for a better layout; right, to settle sooner."),
 ]
 "The toolbar's sliders."
 
@@ -129,7 +153,7 @@ class AnimationToolbar(ttk.Frame):
     self.relationBox.pack(side=tk.LEFT, padx=(3, 0))
     tip([label, self.relationBox], TIPS["follows"])
 
-    self.sliders:dict[str, tuple[ttk.Scale, ttk.Label, str]] = {}
+    self.sliders:dict[str, tuple[ttk.Scale, ttk.Label, str|Callable[[float], str]]] = {}
     for text, attr, lo, hi, fmt, tiptext in SLIDERS:
       g = self._group()
       label = ttk.Label(g, text=text)
@@ -242,13 +266,27 @@ class AnimationToolbar(ttk.Frame):
 
     :param attr: The layout's attribute it sets.
     :type attr: str
-    :param value: Its new value.
+    :param value: Its new position (the layout's value, but see *SCALED*).
     :type value: float
     '''
+    if attr in SCALED:
+      value = SCALED[attr][1](value)
     if not self._refreshing: # (not when the toolbar itself sets the slider: see refresh())
       self.view.setAnimationSetting(attr, value)
-    scale, label, fmt = self.sliders[attr]
-    label.configure(text=fmt.format(value))
+    _scale, label, fmt = self.sliders[attr]
+    label.configure(text=self._format(fmt, value))
+
+  @staticmethod
+  def _format(fmt:str|Callable[[float], str], value:float) -> str:
+    '''
+    :param fmt: A slider's value format (see *SLIDERS*).
+    :type fmt: str|Callable[[float], str]
+    :param value: The layout's value.
+    :type value: float
+    :returns: The value, as the slider shows it.
+    :rtype: str
+    '''
+    return fmt(value) if callable(fmt) else fmt.format(value)
 
   def _setPlaceLabels(self) -> None:
     '''
@@ -285,9 +323,10 @@ class AnimationToolbar(ttk.Frame):
     try:
       for attr, (scale, label, fmt) in self.sliders.items():
         v = float(getattr(layout, attr))
-        if abs(float(scale.get()) - v) > 1e-9:
-          scale.set(v)
-        label.configure(text=fmt.format(v))
+        pos = SCALED[attr][0](v) if attr in SCALED else v
+        if abs(float(scale.get()) - pos) > 1e-9:
+          scale.set(pos)
+        label.configure(text=self._format(fmt, v))
     finally:
       self._refreshing = False
 

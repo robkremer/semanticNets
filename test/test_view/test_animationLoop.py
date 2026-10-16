@@ -209,6 +209,23 @@ class Test(unittest.TestCase):
     self.assertEqual(layout.obj.bb[0], 5)                      # the new run's step
     layout.kill()
 
+  def test0700slowCooling(self):
+    from math import log10
+    from sn.view.graphics.animationToolbar import SCALED, SLIDERS, DEFAULTS, coolingLoss
+    toPos, fromPos = SCALED["cooling"]
+    lo, hi = next((lo, hi) for _, attr, lo, hi, _, _ in SLIDERS if attr == "cooling")
+    self.assertEqual(fromPos(lo), 0.999)                       # the slowest: 0.1% lost at each cool-down
+    self.assertEqual(fromPos(hi), 0.5)                         # the fastest: half
+    self.assertTrue(lo < toPos(DEFAULTS["cooling"]) < hi)
+    self.assertEqual(fromPos(toPos(0.7)), 0.7)                 # (no 0.7000000000000001 saved with the view)
+    self.assertEqual([coolingLoss(c) for c in (0.7, 0.999, 0.975)], ["30%", "0.1%", "2.5%"])
+    self.assertAlmostEqual(fromPos(log10(0.02)), 0.98)
+    layout = Layout(self.view)
+    layout.cooling = 1.5 # (eg: a hand-edited view file: it'd never cool)
+    layout.temperature, layout._best, layout._stalled = 1.0, 0.0, layout.patience
+    layout._cool(1.0)
+    self.assertLess(layout.temperature, 1.0)
+
 
 class FakeDragView:
   def __init__(self):

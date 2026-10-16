@@ -294,7 +294,8 @@ Settings
 
 The layout's parameters are attributes of the FieldsLayout (eg:
 ``flowDirection``, ``flowStrength``, ``e`` (repulsion), ``k`` (springs),
-``heat``). The view changes them through ``SNGView.setAnimationSetting``,
+``heat``, ``cooling`` -- what the temperature is multiplied by at each
+cool-down, which the toolbar shows on a log scale, as the share lost). The view changes them through ``SNGView.setAnimationSetting``,
 which both the **view | layout | animate** menu and the
 :py:class:`~sn.view.graphics.animationToolbar.AnimationToolbar` use, and
 saves the current settings with the view (its ``animation`` property). The

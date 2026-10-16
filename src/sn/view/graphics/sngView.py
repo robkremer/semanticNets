@@ -1690,14 +1690,14 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       model = Model(src)
     app.openViewOn(model, viewURL) #type: ignore[attr-defined]
 
-  ANIMATION_SETTINGS = ("flowStrength", "e", "k", "heat")
+  ANIMATION_SETTINGS = ("flowStrength", "e", "k", "heat", "cooling")
   "The animation layout's numeric settings saved with the view (see *_animationState()*)."
 
   def _animationState(self) -> str:
     '''
     :returns: What's saved with the view about its animation layout: whether
       the animation toolbar is shown, and the settings it shows -- eg:
-      "toolbar=1;direction=down;follows=isa;labels=1;flowStrength=6.0;e=1000.0;k=0.005;heat=6.0".
+      "toolbar=1;direction=down;follows=isa;labels=1;flowStrength=6.0;e=1000.0;k=0.005;heat=6.0;cooling=0.7".
     :rtype: str
     '''
     layout = self.animationLayout()

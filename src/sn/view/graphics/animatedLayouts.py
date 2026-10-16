@@ -572,7 +572,11 @@ class FieldsLayout():
     self.progress:float = 0.95
     'Progress means the total movement in a step falling below this fraction of the best so far.'
     self.cooling:float = 0.7
-    'What *temperature* is multiplied by when there\'s no progress.'
+    '''
+    What *temperature* is multiplied by when there's no progress: nearer 1, it
+    cools more slowly, and a run goes on longer (eg: 0.999 -- the animation
+    toolbar's slowest -- for an hour or so, with a current). Kept below 1, or it'd never cool.
+    '''
     self.temperature:float = 1.0
     '''
     Scales how far an object may move in a step (*maxDisplacement*). It starts
@@ -891,7 +895,7 @@ class FieldsLayout():
       return
     self._stalled += 1
     if self._stalled >= self.patience:
-      self.temperature *= self.cooling
+      self.temperature *= max(0.0, min(0.999, self.cooling))
       self._best, self._stalled = energy, 0 # (progress from here on is measured afresh)
       logger.debug(f"FieldsLayout: not converging; cooling to {self.temperature:.3f}")
 
