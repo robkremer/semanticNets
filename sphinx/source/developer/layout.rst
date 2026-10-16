@@ -248,14 +248,14 @@ The forces
 - With a current, **heat**: random displacement, decaying with the
   temperature.
 - **Leaps** (:py:func:`~sn.view.graphics.animatedLayouts.leap`), with a
-  chance of ``leaps`` × temperature in a step: an object out on the canvas,
-  chosen by the square of its links' stretch
-  (:py:func:`~sn.view.graphics.animatedLayouts.stretch`), is moved -- uncapped
-  -- to land beside the (weighted) centre of what it's linked to, past any
-  wall of repulsion its springs couldn't pull it through: a kind of
-  tunnelling. Only a long leap (``LEAP_MIN``) that at least halves its stretch
-  is made. A leap's own move isn't counted in the step's movement for cooling;
-  the settling after it is.
+  chance of ``leaps`` × temperature in a step -- a mutation: an object out
+  on the canvas, chosen by the square of its links' stretch
+  (:py:func:`~sn.view.graphics.animatedLayouts.stretch`), with any leaves
+  near it, is thrown -- uncapped -- to a random place in or around the graph
+  (up to ``LEAP_REACH`` of its size beyond its edges), at least ``LEAP_MIN``
+  of its diagonal away. Its springs pull it back in by another way,
+  disturbing what it's related to. A leap's own move isn't counted in the
+  step's movement for cooling; the settling after it is.
 
 Then the mean drift is removed (so the drawing doesn't wander off), each
 step is capped by the temperature, and the whole drawing is slid so that

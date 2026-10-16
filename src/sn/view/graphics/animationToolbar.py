@@ -82,10 +82,11 @@ SLIDERS:list[tuple[str, str, float, float, str|Callable[[float], str], str]] = [
    "Slide it left for a run that goes on a long time -- down at 0.1%, with a current, an hour or so -- "
    "exploring for a better layout; right, to settle sooner."),
   ("leaps",     "leaps",        0.0,    0.2,   lambda v: f"{v * 100:.0f}%",
-   "The chance, in a step, of a leap: an object whose relations are stretched -- eg: stuck behind a wall of "
-   "other objects -- jumps right across to land beside what it's related to (the more stretched, the likelier "
-   "to go). Like tunnelling: it gets the layout out of dead ends the springs can't pull it through. "
-   "It fades as the layout cools. 0% for none."),
+   "The chance, in a step, of a leap: like a mutation, an object (likeliest one whose relations are "
+   "stretched, eg: stuck behind a wall of other objects) is thrown somewhere else entirely -- across the graph, "
+   "or out into the space around it -- and pulled back in by another way, upsetting what it's related to as it "
+   "comes. It gets the layout out of dead ends. It fades as the layout cools; late leaps may be left out of "
+   "place (run again with 0%, or move them). 0% for none."),
 ]
 "The toolbar's sliders."
 

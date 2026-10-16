@@ -32,7 +32,7 @@ Created on Nov 19, 2025
 
 import weakref
 from typing import Optional, override, TYPE_CHECKING, Any
-from math import sqrt, acos, pi, cos, sin
+from math import sqrt, acos, pi
 from random import random
 from threading import Thread
 import queue
@@ -337,10 +337,12 @@ def misalignment(snap:Snapshot, flow:tuple[float, float]) -> float:
       total += acos(max(-1.0, min(1.0, (vx * tx + vy * ty) / r))) / pi
   return total
 
-LEAP_MIN = 100.0
-"The shortest leap (view units, centre to centre): anything shorter, the springs do as well (see *leap()*)."
-LEAP_GAP = 20.0
-"How far (between edges, roughly) from what it's related to a leap lands an object (see *leap()*)."
+LEAP_REACH = 0.5
+"How far out beyond the graph a leap may land, as a fraction of the graph's width and height (see *leap()*)."
+LEAP_MIN = 0.25
+"The shortest leap, as a fraction of the graph's diagonal: a leap is a big change (see *leap()*)."
+LEAP_LEAF = 50.0
+"How near (between edges, beyond *kMinDist*) a leaf must be to go with what leaps (see *leap()*)."
 
 def stretch(snap:Snapshot, i:int, kMinDist:float, at:tuple[float, float]|None=None) -> float:
   '''
@@ -363,50 +365,58 @@ def stretch(snap:Snapshot, i:int, kMinDist:float, at:tuple[float, float]|None=No
   finally:
     snap.positions[i] = saved
 
-def leap(snap:Snapshot, kMinDist:float, tries:int=5) -> tuple[int, float, float]|None:
+def leap(snap:Snapshot, kMinDist:float, tries:int=20) -> tuple[list[int], float, float]|None:
   '''
-  A leap, like quantum tunnelling: an object out on the canvas is taken right
-  across the canvas, to land beside what it's related to -- past whatever
-  walls of repulsion kept it away, which its springs, a step at a time, can't
-  pull it through. The objects whose links are the most stretched are the
-  likeliest to go (by the square of their *stretch()*). A leap is made only
-  if it's long (see *LEAP_MIN*) and at least halves the object's stretch;
-  otherwise another object is tried, up to *tries* in all. (A window leaps
-  with what it contains.) Plain arithmetic: safe in a thread.
+  A leap, like a mutation: an object out on the canvas is thrown somewhere
+  else entirely -- anywhere across the graph, or well out into the free space
+  around it (up to *LEAP_REACH* of its size beyond its edges) -- at least
+  *LEAP_MIN* of the graph's diagonal away. Its relations then pull it back in
+  from wherever it lands, by another way: around walls of other objects that
+  kept it from what it's related to, which its springs, a step at a time,
+  couldn't pull it through. The objects whose links are the most stretched
+  are the likeliest to go (by the square of their *stretch()*), each taking
+  its leaves (what's related to it alone) along, if they're near it (see
+  *LEAP_LEAF*): not, say, the one it's stuck away from. (A window leaps with what it
+  contains.) Plain arithmetic: safe in a thread.
 
   :param snap: The graph.
   :type snap: Snapshot
   :param kMinDist: The gap below which links don't pull.
   :type kMinDist: float
-  :param tries: How many objects to try.
+  :param tries: How many places to try, for one far enough away.
   :type tries: int
-  :returns: (the object's index, dx, dy), or None for no leap.
-  :rtype: tuple[int, float, float]|None
+  :returns: (the object's index and its leaves', dx, dy), or None for no leap.
+  :rtype: tuple[list[int], float, float]|None
   '''
-  candidates = [(i, s) for i in range(len(snap.objects)) if snap.owners[i] is None and i not in snap.pinned
-                and (s := stretch(snap, i, kMinDist)) > 0.0]
-  diagonal = lambda i: sqrt(snap.halfSizes[i][0] ** 2 + snap.halfSizes[i][1] ** 2)
+  top = [i for i in range(len(snap.objects)) if snap.owners[i] is None]
+  candidates = [(i, s) for i in top if i not in snap.pinned and (s := stretch(snap, i, kMinDist)) > 0.0]
+  if not candidates:
+    return None
+  pick, total = random() * sum(s * s for _, s in candidates), 0.0
+  i = candidates[-1][0]
+  for c, s in candidates:
+    total += s * s
+    if total >= pick:
+      i = c
+      break
+  degree:dict[int, int] = {}
+  for a, b, _ in snap.links:
+    degree[a], degree[b] = degree.get(a, 0) + 1, degree.get(b, 0) + 1
+  leaves = [j for a, b, _ in snap.links if i in (a, b) and degree[j := b if a == i else a] == 1
+            and snap.owners[j] is None and j not in snap.pinned and gap(snap, i, j)[0] <= kMinDist + LEAP_LEAF]
+  x1 = min(snap.positions[j][0] - snap.halfSizes[j][0] for j in top)
+  y1 = min(snap.positions[j][1] - snap.halfSizes[j][1] for j in top)
+  x2 = max(snap.positions[j][0] + snap.halfSizes[j][0] for j in top)
+  y2 = max(snap.positions[j][1] + snap.halfSizes[j][1] for j in top)
+  w, h = x2 - x1, y2 - y1
+  shortest = LEAP_MIN * sqrt(w * w + h * h)
+  (px, py), (hw, hh) = snap.positions[i], snap.halfSizes[i]
   for _ in range(tries):
-    if not candidates:
-      return None
-    weights = [s * s for _, s in candidates]
-    pick, total = random() * sum(weights), 0.0
-    n = len(candidates) - 1
-    for n, w in enumerate(weights):
-      total += w
-      if total >= pick:
-        break
-    i, s = candidates.pop(n)
-    neighbours = [(b if a == i else a, w) for a, b, w in snap.links if i in (a, b)]
-    weight = sum(w for _, w in neighbours)
-    cx = sum(snap.positions[j][0] * w for j, w in neighbours) / weight
-    cy = sum(snap.positions[j][1] * w for j, w in neighbours) / weight
-    r = diagonal(i) + sum(diagonal(j) for j, _ in neighbours) / len(neighbours) + kMinDist + LEAP_GAP
-    angle = random() * 2 * pi
-    x, y = cx + r * cos(angle), cy + r * sin(angle)
-    dx, dy = x - snap.positions[i][0], y - snap.positions[i][1]
-    if sqrt(dx * dx + dy * dy) >= LEAP_MIN and stretch(snap, i, kMinDist, (x, y)) <= s * 0.5:
-      return i, dx, dy
+    # (anywhere in the graph or around it -- but not off the canvas's top or left)
+    x = max(hw + PANE_MARGIN, x1 - LEAP_REACH * w + random() * w * (1 + 2 * LEAP_REACH))
+    y = max(hh + PANE_MARGIN, y1 - LEAP_REACH * h + random() * h * (1 + 2 * LEAP_REACH))
+    if sqrt((x - px) ** 2 + (y - py) ** 2) >= shortest:
+      return [i] + leaves, x - px, y - py
   return None
 
 def forces(snap:Snapshot, e:float, gMaxDist:float, k:float, kMinDist:float, maxDisplacement:float,
@@ -644,10 +654,14 @@ class FieldsLayout():
     '''
     self.leaps:float = 0.05
     '''
-    The chance, in a step, of a leap (see *leap()*): an object whose relations
-    are stretched -- eg: held off behind a wall of other objects -- jumps right
-    across to what it's related to. Scaled by *temperature*, so leaps fade out as
-    the layout settles; none while straightening. 0 for none.
+    The chance, in a step, of a leap (see *leap()*): an object -- likeliest one
+    whose relations are stretched, eg: held off behind a wall of other objects
+    -- is thrown somewhere else entirely, across the graph or out beyond it, and
+    finds its way back by another route. Scaled by *temperature*, so leaps fade
+    out as the layout settles; none while straightening. 0 for none. A leap
+    is meant to be a big change, upsetting what the object is related to as
+    it's pulled back; late in a run, as it cools, the way back is slow, and it
+    may be left out of place (run it again with no leaps, or move it by hand).
     '''
     self.leapCount:int = 0
     'How many leaps this run has made.'
@@ -848,13 +862,14 @@ class FieldsLayout():
     settling = flow is not None and self._arranged
     straighten = flow is not None and self._straightening > 0
     jump = leap(snap, self.kMinDist) if not straighten and random() < self.leaps * self.temperature else None
+    jumpers = set(jump[0]) if jump is not None else set()
     moves = forces(snap, self.e, self.gMaxDist, self.k, self.kMinDist,
                    self.maxDisplacement * (1.0 if straighten else self.temperature),
                    flow=flow, flowStrength=self.maxDisplacement if straighten else self.flowStrength * (1.0 if settling else self.temperature),
                    layerGain=self.settleLayerGain if settling else self.layerGain, straighten=straighten,
                    flowSpacing=self.flowSpacing, heat=(self.heat * self.temperature) if flow is not None and not straighten else 0.0,
                    arranging=flow is not None and not self._arranged,
-                   leaps={jump[0]: (jump[1], jump[2])} if jump is not None else None)
+                   leaps={i: (jump[1], jump[2]) for i in jumpers} if jump is not None else None)
     pins = {id(snap.objects[i]) for i in snap.pinned}
     # (an object moves if it moves enough -- or if its window does: it mustn't be left behind)
     moving:set[int] = set()
@@ -866,7 +881,7 @@ class FieldsLayout():
         moving.add(i)
         ret.append((snap.objects[i], (dx, dy)))
         ret += [(vo, (dx, dy)) for vo in snap.passengers.get(i, ())]
-        if jump is not None and jump[0] in snap.chains[i]:
+        if jumpers.intersection(snap.chains[i]):
           leapt.add(id(snap.objects[i]))
           leapt.update(id(vo) for vo in snap.passengers.get(i, ()))
     return ret, misaligned, pins, leapt

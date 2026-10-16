@@ -227,31 +227,34 @@ class Test(unittest.TestCase):
     self.assertLess(layout.temperature, 1.0)
 
   def test0800leaps(self):
-    from sn.view.graphics.animatedLayouts import Snapshot, leap, stretch, forces, LEAP_MIN
-    # a stuck behind a wall (b, c, d) from its friend f, far away; the wall's own links are slack
+    from sn.view.graphics.animatedLayouts import Snapshot, leap, forces, LEAP_MIN, LEAP_REACH, PANE_MARGIN
+    # a (with its leaf l) stuck behind a wall (b, c, d) from its friend f; the wall's own links are slack
     snap = Snapshot.__new__(Snapshot)
-    snap.positions = [(0.0, 0.0), (100.0, -40.0), (100.0, 0.0), (100.0, 40.0), (600.0, 0.0)]
+    snap.positions = [(100.0, 100.0), (200.0, 80.0), (200.0, 100.0), (200.0, 120.0), (700.0, 100.0), (80.0, 100.0)]
     n = len(snap.positions)
     snap.objects = [FakeObject() for _ in range(n)]
     snap.halfSizes = [(10.0, 10.0)] * n
     snap.owners, snap.regions, snap.pinned = [None] * n, [None] * n, set()
     snap.chains, snap.passengers = [[i] for i in range(n)], {}
-    snap.links = [(0, 4, 1.0), (1, 2, 1.0), (2, 3, 1.0)]
+    snap.links = [(0, 4, 1.0), (1, 2, 1.0), (2, 3, 1.0), (0, 5, 1.0)]
     snap.directed, snap.ranks = [], {}
-    for _ in range(20):
-      i, dx, dy = leap(snap, 0.0)
-      self.assertIn(i, (0, 4))                                 # only what's stretched leaps
-      self.assertGreaterEqual((dx * dx + dy * dy) ** 0.5, LEAP_MIN)
+    w, h = 710.0 - 70.0, 130.0 - 70.0 # (the graph's extent)
+    for _ in range(50):
+      jumpers, dx, dy = leap(snap, 0.0)
+      i = jumpers[0]
+      self.assertIn(i, (0, 4, 5))                               # only what's stretched leaps
+      if i == 0:
+        self.assertEqual(jumpers, [0, 5])                       # with its leaf
+      self.assertGreaterEqual((dx * dx + dy * dy) ** 0.5, LEAP_MIN * (w * w + h * h) ** 0.5) # a big change
       x, y = snap.positions[i][0] + dx, snap.positions[i][1] + dy
-      self.assertLess(stretch(snap, i, 0.0, (x, y)), stretch(snap, i, 0.0) / 2)
-    self.assertEqual(snap.positions[0], (0.0, 0.0))            # (measuring doesn't move it)
+      self.assertTrue(70.0 - LEAP_REACH * w <= x <= 710.0 + LEAP_REACH * w)  # in or around the graph
+      self.assertTrue(10.0 + PANE_MARGIN <= x and 10.0 + PANE_MARGIN <= y <= 130.0 + LEAP_REACH * h) # (not off the top or left)
+    self.assertEqual(snap.positions[0], (100.0, 100.0))         # (it's only worked out)
     moves = forces(snap, 1000.0, 200.0, 0.005, 0.0, 10.0, leaps={0: (500.0, 30.0)})
-    self.assertEqual(moves[0], (500.0, 30.0))                  # uncapped
-    snap.links = [(1, 2, 1.0), (2, 3, 1.0)]
-    self.assertIsNone(leap(snap, 0.0))                         # nothing stretched far: no leap
-    snap.positions[4] = (40.0, 0.0)
-    snap.links = [(0, 4, 1.0)]
-    self.assertIsNone(leap(snap, 0.0))                         # too short a leap: the springs will do
+    self.assertEqual(moves[0], (500.0, 30.0))                   # uncapped
+    snap.positions[4], snap.positions[5] = (120.0, 100.0), (100.0, 120.0)
+    snap.links = [(1, 2, 1.0), (2, 3, 1.0), (0, 4, 1.0), (0, 5, 1.0)]
+    self.assertIsNone(leap(snap, 30.0))                         # nothing stretched: no leap
 
   def test0900aLeapIsntCountedAsMovement(self):
     layout = Layout(self.view)
