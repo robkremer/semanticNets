@@ -1275,7 +1275,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     # (its model's URL relative to the view's file if they're side by side -- see PRDb.relativeURL() -- so
     # a view and model copied together stay together; a relative URL is resolved against the view's file on reading)
     def readModel(m:Any) -> Model: # (one already in memory -- eg: the system model, sn, which has no file -- as is)
-      db = PRDb.AllDBs.get(str(m))
+      db = PRDb.AllDBs.get(PRDb.resolveURL(str(m))) # (by what it stands for: eg, old views name sn "sn:/sn.xml" -- see PRDb.aliases)
       return db if isinstance(db, Model) else Model(cast(str, m))
     ret.conArgs.append(ParamInfo("model", str, getter=lambda slf: PRDb.relativeURL(cast(SNGView,slf).model.url),
                                  setter=readModel, inHead=True))
