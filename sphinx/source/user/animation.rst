@@ -100,6 +100,28 @@ are also on the **view | layout | animate** menu (**current direction**,
 **current strength**, **current follows**). They're saved with the view, as
 are the sliders and **place labels**.
 
+An example
+----------
+
+The XMLreader example app (see :doc:`exampleApps`) read the animals model's
+own file, *animals.snm*, making a model of its XML: some 300 objects -- the
+file's objects, their properties, and so on -- and their relations. As
+first drawn, it's a tangle:
+
+.. figure:: ../images/user/animation-before.png
+   :alt: About 300 objects and their relations in a dense tangle, criss-crossing the view
+
+   Before: about 300 objects, criss-crossed by their relations.
+
+After a long run -- **cooling** at 0.1%, **leaps** at 5%, and no current --
+the tree that's in the file shows itself: the file's root in the middle, and
+each object's properties around it, out to the leaves.
+
+.. figure:: ../images/user/animation-after.png
+   :alt: The same objects laid out as a radial tree, branches spreading out from the root in the middle
+
+   After: the same view, laid out by a long run.
+
 Tips
 ----
 
