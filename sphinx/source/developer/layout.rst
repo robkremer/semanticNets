@@ -247,6 +247,15 @@ The forces
   along the current, spaced by the objects' typical size.
 - With a current, **heat**: random displacement, decaying with the
   temperature.
+- **Leaps** (:py:func:`~sn.view.graphics.animatedLayouts.leap`), with a
+  chance of ``leaps`` × temperature in a step: an object out on the canvas,
+  chosen by the square of its links' stretch
+  (:py:func:`~sn.view.graphics.animatedLayouts.stretch`), is moved -- uncapped
+  -- to land beside the (weighted) centre of what it's linked to, past any
+  wall of repulsion its springs couldn't pull it through: a kind of
+  tunnelling. Only a long leap (``LEAP_MIN``) that at least halves its stretch
+  is made. A leap's own move isn't counted in the step's movement for cooling;
+  the settling after it is.
 
 Then the mean drift is removed (so the drawing doesn't wander off), each
 step is capped by the temperature, and the whole drawing is slid so that
@@ -294,7 +303,7 @@ Settings
 
 The layout's parameters are attributes of the FieldsLayout (eg:
 ``flowDirection``, ``flowStrength``, ``e`` (repulsion), ``k`` (springs),
-``heat``, ``cooling`` -- what the temperature is multiplied by at each
+``heat``, ``leaps``, ``cooling`` -- what the temperature is multiplied by at each
 cool-down, which the toolbar shows on a log scale, as the share lost). The view changes them through ``SNGView.setAnimationSetting``,
 which both the **view | layout | animate** menu and the
 :py:class:`~sn.view.graphics.animationToolbar.AnimationToolbar` use, and

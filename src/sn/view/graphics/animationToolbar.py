@@ -44,7 +44,7 @@ from util.tooltip import CreateToolTip
 if TYPE_CHECKING:
   from sn.view.graphics.sngView import SNGView
 
-DEFAULTS:dict[str, float] = {"flowStrength": 6.0, "e": 1000.0, "k": 0.005, "heat": 6.0, "cooling": 0.7}
+DEFAULTS:dict[str, float] = {"flowStrength": 6.0, "e": 1000.0, "k": 0.005, "heat": 6.0, "cooling": 0.7, "leaps": 0.0}
 "The settings *Reset* puts back (the animation layout's own defaults)."
 
 def coolingLoss(cooling:float) -> str:
@@ -81,6 +81,11 @@ SLIDERS:list[tuple[str, str, float, float, str|Callable[[float], str], str]] = [
    "How fast it cools: how much of the temperature (T) it loses each time it stops making progress. "
    "Slide it left for a run that goes on a long time -- down at 0.1%, with a current, an hour or so -- "
    "exploring for a better layout; right, to settle sooner."),
+  ("leaps",     "leaps",        0.0,    0.2,   lambda v: f"{v * 100:.0f}%",
+   "The chance, in a step, of a leap: an object whose relations are stretched -- eg: stuck behind a wall of "
+   "other objects -- jumps right across to land beside what it's related to (the more stretched, the likelier "
+   "to go). Like tunnelling: it gets the layout out of dead ends the springs can't pull it through. "
+   "It fades as the layout cools. 0% for none."),
 ]
 "The toolbar's sliders."
 
@@ -88,7 +93,8 @@ TIPS:dict[str, str] = {
   "play": "Start the animation layout (or stop it). A whole run is one undo.",
   "status": "What the animation layout is doing: arranging (the current puts things into layers), settling "
             "(cooling down until nothing moves much), straightening (the layers' lines), or stopped. "
-            "T is the temperature: how far things may move in a step, falling as it settles.",
+            "T is the temperature: how far things may move in a step, falling as it settles. "
+            "Leaps: how many objects have leapt this run (see leaps).",
   "current": "A current across the workspace (or none): it lines up the relations it follows -- their "
              "destinations upstream of their sources -- in layers. Eg: isa, flowing down: a class diagram, "
              "superclasses above their subclasses.",
@@ -129,7 +135,7 @@ class AnimationToolbar(ttk.Frame):
     g = self._group()
     self.playButton = ttk.Button(g, width=7, command=self.view.toggleAnimationLayout)
     self.playButton.pack(side=tk.LEFT)
-    self.status = ttk.Label(g, width=20, foreground="gray35")
+    self.status = ttk.Label(g, width=30, foreground="gray35")
     self.status.pack(side=tk.LEFT, padx=(4, 0))
     tip([self.playButton], TIPS["play"]); tip([self.status], TIPS["status"])
 
@@ -346,7 +352,8 @@ class AnimationToolbar(ttk.Frame):
       phase = "arranging"
     else:
       phase = "settling"
-    return f"running: {phase} (T={layout.temperature:.2f})"
+    leaps = getattr(layout, "leapCount", 0)
+    return f"running: {phase} (T={layout.temperature:.2f})" + (f", {leaps} leaps" if leaps else "")
 
   def startPolling(self) -> None:
     'Keep the toolbar up to date while it\'s shown (see *POLL_MS*).'

@@ -32,7 +32,7 @@ Created on Nov 19, 2025
 
 import weakref
 from typing import Optional, override, TYPE_CHECKING, Any
-from math import sqrt, acos, pi
+from math import sqrt, acos, pi, cos, sin
 from random import random
 from threading import Thread
 import queue
@@ -337,10 +337,82 @@ def misalignment(snap:Snapshot, flow:tuple[float, float]) -> float:
       total += acos(max(-1.0, min(1.0, (vx * tx + vy * ty) / r))) / pi
   return total
 
+LEAP_MIN = 100.0
+"The shortest leap (view units, centre to centre): anything shorter, the springs do as well (see *leap()*)."
+LEAP_GAP = 20.0
+"How far (between edges, roughly) from what it's related to a leap lands an object (see *leap()*)."
+
+def stretch(snap:Snapshot, i:int, kMinDist:float, at:tuple[float, float]|None=None) -> float:
+  '''
+  :param snap: The graph.
+  :type snap: Snapshot
+  :param i: An object's index.
+  :type i: int
+  :param kMinDist: The gap below which links don't pull.
+  :type kMinDist: float
+  :param at: Where to measure it with object *i*'s centre; None for where it is.
+  :type at: tuple[float, float]|None
+  :returns: How stretched object *i*'s links are, in all: the sum of their gaps beyond *kMinDist*, by weight.
+  :rtype: float
+  '''
+  saved = snap.positions[i]
+  if at is not None:
+    snap.positions[i] = at
+  try:
+    return sum(w * max(0.0, gap(snap, a, b)[0] - kMinDist) for a, b, w in snap.links if i in (a, b))
+  finally:
+    snap.positions[i] = saved
+
+def leap(snap:Snapshot, kMinDist:float, tries:int=5) -> tuple[int, float, float]|None:
+  '''
+  A leap, like quantum tunnelling: an object out on the canvas is taken right
+  across the canvas, to land beside what it's related to -- past whatever
+  walls of repulsion kept it away, which its springs, a step at a time, can't
+  pull it through. The objects whose links are the most stretched are the
+  likeliest to go (by the square of their *stretch()*). A leap is made only
+  if it's long (see *LEAP_MIN*) and at least halves the object's stretch;
+  otherwise another object is tried, up to *tries* in all. (A window leaps
+  with what it contains.) Plain arithmetic: safe in a thread.
+
+  :param snap: The graph.
+  :type snap: Snapshot
+  :param kMinDist: The gap below which links don't pull.
+  :type kMinDist: float
+  :param tries: How many objects to try.
+  :type tries: int
+  :returns: (the object's index, dx, dy), or None for no leap.
+  :rtype: tuple[int, float, float]|None
+  '''
+  candidates = [(i, s) for i in range(len(snap.objects)) if snap.owners[i] is None and i not in snap.pinned
+                and (s := stretch(snap, i, kMinDist)) > 0.0]
+  diagonal = lambda i: sqrt(snap.halfSizes[i][0] ** 2 + snap.halfSizes[i][1] ** 2)
+  for _ in range(tries):
+    if not candidates:
+      return None
+    weights = [s * s for _, s in candidates]
+    pick, total = random() * sum(weights), 0.0
+    n = len(candidates) - 1
+    for n, w in enumerate(weights):
+      total += w
+      if total >= pick:
+        break
+    i, s = candidates.pop(n)
+    neighbours = [(b if a == i else a, w) for a, b, w in snap.links if i in (a, b)]
+    weight = sum(w for _, w in neighbours)
+    cx = sum(snap.positions[j][0] * w for j, w in neighbours) / weight
+    cy = sum(snap.positions[j][1] * w for j, w in neighbours) / weight
+    r = diagonal(i) + sum(diagonal(j) for j, _ in neighbours) / len(neighbours) + kMinDist + LEAP_GAP
+    angle = random() * 2 * pi
+    x, y = cx + r * cos(angle), cy + r * sin(angle)
+    dx, dy = x - snap.positions[i][0], y - snap.positions[i][1]
+    if sqrt(dx * dx + dy * dy) >= LEAP_MIN and stretch(snap, i, kMinDist, (x, y)) <= s * 0.5:
+      return i, dx, dy
+  return None
+
 def forces(snap:Snapshot, e:float, gMaxDist:float, k:float, kMinDist:float, maxDisplacement:float,
            flow:tuple[float, float]|None=None, flowStrength:float=0.0, flowSpacing:float=40.0,
            heat:float=0.0, arranging:bool=False, layerGain:float=0.2, straighten:bool=False,
-           pull:float=30.0) -> list[tuple[float, float]]:
+           pull:float=30.0, leaps:dict[int, tuple[float, float]]|None=None) -> list[tuple[float, float]]:
   '''
   The displacement of each object in *snap* (in its order), with distances
   measured between the objects' edges (see *gap()*), so big objects -- context
@@ -407,6 +479,9 @@ def forces(snap:Snapshot, e:float, gMaxDist:float, k:float, kMinDist:float, maxD
   :type straighten: bool
   :param pull: The least a contained object outside its pane is moved toward it in a step (when it's further).
   :type pull: float
+  :param leaps: Objects (by index) that leap this step (see *leap()*), and how far: their moves, uncapped, instead
+    of the forces' (with what's in them, as usual).
+  :type leaps: dict[int, tuple[float, float]]|None
   :returns: (dx, dy) for each object: how far it moves on the canvas (with its window's move).
   :rtype: list[tuple[float, float]]
   '''
@@ -466,6 +541,8 @@ def forces(snap:Snapshot, e:float, gMaxDist:float, k:float, kMinDist:float, maxD
     mx, my = sum(capped[i][0] for i in top) / len(top), sum(capped[i][1] for i in top) / len(top)
     for i in top:
       capped[i] = (capped[i][0] - mx, capped[i][1] - my)
+  for i, d in (leaps or {}).items():
+    capped[i] = d
   for i in range(n): # (what's in a window: in its pane -- in its window's frame, as its window moves it too)
     region = snap.regions[i]
     if region is None:
@@ -565,6 +642,15 @@ class FieldsLayout():
     (scaled by *temperature*, so it fades as the layout cools) -- to shake the
     layout out of dead ends, eg: a tree pointing straight against the current.
     '''
+    self.leaps:float = 0.0
+    '''
+    The chance, in a step, of a leap (see *leap()*): an object whose relations
+    are stretched -- eg: held off behind a wall of other objects -- jumps right
+    across to what it's related to. Scaled by *temperature*, so leaps fade out as
+    the layout settles; none while straightening. 0 for none.
+    '''
+    self.leapCount:int = 0
+    'How many leaps this run has made.'
     self.flowRelation:Any = None
     'The relation type the current lines up (its dst upstream of its src); None for "isa".'
     self.patience:int = 8
@@ -619,6 +705,7 @@ class FieldsLayout():
     self._start:dict[int, tuple[VObject, list[int]]] = {} # id(vo) -> (vo, its bounding box when the run started): for the undo
     self._wasFloating:dict[int, bool] = {} # id(label) -> whether it floated when the run started, for the labels it pinned: for the undo
     self._pins:set[int] = set() # id(label) of the floating labels this step places (see Snapshot.pinned)
+    self._leapt:set[int] = set() # id(vo) of what leapt this step (see leap()): not counted as the step's movement (see _cool())
     self._view = weakref.ref(view)
 
   @property
@@ -649,6 +736,7 @@ class FieldsLayout():
     except WeakrefError:
       return
     self._start, self._wasFloating = {}, {}
+    self.leapCount = 0
     self.temperature, self._best, self._stalled = 1.0, float("inf"), 0
     self._misalignment, self._bestMisalignment, self._arranged = None, float("inf"), False
     self._straightening, self._straightened = 0, False
@@ -737,10 +825,10 @@ class FieldsLayout():
     :returns: (object, (dx, dy)) for the objects that should move this step.
     :rtype: list[tuple[VObject, tuple[float, float]]]
     '''
-    ret, self._misalignment, self._pins = self._work(snap)
+    ret, self._misalignment, self._pins, self._leapt = self._work(snap)
     return ret
 
-  def _work(self, snap:Snapshot) -> tuple[list[tuple[VObject, tuple[float, float]]], float|None, set[int]]:
+  def _work(self, snap:Snapshot) -> tuple[list[tuple[VObject, tuple[float, float]]], float|None, set[int], set[int]]:
     '''
     What *_forces()* works out, without keeping any of it: safe in a thread
     (see *FieldsLayout_threaded*) -- even one whose run has been stopped, and
@@ -748,8 +836,9 @@ class FieldsLayout():
 
     :param snap: The graph.
     :type snap: Snapshot
-    :returns: The moves (see *_forces()*), the misalignment (see *_cool()*), and the pins (see *_pins*).
-    :rtype: tuple[list[tuple[VObject, tuple[float, float]]], float|None, set[int]]
+    :returns: The moves (see *_forces()*), the misalignment (see *_cool()*), the pins (see *_pins*), and
+      what leapt (see *_leapt*).
+    :rtype: tuple[list[tuple[VObject, tuple[float, float]]], float|None, set[int], set[int]]
     '''
     flow = FLOW_DIRECTIONS.get(self.flowDirection or "")
     # (how far, in all, the current's relations are from in line: see _cool(); None while there's no current)
@@ -758,23 +847,29 @@ class FieldsLayout():
     # stiffens, and doesn't fade as it cools -- the cooling step limit still ends the run)
     settling = flow is not None and self._arranged
     straighten = flow is not None and self._straightening > 0
+    jump = leap(snap, self.kMinDist) if not straighten and random() < self.leaps * self.temperature else None
     moves = forces(snap, self.e, self.gMaxDist, self.k, self.kMinDist,
                    self.maxDisplacement * (1.0 if straighten else self.temperature),
                    flow=flow, flowStrength=self.maxDisplacement if straighten else self.flowStrength * (1.0 if settling else self.temperature),
                    layerGain=self.settleLayerGain if settling else self.layerGain, straighten=straighten,
                    flowSpacing=self.flowSpacing, heat=(self.heat * self.temperature) if flow is not None and not straighten else 0.0,
-                   arranging=flow is not None and not self._arranged)
+                   arranging=flow is not None and not self._arranged,
+                   leaps={jump[0]: (jump[1], jump[2])} if jump is not None else None)
     pins = {id(snap.objects[i]) for i in snap.pinned}
     # (an object moves if it moves enough -- or if its window does: it mustn't be left behind)
     moving:set[int] = set()
     ret:list[tuple[VObject, tuple[float, float]]] = []
+    leapt:set[int] = set()
     for i in sorted(range(len(moves)), key=lambda i: len(snap.chains[i])):
       dx, dy = moves[i]
       if abs(dx) + abs(dy) > self.displacementSensitivity or (snap.owners[i] in moving and (dx or dy)):
         moving.add(i)
         ret.append((snap.objects[i], (dx, dy)))
         ret += [(vo, (dx, dy)) for vo in snap.passengers.get(i, ())]
-    return ret, misaligned, pins
+        if jump is not None and jump[0] in snap.chains[i]:
+          leapt.add(id(snap.objects[i]))
+          leapt.update(id(vo) for vo in snap.passengers.get(i, ()))
+    return ret, misaligned, pins, leapt
 
   def _call(self, autoOff:bool):
     '''
@@ -815,7 +910,11 @@ class FieldsLayout():
             vo._floatingAnchor = False # type: ignore[attr-defined]
           vo.moveBy(dx, dy, adjustPos=False, carry=False) # (a window's contents have moves of their own)
       moved = len(changes) > 0
-      self._cool(sum(abs(dx) + abs(dy) for _, (dx, dy) in changes))
+      if self._leapt:
+        self.leapCount += 1
+        logger.debug(f"FieldsLayout: leap {self.leapCount}")
+      # (a leap isn't progress or the lack of it: the settling after it is)
+      self._cool(sum(abs(dx) + abs(dy) for vo, (dx, dy) in changes if id(vo) not in self._leapt))
       # (settled, with a current: straighten its layers before stopping -- see *straightenSteps*)
       if self.flowDirection in FLOW_DIRECTIONS and (not moved or self.temperature < 0.1):
         if self._straightening == 0 and not self._straightened:
@@ -952,7 +1051,7 @@ class FieldsLayout_threaded(FieldsLayout):
       try:
         result.put((self._work(snap), None))
       except Exception:
-        result.put((([], None, set()), format_exc()))
+        result.put((([], None, set(), set()), format_exc()))
     Thread(target=work, daemon=True).start()
     self._later(self.POLL_MS, lambda: self._poll(result, autoOff))
 
@@ -961,13 +1060,13 @@ class FieldsLayout_threaded(FieldsLayout):
     On the GUI thread: if the thread's step is done, make its moves (see
     *_commitChanges()*); otherwise check again shortly.
 
-    :param result: Where the thread leaves ((changes, misalignment, pins), error): see *_work()*.
+    :param result: Where the thread leaves ((changes, misalignment, pins, leapt), error): see *_work()*.
     :type result: queue.SimpleQueue
     :param autoOff: As for *FieldsLayout.__call__()*.
     :type autoOff: bool
     '''
     try:
-      (changes, self._misalignment, self._pins), error = result.get_nowait()
+      (changes, self._misalignment, self._pins, self._leapt), error = result.get_nowait()
     except queue.Empty:
       self._later(self.POLL_MS, lambda: self._poll(result, autoOff))
       return
