@@ -1175,7 +1175,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     winX = self.canvas.canvasx(event.x) # convert widget-relative coords to canvas coords (accounts for scroll position)
     winY = self.canvas.canvasy(event.y)
     r = self.boundingBox()
-    self.dragInfo = (r[0], r[1], winX, winY, False) # x,y,no-drag-motion-event
+    self.dragInfo = (r[0], r[1], winX, winY, False) # x,y,press-x,press-y (canvas coords),no-drag-motion-event
     # Record each object this drag might move's TRUE starting position, right
     # now before any <B1-Motion> tick has touched anything. onB1_Motion()
     # moves every object in self.view.selected (or just self) via direct
@@ -1222,8 +1222,12 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       self.view.addEventHandled(event)
       winX = self.canvas.canvasx(event.x) # convert widget-relative coords to canvas coords (accounts for scroll position)
       winY = self.canvas.canvasy(event.y)
-      dX = winX - self.dragInfo[2]
-      dY = winY - self.dragInfo[3]
+      # How far the pointer's gone since the press, in view units (canvas
+      # coordinates are zoomed: at 200% a pixel is half a view unit). Each
+      # object goes to where it started plus that -- not moved by each tick's
+      # step, which (positions being whole numbers) loses the fractions, and
+      # the object falls behind the pointer.
+      dX, dY = self.view.windowToView(winX - self.dragInfo[2], winY - self.dragInfo[3])
       #print(f'onB1_Motion() event({event.x},{event.y}), d=({dX},{dY}), selected={self.selected()}')
       self.view.freshPaint()
       # allowOverScrollRegionSE=True: a live drag needs to actually be able to
@@ -1231,13 +1235,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       # clamps to it unconditionally, which would mean the bounding box could
       # never exceed the region and draw()'s scroll-region-growth check
       # (self.view.resetScrollRegion()) could never fire.
-      if self.selected():
-        for n in self.view.selected:
-          n.moveBy(dX, dY, adjustPos=False, fast=False, allowOverScrollRegionSE=True)
-      else:
-        self.moveBy(dX, dY, adjustPos=False, fast=False, allowOverScrollRegionSE=True)
-      # reset the starting point for the next move
-      self.dragInfo = (self.dragInfo[0], self.dragInfo[1], winX, winY, True) # x,y,drag-motion-event-occurred
+      for n, start in self.dragStartPositions.items():
+        n.moveTo(round(start[0] + dX), round(start[1] + dY), adjustPos=False, fast=False, allowOverScrollRegionSE=True)
+      self.dragInfo = (*self.dragInfo[:4], True) # x,y,press-x,press-y,drag-motion-event-occurred
       return 'break'
     #else:
       #print(f'non-drag onB1_Motion() event x={event.x}, y={event.y}')
