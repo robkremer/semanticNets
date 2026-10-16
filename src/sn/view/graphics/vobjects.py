@@ -1198,6 +1198,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         self.dragStartCenters.setdefault(vo, vo.centerPt())
         if vo is not n and vo not in movedSet:
           self.dragAlong.add(vo)
+    # (put back on the release, drag or click -- see onB1_ButtonRelease())
     self.old_suppressLocalLayout = self.view.suppressLocalLayout()
     self.view.suppressLocalLayout(True)
     return 'break'
@@ -1281,6 +1282,17 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     :rtype:
     """
     #from sn.view.vcommands import MoveCommand
+    # Whatever the press was for, put back the suppression state it changed
+    # (see onButton_1()) -- for a click too, and for the second press of a
+    # double-click (which clears dragInfo): left suppressed, the animation
+    # layout thinks something's still being dragged, and stands still for good.
+    # For a drag, that's before the final move below, so that the release-time
+    # moveTo() (adjustPos defaults to True) is free to run FindFree and resolve
+    # any overlaps -- that's the "everything is fine except..." comment below:
+    # the one point in a drag where we actually want the full layout
+    # resolution to run.
+    if "old_suppressLocalLayout" in self.__dict__:
+      self.view.suppressLocalLayout(self.__dict__.pop("old_suppressLocalLayout"))
     if self.resizeInfo is not None:
       self.view.addEventHandled(event)
       _anchor, oldBB, oldUserSized = self.resizeInfo
@@ -1294,13 +1306,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     if self.dragInfo is not None:
       self.view.addEventHandled(event)
       if self.dragInfo[4]: # indicated there was a <B1_Motion> event, ie: this was a drag: wrap up a move.
-        # Restore whatever suppression state was in effect before this drag
-        # started (set in onButton_1()) *before* the final move below, so that
-        # the release-time moveTo() (adjustPos defaults to True) is free to run
-        # FindFree and resolve any overlaps -- that's the "everything is fine
-        # except..." comment below: this is the one point in a drag where we
-        # actually want the full layout resolution to run.
-        self.view.suppressLocalLayout(self.old_suppressLocalLayout)
         # if False: #self.canvas.fieldsLayoutObj.active:
         #   bb = self.boundingBox()
         #   x, y, _, _ = bb
