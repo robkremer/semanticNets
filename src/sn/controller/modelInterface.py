@@ -162,6 +162,64 @@ def _refuseInferred(doing:str, *objects:Any) -> None:
     if getattr(o, "inferred", False):
       raise PermissionError(f'"{o.name}" is inferred: mark it as asserted to {doing} it.')
 
+class NoSuchObjectError(KeyError, ValueError):
+  '''
+  There's no object of the name or reference given. It's a *KeyError*, as
+  *GORef.eval()* raises, and a *ValueError*, like the other things wrong
+  with a command's arguments, but it reads as plain text (not quoted, as a
+  *KeyError* would be).
+  '''
+  def __str__(self) -> str:
+    return str(self.args[0]) if self.args else ""
+
+def _lookup(text:str, model:Any, filtr:Callable|None=None) -> Any:
+  '''
+  Like *GORef.eval()*, but a name with spaces needn't be quoted: the command
+  line's quotes are gone by the time a name gets here (eg: *big dog* for
+  *"big dog"*), and *GORef.eval()* only takes such a name quoted.
+
+  :param text: An object's reference as typed (eg: "fred", "#12", "big dog").
+  :type text: str
+  :param model: The model to look it up in.
+  :type model: Any
+  :param filtr: As for *GORef.eval()*.
+  :type filtr: Callable | None
+  :returns: The object.
+  :rtype: Any
+  :raises NoSuchObjectError: If there's no object called *text*.
+  '''
+  kwargs = {} if filtr is None else {"filtr": filtr}
+  try:
+    try:
+      return GORef.eval(text, model, **kwargs) #type: ignore[call-overload]
+    except ValueError:
+      url, hash, name = text.rpartition("#")
+      if not any(ch.isspace() for ch in name) or name[:1] in "\"'":
+        raise
+      quote = '"' if '"' not in name else "'"
+      return GORef.eval(f'{url}{hash}{quote}{name}{quote}', model, **kwargs) #type: ignore[call-overload]
+  except KeyError:
+    raise NoSuchObjectError(f'There\'s no object named "{text}".') from None
+
+def _object(obj:Any, model:Any=None) -> Any:
+  '''
+  :param obj: An object, or (if the command line's decoder couldn't look it up)
+    its name or reference as typed.
+  :type obj: Any
+  :param model: The model to look a name up in. If it's *None*, a name is
+    taken to be one the decoder (which looked in the default model) couldn't
+    find, or found more than one object for.
+  :type model: Any
+  :returns: *obj*, or the object it names (*None* stays *None*).
+  :rtype: Any
+  :raises NoSuchObjectError: If there's no object called *obj*.
+  '''
+  if not isinstance(obj, str):
+    return obj
+  if model is None:
+    raise NoSuchObjectError(f'There\'s no object named "{obj}" (or there\'s more than one).')
+  return _lookup(obj, model)
+
 def _decodeObjects(objects:list[Any]|GraphObject|str, model:Model|None) -> list[GraphObject]:
   '''
   :param objects: Objects, or their names or references as typed (eg: "fred", "#12").
@@ -175,7 +233,7 @@ def _decodeObjects(objects:list[Any]|GraphObject|str, model:Model|None) -> list[
   ret:list[GraphObject] = []
   for o in objects if isinstance(objects, list) else [objects]:
     if isinstance(o, str):
-      found = GORef.eval(o, model)
+      found = _lookup(o, model)
       if not isinstance(found, GraphObject):
         raise ValueError(f'"{o}" isn\'t an object\'s name.')
       o = found
@@ -199,7 +257,7 @@ def _parentsOf(parent:Any, kind:type, model:Model|None) -> list[Any]:
   for p in parent if isinstance(parent, list) else [parent]:
     if isinstance(p, str):
       try: # (parents are types: an individual relation has its type's name too)
-        p = GORef.eval(p, model, filtr=lambda o: o.isType()) #type: ignore[call-overload, attr-defined]
+        p = _lookup(p, model, filtr=lambda o: o.isType()) #type: ignore[attr-defined]
       except (KeyError, ValueError):
         raise ValueError(f'There\'s no object "{p}" to be the parent.') from None
       except Exception as ex: # eg: the name is ambiguous
@@ -287,7 +345,7 @@ class ModelContext(CommandContext):
       try:
         # otherParams = kwargs.get("params")
         # model = otherParams["model"] if otherParams is not None else None
-        ret = GORef.eval(s, d["model"] if kwargs.get("model") is None else kwargs["model"])
+        ret = _lookup(s, d["model"] if kwargs.get("model") is None else kwargs["model"])
         # ret = GORef.eval(s, d["model"] if model is None else model)
         assert isinstance(ret, GraphObject)
         return ret
@@ -632,6 +690,7 @@ class ModelContext(CommandContext):
       no keys are given, *dict* of all keys-to-values is returned.
     :rtype: Any
     '''
+    object = _object(object, model or self.defaults.get("model"))
     n = len(key)
     if n == 1:
       return object.get(key[0], None)
@@ -701,6 +760,7 @@ class ModelContext(CommandContext):
       :type restriction: str
       '''
       super().__init__("set attribute")
+      object = _object(object, model)
       _refuseInferred("change", object)
       self.attr:Attribute|None = value if isinstance(value, Attribute) else None
       "A complete (or value-only) Attribute record, eg: from the attribute editor, is set as is."
@@ -789,6 +849,7 @@ class ModelContext(CommandContext):
       :type model: Model
       '''
       super().__init__("set attribute")
+      object = _object(object, model)
       _refuseInferred("change", object)
       self.object:GraphObject = object
       self.key:str = key
@@ -887,11 +948,11 @@ class ModelContext(CommandContext):
         if isinstance(obj, str):
           go:GraphObject|PRDb[GraphObject]
           if i == 1 and expLen == 3: # second argument must a type in a relational expression
-            go = GORef.eval(obj, model, filtr=lambda o: o.isType()) #type: ignore[call-overload, attr-defined]
+            go = _lookup(obj, model, filtr=lambda o: o.isType()) #type: ignore[attr-defined]
           elif i == 0 and expLen == 2: # first argument must be a type in a type expression
-            go = GORef.eval(obj, model, filtr=lambda o: o.isType()) #type: ignore[call-overload, attr-defined]
+            go = _lookup(obj, model, filtr=lambda o: o.isType()) #type: ignore[attr-defined]
           else:
-            go = GORef.eval(obj, model) #type: ignore[call-overload]
+            go = _lookup(obj, model)
           assert isinstance(go, GraphObject)
           objects[i] = go
         if not (isinstance(objects[i], GraphObject) or isinstance(objects[i], Model) and expLen==1):
@@ -1025,7 +1086,7 @@ class ModelContext(CommandContext):
       def eval_(s:str|GraphObject, m:Model, filtr:Callable=lambda o:True) -> GraphObject:
         if isinstance(s, GraphObject):
           return s
-        ret = GORef.eval(s, m, filtr)
+        ret = _lookup(s, m, filtr)
         assert isinstance(ret, GraphObject)
         return ret
       
@@ -1296,6 +1357,7 @@ class ModelContext(CommandContext):
       '''
       # param checking...
       super().__init__("remove")
+      object = _object(object)
       _refuseInferred("remove", object)
       self.object:GraphObject = object
       self.removed:bool = False
@@ -1495,6 +1557,7 @@ class ModelContext(CommandContext):
       if kind not in ("individual", "type"):
         raise ValueError(f'The kind is "individual" or "type", not "{kind}".')
       individual = kind == "individual"
+      object = _object(object)
       problem = object.individualChangeProblem(individual)
       if problem is not None:
         raise ValueError(f'"{object.name}" can\'t be made {"an individual" if individual else "a type"}: {problem}.')
@@ -1542,6 +1605,7 @@ class ModelContext(CommandContext):
       :type object: GraphObject
       '''
       super().__init__("mark asserted")
+      object = _object(object)
       if not getattr(object, "inferred", False):
         raise ValueError(f'"{object.name}" isn\'t inferred: it\'s asserted already.')
       if object.model.writeLocked():
@@ -1622,6 +1686,7 @@ class ModelContext(CommandContext):
       :type clear_destination: bool
       '''
       super().__init__("reconnect")
+      relation, source, destination = _object(relation), _object(source), _object(destination)
       if not isinstance(relation, Relation):
         raise TypeError(f'reconnect: expected a Relation, got {type(relation).__name__}.')
       _refuseInferred("reconnect", relation)
@@ -1743,6 +1808,7 @@ class ModelContext(CommandContext):
       assert model is not None, "There is no Model specified."
       assert not (type and individual), "An GraphObject cannot be both an individual and a type."
       self.parents:list[Relation] = _parentsOf(parent, Relation, model)
+      source, destination = _object(source, model), _object(destination, model)
       if len(self.parents) > 1 and model.ISA in self.parents:
         raise TypeError("Multiple parents cannot include the ISA relation.")
       if self.parents == [model.ISA] and source is not None and (problem := source.parentProblem(destination)) is not None:

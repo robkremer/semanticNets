@@ -131,7 +131,7 @@ class Test(unittest.TestCase):
     fred = self.line("new node person --name fred")
     alfred = self.line('new node person --name "Alfred the Great"')
     parent = self.line("new relation relation --type --name has-parent")
-    r = self.line(f"new relation has-parent --source fred --destination {alfred.getPRef().tostring(self.m)}") # (by #id: a name with spaces doesn't resolve)
+    r = self.line('new relation has-parent --source fred --destination "Alfred the Great"')
     return fred, alfred, parent, r
 
   def test0700modelSearch(self):
@@ -162,6 +162,36 @@ class Test(unittest.TestCase):
     self.assertIn("Relations", self.line("search ^contains$ -r -s"))
     with self.assertRaisesRegex(ValueError, "regular expression"):
       self.line('search "(" --regex')
+
+  def test0900namesWithSpaces(self):
+    self.line("new node node --type --name person")
+    dog = self.line('new node person --name "big dog"')
+    fred = self.line("new node person --name fred")
+    self.line("new relation relation --type --name likes")
+    self.assertIs(self.line('query "big dog"'), dog)
+    self.assertIs(self.line("query 'big dog'"), dog)
+    self.assertIs(self.line('query "#big dog"'), dog)
+    r = self.line('new relation likes --source fred --destination "big dog"')
+    self.assertIs(r.dst, dog)
+    self.assertEqual(self.line('query fred likes ?'), [dog])
+    self.assertTrue(self.line('query fred likes "big dog"'))
+    self.line('set attribute "big dog" colour brown')
+    self.assertEqual(self.line('get attribute "big dog" colour'), "brown")
+
+  def test1000unknownNames(self):
+    self.line("new node node --type --name person")
+    self.line("new node person --name fred")
+    self.line("new relation relation --type --name likes")
+    for line, name in (('query "no body"', "no body"),
+                       ("query nobody", "nobody"),
+                       ("new relation likes --source fred --destination nobody", "nobody"),
+                       ('new relation likes --source "no body" --destination fred', "no body"),
+                       ('set attribute "no body" colour brown', "no body"),
+                       ('get attribute nobody colour', "nobody"),
+                       ('remove "no body"', "no body")):
+      with self.subTest(line=line):
+        with self.assertRaisesRegex(ValueError, f'no object named "{name}"'):
+          self.line(line)
 
 if __name__ == "__main__":
   unittest.main()
