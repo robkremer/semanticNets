@@ -31,6 +31,7 @@ import unittest
 from contextlib import redirect_stdout
 from sn.model.model import Model, Node, Relation
 from sn.controller.modelInterface import ModelContext
+from util.persistence.pRef import DuplicateNameError
 
 
 class Test(unittest.TestCase):
@@ -192,6 +193,23 @@ class Test(unittest.TestCase):
       with self.subTest(line=line):
         with self.assertRaisesRegex(ValueError, f'no object named "{name}"'):
           self.line(line)
+
+  def test1100ambiguousNames(self):
+    self.line("new node node --type --name person")
+    self.line("new node person --name fred")
+    self.line("new node person --name mary")
+    self.line("new relation relation --type --name likes")
+    self.line("new relation likes --source fred --destination mary") # (named "likes" too)
+    for line, option in (("reconnect likes --source mary", "relation"),
+                         ("remove likes", "object"),
+                         ("set kind likes type", "object"),
+                         ("mark asserted likes", "object")):
+      with self.subTest(line=line):
+        with self.assertRaisesRegex(ValueError, f'^--{option}: .*"#likes" resolves to multiple objects') as cm:
+          self.line(line)
+        self.assertIsInstance(cm.exception.__cause__, DuplicateNameError)
+    with self.assertRaisesRegex(ValueError, '^--relation: There\'s no object named "nobody"'):
+      self.line("reconnect nobody")
 
 if __name__ == "__main__":
   unittest.main()

@@ -242,8 +242,9 @@ def _decodeObjects(objects:list[Any]|GraphObject|str, model:Model|None) -> list[
 
 def _parentsOf(parent:Any, kind:type, model:Model|None) -> list[Any]:
   '''
-  :param parent: The parent or parents of a new object, as decoded from the
-    command line: any that wouldn't decode are still the strs typed.
+  :param parent: The parent or parents of a new object: objects, or their names
+    as typed (the command line leaves them as strs, so a name that's ambiguous
+    can be taken as the type of that name).
   :type parent: Any
   :param kind: What each parent must be (*Node* or *Relation*).
   :type kind: type
@@ -256,7 +257,12 @@ def _parentsOf(parent:Any, kind:type, model:Model|None) -> list[Any]:
   ret:list[Any] = []
   for p in parent if isinstance(parent, list) else [parent]:
     if isinstance(p, str):
-      try: # (parents are types: an individual relation has its type's name too)
+      try:
+        p = _lookup(p, model)
+      except Exception: # (parents are types: an individual relation has its type's name too)
+        pass
+    if isinstance(p, str):
+      try:
         p = _lookup(p, model, filtr=lambda o: o.isType()) #type: ignore[attr-defined]
       except (KeyError, ValueError):
         raise ValueError(f'There\'s no object "{p}" to be the parent.') from None
@@ -1238,7 +1244,7 @@ class ModelContext(CommandContext):
     return Model(url, mode=mode)
 
   # This is just a signature -- the behaviour is in class _New_node.
-  def new_node(self, parent:Node|list[Node], /, name:Optional[str]=None, individual:bool=False, type:bool=False, model:Model|None=None):
+  def new_node(self, parent:str|Node|list[str|Node], /, name:Optional[str]=None, individual:bool=False, type:bool=False, model:Model|None=None):
     '''
     Create a new Node object.
     
@@ -1262,7 +1268,7 @@ class ModelContext(CommandContext):
     pass
     
   class _New_node(Command):
-    def __init__(self, parent:GraphObject|list[GraphObject], /, name:Optional[str]=None, individual:bool=False, type:bool=False, model:Optional[Model]=None):
+    def __init__(self, parent:str|GraphObject|list[str|GraphObject], /, name:Optional[str]=None, individual:bool=False, type:bool=False, model:Optional[Model]=None):
       '''
       Create a new Node object.
       
@@ -1651,7 +1657,7 @@ class ModelContext(CommandContext):
       '''
       return f'{super().__str__()} {self.objects[0].getPRef().tostring() if self.objects else ""}'
 
-  def reconnect(self, relation:Relation, /, source:GraphObject|None=None, destination:GraphObject|None=None,
+  def reconnect(self, relation:GraphObject, /, source:GraphObject|None=None, destination:GraphObject|None=None,
                 clear_source:bool=False, clear_destination:bool=False):
     '''
     Change the source and/or destination of an existing *Relation*.
@@ -1671,7 +1677,7 @@ class ModelContext(CommandContext):
     pass
 
   class _Reconnect(Command):
-    def __init__(self, relation:Relation, /, source:GraphObject|None=None, destination:GraphObject|None=None,
+    def __init__(self, relation:GraphObject, /, source:GraphObject|None=None, destination:GraphObject|None=None,
                  clear_source:bool=False, clear_destination:bool=False):
       '''
       :param relation:
@@ -1739,7 +1745,7 @@ class ModelContext(CommandContext):
       return f'{super().__str__()} {self.relation.getPRef().tostring()} {" ".join(ends)}'
 
   # This is just a signature -- the behaviour is in class _New_node.
-  def new_relation(self, parent:GraphObject|list[GraphObject], /, 
+  def new_relation(self, parent:str|GraphObject|list[str|GraphObject], /, 
                  name:Optional[str]=None, 
                  individual:bool=False, type:bool=False, 
                  destination:GraphObject|None=None, source:GraphObject|None=None, 
@@ -1773,7 +1779,7 @@ class ModelContext(CommandContext):
     pass
     
   class _New_relation(Command):
-    def __init__(self, parent:GraphObject|list[GraphObject], /, 
+    def __init__(self, parent:str|GraphObject|list[str|GraphObject], /, 
                  name:Optional[str]=None, 
                  individual:bool=False, type:bool=False, 
                  destination:GraphObject|None=None, source:GraphObject|None=None, 
