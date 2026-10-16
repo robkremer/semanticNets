@@ -1,3 +1,12 @@
+'''
+Defines and instantiates *TopModel* that must ALWAYS be memory resident for the
+program to work.  Top model contains the following base objects:
+
+  - top
+    
+    - relation
+      - isa
+'''
 #################################################################################
 # (c) Copyright 2024-2026, Rob Kremer, MIT open source license.                 #
 #                                                                               #

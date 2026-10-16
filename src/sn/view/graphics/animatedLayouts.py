@@ -20,9 +20,7 @@
 # SOFTWARE.                                                                     #
 #################################################################################
 from __future__ import annotations
-from sn.model.model import Model
 from traceback import format_exc
-from concurrent.futures.thread import ThreadPoolExecutor
 import sn
 
 '''
@@ -32,10 +30,8 @@ Created on Nov 19, 2025
 
 '''
 
-import logging
 import weakref
-from typing import Optional, Generator, override, Tuple, TYPE_CHECKING, Any
-from time import monotonic_ns
+from typing import Optional, override, TYPE_CHECKING, Any
 from math import sqrt, acos, pi
 from random import random
 from threading import Thread
@@ -916,33 +912,4 @@ class FieldsLayout_threaded(FieldsLayout):
     if error:
       logger.error(f"Exception during FieldsLayout processing: {error}")
     self._commitChanges(changes, autoOff)
-
-try: # (the "bones" engine, from the older tygra projects; not installed here, and nothing uses it now)
-  from fieldLayout import UpdateRec, Graph, Point, ID, Op, BNode, \
-      OP_NEW_NODE, OP_NEW_REL, OP_DEL_NODE, OP_DEL_REL, OP_MOD_POS, OP_MOD_WEIGHT, \
-      FIELD_LAYOUT_PARAMS
-except ImportError:
-  pass
-    
-  
-# class BonesGraph:
-#
-#   def __init__(self, relationWeights:dict[str,float]={"*":0.5}):
-#     self.nodes:dict[id, BNode] = dict()
-#     self.relationWeights:dict[str, float] = relationWeights
-#     self.defaultWeight = self.relationWeights["*"] if "*" in self.relationWeights else 0.5
-    
-
-  
-# def testBones(view:SNView):
-#   bg = BonesGraph()
-#   # i = 0
-#   # for obj in view._objects.values():
-#   #   if bg.addNode(obj) is not None:
-#   #     i += 1
-#   #   if i>10: break
-#   bg.setView(view)
-#   for k,v in bg.nodes.items():
-#     print('{:5d}: {!s:s}'.format(k, v))
-    
     
