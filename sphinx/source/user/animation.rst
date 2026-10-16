@@ -81,11 +81,13 @@ cooling         how fast it cools: how much of T it loses each time it stops
 leaps           the chance, in a step, of a leap: like a mutation, an object
                 is thrown somewhere else entirely -- across the graph, or out
                 into the space around it -- and pulled back in by another
-                way, upsetting what it's related to as it comes. Objects
-                stuck away from what they're related to (eg: behind a wall
-                of other objects) are the likeliest to go. Leaps fade as the
-                layout cools; 5% by default, 0% for none. The status shows
-                how many there have been
+                way, upsetting what it's related to as it comes. The object
+                is picked at random, but one with a long relation (eg: stuck
+                behind a wall of other objects) is the likeliest to go --
+                however many relations it has. Leaps fade as the layout
+                cools, and stop as it nears the end, to give the last ones
+                time to come back; 5% by default, 0% for none. The status
+                shows how many there have been
 place labels    whether a run ends by finding free places for the relations'
                 labels (which can take a while in a crowded view). Ticked
                 between runs, it places them straight away; ticked during a

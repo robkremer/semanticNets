@@ -248,9 +248,12 @@ The forces
 - With a current, **heat**: random displacement, decaying with the
   temperature.
 - **Leaps** (:py:func:`~sn.view.graphics.animatedLayouts.leap`), with a
-  chance of ``leaps`` × temperature in a step -- a mutation: an object out
-  on the canvas, chosen by the square of its links' stretch
-  (:py:func:`~sn.view.graphics.animatedLayouts.stretch`), with any leaves
+  chance of ``leaps`` × temperature in a step, until the temperature falls
+  below ``LEAP_STOP`` -- a mutation: an object out on the canvas, picked at
+  random -- for ``LEAP_ANY`` of the leaps, evenly; for the rest, by the
+  square of its longest link's stretch
+  (:py:func:`~sn.view.graphics.animatedLayouts.stretch`), not its number of
+  links, as moving a hub is likelier a fatal mutation -- with any leaves
   near it, is thrown -- uncapped -- to a random place in or around the graph
   (up to ``LEAP_REACH`` of its size beyond its edges), at least ``LEAP_MIN``
   of its diagonal away. Its springs pull it back in by another way,

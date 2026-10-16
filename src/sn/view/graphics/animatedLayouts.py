@@ -341,10 +341,19 @@ LEAP_REACH = 0.5
 "How far out beyond the graph a leap may land, as a fraction of the graph's width and height (see *leap()*)."
 LEAP_MIN = 0.25
 "The shortest leap, as a fraction of the graph's diagonal: a leap is a big change (see *leap()*)."
+LEAP_ANY = 0.25
+"The share of leaps whose object is picked at random from all those out on the canvas, not by its longest link (see *leap()*)."
+LEAP_STOP = 0.6
+'''
+The temperature below which there are no more leaps: so the last ones have
+time to come back (see *FieldsLayout.leaps*). (With the usual settings, a run
+ends at about 0.25, where no step moves anything enough to count -- see
+*FieldsLayout.displacementSensitivity*.)
+'''
 LEAP_LEAF = 50.0
 "How near (between edges, beyond *kMinDist*) a leaf must be to go with what leaps (see *leap()*)."
 
-def stretch(snap:Snapshot, i:int, kMinDist:float, at:tuple[float, float]|None=None) -> float:
+def stretch(snap:Snapshot, i:int, kMinDist:float) -> float:
   '''
   :param snap: The graph.
   :type snap: Snapshot
@@ -352,18 +361,11 @@ def stretch(snap:Snapshot, i:int, kMinDist:float, at:tuple[float, float]|None=No
   :type i: int
   :param kMinDist: The gap below which links don't pull.
   :type kMinDist: float
-  :param at: Where to measure it with object *i*'s centre; None for where it is.
-  :type at: tuple[float, float]|None
-  :returns: How stretched object *i*'s links are, in all: the sum of their gaps beyond *kMinDist*, by weight.
+  :returns: How stretched object *i*'s longest link is: its gap beyond *kMinDist*, by weight -- however many
+    links it has (a hub isn't more stretched for having more of them).
   :rtype: float
   '''
-  saved = snap.positions[i]
-  if at is not None:
-    snap.positions[i] = at
-  try:
-    return sum(w * max(0.0, gap(snap, a, b)[0] - kMinDist) for a, b, w in snap.links if i in (a, b))
-  finally:
-    snap.positions[i] = saved
+  return max((w * max(0.0, gap(snap, a, b)[0] - kMinDist) for a, b, w in snap.links if i in (a, b)), default=0.0)
 
 def leap(snap:Snapshot, kMinDist:float, tries:int=20) -> tuple[list[int], float, float]|None:
   '''
@@ -373,8 +375,11 @@ def leap(snap:Snapshot, kMinDist:float, tries:int=20) -> tuple[list[int], float,
   *LEAP_MIN* of the graph's diagonal away. Its relations then pull it back in
   from wherever it lands, by another way: around walls of other objects that
   kept it from what it's related to, which its springs, a step at a time,
-  couldn't pull it through. The objects whose links are the most stretched
-  are the likeliest to go (by the square of their *stretch()*), each taking
+  couldn't pull it through. The object is picked at random: for *LEAP_ANY*
+  of the leaps, from all those out on the canvas, evenly; for the rest, the
+  objects with the longest links are the likeliest to go (by the square of
+  their *stretch()*) -- not those with the most links: moving a hub is more
+  likely a fatal mutation. Each takes
   its leaves (what's related to it alone) along, if they're near it (see
   *LEAP_LEAF*): not, say, the one it's stuck away from. (A window leaps with what it
   contains.) Plain arithmetic: safe in a thread.
@@ -389,16 +394,20 @@ def leap(snap:Snapshot, kMinDist:float, tries:int=20) -> tuple[list[int], float,
   :rtype: tuple[list[int], float, float]|None
   '''
   top = [i for i in range(len(snap.objects)) if snap.owners[i] is None]
-  candidates = [(i, s) for i in top if i not in snap.pinned and (s := stretch(snap, i, kMinDist)) > 0.0]
-  if not candidates:
+  movable = [i for i in top if i not in snap.pinned]
+  candidates = [(i, s) for i in movable if (s := stretch(snap, i, kMinDist)) > 0.0]
+  if not movable:
     return None
-  pick, total = random() * sum(s * s for _, s in candidates), 0.0
-  i = candidates[-1][0]
-  for c, s in candidates:
-    total += s * s
-    if total >= pick:
-      i = c
-      break
+  if not candidates or random() < LEAP_ANY: # (any of them)
+    i = movable[int(random() * len(movable)) % len(movable)]
+  else: # (the longer its longest link, the likelier)
+    pick, total = random() * sum(s * s for _, s in candidates), 0.0
+    i = candidates[-1][0]
+    for c, s in candidates:
+      total += s * s
+      if total >= pick:
+        i = c
+        break
   degree:dict[int, int] = {}
   for a, b, _ in snap.links:
     degree[a], degree[b] = degree.get(a, 0) + 1, degree.get(b, 0) + 1
@@ -655,13 +664,14 @@ class FieldsLayout():
     self.leaps:float = 0.05
     '''
     The chance, in a step, of a leap (see *leap()*): an object -- likeliest one
-    whose relations are stretched, eg: held off behind a wall of other objects
-    -- is thrown somewhere else entirely, across the graph or out beyond it, and
+    with a long relation, eg: held off behind a wall of other objects -- is
+    thrown somewhere else entirely, across the graph or out beyond it, and
     finds its way back by another route. Scaled by *temperature*, so leaps fade
-    out as the layout settles; none while straightening. 0 for none. A leap
-    is meant to be a big change, upsetting what the object is related to as
-    it's pulled back; late in a run, as it cools, the way back is slow, and it
-    may be left out of place (run it again with no leaps, or move it by hand).
+    out as the layout settles, and stop once it's below *LEAP_STOP*, so the
+    last ones have time to come back; none while straightening. 0 for none. A
+    leap is meant to be a big change, upsetting what the object is related to
+    as it's pulled back; as it cools, the way back is slow, and it may be left
+    out of place (run it again with no leaps, or move it by hand).
     '''
     self.leapCount:int = 0
     'How many leaps this run has made.'
@@ -861,7 +871,8 @@ class FieldsLayout():
     # stiffens, and doesn't fade as it cools -- the cooling step limit still ends the run)
     settling = flow is not None and self._arranged
     straighten = flow is not None and self._straightening > 0
-    jump = leap(snap, self.kMinDist) if not straighten and random() < self.leaps * self.temperature else None
+    jump = leap(snap, self.kMinDist) if not straighten and self.temperature >= LEAP_STOP \
+           and random() < self.leaps * self.temperature else None
     jumpers = set(jump[0]) if jump is not None else set()
     moves = forces(snap, self.e, self.gMaxDist, self.k, self.kMinDist,
                    self.maxDisplacement * (1.0 if straighten else self.temperature),

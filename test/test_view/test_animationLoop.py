@@ -226,35 +226,72 @@ class Test(unittest.TestCase):
     layout._cool(1.0)
     self.assertLess(layout.temperature, 1.0)
 
-  def test0800leaps(self):
-    from sn.view.graphics.animatedLayouts import Snapshot, leap, forces, LEAP_MIN, LEAP_REACH, PANE_MARGIN
-    # a (with its leaf l) stuck behind a wall (b, c, d) from its friend f; the wall's own links are slack
+  @staticmethod
+  def snapshot(positions, links):
+    "A stand-in snapshot: objects (20 x 20) out on the canvas at *positions*, with *links*."
+    from sn.view.graphics.animatedLayouts import Snapshot
     snap = Snapshot.__new__(Snapshot)
-    snap.positions = [(100.0, 100.0), (200.0, 80.0), (200.0, 100.0), (200.0, 120.0), (700.0, 100.0), (80.0, 100.0)]
+    snap.positions = list(positions)
     n = len(snap.positions)
     snap.objects = [FakeObject() for _ in range(n)]
     snap.halfSizes = [(10.0, 10.0)] * n
     snap.owners, snap.regions, snap.pinned = [None] * n, [None] * n, set()
     snap.chains, snap.passengers = [[i] for i in range(n)], {}
-    snap.links = [(0, 4, 1.0), (1, 2, 1.0), (2, 3, 1.0), (0, 5, 1.0)]
+    snap.links = list(links)
     snap.directed, snap.ranks = [], {}
+    return snap
+
+  def test0800leaps(self):
+    from sn.view.graphics.animatedLayouts import leap, forces, LEAP_MIN, LEAP_REACH, LEAP_ANY, PANE_MARGIN
+    # a (with its leaf l) stuck behind a wall (b, c, d) from its friend f; the wall's own links are slack
+    snap = self.snapshot([(100.0, 100.0), (200.0, 80.0), (200.0, 100.0), (200.0, 120.0), (700.0, 100.0), (80.0, 100.0)],
+                         [(0, 4, 1.0), (1, 2, 1.0), (2, 3, 1.0), (0, 5, 1.0)])
     w, h = 710.0 - 70.0, 130.0 - 70.0 # (the graph's extent)
-    for _ in range(50):
+    picks = []
+    for _ in range(400):
       jumpers, dx, dy = leap(snap, 0.0)
       i = jumpers[0]
-      self.assertIn(i, (0, 4, 5))                               # only what's stretched leaps
+      picks.append(i)
       if i == 0:
         self.assertEqual(jumpers, [0, 5])                       # with its leaf
       self.assertGreaterEqual((dx * dx + dy * dy) ** 0.5, LEAP_MIN * (w * w + h * h) ** 0.5) # a big change
       x, y = snap.positions[i][0] + dx, snap.positions[i][1] + dy
       self.assertTrue(70.0 - LEAP_REACH * w <= x <= 710.0 + LEAP_REACH * w)  # in or around the graph
       self.assertTrue(10.0 + PANE_MARGIN <= x and 10.0 + PANE_MARGIN <= y <= 130.0 + LEAP_REACH * h) # (not off the top or left)
+    stretched = sum(1 for i in picks if i in (0, 4)) / len(picks)
+    self.assertGreater(stretched, (1 - LEAP_ANY) * 0.9)         # mostly what's stretched...
+    self.assertTrue(any(i in (1, 2, 3, 5) for i in picks))      # ... but anything may go
     self.assertEqual(snap.positions[0], (100.0, 100.0))         # (it's only worked out)
     moves = forces(snap, 1000.0, 200.0, 0.005, 0.0, 10.0, leaps={0: (500.0, 30.0)})
     self.assertEqual(moves[0], (500.0, 30.0))                   # uncapped
     snap.positions[4], snap.positions[5] = (120.0, 100.0), (100.0, 120.0)
     snap.links = [(1, 2, 1.0), (2, 3, 1.0), (0, 4, 1.0), (0, 5, 1.0)]
-    self.assertIsNone(leap(snap, 30.0))                         # nothing stretched: no leap
+    self.assertIsNotNone(leap(snap, 30.0))                      # nothing stretched: still a leap, at random
+
+  def test0850leapersHaveLongLinksNotMany(self):
+    from sn.view.graphics.animatedLayouts import stretch
+    from math import cos, sin, pi
+    # a hub with eight links about 100 long; a loner with one 300 long
+    hub = [(0.0, 0.0)] + [(130.0 * cos(k * pi / 4), 130.0 * sin(k * pi / 4)) for k in range(8)]
+    snap = self.snapshot(hub + [(1000.0, 0.0), (1320.0, 0.0)], [(0, j, 1.0) for j in range(1, 9)] + [(9, 10, 1.0)])
+    self.assertLess(stretch(snap, 0, 0.0), stretch(snap, 9, 0.0))
+
+  def test0870noLeapsLate(self):
+    import sn.view.graphics.animatedLayouts as al
+    snap = self.snapshot([(0.0, 0.0), (900.0, 0.0)], [(0, 1, 1.0)])
+    calls = []
+    real = al.leap
+    al.leap = lambda *a, **kw: calls.append(1) or real(*a, **kw)
+    self.addCleanup(setattr, al, "leap", real)
+    layout = FieldsLayout(self.view)
+    layout.leaps = 1.0
+    layout.temperature = al.LEAP_STOP - 0.01
+    layout._work(snap)
+    self.assertEqual(calls, [])                                 # too cool: none
+    layout.temperature = 1.0
+    *_, leapt = layout._work(snap)
+    self.assertEqual(len(calls), 1)
+    self.assertTrue(leapt)
 
   def test0900aLeapIsntCountedAsMovement(self):
     layout = Layout(self.view)
