@@ -124,16 +124,22 @@ Hubs
 The **hubs** layout needs no relation type: it uses every relation shown.
 In each group of connected nodes, the ones with at least a given number of
 relations (**A hub has at least this many relations**: 3, to start with)
-are hubs, each with the nodes nearest it round it like spokes; the hubs go on
-a circle, with their spokes facing out. It suits networks that aren't trees
--- eg: what the XMLreader makes of an XML file (see :doc:`exampleApps`).
+are hubs, each with the nodes nearest it round it like spokes. The hubs
+linked to two or more others make the core, which goes on a circle, with
+their spokes facing out; a hub that just hangs off another (eg: at the end
+of a chain) goes out beyond it, with the spokes, rather than on the circle --
+so the circle stays small. (If the hubs make a tree, there's no circle: the
+one with the most relations is in the middle.) Branches keep going outward,
+the longest straight out. It suits networks that aren't trees -- eg: what
+the XMLreader makes of an XML file (see :doc:`exampleApps`).
 
 .. figure:: ../images/user/layout-hubs.png
    :alt: A small library model arranged round hubs: library1 in the middle, its books b1 and b2 and the magazine Byte round it, and each book's title, author and chapters round the book
    :width: 360px
 
    **hubs**, on the XMLreader's model of *books.xml*: the library, and each
-   of its books, is a hub.
+   of its books, is a hub; the books hang off the library, so they go out
+   beyond it.
 
 Keeping a view arranged
 -----------------------

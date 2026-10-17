@@ -88,6 +88,11 @@ RADIAL_SPREAD = math.pi
 '''The widest a node's children's wedges may be, side by side, in the radial layout
 (see *radialPositions()*): the circles beyond it are moved out until they fit.'''
 
+HUB_SPREAD = math.pi
+'''The widest a hub layout's nodes below the hubs' own spokes spread their
+children: so the branches keep going out, away from the hub, rather than
+curling round it (see *hubPositions()*).'''
+
 ROW_LENGTH = 1600.0
 '''The longest a row of balloons (or radial trees, or groups of hubs) is,
 unless one's longer: they're put one after another along it, then in another
@@ -208,8 +213,10 @@ class _Balloons(Generic[K]):
   and where each node of one goes (*place()*).
   '''
   def __init__(self, kids:Mapping[K, Sequence[K]], sizes:Mapping[K, tuple[float, float]], spacing:float,
-               edgeRoom:Optional[Mapping[K, float]], parentGap:float):
+               edgeRoom:Optional[Mapping[K, float]], parentGap:float, spread:Optional[float]=None):
     self.kids, self.sizes, self.spacing, self.parentGap = kids, sizes, spacing, parentGap
+    self.spread = spread
+    "The widest a balloon's nodes below its root spread their children (else all but *parentGap*)."
     self.room = (lambda k: edgeRoom.get(k, spacing)) if edgeRoom else (lambda k: spacing)
     self.circles:dict = {}
     "The circles of each node measured (and not yet in its parent's), and its subtree's: from it, facing along x."
@@ -232,20 +239,31 @@ class _Balloons(Generic[K]):
       order.append(m)
       stack.extend(self.kids.get(m, ()))
     for m in reversed(order):
-      self._one(m, isRoot and m == n)
+      self._one(m, isRoot and m == n, m != n)
     return self.circles.pop(n)
 
-  def _one(self, m, isRoot:bool) -> None:
+  def _one(self, m, isRoot:bool, below:bool=False) -> None:
     r = radius(self.sizes[m])
     ks = self.kids.get(m, ())
     if not ks:
       self.circles[m], self.D[m], self.offsets[m] = [(0.0, 0.0, r)], 0.0, []
       return
     groups = [self.circles.pop(k) for k in ks]
+    if below and self.spread is not None and len(ks) > 2: # (the biggest branches in the middle, going straight on)
+      bySize = sorted(range(len(ks)), key=lambda i: (-len(groups[i]), i)) # (biggest first: from the middle out)
+      middle:deque = deque()
+      for j, i in enumerate(bySize):
+        if j % 2:
+          middle.appendleft(i)
+        else:
+          middle.append(i)
+      ks, groups = [ks[i] for i in middle], [groups[i] for i in middle]
     # (each child's circle clear of this one's by its room; the rest of its subtree by the spacing)
     least = [max(-x + math.sqrt(max(0.0, (r + (self.room(k) if i == 0 else self.spacing) + cr) ** 2 - y * y))
                  for i, (x, y, cr) in enumerate(g)) for k, g in zip(ks, groups)]
     avail = 2 * math.pi if isRoot else 2 * math.pi - self.parentGap
+    if below and self.spread is not None:
+      avail = min(avail, self.spread)
     d, angles = _ring(groups, avail, self.spacing / 2, least, centred=isRoot)
     circles:list[Circle] = [(0.0, 0.0, r)]
     for g, a in zip(groups, angles):
@@ -419,9 +437,14 @@ def hubForest(nodes:Sequence[K], neighbours:Mapping[K, Sequence[K]], minSpokes:i
   '''
   Find the hubs of a graph, and their spokes: in each connected group of
   nodes, the hubs are those with at least *minSpokes* neighbours (or, if
-  none has, the one with the most), the most first; every other node is a
-  spoke of the hub nearest it (the first of those as near), under the node
-  next nearer it. The hubs are in order round a ring: each after the one
+  none has, the one with the most), the most first -- but only the core of
+  them, those linked (through their spokes) to two others or more, once
+  those linked to fewer are taken off, again and again (if none's left --
+  eg: the hubs make a tree -- the one with the most neighbours, alone): one
+  that hangs off another goes out beyond it, as its spokes do, so the ring
+  is no bigger than the core needs. (Not a pinned hub: it's cut out, below.) Every
+  other node is a spoke of the hub nearest it (the first of those as near),
+  under the node next nearer it. The hubs are in order round a ring: each after the one
   most related to the one before (the relations between their spokes too).
   A *pinned* node (eg: one the user's put somewhere) that's a spoke, or one
   of a ring's hubs, is cut out of its group (with the spokes under it) as
@@ -468,22 +491,40 @@ def hubForest(nodes:Sequence[K], neighbours:Mapping[K, Sequence[K]], minSpokes:i
       continue
     hubs = sorted((n for n in comp if degree[n] >= minSpokes), key=lambda n: (-degree[n], index[n])) \
            or [min(comp, key=lambda n: (-degree[n], index[n]))]
-    owner = {h: h for h in hubs}
-    kids:dict[K, list[K]] = {n: [] for n in comp}
-    queue = deque(hubs)
-    while queue:
-      n = queue.popleft()
-      for m in nbrs[n]:
-        if m not in owner:
-          owner[m] = owner[n]
-          kids[n].append(m)
-          queue.append(m)
-    links:dict[tuple[K, K], int] = {}
-    for n in comp:
-      for m in nbrs[n]:
-        a, b = owner[n], owner[m]
-        if a != b:
-          links[(a, b)] = links.get((a, b), 0) + 1
+    def spokes(hubs:list[K]) -> tuple[dict[K, K], dict[K, list[K]], dict[tuple[K, K], int]]:
+      "Each node's hub, and its children (spokes of the nearest hub, under the node next nearer); and the links between the hubs' nodes."
+      owner = {h: h for h in hubs}
+      kids:dict[K, list[K]] = {n: [] for n in comp}
+      queue = deque(hubs)
+      while queue:
+        n = queue.popleft()
+        for m in nbrs[n]:
+          if m not in owner:
+            owner[m] = owner[n]
+            kids[n].append(m)
+            queue.append(m)
+      links:dict[tuple[K, K], int] = {}
+      for n in comp:
+        for m in nbrs[n]:
+          a, b = owner[n], owner[m]
+          if a != b:
+            links[(a, b)] = links.get((a, b), 0) + 1
+      return owner, kids, links
+    owner, kids, links = spokes(hubs)
+    # (only the core on the ring: a hub linked to fewer than two others -- once those hanging off it are
+    # taken off -- goes out beyond the hub it hangs off, in its balloon, as its spokes do)
+    # (a pinned hub's cut out below anyway: never the core)
+    core = {h for h in hubs if h not in pinned}
+    pruned = True
+    while pruned and core:
+      pruned = False
+      for h in list(core):
+        if sum(1 for g in core if g is not h and (links.get((h, g)) or links.get((g, h)))) < 2:
+          core.discard(h)
+          pruned = True
+    if len(core) < len(hubs):
+      hubs = [h for h in hubs if h in core] or [next((h for h in hubs if h not in pinned), hubs[0])]
+      owner, kids, links = spokes(hubs)
     ring = [hubs[0]]
     rest = hubs[1:]
     while rest:
@@ -513,9 +554,11 @@ def hubPositions(hubs:list[K], children:Mapping[K, Sequence[K]], sizes:Mapping[K
   each hub's spokes in a balloon round it (see *balloonPositions()*), and the
   hubs on a ring, in order (from the top, clockwise), their spokes spread
   round the way away from its middle (keeping *parentGap* toward the middle
-  clear, for the relations between the hubs). The ring's as small as it can
-  be with each hub's balloon in its own wedge (as for *balloonPositions()*). A
-  single hub's balloon is all round it.
+  clear, for the relations between the hubs). Below the spokes, each node's
+  children are spread over no more than *HUB_SPREAD*, facing away from it,
+  the biggest branches in the middle: so the branches keep going out. The ring's as small as it can be with each
+  hub's balloon in its own wedge (as for *balloonPositions()*). A single
+  hub's balloon is all round it.
 
   :param hubs: The hubs, in order round the ring.
   :type hubs: list[K]
@@ -533,7 +576,7 @@ def hubPositions(hubs:list[K], children:Mapping[K, Sequence[K]], sizes:Mapping[K
     the radius of a circle round them all.
   :rtype: tuple[dict[K, tuple[float, float]], float]
   '''
-  b = _Balloons(children, sizes, spacing, edgeRoom, parentGap)
+  b = _Balloons(children, sizes, spacing, edgeRoom, parentGap, spread=HUB_SPREAD)
   out:dict[K, tuple[float, float]] = {}
   if len(hubs) == 1:
     b.measure(hubs[0], True)

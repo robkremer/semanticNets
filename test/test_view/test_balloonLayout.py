@@ -227,28 +227,71 @@ class Test(unittest.TestCase):
     self.assertEqual(isolated, ["z"])
     self.assertEqual(len(groups), 2)
     hubs, kids = groups[0]
-    self.assertEqual(sorted(hubs), ["h1", "h2"])
-    self.assertEqual(sorted(kids["h1"]), ["a", "b", "c"])                # h2's a hub: not h1's spoke
-    self.assertEqual(sorted(kids["h2"]), ["d", "e", "f"])
+    self.assertEqual(hubs, ["h1"])                                        # h2 hangs off h1: no ring of two
+    self.assertEqual(sorted(kids["h1"]), ["a", "b", "c", "h2"])
+    self.assertEqual(sorted(kids["h2"]), ["d", "e", "f"])                 # (with its spokes)
     self.assertEqual(kids["c"], ["g"])                                    # under the spoke nearer it
     self.assertEqual(groups[1][0], ["x"])                                 # no hub: the one with the most (the first)
     self.assertEqual(groups[1][1]["x"], ["y"])
 
   def test0900hubRingOrder(self):
-    # hubs in a chain p - q - r - s (each with spokes), given most-connected first: the ring follows the chain
+    # hubs in a cycle p - q - r - s - t - p (each with spokes), given most-connected first: the ring follows it
     nbrs:dict = {}
     def link(a, b):
       nbrs.setdefault(a, []).append(b)
       nbrs.setdefault(b, []).append(a)
-    for h in "pqrs":
+    for h in "pqrst":
       for i in range(3 if h != "q" else 4):
         link(h, f"{h}{i}")
-    link("p", "q"); link("q", "r"); link("r", "s")
+    link("p", "q"); link("q", "r"); link("r", "s"); link("s", "t"); link("t", "p")
     groups, _ = hubForest(sorted(nbrs), nbrs, minSpokes=3)
     ring = groups[0][0]
     self.assertEqual(ring[0], "q")                                        # the most related first
+    self.assertEqual(sorted(ring), list("pqrst"))
     for a, b in zip(ring, ring[1:]):
       self.assertIn(b, nbrs[a] + [x for y in nbrs[a] for x in nbrs.get(y, [])])
+
+  def test0950hubsHangingOffTheCoreGoOutBeyondIt(self):
+    # a core of three hubs (a triangle p, q, r), and hubs hanging off it: s off r, u off s (a chain), v off q
+    nbrs:dict = {}
+    def link(a, b):
+      nbrs.setdefault(a, []).append(b)
+      nbrs.setdefault(b, []).append(a)
+    for h in "pqrsuv":
+      for i in range(3):
+        link(h, f"{h}{i}")
+    link("p", "q"); link("q", "r"); link("r", "p"); link("r", "s"); link("s", "u"); link("q", "v")
+    groups, _ = hubForest(sorted(nbrs), nbrs, minSpokes=3)
+    ring, kids = groups[0]
+    self.assertEqual(sorted(ring), ["p", "q", "r"])                       # only the core on the ring
+    self.assertIn("s", kids["r"]); self.assertIn("u", kids["s"]); self.assertIn("v", kids["q"])
+    sizes = {n: (40, 20) for n in nbrs}
+    pos, _ = hubPositions(ring, kids, sizes, spacing=10)
+    self.assertEqual(overlapping(boxes(pos, sizes)), [])
+    out = lambda n: math.hypot(*pos[n])
+    self.assertGreater(out("s"), out("r")); self.assertGreater(out("u"), out("s")); self.assertGreater(out("v"), out("q"))
+    # hubs making a tree (a chain): the most connected alone, the rest hanging off it
+    nbrs = {}
+    for h in "pqr":
+      for i in range(3 if h != "q" else 4):
+        link(h, f"{h}{i}")
+    link("p", "q"); link("q", "r")
+    groups, _ = hubForest(sorted(nbrs), nbrs, minSpokes=3)
+    self.assertEqual(groups[0][0], ["q"])
+
+  def test0960hubBranchesGoStraightOut(self):
+    # a hub h with spokes; spoke s has leaves l0..l3 and a long branch b0 - b1 - b2 - b3: the branch straight on
+    kids = {"h": ["s", "t", "u"], "s": ["l0", "l1", "b0", "l2", "l3"], "b0": ["b1"], "b1": ["b2"], "b2": ["b3"]}
+    kids["s"] = ["b0", "l0", "l1", "l2", "l3"] # (given first: still put in the middle)
+    nodes = {n for k, v in kids.items() for n in [k, *v]}
+    sizes = {n: (40, 20) for n in nodes}
+    pos, _ = hubPositions(["h"], kids, sizes, spacing=10)
+    turn = lambda p, q: abs((math.atan2(p[1], p[0]) - math.atan2(q[1], q[0]) + math.pi) % (2 * math.pi) - math.pi)
+    rel = lambda n, base: (pos[n][0] - pos[base][0], pos[n][1] - pos[base][1])
+    self.assertLess(turn(rel("b0", "s"), pos["s"]), math.pi / 8)           # on along the line from the hub through s
+    for a, b in (("b0", "b1"), ("b1", "b2"), ("b2", "b3")):
+      self.assertGreater(math.hypot(*pos[b]), math.hypot(*pos[a]))          # ever further out
+    self.assertEqual(overlapping(boxes(pos, sizes)), [])
 
   def test1000hubPositionsDontOverlap(self):
     rnd = random.Random(9)

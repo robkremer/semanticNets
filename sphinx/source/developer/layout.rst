@@ -193,7 +193,13 @@ function:
 :py:func:`~sn.view.graphics.balloonLayout.hubForest` and :py:func:`~sn.view.graphics.balloonLayout.hubPositions`
   For a graph that isn't a tree: in each connected group, the nodes with at
   least ``minSpokes`` neighbours are hubs, each other node a spoke of the
-  nearest; the hubs on a ring, each one's spokes in a balloon round it.
+  nearest; the hubs on a ring, each one's spokes in a balloon round it. Only
+  the core hubs go on the ring (those linked to two others or more, once
+  those linked to fewer are pruned, again and again; if none's left, the
+  most connected one alone): the rest hang off them, out beyond them, as
+  spokes do. Below a hub's own spokes, children spread over no more than
+  ``HUB_SPREAD`` (a half-plane), the biggest branches in the middle, so
+  branches keep going out rather than curling round the hub.
 
 Balloon and radial find their trees with a *TreeLayout* (``structure()``).
 With ``trees="joined"`` (the default), ``_TreeRoundLayout._join()`` then
