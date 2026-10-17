@@ -395,9 +395,9 @@ def radialPositions(roots:list[K], children:Mapping[K, Sequence[K]], sizes:Mappi
       if not kids[n]:
         continue
       total = sum(need[k] for k in kids[n])
-      room = span[n] if n is root else max(total, min(span[n], RADIAL_SPREAD))
-      extra = (room - total) / len(kids[n])
-      s = -math.pi / 2 if n is root else angle[n] - room / 2 # (the root's: all round, from the top)
+      wide = span[n] if n is root else max(total, min(span[n], RADIAL_SPREAD))
+      extra = (wide - total) / len(kids[n])
+      s = -math.pi / 2 if n is root else angle[n] - wide / 2 # (the root's: all round, from the top)
       for k in kids[n]:
         span[k] = need[k] + extra
         angle[k] = s + span[k] / 2

@@ -148,6 +148,15 @@ class Test(unittest.TestCase):
     for k in "cd":
       self.assertAlmostEqual(turn(pos[k], pos["a"]), 0.0)
 
+  def test0760radialSeveralTreesWithEdgeRoom(self):
+    # (a later tree, after one with children, used to fail: the edge room was lost)
+    kids = {"r": ["a", "b"], "a": ["c"], "d": ["e", "f"], "e": ["g"]}
+    pos, trees = radialPositions(["r", "d"], kids, self.sizes, spacing=10, edgeRoom={k: 40.0 for k in "abcefg"})
+    self.assertEqual([t[0] for t in trees], ["r", "d"])
+    self.assertEqual(pos["d"], (0.0, 0.0))                              # (each tree on its own)
+    tree = {n for n in "defg"}
+    self.assertEqual(overlapping(boxes({n: p for n, p in pos.items() if n in tree}, self.sizes)), [])
+
   def test0800hubForest(self):
     # two stars (h1: a b c; h2: d e f), their hubs related; x and y related only to each other; z to nothing
     edges = [("h1", "a"), ("h1", "b"), ("h1", "c"), ("h2", "d"), ("h2", "e"), ("h2", "f"), ("h1", "h2"),
