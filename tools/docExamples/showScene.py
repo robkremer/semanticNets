@@ -267,7 +267,7 @@ def main() -> None:
       def keep() -> None:
         v.context.visibility("system objects", "hide")
         v.context.visibility("isa individuals", "hide")
-        v.doErase([vo(v, "has-ancestor"), vo(v, "has-parent")]) # (the relation types: their labels float between their ends, which are the same)
+        v.doErase([vo(v, "has-ancestor"), vo(v, "has-parent")]) # (the relation types: not part of the family tree -- they'd be laid out as nodes, near person)
         v.setDynamicLayout(TreeLayout(v, relation="has-parent", parentEnd="destination", direction="down", spacing=60, others="rows"))
       app.after(1000, keep)
       app.after(2000, lambda: (toTerminal(), v.reason()))

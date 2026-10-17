@@ -59,16 +59,19 @@ A subclass says what it is, and implements what its kinds need:
 ``PARAMETERS``
   The keyword arguments its constructor takes, as
   :py:class:`~sn.view.graphics.layout.LayoutParameter`\ s: each one's name,
-  label, kind (``"relation"``, ``"choice"``, ``"int"`` or ``"bool"``),
-  default, choices and note, and which kinds of use it matters for. A
-  program constructs a layout with them directly (eg:
-  ``TreeLayout(view, relation="includes", parentEnd="source")``: a relation
-  can be given by name); the menus ask for them with a dialog made from the
-  list (:py:meth:`~sn.view.graphics.layout.LayoutHeuristic.askParameters`,
-  :py:mod:`~sn.view.graphics.layoutDialog`), which
+  label, kind (``"relation"``, ``"relations"`` -- a table of relation
+  types: see below -- ``"choice"``, ``"int"`` or ``"bool"``), default,
+  choices and note, and which kinds of use it matters for. A program
+  constructs a layout with them directly (eg: ``TreeLayout(view,
+  relations=table)``; or, for the layouts that take a table, the simple way
+  for a single relation type: ``TreeLayout(view, relation="includes",
+  parentEnd="source")`` -- a relation can be given by name); the menus ask
+  for them with a dialog made from the list
+  (:py:meth:`~sn.view.graphics.layout.LayoutHeuristic.askParameters`,
+  :py:mod:`~sn.view.graphics.layoutDialog`: a table is edited by its
+  ``RelationTableEditor``), which
   :py:meth:`~sn.view.graphics.layout.LayoutHeuristic.parameterChanged` can
-  adjust as the user changes it (eg: the tree layout's parent end, when a
-  relation type is chosen).
+  adjust as the user changes it.
 
 static: ``targets()``
   Where to move things: each object's new top left corner.
@@ -128,10 +131,14 @@ A view saves its dynamic layout (its ``layout`` property:
 :py:meth:`~sn.view.graphics.layout.LayoutHeuristic.fromState`) -- its name,
 its parameters, and anything else it keeps
 (:py:meth:`~sn.view.graphics.layout.LayoutHeuristic.extraState`: eg: a tree
-layout's pins) -- as text: ``name=tree;relation=includes;direction=right;pins=12,40``.
+layout's pins) -- as text:
+``name=tree;relations=includes:shapes:source;direction=right;pins=12,40``.
 It also saves the parameters each layout was last used with
 (``layoutParameters``), which the dialogs start from
-(``SNGView.lastLayoutParameters()``).
+(``SNGView.lastLayoutParameters()``). What an older version saved is
+converted as it's read
+(:py:meth:`~sn.view.graphics.layout.LayoutHeuristic.upgradeParameters`: eg:
+a single ``relation`` and ``parentEnd``, to a table).
 
 Placing one object
 ------------------
@@ -143,16 +150,55 @@ its supertype), and nudges a dropped object off whatever it landed on.
 outliers, axis by axis -- gaps between clusters far wider than is typical of
 the drawing -- and works out how far to shift them back.
 
+What's arranged
+---------------
+
+The tree, balloon, radial and hubs layouts arrange the nodes shown and the
+relation types shown alike (:py:func:`~sn.view.graphics.treeLayout.isMember`):
+a relation type has a place of its own, as a node does (it never floats:
+see :doc:`view`), and is related to others by the relations it's an end of
+-- mostly *isa*, between relation types. The relations that relate what's
+arranged are the individual relations shown
+(:py:func:`~sn.view.graphics.treeLayout.isLink`); a relation type's own ends
+-- its domain and range -- aren't, unless the relation table says so, as if
+by a relation from the relation type to each
+(:py:class:`~sn.view.graphics.treeLayout.Terminal`: a link with no label).
+
+The relation table
+~~~~~~~~~~~~~~~~~~
+
+The tree, balloon and radial layouts (and hubs, if asked) follow an ordered
+table of relation types,
+:py:class:`~sn.view.graphics.relationTable.RelationTable` (their
+``relations`` parameter): each row names a relation type -- or ``TERMINALS``,
+the relation types' own ends -- and says what its relations do: shape the
+trees (``SHAPES``, with which end is the parent), pull things together
+(``PULLS``: only for joining trees, and putting the nodes in no tree near
+what they're related to), or nothing (``IGNORED``). A row covers its
+relation type's subtypes too, unless a subtype has a row of its own: the
+most specific row wins, and a relation no row covers pulls together.
+:py:class:`~sn.view.graphics.relationTable.RelationRoles` is a table for a
+model: each relation's row, role, rank (the row's index: lower wins) and
+parent end. ``RelationTable.single()`` is the table that's like a single
+relation type -- it shapes the trees, everything else pulls together, the
+relation types' ends last -- which is what the layouts start with (for
+*isa*), and what an old ``relation`` and ``parentEnd`` become. The dialog
+shows a row for each relation type shown in the view
+(``RelationTable.expanded()``: a new row does what the row that covered it
+did, so nothing changes until the user changes it).
+
 Trees
 -----
 
 :py:class:`~sn.view.graphics.treeLayout.TreeLayout` arranges nodes as trees
-by a relation type and its subtypes (``relation``; ``parentEnd`` says which
-end's the parent). ``structure()`` finds the trees in the view: the roots,
-each node's children (grouped by which of the relation's direct subtypes
-they're related by), the relation to each child, and the nodes in no tree.
-A node with two parents goes under the first; a relation that would make a
-cycle is left out. The geometry is a pure function,
+by the relations whose rows shape them. ``structure()`` finds the trees in
+the view: the roots, each node's children (grouped by the row they're
+related by, then by which of its relation type's direct subtypes), the
+relation to each child, and the nodes in no tree. A node with two parents
+goes under the one related by the highest row (then the first made); a
+relation that would make a cycle is left out.
+:py:meth:`~sn.view.graphics.treeLayout.TreeLayout.related` says what else
+something's related to by the rows that aren't ignored. The geometry is a pure function,
 :py:func:`~sn.view.graphics.treeLayout.treePositions`, of the trees and the
 nodes' sizes: each depth in a line, each parent level with the middle of its
 children -- or, *compact*, each subtree tucked in beside the one before
@@ -199,12 +245,15 @@ function:
   most connected one alone): the rest hang off them, out beyond them, as
   spokes do. Below a hub's own spokes, children spread over no more than
   ``HUB_SPREAD`` (a half-plane), the biggest branches in the middle, so
-  branches keep going out rather than curling round the hub.
+  branches keep going out rather than curling round the hub. The neighbours
+  are by every relation shown -- or, with ``follow="as in the table"``, only
+  by the rows of its table that aren't ignored (shaping and pulling together
+  count the same), and the relation types' ends if their row isn't.
 
 Balloon and radial find their trees with a *TreeLayout* (``structure()``).
 With ``trees="joined"`` (the default), ``_TreeRoundLayout._join()`` then
-makes a tree whose root is related, by any relation shown, to a node in
-another tree one of that node's children -- from the top trees (roots
+makes a tree whose root is related, by a row that isn't ignored, to a node
+in another tree one of that node's children -- from the top trees (roots
 related to no other tree), biggest first -- so related trees are laid out
 as one.
 Kept arranged, each group is laid out again where it is -- its root (or its

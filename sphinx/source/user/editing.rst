@@ -48,7 +48,9 @@ Selecting, moving and resizing
   **fit to text** (in its menu) undoes manual sizing.
 - A relation's label normally sits midway between its ends (*floating*);
   dragging it pins it where you put it. **floating** in its menu (or **view |
-  float all relations**) puts it back between its ends.
+  float all relations**) puts it back between its ends. A relation *type*
+  doesn't float: it has a place of its own, as a node does (a new one starts
+  out between its ends -- its domain and range -- and stays there).
 
 Attributes
 ----------

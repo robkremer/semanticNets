@@ -610,7 +610,7 @@ class TreeLayout(LayoutHeuristic):
 
   def terminals(self, ids:set[int], nodes:Iterable[VObject]) -> list[Terminal]:
     '''
-    :param ids: The *id()*s of what's arranged.
+    :param ids: The ids (*id()*) of what's arranged.
     :type ids: set[int]
     :param nodes: What's arranged.
     :type nodes: Iterable[VObject]
@@ -630,7 +630,7 @@ class TreeLayout(LayoutHeuristic):
     '''
     :param n: Something arranged (see *isMember()*).
     :type n: VObject
-    :param ids: The *id()*s of what's arranged.
+    :param ids: The ids (*id()*) of what's arranged.
     :type ids: set[int]
     :returns: What else arranged *n* is related to by the rows of the table
       that aren't ignored (see *relationTable.ROLES*): each once, with the

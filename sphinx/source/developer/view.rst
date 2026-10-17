@@ -35,7 +35,10 @@ the animation settings.
   moved and related) and a connector from its source, through the label, to
   its destination. A *floating* label keeps itself midway between its ends
   (at the midpoint of the gap between the ends' edges, so it isn't hidden
-  by a large object); dragging it pins it.
+  by a large object); dragging it pins it. A relation type never floats: it
+  has a place of its own, as a node does (see ``VRelation.floating()``); one
+  read from an older view that floated is pinned once the view's drawn
+  (``SNGView._pinRelationTypes()``).
 
 Every canvas item a VObject draws carries the VObject's own unique tag
 (``vo.tag``), so its items can be found, moved, raised and hidden together.

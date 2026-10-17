@@ -25,9 +25,11 @@ A layout with settings asks for them (its menu item ends with "..."); the
 dialog offers the ones you used last time in this view. A view saves which
 layout keeps it arranged, and the settings you used, with the view.
 
-What's arranged is the nodes shown. Relations follow their ends; context
-windows (rules, queries, ...) and what's in them are left as they are; and
-what's hidden stays where it is.
+What's arranged is the nodes shown -- and the relation types shown, which are
+arranged just as nodes are (eg: *has-parent* under *has-ancestor*, by
+**isa**). Individual relations follow their ends; context windows (rules,
+queries, ...) and what's in them are left as they are; and what's hidden
+stays where it is.
 
 The layouts
 -----------
@@ -36,7 +38,7 @@ The layouts
 layout              arrange     keep         what it does
                     now         arranged
 ==================  ==========  ===========  ===================================================
-**tree**            yes         yes          trees by a relation type, in levels
+**tree**            yes         yes          trees by relation types, in levels
 **balloon**         yes         yes          trees, each node's children in a ring round it
 **radial**          yes         yes          trees, each level on a circle round the root
 **hubs**            yes         yes          the most connected nodes as hubs, the rest round them
@@ -49,22 +51,35 @@ Trees
 ~~~~~
 
 The **tree**, **balloon** and **radial** layouts all see the nodes as
-*trees*, by a relation type: by **isa**, a type is the parent of its
+*trees*, by relation types: by **isa**, a type is the parent of its
 subtypes and instances; by *has-parent*, a parent of their children; by
-*includes*, a package of its modules. Its subtypes count too, and a node's
-children are grouped by which of them they're related by (eg: a package's
-modules, then its sub-packages). They ask:
+*includes*, a package of its modules. They ask:
 
-**Relation**
-  The relation type the trees are made of (by default, *isa*).
+**Relations**
+  A table of the relation types shown in the view, in order, each with what
+  it does:
 
-**The parent is the relation's**
-  Which end is the parent: the **destination** for *isa* (*dog* isa
-  *animal*: the parent is *animal*) and for ``has-*`` relations (*carol*
-  has-parent *alice*); the **source** for relations like *includes* (a
-  package includes its modules). Choosing a relation type sets this to the
-  destination for *isa*, and to the source for any other: for a ``has-*``
-  relation, set it back to the destination.
+  - **shapes the tree**: its relations relate parents to children. **The
+    parent is the** relation's **destination** for *isa* (*dog* isa
+    *animal*: the parent is *animal*) and for ``has-*`` relations (*carol*
+    has-parent *alice*), and its **source** for relations like *includes* (a
+    package includes its modules).
+  - **pulls together**: its relations don't make trees, but they're what
+    joins trees (see **Trees related to one another**) and puts the nodes in
+    no tree near what they're related to.
+  - **ignored**: its relations don't count at all.
+
+  A row covers the relation type's subtypes too, unless a subtype has a row
+  of its own. A node's children are grouped by the row they're related by,
+  then by which of its relation type's subtypes (eg: a package's modules,
+  then its sub-packages). The higher rows win: a node with two parents goes
+  under the one related by the higher row -- move a row with its **▲** and
+  **▼** buttons. The last row, **(domain and range of relation types)**, is
+  the relation types' own ends: as if each relation type shown were related
+  to its domain and its range (the parent is the **destination**: the
+  relation type goes under them, if the row shapes the tree).
+
+  To start with, *isa* shapes the trees, and everything else pulls together.
 
 **Grows** (tree only)
   Which way the trees grow, from the root to the leaves: right, down, left
@@ -83,8 +98,8 @@ modules, then its sub-packages). They ask:
   it's related to (and those related to nothing in rows).
 
 **Trees related to one another** (balloon and radial only)
-  What to do with a tree whose root is related -- by some other relation
-  type -- to a node in another tree: **joined**, it goes out beyond that
+  What to do with a tree whose root is related -- by a row that pulls
+  together (or shapes the trees) -- to a node in another tree: **joined**, it goes out beyond that
   node, as if it were one of its children, so the trees make one drawing;
   **apart**, each tree is laid out on its own. (Eg: the XMLreader's model of
   a file, by *has-property*, is many small trees -- an object and its
@@ -93,8 +108,9 @@ modules, then its sub-packages). They ask:
   In a view kept arranged, a joined tree's root dropped somewhere stays
   there, a tree of its own.
 
-A node with two parents goes under the first; a relation that would make a
-cycle is left out of the trees (it's still drawn).
+A node with two parents goes under the one related by the higher row (or,
+for the same row, the first); a relation that would make a cycle is left out
+of the trees (it's still drawn).
 
 .. figure:: ../images/user/layout-tree.png
    :alt: The animals taxonomy as a tree growing down: animal at the top, bird and mammal below it, the species below them, and an individual of each at the bottom
@@ -121,8 +137,11 @@ cycle is left out of the trees (it's still drawn).
 Hubs
 ~~~~
 
-The **hubs** layout needs no relation type: it uses every relation shown.
-In each group of connected nodes, the ones with at least a given number of
+The **hubs** layout needs no relation type: it uses every relation shown --
+or, with **Relations** set to **as in the table**, only those whose rows of
+its table (as above) aren't **ignored** (shaping the tree and pulling
+together count the same), and the relation types' links to their own ends,
+if that row isn't ignored. In each group of connected nodes, the ones with at least a given number of
 relations (**A hub has at least this many relations**: 3, to start with)
 are hubs, each with the nodes nearest it round it like spokes. The hubs
 linked to two or more others make the core, which goes on a circle, with
@@ -171,8 +190,10 @@ Tips
 ----
 
 - For a class diagram, use **tree** by *isa*, growing **down**; for a
-  family tree, **tree** by *has-parent* (the parent is the destination),
-  growing down too.
+  family tree, **tree** with *has-parent* moved to the top of the table,
+  shaping the tree (the parent is the destination), growing down too. With
+  *isa* shaping the tree too, below it, the people with no parents shown go
+  under their types.
 - Before arranging a big view, hide what you don't need (eg: **view | hide by
   category | isa individuals**, or **relation types...**: see
   :doc:`viewing`), or erase it (**erase everything else**, on a node's menu,
