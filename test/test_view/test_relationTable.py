@@ -99,5 +99,13 @@ class Test(unittest.TestCase):
                       ("isa", PULLS, "destination"), ("likes", PULLS, "source"),            # (no row: pulls together)
                       (TERMINALS, PULLS, "destination")])
 
+  def test0600hubsFollowTheTableIfAsked(self):
+    from sn.view.graphics.balloonLayout import HubLayout, HUB_RELATIONS
+    self.assertEqual(HUB_RELATIONS, ("all", "as in the table"))
+    self.assertEqual({p.name: p.default for p in HubLayout.PARAMETERS}["follow"], "all")   # (as it was)
+    cls, kwargs, _ = LayoutHeuristic.decodeParameters("name=hubs;follow=as in the table;relations=isa:ignored:destination") #type: ignore[misc]
+    self.assertIs(cls, HubLayout)
+    self.assertEqual((kwargs["follow"], rows(RelationTable.decode(kwargs["relations"]))), ("as in the table", [("isa", IGNORED, "destination")]))
+
 if __name__ == "__main__":
   unittest.main()

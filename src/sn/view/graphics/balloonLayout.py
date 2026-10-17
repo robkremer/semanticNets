@@ -60,7 +60,7 @@ from sn.view.graphics.vrelations import VRelation
 from sn.view.graphics.layout import (LayoutHeuristic, LayoutParameter, LayoutMoves, FindFree, Direction,
                                      registerLayout, layoutSize, STATIC, DYNAMIC)
 from sn.view.graphics.treeLayout import (TreeLayout, isMember, isLink, upgradeRelation, relationsParameter, RELATIONS_NOTE,
-                                         RelationTable, NEAR_BIAS, _BoxIndex, nearestFree)
+                                         RelationTable, IGNORED, NEAR_BIAS, _BoxIndex, nearestFree)
 
 K = TypeVar("K", bound=Hashable)
 
@@ -72,13 +72,21 @@ the trees); put them in rows after the trees; or leave them where they are.'''
 
 TREES = ("joined", "apart")
 '''What the balloon and radial layouts do with a tree whose root is related
-(by any relation shown, but the trees') to a node in another tree: put it out
+(by a row of their relation table that isn't ignored: see
+*treeLayout.TreeLayout.related()*) to a node in another tree: put it out
 beyond that node, as if one of its children (see *_TreeRoundLayout._join()*);
 or lay it out on its own, apart.'''
 
 HUB_OTHERS = ("rows", "leave")
 '''What the hub layout does with the nodes related to nothing: puts them in
 rows after the rest; or leaves them where they are.'''
+
+HUB_RELATIONS = ("all", "as in the table")
+'''Which relations the hub layout follows: every relation shown; or only
+those whose rows of its relation table aren't ignored (see
+*relationTable.RelationTable*: those that shape the trees and those that pull
+together count the same) -- and the relation types' links to their own ends,
+if their row isn't ignored (see *treeLayout.Terminal*).'''
 
 PARENT_GAP = math.pi / 2
 '''The wedge (radians) a balloon's node keeps clear of its children, toward
@@ -1330,7 +1338,8 @@ class RadialLayout(_TreeRoundLayout):
 class HubLayout(_RoundLayout):
   '''
   Arrange nodes round hubs (see *hubForest()* and *hubPositions()*), by every
-  relation shown: in each connected group, the nodes with at least
+  relation shown -- or those its relation table doesn't ignore (*follow*:
+  see *HUB_RELATIONS*): in each connected group, the nodes with at least
   *minSpokes* relations (to different nodes) are hubs, each with its spokes
   (the nodes nearest it) in a balloon round it, and the hubs on a circle,
   their spokes spread round away from its middle -- where the relations
@@ -1343,7 +1352,8 @@ class HubLayout(_RoundLayout):
 
   Relation types shown are arranged as nodes are (see *treeLayout.isMember()*),
   by the relations they're an end of (eg: isa): not by their own ends (their
-  domain and range). Nodes in a context window (or that are one) aren't arranged.
+  domain and range), unless the table says so. Nodes in a context window (or
+  that are one) aren't arranged.
   '''
   NAME = "hubs"
   PARAMETERS = (
@@ -1352,31 +1362,52 @@ class HubLayout(_RoundLayout):
     LayoutParameter("spacing", "Space between neighbours", "int", 20),
     LayoutParameter("others", "Nodes related to nothing", "choice", "rows", HUB_OTHERS,
                     note='"rows": in rows after the rest.'),
+    LayoutParameter("follow", "Relations", "choice", "all", HUB_RELATIONS,
+                    note='"as in the table": only those whose rows aren\'t ignored ("shapes the tree" and '
+                         '"pulls together" count the same; the parent ends don\'t matter).'),
+    LayoutParameter("relations", "The table", "relations", None,
+                    note="Each row covers its subtypes too (unless they have rows of their own)."),
   )
 
   def __init__(self, view, **kwargs):
     '''
     :param view:
     :type view: SNGView
-    :param kwargs: See *PARAMETERS*: minSpokes, spacing, others (see *HUB_OTHERS*).
+    :param kwargs: See *PARAMETERS*: minSpokes, spacing, others (see *HUB_OTHERS*),
+      follow (see *HUB_RELATIONS*), relations (a *relationTable.RelationTable*,
+      or its text: for *follow* "as in the table"; by default, as isa shapes
+      the trees, and everything else pulls together -- so all count).
     '''
     super().__init__(view, **kwargs)
     if self.params["others"] not in HUB_OTHERS:
       raise ValueError(f'HubLayout: others must be one of {", ".join(HUB_OTHERS)}, not "{self.params["others"]}".')
+    if self.params["follow"] not in HUB_RELATIONS:
+      raise ValueError(f'HubLayout: follow must be one of {", ".join(HUB_RELATIONS)}, not "{self.params["follow"]}".')
+    if self.params["relations"] is None:
+      self.params["relations"] = RelationTable.single("isa")
 
-  def graph(self) -> tuple[list[VObject], dict[VObject, list[VObject]], dict[tuple[VObject, VObject], VRelation]]:
+  def graph(self) -> tuple[list[VObject], dict[VObject, list[VObject]], dict[tuple[VObject, VObject], Any]]:
     '''
     :returns: What's arranged: the nodes (as *TreeLayout.scope()*), by name;
-      what each is related to (by a relation shown, either way), by name; and
-      a relation between each pair of them (the first made), both ways round.
-    :rtype: tuple[list[VObject], dict[VObject, list[VObject]], dict[tuple[VObject, VObject], VRelation]]
+      what each is related to (by a relation shown, either way -- or, as in the
+      table, by those it doesn't ignore, and the relation types' links to
+      their ends: see *follow*), by name; and a relation (or link) between
+      each pair of them (the first made), both ways round.
+    :rtype: tuple[list[VObject], dict[VObject, list[VObject]], dict[tuple[VObject, VObject], Any]]
     '''
     name = lambda vo: (str(vo.modelObject.name).lower() if vo.modelObject is not None else "", vo._id)
-    nodes = sorted(self._tree().scope()[0], key=name)
+    tree = self._tree()
+    tree._roles = None # (afresh: the model's relation types may have changed)
+    nodes = sorted(tree.scope()[0], key=name)
     ids = {id(n) for n in nodes}
     neighbours:dict[VObject, list[VObject]] = {n: [] for n in nodes}
-    between:dict[tuple[VObject, VObject], VRelation] = {}
-    rels = sorted((r for r in self.view.values() if isLink(r) and id(r.src) in ids and id(r.dst) in ids and r.src is not r.dst), key=lambda r: r._id)
+    between:dict[tuple[VObject, VObject], Any] = {}
+    rels:list[Any] = sorted((r for r in self.view.values() if isLink(r) and id(r.src) in ids and id(r.dst) in ids and r.src is not r.dst),
+                            key=lambda r: r._id)
+    if self.params["follow"] != "all":
+      rels = [r for r in rels if tree._role(r) != IGNORED]
+      if tree.roles.role(None) != IGNORED:
+        rels += tree.terminals(ids, nodes)
     for r in rels:
       a, b = r.src, r.dst
       if (a, b) not in between:
@@ -1386,7 +1417,7 @@ class HubLayout(_RoundLayout):
     return nodes, {n: sorted(ns, key=name) for n, ns in neighbours.items()}, between
 
   def _forest(self, dynamic:bool) -> tuple[list[VObject], list[tuple[list[VObject], dict[VObject, list[VObject]]]], list[VObject],
-                                            dict[tuple[VObject, VObject], VRelation]]:
+                                            dict[tuple[VObject, VObject], Any]]:
     ":returns: What's arranged (see *graph()*), its groups and the nodes related to nothing (see *hubForest()*), and the relations."
     nodes, neighbours, between = self.graph()
     pinned = [n for n in nodes if n._id in self.pins] if dynamic else []
