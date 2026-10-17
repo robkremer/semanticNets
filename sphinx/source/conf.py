@@ -24,6 +24,11 @@ sys.path.insert(0, os.path.abspath('../../src'))
 sys.path.insert(0, os.path.abspath('/opt/homebrew/bin'))
 print(f'python version {sys.version}, cwd="{os.getcwd()}"')
 import typing
+
+# The plugins (see sn.plugins): their API pages (plugins/) document them as
+# snplugins.<name>, imported from the project's plugins/ folder.
+import sn.plugins
+sn.plugins.namespace(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "plugins")))
 typing.TYPE_CHECKING = False
 
 

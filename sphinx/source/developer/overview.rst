@@ -35,12 +35,14 @@ Packages
      controller [label="sn.controller\nModelContext: the commands"];
      view [label="sn.view\nUIContext, terminals"];
      graphics [label="sn.view.graphics\nApplication, SNGView, VObjects,\ndecorators, shapes, layouts"];
-     apps [label="sn.exampleApps\nXMLreader, pythonParser"];
+     plugins [label="sn.plugins\nloading, PluginContext"];
+     apps [label="plugins/ (snplugins.*)\nXMLreader, pythonParser"];
      hooks [label="sn.hooks"];
      util [label="util (pythonUtils)", style="rounded,dashed"];
      graphics -> view -> controller -> model -> sn;
      graphics -> model; graphics -> hooks -> sn;
-     apps -> graphics; apps -> model;
+     graphics -> plugins -> hooks;
+     apps -> plugins [style=dashed, label="register(ctx)"]; apps -> graphics; apps -> model;
      {model controller view graphics} -> util [style=dotted];
    }
 
@@ -74,9 +76,14 @@ Packages
   items, tooltips and double-clicks that last when a model's saved: see
   :doc:`view` and :doc:`extending`.
 
-``sn.exampleApps``
-  Programs built on the rest: the XMLreader and the pythonParser (see
-  :doc:`extending`).
+``sn.plugins``
+  Plugins: programs the editor loads at start-up, from ``~/.sn/plugins/``,
+  which add to its menus (see :doc:`extending`).
+
+``plugins/`` (``snplugins.*``)
+  The plugins that come with it, built on the rest: the XMLreader and the
+  pythonParser (see :doc:`extending`). Not under ``src/``: they're imported
+  as ``snplugins.<name>`` from their installed copies.
 
 Running it
 ----------

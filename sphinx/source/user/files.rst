@@ -163,7 +163,8 @@ Settings
 
 **Settings...** (in the application menu) shows the
 program's settings, and lets you change them. They're kept in ``~/.sn/prefs.xml``
-(before, in ``~/.sn.xml``: it's moved there the first time).
+(before, in ``~/.sn.xml``: it's moved there the first time), beside the
+plugins (``~/.sn/plugins/``: see :doc:`exampleApps`).
 Among them:
 
 ===============================================  ==========================================
@@ -185,8 +186,12 @@ setting                                          controls
                                                  your editor (eg: a function's source, from
                                                  the pythonParser: see :doc:`exampleApps`)
 ``hooks/trustedModules``                         the programs (Python modules) besides
-                                                 *Semantic Nets* itself whose functions
-                                                 models may call (see :doc:`exampleApps`)
+                                                 *Semantic Nets* itself and its plugins
+                                                 whose functions models may call (see
+                                                 :doc:`exampleApps`)
+``plugins/disabled``                             the plugins not to load (their folders'
+                                                 names, in ``~/.sn/plugins/``: see
+                                                 :doc:`exampleApps`)
 ``gui/recentFiles``                              how many views **File | Open Recent** lists
 ``gui/directoryPath``                            the folders the model directory searches
 ``model/urlAliases``                             where models have moved (``old -> new``)

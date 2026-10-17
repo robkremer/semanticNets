@@ -4,9 +4,10 @@ Building on Semantic Nets
 *Semantic Nets* can be the front end of another program: the program makes
 a model -- of a file, a program, a database -- and opens it in the editor,
 where the user can look round it, arrange it and reason over it. This page
-works through a small example, *petsapp*, step by step; then the two
-example applications that come with the source, which are built the same way
-(see the User Guide's :doc:`../user/exampleApps`).
+works through a small example, *petsapp*, step by step; then how such a
+program becomes a *plugin*, loaded by the editor and run from its menus --
+as the two that come with it are (see the User Guide's
+:doc:`../user/exampleApps`).
 
 The example's files are in ``tools/docExamples/petsapp/``, and are included
 here as they are. ``tools/docExamples/checkPetsapp.py`` runs them, and checks
@@ -184,39 +185,135 @@ call                                           does
 ``view.save()``                                saves the view
 =============================================  ==========================================
 
-The example applications
-------------------------
+Plugins
+-------
 
-The two programs in ``src/sn/exampleApps/`` are built the same way, on a
-bigger scale.
+A program like *petsapp* runs on its own, making its own
+:py:class:`~sn.view.graphics.guiApp.Application`. To be run from the
+editor instead -- from a menu, alongside whatever else is open -- it's made
+a *plugin* (see :py:mod:`sn.plugins`): a folder in ``~/.sn/plugins/``,
+holding a Python package and a *plugin.toml* describing it::
 
-:py:mod:`sn.exampleApps.XMLreader`
-  :py:mod:`~sn.exampleApps.XMLreader.reader` turns an XML file into a model:
+    ~/.sn/plugins/pets/
+        plugin.toml
+        __init__.py       # register(ctx)
+        build.py
+        hooks.py
+
+.. code-block:: toml
+   :caption: plugin.toml
+
+   name = "Pets"
+   version = "1.0"
+   description = "A small model of pets and their owners."
+   sn-version = "1.0"                # the oldest Semantic Nets it works with
+   exclude = ["examples/*.snm"]      # (optional) files not to install: see below
+
+When the editor starts (:py:meth:`Application.startUp()
+<sn.view.graphics.guiApp.Application.startUp>`), each plugin's package is
+imported as ``snplugins.<folder>`` -- eg: ``snplugins.pets`` -- and its
+``register(ctx)`` called, with a
+:py:class:`~sn.plugins.PluginContext`: what the plugin may use of the editor,
+so that it needn't know how the editor's made.
+
+.. code-block:: python
+   :caption: __init__.py
+
+   def register(ctx):
+     def makePets():
+       from .build import buildModel   # (here: only once it's used -- start-up stays quick)
+       ...
+       ctx.app.openWindow(path)
+     ctx.addMenuItem("Pets...", makePets)              # in the Tools menu
+     ctx.addMenuItem("Pets/Feed them all", feed)       # a menu of its own
+
+=======================================================  ==============================================
+``ctx.app``                                              the editor (eg: ``openWindow()``)
+``ctx.addMenuItem(path, command)``                       a menu item: just a label puts it in
+                                                         **Tools**; ``"Menu/Sub/Label"`` in a top-level
+                                                         menu of its own (before **Window**), and
+                                                         submenus
+``ctx.addSeparator(menu)``, ``ctx.menu(path)``           a separator; the menu itself (a ``tk.Menu``)
+``ctx.pref(key, default)``, ``ctx.setPref(key, value)``  the plugin's own settings, kept with the
+                                                         program's (as ``plugins/<folder>/<key>``)
+``ctx.folder``, ``ctx.manifest``, ``ctx.logger``         its folder (eg: for files that come with it),
+                                                         its *plugin.toml*, its log
+=======================================================  ==============================================
+
+Things to know:
+
+- **Hooks.** Once a plugin's loaded, its package is trusted for hooks (see
+  :py:func:`sn.hooks.trust`): a model's ``.menu/...``, ``vis/tooltip`` and
+  ``.doubleClick`` can name its functions -- as
+  ``snplugins.<folder>.<module>:<function>`` (eg:
+  ``snplugins.pythonParser.hooks:showSource``), the same wherever it's
+  installed.
+- **Failing.** A plugin that's for a later version (``sn-version``), can't
+  be imported, has no ``register()``, or raises in it, is left out, and the
+  log says why (:py:data:`sn.plugins.problems`); so is one the
+  ``plugins/disabled`` setting lists. A menu item's command that raises is
+  logged, and shown in an error dialog.
+- **Coming with the program.** The plugins in the project's ``plugins/``
+  folder are bundled with the app and the .pyz, and copied to
+  ``~/.sn/plugins/`` when the editor starts (see
+  :py:func:`sn.plugins.installBundled`) if they aren't there, or are an
+  older ``version`` there -- so raise the version when changing one. The
+  copy leaves out ``exclude``'s files (eg: models made from its examples),
+  and its models and views (``.snm``, ``.snv``) are made to refer to where
+  they now are. It's a copy, not the files in the app, so that what's in it
+  -- eg: an ontology models are built on -- stays at the same place when the
+  app's moved or updated.
+- **What it can import.** In the packaged app, a plugin has *Semantic
+  Nets*, ``util``, and the parts of the standard library the app has: those
+  the bundled plugins import are added to it when it's built (see
+  ``packaging/bundledPlugins.py``), but a plugin installed later can't bring
+  more (eg: pip packages). Run from the source, or the .pyz, it has whatever
+  that Python has.
+- **Testing.** :py:func:`sn.plugins.importBundled` imports a plugin from the
+  project's ``plugins/`` where it is -- not installed, nor registered -- for
+  tests and tools (eg: ``test/test_sn/test_pythonSource.py``). ``python3.14
+  -m sn --selftest`` installs the bundled plugins in a scratch folder,
+  imports all their modules, and makes a model with each, as the "app" and
+  "pyz" builds do.
+
+The plugins that come with it
+-----------------------------
+
+The two plugins in ``plugins/`` are built as *petsapp* is, on a bigger
+scale (their API pages: :doc:`../plugins/index`).
+
+*XMLreader* (:doc:`../plugins/snplugins.XMLreader`)
+  :py:mod:`~snplugins.XMLreader.reader` turns an XML file into a model:
   a type per tag (with a look of its own: see
-  :py:class:`~sn.exampleApps.XMLreader.reader.TypeLooks`), an individual per
+  :py:class:`~snplugins.XMLreader.reader.TypeLooks`), an individual per
   element, and a ``has-<tag>`` relation per nesting.
-  :py:mod:`sn.exampleApps.XMLreader.__main__` asks for the file, opens a
-  window on the model, shows its types and expands them a few levels
+  :py:mod:`~snplugins.XMLreader.view` asks for the file, opens a window on
+  the model, shows its types and expands them a few levels
   (``showTypesAndExpand()``), and starts the animation layout, saving the
   view once it's settled (``startLayout()``). It shows how to fill a view
-  from a model's types, and how to wait for the animation layout.
+  from a model's types, and how to wait for the animation layout. Its
+  ``register()`` remembers the folder last read from (``ctx.setPref()``),
+  and makes the models of its own examples outside its folder (it's
+  replaced when a newer version's installed).
 
-:py:mod:`sn.exampleApps.pythonParser`
-  :py:mod:`~sn.exampleApps.pythonParser.parser` parses Python files (with
+*pythonParser* (:doc:`../plugins/snplugins.pythonParser`)
+  :py:mod:`~snplugins.pythonParser.parser` parses Python files (with
   :py:mod:`ast`) into a model built on an *ontology* -- a model of the types
-  of things in Python programs, *pythonOntology.snm*, kept with the code and
-  used as the model's super-model, so that every model made from it shares
-  its types. The ontology's types carry the hooks
-  (:py:mod:`~sn.exampleApps.pythonParser.hooks`: **Show source**, the code as
+  of things in Python programs, *pythonOntology.snm*, kept in the plugin's
+  folder and used as the model's super-model, so that every model made from
+  it shares its types. The ontology's types carry the hooks
+  (:py:mod:`~snplugins.pythonParser.hooks`: **Show source**, the code as
   the tooltip, a double-click to open the editor), so the models get them by
-  inheritance. :py:mod:`~sn.exampleApps.pythonParser.source` finds a class's
+  inheritance. :py:mod:`~snplugins.pythonParser.source` finds a class's
   or function's code in its file as it is now, by name and a hash of its
   text, so the hooks still work after the file's been edited.
-  :py:mod:`sn.exampleApps.pythonParser.__main__` shows a dialog (made with
+  :py:mod:`~snplugins.pythonParser.dialog` shows a dialog (made with
   ``util.utils.ownDialog()``, so that macOS doesn't open it full screen),
   then shows the packages and modules (``showPackages()``) as trees by
   *includes*, kept arranged by a dynamic
-  :py:class:`~sn.view.graphics.treeLayout.TreeLayout`.
+  :py:class:`~sn.view.graphics.treeLayout.TreeLayout`. (Its hooks were
+  ``sn.exampleApps.pythonParser.hooks:...`` before it was a plugin: models
+  made then still work, through :py:data:`sn.hooks.MOVED`.)
 
-Both programs save into the folder of what they read, asking before they
-replace anything there.
+Both save into the folder of what they read, asking before they replace
+anything there.

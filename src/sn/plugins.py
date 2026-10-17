@@ -116,7 +116,7 @@ class Manifest:
   "The oldest sn it works with."
   exclude:tuple[str, ...] = ()
   '''The files in its folder not to install (see *installBundled()*): patterns
-  (as *fnmatch*'s) of their paths in it, with "/" (eg: "examples/*.snm").'''
+  (as *fnmatch.fnmatch()* matches) of their paths in it, with "/" (eg: ``examples/*.snm``).'''
   source:Traversable|None = field(default=None, repr=False, compare=False)
   "Its folder, to read from: a folder's, or (for those bundled in a .pyz) a zip file's (see *bundledFolder()*)."
 

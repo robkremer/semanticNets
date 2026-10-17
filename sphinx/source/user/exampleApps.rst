@@ -1,31 +1,56 @@
-Example Applications
-====================
+Plugins
+=======
 
 *Semantic Nets* can be the front end of other programs: a program makes a
 model of something -- a file, a program, a database -- and opens a view of it
 in the editor, where you can look round it, arrange it, ask about it and
-reason over it as you would any model. Two such programs come with the
-source, in ``src/sn/exampleApps/``. They're run from the project's top
-directory, with the same setup as ``./sng`` (see :doc:`gettingStarted`):
+reason over it as you would any model. Such a program can be a **plugin**:
+it's loaded when the editor starts, and adds itself to the menu bar -- most
+often to the **Tools** menu. Two come with *Semantic Nets*, as examples:
 
-.. code-block:: bash
+**Tools | XML Reader...**
+  makes a model of an XML file (see `The XML reader`_).
 
-   export PYTHONPATH=src:../pythonUtils/src
+**Tools | Python Parser...**
+  makes a model of a Python program (see `The Python parser`_).
 
 Both save what they make as an ordinary model and view (``.snm`` and
-``.snv``), next to what they read, so you can open them again later from
-**File | Open...** or the model directory, like any other.
+``.snv``), so you can open them again later from **File | Open...** or the
+model directory, like any other.
+
+Where plugins are
+-----------------
+
+Each plugin is a folder in ``~/.sn/plugins/`` (beside the settings: see
+:doc:`files`); **Help | Reveal Plugins Folder** opens it in the Finder.
+
+- **The ones that come with it** are put there when the editor starts, if
+  they aren't there yet -- or if the editor has a newer version of one (which
+  replaces the copy there: so to change one, copy it to a folder of another
+  name first).
+- **Adding one**: put its folder there, and start the editor again. (A plugin
+  is a folder with a *plugin.toml* in it, saying what it is: how one's made is
+  in the Developer Guide, :doc:`../developer/extending`.)
+- **Turning one off**: list its folder's name in the ``plugins/disabled``
+  setting (**Settings...**), and start the editor again.
+- **One that doesn't work** -- it's for a later version of *Semantic Nets*,
+  or its code fails -- is left out, and the log says why; the rest of the
+  editor, and the other plugins, carry on.
+
+A plugin is a program: its code runs when the editor starts, and models may
+call its functions (see `Menus, tooltips and double-clicks from programs`_).
+Install only plugins you trust.
 
 The XML reader
 --------------
 
-.. code-block:: bash
-
-   python3.14 -m sn.exampleApps.XMLreader [file.xml]
-
-turns an XML file into a model (with no file named, it asks for one). For
-*books.xml*, it makes *books_xml.snm* and *books_xml.snv*, asking first if
-they're there already:
+**Tools | XML Reader...** asks for an XML file -- starting in the folder you
+read one from last, or, the first time, in the plugin's *examples* -- and
+turns it into a model. For *books.xml*, it makes *books_xml.snm* and
+*books_xml.snv*, next to it, asking first if they're there already. (For the
+plugin's own examples, they're made in ``~/Documents/Semantic Nets
+Examples/`` instead: the plugin's folder is replaced when a newer version
+comes.)
 
 - Each **tag** becomes a type (*book*, *chapter*, ...), with a colour and
   shape of its own, which its elements inherit -- so you can see what each
@@ -46,9 +71,9 @@ The view shows the elements, and arranges them with the animation layout
    :alt: The XMLreader's view of books.xml: library1 in the middle, related by has-book to two books and by has-magazine to Byte; each book has its title, author and chapters round it
    :width: 400px
 
-   What the XML reader makes of *books.xml* (in
-   ``src/sn/exampleApps/XMLreader/examples/``): a library with two books and
-   a magazine.
+   What the XML reader makes of *books.xml* (in the plugin's *examples*:
+   ``~/.sn/plugins/XMLreader/examples/``): a library with two books and a
+   magazine.
 
 The *examples* folder also has *library25.xml* and *library200.xml* (25 and
 200 made-up books), to see how it copes with something bigger. Things to try:
@@ -63,11 +88,7 @@ The *examples* folder also has *library25.xml* and *library200.xml* (25 and
 The Python parser
 -----------------
 
-.. code-block:: bash
-
-   python3.14 -m sn.exampleApps.pythonParser [file.py|folder ...]
-
-makes a model of a Python program: its packages, modules, classes, functions
+**Tools | Python Parser...** makes a model of a Python program: its packages, modules, classes, functions
 and methods, their doc strings, and what imports what. It opens a dialog,
 listing the files to analyse (a folder stands for all the ``.py`` files in
 and below it: **Add files...** and **Add folder...** add more), with:
@@ -83,12 +104,11 @@ and below it: **Add files...** and **Add folder...** add more), with:
 **Show imports in the view**
   Which *imports* relations to show: none, those of the files given, or all.
 
-and **Go**. (``--go`` on the command line goes straight away, without the
-dialog; ``--depth``, ``--libraries`` and ``--imports`` set the options.)
+and **Go**.
 
 It makes a model named after the program's main module, with ``_py`` (eg:
 *XMLreader_py.snm* and *.snv*), next to it, built on an ontology of Python
-programs that comes with it (*pythonOntology.snm*: package, module, class,
+programs that comes with it (*pythonOntology.snm*, in the plugin's folder: package, module, class,
 function, method, ... and the relations between them). The view shows the
 packages and modules, as trees growing right, by *includes* (see
 :doc:`layouts`), and the imports asked for; the rest of the model is there to
@@ -101,8 +121,7 @@ opens up for its classes and functions.
    :width: 560px
 
    What the Python parser makes of the XML reader's own code (imports not
-   followed): its two modules, *__main__* and *reader*, and the modules they
-   import, in their packages.
+   followed): its modules, and the modules they import, in their packages.
 
 Its objects know where their code is:
 
@@ -136,9 +155,9 @@ Menus, tooltips and double-clicks from programs
 The pythonParser's menu items, tooltips and double-clicks aren't built
 into the editor: its model's types *name* functions of the pythonParser's,
 in attributes (eg: ``.menu/Show source``), so they still work when the model
-is saved and opened again later -- even without the pythonParser running.
-Opening such a model runs that program's code, so it's done only for the
-programs *Semantic Nets* trusts: its own, and those listed in the
-``hooks/trustedModules`` setting. An item naming a function of any other is
+is saved and opened again later. Opening such a model runs that program's
+code, so it's done only for the programs *Semantic Nets* trusts: its own,
+the plugins it has loaded, and those listed in the ``hooks/trustedModules``
+setting. An item naming a function of any other is
 shown, but greyed out, and the log says why. (How a program does this is in
 the Developer Guide: :doc:`../developer/extending`.)

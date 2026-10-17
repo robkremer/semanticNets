@@ -105,7 +105,7 @@ are the sliders and **place labels**.
 An example
 ----------
 
-The XMLreader example app (see :doc:`exampleApps`) read the animals model's
+The XML reader plugin (see :doc:`exampleApps`) read the animals model's
 own file, *animals.snm*, making a model of its XML: some 300 objects -- the
 file's objects, their properties, and so on -- and their relations. As
 first drawn, it's a tangle:

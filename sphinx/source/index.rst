@@ -33,6 +33,7 @@ The documentation is in two parts:
    :caption: API Reference
 
    dev/sn
+   plugins/index
 
 
 Indices and tables

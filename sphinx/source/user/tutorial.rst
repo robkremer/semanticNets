@@ -141,12 +141,9 @@ A model you didn't make can be big -- eg: what the Python parser makes of a
 program (see :doc:`exampleApps`). Rather than show it all, start small and
 bring in what you need:
 
-1. Make one: eg, from the source's top directory, the parser on the
-   *Semantic Nets* model package:
-
-   .. code-block:: bash
-
-      PYTHONPATH=src:../pythonUtils/src python3.14 -m sn.exampleApps.pythonParser src/sn/model --depth 0 --go
+1. Make one: eg, the parser on the *Semantic Nets* model package: **Tools |
+   Python Parser...**, **Add folder...** and choose *src/sn/model* (in the
+   source), set **Follow imports** to 0 levels, and **Go**.
 
    It's saved next to the code, named after what it takes to be the main
    module -- here, *clingoReasoner_py.snm* and *.snv*, in *src/sn/model*
