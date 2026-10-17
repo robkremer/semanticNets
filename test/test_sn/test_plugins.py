@@ -154,6 +154,29 @@ class Test(unittest.TestCase):
     installed = sorted(str(p.relative_to(self.installed / "alpha")) for p in (self.installed / "alpha").rglob("*"))
     self.assertEqual(installed, ["__init__.py", "data.snm", "examples", "examples/a.xml", "keep.txt", plugins.MANIFEST])
 
+  def test0330fromZip(self):
+    # (as in a .pyz: the plugins are a folder in the zip file)
+    import zipfile
+    archive = Path(self.folder.name) / "app.pyz"
+    with zipfile.ZipFile(archive, "w") as z:
+      z.writestr("sn/__init__.py", "")
+      z.writestr("plugins/alpha/plugin.toml", 'name = "alpha plugin"\nversion = "1.0"\nexclude = ["examples/*.snm"]\n')
+      z.writestr("plugins/alpha/__init__.py", "def register(ctx):\n  pass\n")
+      z.writestr("plugins/alpha/examples/a.xml", "<a/>")
+      z.writestr("plugins/alpha/examples/a_xml.snm", "")
+      z.writestr("plugins/notAPlugin/x.txt", "")
+    source = zipfile.Path(archive, "plugins/")
+    self.assertEqual([m.id for m in plugins.manifests(source)], ["alpha"])
+    self.assertEqual(plugins.installBundled(source, str(self.installed)), ["alpha"])
+    installed = sorted(str(p.relative_to(self.installed / "alpha")) for p in (self.installed / "alpha").rglob("*"))
+    self.assertEqual(installed, ["__init__.py", "examples", "examples/a.xml", plugins.MANIFEST])
+    self.assertEqual((self.installed / "alpha" / "examples" / "a.xml").read_text(), "<a/>")
+    # how bundledFolder() finds it, in a .pyz
+    with mock.patch.object(plugins.sn, "resourcePath", return_value=str(Path(self.folder.name) / "plugins")), \
+         mock.patch.object(plugins.sn, "__file__", str(archive / "sn" / "__init__.py")):
+      found = plugins.bundledFolder()
+    self.assertEqual([m.id for m in plugins.manifests(found)], ["alpha"])
+
   def test0350relocate(self):
     makePlugin(self.bundled, "alpha", files={
       "onto.snm": '<property key="url" value="file:///somewhere/else/alpha/onto.snm" />\n'

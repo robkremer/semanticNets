@@ -62,7 +62,9 @@ import shutil
 import sys
 import tomllib
 import types
-from dataclasses import dataclass
+import zipfile
+from dataclasses import dataclass, field
+from importlib.resources.abc import Traversable
 from pathlib import Path
 from typing import Any, Callable
 import tkinter as tk
@@ -115,11 +117,13 @@ class Manifest:
   exclude:tuple[str, ...] = ()
   '''The files in its folder not to install (see *installBundled()*): patterns
   (as *fnmatch*'s) of their paths in it, with "/" (eg: "examples/*.snm").'''
+  source:Traversable|None = field(default=None, repr=False, compare=False)
+  "Its folder, to read from: a folder's, or (for those bundled in a .pyz) a zip file's (see *bundledFolder()*)."
 
   @property
   def id(self) -> str:
     "Its folder's name: what it's imported as, in *NAMESPACE*, and called in the preferences."
-    return os.path.basename(self.folder)
+    return self.source.name if self.source is not None else os.path.basename(self.folder)
 
   @property
   def module(self) -> str:
@@ -127,56 +131,63 @@ class Manifest:
     return f"{NAMESPACE}.{self.id}"
 
   @classmethod
-  def read(cls, folder:str) -> Manifest:
+  def read(cls, folder:str|Traversable) -> Manifest:
     '''
-    :param folder: A plugin's folder.
-    :type folder: str
+    :param folder: A plugin's folder (or one in a zip file: see *bundledFolder()*).
+    :type folder: str | Traversable
     :returns: Its description.
     :rtype: Manifest
     :raises PluginError: If it isn't a plugin's folder, or its *MANIFEST* can't be read.
     '''
-    name = os.path.basename(folder)
+    source = Path(folder) if isinstance(folder, str) else folder
+    name = source.name
     if not _FOLDER_NAME.fullmatch(name):
       raise PluginError(f'A plugin\'s folder must be named as a Python package is: "{name}" isn\'t.')
     try:
-      with open(os.path.join(folder, MANIFEST), "rb") as f:
-        data = tomllib.load(f)
-    except (OSError, tomllib.TOMLDecodeError) as ex:
+      data = tomllib.loads(source.joinpath(MANIFEST).read_bytes().decode("utf-8"))
+    except (OSError, UnicodeError, tomllib.TOMLDecodeError) as ex:
       raise PluginError(f"{name}'s {MANIFEST} can't be read: {ex}") from ex
     exclude = data.get("exclude", [])
-    return cls(folder, str(data.get("name", name)), str(data.get("version", "0")),
+    return cls(str(folder).rstrip("/"), str(data.get("name", name)), str(data.get("version", "0")),
                str(data.get("description", "")), str(data.get("sn-version", "0")),
-               tuple(str(e) for e in exclude) if isinstance(exclude, list) else ())
+               tuple(str(e) for e in exclude) if isinstance(exclude, list) else (), source)
 
-def bundledFolder() -> str:
+def bundledFolder() -> Traversable:
   '''
   :returns: Where the plugins that come with the program are: the project's
-    ``plugins/`` (or a packaged app's bundled copy: see *sn.resourcePath()*).
-  :rtype: str
+    ``plugins/`` (or a packaged app's bundled copy: see *sn.resourcePath()*);
+    or, in a .pyz, its ``plugins/`` (a folder in the zip file).
+  :rtype: Traversable
   '''
-  return sn.resourcePath("plugins")
+  path = sn.resourcePath("plugins")
+  if os.path.isdir(path):
+    return Path(path)
+  archive = os.path.dirname(os.path.dirname(os.path.abspath(sn.__file__))) # (sn's in the .pyz: <archive>/sn/__init__.py)
+  if os.path.isfile(archive) and zipfile.is_zipfile(archive):
+    return zipfile.Path(archive, "plugins/")
+  return Path(path)
 
-def manifests(folder:str) -> list[Manifest]:
+def manifests(folder:str|Traversable) -> list[Manifest]:
   '''
-  :param folder: A folder of plugins.
-  :type folder: str
+  :param folder: A folder of plugins (or one in a zip file: see *bundledFolder()*).
+  :type folder: str | Traversable
   :returns: The descriptions of the plugins in it (folders with a *MANIFEST*),
     by folder name; any that can't be read are logged, and left out.
   :rtype: list[Manifest]
   '''
   ret:list[Manifest] = []
-  if not os.path.isdir(folder):
+  top = Path(folder) if isinstance(folder, str) else folder
+  if not top.is_dir():
     return ret
-  for name in sorted(os.listdir(folder)):
-    path = os.path.join(folder, name)
-    if os.path.isfile(os.path.join(path, MANIFEST)):
+  for path in sorted(top.iterdir(), key=lambda p: p.name):
+    if path.is_dir() and path.joinpath(MANIFEST).is_file():
       try:
         ret.append(Manifest.read(path))
       except PluginError as ex:
         logger.warning(f"Plugin left out: {ex}")
   return ret
 
-def installBundled(source:str|None=None, target:str|None=None) -> list[str]:
+def installBundled(source:str|Traversable|None=None, target:str|None=None) -> list[str]:
   '''
   Copy the plugins that come with the program into the plugins folder: those
   that aren't there, or are older there (by their version) -- replacing them
@@ -184,7 +195,7 @@ def installBundled(source:str|None=None, target:str|None=None) -> list[str]:
   their models and views refer to where they now are (see *_relocate()*).
 
   :param source: Where the plugins that come with the program are (by default, *bundledFolder()*).
-  :type source: str | None
+  :type source: str | Traversable | None
   :param target: The plugins folder (by default, *PLUGINS_FOLDER*).
   :type target: str | None
   :returns: The plugins copied (their folders' names).
@@ -202,8 +213,8 @@ def installBundled(source:str|None=None, target:str|None=None) -> list[str]:
     try:
       if os.path.exists(dest):
         shutil.rmtree(dest)
-      shutil.copytree(m.folder, dest, ignore=_ignore(m))
-    except OSError:
+      _copy(m, m.source if m.source is not None else Path(m.folder), dest)
+    except (OSError, zipfile.BadZipFile):
       logger.error(f'Couldn\'t install the plugin {m.name} in "{dest}".', exc_info=True)
       continue
     _relocate(dest)
@@ -214,21 +225,33 @@ def installBundled(source:str|None=None, target:str|None=None) -> list[str]:
 NOT_INSTALLED = ("__pycache__", "*.pyc", "*.log", ".gitignore", ".DS_Store")
 "The files in any plugin's folder not to install (see *installBundled()*): patterns of their names."
 
-def _ignore(manifest:Manifest) -> Callable[[str, list[str]], set[str]]:
+def installed(manifest:Manifest, path:str) -> bool:
   '''
   :param manifest: A plugin's description.
   :type manifest: Manifest
-  :returns: *shutil.copytree()*'s *ignore* for installing it: leaving out
-    *NOT_INSTALLED*, and its *Manifest.exclude*.
-  :rtype: Callable[[str, list[str]], set[str]]
+  :param path: A file or folder in its folder, as a path in it, with "/" (eg: "examples/books.xml").
+  :type path: str
+  :returns: Whether it's installed (see *installBundled()*): it isn't one of *NOT_INSTALLED*, nor its *Manifest.exclude*.
+  :rtype: bool
   '''
-  def ignore(folder:str, names:list[str]) -> set[str]:
-    rel = os.path.relpath(folder, manifest.folder)
-    def path(name:str) -> str:
-      return (name if rel == "." else os.path.join(rel, name)).replace(os.sep, "/")
-    return {n for n in names if any(fnmatch.fnmatch(n, p) for p in NOT_INSTALLED)
-                             or any(fnmatch.fnmatch(path(n), p) for p in manifest.exclude)}
-  return ignore
+  name = path.rpartition("/")[2]
+  return not any(fnmatch.fnmatch(name, p) for p in NOT_INSTALLED) and not any(fnmatch.fnmatch(path, p) for p in manifest.exclude)
+
+def _copy(manifest:Manifest, source:Traversable, dest:str, rel:str="") -> None:
+  '''
+  Copy the plugin's folder *source* (or a folder in it: *rel*) to *dest*: what's
+  to be installed (see *installed()*) -- from a folder, or a zip file.
+  '''
+  os.makedirs(dest, exist_ok=True)
+  for child in source.iterdir():
+    path = rel + child.name
+    if not installed(manifest, path):
+      continue
+    if child.is_dir():
+      _copy(manifest, child, os.path.join(dest, child.name), path + "/")
+    else:
+      with open(os.path.join(dest, child.name), "wb") as f:
+        f.write(child.read_bytes())
 
 def _relocate(folder:str) -> None:
   '''
@@ -284,7 +307,7 @@ def importBundled(id:str, module:str="") -> types.ModuleType:
   :returns: It.
   :rtype: types.ModuleType
   '''
-  namespace(bundledFolder())
+  namespace(str(bundledFolder()).rstrip("/")) # (a zip file's folder is imported from by zipimport)
   return importlib.import_module(f"{NAMESPACE}.{id}" + (f".{module}" if module else ""))
 
 class PluginContext:

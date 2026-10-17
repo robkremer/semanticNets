@@ -9,6 +9,8 @@ The app is the graphical editor (sn/__main__.py) with its own Python, Tk and
 clingo inside. It bundles, at the same relative places sn.resourcePath() looks:
 
   - sn/examples/  the example models (package data), installed on the first launch;
+  - plugins/    the plugins that come with it (pythonParser, XMLreader: see
+                sn.plugins), copied to ~/.sn/plugins when the app starts;
   - help/       the HTML documentation (built by the "doc" target), for the Help menu.
 
 .. codeauthor:: Rob Kremer <robkremer@me.com>
@@ -41,6 +43,13 @@ datas = [
   (os.path.join(SRC, "sn", "model", "baseRules.snm"), os.path.join("sn", "model")),
   (os.path.join(SRC, "sn", "examples"), os.path.join("sn", "examples")),
 ]
+# The bundled plugins: as files (they're imported from their installed copies,
+# in ~/.sn/plugins, not from the app): see bundledPlugins.py.
+sys.path.insert(0, SPECPATH)
+import bundledPlugins
+pluginFiles = bundledPlugins.files(os.path.join(ROOT, "plugins"))
+datas += [(f, os.path.dirname(os.path.join("plugins", p))) for f, p in pluginFiles]
+
 html = os.path.join(ROOT, "sphinx", "build", "html")
 if os.path.isdir(html):
   datas.append((html, "help"))
@@ -62,7 +71,7 @@ def _modules(top:str, package:str) -> list[str]:
     ret += [rel if f == "__init__.py" else f"{rel}.{f[:-3]}" for f in files
             if f.endswith(".py") and not f.startswith("x_") and f not in UNUSED]
   return ret
-hiddenimports = _modules(SRC, "sn") + _modules(UTILS, "util") \
+hiddenimports = _modules(SRC, "sn") + _modules(UTILS, "util") + bundledPlugins.stdlibImports([f for f, _ in pluginFiles if f.endswith(".py")]) \
   + ["_cffi_backend", "clingo._clingo"] # (clingo's compiled core is a cffi extension: PyInstaller doesn't see that it needs cffi)
 
 a = Analysis(

@@ -241,6 +241,7 @@ class Application(tk.Tk):
     self.helpmenu.add_command(label=f"{sn.NAME} Developer Guide", command=lambda: self.showHelp("developer/index.html"))
     self.helpmenu.add_separator()
     self.helpmenu.add_command(label="Install Example Models", command=self.onInstallExamples)
+    self.helpmenu.add_command(label="Reveal Plugins Folder", command=self.revealPlugins)
 
     self.config(menu=menubar)
     return menubar
@@ -769,6 +770,23 @@ class Application(tk.Tk):
     from sn import plugins
     plugins.installBundled()
     plugins.loadAll(self)
+
+  def revealPlugins(self) -> None:
+    '''
+    The Help menu's *Reveal Plugins Folder*: open the folder the plugins are
+    installed in (see *sn.plugins.PLUGINS_FOLDER*) in the Finder -- made, if
+    it isn't there yet. (A plugin added or changed there is loaded when the
+    editor next starts.)
+
+    :rtype: None
+    '''
+    import subprocess, webbrowser
+    from sn import plugins
+    os.makedirs(plugins.PLUGINS_FOLDER, exist_ok=True)
+    if sys.platform == "darwin":
+      subprocess.Popen(["open", plugins.PLUGINS_FOLDER], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    else:
+      webbrowser.open(Path(plugins.PLUGINS_FOLDER).as_uri())
 
   EXAMPLES_PREF = ".examplesInstalled"
   "True once the example models have been installed (see *installExamples()*): it's only done once. (Hidden from Settings: see *OPEN_WINDOWS_PREF*.)"

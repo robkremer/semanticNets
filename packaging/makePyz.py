@@ -5,7 +5,8 @@ already have Python. Run it with::
 
   python3.14 SemanticNets-1.0.pyz [file ...]       (or: ... --selftest)
 
-It holds the sn and util packages (pure Python) and their data, but not their
+It holds the sn and util packages (pure Python) and their data, and the
+bundled plugins (plugins/: see bundledPlugins.py), but not their
 compiled dependencies: the person running it needs Python 3.14, with Tk, and
 ``pip install -r packaging/requirements.txt`` (clingo, ...). Its launcher says so
 if they're missing.
@@ -58,6 +59,11 @@ def main() -> None:
   shutil.rmtree(STAGE, ignore_errors=True)
   shutil.copytree(os.path.join(SRC, "sn"), os.path.join(STAGE, "sn"), ignore=ignore)
   shutil.copytree(os.path.join(UTILS, "util"), os.path.join(STAGE, "util"), ignore=ignore)
+  sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+  import bundledPlugins
+  for file, path in bundledPlugins.files(os.path.join(ROOT, "plugins")):
+    os.makedirs(os.path.dirname(os.path.join(STAGE, "plugins", path)), exist_ok=True)
+    shutil.copy(file, os.path.join(STAGE, "plugins", path))
   with open(os.path.join(STAGE, "__main__.py"), "w", encoding="utf-8") as f:
     f.write(LAUNCHER)
   os.makedirs(DIST, exist_ok=True)
