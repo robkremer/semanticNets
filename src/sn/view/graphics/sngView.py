@@ -4585,7 +4585,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       # bgMenu.add_cascade(label="new subtype of Collection", menu=makeModelSubmenu(individual=False, ptype=Collection))
     if snPrefs.get("gui/debugMenus", storeDefault=False, storeType=bool):
       modelEditMenu.add_command(label="validate", command=lambda o=self: o.context.view.validate(refresh=True), accelerator=KEY_VALIDATE[1]) #type: ignore[misc]
-    modelEditMenu.add_command(label="refresh all caches", command=lambda: [o.cache.refresh() for o in self.context.view.values()])
+    modelEditMenu.add_command(label="refresh all caches", command=self.refreshAllCaches)
     
     viewMenu = tk.Menu(self.canvas)
     bgMenu.add_cascade(label="view", menu=viewMenu)
@@ -4975,6 +4975,16 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       obj.__dict__["_firstDrawPending"] = False
       if obj._isConnected():
         obj.makeBindings()
+
+  def refreshAllCaches(self) -> None:
+    '''
+    Refresh every object's cache of its model object's visual attributes (see
+    *vobjects.Cache.refresh()*), and repaint the view, so it shows them.
+    '''
+    for obj in self.context.view.values():
+      if obj is not None:
+        obj.cache.refresh()
+    self.repaint()
 
   def repaint(self, event=None):
     '''

@@ -1463,7 +1463,11 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         o.view.freshPaint()
         o.draw()
       m.add_command(label="validate", command=validate)
-      m.add_command(label="refresh cache", command=lambda: self.cache.refresh(verbose=True))
+      def refreshCache() -> None: # (and redraw it, to show what's refreshed)
+        self.cache.refresh(verbose=True)
+        self.view.freshPaint()
+        self.draw()
+      m.add_command(label="refresh cache", command=refreshCache)
     return m
     
   # def _setCatchNewObjects(self):
