@@ -207,6 +207,8 @@ PREFS:dict[str, tuple[Any, Any, str]] = {
     "attributes (eg: a menu item's .menu/... attribute), as \"module:function\" (see sn.hooks). A hook whose "
     "program isn't running is found by importing its module -- running its code -- so only list ones you trust: "
     "eg, \"mytools\" trusts mytools and the modules in it (mytools.hooks, ...)."),
+  "plugins/disabled": ("list[str]", [],
+    "The plugins (their folders' names, in ~/.sn/plugins) not to load when the editor starts (see sn.plugins)."),
   "gui/directoryPath": (str, "",
     "Where the model directory (Window | Model Directory) looks for models and views, separated by \";\": folders "
     "(paths or \"file:\" URLs) -- one ending in \"/**\" includes the folders below it -- and the URLs of models "

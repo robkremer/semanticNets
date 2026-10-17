@@ -743,6 +743,7 @@ class Application(tk.Tk):
     :rtype: None
     '''
     files = [f for f in files if not f.startswith("-psn_")] # (a process serial number some macOS versions pass to an app)
+    self.loadPlugins()
     for f in files:
       self.openWindow(f)
     if files or getattr(self, "_openedDocuments", False):
@@ -755,6 +756,19 @@ class Application(tk.Tk):
     if not snPrefs.get(self.EXAMPLES_PREF, False) and self.installExamples():
       return
     self.showDirectory()
+
+  def loadPlugins(self) -> None:
+    '''
+    Install the plugins that come with the program (if they're missing, or
+    older), and load the plugins (see *sn.plugins*): they add to the menu bar.
+    Done on start-up (see *startUp()*), not when an Application's made, so
+    that a script (eg: a test) that makes one gets the editor without them.
+
+    :rtype: None
+    '''
+    from sn import plugins
+    plugins.installBundled()
+    plugins.loadAll(self)
 
   EXAMPLES_PREF = ".examplesInstalled"
   "True once the example models have been installed (see *installExamples()*): it's only done once. (Hidden from Settings: see *OPEN_WINDOWS_PREF*.)"

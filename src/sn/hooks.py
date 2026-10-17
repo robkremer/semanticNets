@@ -77,6 +77,9 @@ preference.'''
 TRUSTED_PREF = "hooks/trustedModules"
 "The preference listing the modules and packages, besides sn, whose hooks can be imported."
 
+_trustedPackages:list[str] = []
+"The packages trusted by the program itself (see *trust()*): eg: the plugins loaded (see *sn.plugins*)."
+
 _REF = re.compile(r"[A-Za-z_]\w*(\.[A-Za-z_]\w*)*:[A-Za-z_]\w*(\.[A-Za-z_]\w*)*")
 
 type Hook = Callable[[Any, "HookContext"], Any]
@@ -167,11 +170,32 @@ def isReference(text:Any) -> TypeGuard[str]:
 def trustedModules() -> list[str]:
   '''
   :returns: The modules and packages whose hooks can be imported: sn's own
-    (*TRUSTED_MODULES*), and those in the "hooks/trustedModules" preference.
+    (*TRUSTED_MODULES*), those the program trusts (see *trust()*), and those
+    in the "hooks/trustedModules" preference.
   :rtype: list[str]
   '''
   pref = snPrefs.get(TRUSTED_PREF, [])
-  return list(TRUSTED_MODULES) + [str(m).strip() for m in (pref if isinstance(pref, list) else []) if str(m).strip()]
+  return list(TRUSTED_MODULES) + _trustedPackages \
+    + [str(m).strip() for m in (pref if isinstance(pref, list) else []) if str(m).strip()]
+
+def trust(package:str, trusted:bool=True) -> None:
+  '''
+  Trust *package* (and the modules in it) for hooks, or stop trusting it: for
+  the program itself, not the user (it isn't kept in the preferences): eg: a
+  plugin, once it's loaded (see *sn.plugins*).
+
+  :param package: A module's or package's dotted name.
+  :type package: str
+  :param trusted: Whether to trust it, or stop.
+  :type trusted: bool
+  '''
+  if trusted and package not in _trustedPackages:
+    _trustedPackages.append(package)
+  elif not trusted and package in _trustedPackages:
+    _trustedPackages.remove(package)
+  else:
+    return
+  _onTrustedModules(TRUSTED_PREF, None)
 
 def trusted(module:str) -> bool:
   '''
