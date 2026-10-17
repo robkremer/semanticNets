@@ -32,7 +32,21 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 from sn.model.model import Model, Node, Relation
+from sn.view.graphics.vnodes import VNode
 from sn.view.graphics.vrelations import VRelation
+from sn.view.graphics.treeLayout import isMember, isLink
+
+class StandInNode(VNode):
+  "Stands in for a node in a view: its model object."
+  def __init__(self, mo): self.mo = mo
+  modelObject = property(lambda self: self.mo)
+
+class StandInRelation(VRelation):
+  "Stands in for a relation (or relation type) in a view."
+  def __init__(self, mo, hidden=False): self.mo, self.hidden = mo, hidden
+  modelObject = property(lambda self: self.mo)
+  def _isConnected(self): return True
+  def isHidden(self): return self.hidden
 
 class Test(unittest.TestCase):
 
@@ -68,6 +82,17 @@ class Test(unittest.TestCase):
     self.assertTrue(VRelation.floating(r, True)) #type: ignore[arg-type]
     self.assertEqual(r.moves, [1])
     self.assertFalse(VRelation.floating(r, False)) #type: ignore[arg-type]
+
+  def test0400typesAreLaidOutAsNodes(self):
+    person = next(n for n in self.m.values() if getattr(n, "name", None) == "person")
+    self.assertTrue(isMember(StandInNode(person)))
+    self.assertTrue(isMember(StandInRelation(self.hasParent)))     # (a relation type: as a node)
+    self.assertFalse(isMember(StandInRelation(self.aParentB)))     # (a label: between its ends)
+    self.assertTrue(isLink(StandInRelation(self.aParentB)))
+    self.assertFalse(isLink(StandInRelation(self.aParentB, hidden=True)))
+    self.assertFalse(isLink(StandInRelation(self.hasParent)))      # (its ends are its domain and range)
+    isa = next(r for r in self.m.values() if isinstance(r, Relation) and r.isIndividual() and r.src is self.hasParent)
+    self.assertTrue(isLink(StandInRelation(isa)))                  # (has-parent isa relation: relates two types)
 
 if __name__ == "__main__":
   unittest.main()

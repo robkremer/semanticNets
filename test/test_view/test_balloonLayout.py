@@ -31,6 +31,7 @@ import itertools
 import math
 import random
 import unittest
+from types import SimpleNamespace
 from sn.view.graphics.vnodes import VNode
 from sn.view.graphics.vrelations import VRelation
 from sn.view.graphics.balloonLayout import (balloonPositions, radialPositions, hubForest, hubPositions, radius, placeNearGroups,
@@ -61,6 +62,8 @@ class StandInNode(VNode):
   __hash__, __eq__ = object.__hash__, object.__eq__ # (not by a persistent reference: it has none)
   def __repr__(self): return self.label
 
+INDIVIDUAL = SimpleNamespace(isType=lambda: False)
+
 class StandInRelation(VRelation):
   "Stands in for a relation between two *StandInNode*s."
   def __init__(self, src, dst, hidden=False):
@@ -69,6 +72,7 @@ class StandInRelation(VRelation):
   src = property(lambda self: self.ends[0])
   __hash__, __eq__ = object.__hash__, object.__eq__ # (not by a persistent reference: it has none)
   dst = property(lambda self: self.ends[1])
+  modelObject = property(lambda self: INDIVIDUAL) # (an individual relation: not a relation type -- see treeLayout.isLink())
   def _isConnected(self): return True
   def isHidden(self): return self.hidden
 

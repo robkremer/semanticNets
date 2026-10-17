@@ -406,6 +406,31 @@ def placeNear(items:list[K], sizes:Mapping[K, tuple[float, float]], related:dict
     pending = [n for n in pending if n not in done]
   return ret, pending
 
+def isMember(vo:VObject) -> bool:
+  '''
+  :param vo: A view object.
+  :type vo: VObject
+  :returns: Whether *vo* is something the layouts that arrange nodes (tree,
+    balloon, radial, hubs) arrange as a node: a node, or a relation type (it
+    has a place of its own, as a node does) -- not an individual relation's
+    label, which goes between its ends.
+  :rtype: bool
+  '''
+  mo = vo.modelObject
+  return mo is not None and (isinstance(vo, VNode) or (isinstance(vo, VRelation) and mo.isType()))
+
+def isLink(r:Any) -> bool:
+  '''
+  :param r: A view object.
+  :type r: Any
+  :returns: Whether *r* is a relation shown that relates two things laid out
+    (see *isMember()*): an individual relation, connected and not hidden -- not
+    a relation type: its ends are its domain and range, not things it relates.
+  :rtype: bool
+  '''
+  return isinstance(r, VRelation) and r.modelObject is not None and not r.modelObject.isType() \
+         and r._isConnected() and not r.isHidden()
+
 def _overlaps(a:list[float], b:list[float], gap:float) -> bool:
   return a[0] < b[2] + gap and b[0] < a[2] + gap and a[1] < b[3] + gap and b[1] < a[3] + gap
 
@@ -426,7 +451,9 @@ class TreeLayout(LayoutHeuristic):
   tree relation's label is put just before its child, on the straight line
   from the parent (so the labels line up, and the lines stay straight).
 
-  Nodes in a context window (or that are one) aren't arranged.
+  Relation types shown are arranged as nodes are (see *isMember()*): eg: by
+  isa, has-parent under has-ancestor. Nodes in a context window (or that are
+  one) aren't arranged.
 
   As a static layout (see *arrange()*): the children are in order of name;
   the trees are put one after another (across the way they grow) from the
@@ -526,30 +553,30 @@ class TreeLayout(LayoutHeuristic):
       cache[id(t)] = next((i + 1 for i, s in enumerate(subs) if t is s or t.isa(s)), len(subs) + 1)
     return cache[id(t)]
 
-  def scope(self) -> tuple[list[VNode], list[VRelation]]:
+  def scope(self) -> tuple[list[VObject], list[VRelation]]:
     '''
-    :returns: What's arranged: the nodes shown (not hidden), not in a context
-      window nor one; and the relations shown between them of the tree's type
-      (see *relation*), not to themselves.
-    :rtype: tuple[list[VNode], list[VRelation]]
+    :returns: What's arranged: the nodes and relation types shown (see
+      *isMember()*: not hidden), not in a context window nor one; and the
+      relations shown between them of the tree's type (see *relation*), not to
+      themselves.
+    :rtype: tuple[list[VObject], list[VRelation]]
     '''
     v = self.view
     windows = v.contextWindows()
     inWindows = {id(vo) for w in windows for vo in w.windowContents()} | {id(vo) for vo in v.containmentHomes()}
-    nodes = [vo for vo in v.values() if isinstance(vo, VNode) and vo._isConnected() and not vo.isHidden()
-             and vo.modelObject is not None and not vo.isContextWindow() and id(vo) not in inWindows]
+    nodes = [vo for vo in v.values() if vo is not None and isMember(vo) and vo._isConnected() and not vo.isHidden()
+             and not vo.isContextWindow() and id(vo) not in inWindows]
     ids = {id(n) for n in nodes}
-    edges = [r for r in v.values() if isinstance(r, VRelation) and r._isConnected() and not r.isHidden()
-             and self._isEdge(r.modelObject) and id(r.src) in ids and id(r.dst) in ids and r.src is not r.dst]
+    edges = [r for r in v.values() if isLink(r) and self._isEdge(r.modelObject) and id(r.src) in ids and id(r.dst) in ids and r.src is not r.dst]
     return nodes, edges
 
-  def _ends(self, r:VRelation) -> tuple[VNode, VNode]:
+  def _ends(self, r:VRelation) -> tuple[VObject, VObject]:
     ":returns: (parent, child) of a tree relation."
     if self.params["parentEnd"] == "source":
       return r.src, r.dst #type: ignore[return-value]
     return r.dst, r.src #type: ignore[return-value]
 
-  def structure(self, dynamic:bool) -> tuple[list[VNode], dict[VNode, list[list[VNode]]], dict[VNode, VRelation], list[VNode], list[VRelation]]:
+  def structure(self, dynamic:bool) -> tuple[list[VObject], dict[VObject, list[list[VObject]]], dict[VObject, VRelation], list[VObject], list[VRelation]]:
     '''
     :param dynamic: Whether it's for keeping things arranged (see the class
       doc): children in the order they are, new ones after; pinned nodes the
@@ -559,21 +586,21 @@ class TreeLayout(LayoutHeuristic):
       in groups (see the class doc); each child's tree relation (from its
       parent); the nodes in no tree; and the tree's type of relations that
       aren't tree relations (eg: to a second parent).
-    :rtype: tuple[list[VNode], dict[VNode, list[list[VNode]]], dict[VNode, VRelation], list[VNode], list[VRelation]]
+    :rtype: tuple[list[VObject], dict[VObject, list[list[VObject]]], dict[VObject, VRelation], list[VObject], list[VRelation]]
     '''
     nodes, edges = self.scope()
     vertical = _vertical(self.params["direction"])
     crossOf = lambda vo: vo.centerPt()[0] if vertical else vo.centerPt()[1]
     name = lambda vo: (str(vo.modelObject.name).lower() if vo.modelObject is not None else "", vo._id)
     known = self.known
-    def key(vo:VNode) -> tuple:
+    def key(vo:VObject) -> tuple:
       if not dynamic:
         return (0, *name(vo))
       if known is None or vo._id in known:
         return (0, crossOf(vo), vo._id)
       return (1, *name(vo)) # (new: after the others)
     pinned = {vo._id for vo in nodes} & self.pins if dynamic else set()
-    parentRel:dict[VNode, VRelation] = {}
+    parentRel:dict[VObject, VRelation] = {}
     for r in sorted(edges, key=lambda r: r._id): # (the first parent: the first related, of those not pinned)
       parent, child = self._ends(r)
       if child._id in pinned or child in parentRel:
@@ -588,7 +615,7 @@ class TreeLayout(LayoutHeuristic):
         p = self._ends(parentRel[p])[0]
       if p is child:
         del parentRel[child]
-    groups:dict[VNode, dict[int, list[VNode]]] = {}
+    groups:dict[VObject, dict[int, list[VObject]]] = {}
     for child, r in parentRel.items():
       groups.setdefault(self._ends(r)[0], {}).setdefault(self._group(r.modelObject), []).append(child) #type: ignore[arg-type]
     children = {p: [sorted(g[i], key=key) for i in sorted(g)] for p, g in groups.items()}
@@ -600,8 +627,8 @@ class TreeLayout(LayoutHeuristic):
 
   # ---- where things go -------------------------------------------------------------
 
-  def levelGaps(self, children:dict[VNode, list[list[VNode]]], parentRel:dict[VNode, VRelation],
-                roots:list[VNode]) -> dict[int, float]:
+  def levelGaps(self, children:dict[VObject, list[list[VObject]]], parentRel:dict[VObject, VRelation],
+                roots:list[VObject]) -> dict[int, float]:
     '''
     :returns: The space between each depth of the trees and the next: room
       for the line to the widest label there (*MIN_LINE*), the label, and
@@ -627,8 +654,8 @@ class TreeLayout(LayoutHeuristic):
       level = nxt
     return ret
 
-  def _labelTargets(self, positions:dict[VNode, tuple[float, float]], sizes:dict[VNode, tuple[float, float]],
-                    parentRel:dict[VNode, VRelation]) -> dict[VObject, tuple[float, float]]:
+  def _labelTargets(self, positions:dict[VObject, tuple[float, float]], sizes:dict[VObject, tuple[float, float]],
+                    parentRel:dict[VObject, VRelation]) -> dict[VObject, tuple[float, float]]:
     '''
     :returns: Where each tree relation's label goes (its top left): on the
       straight line from its parent's centre to the middle of its child's near
@@ -671,14 +698,14 @@ class TreeLayout(LayoutHeuristic):
     '''
     roots, children, parentRel, others, loose = self.structure(dynamic)
     nodes = [*roots, *(k for gs in children.values() for g in gs for k in g), *others]
-    sizes:dict[VNode, tuple[float, float]] = {}
+    sizes:dict[VObject, tuple[float, float]] = {}
     for n in nodes:
       sizes[n] = layoutSize(n)
     direction, spacing = self.params["direction"], float(self.params["spacing"])
     vertical = _vertical(direction)
     rel, trees = treePositions(roots, children, sizes, direction=direction, spacing=spacing,
                                levelGaps=self.levelGaps(children, parentRel, roots), compact=bool(self.params["compact"]))
-    positions:dict[VNode, tuple[float, float]] = {}
+    positions:dict[VObject, tuple[float, float]] = {}
     gap = 2 * spacing # (between trees)
     if not dynamic:
       # one after another across, from the top left of what's arranged
@@ -733,19 +760,19 @@ class TreeLayout(LayoutHeuristic):
     ret.update({r: (float(round(x)), float(round(y))) for r, (x, y) in self._labelTargets(positions, sizes, parentRel).items()})
     return ret, loose
 
-  def _rows(self, nodes:list[VNode], sizes:dict[VNode, tuple[float, float]], cursor:float, x0:float, y0:float,
-            trees:list[tuple[VNode, list[float]]]) -> dict[VNode, tuple[float, float]]:
+  def _rows(self, nodes:list[VObject], sizes:dict[VObject, tuple[float, float]], cursor:float, x0:float, y0:float,
+            trees:list[tuple[VObject, list[float]]]) -> dict[VObject, tuple[float, float]]:
     '''
     For *others* "rows": put *nodes* in rows (lines along the way the trees
     grow), starting *cursor* across, from *x0* or *y0* along: each row as long
     as the trees are deep (at least *MIN_ROW_LENGTH*).
 
     :returns: Where they go (their top left).
-    :rtype: dict[VNode, tuple[float, float]]
+    :rtype: dict[VObject, tuple[float, float]]
     '''
     vertical, spacing = _vertical(self.params["direction"]), float(self.params["spacing"])
     length = max([MIN_ROW_LENGTH] + [(b[3] - b[1]) if vertical else (b[2] - b[0]) for _, b in trees])
-    ret:dict[VNode, tuple[float, float]] = {}
+    ret:dict[VObject, tuple[float, float]] = {}
     along, lineSize = 0.0, 0.0
     for n in nodes:
       w, h = sizes[n]
@@ -756,32 +783,32 @@ class TreeLayout(LayoutHeuristic):
       along, lineSize = along + a + spacing, max(lineSize, c)
     return ret
 
-  def _placeNear(self, others:list[VNode], positions:dict[VNode, tuple[float, float]],
-                 sizes:dict[VNode, tuple[float, float]], parentRel:dict[VNode, VRelation]) -> tuple[dict[VNode, tuple[float, float]], list[VNode]]:
+  def _placeNear(self, others:list[VObject], positions:dict[VObject, tuple[float, float]],
+                 sizes:dict[VObject, tuple[float, float]], parentRel:dict[VObject, VRelation]) -> tuple[dict[VObject, tuple[float, float]], list[VObject]]:
     '''
     For *others* "near": where each node in no tree goes, near the nodes it's
     related to (by any relation shown), clear of the trees' nodes and their
     relations' labels (see *placeNear()*).
 
     :param others: The nodes in no tree.
-    :type others: list[VNode]
+    :type others: list[VObject]
     :param positions: Where the trees' nodes are going.
-    :type positions: dict[VNode, tuple[float, float]]
+    :type positions: dict[VObject, tuple[float, float]]
     :param sizes: Everything's (width, height).
-    :type sizes: dict[VNode, tuple[float, float]]
+    :type sizes: dict[VObject, tuple[float, float]]
     :param parentRel: The tree relations (see *structure()*).
-    :type parentRel: dict[VNode, VRelation]
+    :type parentRel: dict[VObject, VRelation]
     :returns: Where those put go; and those related to nothing placed (for the rows).
-    :rtype: tuple[dict[VNode, tuple[float, float]], list[VNode]]
+    :rtype: tuple[dict[VObject, tuple[float, float]], list[VObject]]
     '''
     ids = {id(n) for n in [*positions, *others]}
-    related:dict[VNode, list[VNode]] = {n: [] for n in others}
+    related:dict[VObject, list[VObject]] = {n: [] for n in others}
     for n in others:
       for r in n.relations:
-        if not isinstance(r, VRelation) or not r._isConnected() or r.isHidden():
+        if not isLink(r):
           continue
         other = r.dst if r.src is n else r.src
-        if isinstance(other, VNode) and other is not n and id(other) in ids and other not in related[n]:
+        if other is not n and id(other) in ids and other not in related[n]:
           related[n].append(other)
     placed = {n: [x, y, x + sizes[n][0], y + sizes[n][1]] for n, (x, y) in positions.items()}
     labels = []
@@ -791,9 +818,9 @@ class TreeLayout(LayoutHeuristic):
     return placeNear(others, sizes, related, placed, labels, direction=self.params["direction"],
                      spacing=float(self.params["spacing"]))
 
-  def _keepPlaces(self, trees:list[tuple[VNode, list[float]]], children:dict[VNode, list[list[VNode]]],
-                  rel:dict[VNode, tuple[float, float]], others:list[VNode], fresh:set[int],
-                  gap:float) -> dict[VNode, tuple[float, float]]:
+  def _keepPlaces(self, trees:list[tuple[VObject, list[float]]], children:dict[VObject, list[list[VObject]]],
+                  rel:dict[VObject, tuple[float, float]], others:list[VObject], fresh:set[int],
+                  gap:float) -> dict[VObject, tuple[float, float]]:
     '''
     Dynamically: where the trees go -- each from where its root is -- and the
     nodes in no tree. When a tree grows or shrinks across (eg: something's
@@ -808,19 +835,19 @@ class TreeLayout(LayoutHeuristic):
     the trees' boxes, so a tree can be dropped in a gap in another.
 
     :param trees: The trees, laid out on their own (see *treePositions()*), by root.
-    :type trees: list[tuple[VNode, list[float]]]
+    :type trees: list[tuple[VObject, list[float]]]
     :param children: As for *treePositions()*.
-    :type children: dict[VNode, list[list[VNode]]]
+    :type children: dict[VObject, list[list[VObject]]]
     :param rel: Where *treePositions()* put each node, in its own tree.
-    :type rel: dict[VNode, tuple[float, float]]
+    :type rel: dict[VObject, tuple[float, float]]
     :param others: The nodes in no tree.
-    :type others: list[VNode]
+    :type others: list[VObject]
     :param fresh: The ids of the trees' roots just dropped.
     :type fresh: set[int]
     :param gap: The space kept between nodes of different trees (and those in no tree).
     :type gap: float
     :returns: Where they go (their top left): those that move.
-    :rtype: dict[VNode, tuple[float, float]]
+    :rtype: dict[VObject, tuple[float, float]]
     '''
     vertical = _vertical(self.params["direction"])
     known = self.known
@@ -845,7 +872,7 @@ class TreeLayout(LayoutHeuristic):
       lo, hi = span(box)
       ds = [d for ob, d in changes if start(box) >= end(ob) - 1 and lo < span(ob)[1] and span(ob)[0] < hi]
       return max(ds) if ds else 0.0
-    ret:dict[VNode, tuple[float, float]] = {}
+    ret:dict[VObject, tuple[float, float]] = {}
     placed:list[list[float]] = [] # (the boxes of the nodes placed so far)
     def clear(boxes:list[list[float]]) -> float:
       '''How far across to move *boxes* so none is on (or within *gap* of) a node placed so far.'''
@@ -926,13 +953,12 @@ class TreeLayout(LayoutHeuristic):
     after the command that made or moved it: it stays where it is for now.
     Anything else goes in the nearest free place (see *FindFree*).
     '''
-    mo = node.modelObject
-    if isinstance(node, VRelation):
-      if self._isEdge(mo):
+    if not isMember(node):
+      if self._isEdge(node.modelObject):
         bb = node.boundingBox()
         return bb[0], bb[1]
-    elif isinstance(node, VNode) and mo is not None:
-      if any(isinstance(r, VRelation) and self._isEdge(r.modelObject) for r in node.relations):
+    else:
+      if any(isLink(r) and self._isEdge(r.modelObject) for r in node.relations):
         bb = node.boundingBox()
         return bb[0], bb[1]
     return self._fallback.placeNode(node, referenceNode, direction, loc, **kwargs)
@@ -1005,7 +1031,7 @@ class TreeLayout(LayoutHeuristic):
     nodes, edges = self.scope()
     children = {id(self._ends(r)[1]) for r in edges}
     inTree = children | {id(self._ends(r)[0]) for r in edges}
-    pinned = {vo._id for vo in self._drops(command) if isinstance(vo, VNode)
+    pinned = {vo._id for vo in self._drops(command) if isMember(vo)
               and (id(vo) in children or id(vo) not in inTree)} # (a child, or in no tree: not a root -- it's kept where it is anyway)
     return self._adjustment(command.name, pinned)
 
