@@ -1147,6 +1147,12 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     """
     from sn.view.graphics.layout import finishTween
     finishTween(self.view) # (a layout's smooth move under way: done, before this is picked up)
+    # Cmd-press: the view pans (see SNGView.onButton_1()), so leave the press to
+    # the canvas; a Cmd-click that doesn't drag still toggles this one's selection
+    if s_CMD(event.state):
+      self.dragInfo = None
+      self.view._panClicked = self
+      return None
     # A context window's collapse/expand triangle
     if self.toggleAt(self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)):
       self.view.addEventHandled(event)

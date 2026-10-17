@@ -33,7 +33,7 @@ from contextlib import contextmanager
 from functools import partial
 from typing import cast, override, Any, Iterable, Iterator, Callable, Optional
 from util.utils import bindRightMouse, fixURL, isValidURL, urlExists, expandRect,\
-  flattenPairs, s_SHIFT, normalizeRect
+  flattenPairs, s_SHIFT, s_CMD, normalizeRect
 from sn.view.graphics.utils import eventEqual, addToMenuBar, addCheckToMenuBar, removeFromMenuBar
 from util.terminal import inputAsync
 from util.persistence.pRef import PRDb, PReference
@@ -1202,6 +1202,12 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     self._cursorBeforeTerminal:str = "arrow"
     "The cursor to restore when the pointer moves off a relation terminal (see *_updateTerminalCursor()*)."
     self._scrolling:bool = False
+    self._panned:bool = False
+    "Whether the pointer's moved since a drag-scroll's press (see *onButton_1()*)."
+    self._panClicked:VObject|None = None
+    "The object a Cmd-press landed on: a Cmd-click with no drag toggles its selection."
+    self._cursorBeforePan:str = "arrow"
+    "The cursor to restore when a drag-scroll ends."
 
     self.categories:Categories[GraphObject] = Categories[GraphObject]()
     "Named categories of model objects, for hiding or erasing from the view (see *visibility()*)."
@@ -3181,7 +3187,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :type event:
     :return: *None*
     
-    If the SHIFT key is pressed: start a drag-scroll. Otherwise, unselect 
+    If the SHIFT or COMMAND key is pressed: start a drag-scroll (panning the
+    view -- with COMMAND, over objects too: they leave the press to the
+    canvas, see *VObject.onButton_1()*). Otherwise, unselect 
     everything and prepare for a possible selection box animation (if we get a 
     move event).
 
@@ -3192,7 +3200,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     * Check if the event has been handled by a contained widget. If it has been,
       call *self.removeEventHandled()* and return.
 
-    * If the shift key is pressed start a scroll action and return.
+    * If the shift or command key is pressed start a scroll action and return.
 
     * Otherwise unselect everything and start a selection box action by setting
       up *self._selectionBoxInfo*.
@@ -3208,14 +3216,18 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       return None
 
     # a relation's terminal, over the background (see grabTerminalNear())
-    if not s_SHIFT(event.state) and self.grabTerminalNear(event):
+    if not (s_SHIFT(event.state) or s_CMD(event.state)) and self.grabTerminalNear(event):
       self.removeEventHandled(event)
       return None
 
-    # shift-Button1 down: scroll
-    if s_SHIFT(event.state):
+    # shift- or cmd-Button1 down: scroll (pan the view)
+    if s_SHIFT(event.state) or s_CMD(event.state):
       self._scrolling = True
-      self.canvas.scan_mark(int(self.canvas.canvasx(event.x)), int(self.canvas.canvasy(event.y)))
+      self._panned = False
+      if not s_CMD(event.state): self._panClicked = None # (a Shift-click toggles nothing)
+      self._cursorBeforePan = str(self.canvas.cget("cursor")) or "arrow"
+      self.canvas.configure(cursor="fleur")
+      self.canvas.scan_mark(event.x, event.y)
       return
 
     # plain Button1 down: multi-select box
@@ -3266,6 +3278,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       # continue scrolling
       if self._scrolling:
         self.canvas.scan_dragto(event.x, event.y, gain=1)
+        self._panned = True
         return
   
       # adjust selection box
@@ -3442,7 +3455,15 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     """
     from sn.view.graphics.vnodes import VNode
     from sn.view.graphics.vrelations import VRelation
-    self._scrolling = False
+    if self._scrolling: # a drag-scroll's done; a Cmd-click that never moved toggles what it was on
+      self._scrolling = False
+      self.canvas.configure(cursor=self._cursorBeforePan)
+      clicked, self._panClicked = self._panClicked, None
+      if not self._panned and clicked is not None:
+        clicked.selected(not clicked.selected(), _multi=True)
+      self.removeEventHandled(event)
+      return None
+    self._panClicked = None
     if self.isEventHandled(event):
       self.removeEventHandled(event)
       return None
