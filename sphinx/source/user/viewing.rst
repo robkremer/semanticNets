@@ -135,7 +135,9 @@ The menu also has fixed sizes (eg: 50%). The canvas scrolls with the
 scroll wheel or trackpad (**Shift** for sideways). To pan, drag with
 **Cmd** held down -- anywhere, over nodes and relations too, which stay put
 (a **Cmd**-click that doesn't move still adds to or takes from the
-selection); **Shift**-drag on the background pans too. **view | reset scroll
+selection); **Shift**-drag on the background pans too. Dragging with
+**Option** held down zooms, about where it was pressed: up to zoom in (twice
+as big for each 100 pixels), down to zoom out. **view | reset scroll
 region** fits the scrollable area to the drawing. A view saves its zoom and
 where it was scrolled to.
 

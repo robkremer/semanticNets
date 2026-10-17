@@ -42,7 +42,7 @@ from types import NoneType
 
 
 import sn
-from util.utils import midpoint, s_CMD
+from util.utils import midpoint, s_CMD, s_ALT
 from util.persistence.pRef import PReference
 from util.persistence.serialize import InstantiationInfo, ParamInfo
 from util.abstractGraph import AGRelation
@@ -1124,7 +1124,7 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     :returns:
     :rtype:
     '''
-    if not s_CMD(event.state) and self.grabTerminal(event): # (Cmd: the view pans -- see VObject.onButton_1())
+    if not (s_CMD(event.state) or s_ALT(event.state)) and self.grabTerminal(event): # (Cmd/Option: the view pans/zooms -- see VObject.onButton_1())
       return 'break'
     return super().onButton_1(event)
 

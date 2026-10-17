@@ -33,7 +33,7 @@ from contextlib import contextmanager
 from functools import partial
 from typing import cast, override, Any, Iterable, Iterator, Callable, Optional
 from util.utils import bindRightMouse, fixURL, isValidURL, urlExists, expandRect,\
-  flattenPairs, s_SHIFT, s_CMD, normalizeRect
+  flattenPairs, s_SHIFT, s_CMD, s_ALT, normalizeRect
 from sn.view.graphics.utils import eventEqual, addToMenuBar, addCheckToMenuBar, removeFromMenuBar
 from util.terminal import inputAsync
 from util.persistence.pRef import PRDb, PReference
@@ -1208,6 +1208,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     "The object a Cmd-press landed on: a Cmd-click with no drag toggles its selection."
     self._cursorBeforePan:str = "arrow"
     "The cursor to restore when a drag-scroll ends."
+    self._dragZoom:tuple[int, float, list[float], int, int]|None = None
+    "An Option-drag zooming: where it was pressed (window y), the zoom then, and the point (view units) kept under the pointer, at window x, y (see *onButton_1()*)."
 
     self.categories:Categories[GraphObject] = Categories[GraphObject]()
     "Named categories of model objects, for hiding or erasing from the view (see *visibility()*)."
@@ -3189,7 +3191,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     
     If the SHIFT or COMMAND key is pressed: start a drag-scroll (panning the
     view -- with COMMAND, over objects too: they leave the press to the
-    canvas, see *VObject.onButton_1()*). Otherwise, unselect 
+    canvas, see *VObject.onButton_1()*). If the OPTION key is: start a
+    drag-zoom (over objects too), up to zoom in, down to zoom out, about
+    where it was pressed (see *ZOOM_DRAG*). Otherwise, unselect 
     everything and prepare for a possible selection box animation (if we get a 
     move event).
 
@@ -3201,6 +3205,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       call *self.removeEventHandled()* and return.
 
     * If the shift or command key is pressed start a scroll action and return.
+
+    * If the option key is pressed start a zoom action and return.
 
     * Otherwise unselect everything and start a selection box action by setting
       up *self._selectionBoxInfo*.
@@ -3216,9 +3222,18 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       return None
 
     # a relation's terminal, over the background (see grabTerminalNear())
-    if not (s_SHIFT(event.state) or s_CMD(event.state)) and self.grabTerminalNear(event):
+    if not (s_SHIFT(event.state) or s_CMD(event.state) or s_ALT(event.state)) and self.grabTerminalNear(event):
       self.removeEventHandled(event)
       return None
+
+    # option-Button1 down: zoom
+    if s_ALT(event.state):
+      self._panClicked = None
+      self._cursorBeforePan = str(self.canvas.cget("cursor")) or "arrow"
+      self.canvas.configure(cursor="sb_v_double_arrow")
+      at = self.windowToView(self.canvas.canvasx(event.x), self.canvas.canvasy(event.y))
+      self._dragZoom = (event.y, self._scale, at, event.x, event.y)
+      return
 
     # shift- or cmd-Button1 down: scroll (pan the view)
     if s_SHIFT(event.state) or s_CMD(event.state):
@@ -3273,6 +3288,17 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       # terminal -- see VRelation.onButton_1()) follows the drag
       if self._elasticLineChoiceData is not None:
         self._trackElasticLine(event)
+        return
+
+      # continue zooming: by ZOOM_DRAG for each 100 pixels up, keeping the
+      # pressed-on point under where it was pressed
+      if self._dragZoom is not None:
+        y0, scale0, at, wx, wy = self._dragZoom
+        scale = min(self.MAX_ZOOM, max(self.MIN_ZOOM, scale0 * self.ZOOM_DRAG ** ((y0 - event.y) / 100)))
+        if abs(scale - self._scale) > 1e-6:
+          self.zoom(scale)
+          self.resetScrollRegion()
+          self._scrollToPut(at, wx, wy)
         return
 
       # continue scrolling
@@ -3455,6 +3481,11 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     """
     from sn.view.graphics.vnodes import VNode
     from sn.view.graphics.vrelations import VRelation
+    if self._dragZoom is not None: # a drag-zoom's done
+      self._dragZoom = None
+      self.canvas.configure(cursor=self._cursorBeforePan)
+      self.removeEventHandled(event)
+      return None
     if self._scrolling: # a drag-scroll's done; a Cmd-click that never moved toggles what it was on
       self._scrolling = False
       self.canvas.configure(cursor=self._cursorBeforePan)
@@ -4757,6 +4788,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   ZOOM_STEP = 1.25
   "How much \"Zoom In\" zooms in (and \"Zoom Out\", out)."
 
+  ZOOM_DRAG = 2.0
+  "How much an Option-drag zooms in for each 100 pixels up (and out, down)."
+
   MIN_ZOOM, MAX_ZOOM = 0.05, 8.0
   "The least and most the view zooms to."
 
@@ -4796,6 +4830,19 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       c.xview_moveto(max(0.0, (wx - c.winfo_width() / 2 - sr[0]) / (sr[2] - sr[0])))
     if sr[3] > sr[1]:
       c.yview_moveto(max(0.0, (wy - c.winfo_height() / 2 - sr[1]) / (sr[3] - sr[1])))
+
+  def _scrollToPut(self, at:list[float], wx:float, wy:float) -> None:
+    '''
+    Scroll so the point *at* (view units) is at (*wx*, *wy*) in the window
+    (as near as the scroll region allows).
+    '''
+    c = self.canvas
+    x, y = self.viewToWindow(*at)
+    sr = [float(v) for v in self.scrollRegion]
+    if sr[2] > sr[0]:
+      c.xview_moveto(max(0.0, (x - wx - sr[0]) / (sr[2] - sr[0])))
+    if sr[3] > sr[1]:
+      c.yview_moveto(max(0.0, (y - wy - sr[1]) / (sr[3] - sr[1])))
 
   def zoomAbout(self, scale:float, centre:tuple[float, float]|None=None) -> None:
     '''
