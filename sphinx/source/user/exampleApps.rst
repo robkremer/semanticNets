@@ -121,7 +121,8 @@ opens up for its classes and functions.
    :width: 560px
 
    What the Python parser makes of the XML reader's own code (imports not
-   followed): its modules, and the modules they import, in their packages.
+   followed): its two modules, *reader* and *view*, and the modules they
+   import, in their packages.
 
 Its objects know where their code is:
 
