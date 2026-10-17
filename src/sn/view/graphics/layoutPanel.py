@@ -8,15 +8,16 @@ menus. Shown and hidden with "View | Layout panel" (see
     "arrange now" (static), "keep arranged" (dynamic) and "animate";
   - for the first two, a list of the layouts of that kind (the one keeping the
     view arranged is ticked); and
-  - the animation layout's start/stop button and what it's doing, whichever
-    kind is shown.
+  - a bar of buttons for what's shown, which never scrolls away: for the first
+    two, **Revert** (back to the values the layout was last used with) and
+    **Arrange** (arrange the view once, as one undoable command) or **Use**
+    (make it the view's dynamic layout); for "animate", the animation layout's
+    start/stop button and what it's doing.
 
 Below that is a page for the chosen layout: its parameters (the form its
-dialog shows: see *layoutDialog.LayoutForm*), with **Arrange** (arrange the
-view once, as one undoable command) or **Use** (make it the view's dynamic
-layout), and **Revert** (back to the values it was last used with) -- or, for
-"animate", the animation layout's settings (see *animationControls*), which
-take effect at once. Edits not yet used are kept while other pages are shown.
+dialog shows: see *layoutDialog.LayoutForm*) -- or, for "animate", the
+animation layout's settings (see *animationControls*), which take effect at
+once. Edits not yet used are kept while other pages are shown.
 
 The page is made afresh each time it's chosen, so its lists of relation types
 are the model's as they are then.
@@ -65,6 +66,13 @@ HINTS:dict[str, str] = {
   DYNAMIC: "Keeps the view arranged as it changes (one layout at a time).",
 }
 "Said under a layout's name on its page."
+
+TIPS_LAYOUT:dict[str, str] = {
+  STATIC: "Arrange the view with this layout, once. It's one command: undo puts everything back.",
+  DYNAMIC: "Make this the layout that keeps the view arranged as it changes.",
+  "revert": "Put back the settings this layout was last used with in this view (or its defaults).",
+}
+"Tooltips for the bar's buttons, for a layout."
 
 SCROLL_TAG = "LayoutPanelScroll"
 "The bind tag that scrolls the page with the mouse wheel, given to everything on it (see *LayoutPanel._scrollable()*)."
@@ -116,13 +124,23 @@ class LayoutPanel(ttk.Frame):
     self.list = ttk.Treeview(self, show="tree", selectmode="browse", height=4)
     self.list.bind("<<TreeviewSelect>>", lambda _e: self._picked())
 
-    self.animationBar = ttk.Frame(self)
-    self.animationBar.pack(side=tk.TOP, fill=tk.X, pady=(6, 0))
+    self.bar = ttk.Frame(self)
+    "The buttons for what's shown: *animationBar* or *layoutBar*."
+    self.bar.pack(side=tk.TOP, fill=tk.X, pady=(6, 0))
+    self.animationBar = ttk.Frame(self.bar)
     self.playButton = ttk.Button(self.animationBar, width=7, command=self.view.toggleAnimationLayout)
     self.playButton.pack(side=tk.LEFT)
     self.status = ttk.Label(self.animationBar, foreground="gray35")
     self.status.pack(side=tk.LEFT, padx=(4, 0), fill=tk.X, expand=True)
     tip([self.playButton], TIPS["play"]); tip([self.status], TIPS["status"])
+    self.layoutBar = ttk.Frame(self.bar)
+    self.actButton = ttk.Button(self.layoutBar, width=8, default="active")
+    "Arrange (for arrange now) or Use (for keep arranged)."
+    self.actButton.pack(side=tk.RIGHT, padx=(4, 0))
+    self.revertButton = ttk.Button(self.layoutBar, text="Revert", width=8, command=self.revert)
+    self.revertButton.pack(side=tk.RIGHT)
+    tip([self.revertButton], TIPS_LAYOUT["revert"])
+    CreateToolTip(self.actButton, lambda: TIPS_LAYOUT.get(self.category.get(), ""), wrapLength=300)
 
     ttk.Separator(self).pack(side=tk.TOP, fill=tk.X, pady=6)
 
@@ -194,7 +212,7 @@ class LayoutPanel(ttk.Frame):
     for name in names:
       self.list.insert("", tk.END, iid=name, text=self._listText(category, name))
     self.list.configure(height=len(names))
-    self.list.pack(side=tk.TOP, fill=tk.X, pady=(6, 0), before=self.animationBar)
+    self.list.pack(side=tk.TOP, fill=tk.X, pady=(6, 0), before=self.bar)
     self.list.selection_set(self.chosen[category])
     self.list.see(self.chosen[category])
     self._dynamicName = self.view.localLayout.NAME if self.view.localLayout is not None else ""
@@ -227,6 +245,7 @@ class LayoutPanel(ttk.Frame):
     self.form = self.animation = None
     category, name = self.current()
     self._page = (category, name)
+    self._showBar(category)
     if category == ANIMATED:
       self.animation = AnimationControls(self.page, self.view)
       self.animation.pack(side=tk.TOP, fill=tk.X, padx=(0, 4))
@@ -238,7 +257,7 @@ class LayoutPanel(ttk.Frame):
 
   def _buildLayout(self, category:str, cls:type[LayoutHeuristic]) -> None:
     '''
-    Make the page for a layout: its name, its parameters, and its buttons.
+    Make the page for a layout: its name and its parameters (its buttons are in the bar: see *_showBar()*).
 
     :param category: *STATIC* or *DYNAMIC*.
     :type category: str
@@ -259,14 +278,21 @@ class LayoutPanel(ttk.Frame):
       self.form.pack(side=tk.TOP, fill=tk.X)
     else:
       ttk.Label(self.page, text="(It has no settings.)", foreground="gray40").pack(side=tk.TOP, anchor=tk.W, padx=8)
-    buttons = ttk.Frame(self.page)
-    buttons.pack(side=tk.TOP, fill=tk.X, pady=(10, 4))
-    if category == STATIC:
-      ttk.Button(buttons, text="Arrange", command=self.arrange, default="active").pack(side=tk.RIGHT, padx=4)
-    else:
-      ttk.Button(buttons, text="Use", command=self.use, default="active").pack(side=tk.RIGHT, padx=4)
-    if asked:
-      ttk.Button(buttons, text="Revert", command=self.revert).pack(side=tk.RIGHT, padx=4)
+    self.revertButton.configure(state="normal" if asked else "disabled")
+
+  def _showBar(self, category:str) -> None:
+    '''
+    Show the buttons for a kind of layout in the bar (see *bar*).
+
+    :param category: Of *layout.CATEGORIES*.
+    :type category: str
+    '''
+    shown, hidden = (self.animationBar, self.layoutBar) if category == ANIMATED else (self.layoutBar, self.animationBar)
+    hidden.pack_forget()
+    shown.pack(side=tk.TOP, fill=tk.X)
+    if category != ANIMATED:
+      self.actButton.configure(text="Arrange" if category == STATIC else "Use",
+                               command=self.arrange if category == STATIC else self.use)
 
   def _values(self) -> dict[str, Any]|None:
     '''

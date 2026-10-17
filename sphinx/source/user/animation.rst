@@ -11,8 +11,8 @@ like elastic bands. The objects move a little at a time until things settle
 down, and then it stops by itself.
 
 Start it from **view | layout | animate | start** on the background menu, or
-with the **Start** button at the top of the layout panel (see
-:doc:`layouts`). Start it again (or press **Stop**) to stop it early. A whole run is a single command: **Cmd-Z** puts
+with the **Start** button at the top of the layout panel's **Animate** page
+(see :doc:`layouts`). Start it again (or press **Stop**) to stop it early. A whole run is a single command: **Cmd-Z** puts
 everything back where it was.
 
 What moves

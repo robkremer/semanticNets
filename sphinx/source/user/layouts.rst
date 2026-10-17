@@ -44,14 +44,15 @@ or narrower.
   between the three kinds of layout. For the first two, a list of the layouts
   of that kind is under them -- the one keeping the view arranged is ticked --
   and choosing one shows its page.
-- Under them, whichever kind is shown, are the animation layout's start/stop
-  button and what it's doing (see :doc:`animation`).
-- A layout's page has its settings -- starting with the ones you used last
-  time in this view -- and **Arrange** (arrange the view with it once: one
+- Under them is a bar of buttons, which stays put however far the page below
+  is scrolled. For a layout: **Arrange** (arrange the view with it once: one
   command, so **Cmd-Z** puts everything back) or **Use** (make it the layout
-  that keeps the view arranged). **Revert** puts back the settings it was last
-  used with. Settings you've changed but not yet used are kept while you look
-  at other pages.
+  that keeps the view arranged), and **Revert** (put back the settings it was
+  last used with). For **Animate**: the animation layout's start/stop button
+  and what it's doing (see :doc:`animation`).
+- A layout's page has its settings, starting with the ones you used last time
+  in this view. Settings you've changed but not yet used are kept while you
+  look at other pages.
 - The **Animate** page has the animation layout's settings: see
   :doc:`animation`.
 
