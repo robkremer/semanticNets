@@ -110,6 +110,7 @@ class Test(unittest.TestCase):
     m = plugins.Manifest.read(str(makePlugin(self.installed, "alpha", "2.1")))
     self.assertEqual((m.id, m.name, m.version, m.description, m.snVersion, m.module),
                      ("alpha", "alpha plugin", "2.1", "A test.", "1.0", "snplugins.alpha"))
+    self.assertEqual(m.exclude, ())
     bad = self.installed / "has-dash"
     bad.mkdir()
     (bad / plugins.MANIFEST).write_text('name = "x"\n')
@@ -140,6 +141,18 @@ class Test(unittest.TestCase):
     # an older one bundled: the installed one's kept
     (self.installed / "beta" / plugins.MANIFEST).write_text('name = "beta plugin"\nversion = "3.0"\n')
     self.assertEqual(plugins.installBundled(str(self.bundled), str(self.installed)), [])
+
+  def test0320exclude(self):
+    makePlugin(self.bundled, "alpha", files={"data.snm": "", "app.log": "", ".gitignore": "", "keep.txt": ""})
+    (self.bundled / "alpha" / "examples").mkdir()
+    for f in ("a.xml", "a_xml.snm", "a_xml.snv"):
+      (self.bundled / "alpha" / "examples" / f).write_text("")
+    with open(self.bundled / "alpha" / plugins.MANIFEST, "a") as f:
+      f.write('exclude = ["examples/*.snm", "examples/*.snv"]\n')
+    self.assertEqual(plugins.Manifest.read(str(self.bundled / "alpha")).exclude, ("examples/*.snm", "examples/*.snv"))
+    plugins.installBundled(str(self.bundled), str(self.installed))
+    installed = sorted(str(p.relative_to(self.installed / "alpha")) for p in (self.installed / "alpha").rglob("*"))
+    self.assertEqual(installed, ["__init__.py", "data.snm", "examples", "examples/a.xml", "keep.txt", plugins.MANIFEST])
 
   def test0350relocate(self):
     makePlugin(self.bundled, "alpha", files={

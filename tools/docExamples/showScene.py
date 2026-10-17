@@ -188,9 +188,10 @@ def main() -> None:
     """
     if scene in ("hubs", "xmlreader"): # (the model as the XMLreader makes it; arranged below)
       import shutil
-      from sn.exampleApps.XMLreader import __main__ as xmlReader
-      from sn.exampleApps.XMLreader.reader import buildModel, outputPaths
-      xml = shutil.copy(os.path.join(ROOT, "src", "sn", "exampleApps", "XMLreader", "examples", "books.xml"), folder)
+      from sn.plugins import importBundled
+      xmlReader = importBundled("XMLreader", "view") # (where it is: not installed, nor in the menus)
+      buildModel, outputPaths = xmlReader.buildModel, xmlReader.outputPaths
+      xml = shutil.copy(os.path.join(ROOT, "plugins", "XMLreader", "examples", "books.xml"), folder)
       modelPath = outputPaths(xml)[0]
       model = buildModel(xml, modelPath)
       model.save()
@@ -206,7 +207,7 @@ def main() -> None:
       hooks.trust("snplugins.pythonParser") # (as the editor does, having loaded it: its hooks are named by its ontology)
       Options, convert = dialog.Options, dialog.convert
       code = os.path.join(folder, "XMLreader")
-      shutil.copytree(os.path.join(ROOT, "src", "sn", "exampleApps", "XMLreader"), code,
+      shutil.copytree(os.path.join(ROOT, "plugins", "XMLreader"), code,
                       ignore=shutil.ignore_patterns("examples", "__pycache__", "*.log"))
       before = set(app.windows)
       convert(app, [code], Options(depth=0))
@@ -279,7 +280,8 @@ def main() -> None:
       app.after(3500, v.zoomToFit) # (it's taller than the window)
     settled = [scene != "xmlreader"]
     if scene == "xmlreader": # (as the XMLreader does: the animation layout, until it settles)
-      from sn.exampleApps.XMLreader import __main__ as xmlReader
+      from sn.plugins import importBundled
+      xmlReader = importBundled("XMLreader", "view")
       app.after(1000, lambda: xmlReader.startLayout(v, lambda: (xmlReader.separateNodes(v), settled.__setitem__(0, True))))
     if into is not None:
       def shoot() -> None:

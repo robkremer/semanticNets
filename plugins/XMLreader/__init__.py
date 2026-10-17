@@ -1,0 +1,60 @@
+'''
+XMLreader: a plugin (see *sn.plugins*) that makes a model of an XML file --
+a type for each tag, an individual for each element, and relations for their
+nesting -- and a view of it, arranged, from the Tools menu's "XML Reader...".
+
+  - *reader*: reads the XML file, and makes the model;
+  - *view*: the front end, and the view;
+  - *examples*: some XML files to try.
+
+Created on Oct 3, 2026 (a plugin since Oct 17)
+
+.. codeauthor:: Rob Kremer <robkremer@me.com>
+'''
+#################################################################################
+# (c) Copyright 2026, Rob Kremer, MIT open source license.                      #
+#                                                                               #
+# Permission is hereby granted, free of charge, to any person obtaining a copy  #
+# of this software and associated documentation files (the "Software"), to deal #
+# in the Software without restriction, including without limitation the rights  #
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell     #
+# copies of the Software, and to permit persons to whom the Software is         #
+# furnished to do so, subject to the following conditions:                      #
+#                                                                               #
+# The above copyright notice and this permission notice shall be included in all#
+# copies or substantial portions of the Software.                               #
+#                                                                               #
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR    #
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,      #
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE   #
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER        #
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, #
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE #
+# SOFTWARE.                                                                     #
+#################################################################################
+from __future__ import annotations
+import os
+from typing import Any
+
+def register(ctx:Any) -> None:
+  '''
+  Add "XML Reader..." to the Tools menu (see *sn.plugins.PluginContext*): it
+  asks for the file -- in the folder last read from, or at first the
+  plugin's examples -- and makes its model and view (see *view.convert()*).
+  Those of the plugin's own examples are made in the example models' folder
+  (see *Application.EXAMPLES_FOLDER*), not in the plugin's folder, which is
+  replaced when a newer version's installed.
+
+  :param ctx: The plugin's context.
+  :type ctx: sn.plugins.PluginContext
+  '''
+  def read() -> None:
+    from .view import askForFile, convert # (here: tkinter, the views, ... only once it's used)
+    examples = os.path.join(ctx.folder, "examples")
+    xmlPath = askForFile(ctx.pref("lastFolder", None) or examples)
+    if xmlPath is None:
+      return
+    ctx.setPref("lastFolder", os.path.dirname(xmlPath))
+    mine = os.path.commonpath([os.path.realpath(xmlPath), os.path.realpath(ctx.folder)]) == os.path.realpath(ctx.folder)
+    convert(ctx.app, xmlPath, os.path.expanduser(ctx.app.EXAMPLES_FOLDER) if mine else None)
+  ctx.addMenuItem("XML Reader...", read)

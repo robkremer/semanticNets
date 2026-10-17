@@ -11,6 +11,7 @@ package whose ``__init__.py`` defines ``register(ctx)``, and a
     version = "1.0"
     description = "What it does."
     sn-version = "1.0"     # the oldest sn it works with
+    exclude = ["examples/*.snm"]   # files in it not to install (see installBundled())
 
 It's imported as ``snplugins.<folder>`` (a package whose path is the plugins
 folder: see *namespace()*), so that its hooks (see *sn.hooks*) have the same
@@ -53,6 +54,7 @@ Created on Oct 17, 2026
 # SOFTWARE.                                                                     #
 #################################################################################
 from __future__ import annotations
+import fnmatch
 import importlib
 import os
 import re
@@ -110,6 +112,9 @@ class Manifest:
   description:str = ""
   snVersion:str = "0"
   "The oldest sn it works with."
+  exclude:tuple[str, ...] = ()
+  '''The files in its folder not to install (see *installBundled()*): patterns
+  (as *fnmatch*'s) of their paths in it, with "/" (eg: "examples/*.snm").'''
 
   @property
   def id(self) -> str:
@@ -138,8 +143,10 @@ class Manifest:
         data = tomllib.load(f)
     except (OSError, tomllib.TOMLDecodeError) as ex:
       raise PluginError(f"{name}'s {MANIFEST} can't be read: {ex}") from ex
+    exclude = data.get("exclude", [])
     return cls(folder, str(data.get("name", name)), str(data.get("version", "0")),
-               str(data.get("description", "")), str(data.get("sn-version", "0")))
+               str(data.get("description", "")), str(data.get("sn-version", "0")),
+               tuple(str(e) for e in exclude) if isinstance(exclude, list) else ())
 
 def bundledFolder() -> str:
   '''
@@ -172,7 +179,9 @@ def manifests(folder:str) -> list[Manifest]:
 def installBundled(source:str|None=None, target:str|None=None) -> list[str]:
   '''
   Copy the plugins that come with the program into the plugins folder: those
-  that aren't there, or are older there (by their version) -- replacing them.
+  that aren't there, or are older there (by their version) -- replacing them
+  -- but for the files they say not to (see *Manifest.exclude*), and making
+  their models and views refer to where they now are (see *_relocate()*).
 
   :param source: Where the plugins that come with the program are (by default, *bundledFolder()*).
   :type source: str | None
@@ -193,7 +202,7 @@ def installBundled(source:str|None=None, target:str|None=None) -> list[str]:
     try:
       if os.path.exists(dest):
         shutil.rmtree(dest)
-      shutil.copytree(m.folder, dest, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+      shutil.copytree(m.folder, dest, ignore=_ignore(m))
     except OSError:
       logger.error(f'Couldn\'t install the plugin {m.name} in "{dest}".', exc_info=True)
       continue
@@ -201,6 +210,25 @@ def installBundled(source:str|None=None, target:str|None=None) -> list[str]:
     logger.info(f'Installed the plugin {m.name} {m.version} in "{dest}".')
     ret.append(m.id)
   return ret
+
+NOT_INSTALLED = ("__pycache__", "*.pyc", "*.log", ".gitignore", ".DS_Store")
+"The files in any plugin's folder not to install (see *installBundled()*): patterns of their names."
+
+def _ignore(manifest:Manifest) -> Callable[[str, list[str]], set[str]]:
+  '''
+  :param manifest: A plugin's description.
+  :type manifest: Manifest
+  :returns: *shutil.copytree()*'s *ignore* for installing it: leaving out
+    *NOT_INSTALLED*, and its *Manifest.exclude*.
+  :rtype: Callable[[str, list[str]], set[str]]
+  '''
+  def ignore(folder:str, names:list[str]) -> set[str]:
+    rel = os.path.relpath(folder, manifest.folder)
+    def path(name:str) -> str:
+      return (name if rel == "." else os.path.join(rel, name)).replace(os.sep, "/")
+    return {n for n in names if any(fnmatch.fnmatch(n, p) for p in NOT_INSTALLED)
+                             or any(fnmatch.fnmatch(path(n), p) for p in manifest.exclude)}
+  return ignore
 
 def _relocate(folder:str) -> None:
   '''

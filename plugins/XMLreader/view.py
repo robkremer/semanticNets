@@ -1,30 +1,27 @@
 '''
-An example application built on Semantic Nets: turn an XML file into a
-Semantic Nets model and view, and open the view in the editor.
+XMLreader's front end: turn an XML file into a Semantic Nets model and view,
+and open the view in the editor. (The Tools menu's "XML Reader...": see the
+plugin's *register()*.)
 
-  python3.14 -m sn.exampleApps.XMLreader [file.xml]
-
-With no file named, it asks for one. For "<name>.<ext>" it makes
+It asks for the file (see *askForFile()*). For "<name>.<ext>" it makes
 "<name>_<ext>.snm" (the model: see *reader*) and "<name>_<ext>.snv" (a view of
 it: its elements, arranged -- see *showTypesAndExpand()*) in the same folder
 -- asking first if they're already there, and replacing them -- and opens the
-view.
+view. (For the plugin's own examples, they're made elsewhere: see *convert()*.)
 
-The *examples* folder here has some to try: books.xml (small: a namespace,
+The plugin's *examples* folder has some to try: books.xml (small: a namespace,
 nesting, comments, and elements named by their id or name), and
 library25.xml and library200.xml (25 and 200 made-up books: see
 *examples/makeLibrary.py*).
 
-Created on Oct 3, 2026
+Created on Oct 3, 2026 (as a program of its own: a plugin since Oct 17)
 
 .. codeauthor:: Rob Kremer <robkremer@me.com>
 '''
 from __future__ import annotations
-import sn # (first: it sets up logging -- see sn/__init__.py)
 import math
 import os
-import sys
-from typing import Callable
+from typing import Any, Callable
 import xml.etree.ElementTree as ET
 from tkinter import filedialog, messagebox
 from sn.model.model import Model, Node
@@ -32,21 +29,22 @@ from sn.view.graphics.guiApp import Application
 from sn.view.graphics.sngView import SNGView
 from sn.view.graphics.vnodes import VNode
 from util.utils import overlaps
-from sn.exampleApps.XMLreader.reader import buildModel, outputPaths
+from .reader import buildModel, outputPaths
 
 TITLE = "XML Reader"
 
-def askForFile(app:Application) -> str|None:
+def askForFile(folder:str|None=None) -> str|None:
   '''
-  :param app: The editor.
-  :type app: Application
+  :param folder: The folder to start in, if any.
+  :type folder: str | None
   :returns: The XML file the user chose, or None if they cancelled.
   :rtype: str | None
   '''
   # (no parent: the editor's main window is hidden -- on macOS, a dialog given
   # it as a parent is shown as a sheet in that small, otherwise hidden window)
+  where:dict[str, Any] = {"initialdir": folder} if folder is not None and os.path.isdir(folder) else {}
   path = filedialog.askopenfilename(title="Choose an XML file to make a Semantic Nets model of",
-                                    filetypes=[("XML files", "*.xml"), ("All files", "*.*")])
+                                    filetypes=[("XML files", "*.xml"), ("All files", "*.*")], **where)
   return path or None
 
 def expandLevels(model:Model) -> int:
@@ -180,7 +178,7 @@ def startLayout(view:SNGView, whenSettled:Callable[[], None]|None=None) -> None:
       whenSettled()
   view.canvas.after(500, poll)
 
-def convert(app:Application, xmlPath:str) -> bool:
+def convert(app:Application, xmlPath:str, folder:str|None=None) -> bool:
   '''
   Make the model and view of *xmlPath*, save them, and open the view.
 
@@ -188,10 +186,17 @@ def convert(app:Application, xmlPath:str) -> bool:
   :type app: Application
   :param xmlPath: The XML file.
   :type xmlPath: str
+  :param folder: Where to make them, if not beside it (see *reader.outputPaths()*):
+    eg: for the plugin's own examples, as the plugin's folder is replaced when
+    a newer version's installed (see *sn.plugins.installBundled()*).
+  :type folder: str | None
   :returns: Whether it did.
   :rtype: bool
   '''
   modelPath, viewPath = outputPaths(xmlPath)
+  if folder is not None:
+    os.makedirs(folder, exist_ok=True)
+    modelPath, viewPath = (os.path.join(folder, os.path.basename(p)) for p in (modelPath, viewPath))
   existing = [p for p in (modelPath, viewPath) if os.path.exists(p)]
   if existing:
     if not messagebox.askokcancel(TITLE, "These files are already there:\n\n  " + "\n  ".join(existing)
@@ -222,16 +227,3 @@ def convert(app:Application, xmlPath:str) -> bool:
     print(f"Arranged, and saved {os.path.basename(viewPath)}.")
   startLayout(view, settled)
   return True
-
-def main() -> None:
-  app = Application()
-  def start() -> None:
-    xmlPath = sys.argv[1] if len(sys.argv) > 1 else askForFile(app)
-    if xmlPath is None or not convert(app, xmlPath):
-      if not app.windows:
-        app.quit()
-  app.after(300, start)
-  app.run()
-
-if __name__ == "__main__":
-  main()
