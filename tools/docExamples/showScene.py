@@ -248,6 +248,8 @@ def main() -> None:
     v = win.view
     if scene in (*LAYOUT_SCENES, "xmlreader", "pythonparser", "familytree"): # (room for all of it)
       win.geometry("1500x1000+40+40")
+    elif scene == "animals": # (room for the diagram beside the layout panel)
+      win.geometry("1400x600+40+40")
     def roomForToolbar() -> None: # (the window grows by the reasoning toolbar's height: the canvas is as big as it was)
       bar = v.__dict__.get("_reasoningToolbar")
       if bar is None or not bar.winfo_ismapped(): # (not yet: the window's still being made)
