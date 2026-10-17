@@ -143,9 +143,17 @@ class Test(unittest.TestCase):
       self.assertEqual(hooks.call(ref, "fred", default="dflt"), "dflt")
     self.assertIn("failed", logs.output[0])
 
+  def test0450moved(self):
+    self.assertEqual(hooks.canonical(" sn.exampleApps.pythonParser.hooks:showSource "), "snplugins.pythonParser.hooks:showSource")
+    self.assertEqual(hooks.canonical("sn.exampleApps.pythonParser:f"), "snplugins.pythonParser:f")
+    self.assertEqual(hooks.canonical("sn.exampleApps.pythonParserX.hooks:f"), "sn.exampleApps.pythonParserX.hooks:f")
+    self.assertEqual(hooks.canonical("a.b:c"), "a.b:c")
+    with mock.patch.dict(hooks.MOVED, {"hookfixtures.old": "hookfixtures.good"}):
+      self.assertEqual(hooks.call("hookfixtures.old:shout", "moved"), "MOVED")
+
   def test0500trusted(self):
     self.assertTrue(hooks.trusted("sn"))
-    self.assertTrue(hooks.trusted("sn.exampleApps.pythonParser"))
+    self.assertTrue(hooks.trusted("sn.view.graphics"))
     self.assertFalse(hooks.trusted("snake"))
     self.assertTrue(hooks.trusted("hookfixtures.good"))
     self.assertTrue(hooks.trusted("hookfixtures.good.inner"))

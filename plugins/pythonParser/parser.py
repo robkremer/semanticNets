@@ -35,7 +35,7 @@ The modules analysed are parsed (with *ast*) only for their top-level structure:
     is an *external-module* (and is in its packages, if it has any).
 
 Each module, class and function has its full dotted name as its
-"qualified-name" (eg: sn.exampleApps.pythonParser.parser.buildModel); a
+"qualified-name" (eg: sn.model.model.Node); a
 module or package its file or folder as its "path", where it's from as its
 "origin" (see *ORIGINS*), and how many imports away from the files given it
 is as its "import-depth"; a class or function (or ``__main__`` block) the
@@ -64,7 +64,7 @@ from dataclasses import dataclass, field
 from typing import Callable
 from urllib.parse import unquote, urlparse
 from sn.model.model import Model, Node, Relation, GraphObject
-from sn.exampleApps.pythonParser.source import chunkAttrs
+from .source import chunkAttrs
 
 ONTOLOGY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pythonOntology.snm")
 "The model the models made build on: the types of things in Python programs (package, module, class, ...)."

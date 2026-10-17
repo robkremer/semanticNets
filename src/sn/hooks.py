@@ -4,7 +4,7 @@ model (eg: pythonParser) can give its objects behaviour -- menu items, parts
 of their tooltips, ... -- that lasts when the model's saved and read back.
 
 An attribute names a hook by a *reference*: a string ``module:function``
-(eg: ``sn.exampleApps.pythonParser.hooks:showSource``) -- a function, or a
+(eg: ``snplugins.pythonParser.hooks:showSource``) -- a function, or a
 class's method by its qualified name (``module:Class.method``). It's found
 (*resolve()*) only when it's first used:
 
@@ -76,6 +76,11 @@ preference.'''
 
 TRUSTED_PREF = "hooks/trustedModules"
 "The preference listing the modules and packages, besides sn, whose hooks can be imported."
+
+MOVED = {"sn.exampleApps.pythonParser": "snplugins.pythonParser"}
+'''Packages whose hooks have moved: old -> new. A reference to a hook in one
+is taken to be to it where it is now (see *canonical()*): eg: in a model made
+by the pythonParser before it became a plugin.'''
 
 _trustedPackages:list[str] = []
 "The packages trusted by the program itself (see *trust()*): eg: the plugins loaded (see *sn.plugins*)."
@@ -167,6 +172,19 @@ def isReference(text:Any) -> TypeGuard[str]:
   '''
   return isinstance(text, str) and _REF.fullmatch(text.strip()) is not None
 
+def canonical(ref:str) -> str:
+  '''
+  :param ref: A reference: ``module:function``.
+  :type ref: str
+  :returns: It, stripped -- and naming where its module is now, if it's moved (see *MOVED*).
+  :rtype: str
+  '''
+  ref = ref.strip()
+  for old, new in MOVED.items():
+    if ref.startswith(old + ".") or ref.startswith(old + ":"):
+      return new + ref[len(old):]
+  return ref
+
 def trustedModules() -> list[str]:
   '''
   :returns: The modules and packages whose hooks can be imported: sn's own
@@ -218,7 +236,7 @@ def problem(ref:str) -> str|None:
     isn't trusted, or there's no such hook -- or None if it can.
   :rtype: str | None
   '''
-  ref = ref.strip() if isinstance(ref, str) else ref
+  ref = canonical(ref) if isinstance(ref, str) else ref
   if not isReference(ref):
     return f'"{ref}" isn\'t a hook\'s name ("module:function").'
   if ref in _hooks:
@@ -261,7 +279,7 @@ def resolve(ref:str) -> Hook|None:
   if why is not None:
     _report(str(ref), why)
     return None
-  return _hooks[ref.strip()]
+  return _hooks[canonical(ref)]
 
 def call(ref:str, obj:Any, context:HookContext|None=None, default:Any=None) -> Any:
   '''
@@ -304,7 +322,7 @@ def applies(ref:str, obj:Any, context:HookContext|None=None) -> bool:
   '''
   if resolve(ref) is None:
     return True
-  test = _appliesTo.get(ref.strip())
+  test = _appliesTo.get(canonical(ref))
   if test is None:
     return True
   try:

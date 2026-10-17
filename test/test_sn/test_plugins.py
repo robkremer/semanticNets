@@ -81,11 +81,16 @@ class Test(unittest.TestCase):
       menubar.add_cascade(label=label, menu=tk.Menu(menubar))
     self.app = SimpleNamespace(menubar=menubar)
     self.addCleanup(menubar.destroy)
+    self.before = {m: sys.modules[m] for m in self.pluginModules()} # (eg: another test's bundled pythonParser: put back after)
     self.addCleanup(self.forget)
 
+  def pluginModules(self) -> list[str]:
+    return [m for m in sys.modules if m == plugins.NAMESPACE or m.startswith(plugins.NAMESPACE + ".")]
+
   def forget(self):
-    for m in [m for m in sys.modules if m == plugins.NAMESPACE or m.startswith(plugins.NAMESPACE + ".")]:
+    for m in self.pluginModules():
       del sys.modules[m]
+    sys.modules.update(self.before)
     for id in list(plugins.loaded):
       hooks.trust(plugins.loaded[id].manifest.module, False)
     plugins.loaded.clear()
@@ -135,6 +140,27 @@ class Test(unittest.TestCase):
     # an older one bundled: the installed one's kept
     (self.installed / "beta" / plugins.MANIFEST).write_text('name = "beta plugin"\nversion = "3.0"\n')
     self.assertEqual(plugins.installBundled(str(self.bundled), str(self.installed)), [])
+
+  def test0350relocate(self):
+    makePlugin(self.bundled, "alpha", files={
+      "onto.snm": '<property key="url" value="file:///somewhere/else/alpha/onto.snm" />\n'
+                  '<ref value="file:///somewhere/else/alpha/sub/x.snm" /><ref value="file:///other/beta/y.snm" />\n',
+      "onto.snv": '<property key="model" value="file:///Users/me/git/project/plugins/alpha/onto.snm" />\n',
+      "notes.txt": "file:///somewhere/else/alpha/onto.snm"})
+    plugins.installBundled(str(self.bundled), str(self.installed))
+    here = (self.installed / "alpha").as_uri()
+    self.assertEqual((self.installed / "alpha" / "onto.snm").read_text(),
+                     f'<property key="url" value="{here}/onto.snm" />\n'
+                     f'<ref value="{here}/sub/x.snm" /><ref value="file:///other/beta/y.snm" />\n')
+    self.assertEqual((self.installed / "alpha" / "onto.snv").read_text(), f'<property key="model" value="{here}/onto.snm" />\n')
+    self.assertEqual((self.installed / "alpha" / "notes.txt").read_text(), "file:///somewhere/else/alpha/onto.snm")
+
+  def test0380importBundled(self):
+    makePlugin(self.bundled, "alpha", files={"tools.py": "X = 42\n"})
+    with mock.patch.object(plugins, "bundledFolder", return_value=str(self.bundled)):
+      self.assertEqual(plugins.importBundled("alpha", "tools").X, 42)
+      self.assertEqual(plugins.importBundled("alpha").__name__, "snplugins.alpha")
+    self.assertNotIn("alpha", plugins.loaded)
 
   def test0400menus(self):
     m = plugins.Manifest.read(str(makePlugin(self.installed, "alpha")))

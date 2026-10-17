@@ -24,7 +24,7 @@ import textwrap
 from typing import Any
 import sn
 from sn.hooks import hook, HookContext
-from sn.exampleApps.pythonParser import source
+from . import source
 
 logger:sn.SNLogger = sn.getLogger(__name__)
 

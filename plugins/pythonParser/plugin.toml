@@ -1,0 +1,4 @@
+name = "Python Parser"
+version = "1.0"
+description = "A model of a Python program: its packages, modules, classes, functions and imports, with their code a click away."
+sn-version = "1.0"

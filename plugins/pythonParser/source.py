@@ -131,7 +131,7 @@ def chunkAttrs(node:ast.stmt, lines:list[str]) -> dict[str, Any]:
           ".source-hash": sourceHash(lines[start - 1:end])}
 
 def _isMainBlock(stmt:ast.stmt) -> bool:
-  from sn.exampleApps.pythonParser.parser import isMainBlock # (here: the parser imports this module)
+  from .parser import isMainBlock # (here: the parser imports this module)
   return isMainBlock(stmt)
 
 def _byName(tree:ast.Module, names:list[str], near:int) -> ast.stmt|None:

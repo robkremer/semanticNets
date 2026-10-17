@@ -1,20 +1,18 @@
 '''
-An example application built on Semantic Nets: a top-level analysis of a
-Python program -- its packages, modules, classes, functions, methods, doc
-strings and imports -- as a Semantic Nets model and view, opened in the editor.
+pythonParser's front end: a top-level analysis of a Python program -- its
+packages, modules, classes, functions, methods, doc strings and imports -- as
+a Semantic Nets model and view, opened in the editor. (The Tools menu's
+"Python Parser...": see the plugin's *register()*.)
 
-  python3.14 -m sn.exampleApps.pythonParser [file.py|folder ...] [--depth N] [--libraries] [--imports none|given|all] [--go]
-
-It shows a dialog (see *ParserDialog*) listing the files to analyse -- those
-named on the command line to start with: a folder stands for all the .py
-files in and below it -- with how many levels of imports to follow from them,
-whether to analyse the standard library and installed packages too, and
-which imports to show in the view; and a "Go" button. (With --go, it
-goes straight away, without the dialog.)
+It's a dialog (see *ParserDialog*) listing the files to analyse -- a folder
+stands for all the .py files in and below it -- with how many levels of
+imports to follow from them, whether to analyse the standard library and
+installed packages too, and which imports to show in the view; and a "Go"
+button.
 
 It makes a model of the files and the modules they import, as far out as
-asked (see *parser*), built on the ontology pythonOntology.snm (here, in this
-folder), and a view of it showing the packages and modules, and the
+asked (see *parser*), built on the ontology pythonOntology.snm (here, in the
+plugin's folder), and a view of it showing the packages and modules, and the
 contains-module and has-subpackage relations between them -- a tree, laid out
 left to right -- and the imports asked for (see
 *showPackages()*). The rest of the model (classes, functions, ...) is there
@@ -33,13 +31,11 @@ The model is named after the files' main module -- the best guess at it: see
 they're already there, and replacing them. (Use "save as" to keep it
 somewhere else.)
 
-Created on Oct 10, 2026
+Created on Oct 10, 2026 (as a program of its own: a plugin since Oct 17)
 
 .. codeauthor:: Rob Kremer <robkremer@me.com>
 '''
 from __future__ import annotations
-import sn # (first: it sets up logging -- see sn/__init__.py)
-import argparse
 import os
 from dataclasses import dataclass
 from typing import Any, Callable
@@ -50,12 +46,7 @@ from sn.model.model import Model, Node, Relation
 from sn.view.graphics.guiApp import Application
 from sn.view.graphics.sngView import SNGView
 from sn.view.graphics.treeLayout import TreeLayout
-from sn.exampleApps.pythonParser.parser import buildModel, guessMain, ontologyTypes, outputPaths, readModules
-from util.persistence.serialize import SerializationStrategy
-
-NAME = "pythonParser"
-VERSION = "1.0"
-SerializationStrategy.appName, SerializationStrategy.appVersion = f"{NAME} ({sn.NAME} {sn.VERSION})", VERSION # (in the files it saves)
+from .parser import buildModel, guessMain, ontologyTypes, outputPaths, readModules
 
 TITLE = "Python Parser"
 
@@ -129,7 +120,7 @@ def showPackages(view:SNGView, model:Model, showImports:str="given") -> None:
         view.makeViewObjectForGraphObject(r)
   finally:
     view.localLayout = localLayout
-  tree = dict(relation=ontologyTypes(model)["includes"], parentEnd="source", direction="right", compact=True, others="near")
+  tree:dict[str, Any] = dict(relation=ontologyTypes(model)["includes"], parentEnd="source", direction="right", compact=True, others="near")
   TreeLayout(view, **tree).arrange(animate=False)
   view.setDynamicLayout(TreeLayout(view, **tree)) # (kept arranged: expanding a module opens the tree up for what it defines, and what it imports goes near it)
 
@@ -349,30 +340,3 @@ class ParserDialog(tk.Toplevel):
     self.destroy()
     if self.onClose is not None:
       self.onClose()
-
-def main() -> None:
-  args = argparse.ArgumentParser(prog="python3.14 -m sn.exampleApps.pythonParser",
-                                 description="Make a Semantic Nets model and view of a Python program.")
-  args.add_argument("paths", nargs="*", help="Python files, and folders (all the .py files in and below them).")
-  args.add_argument("--depth", type=int, default=Options.depth, help="How many levels of imports to follow (default: %(default)s).")
-  args.add_argument("--libraries", action="store_true", help="Analyse the standard library and installed packages too.")
-  args.add_argument("--imports", choices=("none", "given", "all"), default=Options.showImports,
-                    help="Which imports to show in the view: those of the files given, by default.")
-  args.add_argument("--go", action="store_true", help="Go straight away, without the dialog (needs paths).")
-  a = args.parse_args()
-  options = Options(a.depth, a.libraries, a.imports)
-  app = Application()
-  def closed() -> None:
-    if not app.windows:
-      app.quit()
-  def start() -> None:
-    if a.go and a.paths:
-      if not convert(app, a.paths, options):
-        closed()
-    else:
-      ParserDialog(app, a.paths, options, onClose=closed)
-  app.after(300, start)
-  app.run()
-
-if __name__ == "__main__":
-  main()

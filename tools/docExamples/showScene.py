@@ -200,7 +200,11 @@ def main() -> None:
       return win
     if scene == "pythonparser": # (the XMLreader's code, its imports not followed)
       import shutil
-      from sn.exampleApps.pythonParser.__main__ import Options, convert
+      from sn import hooks
+      from sn.plugins import importBundled
+      dialog = importBundled("pythonParser", "dialog") # (where it is: not installed, nor in the menus)
+      hooks.trust("snplugins.pythonParser") # (as the editor does, having loaded it: its hooks are named by its ontology)
+      Options, convert = dialog.Options, dialog.convert
       code = os.path.join(folder, "XMLreader")
       shutil.copytree(os.path.join(ROOT, "src", "sn", "exampleApps", "XMLreader"), code,
                       ignore=shutil.ignore_patterns("examples", "__pycache__", "*.log"))

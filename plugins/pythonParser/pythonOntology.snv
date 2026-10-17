@@ -7,7 +7,7 @@
     <property key="application" value="Semantic Nets" />
     <property key="applicationVersion" value="1.0" />
     <property key="type" value="sn.view.graphics.sngView.SNGView" />
-    <property key="url" value="file:///Users/kremer/git/semanticNets/src/sn/exampleApps/pythonParser/pythonOntology.snv" />
+    <property key="url" value="file:///Users/kremer/git/semanticNets/plugins/pythonParser/pythonOntology.snv" />
     <property key="model" value="pythonOntology.snm" />
     <property key="superDBs" type="list" />
     <property key="saved" value="2026-10-17T07:49:35-07:00" />

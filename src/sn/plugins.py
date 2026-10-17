@@ -61,6 +61,7 @@ import sys
 import tomllib
 import types
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Callable
 import tkinter as tk
 import sn
@@ -196,9 +197,37 @@ def installBundled(source:str|None=None, target:str|None=None) -> list[str]:
     except OSError:
       logger.error(f'Couldn\'t install the plugin {m.name} in "{dest}".', exc_info=True)
       continue
+    _relocate(dest)
     logger.info(f'Installed the plugin {m.name} {m.version} in "{dest}".')
     ret.append(m.id)
   return ret
+
+def _relocate(folder:str) -> None:
+  '''
+  Make the models and views (.snm, .snv) in a plugin's folder, just copied
+  there, refer to where they now are: to files in a folder of the plugin's
+  name (where they were written: eg: the project's plugins/pythonParser/), as
+  to the same files here -- so that they aren't taken to have been moved when
+  they're read (as *sn.copyExamples()* does for the example models).
+
+  :param folder: The plugin's folder, in the plugins folder.
+  :type folder: str
+  '''
+  pattern = re.compile(r'file://[^"\'<>\s]*/' + re.escape(os.path.basename(folder)) + "/")
+  uri = Path(folder).as_uri() + "/"
+  for dirpath, _dirs, files in os.walk(folder):
+    for f in files:
+      if f.endswith((".snm", ".snv")):
+        path = os.path.join(dirpath, f)
+        try:
+          with open(path, encoding="utf-8") as fd:
+            text = fd.read()
+          new = pattern.sub(lambda _m: uri, text)
+          if new != text:
+            with open(path, "w", encoding="utf-8") as fd:
+              fd.write(new)
+        except (OSError, UnicodeError):
+          logger.warning(f'Couldn\'t make "{path}" refer to where it now is.', exc_info=True)
 
 def namespace(folder:str) -> types.ModuleType:
   '''
@@ -214,6 +243,21 @@ def namespace(folder:str) -> types.ModuleType:
     ns.__path__ = [folder]
     sys.modules[NAMESPACE] = ns
   return ns
+
+def importBundled(id:str, module:str="") -> types.ModuleType:
+  '''
+  For scripts and tests: import a plugin that comes with the program where it
+  is (see *bundledFolder()*) -- not installed, nor registered -- or a module in it.
+
+  :param id: The plugin's folder name: eg: "pythonParser".
+  :type id: str
+  :param module: A module in it (eg: "parser"); by default, the plugin's package itself.
+  :type module: str
+  :returns: It.
+  :rtype: types.ModuleType
+  '''
+  namespace(bundledFolder())
+  return importlib.import_module(f"{NAMESPACE}.{id}" + (f".{module}" if module else ""))
 
 class PluginContext:
   '''

@@ -20,7 +20,7 @@
 # SOFTWARE.                                                                     #
 #################################################################################
 '''
-Finding a chunk of source again (see *sn.exampleApps.pythonParser.source*):
+Finding a chunk of source again (see the pythonParser plugin's *source*):
 by name, by grep, by its first line, or a guess -- after the file's been
 edited in the ways that each of them is for.
 
@@ -33,8 +33,10 @@ import os
 import tempfile
 import textwrap
 import unittest
-from sn.exampleApps.pythonParser import source
-from sn.exampleApps.pythonParser.source import locate, chunkAttrs, NAME, GREP, FUZZY, GUESS
+from sn.plugins import importBundled
+source = importBundled("pythonParser", "source")
+parser = importBundled("pythonParser", "parser")
+locate, chunkAttrs, NAME, GREP, FUZZY, GUESS = source.locate, source.chunkAttrs, source.NAME, source.GREP, source.FUZZY, source.GUESS
 
 ORIGINAL = textwrap.dedent('''\
   import os
@@ -142,7 +144,7 @@ class Test(unittest.TestCase):
     self.assertEqual(loc.text, "")
 
   def test0900fromAModel(self):
-    from sn.exampleApps.pythonParser.parser import readModules, buildModel
+    readModules, buildModel = parser.readModules, parser.buildModel
     pkg = os.path.join(self.folder.name, "pkg")
     os.mkdir(pkg)
     with open(os.path.join(pkg, "__init__.py"), "w") as f:
