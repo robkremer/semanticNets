@@ -1,5 +1,5 @@
 sn.view.graphics.searchDialog module
-==========================================
+====================================
 
 .. automodule:: sn.view.graphics.searchDialog
    :members:

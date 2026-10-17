@@ -4,8 +4,30 @@ program to work.  Top model contains the following base objects:
 
   - top
     
+    - node
+      
+      - collection
+      - context
+      
+        - rule
+        - definition
+        - query
+        - constraint
+        
+          - requirement
+          
     - relation
+    
       - isa
+      - distinct
+      - contains
+      
+        - antecedent
+        - consequent
+        - definiendum
+        - definiens
+        - condition
+        - required
 '''
 #################################################################################
 # (c) Copyright 2024-2026, Rob Kremer, MIT open source license.                 #
