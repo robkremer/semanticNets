@@ -38,7 +38,9 @@ The layout panel
 **View | Layout panel** (in the menu bar), or **view | layout | layout
 panel...** on the background menu, shows a panel at the right of the window,
 beside the canvas, for trying layouts out. Drag its divider to make it wider
-or narrower.
+or narrower; drag it most of the way to the right, or click the **×** at its
+top, and it closes. While it's closed, a narrow strip with a **‹** runs down
+the window's right edge: click it, or drag it out, to open the panel again.
 
 - At its top, **Arrange now**, **Keep arranged** and **Animate** switch
   between the three kinds of layout. For the first two, a list of the layouts

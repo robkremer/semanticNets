@@ -31,7 +31,7 @@ from sn.controller.modelInterface import ModelContext, changesModel
 
 from contextlib import contextmanager
 from functools import partial
-from typing import cast, override, Any, Iterable, Iterator, Callable, Optional
+from typing import cast, override, Any, Iterable, Iterator, Callable, Optional, TYPE_CHECKING
 from util.utils import bindRightMouse, fixURL, isValidURL, urlExists, expandRect,\
   flattenPairs, s_SHIFT, s_CMD, s_ALT, normalizeRect
 from sn.view.graphics.utils import eventEqual, addToMenuBar, addCheckToMenuBar, removeFromMenuBar
@@ -46,6 +46,8 @@ from sn.view.graphics.vrelations import VRelation
 from sn.view.graphics.layout import FindFree, Direction, gatherShifts, intoRect, freeSpotIn, clearOf, \
                                     LayoutHeuristic, LayoutMoves, NoLayout, finishTween, layoutsFor, STATIC, DYNAMIC, ANIMATED, \
                                     relationTypes, relationNamed
+if TYPE_CHECKING:
+  from sn.view.graphics.layoutPanel import LayoutSplit # (imported when it's made: see SNGView.layoutSplit())
 import sn.view.graphics.treeLayout # (registers the tree layout: see layout.LAYOUTS)
 import sn.view.graphics.balloonLayout # (registers the balloon, radial and hub layouts)
 from sn.view.graphics.decorators import NOMINAL_ASPECT
@@ -1172,6 +1174,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     model.addObserver(self)
     # the reasoning toolbar: shown unless the view was saved with it hidden (see showReasoningToolbar())
     self.canvas.after_idle(lambda: self.showReasoningToolbar(self.__dict__.pop("_pendingReasoningToolbar", "1") != "0", changed=False))
+    self.canvas.after_idle(self.layoutSplit) # (the strip at the right that opens the layout panel: see showLayoutPanel())
     self._closed:bool = False
     "Set when the view's window is closed (see *detachFromModel()*): it then ignores the model's updates."
     
@@ -1813,8 +1816,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   def showLayoutPanel(self, show:bool=True, category:str|None=None, name:str|None=None) -> None:
     '''
     Show (or hide) the layout panel (see *layoutPanel*) at the right of this
-    view's window, beside the canvas -- the first time, splitting the canvas's
-    pane in two, with a divider that can be dragged.
+    view's window, beside the canvas (see *layoutSplit()*): while it's hidden,
+    a narrow strip is there instead, which opens it.
 
     :param show: True to show it; False to hide it.
     :type show: bool
@@ -1824,34 +1827,37 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :type name: str | None
     '''
     from sn.view.graphics.layoutPanel import LayoutPanel
+    split = self.layoutSplit()
     panel:LayoutPanel|None = self.__dict__.get("_layoutPanel")
     if show:
       if panel is None:
-        paned = self.window.appPanedWidget
-        canvasFrame = paned.canvasFrame
-        split = self._layoutSplit = tk.PanedWindow(paned, orient=tk.HORIZONTAL, sashwidth=6, sashrelief="ridge",
-                                                   bg="darkgrey", borderwidth=0)
-        paned.add(split, before=canvasFrame, stretch="always", sticky="news", minsize=0)
-        paned.forget(canvasFrame)
-        split.add(canvasFrame, stretch="always", sticky="news", minsize=100)
-        canvasFrame.lift(split) # (it was made before the split: it'd be hidden behind it)
         panel = self._layoutPanel = LayoutPanel(split, self)
         saved = self.__dict__.pop("_unbuiltLayoutPanel", None) # (read with the view: see _restoreLayoutPanel())
         if saved:
           panel.setSavedState(dict(kv.split("=", 1) for kv in saved.split(";") if "=" in kv))
-      if str(panel) not in [str(p) for p in self._layoutSplit.panes()]:
-        self._layoutSplit.add(panel, stretch="never", sticky="news", width=panel.width, minsize=LayoutPanel.MIN_WIDTH)
+      split.showPanel(panel)
       if category is not None:
         panel.show(category, name)
       panel.startPolling()
     elif panel is not None:
-      if panel.winfo_ismapped() and panel.winfo_width() > 1:
-        panel.width = panel.winfo_width()
       panel.stopPolling()
-      self._layoutSplit.forget(panel)
+      split.hidePanel()
     if self._layoutPanelShown().get() != show:
       self._layoutPanelShown().set(show)
       self.setDirty() # (saved with the view)
+
+  def layoutSplit(self) -> LayoutSplit:
+    '''
+    :returns: The split between the canvas and the layout panel (or the strip
+      that opens it): see *layoutPanel.LayoutSplit*. Made (replacing the
+      canvas's pane) when the view's window is.
+    :rtype: LayoutSplit
+    '''
+    from sn.view.graphics.layoutPanel import LayoutSplit
+    split = self.__dict__.get("_layoutSplit")
+    if split is None:
+      split = self._layoutSplit = LayoutSplit(self)
+    return split
 
   def _layoutPanelState(self) -> str:
     '''

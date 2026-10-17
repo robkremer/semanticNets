@@ -2,7 +2,10 @@
 The layout panel: a pane at the right of a view's window (beside the canvas;
 its divider can be dragged) for trying layouts out without going through the
 menus. Shown and hidden with "View | Layout panel" (see
-*SNGView.showLayoutPanel()*). Its top has
+*SNGView.showLayoutPanel()*), or its own close button; dragged narrower than
+*LayoutSplit.CLOSE_WIDTH*, it closes. While it's hidden, a narrow strip at the
+window's right edge opens it again -- clicked, or dragged out (see
+*LayoutSplit*). Its top has
 
   - a switch between the three kinds of layout (see *layout.CATEGORIES*):
     "arrange now" (static), "keep arranged" (dynamic) and "animate";
@@ -120,6 +123,9 @@ class LayoutPanel(ttk.Frame):
                           command=self._switched)
       b.grid(row=0, column=i, sticky=tk.EW, padx=1)
       switch.columnconfigure(i, weight=1, uniform="switch")
+    close = ttk.Button(switch, text="\u00d7", width=2, style="Toolbutton", command=lambda: self.view.showLayoutPanel(False))
+    close.grid(row=0, column=len(PAGES), padx=(4, 0))
+    tip([close], "Close the layout panel. The strip at the window's right edge (or View | Layout panel) opens it again.")
 
     self.list = ttk.Treeview(self, show="tree", selectmode="browse", height=4)
     self.list.bind("<<TreeviewSelect>>", lambda _e: self._picked())
@@ -450,3 +456,118 @@ class LayoutPanel(ttk.Frame):
       pass
     page = state.get("page", ANIMATED)
     self.show(page if page in (STATIC, DYNAMIC, ANIMATED) else ANIMATED)
+
+class LayoutSplit(tk.PanedWindow):
+  '''
+  A view's canvas and, beside it at the right, its layout panel -- or, while
+  that's hidden, a narrow strip (*STRIP_WIDTH*) that opens it: clicked, or
+  dragged out wider than *OPEN_WIDTH*. The panel dragged narrower than
+  *CLOSE_WIDTH* closes; narrower than *LayoutPanel.MIN_WIDTH*, it springs
+  back to that. It takes the canvas's place in the window's *AppPanedWidget*
+  (above the terminal).
+  '''
+  STRIP_WIDTH = 14
+  "How wide (pixels) the strip is."
+  OPEN_WIDTH = 60
+  "The strip dragged out wider than this (pixels) opens the panel."
+  CLOSE_WIDTH = 160
+  "The panel dragged narrower than this (pixels) closes."
+  SASH_WIDTH = 6
+
+  def __init__(self, view:SNGView):
+    '''
+    :param view: The view whose window it's in.
+    :type view: SNGView
+    '''
+    paned = view.window.appPanedWidget
+    canvasFrame = paned.canvasFrame
+    super().__init__(paned, orient=tk.HORIZONTAL, sashwidth=self.SASH_WIDTH, sashrelief="ridge", bg="darkgrey", borderwidth=0)
+    paned.add(self, before=canvasFrame, stretch="always", sticky="news", minsize=0)
+    paned.forget(canvasFrame)
+    self.add(canvasFrame, stretch="always", sticky="news", minsize=100)
+    canvasFrame.lift(self) # (it was made before the split: it'd be hidden behind it)
+    self.view = view
+    self.panel:LayoutPanel|None = None
+    "The panel, once it's been made (see *SNGView.showLayoutPanel()*)."
+    self._pressedWidth = 0
+    bg = "gray78"
+    self.strip = tk.Frame(self, width=self.STRIP_WIDTH, bg=bg, cursor="hand2")
+    arrow = tk.Label(self.strip, text="\u2039", bg=bg, fg="gray25", cursor="hand2", padx=0, pady=0)
+    arrow.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+    for w in (self.strip, arrow):
+      w.bind("<Button-1>", lambda _e: self.view.showLayoutPanel(True))
+      CreateToolTip(w, "Open the layout panel (or drag it out). View | Layout panel opens and closes it too.", wrapLength=300)
+    self.bind("<ButtonPress-1>", self._pressed, add="+") # (the sash: the panes cover the rest)
+    self.bind("<ButtonRelease-1>", self._released, add="+")
+    self._showStrip()
+
+  def _shown(self, w:tk.Misc) -> bool:
+    ":returns: Whether *w* is one of its panes now."
+    return str(w) in [str(p) for p in self.panes()]
+
+  def _showStrip(self) -> None:
+    if not self._shown(self.strip):
+      self.add(self.strip, stretch="never", sticky="news", width=self.STRIP_WIDTH, minsize=self.STRIP_WIDTH)
+
+  def showPanel(self, panel:LayoutPanel) -> None:
+    '''
+    Show *panel* (as wide as it was: its *width*) instead of the strip.
+
+    :param panel:
+    :type panel: LayoutPanel
+    '''
+    self.panel = panel
+    if self._shown(self.strip):
+      self.forget(self.strip)
+    if not self._shown(panel):
+      self.add(panel, stretch="never", sticky="news", width=panel.width, minsize=0)
+
+  def hidePanel(self) -> None:
+    'Hide the panel (remembering how wide it is, unless it\'s being dragged closed), and show the strip.'
+    panel = self.panel
+    if panel is not None and self._shown(panel):
+      if panel.winfo_ismapped() and panel.winfo_width() >= LayoutPanel.MIN_WIDTH:
+        panel.width = panel.winfo_width()
+      self.forget(panel)
+    self._showStrip()
+
+  def _place(self, width:int) -> None:
+    '''
+    :param width: How wide (pixels) the pane at the right is to be: the sash is moved to suit.
+    :type width: int
+    '''
+    self.update_idletasks()
+    self.sash_place(0, max(0, self.winfo_width() - width - self.SASH_WIDTH), 1)
+
+  def _pressed(self, _event:tk.Event) -> None:
+    'The sash is being dragged: remember how wide the panel was, to open it that wide again if it\'s closed.'
+    panel = self.panel
+    self._pressedWidth = panel.winfo_width() if panel is not None and self._shown(panel) else 0
+
+  def _released(self, _event:tk.Event) -> None:
+    'The sash was let go: close the panel or open it, or let it be, by how wide it is (see the class doc).'
+    self.after_idle(self._settle)
+
+  def _settle(self) -> None:
+    panel = self.panel
+    if panel is not None and self._shown(panel):
+      width = panel.winfo_width()
+      if width < self.CLOSE_WIDTH:
+        if self._pressedWidth >= LayoutPanel.MIN_WIDTH:
+          panel.width = self._pressedWidth
+        self.view.showLayoutPanel(False)
+      elif width < LayoutPanel.MIN_WIDTH:
+        self._place(LayoutPanel.MIN_WIDTH)
+        panel.width = LayoutPanel.MIN_WIDTH
+      else:
+        panel.width = width
+    elif self._shown(self.strip):
+      width = self.strip.winfo_width()
+      if width > self.OPEN_WIDTH:
+        self.view.showLayoutPanel(True)
+        if self.panel is not None:
+          self.panel.width = max(LayoutPanel.MIN_WIDTH, width)
+          self._place(self.panel.width)
+      elif width != self.STRIP_WIDTH:
+        self._place(self.STRIP_WIDTH)
+

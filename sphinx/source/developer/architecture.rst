@@ -155,7 +155,8 @@ holding the menu bar and the open windows. Each view opens in an
 :py:class:`~sn.view.graphics.guiApp.AppPanedWidget` with the canvas above
 and the window's terminal below -- and, when it's shown, the layout panel
 (:py:mod:`~sn.view.graphics.layoutPanel`) beside the canvas, in a horizontal
-split that replaces the canvas's pane the first time it's shown. The window's SNGView draws on the canvas, owns the window's
+split (``LayoutSplit``) that replaces the canvas's pane when the window's
+made; while the panel's hidden, the split holds a narrow strip that opens it. The window's SNGView draws on the canvas, owns the window's
 SNGContext, and routes the terminal's input to it; output (``print`` and
 logging) goes to the terminal of the window that has the focus.
 
