@@ -11,8 +11,8 @@ like elastic bands. The objects move a little at a time until things settle
 down, and then it stops by itself.
 
 Start it from **view | layout | animate | start** on the background menu, or
-with the play button on the animation toolbar. Start it again (or press the
-button) to stop it early. A whole run is a single command: **Cmd-Z** puts
+with the **Start** button at the top of the layout panel (see
+:doc:`layouts`). Start it again (or press **Stop**) to stop it early. A whole run is a single command: **Cmd-Z** puts
 everything back where it was.
 
 What moves
@@ -36,12 +36,12 @@ instances. With a relation like *manages*, flowing *right*, an organization
 chart on its side.
 
 .. figure:: ../images/user/animation-class-diagram.png
-   :alt: The animation toolbar, and a small taxonomy laid out with an isa current flowing down
+   :alt: A small taxonomy laid out with an isa current flowing down, and the layout panel's Animate page
 
-   The animation toolbar, and a small taxonomy laid out with an isa current flowing down.
+   A small taxonomy laid out with an isa current flowing down, and the layout panel's **Animate** page.
 
 The current can flow in eight directions (down, up, left, right, and the
-diagonals), or none. It runs in phases, shown on the toolbar:
+diagonals), or none. It runs in phases, shown at the top of the layout panel:
 
 **arranging**
   The current sorts things into layers. Objects in different layers can pass
@@ -56,11 +56,13 @@ diagonals), or none. It runs in phases, shown on the toolbar:
 
 At the very end, relation labels are tidied up.
 
-The toolbar
------------
+The settings
+------------
 
-**View | Animation toolbar** (in the menu bar) shows a toolbar above the
-canvas, with the layout's controls. Hover over any of them for a description.
+The layout panel's **Animate** page (**View | Layout panel** in the menu bar,
+or **view | layout | animate | settings...** on the background menu: see
+:doc:`layouts`) has the layout's settings, and the panel's top its start/stop
+button and status. Hover over any of them for a description.
 
 ==============  ==========================================================
 control         does

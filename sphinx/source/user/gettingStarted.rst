@@ -102,8 +102,8 @@ The menu bar has:
   :doc:`files`), and **Close model** (its model, and all the windows on it).
 - **Edit**: **Model preferences...** (the window's model's own settings, eg:
   its super-models) and **Replace super-model...** (see :doc:`files`).
-- **View**: **Animation toolbar** (see :doc:`animation`) and **Reasoning
-  toolbar** (see :doc:`reasoning`).
+- **View**: **Layout panel** (see :doc:`layouts` and :doc:`animation`) and
+  **Reasoning toolbar** (see :doc:`reasoning`).
 - **Window**: **Model Directory** (see :doc:`files`), and the open windows.
 - **Help**.
 

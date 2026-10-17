@@ -21,15 +21,42 @@ but the program can arrange a view for you too. The background menu's
   The animation layout: objects push and pull one another until they
   settle, and you watch it happen. See :doc:`animation`.
 
-A layout with settings asks for them (its menu item ends with "..."); the
-dialog offers the ones you used last time in this view. A view saves which
-layout keeps it arranged, and the settings you used, with the view.
+A layout with settings (its menu item ends with "...") opens its page in the
+layout panel (see below), to choose them there; one without is done straight
+away. A view saves which layout keeps it arranged, and the settings you used,
+with the view.
 
 What's arranged is the nodes shown -- and the relation types shown, which are
 arranged just as nodes are (eg: *has-parent* under *has-ancestor*, by
 **isa**). Individual relations follow their ends; context windows (rules,
 queries, ...) and what's in them are left as they are; and what's hidden
 stays where it is.
+
+The layout panel
+----------------
+
+**View | Layout panel** (in the menu bar), or **view | layout | layout
+panel...** on the background menu, shows a panel at the right of the window,
+beside the canvas, for trying layouts out. Drag its divider to make it wider
+or narrower.
+
+- At its top, **Arrange now**, **Keep arranged** and **Animate** switch
+  between the three kinds of layout. For the first two, a list of the layouts
+  of that kind is under them -- the one keeping the view arranged is ticked --
+  and choosing one shows its page.
+- Under them, whichever kind is shown, are the animation layout's start/stop
+  button and what it's doing (see :doc:`animation`).
+- A layout's page has its settings -- starting with the ones you used last
+  time in this view -- and **Arrange** (arrange the view with it once: one
+  command, so **Cmd-Z** puts everything back) or **Use** (make it the layout
+  that keeps the view arranged). **Revert** puts back the settings it was last
+  used with. Settings you've changed but not yet used are kept while you look
+  at other pages.
+- The **Animate** page has the animation layout's settings: see
+  :doc:`animation`.
+
+Whether the panel's shown, what it shows, and how wide it is are saved with
+the view.
 
 The layouts
 -----------

@@ -138,14 +138,14 @@ The application and its windows
      node [shape=box, style=rounded, fontname="Helvetica", fontsize=11];
      app [label="Application (tk.Tk)\nmenu bar, open/new, settings, quit"];
      win [label="AppWindow (tk.Toplevel)\none per view"];
-     toolbar [label="AnimationToolbar\n(optional)"];
      paned [label="AppPanedWidget (tk.PanedWindow)"];
+     panel [label="LayoutPanel\n(optional, beside the canvas)"];
      frame [label="SNGViewFrame\ncanvas + scrollbars"];
      term [label="SNTerminalWidget\nmessages + typed commands"];
      view [label="SNGView\n(owns the window; draws on the canvas)", style="rounded,dashed"];
      app -> win [label=" *"];
-     win -> toolbar; win -> paned;
-     paned -> frame; paned -> term;
+     win -> paned;
+     paned -> frame; paned -> panel; paned -> term;
      view -> win [style=dashed, arrowhead=none];
    }
 
@@ -153,13 +153,14 @@ The application and its windows
 holding the menu bar and the open windows. Each view opens in an
 :py:class:`~sn.view.graphics.guiApp.AppWindow`: an
 :py:class:`~sn.view.graphics.guiApp.AppPanedWidget` with the canvas above
-and the window's terminal below, and the animation toolbar (when shown)
-above them both. The window's SNGView draws on the canvas, owns the window's
+and the window's terminal below -- and, when it's shown, the layout panel
+(:py:mod:`~sn.view.graphics.layoutPanel`) beside the canvas, in a horizontal
+split that replaces the canvas's pane the first time it's shown. The window's SNGView draws on the canvas, owns the window's
 SNGContext, and routes the terminal's input to it; output (``print`` and
 logging) goes to the terminal of the window that has the focus.
 
 Focus also decides the menu bar: when a window gets the focus, its view puts
-its own items (eg: **View | Animation toolbar**) into the shared menu bar,
+its own items (eg: **View | Layout panel**) into the shared menu bar,
 and takes them out when it loses it.
 
 Persistence

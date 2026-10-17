@@ -284,6 +284,22 @@ class LayoutHeuristic(ABC):
   # ---- parameters -------------------------------------------------------------
 
   @classmethod
+  def parametersFor(cls, category:str, current:dict[str, Any]|None=None) -> tuple[list[LayoutParameter], dict[str, Any]]:
+    '''
+    :param category: How it'll be used: *STATIC* or *DYNAMIC*.
+    :type category: str
+    :param current: The values to start with, if not the defaults.
+    :type current: dict[str, Any] | None
+    :returns: The parameters to ask for, for *category* (see
+      *LayoutParameter.categories*), and all of them with the values to start
+      with: what its dialog (see *askParameters()*), or its page in the layout
+      panel (see *layoutPanel*), shows.
+    :rtype: tuple[list[LayoutParameter], dict[str, Any]]
+    '''
+    asked = [p for p in cls.PARAMETERS if category in p.categories]
+    return asked, {p.name: (current or {}).get(p.name, p.default) for p in cls.PARAMETERS}
+
+  @classmethod
   def askParameters(cls, view, category:str, current:dict[str, Any]|None=None, parent=None) -> dict[str, Any]|None:
     '''
     Ask the user for this kind of layout's parameters (those that matter for
@@ -301,8 +317,7 @@ class LayoutHeuristic(ABC):
     :returns: The keyword arguments for its constructor, or None if the user cancelled.
     :rtype: dict[str, Any] | None
     '''
-    asked = [p for p in cls.PARAMETERS if category in p.categories]
-    values = {p.name: (current or {}).get(p.name, p.default) for p in cls.PARAMETERS}
+    asked, values = cls.parametersFor(category, current)
     if not asked:
       return values
     from sn.view.graphics.layoutDialog import LayoutDialog

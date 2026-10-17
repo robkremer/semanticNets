@@ -211,7 +211,7 @@ class Test(unittest.TestCase):
 
   def test0700slowCooling(self):
     from math import log10
-    from sn.view.graphics.animationToolbar import SCALED, SLIDERS, DEFAULTS, coolingLoss
+    from sn.view.graphics.animationControls import SCALED, SLIDERS, DEFAULTS, coolingLoss
     toPos, fromPos = SCALED["cooling"]
     lo, hi = next((lo, hi) for _, attr, lo, hi, _, _ in SLIDERS if attr == "cooling")
     self.assertEqual(fromPos(lo), 0.999)                       # the slowest: 0.1% lost at each cool-down

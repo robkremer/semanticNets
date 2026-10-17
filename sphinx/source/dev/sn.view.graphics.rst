@@ -14,7 +14,7 @@ Submodules
    :maxdepth: 4
 
    sn.view.graphics.animatedLayouts
-   sn.view.graphics.animationToolbar
+   sn.view.graphics.animationControls
    sn.view.graphics.balloonLayout
    sn.view.graphics.connectors
    sn.view.graphics.decorators
@@ -25,6 +25,7 @@ Submodules
    sn.view.graphics.labels
    sn.view.graphics.layout
    sn.view.graphics.layoutDialog
+   sn.view.graphics.layoutPanel
    sn.view.graphics.progress
    sn.view.graphics.reasoningToolbar
    sn.view.graphics.relationTable

@@ -3,6 +3,8 @@ The dialog that asks for a layout heuristic's parameters (see
 *layout.LayoutHeuristic.askParameters()*): made from its *PARAMETERS* (see
 *layout.LayoutParameter*) -- a relation type, a table of them (see
 *RelationTableEditor*), a choice, a number, or a yes/no -- with OK and Cancel.
+The form itself (*LayoutForm*) is also what the layout panel's pages show
+(see *layoutPanel*).
 
 Created on Oct 10, 2026
 
@@ -42,18 +44,17 @@ from sn.view.graphics.relationTable import (RelationTable, RelationRow, ROLES, S
 MAX_INT = 10000
 "The biggest number the dialog's number fields take."
 
-class LayoutDialog(tk.Toplevel):
+class LayoutForm(ttk.Frame):
   '''
-  Asks for some of a layout heuristic's parameters. Modal; *result* is all
-  of its parameters' values (as keyword arguments for its constructor: a
-  relation as a *Relation*) if OK'd, else None.
+  A form for some of a layout heuristic's parameters: a row for each (see the
+  module doc). It's what *LayoutDialog* shows, and the layout panel's pages
+  (see *layoutPanel.LayoutPanel*).
   '''
-  def __init__(self, parent:tk.Misc, title:str, cls:Any, asked:list[LayoutParameter], values:dict[str, Any], view:Any):
+  def __init__(self, parent:tk.Misc, cls:Any, asked:list[LayoutParameter], values:dict[str, Any], view:Any,
+               wrap:int=360, compact:bool=False):
     '''
-    :param parent: The window it's over.
+    :param parent: What it's in.
     :type parent: tk.Misc
-    :param title:
-    :type title: str
     :param cls: The layout heuristic's class (see *LayoutHeuristic.parameterChanged()*).
     :type cls: type[LayoutHeuristic]
     :param asked: The parameters to ask for.
@@ -62,75 +63,94 @@ class LayoutDialog(tk.Toplevel):
     :type values: dict[str, Any]
     :param view: The view it's for: its model's relation types are the choices for a relation.
     :type view: SNGView
+    :param wrap: How wide (pixels) the parameters' notes are, before they wrap (see *setWrap()*).
+    :type wrap: int
+    :param compact: Whether it's laid out narrow: each parameter's name above its entry, and a table of
+      relation types a row on two lines (see *RelationTableEditor*).
+    :type compact: bool
     '''
     super().__init__(parent)
-    ownDialog(self, parent) # (over its parent's window, not full screen: see ownDialog())
-    self.title(title)
     self.cls, self.view, self.asked = cls, view, asked
     self.values:dict[str, Any] = dict(values)
-    self.result:dict[str, Any]|None = None
     self.relations = {str(r.name): r for r in relationTypes(view.model)}
     self.vars:dict[str, tk.Variable] = {}
     self.tables:dict[str, RelationTableEditor] = {}
+    self.notes:list[ttk.Label] = []
+    self._widgets:dict[str, Any] = {} # (a relation's or a choice's or a number's entry, by name)
     pad:dict[str, Any] = dict(padx=8, pady=3)
-    frame = ttk.Frame(self, padding=10)
-    frame.pack(fill=tk.BOTH, expand=True)
     row = 0
     for p in asked:
       v = self.values.get(p.name)
       if p.kind == "relations":
-        ttk.Label(frame, text=p.label + ":").grid(row=row, column=0, columnspan=2, sticky=tk.W, **pad)
+        ttk.Label(self, text=p.label + ":").grid(row=row, column=0, columnspan=2, sticky=tk.W, **pad)
         row += 1
         table = v if isinstance(v, RelationTable) else RelationTable.decode(v) if isinstance(v, str) else RelationTable.single("isa")
-        editor = RelationTableEditor(frame, table.expanded(view.model, shownRelationTypes(view)))
-        editor.grid(row=row, column=0, columnspan=2, sticky=tk.W, padx=16)
+        editor = RelationTableEditor(self, table.expanded(view.model, shownRelationTypes(view)), compact=compact)
+        editor.grid(row=row, column=0, columnspan=2, sticky=tk.W, padx=(4, 0) if compact else 16)
         self.tables[p.name] = editor
         row += 1
         if p.note:
-          ttk.Label(frame, text=p.note, foreground="gray40", wraplength=420).grid(row=row, column=0, columnspan=2, sticky=tk.W, padx=24)
+          note = ttk.Label(self, text=p.note, foreground="gray40", wraplength=wrap)
+          note.grid(row=row, column=0, columnspan=2, sticky=tk.W, padx=24)
+          self.notes.append(note)
           row += 1
         continue
       if p.kind == "bool":
         var:tk.Variable = tk.BooleanVar(value=bool(v))
-        ttk.Checkbutton(frame, text=p.label, variable=var, command=partial(self.changed, p.name)) \
+        ttk.Checkbutton(self, text=p.label, variable=var, command=partial(self.changed, p.name)) \
           .grid(row=row, column=0, columnspan=2, sticky=tk.W, **pad)
       else:
-        ttk.Label(frame, text=p.label + ":").grid(row=row, column=0, sticky=tk.W, **pad)
+        ttk.Label(self, text=p.label + ":").grid(row=row, column=0, columnspan=2 if compact else 1, sticky=tk.W, **pad)
+        if compact: # (its entry below it)
+          row += 1
+        width = 16 if compact else 20
         if p.kind == "relation":
           var = tk.StringVar(value=str(getattr(v, "name", v) or ""))
-          w:tk.Widget = ttk.Combobox(frame, textvariable=var, values=list(self.relations), state="readonly", width=28)
+          w:tk.Widget = ttk.Combobox(self, textvariable=var, values=list(self.relations), state="readonly", width=width,
+                                     postcommand=partial(self._relationNames, p.name))
           w.bind("<<ComboboxSelected>>", partial(self._selected, p.name))
         elif p.kind == "choice":
           var = tk.StringVar(value=str(v))
-          w = ttk.Combobox(frame, textvariable=var, values=list(p.choices), state="readonly", width=28)
+          w = ttk.Combobox(self, textvariable=var, values=list(p.choices), state="readonly", width=width)
           w.bind("<<ComboboxSelected>>", partial(self._selected, p.name))
         else: # int
           var = tk.StringVar(value=str(v))
-          w = ttk.Spinbox(frame, from_=0, to=MAX_INT, textvariable=var, width=8)
-        w.grid(row=row, column=1, sticky=tk.W, **pad)
+          w = ttk.Spinbox(self, from_=0, to=MAX_INT, textvariable=var, width=8)
+        if compact:
+          w.grid(row=row, column=0, columnspan=2, sticky=tk.W, padx=(24, 8), pady=(0, 3))
+        else:
+          w.grid(row=row, column=1, sticky=tk.W, **pad)
+        self._widgets[p.name] = w
       self.vars[p.name] = var
       row += 1
       if p.note:
-        ttk.Label(frame, text=p.note, foreground="gray40", wraplength=360).grid(row=row, column=0, columnspan=2, sticky=tk.W, padx=24)
+        note = ttk.Label(self, text=p.note, foreground="gray40", wraplength=wrap)
+        note.grid(row=row, column=0, columnspan=2, sticky=tk.W, padx=24)
+        self.notes.append(note)
         row += 1
-    buttons = ttk.Frame(frame)
-    buttons.grid(row=row, column=0, columnspan=2, sticky=tk.EW, pady=(10, 0))
-    ttk.Button(buttons, text="OK", command=self.ok, default="active").pack(side=tk.RIGHT, padx=6)
-    ttk.Button(buttons, text="Cancel", command=self.destroy).pack(side=tk.RIGHT, padx=6)
-    self.bind("<Return>", lambda _e: self.ok())
-    self.bind("<Escape>", lambda _e: self.destroy())
-    self.update_idletasks()
-    try:
-      self.grab_set()
-    except tk.TclError: # (not viewable yet)
-      pass
-    self.focus_force()
-    self.wait_window()
 
-  def read(self) -> dict[str, Any]|None:
+  def setWrap(self, wrap:int) -> None:
     '''
+    :param wrap: How wide (pixels) the parameters' notes are now, before they wrap.
+    :type wrap: int
+    '''
+    for note in self.notes:
+      if int(str(note.cget("wraplength")) or 0) != wrap:
+        note.configure(wraplength=wrap)
+
+  def _relationNames(self, name:str) -> None:
+    'Fill a relation\'s list (just before it drops down: the model may have changed since the form was made).'
+    self.relations = {str(r.name): r for r in relationTypes(self.view.model)}
+    w = self._widgets.get(name)
+    if w is not None:
+      w.configure(values=list(self.relations))
+
+  def read(self, complain:bool=True) -> dict[str, Any]|None:
+    '''
+    :param complain: Whether to say why, if a number isn't one.
+    :type complain: bool
     :returns: All the parameters' values, with those asked for as shown -- or
-      None (having said why) if a number isn't one.
+      None if a number isn't one.
     :rtype: dict[str, Any] | None
     '''
     ret = dict(self.values)
@@ -147,7 +167,9 @@ class LayoutDialog(tk.Toplevel):
           if not 0 <= ret[p.name] <= MAX_INT:
             raise ValueError
         except ValueError:
-          messagebox.showerror(self.title(), f'"{p.label}" must be a number from 0 to {MAX_INT}.', parent=self)
+          if complain:
+            messagebox.showerror(self.winfo_toplevel().title() or "Layout",
+                                 f'"{p.label}" must be a number from 0 to {MAX_INT}.', parent=self.winfo_toplevel())
           return None
       else:
         ret[p.name] = v
@@ -176,8 +198,51 @@ class LayoutDialog(tk.Toplevel):
         continue
       self.vars[p.name].set(str(getattr(v, "name", v)) if p.kind != "bool" else bool(v))
 
+class LayoutDialog(tk.Toplevel):
+  '''
+  Asks for some of a layout heuristic's parameters, with a *LayoutForm*.
+  Modal; *result* is all of its parameters' values (as keyword arguments for
+  its constructor: a relation as a *Relation*) if OK'd, else None.
+  '''
+  def __init__(self, parent:tk.Misc, title:str, cls:Any, asked:list[LayoutParameter], values:dict[str, Any], view:Any):
+    '''
+    :param parent: The window it's over.
+    :type parent: tk.Misc
+    :param title:
+    :type title: str
+    :param cls: The layout heuristic's class (see *LayoutHeuristic.parameterChanged()*).
+    :type cls: type[LayoutHeuristic]
+    :param asked: The parameters to ask for.
+    :type asked: list[LayoutParameter]
+    :param values: All its parameters' values to start with (a relation as a *Relation* or its name).
+    :type values: dict[str, Any]
+    :param view: The view it's for: its model's relation types are the choices for a relation.
+    :type view: SNGView
+    '''
+    super().__init__(parent)
+    ownDialog(self, parent) # (over its parent's window, not full screen: see ownDialog())
+    self.title(title)
+    self.result:dict[str, Any]|None = None
+    frame = ttk.Frame(self, padding=10)
+    frame.pack(fill=tk.BOTH, expand=True)
+    self.form = LayoutForm(frame, cls, asked, values, view)
+    self.form.pack(fill=tk.BOTH, expand=True)
+    buttons = ttk.Frame(frame)
+    buttons.pack(fill=tk.X, pady=(10, 0))
+    ttk.Button(buttons, text="OK", command=self.ok, default="active").pack(side=tk.RIGHT, padx=6)
+    ttk.Button(buttons, text="Cancel", command=self.destroy).pack(side=tk.RIGHT, padx=6)
+    self.bind("<Return>", lambda _e: self.ok())
+    self.bind("<Escape>", lambda _e: self.destroy())
+    self.update_idletasks()
+    try:
+      self.grab_set()
+    except tk.TclError: # (not viewable yet)
+      pass
+    self.focus_force()
+    self.wait_window()
+
   def ok(self) -> None:
-    values = self.read()
+    values = self.form.read()
     if values is None:
       return
     self.result = values
@@ -189,16 +254,21 @@ class RelationTableEditor(ttk.Frame):
   relation type (and one for the relation types' own ends: see
   *relationTable.TERMINALS*), each with its role, and which end is the parent
   (for a row that shapes the trees), and buttons to move it up or down (the
-  higher rows win).
+  higher rows win). Compact (eg: in the layout panel), each row is on two
+  lines: its buttons and relation type, and below them its role and parent
+  end.
   '''
-  def __init__(self, parent:tk.Misc, table:RelationTable):
+  def __init__(self, parent:tk.Misc, table:RelationTable, compact:bool=False):
     '''
     :param parent: What it's in.
     :type parent: tk.Misc
     :param table: The table to start with.
     :type table: RelationTable
+    :param compact: Whether it's laid out narrow, a row on two lines.
+    :type compact: bool
     '''
     super().__init__(parent)
+    self.compact = compact
     self.rows:list[RelationRow] = list(table.rows)
     self.setTable(table)
 
@@ -215,6 +285,9 @@ class RelationTableEditor(ttk.Frame):
     "(Re)make the rows' widgets, from *rows*."
     for w in self.winfo_children():
       w.destroy()
+    if self.compact:
+      self._buildCompact()
+      return
     pad:dict[str, Any] = dict(padx=4, pady=1)
     for col, text in enumerate(("Relation", "Role", "The parent is the")):
       ttk.Label(self, text=text, foreground="gray40").grid(row=0, column=col, sticky=tk.W, **pad)
@@ -234,6 +307,32 @@ class RelationTableEditor(ttk.Frame):
         .grid(row=i + 1, column=3, **pad)
       ttk.Button(self, text="\u25bc", width=2, command=partial(self._move, i, 1),
                  state="normal" if i < len(self.rows) - 1 else "disabled").grid(row=i + 1, column=4, **pad)
+
+  def _buildCompact(self) -> None:
+    "(Re)make the rows' widgets, from *rows*: each on two lines."
+    ttk.Label(self, text="Its role, and which end is the parent:", foreground="gray40").pack(side=tk.TOP, anchor=tk.W, pady=(0, 2))
+    for i, r in enumerate(self.rows):
+      line = ttk.Frame(self)
+      line.pack(side=tk.TOP, fill=tk.X, pady=(4, 0))
+      ttk.Button(line, text="\u25b2", width=2, command=partial(self._move, i, -1), state="normal" if i > 0 else "disabled") \
+        .pack(side=tk.LEFT)
+      ttk.Button(line, text="\u25bc", width=2, command=partial(self._move, i, 1),
+                 state="normal" if i < len(self.rows) - 1 else "disabled").pack(side=tk.LEFT)
+      name = ttk.Label(line, text=r.relation, wraplength=200)
+      if r.relation == TERMINALS:
+        name.configure(font=("TkDefaultFont", 11, "italic"))
+      name.pack(side=tk.LEFT, padx=(4, 0))
+      line = ttk.Frame(self)
+      line.pack(side=tk.TOP, fill=tk.X, padx=(16, 0), pady=(1, 0))
+      role = tk.StringVar(value=r.role)
+      roleBox = ttk.Combobox(line, textvariable=role, values=list(ROLES), state="readonly", width=13)
+      roleBox.pack(side=tk.LEFT)
+      end = tk.StringVar(value=r.parentEnd)
+      endBox = ttk.Combobox(line, textvariable=end, values=list(PARENT_ENDS), width=10,
+                            state="readonly" if r.role == SHAPES else "disabled")
+      endBox.pack(side=tk.LEFT, padx=(4, 0))
+      roleBox.bind("<<ComboboxSelected>>", partial(self._changed, i, role, end))
+      endBox.bind("<<ComboboxSelected>>", partial(self._changed, i, role, end))
 
   def _changed(self, i:int, role:tk.StringVar, end:tk.StringVar, _event:tk.Event|None=None) -> None:
     "Row *i*'s role or parent end changed."

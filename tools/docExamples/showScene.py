@@ -19,8 +19,8 @@ screenshots taken of them:
   requirement  the requirement's window, close up: requirement-window.png
   attributes   the attribute editor, on the definition's ?b (it has
                constraints): attribute-editor.png (the editor's window)
-  animals      the taxonomy laid out with an isa current, and the animation
-               toolbar: animation-class-diagram.png (the toolbar and the
+  animals      the taxonomy laid out with an isa current, and the layout
+               panel's "animate" page: animation-class-diagram.png (the panel and the
                diagram)
   tree, balloon, radial
                the taxonomy arranged by that layout (by isa):
@@ -80,7 +80,7 @@ Each scene's screenshots, for --capture: (file name, what's in it, scale --
 of the screen's pixels: 0.5 halves a Retina screen's). What's in it:
 "window" is the whole window, title bar and all; "left" its left part, from
 the canvas to the terminal pane (without the reasoning toolbar below); and
-"diagram" the animation toolbar and the canvas below it; "drawing" what's
+"diagram" the canvas and the layout panel beside it; "drawing" what's
 drawn on the canvas (as much as is in the window, and a little around it);
 and "context:<name>" the context window of that name (and a few points
 around it).
@@ -104,13 +104,14 @@ def region(win, what:str) -> tuple[int, int, int, int]:
     bottom = terminal.winfo_rooty() + terminal.winfo_height()
     return x, canvas.winfo_rooty(), 372, bottom - canvas.winfo_rooty()
   if what == "diagram": # (down to a little below what's drawn)
-    bar = win.view.__dict__["_animationToolbar"]
+    panel = win.view.__dict__["_layoutPanel"]
     c = win.view.canvas
     drawn = c.bbox("all")
     bottom = canvas.winfo_rooty() + canvas.winfo_height()
-    if drawn:
-      bottom = min(bottom, c.winfo_rooty() + int(drawn[3] - c.canvasy(0)) + 30)
-    return x, bar.winfo_rooty(), w, bottom - bar.winfo_rooty()
+    if drawn: # (but all of the panel's page)
+      bottom = min(bottom, max(c.winfo_rooty() + int(drawn[3] - c.canvasy(0)) + 30,
+                               panel.page.winfo_rooty() + panel.page.winfo_reqheight() + 8))
+    return x, canvas.winfo_rooty(), w, bottom - canvas.winfo_rooty()
   if what == "drawing":
     c = win.view.canvas
     drawn = c.bbox("all")

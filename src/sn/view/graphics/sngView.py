@@ -44,7 +44,7 @@ from util.command import Command
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
 from sn.view.graphics.layout import FindFree, Direction, gatherShifts, intoRect, freeSpotIn, clearOf, \
-                                    LayoutHeuristic, LayoutMoves, NoLayout, finishTween, layoutsFor, STATIC, DYNAMIC, \
+                                    LayoutHeuristic, LayoutMoves, NoLayout, finishTween, layoutsFor, STATIC, DYNAMIC, ANIMATED, \
                                     relationTypes, relationNamed
 import sn.view.graphics.treeLayout # (registers the tree layout: see layout.LAYOUTS)
 import sn.view.graphics.balloonLayout # (registers the balloon, radial and hub layouts)
@@ -1294,7 +1294,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       # a pixel or so, if the file was saved with other font metrics -- so that isn't a change.
       # It's the objects' first drawing too: theirs, queued as they were made, are put off till then.)
       slf.__dict__["_firstDrawsDeferred"] = True
-      slf.canvas.after_idle(lambda slf=slf: [slf.applyVisibility(), slf._restoreAnimationState(), slf._restoreLayoutState(), slf._drawAllAfterRead(), slf.canvas.after_idle(slf._pinRelationTypes), slf.resetScrollRegion(), slf._restoreViewport(), slf.setDirty(False)]) # type: ignore[misc]
+      slf.canvas.after_idle(lambda slf=slf: [slf.applyVisibility(), slf._restoreAnimationState(), slf._restoreLayoutState(), slf._restoreLayoutPanel(), slf._drawAllAfterRead(), slf.canvas.after_idle(slf._pinRelationTypes), slf.resetScrollRegion(), slf._restoreViewport(), slf.setDirty(False)]) # type: ignore[misc]
     ret:InstantiationInfo = super().getInstantiationInfo()
     # ret.class_ = cls
     # (its model's URL relative to the view's file if they're side by side -- see PRDb.relativeURL() -- so
@@ -1317,6 +1317,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         lambda slf: cast(SNGView, slf)._animationState(),
         lambda slf, v: setattr(slf, "_pendingAnimation", str(v)), # (applied once the view is built: see _restoreAnimationState())
         optional=True))
+    ret.postconSetters.append(PropertyInfo("layoutPanel", str,
+        lambda slf: cast(SNGView, slf)._layoutPanelState(),
+        lambda slf, v: setattr(slf, "_pendingLayoutPanel", str(v)), # (applied once the view is built: see _restoreLayoutPanel())
+        optional=True)) # optional: views saved before it existed still load (with the animation toolbar's "toolbar=1" for it)
     ret.postconSetters.append(PropertyInfo("layout", str,
         lambda slf: cast(SNGView, slf).localLayout.state() if cast(SNGView, slf).localLayout is not None else "",
         lambda slf, v: setattr(slf, "_pendingLayout", str(v)), # (applied once the view is built: see _restoreLayoutState())
@@ -1603,7 +1607,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     addToMenuBar("Edit|Replace super-model...", self.doReplaceSuperModel)
     self._editLockedVar().set(not self.isModelEditor()) # (the model may have been write-locked since)
     addCheckToMenuBar("Edit|Lock view", self._editLockedVar(), self._onLockViewItem, separatorBefore=True)
-    addCheckToMenuBar("View|Animation toolbar", self._animationToolbarShown(), self._onAnimationToolbarItem,
+    addCheckToMenuBar("View|Layout panel", self._layoutPanelShown(), self._onLayoutPanelItem,
                       cascadePositions={"View": self._afterFileMenu() + 1}) # (after "Edit", made just above)
     addCheckToMenuBar("View|Reasoning toolbar", self._reasoningToolbarShown(),
                       lambda: self.showReasoningToolbar(self._reasoningToolbarShown().get()))
@@ -1644,7 +1648,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     removeFromMenuBar("Edit|Lock view")
     removeFromMenuBar("File|Close model")
     removeFromMenuBar("File|Open super model")
-    removeFromMenuBar("View|Animation toolbar")
+    removeFromMenuBar("View|Layout panel")
     removeFromMenuBar("View|Reasoning toolbar")
     for item in ("Zoom In", "Zoom Out", "Normal Size", "Zoom to Fit"):
       removeFromMenuBar("View|" + item)
@@ -1726,14 +1730,13 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
   def _animationState(self) -> str:
     '''
-    :returns: What's saved with the view about its animation layout: whether
-      the animation toolbar is shown, and the settings it shows -- eg:
-      "toolbar=1;direction=down;follows=isa;labels=1;flowStrength=6.0;e=1000.0;k=0.005;heat=6.0;cooling=0.7;leaps=0.05".
+    :returns: What's saved with the view about its animation layout: its
+      settings -- eg:
+      "direction=down;follows=isa;labels=1;flowStrength=6.0;e=1000.0;k=0.005;heat=6.0;cooling=0.7;leaps=0.05".
     :rtype: str
     '''
     layout = self.animationLayout()
-    parts = {"toolbar": "1" if self._animationToolbarShown().get() else "0",
-             "direction": layout.flowDirection or "none",
+    parts = {"direction": layout.flowDirection or "none",
              "follows": (layout.flowRelation or self.model.ISA).name,
              "labels": "1" if layout.placeLabels else "0"}
     parts.update({k: repr(float(getattr(layout, k))) for k in self.ANIMATION_SETTINGS})
@@ -1741,8 +1744,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
   def _restoreAnimationState(self) -> None:
     '''
-    Once a read view is built: put its saved animation layout settings back,
-    and show its animation toolbar if it was shown (see *_animationState()*).
+    Once a read view is built: put its saved animation layout settings back
+    (see *_animationState()*) -- and, for a view saved with the animation
+    toolbar the layout panel replaced showing ("toolbar=1"), and no layout
+    panel state, show the panel's "animate" page.
     '''
     text = self.__dict__.pop("_pendingAnimation", None)
     if not text:
@@ -1759,15 +1764,15 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         if k in state:
           setattr(layout, k, float(state[k]))
       layout.placeLabels = state.get("labels", "1") != "0"
-      if state.get("toolbar") == "1":
-        self.showAnimationToolbar(True)
+      if state.get("toolbar") == "1" and "_pendingLayoutPanel" not in self.__dict__:
+        self.__dict__["_pendingLayoutPanel"] = f"shown=1;page={ANIMATED}"
     except Exception:
       logger.exception(f"{self.name}: couldn't restore its animation settings ({text!r})")
 
   def setAnimationSetting(self, attr:str, value:Any) -> None:
     '''
-    Change one of the animation layout's settings (eg: from the toolbar or the
-    menu) -- marking the view changed, as they're saved with it.
+    Change one of the animation layout's settings (eg: from the layout panel or
+    the menu) -- marking the view changed, as they're saved with it.
 
     :param attr: The layout's attribute, eg: "flowDirection" or "heat".
     :type attr: str
@@ -1779,45 +1784,95 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       setattr(layout, attr, value)
       self.setDirty()
 
-  def _animationToolbarShown(self) -> tk.BooleanVar:
+  def _layoutPanelShown(self) -> tk.BooleanVar:
     '''
-    :returns: Whether this view's animation toolbar is shown -- what "View | Animation toolbar" shows (and sets).
+    :returns: Whether this view's layout panel is shown -- what "View | Layout panel" shows (and sets).
     :rtype: tk.BooleanVar
     '''
-    var = self.__dict__.get("_toolbarVar")
+    var = self.__dict__.get("_layoutPanelVar")
     if var is None:
-      var = self._toolbarVar = tk.BooleanVar(self.canvas, value=False)
+      var = self._layoutPanelVar = tk.BooleanVar(self.canvas, value=False)
     return var
 
-  def _onAnimationToolbarItem(self) -> None:
-    'The "View | Animation toolbar" item was chosen: its check mark is already set; show or hide accordingly.'
-    self.showAnimationToolbar(self._animationToolbarShown().get())
+  def _onLayoutPanelItem(self) -> None:
+    'The "View | Layout panel" item was chosen: its check mark is already set; show or hide accordingly.'
+    self.showLayoutPanel(self._layoutPanelShown().get())
 
-  def toggleAnimationToolbar(self) -> None:
-    'Show the animation toolbar if it\'s hidden, or hide it if it\'s shown.'
-    self.showAnimationToolbar(not self._animationToolbarShown().get())
+  def toggleLayoutPanel(self) -> None:
+    'Show the layout panel if it\'s hidden, or hide it if it\'s shown.'
+    self.showLayoutPanel(not self._layoutPanelShown().get())
 
-  def showAnimationToolbar(self, show:bool=True) -> None:
+  def showLayoutPanel(self, show:bool=True, category:str|None=None, name:str|None=None) -> None:
     '''
-    Show (or hide) the animation toolbar (see *animationToolbar*) across the top of
-    this view's window.
+    Show (or hide) the layout panel (see *layoutPanel*) at the right of this
+    view's window, beside the canvas -- the first time, splitting the canvas's
+    pane in two, with a divider that can be dragged.
 
     :param show: True to show it; False to hide it.
     :type show: bool
+    :param category: The kind of layout to show (of *layout.CATEGORIES*), if not the one it shows.
+    :type category: str | None
+    :param name: The layout to show, of that kind (see *layoutPanel.LayoutPanel.show()*).
+    :type name: str | None
     '''
-    from sn.view.graphics.animationToolbar import AnimationToolbar
-    bar = self.__dict__.get("_animationToolbar")
+    from sn.view.graphics.layoutPanel import LayoutPanel
+    panel:LayoutPanel|None = self.__dict__.get("_layoutPanel")
     if show:
-      if bar is None:
-        bar = self._animationToolbar = AnimationToolbar(self.window, self)
-      bar.pack(side=tk.TOP, fill=tk.X, before=self.window.appPanedWidget)
-      bar.startPolling()
-    elif bar is not None:
-      bar.stopPolling()
-      bar.pack_forget()
-    if self._animationToolbarShown().get() != show:
-      self._animationToolbarShown().set(show)
+      if panel is None:
+        paned = self.window.appPanedWidget
+        canvasFrame = paned.canvasFrame
+        split = self._layoutSplit = tk.PanedWindow(paned, orient=tk.HORIZONTAL, sashwidth=6, sashrelief="ridge",
+                                                   bg="darkgrey", borderwidth=0)
+        paned.add(split, before=canvasFrame, stretch="always", sticky="news", minsize=0)
+        paned.forget(canvasFrame)
+        split.add(canvasFrame, stretch="always", sticky="news", minsize=100)
+        canvasFrame.lift(split) # (it was made before the split: it'd be hidden behind it)
+        panel = self._layoutPanel = LayoutPanel(split, self)
+        saved = self.__dict__.pop("_unbuiltLayoutPanel", None) # (read with the view: see _restoreLayoutPanel())
+        if saved:
+          panel.setSavedState(dict(kv.split("=", 1) for kv in saved.split(";") if "=" in kv))
+      if str(panel) not in [str(p) for p in self._layoutSplit.panes()]:
+        self._layoutSplit.add(panel, stretch="never", sticky="news", width=panel.width, minsize=LayoutPanel.MIN_WIDTH)
+      if category is not None:
+        panel.show(category, name)
+      panel.startPolling()
+    elif panel is not None:
+      if panel.winfo_ismapped() and panel.winfo_width() > 1:
+        panel.width = panel.winfo_width()
+      panel.stopPolling()
+      self._layoutSplit.forget(panel)
+    if self._layoutPanelShown().get() != show:
+      self._layoutPanelShown().set(show)
       self.setDirty() # (saved with the view)
+
+  def _layoutPanelState(self) -> str:
+    '''
+    :returns: What's saved with the view about its layout panel: whether it's
+      shown, and what *layoutPanel.LayoutPanel.savedState()* says (if it's been
+      made) -- eg: "shown=1;page=static;static=tree;width=340".
+    :rtype: str
+    '''
+    panel = self.__dict__.get("_layoutPanel")
+    shown = "shown=" + ("1" if self._layoutPanelShown().get() else "0")
+    if panel is None:
+      return self.__dict__.get("_unbuiltLayoutPanel", shown) # (as it was read, if it's never been shown)
+    return shown + ";" + panel.savedState()
+
+  def _restoreLayoutPanel(self) -> None:
+    '''
+    Once a read view is built: show its layout panel as it was saved (see
+    *_layoutPanelState()*), if it was shown. What it was showing is put back
+    when it's made: now, or when it's first shown.
+    '''
+    text = self.__dict__.pop("_pendingLayoutPanel", None)
+    if not text:
+      return
+    try:
+      self._unbuiltLayoutPanel = text
+      if "shown=1" in text.split(";"):
+        self.showLayoutPanel(True)
+    except Exception:
+      logger.exception(f"{self.name}: couldn't restore its layout panel ({text!r})")
 
   def _reasoningToolbarShown(self) -> tk.BooleanVar:
     '''
@@ -5220,6 +5275,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     layout = self.animationLayout()
     menu = tk.Menu(parent)
     menu.add_command(label="stop" if layout.active else "start", command=self.toggleAnimationLayout)
+    menu.add_command(label="settings...", command=lambda: self.showLayoutPanel(True, ANIMATED))
     menu.add_separator()
     self._flowVars = getattr(self, "_flowVars", {}) # (keep the variables alive)
     direction = tk.StringVar(value=layout.flowDirection or "none")
@@ -5270,8 +5326,9 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     The "layout" submenu: the layouts, by kind (see *layout.CATEGORIES*):
     "arrange now" (static: done at once, as one undoable command), "keep
     arranged" (dynamic: one at a time: the view's *localLayout*), and
-    "animate" (see *_animationLayoutMenu()*). A layout with parameters asks
-    for them (see *layout.LayoutHeuristic.askParameters()*).
+    "animate" (see *_animationLayoutMenu()*). A layout with parameters opens
+    its page in the layout panel (see *showLayoutPanel()*), to set them and
+    arrange or use it there; one without is done (or used) straight away.
 
     :param parent: The menu it's a submenu of.
     :type parent: tk.Menu
@@ -5279,10 +5336,13 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     :rtype: tk.Menu
     '''
     menu = tk.Menu(parent)
+    menu.add_command(label="layout panel...", command=lambda: self.showLayoutPanel(True))
+    menu.add_separator()
     arrange = tk.Menu(menu)
     for cls in layoutsFor(STATIC):
       asks = any(STATIC in p.categories for p in cls.PARAMETERS)
-      arrange.add_command(label=cls.NAME + ("..." if asks else ""), command=partial(self.arrangeWith, cls))
+      arrange.add_command(label=cls.NAME + ("..." if asks else ""),
+                          command=partial(self.showLayoutPanel, True, STATIC, cls.NAME) if asks else partial(self.arrangeWith, cls))
     menu.add_cascade(label="arrange now", menu=arrange)
     keep = tk.Menu(menu)
     current = tk.StringVar(value=self.localLayout.NAME)
@@ -5290,7 +5350,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     for cls in layoutsFor(DYNAMIC):
       asks = any(DYNAMIC in p.categories for p in cls.PARAMETERS)
       keep.add_radiobutton(label=cls.NAME + ("..." if asks else ""), variable=current, value=cls.NAME,
-                           command=partial(self.keepArrangedWith, cls))
+                           command=partial(self._keepArrangedItem, cls) if asks else partial(self.keepArrangedWith, cls))
     menu.add_cascade(label="keep arranged", menu=keep)
     menu.add_cascade(label="animate", menu=self._animationLayoutMenu(menu))
     return menu
@@ -5371,6 +5431,19 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     if kwargs is None:
       return
     cls(self, **kwargs).arrange() # (it remembers them: see layout.LayoutHeuristic.arrange())
+
+  def _keepArrangedItem(self, cls:type[LayoutHeuristic]) -> None:
+    '''
+    A "keep arranged" item for a layout with parameters was chosen: open its
+    page in the layout panel, to set them and use it there. Its check mark
+    stays on the view's dynamic layout till then.
+
+    :param cls: The kind of layout.
+    :type cls: type[LayoutHeuristic]
+    '''
+    if getattr(self, "_layoutVar", None) is not None:
+      self._layoutVar.set(self.localLayout.NAME)
+    self.showLayoutPanel(True, DYNAMIC, cls.NAME)
 
   def keepArrangedWith(self, cls:type[LayoutHeuristic]) -> None:
     '''

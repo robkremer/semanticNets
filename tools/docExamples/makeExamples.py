@@ -216,7 +216,7 @@ def layOutAnimals(app, folder:str, done) -> None:
   '''
   Open the animals model's view, lay it out as a class diagram with the
   animation layout (an isa current flowing down), and save it -- with the
-  animation toolbar showing.
+  layout panel's "animate" page showing.
 
   :param app: The editor.
   :param folder: Where the model is.
@@ -224,13 +224,14 @@ def layOutAnimals(app, folder:str, done) -> None:
   :param done: Called when it's saved.
   '''
   from sn.view.graphics.animatedLayouts import isEligible
+  from sn.view.graphics.layout import ANIMATED
   win = app.openWindow(os.path.join(folder, "animals.snm"))
   win.geometry("1000x560+60+60")
   v = win.view
   v.showAllModel()
   def start() -> None:
     v.context.visibility("system objects", "hide")
-    v.showAnimationToolbar(True)
+    v.showLayoutPanel(True, ANIMATED)
     v.setAnimationSetting("flowDirection", "down")
     v.toggleAnimationLayout()
     app.after(1000, wait)

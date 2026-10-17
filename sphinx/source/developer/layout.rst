@@ -65,11 +65,14 @@ A subclass says what it is, and implements what its kinds need:
   constructs a layout with them directly (eg: ``TreeLayout(view,
   relations=table)``; or, for the layouts that take a table, the simple way
   for a single relation type: ``TreeLayout(view, relation="includes",
-  parentEnd="source")`` -- a relation can be given by name); the menus ask
-  for them with a dialog made from the list
-  (:py:meth:`~sn.view.graphics.layout.LayoutHeuristic.askParameters`,
-  :py:mod:`~sn.view.graphics.layoutDialog`: a table is edited by its
-  ``RelationTableEditor``), which
+  parentEnd="source")`` -- a relation can be given by name); the user sets
+  them in a form made from the list
+  (:py:class:`~sn.view.graphics.layoutDialog.LayoutForm`: a table is edited by
+  its ``RelationTableEditor``), on the layout's page in the layout panel
+  (:py:mod:`~sn.view.graphics.layoutPanel`: see below) -- or, for a program
+  that asks, in a modal dialog
+  (:py:meth:`~sn.view.graphics.layout.LayoutHeuristic.askParameters`) --
+  which
   :py:meth:`~sn.view.graphics.layout.LayoutHeuristic.parameterChanged` can
   adjust as the user changes it.
 
@@ -372,7 +375,7 @@ The layout's parameters are attributes of the FieldsLayout (eg:
 ``flowDirection``, ``flowStrength``, ``e`` (repulsion), ``k`` (springs),
 ``heat``, ``leaps``, ``cooling`` -- what the temperature is multiplied by at each
 cool-down, which the toolbar shows on a log scale, as the share lost). The view changes them through ``SNGView.setAnimationSetting``,
-which both the **view | layout | animate** menu and the
-:py:class:`~sn.view.graphics.animationToolbar.AnimationToolbar` use, and
-saves the current settings with the view (its ``animation`` property). The
-toolbar polls the layout to show its phase and temperature.
+which both the **view | layout | animate** menu and the layout panel's
+**Animate** page (:py:class:`~sn.view.graphics.animationControls.AnimationControls`)
+use, and saves the current settings with the view (its ``animation``
+property). The panel polls the layout to show its phase and temperature.

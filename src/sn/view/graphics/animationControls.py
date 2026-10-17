@@ -1,9 +1,9 @@
 '''
-The animation toolbar: a strip across the top of a view's window with the
-animation layout's (see *animatedLayouts*) controls -- a start/stop button and
-the most important settings -- so it can be watched and adjusted as it runs,
-without going through the menus. Shown and hidden with "View | Animation
-toolbar" (see *SNGView.toggleAnimationToolbar()*).
+The animation layout's (see *animatedLayouts*) settings, as the layout panel's
+"animate" page shows them (see *layoutPanel*): the current's direction and the
+relation type it follows, sliders for the most important numbers, and whether
+a run ends by placing the labels. (The panel's top has the start/stop button
+and what the layout's doing: see *statusText()*.)
 
 Settings take effect at once, even while it's running: the layout reads them
 at every step.
@@ -88,7 +88,7 @@ SLIDERS:list[tuple[str, str, float, float, str|Callable[[float], str], str]] = [
    "comes. It gets the layout out of dead ends. It fades as the layout cools, and stops near the end, but "
    "the last leaps may be left out of place (run again with 0%, or move them). 0% for none."),
 ]
-"The toolbar's sliders."
+"The sliders."
 
 TIPS:dict[str, str] = {
   "play": "Start the animation layout (or stop it). A whole run is one undo.",
@@ -105,132 +105,89 @@ TIPS:dict[str, str] = {
             "a crowded view. Turn it off while starting run after run; turning it on (between runs) places "
             "them straight away.",
 }
-"Tooltips for the toolbar's other controls."
+"Tooltips for the other controls (and the panel's start/stop button and status)."
 
-class AnimationToolbar(ttk.Frame):
+def statusText(layout:Any) -> str:
   '''
-  The animation toolbar for a view: see the module doc.
+  :param layout: The animation layout.
+  :type layout: FieldsLayout_threaded
+  :returns: What it's doing, eg: "running: settling (T=0.49)".
+  :rtype: str
   '''
-  PADDING = 4
-  "The toolbar's padding (pixels) at its left and right."
-  POLL_MS = 250
-  "How often (ms) the toolbar shows the layout's state (and any settings changed elsewhere, eg: the menu)."
+  if not layout.active:
+    return "stopped"
+  if getattr(layout, "_straightening", 0) > 0:
+    phase = "straightening"
+  elif layout.flowDirection in FLOW_DIRECTIONS and not getattr(layout, "_arranged", True):
+    phase = "arranging"
+  else:
+    phase = "settling"
+  leaps = getattr(layout, "leapCount", 0)
+  return f"running: {phase} (T={layout.temperature:.2f})" + (f", {leaps} leaps" if leaps else "")
 
+class AnimationControls(ttk.Frame):
+  '''
+  The animation layout's settings, for a view: see the module doc. A row for
+  each: its name, its control, and (for a slider) its value.
+  '''
   def __init__(self, master:tk.Misc, view:SNGView):
     '''
-    :param master: The widget it's in: the view's window.
+    :param master: The widget it's in: the layout panel's page.
     :type master: tk.Misc
-    :param view: The view whose animation layout it controls.
+    :param view: The view whose animation layout it sets.
     :type view: SNGView
     '''
-    super().__init__(master, padding=(self.PADDING, 2))
+    super().__init__(master)
     self.view = view
-    self._polling = False
     self._refreshing = False
-    self._rows:list[list[ttk.Frame]] = []
-    self._rowHeights:list[int] = []
-    self.groups:list[ttk.Frame] = []
-    "The toolbar's groups of controls, in order: laid out in rows, as many as fit across (see *_reflow()*)."
     tip = lambda widgets, text: [CreateToolTip(w, text, wrapLength=300) for w in widgets]
+    pad:dict[str, Any] = dict(padx=(0, 6), pady=3)
+    self.columnconfigure(1, weight=1)
+    row = 0
 
-    g = self._group()
-    self.playButton = ttk.Button(g, width=7, command=self.view.toggleAnimationLayout)
-    self.playButton.pack(side=tk.LEFT)
-    self.status = ttk.Label(g, width=30, foreground="gray35")
-    self.status.pack(side=tk.LEFT, padx=(4, 0))
-    tip([self.playButton], TIPS["play"]); tip([self.status], TIPS["status"])
-
-    g = self._group()
-    label = ttk.Label(g, text="current")
-    label.pack(side=tk.LEFT)
+    label = ttk.Label(self, text="current")
+    label.grid(row=row, column=0, sticky=tk.W, **pad)
     self.direction = tk.StringVar(self)
-    self.directionBox = ttk.Combobox(g, textvariable=self.direction, state="readonly", width=9,
+    self.directionBox = ttk.Combobox(self, textvariable=self.direction, state="readonly", width=12,
                                      values=["none", *FLOW_DIRECTIONS])
     self.directionBox.bind("<<ComboboxSelected>>", lambda _e: self._setDirection())
-    self.directionBox.pack(side=tk.LEFT, padx=(3, 0))
+    self.directionBox.grid(row=row, column=1, columnspan=2, sticky=tk.W, **pad)
     tip([label, self.directionBox], TIPS["current"])
+    row += 1
 
-    g = self._group()
-    label = ttk.Label(g, text="follows")
-    label.pack(side=tk.LEFT)
+    label = ttk.Label(self, text="follows")
+    label.grid(row=row, column=0, sticky=tk.W, **pad)
     self.relation = tk.StringVar(self)
-    self.relationBox = ttk.Combobox(g, textvariable=self.relation, state="readonly", width=10,
+    self.relationBox = ttk.Combobox(self, textvariable=self.relation, state="readonly", width=16,
                                     postcommand=self._relationNames)
     self.relationBox.bind("<<ComboboxSelected>>", lambda _e: self._setRelation())
-    self.relationBox.pack(side=tk.LEFT, padx=(3, 0))
+    self.relationBox.grid(row=row, column=1, columnspan=2, sticky=tk.W, **pad)
     tip([label, self.relationBox], TIPS["follows"])
+    row += 1
 
     self.sliders:dict[str, tuple[ttk.Scale, ttk.Label, str|Callable[[float], str]]] = {}
     for text, attr, lo, hi, fmt, tiptext in SLIDERS:
-      g = self._group()
-      label = ttk.Label(g, text=text)
-      label.pack(side=tk.LEFT)
-      scale = ttk.Scale(g, from_=lo, to=hi, length=70, command=lambda v, a=attr: self._setSlider(a, float(v)))  # type: ignore[misc]
-      scale.pack(side=tk.LEFT, padx=(3, 0))
-      value = ttk.Label(g, width=6)
-      value.pack(side=tk.LEFT, padx=(2, 0))
+      label = ttk.Label(self, text=text)
+      label.grid(row=row, column=0, sticky=tk.W, **pad)
+      scale = ttk.Scale(self, from_=lo, to=hi, length=100, command=lambda v, a=attr: self._setSlider(a, float(v)))  # type: ignore[misc]
+      scale.grid(row=row, column=1, sticky=tk.EW, **pad)
+      value = ttk.Label(self, width=6)
+      value.grid(row=row, column=2, sticky=tk.W, pady=3)
       self.sliders[attr] = (scale, value, fmt)
       tip([label, scale, value], tiptext)
+      row += 1
 
-    g = self._group()
     self.placeLabels = tk.BooleanVar(self, value=True)
-    labels = ttk.Checkbutton(g, text="place labels", variable=self.placeLabels, command=self._setPlaceLabels)
-    labels.pack(side=tk.LEFT)
+    labels = ttk.Checkbutton(self, text="place labels", variable=self.placeLabels, command=self._setPlaceLabels)
+    labels.grid(row=row, column=0, columnspan=3, sticky=tk.W, pady=(8, 3))
     tip([labels], TIPS["labels"])
+    row += 1
 
-    g = self._group()
-    reset = ttk.Button(g, text="Reset", width=6, command=self.reset)
-    reset.pack(side=tk.LEFT)
+    reset = ttk.Button(self, text="Reset", width=6, command=self.reset)
+    reset.grid(row=row, column=0, columnspan=3, sticky=tk.W, pady=(8, 0))
     tip([reset], TIPS["reset"])
 
-    self.bind("<Configure>", lambda _e: self._reflow())
     self.refresh()
-    self._reflow()
-
-  def _group(self) -> ttk.Frame:
-    '''
-    :returns: A new group of controls, at the end of the toolbar.
-    :rtype: ttk.Frame
-    '''
-    g = ttk.Frame(self)
-    self.groups.append(g)
-    return g
-
-  def _reflow(self) -> None:
-    '''
-    Lay the groups out in rows: left to right, starting a new row whenever the
-    next one wouldn't fit in the width there is -- so it's one row in a wide
-    window, and more in a narrow one.
-    '''
-    width = self.winfo_width()
-    if width <= 1: # (not shown yet: the window's width)
-      width = self.master.winfo_width()
-    width -= 2 * self.PADDING # (the room inside the toolbar's padding)
-    gap = 10
-    rows:list[list[ttk.Frame]] = [[]]
-    used = 0
-    for g in self.groups:
-      w = g.winfo_reqwidth()
-      if rows[-1] and used + gap + w > width:
-        rows.append([])
-        used = 0
-      used += (gap if rows[-1] else 0) + w
-      rows[-1].append(g)
-    heights = [max(g.winfo_reqheight() for g in row) for row in rows]
-    # (the heights too: before the toolbar is first shown, its groups don't know theirs yet -- 1 --
-    # and the toolbar's own height would stay that small)
-    if rows == self._rows and heights == self._rowHeights:
-      return
-    self._rows, self._rowHeights = rows, heights
-    # (placed by hand: each row on its own, left to right -- grid would line the rows' columns up)
-    y = 0
-    for row, height in zip(rows, heights):
-      x = 0
-      for g in row:
-        g.place(x=x, y=y + (height - g.winfo_reqheight()) // 2)
-        x += g.winfo_reqwidth() + gap
-      y += height + 2
-    self.configure(height=y + 4)
 
   @property
   def layout(self) -> Any:
@@ -278,7 +235,7 @@ class AnimationToolbar(ttk.Frame):
     '''
     if attr in SCALED:
       value = SCALED[attr][1](value)
-    if not self._refreshing: # (not when the toolbar itself sets the slider: see refresh())
+    if not self._refreshing: # (not when refresh() itself sets the slider)
       self.view.setAnimationSetting(attr, value)
     _scale, label, fmt = self.sliders[attr]
     label.configure(text=self._format(fmt, value))
@@ -311,13 +268,11 @@ class AnimationToolbar(ttk.Frame):
       self.view.setAnimationSetting(attr, value)
     self.refresh()
 
-  # ---- layout -> toolbar -----------------------------------------------------
+  # ---- layout -> controls ----------------------------------------------------
 
   def refresh(self) -> None:
-    'Show the layout\'s state and settings (eg: changed from the menu, or by the run ending).'
+    'Show the layout\'s settings (eg: changed from the menu).'
     layout = self.layout
-    self.playButton.configure(text="■ Stop" if layout.active else "▶ Start")
-    self.status.configure(text=self._statusText(layout))
     d = layout.flowDirection or "none"
     if self.direction.get() != d:
       self.direction.set(d)
@@ -336,41 +291,3 @@ class AnimationToolbar(ttk.Frame):
         label.configure(text=self._format(fmt, v))
     finally:
       self._refreshing = False
-
-  @staticmethod
-  def _statusText(layout:Any) -> str:
-    '''
-    :param layout: The animation layout.
-    :type layout: FieldsLayout_threaded
-    :returns: What it's doing, eg: "running: settling (T=0.49)".
-    :rtype: str
-    '''
-    if not layout.active:
-      return "stopped"
-    if getattr(layout, "_straightening", 0) > 0:
-      phase = "straightening"
-    elif layout.flowDirection in FLOW_DIRECTIONS and not getattr(layout, "_arranged", True):
-      phase = "arranging"
-    else:
-      phase = "settling"
-    leaps = getattr(layout, "leapCount", 0)
-    return f"running: {phase} (T={layout.temperature:.2f})" + (f", {leaps} leaps" if leaps else "")
-
-  def startPolling(self) -> None:
-    'Keep the toolbar up to date while it\'s shown (see *POLL_MS*).'
-    if not self._polling:
-      self._polling = True
-      self._poll()
-
-  def stopPolling(self) -> None:
-    'Stop keeping the toolbar up to date (it\'s hidden).'
-    self._polling = False
-
-  def _poll(self) -> None:
-    if not self._polling or not self.winfo_exists():
-      self._polling = False
-      return
-    try:
-      self.refresh()
-    finally:
-      self.after(self.POLL_MS, self._poll)
