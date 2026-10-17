@@ -74,6 +74,7 @@ class FakeView:
     self._selectionBoxInfo = None
     self._elasticLineChoiceData = None
     self._scrolling = False
+    self._dragZoom = None # (SNGView.__init__ sets it: see onButton_1(), an Option-press drag-zooms)
     self.nodes:list[FakeNode] = []
   def isEventHandled(self, _event): return False
   def removeEventHandled(self, _event): pass
