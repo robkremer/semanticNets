@@ -45,7 +45,7 @@ from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
 from sn.view.graphics.layout import FindFree, Direction, gatherShifts, intoRect, freeSpotIn, clearOf, \
                                     LayoutHeuristic, LayoutMoves, NoLayout, finishTween, layoutsFor, STATIC, DYNAMIC, ANIMATED, \
-                                    relationTypes, relationNamed
+                                    relationTypes, relationNamed, nodeTypes, nodeNamed
 if TYPE_CHECKING:
   from sn.view.graphics.layoutPanel import LayoutSplit # (imported when it's made: see SNGView.layoutSplit())
 import sn.view.graphics.treeLayout # (registers the tree layout: see layout.LAYOUTS)
@@ -886,6 +886,8 @@ class _Adjusted(CompositeCommand):
 
 RELATION_CATEGORY = "relations: "
 "How a relation type's category (for hiding or erasing its relations) is named: see *SNGView.relationCategory()*."
+NODE_CATEGORY = "nodes: "
+"How a node type's category (for hiding or erasing its individuals) is named: see *SNGView.nodeCategory()*."
 
 class ViewDoList(DoList):
   '''
@@ -3833,9 +3835,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     '''
     A checkbox per category for *mode* ("hide" or "erase"): checking it sets
     that category to *mode* (so unchecks it in the other menu); unchecking it
-    shows the category again. The relation types' categories (see
-    *relationCategory()*) are listed only while they're hidden or erased;
-    "relation types..." chooses them (see *chooseRelationCategories()*).
+    shows the category again. The relation and node types' categories (see
+    *relationCategory()*, *nodeCategory()*) are listed only while they're
+    hidden or erased; "relation types..." and "node types..." choose them (see
+    *chooseRelationCategories()*, *chooseNodeCategories()*).
 
     :param mode:
     :type mode: str
@@ -3845,7 +3848,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     menu = tk.Menu(self.canvas)
     self._visibilityVars = getattr(self, "_visibilityVars", {}) # (keep the variables alive)
     for name in self.categories.keys():
-      if name.startswith(RELATION_CATEGORY) and name not in self.hides:
+      if name.startswith((RELATION_CATEGORY, NODE_CATEGORY)) and name not in self.hides:
         continue
       var = tk.BooleanVar(value=self.hides.get(name) == mode)
       self._visibilityVars[(mode, name)] = var
@@ -3853,6 +3856,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
                            command=lambda n=name, v=var: self.context.visibility(n, mode if v.get() else "show")) #type: ignore[misc]
     menu.add_separator()
     menu.add_command(label="relation types...", command=lambda: self.chooseRelationCategories(mode))
+    menu.add_command(label="node types...", command=lambda: self.chooseNodeCategories(mode))
     return menu
 
   def relationCategory(self, typ:Relation|str) -> str:
@@ -3880,10 +3884,36 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       self.categories.addCategory(category, test)
     return category
 
+  def nodeCategory(self, typ:Node|str) -> str:
+    '''
+    The category of the individuals of a node type, and of its subtypes (not
+    the types themselves: see the "types" category; nor relations), for
+    hiding or erasing (see *visibility()*): made the first time it's asked
+    for.
+
+    :param typ: The node type, or its name.
+    :type typ: Node | str
+    :returns: The category's name: *NODE_CATEGORY* and the type's: eg: "nodes: person".
+    :rtype: str
+    '''
+    name = str(typ if isinstance(typ, str) else typ.name)
+    category = NODE_CATEGORY + name
+    if category not in self.categories.keys():
+      found:dict[str, Node|None] = {}
+      def test(mo:GraphObject) -> bool:
+        if "t" not in found: # (looked up when first needed: eg: a view read before its model's super-models)
+          found["t"] = typ if isinstance(typ, Node) else nodeNamed(self.model, name)
+        t = found["t"]
+        return t is not None and isinstance(mo, Node) and not isinstance(mo, Relation) \
+               and mo.isIndividual() and mo.isa(t)
+      self.categories.addCategory(category, test)
+    return category
+
   def _setHides(self, text:str) -> None:
     '''
     Put back the hidden and erased categories saved with the view (see
-    *hides*), making those of relation types (see *relationCategory()*).
+    *hides*), making those of relation and node types (see
+    *relationCategory()*, *nodeCategory()*).
 
     :param text: What was saved: eg: "types=hide,relations: imports=erase".
     :type text: str
@@ -3892,6 +3922,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     for category in self.hides:
       if category.startswith(RELATION_CATEGORY):
         self.relationCategory(category[len(RELATION_CATEGORY):])
+      elif category.startswith(NODE_CATEGORY):
+        self.nodeCategory(category[len(NODE_CATEGORY):])
 
   def _shownModelObjects(self) -> set[int]:
     ":returns: The ids of the model objects shown in the view (not erased: hidden ones too)."
@@ -3942,7 +3974,6 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     One undoable command (see *represent()*).
     '''
     from sn.view.graphics.visibilityDialog import TypesDialog
-    from sn.view.graphics.layout import nodeTypes
     RELATIONS = "and their relations to what's shown"
     types = nodeTypes(self.model)
     d = TypesDialog(self.canvas, "Show nodes", types, set(), options=[(RELATIONS, True)], # type: ignore[arg-type]
@@ -4000,6 +4031,33 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     if chosen is None:
       return
     changes = [(self.relationCategory(t), mode if id(t) in chosen else "show") for t in types
+               if (id(t) in chosen) != (id(t) in checked)]
+    if not changes:
+      return
+    with CompositeCommandMgr(self.context):
+      for category, m in changes:
+        self.context.visibility(category, m)
+
+  def chooseNodeCategories(self, mode:str) -> None:
+    '''
+    "node types...": choose, in a dialog, the node types whose individuals
+    (and their subtypes') to hide or erase (*mode*) -- and with them, their
+    relations; those unchecked that were are shown again. Done as one
+    undoable command.
+
+    :param mode: "hide" or "erase".
+    :type mode: str
+    '''
+    from sn.view.graphics.visibilityDialog import TypesDialog
+    types = nodeTypes(self.model)
+    checked = {id(t) for t in types if self.hides.get(NODE_CATEGORY + str(t.name)) == mode}
+    verb = "Hide" if mode == "hide" else "Erase"
+    chosen = TypesDialog(self.canvas, f"{verb} nodes", types, checked, # type: ignore[arg-type]
+                                 note=f"{verb} the individuals of these types (and their subtypes), and their relations. "
+                                      f"(The types themselves: the \"types\" category.)").show()
+    if chosen is None:
+      return
+    changes = [(self.nodeCategory(t), mode if id(t) in chosen else "show") for t in types
                if (id(t) in chosen) != (id(t) in checked)]
     if not changes:
       return

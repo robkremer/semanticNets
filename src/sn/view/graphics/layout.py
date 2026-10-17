@@ -232,6 +232,17 @@ def relationNamed(model:Model, name:str) -> Relation|None:
   '''
   return next((r for r in relationTypes(model) if r.name == name), None)
 
+def nodeNamed(model:Model, name:str) -> Node|None:
+  '''
+  :param model: A model.
+  :type model: Model
+  :param name: A node type's name.
+  :type name: str
+  :returns: The first of *nodeTypes()* with that name, if any.
+  :rtype: Node | None
+  '''
+  return next((n for n in nodeTypes(model) if n.name == name), None)
+
 class LayoutHeuristic(ABC):
   '''
   A way of arranging a view's objects: static, dynamic, animated, or more

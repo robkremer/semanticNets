@@ -1,8 +1,10 @@
 '''
 Choosing types in a dialog (*TypesDialog*): a checkbox for each, its
 subtypes indented under it -- eg: "hide by category" / "erase by category" >
-"relation types..." (which relation types' relations to hide or erase: see
-*SNGView.chooseRelationCategories()*), and "show" > "relations..." and
+"relation types..." and "node types..." (which relation types' relations,
+or node types' individuals, to hide or erase: see
+*SNGView.chooseRelationCategories()*, *SNGView.chooseNodeCategories()*), and
+"show" > "relations..." and
 "nodes..." (see *SNGView.showRelationsOfTypes()*, *SNGView.showNodesOfTypes()*).
 
 Created on Oct 12, 2026

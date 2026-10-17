@@ -65,6 +65,10 @@ Each menu also has **relation types...**, which asks which relation types to
 hide (or erase): their relations, and their subtypes', are hidden like a
 category -- eg: *has-sibling*, to see a family tree's lines of descent by
 themselves.
+And **node types...** asks which node types to hide (or erase): their
+individuals, and their subtypes', are hidden like a category, and so are their
+relations -- eg: *person*, to see only the places in a model of who lives
+where. (The types themselves are the *types* category.)
 
 Checking a category in the **hide** menu stops drawing those objects (they
 stay in the view, with their positions); in the **erase** menu, takes them
