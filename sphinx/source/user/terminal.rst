@@ -15,6 +15,13 @@ keeps its **own** undo history: **Cmd-Z** in a window undoes what was done in
 in one of them may not give what you'd expect: it puts back what *that*
 window changed, whatever has happened since in the other.
 
+Warnings and errors are printed in the terminal pane in red, and the pane
+**flashes** (its background turns red and back, twice) when one arrives, so
+it isn't missed -- whether it's logged by the program, or is an exception (a
+traceback). A burst of them (a traceback, or several warnings in a row) gives
+one flash, not one per line; ordinary output doesn't flash. The pane also
+flashes when a command asks you a question.
+
 Commands
 --------
 

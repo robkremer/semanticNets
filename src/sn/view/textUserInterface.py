@@ -364,6 +364,7 @@ class SNTerminalWidget(SNAbstractTerminal, TerminalWidget):
                      queryFlashColor: str|None = "red", #DeepSkyBlue2",
                      queryFlashCount: int = 6,
                      queryFlashIntervalMs: int = 150,
+                     errorFlashCount: int = 2,
                      bg="AntiqueWhite1",
                      fg="darkblue",
                      **kwargs):
@@ -394,6 +395,9 @@ class SNTerminalWidget(SNAbstractTerminal, TerminalWidget):
     :type queryFlashCount: int
     :param queryFlashIntervalMs:
     :type queryFlashIntervalMs: int
+    :param errorFlashCount: How many times to flash when a warning, error or
+      exception is printed (once per burst; 0 for never).
+    :type errorFlashCount: int
     :param bg:
     :type bg:
     :param fg:
@@ -410,6 +414,7 @@ class SNTerminalWidget(SNAbstractTerminal, TerminalWidget):
                             bg=bg, fg=fg, stderrfg=stderrfg, queryfg=queryfg,
                             stdoutfg=stdoutfg, promptfg=promptfg, resultfg=resultfg,
                             queryFont=queryFont, queryFlashColor=queryFlashColor, queryFlashCount=queryFlashCount, queryFlashIntervalMs=queryFlashIntervalMs,
+                            errorFlashCount=errorFlashCount,
                             background=snPrefs.get("text/backgroundColor", storeDefault="white", storeType="color"),
                             **kwargs) 
 
