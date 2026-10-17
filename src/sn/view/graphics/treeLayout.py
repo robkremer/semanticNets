@@ -38,22 +38,20 @@ from __future__ import annotations
 from typing import Any, Hashable, Iterable, Mapping, Optional, Sequence, TypeVar, override
 from util.command import Command
 from util.utils import Point
-from sn.model.model import GraphObject, IsaIndividual, Relation
+from sn.model.model import GraphObject, Relation
 from sn.view.graphics.vnodes import VNode
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
 from sn.view.graphics.layout import (LayoutHeuristic, LayoutParameter, LayoutMoves, FindFree, Direction,
                                      registerLayout, layoutSize, STATIC, DYNAMIC)
+from sn.view.graphics.relationTable import (RelationTable, RelationRoles, PARENT_ENDS, SHAPES, PULLS, IGNORED,
+                                            TERMINALS) # (PARENT_ENDS, ...: for those that import them from here)
 
 K = TypeVar("K", bound=Hashable)
 
 DIRECTIONS = ("right", "down", "left", "up")
 "Which way a tree grows: from its root out to its leaves."
 
-PARENT_ENDS = ("source", "destination")
-'''Which end of a relation is the parent: eg: the source for "includes" (a
-package includes its modules); the destination for "isa" (a subtype isa its
-type) and "has-parent" (a child has-parent its parent).'''
 
 OTHERS = ("leave", "rows", "near")
 '''What a static tree layout does with the nodes in no tree: leaves them where
@@ -431,29 +429,94 @@ def isLink(r:Any) -> bool:
   return isinstance(r, VRelation) and r.modelObject is not None and not r.modelObject.isType() \
          and r._isConnected() and not r.isHidden()
 
+class Terminal:
+  '''
+  A relation type's link to one of its own ends -- its domain or its range
+  (see *relationTable.TERMINALS*) -- laid out as if it were a relation from
+  the relation type to that end: one with no label of its own (the relation
+  type is laid out as a node is: see *isMember()*).
+  '''
+  modelObject = None
+  "(No relation in the model: see *RelationRoles.role()*, for the relation types' own ends.)"
+
+  def __init__(self, relType:VRelation, end:VObject, which:int):
+    '''
+    :param relType: The relation type.
+    :type relType: VRelation
+    :param end: Its source (domain) or destination (range).
+    :type end: VObject
+    :param which: 0 for its source, 1 for its destination.
+    :type which: int
+    '''
+    self.src, self.dst, self.which = relType, end, which
+
+  def __repr__(self) -> str:
+    return f"Terminal({self.src}, {self.dst})"
+
+def upgradeRelation(state:dict[str, str]) -> dict[str, str]:
+  '''
+  For the layouts that took a single relation type ("relation", and
+  "parentEnd") before they took a table of them ("relations": see
+  *relationTable.RelationTable.single()*): convert what an older version saved.
+
+  :param state: What was saved (see *layout.LayoutHeuristic.upgradeParameters()*).
+  :type state: dict[str, str]
+  :returns: It, converted.
+  :rtype: dict[str, str]
+  '''
+  if "relation" in state and "relations" not in state:
+    state = dict(state)
+    end = state.pop("parentEnd", None)
+    state["relations"] = RelationTable.single(state.pop("relation"), end if end in PARENT_ENDS else None).encode()
+  return state
+
+def relationsParameter(kwargs:dict[str, Any], relation:Any, parentEnd:str|None) -> dict[str, Any]:
+  '''
+  For the layouts that take a table of relation types: *kwargs*, with a single
+  relation type given the old way (*relation*, *parentEnd*: eg: by a program)
+  as the table that's like it (see *relationTable.RelationTable.single()*) --
+  its parent end the destination if none's given, as it was -- unless a
+  table's given too.
+  '''
+  if relation is not None and kwargs.get("relations") is None:
+    kwargs = dict(kwargs, relations=RelationTable.single(relation, parentEnd or "destination"))
+  return kwargs
+
+RELATIONS_NOTE = ('Each row covers its subtypes too (unless they have rows of their own). "shapes the tree": '
+                  'its relations relate parents to children (higher rows first: eg: a node with two parents '
+                  'goes under the higher). "pulls together": only for joining trees and putting nodes near '
+                  'what they\'re related to.')
+"What the dialog says under the relation table (see *relationTable.RelationTable*)."
+
 def _overlaps(a:list[float], b:list[float], gap:float) -> bool:
   return a[0] < b[2] + gap and b[0] < a[2] + gap and a[1] < b[3] + gap and b[1] < a[3] + gap
 
 @registerLayout
 class TreeLayout(LayoutHeuristic):
   '''
-  Arrange nodes as trees by a relation type (*relation*) and its subtypes:
-  each relation of one of those types (shown in the view) from a parent to a
-  child -- which end's the parent is *parentEnd* -- puts the child one level
-  out from the parent, the way the trees grow (*direction*). A node's
-  children (laid out one after another across, or -- *compact* -- tucked in
-  beside each other where there's room: see *treePositions()*) are grouped
-  by which of *relation*'s direct subtypes they're
-  related by (in the order those were made: eg: for "includes", a
-  package's modules, then its sub-packages), and each group's in order. A
-  node with more than one parent is put under the first; its other
-  relations are left floating, as are those that would make a cycle. Each
-  tree relation's label is put just before its child, on the straight line
-  from the parent (so the labels line up, and the lines stay straight).
+  Arrange nodes as trees by the relation types in a table (*relations*: see
+  *relationTable.RelationTable*) whose rows shape the trees: each relation
+  of one of those types (shown in the view) from a parent to a child --
+  which end's the parent its row says -- puts the child one level out from
+  the parent, the way the trees grow (*direction*). A node's children (laid
+  out one after another across, or -- *compact* -- tucked in beside each
+  other where there's room: see *treePositions()*) are grouped by the row
+  they're related by, and then by which of its relation type's direct
+  subtypes (in the order those were made: eg: for "includes", a package's
+  modules, then its sub-packages), and each group's in order. A node with
+  more than one parent is put under the one related by the highest row (the
+  first related, of those); its other relations are left floating, as are
+  those that would make a cycle. Each tree relation's label is put just
+  before its child, on the straight line from the parent (so the labels line
+  up, and the lines stay straight). The rows that pull things together (and
+  those that shape the trees) are what join trees (see *balloonLayout.TREES*)
+  and put the nodes in no tree near what they're related to (*others*).
 
   Relation types shown are arranged as nodes are (see *isMember()*): eg: by
-  isa, has-parent under has-ancestor. Nodes in a context window (or that are
-  one) aren't arranged.
+  isa, has-parent under has-ancestor -- and, by the table's row for them (see
+  *relationTable.TERMINALS*), by their own ends (their domain and range), as
+  if each were related to them. Nodes in a context window (or that are one)
+  aren't arranged.
 
   As a static layout (see *arrange()*): the children are in order of name;
   the trees are put one after another (across the way they grow) from the
@@ -478,11 +541,7 @@ class TreeLayout(LayoutHeuristic):
   NAME = "tree"
   CATEGORIES = (STATIC, DYNAMIC)
   PARAMETERS = (
-    LayoutParameter("relation", "Relation", "relation", "isa",
-                    note="Its subtypes too: each kind's children are grouped together."),
-    LayoutParameter("parentEnd", "The parent is the relation's", "choice", "destination", PARENT_ENDS,
-                    note='Eg: the source for "includes" (a package includes its modules); '
-                         'the destination for "isa" (a subtype isa its type).'),
+    LayoutParameter("relations", "Relations", "relations", None, note=RELATIONS_NOTE),
     LayoutParameter("direction", "Grows", "choice", "right", DIRECTIONS),
     LayoutParameter("spacing", "Space between neighbours", "int", 20),
     LayoutParameter("compact", "Compact: subtrees tuck in beside each other", "bool", False,
@@ -493,21 +552,30 @@ class TreeLayout(LayoutHeuristic):
                          'where you put it.'),
   )
 
-  def __init__(self, view, **kwargs):
+  def __init__(self, view, relation:Any=None, parentEnd:str|None=None, **kwargs):
     '''
     :param view:
     :type view: SNGView
-    :param kwargs: See *PARAMETERS*: relation (a relation type, or its name),
-      parentEnd ("source" or "destination"), direction (see *DIRECTIONS*),
+    :param relation: The simple way to give the table (*relations*), for a
+      single relation type (a *Relation*, or its name): it shapes the trees;
+      every other relation pulls things together (see
+      *relationTable.RelationTable.single()*). Not if *relations* is given.
+    :type relation: Any
+    :param parentEnd: With *relation*: which end of its relations is the
+      parent: "source" or "destination" (the default).
+    :type parentEnd: str | None
+    :param kwargs: See *PARAMETERS*: relations (a *relationTable.RelationTable*,
+      or its text: by default, as *relation* isa), direction (see *DIRECTIONS*),
       spacing, compact (see *treePositions()*), others (see *OTHERS*: static only).
     '''
-    super().__init__(view, **kwargs)
-    if self.params["relation"] is None:
-      self.params["relation"] = view.model.ISA
+    super().__init__(view, **relationsParameter(kwargs, relation, parentEnd))
+    if self.params["relations"] is None:
+      self.params["relations"] = RelationTable.single("isa")
     if self.params["direction"] not in DIRECTIONS:
       raise ValueError(f'TreeLayout: direction must be one of {", ".join(DIRECTIONS)}, not "{self.params["direction"]}".')
-    if self.params["parentEnd"] not in PARENT_ENDS:
-      raise ValueError(f'TreeLayout: parentEnd must be one of {", ".join(PARENT_ENDS)}, not "{self.params["parentEnd"]}".')
+    if parentEnd is not None and parentEnd not in PARENT_ENDS:
+      raise ValueError(f'TreeLayout: parentEnd must be one of {", ".join(PARENT_ENDS)}, not "{parentEnd}".')
+    self._roles:RelationRoles|None = None
     self.pins:set[int] = set()
     "The ids (*VObject._id*) of the tree nodes the user has dropped, pinned as roots of their own (see *adjust()*)."
     self.known:set[int]|None = None
@@ -517,49 +585,111 @@ class TreeLayout(LayoutHeuristic):
 
   @classmethod
   @override
-  def parameterChanged(cls, view, name:str, values:dict[str, Any]) -> dict[str, Any]:
-    '''
-    A relation type chosen: its parent end is the destination for isa, and
-    the source for others.
-    '''
-    if name == "relation" and values.get("relation") is not None:
-      values["parentEnd"] = "destination" if values["relation"] is view.model.ISA else "source"
-    return values
+  def upgradeParameters(cls, state:dict[str, str]) -> dict[str, str]:
+    ":returns: *state*, with a single relation type saved by an older version as a table (see *upgradeRelation()*)."
+    return upgradeRelation(state)
 
   # ---- what's arranged -----------------------------------------------------------
 
+  @property
+  def roles(self) -> RelationRoles:
+    ":returns: The relation table, for the view's model (see *RelationRoles*): found afresh each time things are arranged."
+    if self._roles is None:
+      self._roles = self.params["relations"].roles(self.view.model)
+    return self._roles
+
+  def _role(self, r:Any) -> str:
+    ":returns: What a relation shown, or a relation type's link to an end (see *Terminal*), does (see *relationTable.ROLES*)."
+    return self.roles.role(r.modelObject)
+
+  def _order(self, r:Any) -> tuple[int, int, int]:
+    ":returns: How highly a tree relation is ranked (lower first): by its row, then in the order made."
+    if isinstance(r, Terminal):
+      return self.roles.rank(None), r.src._id, r.which
+    return self.roles.rank(r.modelObject), r._id, 0
+
+  def terminals(self, ids:set[int], nodes:Iterable[VObject]) -> list[Terminal]:
+    '''
+    :param ids: The *id()*s of what's arranged.
+    :type ids: set[int]
+    :param nodes: What's arranged.
+    :type nodes: Iterable[VObject]
+    :returns: The links of the relation types among *nodes* to their own ends
+      that are arranged too (see *Terminal*): source first.
+    :rtype: list[Terminal]
+    '''
+    ret:list[Terminal] = []
+    for t in nodes:
+      if isinstance(t, VRelation):
+        for which, end in enumerate((t.src, t.dst)):
+          if isinstance(end, VObject) and end is not t and id(end) in ids and not (which and end is t.src):
+            ret.append(Terminal(t, end, which))
+    return ret
+
+  def related(self, n:VObject, ids:set[int]) -> list[tuple[VObject, Any]]:
+    '''
+    :param n: Something arranged (see *isMember()*).
+    :type n: VObject
+    :param ids: The *id()*s of what's arranged.
+    :type ids: set[int]
+    :returns: What else arranged *n* is related to by the rows of the table
+      that aren't ignored (see *relationTable.ROLES*): each once, with the
+      (first) relation -- or relation type's link to its end (see *Terminal*)
+      -- between them; by relations in the order made, then the ends.
+    :rtype: list[tuple[VObject, Any]]
+    '''
+    terminalsCount = self.roles.role(None) != IGNORED
+    ret:dict[int, tuple[VObject, Any]] = {}
+    def add(other:Any, r:Any) -> None:
+      if isinstance(other, VObject) and other is not n and id(other) in ids and id(other) not in ret:
+        ret[id(other)] = (other, r)
+    for r in sorted((r for r in n.relations if isinstance(r, VRelation)), key=lambda r: r._id):
+      if isLink(r):
+        if self._role(r) != IGNORED:
+          add(r.dst if r.src is n else r.src, r)
+      elif terminalsCount and isMember(r): # (a relation type n is an end of)
+        add(r, Terminal(r, n, 0 if r.src is n else 1))
+    if terminalsCount and isinstance(n, VRelation) and isMember(n):
+      for which, end in enumerate((n.src, n.dst)):
+        add(end, Terminal(n, end, which)) #type: ignore[arg-type]
+    return list(ret.values())
+
+  def shaped(self, node:VObject) -> bool:
+    '''
+    :param node: Something arranged (see *isMember()*).
+    :type node: VObject
+    :returns: Whether it's related to anything by a relation that shapes the
+      trees (see *relationTable.SHAPES*): so it may be in a tree.
+    :rtype: bool
+    '''
+    if any(isLink(r) and self._isEdge(r.modelObject) for r in node.relations):
+      return True
+    if self.roles.role(None) != SHAPES:
+      return False
+    return any(isMember(r) for r in node.relations if isinstance(r, VRelation)) or \
+           (isinstance(node, VRelation) and any(isinstance(e, VObject) and e is not node for e in (node.src, node.dst)))
+
   def _isEdge(self, mo:GraphObject|None) -> bool:
-    ":returns: Whether *mo* is a relation of the tree's relation type (or a subtype)."
-    rel = self.params["relation"]
+    ":returns: Whether *mo* is a relation whose row shapes the trees (see *relationTable.SHAPES*)."
     if mo is None or not isinstance(mo, Relation) or not mo.isIndividual():
       return False
-    if rel is self.view.model.ISA:
-      return isinstance(mo, IsaIndividual)
-    return not isinstance(mo, IsaIndividual) and (mo.isa(rel) or rel in mo.getParents())
+    return self.roles.role(mo) == SHAPES
 
-  def _group(self, mo:Relation) -> int:
+  def _group(self, r:Any) -> tuple[int, int]:
     '''
-    :returns: Which group a child related by *mo* is in: 0 for the relation
-      type itself; else 1 + which of its direct subtypes (in the order they
-      were made) *mo* is a kind of.
+    :returns: Which group a child related by *r* is in: by its row, then by
+      which of its relation type's direct subtypes (see *RelationRoles.group()*).
     '''
-    rel = self.params["relation"]
-    cache = self.__dict__.setdefault("_groups", {})
-    t = next((p for p in mo.getParents() if isinstance(p, Relation)), None)
-    if t is None or t is rel:
-      return 0
-    if id(t) not in cache:
-      subs = sorted((c for c in rel.getChildren() if isinstance(c, Relation) and c.isType()), key=lambda c: c._id)
-      cache[id(t)] = next((i + 1 for i, s in enumerate(subs) if t is s or t.isa(s)), len(subs) + 1)
-    return cache[id(t)]
+    return self.roles.rank(r.modelObject), self.roles.group(r.modelObject)
 
-  def scope(self) -> tuple[list[VObject], list[VRelation]]:
+  def scope(self) -> tuple[list[VObject], list[Any]]:
     '''
     :returns: What's arranged: the nodes and relation types shown (see
       *isMember()*: not hidden), not in a context window nor one; and the
-      relations shown between them of the tree's type (see *relation*), not to
-      themselves.
-    :rtype: tuple[list[VObject], list[VRelation]]
+      relations shown between them whose rows shape the trees (see
+      *relations*), not to themselves -- and the relation types' links to
+      their ends, if their row does (see *Terminal*).
+    :rtype: tuple[list[VObject], list[Any]]
     '''
     v = self.view
     windows = v.contextWindows()
@@ -567,16 +697,18 @@ class TreeLayout(LayoutHeuristic):
     nodes = [vo for vo in v.values() if vo is not None and isMember(vo) and vo._isConnected() and not vo.isHidden()
              and not vo.isContextWindow() and id(vo) not in inWindows]
     ids = {id(n) for n in nodes}
-    edges = [r for r in v.values() if isLink(r) and self._isEdge(r.modelObject) and id(r.src) in ids and id(r.dst) in ids and r.src is not r.dst]
+    edges:list[Any] = [r for r in v.values() if isLink(r) and self._isEdge(r.modelObject) and id(r.src) in ids and id(r.dst) in ids and r.src is not r.dst]
+    if self.roles.role(None) == SHAPES:
+      edges += self.terminals(ids, nodes)
     return nodes, edges
 
-  def _ends(self, r:VRelation) -> tuple[VObject, VObject]:
-    ":returns: (parent, child) of a tree relation."
-    if self.params["parentEnd"] == "source":
+  def _ends(self, r:Any) -> tuple[VObject, VObject]:
+    ":returns: (parent, child) of a tree relation (or a relation type's link to an end: see *Terminal*), as its row says."
+    if self.roles.parentEnd(r.modelObject) == "source":
       return r.src, r.dst #type: ignore[return-value]
     return r.dst, r.src #type: ignore[return-value]
 
-  def structure(self, dynamic:bool) -> tuple[list[VObject], dict[VObject, list[list[VObject]]], dict[VObject, VRelation], list[VObject], list[VRelation]]:
+  def structure(self, dynamic:bool) -> tuple[list[VObject], dict[VObject, list[list[VObject]]], dict[VObject, Any], list[VObject], list[VRelation]]:
     '''
     :param dynamic: Whether it's for keeping things arranged (see the class
       doc): children in the order they are, new ones after; pinned nodes the
@@ -584,10 +716,12 @@ class TreeLayout(LayoutHeuristic):
     :type dynamic: bool
     :returns: The trees: their roots (in order across); each node's children,
       in groups (see the class doc); each child's tree relation (from its
-      parent); the nodes in no tree; and the tree's type of relations that
-      aren't tree relations (eg: to a second parent).
-    :rtype: tuple[list[VObject], dict[VObject, list[list[VObject]]], dict[VObject, VRelation], list[VObject], list[VRelation]]
+      parent: a relation, or a relation type's link to an end -- see
+      *Terminal*); the nodes in no tree; and the relations whose rows shape
+      the trees that aren't tree relations (eg: to a second parent).
+    :rtype: tuple[list[VObject], dict[VObject, list[list[VObject]]], dict[VObject, Any], list[VObject], list[VRelation]]
     '''
+    self._roles = None # (afresh: the model's relation types may have changed)
     nodes, edges = self.scope()
     vertical = _vertical(self.params["direction"])
     crossOf = lambda vo: vo.centerPt()[0] if vertical else vo.centerPt()[1]
@@ -600,8 +734,8 @@ class TreeLayout(LayoutHeuristic):
         return (0, crossOf(vo), vo._id)
       return (1, *name(vo)) # (new: after the others)
     pinned = {vo._id for vo in nodes} & self.pins if dynamic else set()
-    parentRel:dict[VObject, VRelation] = {}
-    for r in sorted(edges, key=lambda r: r._id): # (the first parent: the first related, of those not pinned)
+    parentRel:dict[VObject, Any] = {}
+    for r in sorted(edges, key=self._order): # (the first parent: by the highest row, the first related, of those not pinned)
       parent, child = self._ends(r)
       if child._id in pinned or child in parentRel:
         continue
@@ -615,24 +749,25 @@ class TreeLayout(LayoutHeuristic):
         p = self._ends(parentRel[p])[0]
       if p is child:
         del parentRel[child]
-    groups:dict[VObject, dict[int, list[VObject]]] = {}
+    groups:dict[VObject, dict[tuple[int, int], list[VObject]]] = {}
     for child, r in parentRel.items():
-      groups.setdefault(self._ends(r)[0], {}).setdefault(self._group(r.modelObject), []).append(child) #type: ignore[arg-type]
+      groups.setdefault(self._ends(r)[0], {}).setdefault(self._group(r), []).append(child)
     children = {p: [sorted(g[i], key=key) for i in sorted(g)] for p, g in groups.items()}
     inTree = set(parentRel) | set(children)
     roots = sorted((n for n in nodes if n in inTree and n not in parentRel), key=key)
     others = sorted((n for n in nodes if n not in inTree), key=key)
-    loose = [r for r in edges if parentRel.get(self._ends(r)[1]) is not r]
+    loose = [r for r in edges if isinstance(r, VRelation) and parentRel.get(self._ends(r)[1]) is not r]
     return roots, children, parentRel, others, loose
 
   # ---- where things go -------------------------------------------------------------
 
-  def levelGaps(self, children:dict[VObject, list[list[VObject]]], parentRel:dict[VObject, VRelation],
+  def levelGaps(self, children:dict[VObject, list[list[VObject]]], parentRel:dict[VObject, Any],
                 roots:list[VObject]) -> dict[int, float]:
     '''
     :returns: The space between each depth of the trees and the next: room
       for the line to the widest label there (*MIN_LINE*), the label, and
-      *LABEL_GAP* -- at least *MIN_LEVEL_GAP*.
+      *LABEL_GAP* -- at least *MIN_LEVEL_GAP* (all there is between a relation
+      type and its end: see *Terminal*).
     :rtype: dict[int, float]
     '''
     vertical = _vertical(self.params["direction"])
@@ -647,25 +782,28 @@ class TreeLayout(LayoutHeuristic):
             if k in seen:
               continue
             seen.add(k)
-            w, h = layoutSize(parentRel[k])
-            size = h if vertical else w
-            ret[d] = max(ret.get(d, MIN_LEVEL_GAP), size + MIN_LINE + 2 * LABEL_GAP)
+            if isinstance(parentRel[k], VRelation):
+              w, h = layoutSize(parentRel[k])
+              ret[d] = max(ret.get(d, MIN_LEVEL_GAP), (h if vertical else w) + MIN_LINE + 2 * LABEL_GAP)
+            else: # (no label)
+              ret[d] = ret.get(d, MIN_LEVEL_GAP)
             nxt.append((k, d + 1))
       level = nxt
     return ret
 
   def _labelTargets(self, positions:dict[VObject, tuple[float, float]], sizes:dict[VObject, tuple[float, float]],
-                    parentRel:dict[VObject, VRelation]) -> dict[VObject, tuple[float, float]]:
+                    parentRel:dict[VObject, Any]) -> dict[VObject, tuple[float, float]]:
     '''
     :returns: Where each tree relation's label goes (its top left): on the
       straight line from its parent's centre to the middle of its child's near
-      side, just before the child (*LABEL_GAP*), the way the tree grows.
+      side, just before the child (*LABEL_GAP*), the way the tree grows. (Not
+      a relation type's link to its end: it has no label -- see *Terminal*.)
     '''
     direction = self.params["direction"]
     ret:dict[VObject, tuple[float, float]] = {}
     for child, r in parentRel.items():
       parent = self._ends(r)[0]
-      if parent not in positions or child not in positions:
+      if not isinstance(r, VRelation) or parent not in positions or child not in positions:
         continue
       (px, py), (pw, ph) = positions[parent], sizes[parent]
       (cx, cy), (cw, ch) = positions[child], sizes[child]
@@ -784,11 +922,11 @@ class TreeLayout(LayoutHeuristic):
     return ret
 
   def _placeNear(self, others:list[VObject], positions:dict[VObject, tuple[float, float]],
-                 sizes:dict[VObject, tuple[float, float]], parentRel:dict[VObject, VRelation]) -> tuple[dict[VObject, tuple[float, float]], list[VObject]]:
+                 sizes:dict[VObject, tuple[float, float]], parentRel:dict[VObject, Any]) -> tuple[dict[VObject, tuple[float, float]], list[VObject]]:
     '''
     For *others* "near": where each node in no tree goes, near the nodes it's
-    related to (by any relation shown), clear of the trees' nodes and their
-    relations' labels (see *placeNear()*).
+    related to (by the rows that aren't ignored: see *related()*), clear of
+    the trees' nodes and their relations' labels (see *placeNear()*).
 
     :param others: The nodes in no tree.
     :type others: list[VObject]
@@ -797,19 +935,12 @@ class TreeLayout(LayoutHeuristic):
     :param sizes: Everything's (width, height).
     :type sizes: dict[VObject, tuple[float, float]]
     :param parentRel: The tree relations (see *structure()*).
-    :type parentRel: dict[VObject, VRelation]
+    :type parentRel: dict[VObject, Any]
     :returns: Where those put go; and those related to nothing placed (for the rows).
     :rtype: tuple[dict[VObject, tuple[float, float]], list[VObject]]
     '''
     ids = {id(n) for n in [*positions, *others]}
-    related:dict[VObject, list[VObject]] = {n: [] for n in others}
-    for n in others:
-      for r in n.relations:
-        if not isLink(r):
-          continue
-        other = r.dst if r.src is n else r.src
-        if other is not n and id(other) in ids and other not in related[n]:
-          related[n].append(other)
+    related:dict[VObject, list[VObject]] = {n: [other for other, _ in self.related(n, ids)] for n in others}
     placed = {n: [x, y, x + sizes[n][0], y + sizes[n][1]] for n, (x, y) in positions.items()}
     labels = []
     for label, (x, y) in self._labelTargets(positions, sizes, parentRel).items():
@@ -958,7 +1089,7 @@ class TreeLayout(LayoutHeuristic):
         bb = node.boundingBox()
         return bb[0], bb[1]
     else:
-      if any(isLink(r) and self._isEdge(r.modelObject) for r in node.relations):
+      if self.shaped(node):
         bb = node.boundingBox()
         return bb[0], bb[1]
     return self._fallback.placeNode(node, referenceNode, direction, loc, **kwargs)
@@ -1028,6 +1159,7 @@ class TreeLayout(LayoutHeuristic):
     node in no tree the user dropped is pinned there too, so it's left
     there, not put in rows or near what it's related to (see *others*).
     '''
+    self._roles = None # (afresh: the model's relation types may have changed)
     nodes, edges = self.scope()
     children = {id(self._ends(r)[1]) for r in edges}
     inTree = children | {id(self._ends(r)[0]) for r in edges}

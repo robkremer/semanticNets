@@ -142,8 +142,9 @@ class LayoutParameter:
   label:str
   "What the dialog calls it."
   kind:str
-  '''"relation" (a relation type: a *Relation*, or its name), "choice" (one
-  of *choices*), "int" or "bool".'''
+  '''"relation" (a relation type: a *Relation*, or its name), "relations"
+  (an ordered table of relation types: a *relationTable.RelationTable*, or
+  its text), "choice" (one of *choices*), "int" or "bool".'''
   default:Any = None
   "Its value if none's given (a relation's name, for a relation)."
   choices:tuple[str, ...] = ()
@@ -269,7 +270,10 @@ class LayoutHeuristic(ABC):
     "Its parameters' values (see *PARAMETERS*): relations as *Relation* objects."
     for p in self.PARAMETERS:
       v = kwargs.get(p.name, p.default)
-      if p.kind == "relation" and isinstance(v, str):
+      if p.kind == "relations" and isinstance(v, str):
+        from sn.view.graphics.relationTable import RelationTable
+        v = RelationTable.decode(v)
+      elif p.kind == "relation" and isinstance(v, str):
         name = v
         v = relationNamed(view.model, name)
         if v is None:
@@ -336,7 +340,7 @@ class LayoutHeuristic(ABC):
     '''
     :returns: What's saved with the view about it, as its dynamic layout (see
       *fromState()*): its name, parameters, and anything else it keeps (see
-      *extraState()*): eg: "name=tree;relation=includes;direction=right;pins=12,40".
+      *extraState()*): eg: "name=tree;relations=includes:shapes:source;direction=right;pins=12,40".
     :rtype: str
     '''
     return self.encodeParameters(self.params, self.extraState())
@@ -350,7 +354,7 @@ class LayoutHeuristic(ABC):
     :param extra: Anything else to say (see *extraState()*).
     :type extra: dict[str, str]
     :returns: Them as text: its name, then each parameter's value (see
-      *decodeParameters()*): eg: "name=tree;relation=includes;direction=right".
+      *decodeParameters()*): eg: "name=tree;relations=includes:shapes:source;direction=right".
     :rtype: str
     '''
     parts = {"name": cls.NAME}
@@ -376,6 +380,7 @@ class LayoutHeuristic(ABC):
     cls = LAYOUTS.get(state.get("name", ""))
     if cls is None:
       return None
+    state = cls.upgradeParameters(state)
     kwargs:dict[str, Any] = {}
     for p in cls.PARAMETERS:
       if p.name in state:
@@ -385,6 +390,18 @@ class LayoutHeuristic(ABC):
         except ValueError: # (not a number: the default, then)
           pass
     return cls, kwargs, state
+
+  @classmethod
+  def upgradeParameters(cls, state:dict[str, str]) -> dict[str, str]:
+    '''
+    :param state: What *decodeParameters()* read: eg: saved by an older
+      version, whose parameters were different.
+    :type state: dict[str, str]
+    :returns: It, with any old parameters converted to the ones there are
+      now. As it is, by default.
+    :rtype: dict[str, str]
+    '''
+    return state
 
   def extraState(self) -> dict[str, str]:
     '''

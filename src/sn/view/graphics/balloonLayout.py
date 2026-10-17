@@ -59,7 +59,8 @@ from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
 from sn.view.graphics.layout import (LayoutHeuristic, LayoutParameter, LayoutMoves, FindFree, Direction,
                                      registerLayout, layoutSize, STATIC, DYNAMIC)
-from sn.view.graphics.treeLayout import TreeLayout, isMember, isLink, PARENT_ENDS, NEAR_BIAS, _BoxIndex, nearestFree
+from sn.view.graphics.treeLayout import (TreeLayout, isMember, isLink, upgradeRelation, relationsParameter, RELATIONS_NOTE,
+                                         RelationTable, NEAR_BIAS, _BoxIndex, nearestFree)
 
 K = TypeVar("K", bound=Hashable)
 
@@ -757,7 +758,7 @@ class _Laid:
   group on its own, and the nodes in none.
   '''
   def __init__(self, groups:list[dict[VObject, tuple[float, float]]], refs:list[list[VObject]],
-               edges:list[tuple[VObject, VObject, VRelation]], sizes:dict[VObject, tuple[float, float]],
+               edges:list[tuple[VObject, VObject, Any]], sizes:dict[VObject, tuple[float, float]],
                rows:list[VObject], stay:list[VObject]):
     self.groups = groups
     "Where each group's nodes' centres go, on its own (those put near it too: see *placeNearGroups()*)."
@@ -803,7 +804,7 @@ class _RoundLayout(LayoutHeuristic):
   def _tree(self) -> TreeLayout:
     ":returns: A tree layout with its parameters: for what's arranged, and its trees."
     if self._treeLayout is None:
-      kw = {k: v for k, v in self.params.items() if k in ("relation", "parentEnd", "spacing")}
+      kw = {k: v for k, v in self.params.items() if k in ("relations", "spacing")}
       self._treeLayout = TreeLayout(self.view, **kw)
     return self._treeLayout
 
@@ -826,7 +827,7 @@ class _RoundLayout(LayoutHeuristic):
     raise NotImplementedError
 
   def _withLabels(self, positions:dict[VObject, tuple[float, float]], sizes:dict[VObject, tuple[float, float]],
-                  edges:list[tuple[VObject, VObject, VRelation]]) -> dict[VObject, tuple[float, float]]:
+                  edges:list[tuple[VObject, VObject, Any]]) -> dict[VObject, tuple[float, float]]:
     ":returns: *positions*, and where the labels of the relations between them go (see *_labelTargets()*, *_otherLabels()*)."
     ret:dict[VObject, tuple[float, float]] = {n: p for n, p in positions.items()}
     ret.update(self._labelTargets(positions, sizes, edges))
@@ -1015,10 +1016,10 @@ class _RoundLayout(LayoutHeuristic):
 
   @staticmethod
   def _labelTargets(positions:dict[VObject, tuple[float, float]], sizes:dict[VObject, tuple[float, float]],
-                    edges:list[tuple[VObject, VObject, VRelation]]) -> dict[VObject, tuple[float, float]]:
+                    edges:list[tuple[VObject, VObject, Any]]) -> dict[VObject, tuple[float, float]]:
     '''
     :param edges: (parent, child, relation): the relations whose labels to put.
-    :type edges: list[tuple[VObject, VObject, VRelation]]
+    :type edges: list[tuple[VObject, VObject, Any]]
     :returns: Where each relation's label goes (its top left): on the line
       between its parent's and child's centres, in the middle of the space
       between their circles (see *radius()*).
@@ -1026,7 +1027,7 @@ class _RoundLayout(LayoutHeuristic):
     '''
     ret:dict[VObject, tuple[float, float]] = {}
     for p, k, r in edges:
-      if p not in positions or k not in positions:
+      if not isinstance(r, VRelation) or p not in positions or k not in positions: # (not a relation type's link to its end: no label)
         continue
       (px, py), (kx, ky) = positions[p], positions[k]
       pc = (px + sizes[p][0] / 2, py + sizes[p][1] / 2)
@@ -1041,10 +1042,10 @@ class _RoundLayout(LayoutHeuristic):
     return ret
 
   def _otherLabels(self, positions:dict[VObject, tuple[float, float]], sizes:dict[VObject, tuple[float, float]],
-                   edges:list[tuple[VObject, VObject, VRelation]]) -> dict[VObject, tuple[float, float]]:
+                   edges:list[tuple[VObject, VObject, Any]]) -> dict[VObject, tuple[float, float]]:
     '''
     :param edges: The relations whose labels are put already (see *_labelTargets()*).
-    :type edges: list[tuple[VObject, VObject, VRelation]]
+    :type edges: list[tuple[VObject, VObject, Any]]
     :returns: Where the label of each other relation shown between the nodes
       arranged goes (its top left): midway between its ends' centres -- or,
       for more than one between the same two, side by side across the line
@@ -1075,10 +1076,10 @@ class _RoundLayout(LayoutHeuristic):
         ret[r] = (float(round(x - lw / 2)), float(round(y - lh / 2)))
     return ret
 
-  def _edgeRoom(self, edges:list[tuple[VObject, VObject, VRelation]]) -> dict[VObject, float]:
-    ":returns: The room each child needs between it and its parent: its relation's label (its circle) and the spacing."
+  def _edgeRoom(self, edges:list[tuple[VObject, VObject, Any]]) -> dict[VObject, float]:
+    ":returns: The room each child needs between it and its parent: its relation's label (its circle), if it has one, and the spacing."
     spacing = float(self.params["spacing"])
-    return {k: 2 * radius(layoutSize(r)) + spacing for _, k, r in edges}
+    return {k: (2 * radius(layoutSize(r)) if isinstance(r, VRelation) else 0.0) + spacing for _, k, r in edges}
 
 class _TreeRoundLayout(_RoundLayout):
   '''
@@ -1087,32 +1088,33 @@ class _TreeRoundLayout(_RoundLayout):
   Relation types shown are arranged as nodes are (see *treeLayout.isMember()*).
   '''
   PARAMETERS = (
-    LayoutParameter("relation", "Relation", "relation", "isa",
-                    note="Its subtypes too: each kind's children are together."),
-    LayoutParameter("parentEnd", "The parent is the relation's", "choice", "destination", PARENT_ENDS,
-                    note='Eg: the source for "includes" (a package includes its modules); '
-                         'the destination for "isa" (a subtype isa its type).'),
+    LayoutParameter("relations", "Relations", "relations", None, note=RELATIONS_NOTE),
     LayoutParameter("spacing", "Space between neighbours", "int", 20),
     LayoutParameter("others", "Nodes in no tree", "choice", "near", OTHERS,
                     note='"near": each near what it\'s related to, out beyond it (those related to nothing '
                          'there in rows). "rows": in rows after the trees.'),
     LayoutParameter("trees", "Trees related to one another", "choice", "joined", TREES,
-                    note='"joined": a tree whose root is related to a node in another (eg: by another relation '
-                         'type) goes out beyond that node, as if one of its children. "apart": each on its own.'),
+                    note='"joined": a tree whose root is related to a node in another (by a row that pulls '
+                         'together, or shapes the tree) goes out beyond that node, as if one of its children. '
+                         '"apart": each on its own.'),
   )
 
-  def __init__(self, view, **kwargs):
+  def __init__(self, view, relation:Any=None, parentEnd:str|None=None, **kwargs):
     '''
     :param view:
     :type view: SNGView
-    :param kwargs: See *PARAMETERS*: relation (a relation type, or its name),
-      parentEnd ("source" or "destination"), spacing, others (see *OTHERS*), trees (see *TREES*).
+    :param relation: As for *TreeLayout*: the simple way to give the table
+      (*relations*), for a single relation type.
+    :type relation: Any
+    :param parentEnd: With *relation*: which end of its relations is the parent.
+    :type parentEnd: str | None
+    :param kwargs: See *PARAMETERS*: relations (a *relationTable.RelationTable*,
+      or its text: by default, as *relation* isa), spacing, others (see
+      *OTHERS*), trees (see *TREES*).
     '''
-    super().__init__(view, **kwargs)
-    if self.params["relation"] is None:
-      self.params["relation"] = view.model.ISA
-    if self.params["parentEnd"] not in PARENT_ENDS:
-      raise ValueError(f'{type(self).__name__}: parentEnd must be one of {", ".join(PARENT_ENDS)}, not "{self.params["parentEnd"]}".')
+    super().__init__(view, **relationsParameter(kwargs, relation, parentEnd))
+    if self.params["relations"] is None:
+      self.params["relations"] = RelationTable.single("isa")
     if self.params["others"] not in OTHERS:
       raise ValueError(f'{type(self).__name__}: others must be one of {", ".join(OTHERS)}, not "{self.params["others"]}".')
     if self.params["trees"] not in TREES:
@@ -1120,9 +1122,9 @@ class _TreeRoundLayout(_RoundLayout):
 
   @classmethod
   @override
-  def parameterChanged(cls, view, name:str, values:dict[str, Any]) -> dict[str, Any]:
-    "As *TreeLayout.parameterChanged()*: a relation type chosen, its parent end."
-    return TreeLayout.parameterChanged(view, name, values)
+  def upgradeParameters(cls, state:dict[str, str]) -> dict[str, str]:
+    ":returns: *state*, with a single relation type saved by an older version as a table (see *treeLayout.upgradeRelation()*)."
+    return upgradeRelation(state)
 
   def positions(self, roots:list[VObject], kids:dict[VObject, list[VObject]], sizes:dict[VObject, tuple[float, float]],
                 edgeRoom:dict[VObject, float]) -> tuple[dict[VObject, tuple[float, float]], list[tuple[VObject, list[VObject], float]]]:
@@ -1138,9 +1140,11 @@ class _TreeRoundLayout(_RoundLayout):
       roots, others = sorted(roots, key=_byName), sorted(others, key=_byName)
       children = {p: [sorted(g, key=_byName) for g in gs] for p, gs in children.items()}
     kids = {p: [k for g in gs for k in g] for p, gs in children.items()}
-    joins:list[tuple[VObject, VObject, VRelation]] = []
+    joins:list[tuple[VObject, VObject, Any]] = []
     if self.params["trees"] == "joined":
-      roots, joins = self._join(roots, kids, {n._id for n in roots} & self.pins if dynamic else set())
+      ids = {id(n) for n in [*roots, *(k for ks in kids.values() for k in ks), *others]}
+      roots, joins = self._join(roots, kids, {n._id for n in roots} & self.pins if dynamic else set(),
+                                lambda n: tree.related(n, ids))
     nodes = [*roots, *(k for ks in kids.values() for k in ks), *others]
     sizes = {n: layoutSize(n) for n in nodes}
     edges = [(tree._ends(r)[0], k, r) for k, r in parentRel.items()] + joins
@@ -1155,10 +1159,11 @@ class _TreeRoundLayout(_RoundLayout):
     return _Laid(groups, [[root] for root, _, _ in trees], edges, sizes, rows, stay)
 
   @staticmethod
-  def _join(roots:list[VObject], kids:dict[VObject, list[VObject]], pinned:set[int]) -> tuple[list[VObject], list[tuple[VObject, VObject, VRelation]]]:
+  def _join(roots:list[VObject], kids:dict[VObject, list[VObject]], pinned:set[int],
+            related:Callable[[VObject], list[tuple[VObject, Any]]]|None=None) -> tuple[list[VObject], list[tuple[VObject, VObject, Any]]]:
     '''
     Join the trees related to one another (see *TREES*): a tree whose root is
-    related (by any relation shown) to a node in another tree becomes one of
+    related (see *related*) to a node in another tree becomes one of
     that node's children (the last) -- so it's laid out out beyond it, along
     the way out from the middle, rather than wherever it was. From the biggest
     top tree (one whose root isn't related to another tree), each tree related
@@ -1173,10 +1178,17 @@ class _TreeRoundLayout(_RoundLayout):
     :type kids: dict[VObject, list[VObject]]
     :param pinned: The ids of the roots that are pinned (see *pins*).
     :type pinned: set[int]
+    :param related: What each root is related to, and by what, in order (see
+      *TreeLayout.related()*: by the rows of the relation table that aren't
+      ignored). If None, by any relation shown (see *treeLayout.isLink()*).
+    :type related: Callable[[VObject], list[tuple[VObject, Any]]] | None
     :returns: The roots of the trees there are now (in order); and each tree
-      joined: (the node it's joined to, its root, the relation between them).
-    :rtype: tuple[list[VObject], list[tuple[VObject, VObject, VRelation]]]
+      joined: (the node it's joined to, its root, the relation between them --
+      or the relation type's link to its end: see *treeLayout.Terminal*).
+    :rtype: tuple[list[VObject], list[tuple[VObject, VObject, Any]]]
     '''
+    if related is None:
+      related = lambda n: [(r.dst if r.src is n else r.src, r) for r in sorted((r for r in n.relations if isLink(r)), key=lambda r: r._id)]
     treeOf:dict[VObject, VObject] = {}
     size:dict[VObject, int] = {}
     for root in roots:
@@ -1187,19 +1199,18 @@ class _TreeRoundLayout(_RoundLayout):
           treeOf[n] = root
           stack.extend(kids.get(n, ()))
       size[root] = sum(1 for t in treeOf.values() if t is root)
-    links:dict[VObject, list[tuple[VObject, VRelation]]] = {}
+    links:dict[VObject, list[tuple[VObject, Any]]] = {}
     for root in roots:
       if root._id in pinned:
         continue
-      for r in sorted((r for r in root.relations if isLink(r)), key=lambda r: r._id):
-        other = r.dst if r.src is root else r.src
+      for other, r in related(root):
         if other in treeOf and treeOf[other] is not root:
           links.setdefault(root, []).append((other, r))
     # (from the tops -- trees whose roots aren't related to another tree -- the biggest first; stable: in
     # order, among those as big)
     rest = sorted(roots, key=lambda r: (r in links, -size[r]))
     joined:set[VObject] = set()
-    joins:list[tuple[VObject, VObject, VRelation]] = []
+    joins:list[tuple[VObject, VObject, Any]] = []
     while rest:
       joined.add(rest.pop(0))
       grew = True
@@ -1236,13 +1247,14 @@ class _TreeRoundLayout(_RoundLayout):
     tree = self._tree()
     if not isMember(node):
       return tree._isEdge(node.modelObject)
-    return any(isLink(r) and tree._isEdge(r.modelObject) for r in node.relations)
+    return tree.shaped(node)
 
   def _placeNear(self, groups:list[dict[VObject, tuple[float, float]]], others:list[VObject],
-                 sizes:dict[VObject, tuple[float, float]], edges:list[tuple[VObject, VObject, VRelation]]) -> list[VObject]:
+                 sizes:dict[VObject, tuple[float, float]], edges:list[tuple[VObject, VObject, Any]]) -> list[VObject]:
     '''
     For *others* "near": put each node in no tree near the tree nodes it's
-    related to (by any relation shown), in their tree, clear of its nodes and
+    related to (by the rows of the relation table that aren't ignored: see
+    *TreeLayout.related()*), in their tree, clear of its nodes and
     its relations' labels, with room for the label of the relation between
     them (see *placeNearGroups()*).
 
@@ -1253,25 +1265,23 @@ class _TreeRoundLayout(_RoundLayout):
     :param sizes: Every node's (width, height).
     :type sizes: dict[VObject, tuple[float, float]]
     :param edges: The tree relations (parent, child, relation).
-    :type edges: list[tuple[VObject, VObject, VRelation]]
+    :type edges: list[tuple[VObject, VObject, Any]]
     :returns: Those not put (related to no tree): for the rows.
     :rtype: list[VObject]
     '''
     spacing = float(self.params["spacing"])
     ids = {id(n) for n in [*(n for g in groups for n in g), *others]}
     related:dict[VObject, list[VObject]] = {n: [] for n in others}
-    between:dict[tuple[int, int], VRelation] = {}
+    between:dict[tuple[int, int], Any] = {}
+    tree = self._tree()
     for n in others:
-      for r in sorted((r for r in n.relations if isLink(r)), key=lambda r: r._id):
-        other = r.dst if r.src is n else r.src
-        if other is not n and id(other) in ids:
-          if other not in related[n]:
-            related[n].append(other)
-          between.setdefault((id(n), id(other)), r)
-          between.setdefault((id(other), id(n)), r)
+      for other, r in tree.related(n, ids):
+        related[n].append(other)
+        between.setdefault((id(n), id(other)), r)
+        between.setdefault((id(other), id(n)), r)
     def room(n:VObject, r:VObject) -> float:
       rel = between.get((id(n), id(r)))
-      return (2 * radius(layoutSize(rel)) if rel is not None else 0.0) + spacing
+      return (2 * radius(layoutSize(rel)) if isinstance(rel, VRelation) else 0.0) + spacing
     obstacles = []
     for g in groups: # (the tree relations' labels, where they'll be)
       tops = {n: (cx - sizes[n][0] / 2, cy - sizes[n][1] / 2) for n, (cx, cy) in g.items()}
@@ -1389,7 +1399,7 @@ class HubLayout(_RoundLayout):
     sizes = {n: layoutSize(n) for n in nodes}
     spacing = float(self.params["spacing"])
     centres:list[dict[VObject, tuple[float, float]]] = []
-    edges:list[tuple[VObject, VObject, VRelation]] = []
+    edges:list[tuple[VObject, VObject, Any]] = []
     for hubs, kids in groups:
       es = [(p, k, between[(p, k)]) for p, ks in kids.items() for k in ks]
       out = hubPositions(hubs, kids, sizes, spacing=spacing, edgeRoom=self._edgeRoom(es))[0]

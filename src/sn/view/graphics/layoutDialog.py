@@ -1,8 +1,8 @@
 '''
 The dialog that asks for a layout heuristic's parameters (see
 *layout.LayoutHeuristic.askParameters()*): made from its *PARAMETERS* (see
-*layout.LayoutParameter*) -- a relation type, a choice, a number, or a
-yes/no -- with OK and Cancel.
+*layout.LayoutParameter*) -- a relation type, a table of them (see
+*RelationTableEditor*), a choice, a number, or a yes/no -- with OK and Cancel.
 
 Created on Oct 10, 2026
 
@@ -36,6 +36,8 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from util.utils import ownDialog
 from sn.view.graphics.layout import LayoutParameter, relationTypes
+from sn.view.graphics.relationTable import (RelationTable, RelationRow, ROLES, SHAPES, PARENT_ENDS, TERMINALS,
+                                            shownRelationTypes)
 
 MAX_INT = 10000
 "The biggest number the dialog's number fields take."
@@ -69,12 +71,25 @@ class LayoutDialog(tk.Toplevel):
     self.result:dict[str, Any]|None = None
     self.relations = {str(r.name): r for r in relationTypes(view.model)}
     self.vars:dict[str, tk.Variable] = {}
+    self.tables:dict[str, RelationTableEditor] = {}
     pad:dict[str, Any] = dict(padx=8, pady=3)
     frame = ttk.Frame(self, padding=10)
     frame.pack(fill=tk.BOTH, expand=True)
     row = 0
     for p in asked:
       v = self.values.get(p.name)
+      if p.kind == "relations":
+        ttk.Label(frame, text=p.label + ":").grid(row=row, column=0, columnspan=2, sticky=tk.W, **pad)
+        row += 1
+        table = v if isinstance(v, RelationTable) else RelationTable.decode(v) if isinstance(v, str) else RelationTable.single("isa")
+        editor = RelationTableEditor(frame, table.expanded(view.model, shownRelationTypes(view)))
+        editor.grid(row=row, column=0, columnspan=2, sticky=tk.W, padx=16)
+        self.tables[p.name] = editor
+        row += 1
+        if p.note:
+          ttk.Label(frame, text=p.note, foreground="gray40", wraplength=420).grid(row=row, column=0, columnspan=2, sticky=tk.W, padx=24)
+          row += 1
+        continue
       if p.kind == "bool":
         var:tk.Variable = tk.BooleanVar(value=bool(v))
         ttk.Checkbutton(frame, text=p.label, variable=var, command=partial(self.changed, p.name)) \
@@ -120,6 +135,9 @@ class LayoutDialog(tk.Toplevel):
     '''
     ret = dict(self.values)
     for p in self.asked:
+      if p.kind == "relations":
+        ret[p.name] = self.tables[p.name].table()
+        continue
       v = self.vars[p.name].get()
       if p.kind == "relation":
         ret[p.name] = self.relations.get(str(v))
@@ -152,6 +170,10 @@ class LayoutDialog(tk.Toplevel):
     self.values = self.cls.parameterChanged(self.view, name, values)
     for p in self.asked:
       v = self.values.get(p.name)
+      if p.kind == "relations":
+        if isinstance(v, RelationTable) and v != self.tables[p.name].table():
+          self.tables[p.name].setTable(v)
+        continue
       self.vars[p.name].set(str(getattr(v, "name", v)) if p.kind != "bool" else bool(v))
 
   def ok(self) -> None:
@@ -160,3 +182,69 @@ class LayoutDialog(tk.Toplevel):
       return
     self.result = values
     self.destroy()
+
+class RelationTableEditor(ttk.Frame):
+  '''
+  Edits a relation table (see *relationTable.RelationTable*): a row for each
+  relation type (and one for the relation types' own ends: see
+  *relationTable.TERMINALS*), each with its role, and which end is the parent
+  (for a row that shapes the trees), and buttons to move it up or down (the
+  higher rows win).
+  '''
+  def __init__(self, parent:tk.Misc, table:RelationTable):
+    '''
+    :param parent: What it's in.
+    :type parent: tk.Misc
+    :param table: The table to start with.
+    :type table: RelationTable
+    '''
+    super().__init__(parent)
+    self.rows:list[RelationRow] = list(table.rows)
+    self.setTable(table)
+
+  def setTable(self, table:RelationTable) -> None:
+    ":param table: The table to show now."
+    self.rows = list(table.rows)
+    self._build()
+
+  def table(self) -> RelationTable:
+    ":returns: The table, as it's shown now."
+    return RelationTable(self.rows)
+
+  def _build(self) -> None:
+    "(Re)make the rows' widgets, from *rows*."
+    for w in self.winfo_children():
+      w.destroy()
+    pad:dict[str, Any] = dict(padx=4, pady=1)
+    for col, text in enumerate(("Relation", "Role", "The parent is the")):
+      ttk.Label(self, text=text, foreground="gray40").grid(row=0, column=col, sticky=tk.W, **pad)
+    for i, r in enumerate(self.rows):
+      ttk.Label(self, text=r.relation, font=("TkDefaultFont", 11, "italic") if r.relation == TERMINALS else None) \
+        .grid(row=i + 1, column=0, sticky=tk.W, **pad)
+      role = tk.StringVar(value=r.role)
+      roleBox = ttk.Combobox(self, textvariable=role, values=list(ROLES), state="readonly", width=15)
+      roleBox.grid(row=i + 1, column=1, sticky=tk.W, **pad)
+      end = tk.StringVar(value=r.parentEnd)
+      endBox = ttk.Combobox(self, textvariable=end, values=list(PARENT_ENDS), width=11,
+                            state="readonly" if r.role == SHAPES else "disabled")
+      endBox.grid(row=i + 1, column=2, sticky=tk.W, **pad)
+      roleBox.bind("<<ComboboxSelected>>", partial(self._changed, i, role, end))
+      endBox.bind("<<ComboboxSelected>>", partial(self._changed, i, role, end))
+      ttk.Button(self, text="\u25b2", width=2, command=partial(self._move, i, -1), state="normal" if i > 0 else "disabled") \
+        .grid(row=i + 1, column=3, **pad)
+      ttk.Button(self, text="\u25bc", width=2, command=partial(self._move, i, 1),
+                 state="normal" if i < len(self.rows) - 1 else "disabled").grid(row=i + 1, column=4, **pad)
+
+  def _changed(self, i:int, role:tk.StringVar, end:tk.StringVar, _event:tk.Event|None=None) -> None:
+    "Row *i*'s role or parent end changed."
+    old = self.rows[i]
+    self.rows[i] = RelationRow(old.relation, role.get(), end.get())
+    if (old.role == SHAPES) != (role.get() == SHAPES): # (its parent end matters now, or doesn't)
+      self._build()
+
+  def _move(self, i:int, by:int) -> None:
+    "Move row *i* up (*by* -1) or down (1)."
+    j = i + by
+    if 0 <= j < len(self.rows):
+      self.rows[i], self.rows[j] = self.rows[j], self.rows[i]
+      self._build()
