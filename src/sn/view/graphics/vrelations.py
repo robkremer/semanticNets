@@ -155,12 +155,16 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     # if not self.view.reading: # can't do an expansion while things aren't settled yet...
     #   self._connect()
           
-    self._floatingAnchor = True if floating is None else floating
+    # (a relation type never floats: it has a place of its own, as a node does -- one read
+    # from an old view that floated is pinned once the view's drawn: see SNGView._pinRelationTypes())
+    isType = self.modelObject is not None and self.modelObject.isType()
+    self._floatingAnchor = (True if floating is None else floating) and not (isType and (floating is None or not view.reading))
+    place = isType and floating is None and x is None # (a new relation type: put between its ends once, then it stays)
     # self._redrawExecuting = False
     
     # (not if it's been taken out of the view meanwhile: that would draw it again -- see VObject._firstDraw())
     # (nor while a view's being read: its label is where it was saved; if an end's size changes as it's first drawn, it repositions this then)
-    self.canvas.after(0, lambda slf=self: slf.reposition(aggressive=True) #type: ignore[misc]
+    self.canvas.after(0, lambda slf=self, place=place: slf.reposition(aggressive=True, place=place) #type: ignore[misc]
                       if slf._isConnected() and not slf.view.__dict__.get("_firstDrawsDeferred") and not slf.__dict__.get("_drawnWithView") else None)
     # self.canvas.freshPaint()
     # self.draw()
@@ -466,13 +470,20 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
   ### GETTERS AND SETTERS ##############################################################
   
   def floating(self, value:Optional[bool]=None):
-    # if self.modelObject['type']: return False # type relations never float
     '''
-    :param value:
+    Whether this relation's label floats: follows its ends, between them (see
+    *reposition()*). A relation type never floats: it has a place of its own,
+    as a node does (setting it to float pins it; one read from an old view
+    that floated is pinned once the view's drawn: see
+    *SNGView._pinRelationTypes()*).
+
+    :param value: If given, whether it floats from now on.
     :type value: Optional[bool]
-    :returns:
-    :rtype:
+    :returns: Whether it floats.
+    :rtype: bool
     '''
+    if value and self.modelObject is not None and self.modelObject.isType():
+      value = False
     if value != None:
       oldVal = self._floatingAnchor
       self._floatingAnchor = value
@@ -825,7 +836,7 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     return (isinstance(src, VObject) and isinstance(dst, VObject) and src is not dst
             and src.isContextWindow() and src.paneAt(dst.centerPt()) is not None)
 
-  def reposition(self, aggressive:bool=False, suppressDraw:bool=False, adjustPos:bool=True):
+  def reposition(self, aggressive:bool=False, suppressDraw:bool=False, adjustPos:bool=True, place:bool=False):
     '''
     :param aggressive:
     :type aggressive: bool
@@ -841,6 +852,9 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
       doesn't jump to a FindFree-computed spot on every single mouse-motion
       tick while something it's connected to is being dragged.
     :type adjustPos: bool
+    :param place: [default=False] Put it between its ends even if it doesn't
+      float (eg: a new relation type, once: see *floating()*).
+    :type place: bool
     '''
     # connectedObjects = self._getConnectedVObjects()
     # if self.floating() and len(connectedObjects) > 1 and self.modelObject.isIndividual():
@@ -852,7 +866,7 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     #   self.moveToCenterOn(ctr[0], ctr[1])
     # else:
     #   self.adjustPos(aggressive=aggressive)
-    if not self.floating():
+    if not self.floating() and not place:
       if not suppressDraw:
         self.draw()
       return

@@ -1294,7 +1294,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       # a pixel or so, if the file was saved with other font metrics -- so that isn't a change.
       # It's the objects' first drawing too: theirs, queued as they were made, are put off till then.)
       slf.__dict__["_firstDrawsDeferred"] = True
-      slf.canvas.after_idle(lambda slf=slf: [slf.applyVisibility(), slf._restoreAnimationState(), slf._restoreLayoutState(), slf._drawAllAfterRead(), slf.resetScrollRegion(), slf._restoreViewport(), slf.setDirty(False)]) # type: ignore[misc]
+      slf.canvas.after_idle(lambda slf=slf: [slf.applyVisibility(), slf._restoreAnimationState(), slf._restoreLayoutState(), slf._drawAllAfterRead(), slf.canvas.after_idle(slf._pinRelationTypes), slf.resetScrollRegion(), slf._restoreViewport(), slf.setDirty(False)]) # type: ignore[misc]
     ret:InstantiationInfo = super().getInstantiationInfo()
     # ret.class_ = cls
     # (its model's URL relative to the view's file if they're side by side -- see PRDb.relativeURL() -- so
@@ -4604,7 +4604,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     if snPrefs.get("gui/debugMenus", storeDefault=False, storeType=bool):
       viewMenu.add_command(label="repaint", command=self.repaint, accelerator=KEY_REPAINT[1])
     viewMenu.add_separator()
-    viewMenu.add_command(label="float all relations", command=lambda: [r.floating(True) for r in self.context.view.values() if isinstance(r, VRelation) and r.modelObject is not None and r.modelObject.isIndividual()])
+    viewMenu.add_command(label="float all relations", command=lambda: [r.floating(True) for r in self.context.view.values() if isinstance(r, VRelation)]) # (not relation types: they never float)
 
     reasonMenu = tk.Menu(self.canvas)
     bgMenu.add_cascade(label="reasoning", menu=reasonMenu)
@@ -4975,6 +4975,16 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       obj.__dict__["_firstDrawPending"] = False
       if obj._isConnected():
         obj.makeBindings()
+
+  def _pinRelationTypes(self) -> None:
+    '''
+    Once a read view is drawn: pin the relation types that float (from a view
+    saved before they always had a place of their own, as nodes do: see
+    *VRelation.floating()*) where they're drawn, so nothing moves.
+    '''
+    for obj in self.context.view.values():
+      if isinstance(obj, VRelation) and obj.modelObject is not None and obj.modelObject.isType():
+        obj._floatingAnchor = False
 
   def refreshAllCaches(self) -> None:
     '''

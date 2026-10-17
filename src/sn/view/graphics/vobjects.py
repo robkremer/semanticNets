@@ -2047,7 +2047,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       if (dx or dy) and carry:
         # (not objects that are themselves being moved -- eg: also selected -- nor
         # floating relation labels: they follow their ends, so they'd move twice)
-        floats = lambda vo: callable(getattr(vo, "floating", None)) and vo.modelObject is not None and vo.modelObject.isIndividual() and vo.floating()
+        floats = lambda vo: callable(getattr(vo, "floating", None)) and vo.floating()
         contents = self.carriedContents()
         carried = [vo for vo in contents if not (self.selected() and vo.selected()) and not floats(vo)]
         # ... and its containment links' labels, if they're pinned (they're drawn only when what they contain is out of the window)
@@ -2173,8 +2173,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     layout = self.view.localLayout
     if layout is not None:
       layout(self, aggressive=aggressive)
-      for r in self.relations:
-        layout(r, aggressive=aggressive)
+      for r in self.relations: # (their labels, which follow their ends: not relation types -- they have places of their own, as nodes do)
+        if r.modelObject is None or not r.modelObject.isType():
+          layout(r, aggressive=aggressive)
     rect = self.boundingBox(fast=fast)
     
     return rect[0], rect[1]

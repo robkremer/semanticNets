@@ -104,7 +104,7 @@ class Snapshot:
     homes = view.containmentHomes()
     self.objects:list[VObject] = [vo for vo in view.values() if vo is not None and (isEligible(vo) or self._placed(vo, homes))]
     index = {id(vo): i for i, vo in enumerate(self.objects)}
-    self.pinned:set[int] = {i for i, vo in enumerate(self.objects) if isinstance(vo, VRelation) and vo.modelObject.isIndividual() and vo.floating()} # type: ignore[union-attr]
+    self.pinned:set[int] = {i for i, vo in enumerate(self.objects) if isinstance(vo, VRelation) and vo.floating()}
     "The relations' labels (by index) that float now, but are placed in their panes: moving them pins them (see *_placed()*)."
     self.owners:list[int|None] = [None] * len(self.objects)
     "The window (by index) each object is in (see *SNGView.containmentHomes()*), or None for one out on the canvas."
@@ -983,7 +983,7 @@ class FieldsLayout():
     '''
     for vo in list(view.values()):
       if isinstance(vo, VRelation) and vo._isConnected() and not vo.isHidden() and vo.modelObject is not None \
-         and vo.modelObject.isIndividual() and vo.floating():
+         and vo.floating():
         try:
           vo.reposition(adjustPos=True)
         except Exception:
