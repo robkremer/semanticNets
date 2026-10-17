@@ -82,6 +82,17 @@ modules, then its sub-packages). They ask:
   they are; put them in **rows** after the trees; or put each **near** what
   it's related to (and those related to nothing in rows).
 
+**Trees related to one another** (balloon and radial only)
+  What to do with a tree whose root is related -- by some other relation
+  type -- to a node in another tree: **joined**, it goes out beyond that
+  node, as if it were one of its children, so the trees make one drawing;
+  **apart**, each tree is laid out on its own. (Eg: the XMLreader's model of
+  a file, by *has-property*, is many small trees -- an object and its
+  properties -- linked by *has-object*: joined, they make one tree.)
+  Joining starts from the trees whose roots aren't related to another tree.
+  In a view kept arranged, a joined tree's root dropped somewhere stays
+  there, a tree of its own.
+
 A node with two parents goes under the first; a relation that would make a
 cycle is left out of the trees (it's still drawn).
 

@@ -196,6 +196,11 @@ function:
   nearest; the hubs on a ring, each one's spokes in a balloon round it.
 
 Balloon and radial find their trees with a *TreeLayout* (``structure()``).
+With ``trees="joined"`` (the default), ``_TreeRoundLayout._join()`` then
+makes a tree whose root is related, by any relation shown, to a node in
+another tree one of that node's children -- from the top trees (roots
+related to no other tree), biggest first -- so related trees are laid out
+as one.
 Kept arranged, each group is laid out again where it is -- its root (or its
 hubs, on average) where it is (:py:func:`~sn.view.graphics.balloonLayout.groupOffset`)
 -- and moved off any group before it to the nearest clear place

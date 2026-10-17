@@ -70,6 +70,12 @@ near the tree nodes it's related to, out beyond them, away from the middle of
 their tree (see *placeNearGroups()*: those related to no tree in rows after
 the trees); put them in rows after the trees; or leave them where they are.'''
 
+TREES = ("joined", "apart")
+'''What the balloon and radial layouts do with a tree whose root is related
+(by any relation shown, but the trees') to a node in another tree: put it out
+beyond that node, as if one of its children (see *_TreeRoundLayout._join()*);
+or lay it out on its own, apart.'''
+
 HUB_OTHERS = ("rows", "leave")
 '''What the hub layout does with the nodes related to nothing: puts them in
 rows after the rest; or leaves them where they are.'''
@@ -1047,6 +1053,9 @@ class _TreeRoundLayout(_RoundLayout):
     LayoutParameter("others", "Nodes in no tree", "choice", "near", OTHERS,
                     note='"near": each near what it\'s related to, out beyond it (those related to nothing '
                          'there in rows). "rows": in rows after the trees.'),
+    LayoutParameter("trees", "Trees related to one another", "choice", "joined", TREES,
+                    note='"joined": a tree whose root is related to a node in another (eg: by another relation '
+                         'type) goes out beyond that node, as if one of its children. "apart": each on its own.'),
   )
 
   def __init__(self, view, **kwargs):
@@ -1054,7 +1063,7 @@ class _TreeRoundLayout(_RoundLayout):
     :param view:
     :type view: SNGView
     :param kwargs: See *PARAMETERS*: relation (a relation type, or its name),
-      parentEnd ("source" or "destination"), spacing, others (see *OTHERS*).
+      parentEnd ("source" or "destination"), spacing, others (see *OTHERS*), trees (see *TREES*).
     '''
     super().__init__(view, **kwargs)
     if self.params["relation"] is None:
@@ -1063,6 +1072,8 @@ class _TreeRoundLayout(_RoundLayout):
       raise ValueError(f'{type(self).__name__}: parentEnd must be one of {", ".join(PARENT_ENDS)}, not "{self.params["parentEnd"]}".')
     if self.params["others"] not in OTHERS:
       raise ValueError(f'{type(self).__name__}: others must be one of {", ".join(OTHERS)}, not "{self.params["others"]}".')
+    if self.params["trees"] not in TREES:
+      raise ValueError(f'{type(self).__name__}: trees must be one of {", ".join(TREES)}, not "{self.params["trees"]}".')
 
   @classmethod
   @override
@@ -1084,9 +1095,12 @@ class _TreeRoundLayout(_RoundLayout):
       roots, others = sorted(roots, key=_byName), sorted(others, key=_byName)
       children = {p: [sorted(g, key=_byName) for g in gs] for p, gs in children.items()}
     kids = {p: [k for g in gs for k in g] for p, gs in children.items()}
+    joins:list[tuple[VNode, VNode, VRelation]] = []
+    if self.params["trees"] == "joined":
+      roots, joins = self._join(roots, kids, {n._id for n in roots} & self.pins if dynamic else set())
     nodes = [*roots, *(k for ks in kids.values() for k in ks), *others]
     sizes = {n: layoutSize(n) for n in nodes}
-    edges = [(tree._ends(r)[0], k, r) for k, r in parentRel.items()]
+    edges = [(tree._ends(r)[0], k, r) for k, r in parentRel.items()] + joins
     centres, trees = self.positions(roots, kids, sizes, self._edgeRoom(edges))
     groups = [{n: centres[n] for n in members} for _, members, _ in trees]
     mode = self.params["others"]
@@ -1097,14 +1111,83 @@ class _TreeRoundLayout(_RoundLayout):
       rows = self._placeNear(groups, rows, sizes, edges)
     return _Laid(groups, [[root] for root, _, _ in trees], edges, sizes, rows, stay)
 
+  @staticmethod
+  def _join(roots:list[VNode], kids:dict[VNode, list[VNode]], pinned:set[int]) -> tuple[list[VNode], list[tuple[VNode, VNode, VRelation]]]:
+    '''
+    Join the trees related to one another (see *TREES*): a tree whose root is
+    related (by any relation shown) to a node in another tree becomes one of
+    that node's children (the last) -- so it's laid out out beyond it, along
+    the way out from the middle, rather than wherever it was. From the biggest
+    top tree (one whose root isn't related to another tree), each tree related
+    to one joined so far is joined to it (to the first node it's related to,
+    in order of the relations made), and so on; then from the biggest of the
+    rest (tops first). (Not a pinned root: it stays where
+    it's been dropped.)
+
+    :param roots: The trees' roots.
+    :type roots: list[VNode]
+    :param kids: Each node's children: the joined trees' roots are added.
+    :type kids: dict[VNode, list[VNode]]
+    :param pinned: The ids of the roots that are pinned (see *pins*).
+    :type pinned: set[int]
+    :returns: The roots of the trees there are now (in order); and each tree
+      joined: (the node it's joined to, its root, the relation between them).
+    :rtype: tuple[list[VNode], list[tuple[VNode, VNode, VRelation]]]
+    '''
+    treeOf:dict[VNode, VNode] = {}
+    size:dict[VNode, int] = {}
+    for root in roots:
+      stack = [root]
+      while stack:
+        n = stack.pop()
+        if n not in treeOf:
+          treeOf[n] = root
+          stack.extend(kids.get(n, ()))
+      size[root] = sum(1 for t in treeOf.values() if t is root)
+    links:dict[VNode, list[tuple[VNode, VRelation]]] = {}
+    for root in roots:
+      if root._id in pinned:
+        continue
+      for r in sorted((r for r in root.relations if isinstance(r, VRelation)), key=lambda r: r._id):
+        if not r._isConnected() or r.isHidden():
+          continue
+        other = r.dst if r.src is root else r.src
+        if isinstance(other, VNode) and treeOf.get(other, root) is not root:
+          links.setdefault(root, []).append((other, r))
+    # (from the tops -- trees whose roots aren't related to another tree -- the biggest first; stable: in
+    # order, among those as big)
+    rest = sorted(roots, key=lambda r: (r in links, -size[r]))
+    joined:set[VNode] = set()
+    joins:list[tuple[VNode, VNode, VRelation]] = []
+    while rest:
+      joined.add(rest.pop(0))
+      grew = True
+      while grew:
+        grew = False
+        for root in list(rest):
+          hit = next(((n, r) for n, r in links.get(root, ()) if treeOf[n] in joined), None)
+          if hit is not None:
+            kids.setdefault(hit[0], []).append(root)
+            joins.append((hit[0], root, hit[1]))
+            joined.add(root)
+            rest.remove(root)
+            grew = True
+    under = {root for _, root, _ in joins}
+    return [r for r in roots if r not in under], joins
+
   @override
   def _pinnable(self, drops:list[VNode]) -> set[int]:
-    "As *TreeLayout.adjust()*: a tree's child, or a node in no tree (not a root: it's kept where it is anyway)."
+    '''
+    As *TreeLayout.adjust()*: a tree's child, or a node in no tree (not a root:
+    it's kept where it is anyway) -- or, with the trees joined (see *TREES*),
+    any root: it may be joined to another tree, as a child (pinned, it isn't).
+    '''
     tree = self._tree()
     _, edges = tree.scope()
     children = {id(tree._ends(r)[1]) for r in edges}
     inTree = children | {id(tree._ends(r)[0]) for r in edges}
-    return {vo._id for vo in drops if id(vo) in children or id(vo) not in inTree}
+    joined = self.params["trees"] == "joined"
+    return {vo._id for vo in drops if joined or id(vo) in children or id(vo) not in inTree}
 
   @override
   def _staysPut(self, node:VObject) -> bool:

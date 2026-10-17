@@ -27,9 +27,12 @@ Created on Oct 14, 2026
 
 @author: robkremer
 '''
+import itertools
 import math
 import random
 import unittest
+from sn.view.graphics.vnodes import VNode
+from sn.view.graphics.vrelations import VRelation
 from sn.view.graphics.balloonLayout import (balloonPositions, radialPositions, hubForest, hubPositions, radius, placeNearGroups,
                                             topLefts, groupOffset, separateGroups)
 
@@ -47,6 +50,27 @@ def randomTree(rnd, n):
   for i in range(1, n):
     kids.setdefault(rnd.randrange(i), []).append(i)
   return sizes, kids
+
+_ids = itertools.count(1)
+
+class StandInNode(VNode):
+  "Stands in for a node, for *_TreeRoundLayout._join()*: its id and relations."
+  def __init__(self, label):
+    self.label, self._id, self.rels = label, next(_ids), []
+  relations = property(lambda self: iter(self.rels))
+  __hash__, __eq__ = object.__hash__, object.__eq__ # (not by a persistent reference: it has none)
+  def __repr__(self): return self.label
+
+class StandInRelation(VRelation):
+  "Stands in for a relation between two *StandInNode*s."
+  def __init__(self, src, dst, hidden=False):
+    self._id, self.ends, self.hidden = next(_ids), (src, dst), hidden
+    src.rels.append(self); dst.rels.append(self)
+  src = property(lambda self: self.ends[0])
+  __hash__, __eq__ = object.__hash__, object.__eq__ # (not by a persistent reference: it has none)
+  dst = property(lambda self: self.ends[1])
+  def _isConnected(self): return True
+  def isHidden(self): return self.hidden
 
 def crosses(a, b, c, d):
   ":returns: Whether segments ab and cd cross (not just touch at an end)."
@@ -156,6 +180,40 @@ class Test(unittest.TestCase):
     self.assertEqual(pos["d"], (0.0, 0.0))                              # (each tree on its own)
     tree = {n for n in "defg"}
     self.assertEqual(overlapping(boxes({n: p for n, p in pos.items() if n in tree}, self.sizes)), [])
+
+  def test0770joinedTrees(self):
+    from sn.view.graphics.balloonLayout import _TreeRoundLayout
+    N = {c: StandInNode(c) for c in "rabcxyzpq"}
+    # trees: r (a, b (c)), x (y), z, p (q); by other relations: x -- c, z -- y, p -- q's... nothing else
+    kids = {N["r"]: [N["a"], N["b"]], N["b"]: [N["c"]], N["x"]: [N["y"]], N["p"]: [N["q"]]}
+    StandInRelation(N["c"], N["x"])                       # x's root related to c in r's tree
+    StandInRelation(N["z"], N["y"])                       # z's related to y in x's tree (joined in turn)
+    StandInRelation(N["p"], N["a"], hidden=True)          # (hidden: no join)
+    roots = [N["x"], N["r"], N["z"], N["p"]]
+    kept, joins = _TreeRoundLayout._join(roots, kids, set())
+    self.assertEqual(kept, [N["r"], N["p"]])              # from the top tree; p's only link is hidden
+    self.assertEqual([(a, b) for a, b, _ in joins], [(N["c"], N["x"]), (N["y"], N["z"])])
+    self.assertEqual(kids[N["c"]], [N["x"]])
+    self.assertEqual(kids[N["y"]], [N["z"]])
+    # a pinned root stays a tree of its own
+    kids = {N["r"]: [N["a"], N["b"]], N["b"]: [N["c"]], N["x"]: [N["y"]], N["p"]: [N["q"]]}
+    kept, joins = _TreeRoundLayout._join(roots, kids, {N["x"]._id})
+    self.assertEqual(kept, [N["x"], N["r"], N["p"]])
+    self.assertEqual([(a, b) for a, b, _ in joins], [(N["y"], N["z"])])
+    # the top tree first, though smaller: t (a top) has u, related to the root of the big tree x
+    T = {c: StandInNode(c) for c in "tu"}
+    kids = {N["x"]: [N["y"], N["a"], N["b"]], T["t"]: [T["u"]]}
+    StandInRelation(N["x"], T["u"])
+    kept, joins = _TreeRoundLayout._join([N["x"], T["t"]], kids, set())
+    self.assertEqual(kept, [T["t"]])
+    self.assertEqual([(a, b) for a, b, _ in joins], [(T["u"], N["x"])])
+    # laid out radially, joined: x out beyond c, along the way out from the middle through c
+    kids = {N["r"]: [N["a"], N["b"]], N["b"]: [N["c"]], N["x"]: [N["y"]], N["p"]: [N["q"]]}
+    kept, _ = _TreeRoundLayout._join(roots, kids, set())
+    pos, _ = radialPositions(kept, kids, {n: (60, 30) for n in N.values()}, spacing=10)
+    angle = lambda n: math.atan2(pos[n][1], pos[n][0])
+    self.assertAlmostEqual(angle(N["x"]), angle(N["c"]))
+    self.assertGreater(math.hypot(*pos[N["x"]]), math.hypot(*pos[N["c"]]))
 
   def test0800hubForest(self):
     # two stars (h1: a b c; h2: d e f), their hubs related; x and y related only to each other; z to nothing
