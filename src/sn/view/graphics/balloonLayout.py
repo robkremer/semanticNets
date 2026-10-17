@@ -78,6 +78,10 @@ PARENT_GAP = math.pi / 2
 '''The wedge (radians) a balloon's node keeps clear of its children, toward
 its parent: where the relation from its parent comes in.'''
 
+RADIAL_SPREAD = math.pi
+'''The widest a node's children's wedges may be, side by side, in the radial layout
+(see *radialPositions()*): the circles beyond it are moved out until they fit.'''
+
 ROW_LENGTH = 1600.0
 '''The longest a row of balloons (or radial trees, or groups of hubs) is,
 unless one's longer: they're put one after another along it, then in another
@@ -308,12 +312,19 @@ def radialPositions(roots:list[K], children:Mapping[K, Sequence[K]], sizes:Mappi
                     spacing:float=20.0, edgeRoom:Optional[Mapping[K, float]]=None) -> tuple[dict[K, tuple[float, float]], list[tuple[K, list[K], float]]]:
   '''
   Lay out some trees radially, each on its own: its root in the middle, each
-  depth on a circle round it, and each node's subtree in a wedge (its
-  children dividing it, from the top, clockwise), as wide as its leaves need
-  (their circles, *spacing* apart), each node in the middle of its own. Each
-  circle's as small as it can be with no node on another: far enough out
+  depth on a circle round it, and each node's subtree in a wedge just as wide
+  as it needs -- the most, at any depth, that its nodes there take up (their
+  circles, *spacing* apart), seen from the middle -- each node in the middle
+  of its own, its children's wedges side by side (in order, clockwise) and
+  centred on it, sharing out what's spare in its wedge -- but over no more
+  than *RADIAL_SPREAD*: so each subtree stays close to the line out from the
+  middle through its root, however big it is, rather than being spread
+  round all the room its parent has. (The root's children go all round,
+  from the top.) Each circle's as small as it can be: far enough out
   from the one before for the nodes on both (and *edgeRoom*), and for each
-  node on it to fit in its wedge.
+  node's children to fit in front of it (in the angle, seen from the middle,
+  between the tangents to its circle where they meet the next) -- and all of
+  them further out, in proportion, if the wedges wouldn't otherwise fit round.
 
   :param roots: The trees' roots.
   :type roots: list[K]
@@ -343,17 +354,6 @@ def radialPositions(roots:list[K], children:Mapping[K, Sequence[K]], sizes:Mappi
       for k in kids[n]:
         depth[k] = depth[n] + 1
         order.append(k)
-    weight:dict[K, float] = {}
-    for n in reversed(order):
-      weight[n] = max(2 * radius(sizes[n]) + spacing, sum(weight[k] for k in kids[n]))
-    span, start, angle = {root: 2 * math.pi}, {root: -math.pi / 2}, {root: 0.0}
-    for n in order:
-      total = sum(weight[k] for k in kids[n])
-      s = start[n]
-      for k in kids[n]:
-        span[k] = span[n] * weight[k] / total
-        start[k], angle[k] = s, s + span[k] / 2
-        s += span[k]
     deepest = max(depth.values())
     maxR, maxRoom = [0.0] * (deepest + 1), [0.0] * (deepest + 1)
     for n, d in depth.items():
@@ -362,11 +362,46 @@ def radialPositions(roots:list[K], children:Mapping[K, Sequence[K]], sizes:Mappi
         maxRoom[d] = max(maxRoom[d], room(n))
     rho = [0.0]
     for d in range(1, deepest + 1):
-      need = rho[-1] + maxR[d - 1] + maxR[d] + maxRoom[d]
-      for n in order:
-        if depth[n] == d: # (its circle in its wedge)
-          need = max(need, (radius(sizes[n]) + spacing / 2) / math.sin(min(span[n], math.pi) / 2))
-      rho.append(need)
+      rho.append(max(rho[-1] + maxR[d - 1] + maxR[d] + maxRoom[d], maxR[d] + spacing / 2))
+    # (the angle each node's circle takes up, seen from the middle; each subtree's: the most at any depth)
+    own = lambda n: 2 * math.asin(min(1.0, (radius(sizes[n]) + spacing / 2) / rho[depth[n]]))
+    def needs() -> dict[K, float]:
+      need:dict[K, float] = {}
+      for n in reversed(order):
+        need[n] = max(own(n) if depth[n] else 0.0, sum(need[k] for k in kids[n]))
+      return need
+    atDepth:list[list[K]] = [[] for _ in range(deepest + 1)]
+    for n in order:
+      if kids[n]:
+        atDepth[depth[n]].append(n)
+    need = needs()
+    for _ in range(1000):
+      if need[root] > 2 * math.pi * (1 + 1e-9): # (too much for all round: every circle further out -- the angles shrink at least as much)
+        f = need[root] / (2 * math.pi) * (1 + 1e-6)
+        rho = [r * f for r in rho]
+        need = needs()
+        continue
+      # (each node's children in front of it: within the angle seen from the middle where the next circle is
+      # beyond the tangents to its own circle -- else the next circle out, and those beyond it, further out)
+      grow = next((d for d in range(1, deepest) for n in atDepth[d]
+                   if sum(need[k] for k in kids[n]) > RADIAL_SPREAD * (1 + 1e-9)), None)
+      if grow is None:
+        break
+      step = 0.1 * rho[grow + 1]
+      rho = rho[:grow + 1] + [r + step for r in rho[grow + 1:]]
+      need = needs()
+    angle, span = {root: 0.0}, {root: 2 * math.pi}
+    for n in order: # (each node's children side by side, centred on it, sharing out what's spare in its wedge)
+      if not kids[n]:
+        continue
+      total = sum(need[k] for k in kids[n])
+      room = span[n] if n is root else max(total, min(span[n], RADIAL_SPREAD))
+      extra = (room - total) / len(kids[n])
+      s = -math.pi / 2 if n is root else angle[n] - room / 2 # (the root's: all round, from the top)
+      for k in kids[n]:
+        span[k] = need[k] + extra
+        angle[k] = s + span[k] / 2
+        s += span[k]
     for n in order:
       p = rho[depth[n]]
       ret[n] = (p * math.cos(angle[n]), p * math.sin(angle[n]))

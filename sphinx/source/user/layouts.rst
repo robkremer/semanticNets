@@ -104,7 +104,8 @@ cycle is left out of the trees (it's still drawn).
    :width: 360px
 
    **radial**, by *isa*: the root in the middle, and each level further out,
-   each subtree in its own wedge.
+   each subtree in its own wedge, out beyond its parent -- however big it is,
+   it keeps to its parent's side, rather than spreading round the root.
 
 Hubs
 ~~~~

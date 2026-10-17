@@ -131,6 +131,23 @@ class Test(unittest.TestCase):
       self.assertEqual(len(pos), n)
       self.assertEqual(overlapping(boxes(pos, sizes)), [], kids)
 
+  def test0750radialSubtreesFollowTheirRadialLine(self):
+    # a big subtree (a, with 30 children) beside a small one: a's children stay out beyond a,
+    # not spread round all the room a's weight would give it
+    sizes = {n: (60, 30) for n in ["r", "a", "b", *range(30)]}
+    kids = {"r": ["a", "b"], "a": list(range(30))}
+    pos, _ = radialPositions(["r"], kids, sizes, spacing=10)
+    turn = lambda p, q: abs((math.atan2(p[1], p[0]) - math.atan2(q[1], q[0]) + math.pi) % (2 * math.pi) - math.pi)
+    for k in range(30):
+      self.assertLess(turn(pos[k], pos["a"]), math.pi / 2)              # on a's side of the middle
+    self.assertLess(turn(pos[0], pos["a"]) - turn(pos[29], pos["a"]), 1e-9) # (centred on a)
+    self.assertEqual(overlapping(boxes(pos, sizes)), [])
+    # a chain: each node straight out beyond its parent
+    kids = {"r": ["a", "b"], "a": ["c"], "c": ["d"]}
+    pos, _ = radialPositions(["r"], kids, self.sizes, spacing=10)
+    for k in "cd":
+      self.assertAlmostEqual(turn(pos[k], pos["a"]), 0.0)
+
   def test0800hubForest(self):
     # two stars (h1: a b c; h2: d e f), their hubs related; x and y related only to each other; z to nothing
     edges = [("h1", "a"), ("h1", "b"), ("h1", "c"), ("h2", "d"), ("h2", "e"), ("h2", "f"), ("h1", "h2"),

@@ -184,7 +184,11 @@ function:
 
 :py:func:`~sn.view.graphics.balloonLayout.radialPositions`
   Each root in the middle, each depth on a circle round it, each subtree in
-  its own wedge.
+  its own wedge: as wide as it needs at its widest depth, centred on its
+  parent, and sharing what's spare of its parent's wedge, but no wider (with
+  its siblings) than ``RADIAL_SPREAD`` (a half-plane) -- the circles beyond
+  are moved out until they fit. So a big subtree stays out beyond its
+  parent, instead of being spread round all the room its weight would get.
 
 :py:func:`~sn.view.graphics.balloonLayout.hubForest` and :py:func:`~sn.view.graphics.balloonLayout.hubPositions`
   For a graph that isn't a tree: in each connected group, the nodes with at
