@@ -222,14 +222,27 @@ def fadeColor(canvas, color:str, amount:float=INFERRED_FADE) -> str:
   :type amount: float
   :returns: The faded colour, as "#rrggbb" (*color* if it can't be read).
   :rtype: str
+
+  Remembered on *canvas* for its background at the time (read each call, so
+  a changed background -- eg: the *gui/backgroundColor* preference on a new
+  canvas, or *configure(background=...)* -- gets its own): an inferred
+  object's colours are asked for often (see *Cache.__getitem__()*), and the
+  two *winfo_rgb()* calls are most of the cost.
   '''
   try:
+    background = canvas.cget("background")
+    memo = getattr(canvas, "__dict__", {}).setdefault("_fadedColors", {})
+    key = (color, background, amount)
+    ret = memo.get(key)
+    if ret is not None:
+      return ret
     fg = canvas.winfo_rgb(color)
-    bg = canvas.winfo_rgb(canvas.cget("background"))
+    bg = canvas.winfo_rgb(background)
   except Exception:
     return color
   mix = [int((f * amount + b * (1 - amount)) / 257) for f, b in zip(fg, bg)]
-  return "#{:02x}{:02x}{:02x}".format(*mix)
+  ret = memo[key] = "#{:02x}{:02x}{:02x}".format(*mix)
+  return ret
 
 class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReportingObject):
   '''
