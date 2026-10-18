@@ -36,9 +36,7 @@ TITLE = "XML Reader"
 def askForFile(folder:str|None=None) -> str|None:
   '''
   :param folder: The folder to start in, if any.
-  :type folder: str | None
   :returns: The XML file the user chose, or None if they cancelled.
-  :rtype: str | None
   '''
   # (no parent: the editor's main window is hidden -- on macOS, a dialog given
   # it as a parent is shown as a sheet in that small, otherwise hidden window)
@@ -50,10 +48,8 @@ def askForFile(folder:str|None=None) -> str|None:
 def expandLevels(model:Model) -> int:
   '''
   :param model: A model made by *buildModel()*.
-  :type model: Model
   :returns: How many levels to expand its types by (see *showTypesAndExpand()*):
     fewer for a bigger model, as showing it takes longer.
-  :rtype: int
   '''
   elements = sum(1 for o in model.values() if isinstance(o, Node) and o.isIndividual())
   return 4 if elements <= 100 else 3 if elements <= 500 else 2
@@ -81,9 +77,7 @@ def showTypesAndExpand(view:SNGView, model:Model) -> None:
   isn't where it ends up, and placing things in a crowded view takes a long time.
 
   :param view: A view of *model*.
-  :type view: SNGView
   :param model: A model made by *buildModel()*.
-  :type model: Model
   '''
   types = [o for o in model.values() if isinstance(o, Node) and not o.isIndividual() and model.NODE in o.getParents()]
   levels = expandLevels(model)
@@ -108,9 +102,7 @@ def showTypesAndExpand(view:SNGView, model:Model) -> None:
 def visibleNodes(view:SNGView) -> list[VNode]:
   '''
   :param view: A view.
-  :type view: SNGView
   :returns: The nodes in it, in order of their types' and then their own names.
-  :rtype: list[VNode]
   '''
   def key(vo:VNode) -> tuple[str, str]:
     mo = vo.modelObject
@@ -125,7 +117,6 @@ def spreadOut(view:SNGView) -> None:
   layout with nothing on top of anything else.
 
   :param view: A view.
-  :type view: SNGView
   '''
   nodes = visibleNodes(view)
   if not nodes:
@@ -144,9 +135,7 @@ def separateNodes(view:SNGView) -> int:
   layout pulls related nodes together, and can leave some on top of others.
 
   :param view: A view.
-  :type view: SNGView
   :returns: How many were moved.
-  :rtype: int
   '''
   if view.localLayout is None:
     return 0
@@ -165,9 +154,7 @@ def startLayout(view:SNGView, whenSettled:Callable[[], None]|None=None) -> None:
   *whenSettled* when it has settled and stopped.
 
   :param view: A view.
-  :type view: SNGView
   :param whenSettled: What to do then: eg: save the view.
-  :type whenSettled: Callable[[], None] | None
   '''
   layout = view.animationLayout()
   layout()
@@ -183,15 +170,11 @@ def convert(app:Application, xmlPath:str, folder:str|None=None) -> bool:
   Make the model and view of *xmlPath*, save them, and open the view.
 
   :param app: The editor.
-  :type app: Application
   :param xmlPath: The XML file.
-  :type xmlPath: str
   :param folder: Where to make them, if not beside it (see *reader.outputPaths()*):
     eg: for the plugin's own examples, as the plugin's folder is replaced when
     a newer version's installed (see *sn.plugins.installBundled()*).
-  :type folder: str | None
   :returns: Whether it did.
-  :rtype: bool
   '''
   modelPath, viewPath = outputPaths(xmlPath)
   if folder is not None:

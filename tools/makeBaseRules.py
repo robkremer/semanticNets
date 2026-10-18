@@ -43,7 +43,6 @@ def setUp() -> str:
   imported, as that reads the preferences from there (and logs there).
 
   :returns: The folder.
-  :rtype: str
   '''
   folder = os.path.realpath(tempfile.mkdtemp(prefix="snBaseRules-")) # (resolved: on macOS, /var is /private/var)
   os.environ["HOME"] = folder
@@ -55,7 +54,6 @@ def setUp() -> str:
 def makeBaseRules(path:str) -> None:
   '''
   :param path: Where to save the model.
-  :type path: str
   '''
   from sn.model.model import Model, Node, Relation
   import sn.model.reasoner
@@ -138,7 +136,6 @@ def install(folder:str) -> None:
   so nothing of this temporary folder is left in it.
 
   :param folder: Where it was made.
-  :type folder: str
   '''
   from pathlib import Path
   from sn.model.reasoner import BASE_RULES_PLACEHOLDER

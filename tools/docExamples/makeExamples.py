@@ -37,7 +37,6 @@ def setUp() -> str:
   imported, as that reads the preferences from there (and logs there).
 
   :returns: The folder.
-  :rtype: str
   '''
   folder = os.path.realpath(tempfile.mkdtemp(prefix="snExamples-")) # (resolved: on macOS, /var is /private/var)
   os.environ["HOME"] = folder
@@ -59,7 +58,6 @@ def makeFamily(folder:str) -> None:
   bob only by inference).
 
   :param folder: Where to save it (as family.snm).
-  :type folder: str
   '''
   from sn.model.model import Model, Node, Relation
   m = Model(os.path.join(folder, "family.snm"))
@@ -134,7 +132,6 @@ def makeAnimals(folder:str) -> None:
   on mammal and bird, colours on each species: the individuals inherit both.
 
   :param folder: Where to save it (as animals.snm).
-  :type folder: str
   '''
   from sn.model.model import Model, Node
   m = Model(os.path.join(folder, "animals.snm"))
@@ -165,7 +162,6 @@ def layOutFamily(app, folder:str, done) -> None:
 
   :param app: The editor.
   :param folder: Where the model is.
-  :type folder: str
   :param done: Called when it's saved.
   '''
   win = app.openWindow(os.path.join(folder, "family.snm"))
@@ -220,7 +216,6 @@ def layOutAnimals(app, folder:str, done) -> None:
 
   :param app: The editor.
   :param folder: Where the model is.
-  :type folder: str
   :param done: Called when it's saved.
   '''
   from sn.view.graphics.animatedLayouts import isEligible
@@ -259,7 +254,6 @@ def install(folder:str) -> None:
   neutralized -- so nothing of this temporary folder is left in them.
 
   :param folder: Where they were made.
-  :type folder: str
   '''
   import sn
   for f in ("family.snm", "family.snv", "animals.snm", "animals.snv"):

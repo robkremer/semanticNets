@@ -19,9 +19,7 @@ KINDS = ("novel", "textbook", "poetry", "biography")
 def makeLibrary(n:int) -> str:
   '''
   :param n: How many books.
-  :type n: int
   :returns: The library, as XML.
-  :rtype: str
   '''
   lines = ['<?xml version="1.0"?>', "<library>"]
   for i in range(n):

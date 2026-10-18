@@ -70,11 +70,9 @@ class Options:
 def packagesAndModules(model:Model) -> tuple[list[Node], list[Relation], list[Relation]]:
   '''
   :param model: A model made by *parser.buildModel()*.
-  :type model: Model
   :returns: Its packages and modules; the relations between them that are
     kinds of *includes* (contains-module and has-subpackage); and the imports
     relations between them.
-  :rtype: tuple[list[Node], list[Relation], list[Relation]]
   '''
   T = ontologyTypes(model)
   mine = [o for o in model.values() if o.model is model and o.isIndividual()]
@@ -102,11 +100,8 @@ def showPackages(view:SNGView, model:Model, showImports:str="given") -> None:
   the tree layout places everything.
 
   :param view: A view of *model*.
-  :type view: SNGView
   :param model: A model made by *parser.buildModel()*.
-  :type model: Model
   :param showImports: Which imports to show: "none", "given" or "all".
-  :type showImports: str
   '''
   nodes, includes, imports = packagesAndModules(model)
   localLayout, view.localLayout = view.localLayout, None #type: ignore[assignment] # (None: none, for now)
@@ -131,17 +126,11 @@ def convert(app:Application, paths:list[str], options:Options, parent:tk.Misc|No
   as far as *options* says), save them, and open the view.
 
   :param app: The editor.
-  :type app: Application
   :param paths: The files (and folders: see *parser.pythonFiles()*).
-  :type paths: list[str]
   :param options: What to analyse, and show.
-  :type options: Options
   :param parent: The window any messages are about (eg: the dialog), if any.
-  :type parent: tk.Misc | None
   :param progress: Told about each module as it's analysed, if given (see *parser.readModules()*).
-  :type progress: Callable[[str], None] | None
   :returns: Whether it did.
-  :rtype: bool
   '''
   # (no parent, if none's given: the editor's main window is hidden -- on macOS,
   # a dialog given it as a parent is shown as a sheet in that small, otherwise hidden window)
@@ -192,13 +181,9 @@ class ParserDialog(tk.Toplevel):
                onClose:Callable[[], None]|None=None):
     '''
     :param app: The editor.
-    :type app: Application
     :param paths: The files and folders to start with.
-    :type paths: list[str]
     :param options: The options to start with.
-    :type options: Options
     :param onClose: Called when it's closed: by "Go" (when the view's opened) or "Cancel".
-    :type onClose: Callable[[], None] | None
     '''
     super().__init__(app)
     ownDialog(self, app) # (over the editor's window, if one's on screen -- not full screen: see ownDialog())
@@ -265,7 +250,6 @@ class ParserDialog(tk.Toplevel):
   def add(self, paths:list[str]) -> None:
     '''
     :param paths: Files or folders to add to the list (each once).
-    :type paths: list[str]
     '''
     for p in paths:
       p = os.path.abspath(p)
@@ -303,7 +287,6 @@ class ParserDialog(tk.Toplevel):
   def options(self) -> Options|None:
     '''
     :returns: The options chosen, or None (having said why) if the depth isn't a number from 0 to *MAX_DEPTH*.
-    :rtype: Options | None
     '''
     try:
       depth = int(self.depth.get())

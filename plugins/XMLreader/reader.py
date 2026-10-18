@@ -70,7 +70,6 @@ class TypeLooks:
   def __init__(self, seed:str):
     '''
     :param seed: What the choices depend on: eg: the XML file's name.
-    :type seed: str
     '''
     self.random = random.Random(seed)
     self.hue = self.random.random()
@@ -88,7 +87,6 @@ class TypeLooks:
     hue, and a shape.
 
     :param t: A type.
-    :type t: Node
     '''
     self.hue += self.GOLDEN
     self.hues[id(t)] = self.hue
@@ -104,9 +102,7 @@ class TypeLooks:
     with a border to match. Its shape is *parent*'s (inherited).
 
     :param sub: The subtype.
-    :type sub: Node
     :param parent: Its type.
-    :type parent: Node
     '''
     hue = self.hues.get(id(parent))
     if hue is None: # (not one of ours)
@@ -119,10 +115,8 @@ class TypeLooks:
 def outputPaths(xmlPath:str) -> tuple[str, str]:
   '''
   :param xmlPath: The XML file, eg: "/a/b/books.xml".
-  :type xmlPath: str
   :returns: The model and view files made from it: in the same folder, named
     "<name>_<ext>": eg: "/a/b/books_xml.snm" and "/a/b/books_xml.snv".
-  :rtype: tuple[str, str]
   '''
   folder, file = os.path.split(os.path.abspath(xmlPath))
   name, ext = os.path.splitext(file)
@@ -132,19 +126,15 @@ def outputPaths(xmlPath:str) -> tuple[str, str]:
 def localName(name:str) -> str:
   '''
   :param name: A tag or attribute name, perhaps with a namespace (eg: "{http://...}book").
-  :type name: str
   :returns: The name without its namespace (eg: "book").
-  :rtype: str
   '''
   return name.rsplit("}", 1)[-1]
 
 def attributeKey(name:str) -> str:
   '''
   :param name: An XML attribute's name (without a namespace).
-  :type name: str
   :returns: The attribute's name in the model: *name* -- or "xml/<name>" if
     Semantic Nets uses *name* for something else (see *RESERVED*).
-  :rtype: str
   '''
   return f"xml/{name}" if name in RESERVED or name.startswith(RESERVED_PREFIXES) else name
 
@@ -154,11 +144,8 @@ def buildModel(xmlPath:str, modelPath:str) -> Model:
   a new model file *modelPath* (not saved: call its *save()*).
 
   :param xmlPath: The XML file.
-  :type xmlPath: str
   :param modelPath: The model's file: it mustn't exist yet.
-  :type modelPath: str
   :returns: The model.
-  :rtype: Model
   :raises xml.etree.ElementTree.ParseError: if the file isn't well-formed XML.
   '''
   root = ET.parse(xmlPath).getroot() # (parse first: if it isn't XML, nothing is made)

@@ -150,11 +150,9 @@ class SourceModule:
 def pythonFiles(paths:list[str]) -> list[str]:
   '''
   :param paths: Python files and folders.
-  :type paths: list[str]
   :returns: The files, and the .py files in (and below) the folders -- but not
     in hidden folders, or those in *SKIP_FOLDERS* -- each once, as absolute
     paths, in order.
-  :rtype: list[str]
   '''
   ret:list[str] = []
   def add(p:str) -> None:
@@ -175,11 +173,9 @@ def pythonFiles(paths:list[str]) -> list[str]:
 def packageFolders(path:str) -> list[str]:
   '''
   :param path: A Python file.
-  :type path: str
   :returns: The folders of the packages it's in (those with an __init__.py),
     outermost first: its own folder, and those above it, as far up as they're
     packages.
-  :rtype: list[str]
   '''
   ret:list[str] = []
   folder = os.path.dirname(path)
@@ -194,10 +190,8 @@ def packageFolders(path:str) -> list[str]:
 def readModule(path:str) -> SourceModule:
   '''
   :param path: One of the Python files given.
-  :type path: str
   :returns: It, parsed (or with the reason it couldn't be), named by the
     packages it's in (see *packageFolders()*).
-  :rtype: SourceModule
   '''
   packages = packageFolders(path)
   parts = [os.path.basename(p) for p in packages]
@@ -211,10 +205,8 @@ def readModule(path:str) -> SourceModule:
 def sourceRoot(mod:SourceModule) -> str:
   '''
   :param mod: One of the files given (see *readModule()*).
-  :type mod: SourceModule
   :returns: The folder its absolute imports are from: the one its outermost
     package is in (or, if it isn't in one, its own).
-  :rtype: str
   '''
   return os.path.dirname(mod.packages[0] if mod.packages else mod.path or "")
 
@@ -234,7 +226,6 @@ class ModuleFinder:
   def __init__(self, roots:list[str]):
     '''
     :param roots: The folders to look in first.
-    :type roots: list[str]
     '''
     self.roots:list[str] = []
     for r in roots + [p for p in sys.path if p]:
@@ -251,10 +242,8 @@ class ModuleFinder:
   def origin(self, path:str) -> str:
     '''
     :param path: A module's file or folder.
-    :type path: str
     :returns: Where it's from (see *ORIGINS*): the standard library, an
       installed package, or the project.
-    :rtype: str
     '''
     p = os.path.realpath(path)
     if _under(p, self.installed): # (first: site-packages is in the standard library's folder)
@@ -266,9 +255,7 @@ class ModuleFinder:
   def find(self, name:str) -> SourceModule|None:
     '''
     :param name: A module's dotted name: eg: "a.b.c".
-    :type name: str
     :returns: The module (not analysed), or None if there isn't one.
-    :rtype: SourceModule | None
     '''
     if name in self.found:
       return self.found[name]
@@ -304,11 +291,9 @@ class ModuleFinder:
   def resolve(self, name:str) -> SourceModule:
     '''
     :param name: A dotted name an import names: eg: "a.b.c".
-    :type name: str
     :returns: The module it imports: the longest of *name*, and its prefixes
       (eg: "a.b", "a"), that's a module -- or, if none is, a module (not
       found) named by its first part (eg: "a").
-    :rtype: SourceModule
     '''
     parts = name.split(".")
     for i in range(len(parts), 0, -1):
@@ -323,9 +308,7 @@ class ModuleFinder:
 def isMainBlock(stmt:ast.stmt) -> bool:
   '''
   :param stmt: A module's top-level statement.
-  :type stmt: ast.stmt
   :returns: Whether it's ``if __name__ == "__main__":`` (either way round).
-  :rtype: bool
   '''
   if not isinstance(stmt, ast.If) or not isinstance(stmt.test, ast.Compare) or len(stmt.test.ops) != 1 \
      or not isinstance(stmt.test.ops[0], ast.Eq):
@@ -337,15 +320,11 @@ def isMainBlock(stmt:ast.stmt) -> bool:
 def importBase(mod:SourceModule, level:int, module:str|None) -> str|None:
   '''
   :param mod: The module with the import.
-  :type mod: SourceModule
   :param level: The import's level: 0 for an absolute import; the number of
     leading dots of a relative one.
-  :type level: int
   :param module: The module named after them, if any (eg: "b" in "from ..b import c").
-  :type module: str | None
   :returns: The dotted name the import is from, or None if it goes above the
     outermost package.
-  :rtype: str | None
   '''
   if level == 0:
     return module
@@ -359,16 +338,12 @@ def importedModules(mod:SourceModule, find:Callable[[str], SourceModule|None],
                     resolve:Callable[[str], SourceModule]) -> list[SourceModule]:
   '''
   :param mod: A parsed module.
-  :type mod: SourceModule
   :param find: Finds a module by its dotted name, if there is one (eg: *ModuleFinder.find()*).
-  :type find: Callable[[str], SourceModule | None]
   :param resolve: The module an import of a dotted name imports (eg: *ModuleFinder.resolve()*).
-  :type resolve: Callable[[str], SourceModule]
   :returns: The modules it imports (anywhere in it), each once, in order --
     not itself, nor those in *SKIP_IMPORTS*. For "from a.b import c", that's
     the module a.b.c if there is one (c is a module in the package a.b),
     otherwise a.b.
-  :rtype: list[SourceModule]
   '''
   if mod.tree is None:
     return []
@@ -405,18 +380,13 @@ def readModules(paths:list[str], depth:int=0, libraries:bool=False,
   then on *sys.path*.
 
   :param paths: Python files and folders (see *pythonFiles()*).
-  :type paths: list[str]
   :param depth: How many imports out from the files to analyse: 0 for just the files.
-  :type depth: int
   :param libraries: Whether to analyse modules in the standard library and
     installed packages too.
-  :type libraries: bool
   :param progress: Told about each module as it's analysed, if given: eg: to show progress.
-  :type progress: Callable[[str], None] | None
   :returns: The modules: the files first (if two have the same dotted name --
     eg: two main.py's in different folders -- only the first is kept), and
     then the others, nearest first; with their imports resolved.
-  :rtype: list[SourceModule]
   '''
   modules:dict[str, SourceModule] = {}
   for p in pythonFiles(paths):
@@ -457,9 +427,7 @@ def guessMain(modules:list[SourceModule]) -> SourceModule:
   than one of its sub-packages'); and, other things being equal, the first.
 
   :param modules: Modules (see *readModules()*), with at least one file given.
-  :type modules: list[SourceModule]
   :returns: The best guess.
-  :rtype: SourceModule
   '''
   given = [m for m in modules if m.depth == 0]
   names = {m.name for m in given}
@@ -484,10 +452,8 @@ def guessMain(modules:list[SourceModule]) -> SourceModule:
 def modelName(mod:SourceModule) -> str:
   '''
   :param mod: A program's main module (see *guessMain()*).
-  :type mod: SourceModule
   :returns: A name for its model: its module's name -- or, for a __main__.py
     or __init__.py, its package's.
-  :rtype: str
   '''
   if (mod.isPackage or mod.shortName == "__main__") and mod.packages:
     return os.path.basename(mod.packages[-1])
@@ -496,11 +462,9 @@ def modelName(mod:SourceModule) -> str:
 def outputPaths(mod:SourceModule) -> tuple[str, str]:
   '''
   :param mod: A program's main module (see *guessMain()*).
-  :type mod: SourceModule
   :returns: The model and view files to make for it: named by *modelName()*,
     with "_py" (eg: "reader_py.snm" and "reader_py.snv"), next to its file --
     or, for a __main__.py or __init__.py, next to its package's folder.
-  :rtype: tuple[str, str]
   '''
   name = modelName(mod)
   if (mod.isPackage or mod.shortName == "__main__") and mod.packages:
@@ -513,12 +477,9 @@ def outputPaths(mod:SourceModule) -> tuple[str, str]:
 def docName(doc:str, owner:str) -> str:
   '''
   :param doc: A doc string.
-  :type doc: str
   :param owner: The name of what it's the doc string of.
-  :type owner: str
   :returns: Its first (non-blank) line, cut down to *DOC_NAME_LENGTH* -- or,
     if that's a field (eg: ":param x: ..."), "<owner> doc".
-  :rtype: str
   '''
   line = next((l.strip() for l in doc.splitlines() if l.strip()), "")
   if line.startswith(":") or line.startswith(".."):
@@ -528,9 +489,7 @@ def docName(doc:str, owner:str) -> str:
 def ontologyTypes(model:Model) -> dict[str, GraphObject]:
   '''
   :param model: A model with *ONTOLOGY* as a super-model.
-  :type model: Model
   :returns: The ontology's types, by name.
-  :rtype: dict[str, GraphObject]
   '''
   onto = next(db for db in model.superDBs if isinstance(db, Model) and db.url.startswith("file:")
               and os.path.realpath(unquote(urlparse(db.url).path)) == os.path.realpath(ONTOLOGY))
@@ -542,11 +501,8 @@ def buildModel(modelPath:str, modules:list[SourceModule]) -> Model:
   file *modelPath* (not saved: call its *save()*).
 
   :param modelPath: The model's file: it mustn't exist yet.
-  :type modelPath: str
   :param modules: The modules (see *readModules()*).
-  :type modules: list[SourceModule]
   :returns: The model.
-  :rtype: Model
   '''
   m = Model(modelPath)
   m.setSuperModels([ONTOLOGY])
@@ -641,7 +597,6 @@ class ClassIndex:
   def __init__(self, modules:list[SourceModule]):
     '''
     :param modules: The analysed modules, with their imports resolved.
-    :type modules: list[SourceModule]
     '''
     self.classes:dict[str, ast.ClassDef] = {}       # qualified name -> the class
     self.module:dict[str, SourceModule] = {}        # qualified name -> the module it's in
@@ -673,14 +628,10 @@ class ClassIndex:
   def resolve(self, mod:SourceModule, prefix:str, base:ast.expr) -> str|None:
     '''
     :param mod: The module a class is in.
-    :type mod: SourceModule
     :param prefix: The qualified name of what the class is in (its module, or
       a class it's nested in).
-    :type prefix: str
     :param base: One of its bases, as written.
-    :type base: ast.expr
     :returns: The qualified name of that base, if it's one of the analysed classes.
-    :rtype: str | None
     '''
     try:
       written = ast.unparse(base)
@@ -696,9 +647,7 @@ class ClassIndex:
   def bases(self, qualified:str) -> list[str]:
     '''
     :param qualified: One of the analysed classes' qualified name.
-    :type qualified: str
     :returns: The qualified names of those of its bases that are analysed classes.
-    :rtype: list[str]
     '''
     c, mod = self.classes[qualified], self.module[qualified]
     prefix = qualified.rsplit(".", 1)[0]
@@ -707,10 +656,8 @@ class ClassIndex:
   def inheritedMethods(self, qualified:str, _seen:set[str]|None=None) -> set[str]:
     '''
     :param qualified: One of the analysed classes' qualified name.
-    :type qualified: str
     :returns: The names of the methods its bases (those among the analysed
       classes), and theirs, define.
-    :rtype: set[str]
     '''
     seen = _seen if _seen is not None else {qualified}
     ret:set[str] = set()
@@ -725,10 +672,8 @@ class ClassIndex:
 def decoratorNames(f:ast.FunctionDef|ast.AsyncFunctionDef) -> set[str]:
   '''
   :param f: A function.
-  :type f: ast.FunctionDef | ast.AsyncFunctionDef
   :returns: The last part of each of its decorators' names: eg: "abstractmethod"
     for @abc.abstractmethod, "setter" for @x.setter.
-  :rtype: set[str]
   '''
   ret:set[str] = set()
   for d in f.decorator_list:
@@ -745,11 +690,8 @@ PROPERTY_DECORATORS = {"property", "cached_property", "setter", "getter", "delet
 def methodKinds(s:ast.FunctionDef|ast.AsyncFunctionDef, inherited:set[str]) -> list[str]:
   '''
   :param s: A method.
-  :type s: ast.FunctionDef | ast.AsyncFunctionDef
   :param inherited: The names of the methods its class inherits (see *ClassIndex.inheritedMethods()*).
-  :type inherited: set[str]
   :returns: The kinds of method it is (see the module doc): *method* if none.
-  :rtype: list[str]
   '''
   decorators = decoratorNames(s)
   kinds = [k for k, applies in (("class-method", "classmethod" in decorators),
@@ -765,21 +707,15 @@ def classNode(mod:SourceModule, c:ast.ClassDef, prefix:str, node, relate, doc, c
   Make the node for a class, its methods and nested classes (see *buildModel()*).
 
   :param mod: The module it's in.
-  :type mod: SourceModule
   :param c: The class.
-  :type c: ast.ClassDef
   :param prefix: The qualified name of what it's in (its module, or a class).
-  :type prefix: str
   :param node: *buildModel()*'s node maker.
   :param relate: *buildModel()*'s relation maker.
   :param doc: *buildModel()*'s doc string maker.
   :param classes: The analysed classes.
-  :type classes: ClassIndex
   :param classNodes: The classes' nodes so far, by qualified name: this one's
     (and its nested classes') are added.
-  :type classNodes: dict[str, Node]
   :returns: Its node.
-  :rtype: Node
   '''
   q = f"{prefix}.{c.name}"
   cls = node(["class"], c.name, qualified_name=q, line=c.lineno,

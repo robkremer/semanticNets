@@ -83,10 +83,8 @@ class Location:
 def readSource(path:str) -> str:
   '''
   :param path: A Python file.
-  :type path: str
   :returns: Its text: decoded as Python would (its encoding declaration, if
     it has one), with its line ends made "\\n".
-  :rtype: str
   :raises OSError: If it can't be read.
   '''
   with open(path, "rb") as f:
@@ -95,9 +93,7 @@ def readSource(path:str) -> str:
 def chunkStart(node:ast.stmt) -> int:
   '''
   :param node: A class or function (or any statement).
-  :type node: ast.stmt
   :returns: Its first line: its first decorator's, if it has any.
-  :rtype: int
   '''
   decorators = getattr(node, "decorator_list", [])
   return min([node.lineno] + [d.lineno for d in decorators])
@@ -105,10 +101,8 @@ def chunkStart(node:ast.stmt) -> int:
 def sourceHash(lines:list[str]) -> str:
   '''
   :param lines: A chunk's lines.
-  :type lines: list[str]
   :returns: A short hash of them, the same whatever their indentation (eg: a
     function made a method) and trailing white space.
-  :rtype: str
   '''
   text = textwrap.dedent("\n".join(l.rstrip() for l in lines)).strip("\n")
   return hashlib.sha1(text.encode("utf-8")).hexdigest()[:HASH_LENGTH]
@@ -116,14 +110,11 @@ def sourceHash(lines:list[str]) -> str:
 def chunkAttrs(node:ast.stmt, lines:list[str]) -> dict[str, Any]:
   '''
   :param node: A class, function or ``__main__`` block, as parsed.
-  :type node: ast.stmt
   :param lines: Its file's lines.
-  :type lines: list[str]
   :returns: What its model node keeps to find it again (see *locate()*):
     "end-line"; ".signature-line", its ``def`` / ``class`` / ``if`` line as
     written; and ".source-hash" (see *sourceHash()*). (The keys starting with
     "." are hidden by the attribute editor.)
-  :rtype: dict[str, Any]
   '''
   start, end = chunkStart(node), node.end_lineno or node.lineno
   return {"end-line": end,
@@ -137,14 +128,10 @@ def _isMainBlock(stmt:ast.stmt) -> bool:
 def _byName(tree:ast.Module, names:list[str], near:int) -> ast.stmt|None:
   '''
   :param tree: A module.
-  :type tree: ast.Module
   :param names: A chunk's names, outermost first: eg: ["Class", "method"], or ["__main__"].
-  :type names: list[str]
   :param near: The line it was on: of several of the same name (eg: a
     property's getter and setter), the nearest is taken.
-  :type near: int
   :returns: The chunk, if there is one by that name.
-  :rtype: ast.stmt | None
   '''
   body:list[ast.stmt] = tree.body
   found:ast.stmt|None = None
@@ -164,13 +151,10 @@ def _byName(tree:ast.Module, names:list[str], near:int) -> ast.stmt|None:
 def _blockEnd(lines:list[str], line:int) -> int:
   '''
   :param lines: A file's lines.
-  :type lines: list[str]
   :param line: A ``def`` / ``class`` / ``if`` line (1-based).
-  :type line: int
   :returns: The last line of the block it starts, going by indentation: the
     last non-blank line before the next one indented no more than it (for
     when the file can't be parsed).
-  :rtype: int
   '''
   indent = len(lines[line - 1]) - len(lines[line - 1].lstrip())
   end = line
@@ -197,18 +181,12 @@ def locate(path:str, names:list[str], line:int=0, signature:str="", oldHash:str=
   Find a chunk in its file (see the module doc).
 
   :param path: Its file.
-  :type path: str
   :param names: Its names within its module, outermost first: eg: ["Class",
     "method"], or ["__main__"].
-  :type names: list[str]
   :param line: The line it was on (its "line"); 0 if not known.
-  :type line: int
   :param signature: Its first line, as it was (its ".signature-line").
-  :type signature: str
   :param oldHash: Its hash, as it was (its ".source-hash"; see *sourceHash()*).
-  :type oldHash: str
   :returns: Where it is now.
-  :rtype: Location
   '''
   try:
     text = readSource(path)
@@ -291,10 +269,8 @@ def moduleOf(node:Any) -> Any|None:
   '''
   :param node: A node of a model made by the parser: a class, function or
     ``__main__`` block (or a module).
-  :type node: Any
   :returns: The module (or package) it's in, following *DEFINES* relations
     back from it; None if there's none.
-  :rtype: Any | None
   '''
   seen:set[int] = set()
   while node is not None and id(node) not in seen:
@@ -322,11 +298,9 @@ def locateNode(node:Any) -> Location|None:
   Find the source of a node of a model made by the parser (see *locate()*).
 
   :param node: A class, function or ``__main__`` block's node.
-  :type node: Any
   :returns: Where it is now; None if it isn't one of those (eg: a module, or
     a type), or its module has no file. (A chunk in a package is in its
     __init__.py.)
-  :rtype: Location | None
   '''
   q = node.get("qualified-name", None)
   mod = moduleOf(node)

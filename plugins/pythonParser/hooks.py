@@ -34,11 +34,9 @@ RULE = "▔" * 18
 def fileOf(obj:Any) -> str|None:
   '''
   :param obj: A node of a model made by the parser.
-  :type obj: Any
   :returns: The Python file it's in (or is: a module's; a package's
     __init__.py), if it has one that's there; else None (eg: a type, or a
     built-in or compiled module).
-  :rtype: str | None
   '''
   try:
     if not obj.isIndividual():
