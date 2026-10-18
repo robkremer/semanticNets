@@ -61,6 +61,7 @@ Created on Apr 21, 2026
 # SOFTWARE.                                                                     #
 #################################################################################
 from __future__ import annotations
+from collections import deque
 from contextlib import contextmanager
 from util.persistence.pRef import PRObject, PRDb, PReference, PRDbContainer
 from util.persistence.serialize import InstantiationInfo, ParamInfo, PropertyInfo,\
@@ -806,9 +807,9 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     :rtype: list[tuple[Relation, GraphObject]]
     '''
     ret:list[tuple[Relation,GraphObject]] = []
-    todo:list[GraphObject] = [self]
+    todo:deque[GraphObject] = deque([self])
     while todo:
-      o = todo.pop(0)
+      o = todo.popleft()
       if o.id in seen:
         continue
       seen.add(o.id)
@@ -1209,12 +1210,14 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     :rtype: list[GraphObject]
     '''
     ret:list[GraphObject] = []
-    pending:list[GraphObject] = [self]
+    have:set[int] = set() # (ids of ret's)
+    pending:deque[GraphObject] = deque([self])
     while pending:
-      o = pending.pop(0)
-      if not getattr(o, "inferred", False) or any(o is r for r in ret):
+      o = pending.popleft()
+      if not getattr(o, "inferred", False) or id(o) in have:
         continue
       ret.append(o)
+      have.add(id(o))
       pending += [r for r, _ in o._getOutgoing(lambda r: isinstance(r, IsaIndividual) and r.inferred)]
       if isinstance(o, Relation):
         pending += [e for e in (o.localSrc, o.localDst) if e is not None]
