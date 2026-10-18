@@ -34,11 +34,11 @@ from sn import snPrefs
 from sn.model.model import Relation
 from functools import partial
 from typing import Optional, Callable, Any
-from util.utils import s_SHIFT, bindRightMouse, s_ALT, flattenPairs, s_CMD, normalizeRect
+from util.utils import s_SHIFT, bindRightMouse, s_ALT, flattenPairs, s_CMD, s_CTL, normalizeRect
 from sn.view.graphics.utils import eventEqual
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
-from sn.view.graphics.viewBase import KEY_ERASE, KEY_FIND, KEY_ZOOM_IN, KEY_ZOOM_FIT, KEY_ZOOM_NORMAL, KEY_REDO, KEY_COPY_IMAGE, KEY_REMOVE, KEY_VALIDATE, KEY_ZOOM_OUT, KEY_CLEAR_HIGHLIGHTS, KEY_COPY, KEY_PASTE, KEY_REPAINT, KEY_SELECT_ALL, KEY_CUT, KEY_UNDO
+from sn.view.graphics.viewBase import KEY_ERASE, KEY_FIND, KEY_ZOOM_IN, KEY_ZOOM_FIT, KEY_ZOOM_NORMAL, KEY_REDO, KEY_COPY_IMAGE, KEY_REMOVE, KEY_VALIDATE, KEY_ZOOM_OUT, KEY_CLEAR_HIGHLIGHTS, KEY_COPY, KEY_PASTE, KEY_REPAINT, KEY_SELECT_ALL, KEY_CUT, KEY_UNDO, VKEY_VALIDATE
 from collections import namedtuple
 from sn.view.graphics.viewBase import ViewBase
 from typing import TYPE_CHECKING
@@ -116,6 +116,37 @@ class InputMixin(ViewBase):
 
     # find objects by name
     self.canvas.bind(KEY_FIND[0], lambda _e: self.openSearchDialog())
+
+    # validate (debugging)
+    self.canvas.bind(KEY_VALIDATE[0], lambda _e: self.onValidateKey())
+    self.canvas.bind("<Option-KeyPress>", self.onOptionKey) # (Option-V by the key, whatever the layout types: see VKEY_VALIDATE)
+
+  def onOptionKey(self, event:tk.Event) -> str|None:
+    '''
+    An Option key press that no more particular binding took: Option-V (by its
+    virtual key code, which Tk on macOS puts in the top byte of *event.keycode*)
+    validates the view.
+
+    :param event:
+    :type event: tk.Event
+    :returns: "break" if it was Option-V.
+    :rtype: str | None
+    '''
+    state = int(event.state)
+    if (event.keycode >> 24) & 0xFF == VKEY_VALIDATE and not (s_CMD(state) or s_CTL(state) or s_SHIFT(state)):
+      return self.onValidateKey()
+    return None
+
+  def onValidateKey(self) -> str:
+    '''
+    Validate the view (and repaint it, if something's wrong), as the "validate"
+    menu item does.
+
+    :returns: "break"
+    :rtype: str
+    '''
+    self.validate(refresh=True)
+    return "break"
 
   def onEnter(self, _event:tk.Event) -> None:
     '''

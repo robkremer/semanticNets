@@ -309,6 +309,22 @@ class Test(unittest.TestCase):
     v.onMotion(self.event(x1, y1))
     self.assertEqual(v.validate(), 0) # (how many problems it found)
 
+  def test0950validateKey(self):
+    'Option-V validates: by the V key, as the keysym is whatever the layout makes of it (the keycodes are from real presses).'
+    from sn.view.graphics.viewBase import KEY_VALIDATE, KEY_PASTE
+    v = self.view
+    self.assertNotEqual(KEY_VALIDATE[0], KEY_PASTE[0])
+    self.assertTrue(v.canvas.bind(KEY_VALIDATE[0]))
+    self.assertTrue(v.canvas.bind("<Option-KeyPress>"))
+    calls = []
+    v.validate = lambda refresh=False: calls.append(refresh) or 0 # type: ignore[method-assign]
+    key = lambda keycode, state: SimpleNamespace(keycode=keycode, state=state, widget=v.canvas)
+    self.assertEqual(v.onOptionKey(key(0x98002c7, 0x10)), "break") # Option-V (ABC Extended: a caron)
+    self.assertEqual(calls, [True])
+    self.assertIsNone(v.onOptionKey(key(0x9c0030c, 0x11)))       # Shift-Option-V
+    self.assertIsNone(v.onOptionKey(key(0x88000b8, 0x10)))       # Option-C
+    self.assertEqual(calls, [True])
+
   def test1000replacingModel(self):
     'A model made afresh where one is open (eg: by a plugin): its window\'s closed and it\'s forgotten first, so what\'s made isn\'t added to it.'
     from util.persistence.pRef import PRDb
