@@ -63,7 +63,7 @@ from util.persistence.serialize import InstantiationInfo, ParamInfo, PropertyInf
 from util.commandParser import CompositeCommandMgr
 from util.persistence.pRef import PRObject, PRDb, PReference #, DeletedObjectError
 from util.observer import Observer, Subject
-from util.utils import removeDuplicates, tag_bindRightMouse, tag_unbindRightMouse, s_CMD, s_SHIFT, s_ALT,\
+from util.utils import tag_bindRightMouse, tag_unbindRightMouse, s_CMD, s_SHIFT, s_ALT,\
   pointInPoly, showExceptionDialog
 from util.tooltip import CreateToolTip
 from util.command import CommandWrapper
@@ -78,7 +78,7 @@ from util.errorReportingObject import ErrorReportingObject
 import sn
 from sn import snPrefs
 from sn.model import GraphObject, Relation
-from sn.model.model import UP_ARROW, IsaIndividual, Node
+from sn.model.model import UP_ARROW, IsaIndividual, Node, removeDuplicateObjects
 from sn.model import names
 from sn.model.constraints import WHERE, CONSTRAINTS, CONSTRAINTS_NOTE, splitWhere, mergeConstraints, ConstraintError
 from util.attribute import Attribute, VAR
@@ -2281,7 +2281,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         return False
       other = rel.localDst if rel.localSrc is mo else rel.localSrc
       return not (other is not None and self.view.isFiltered(other)) and filter(self, rel)
-    return removeDuplicates([r for r, _ in mo._getIncoming(filtr=ok)] + [r for r, _ in mo._getOutgoing(filtr=ok)])
+    return removeDuplicateObjects([r for r, _ in mo._getIncoming(filtr=ok)] + [r for r, _ in mo._getOutgoing(filtr=ok)])
 
   def expandByRelation(self) -> None:
     '''
