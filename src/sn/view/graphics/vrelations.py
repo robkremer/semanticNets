@@ -55,14 +55,7 @@ if TYPE_CHECKING:
 
 logger:sn.SNLogger = sn.getLogger(__name__)
   
-ROLE_VATTRIBUTES = {'vis/lineColor': 'black',
-                    'vis/fillColor': '',
-                    'vis/lineWidth': 1,
-                    'nearEndShape': '',
-                    'farEndShape': '',
-                    }
 
-    
 class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconnect()/_reconnect() take AGRelation's keep/kept as kwargs)
   '''
   Implements the visual representation of model *Relation*. The roles are taken

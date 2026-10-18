@@ -41,11 +41,6 @@ Visual Attributes
   - borderSmooth: [``bool``] **not implemented**
   - textColor: [color]
   - textModifiesBB: [``bool``]
-  - <role>.lineColor: [color] ``Relations`` only. **not implemented**
-  - <role>.fillColor: [color] ``Relations`` only. **not implemented**
-  - <role>.lineWidth: [``int``] ``Relations`` only. **not implemented**
-  - <role>.nearEndShape: [``str``] ``{ arrow[(<innerLen>,<outerLen>,<width>)] | circle[(radius)] }`` ``Relations`` only. **not implemented**
-  - <role>.farEndShape: [``str``] ``{ arrow[(<innerLen>,<outerLen>,<width>)] | circle[(radius)] }`` ``Relations`` only. **not implemented**
 
 ----------
 '''
@@ -2301,15 +2296,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         r.view.freshPaint()
         r.draw()
     self._detachedTypeEnds = []
-
-  def isHidable(self) -> bool:
-    '''
-    An object is "hidable" only if ALL it's relations are instances.
-
-    :returns:
-    :rtype: bool
-    '''
-    return True
 
   # ---- Debugging support -----------------------------------------------------
   
