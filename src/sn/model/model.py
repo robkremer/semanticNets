@@ -177,6 +177,7 @@ _supersInProgress:set[int] = set()
 _retracting:set[int] = set()
 "The objects *GraphObject.retract()* is working down from, just now: to stop at an isa cycle."
 _reportedSelfParents:set[int] = set()
+"The objects whose isa link to themselves has been reported (see *GraphObject.getParents()*): it's said once."
 
 _isaGeneration:int = 0
 '''Bumped whenever a relation is connected, disconnected or reconnected, or has an
@@ -193,7 +194,6 @@ def isaStructureChanged() -> None:
   '''
   global _isaGeneration
   _isaGeneration += 1
-"The objects whose isa link to themselves has been reported (see *GraphObject.getParents()*): it's said once."
 
 class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReportingObject):
   '''
@@ -463,7 +463,7 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
       _retracting.discard(id(self))
 
   @override
-  def getSupers[GraphObject](self, asTree:bool=False, rmDups:bool=True) -> list:
+  def getSupers(self, asTree:bool=False, rmDups:bool=True) -> list:
     '''
     :param asTree:
     :type asTree: bool
@@ -1059,7 +1059,7 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     '''
     try:
       ret = self["name"]
-    except:
+    except Exception: # KeyError: none set or inherited; or anything, part-way through making the object (names show in messages)
       ret = "?"
     if ret is NOVALUE:
       ret = "<name not set>"
@@ -2598,7 +2598,7 @@ class IsaIndividual(Relation):
             )
 
   @override
-  def getSupers[GraphObject](self, asTree:bool=False, rmDups:bool=True) -> list:
+  def getSupers(self, asTree:bool=False, rmDups:bool=True) -> list:
     '''
     :param asTree:
     :type asTree: bool
