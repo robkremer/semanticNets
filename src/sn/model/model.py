@@ -1791,7 +1791,7 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     '''
     ret:list[tuple[str, str]] = []
     for observer, _topics in self._observers:
-      if not getattr(observer, "_closed", False):
+      if not getattr(observer, "_closed", False) and getattr(observer, "model", self) is self: # (not a view of another model showing its objects: see SNGView._observeModel())
         ret.append(("view", getattr(observer, "url", repr(observer))))
     for url, db in list(PRDb.AllDBs.items()): # @UndefinedVariable
       if db is self or not isinstance(db, Model):

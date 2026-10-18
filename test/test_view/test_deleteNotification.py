@@ -22,9 +22,10 @@
 '''
 A model's "del" notification (and an undo's "new") names the object by its id
 in that model only (*PRDb._unregister()*), and every model numbers its objects
-from 256: a view shows its model's super-models' objects too, so *SNGView.update()*
-must take away, and later bring back, the box of the notifying model's object,
-not another model's with the same id. Runs *update()* on a stand-in view.
+from 256: a view shows its model's super-models' objects too, and hears from
+them (see *SNGView._observeModel()*), so *SNGView.update()* must take away, and
+later bring back, the box of the notifying model's object, not another model's
+with the same id. Runs *update()* on a stand-in view.
 
 Created on Oct 17, 2026
 
@@ -35,6 +36,7 @@ import tempfile
 from pathlib import Path
 from sn.model.model import Model, Node
 from sn.view.graphics.sngView import SNGView
+from util.observer import Observer
 
 class FakeVObject:
   "Stands in for a *VObject*: just whether it's in the view."
@@ -47,12 +49,18 @@ class FakeVObject:
   def isInferred(self): return False
 
 class FakeView:
-  "Stands in for an *SNGView*: what *update()* uses for \"new\" and \"del\"."
-  def __init__(self, vos):
+  "Stands in for an *SNGView* of *model*: what *update()* uses for \"new\" and \"del\"."
+  _indexKeys = staticmethod(SNGView._indexKeys)
+  def __init__(self, model, vos):
+    self.model = model
     self.vos = vos
+    self._db = {}
     self._deletedGraphObjectsCache = {}
   def values(self): return [vo for vo in self.vos if vo.connected]
-  def findViewObjectForGraphObject(self, f): return SNGView.findViewObjectForGraphObject(self, f) #type: ignore[arg-type]
+  def _viewObjectIndex(self):
+    self.__dict__.pop("_byModelObject", None) # (made afresh: the stand-ins don't keep it up to date)
+    return SNGView._viewObjectIndex(self) #type: ignore[arg-type]
+  def _viewObjectsForID(self, model, modelID): return SNGView._viewObjectsForID(self, model, modelID) #type: ignore[arg-type]
   def structureChanged(self): pass
   def isDirty(self): return False
   def setDirty(self, dirty=True): pass
@@ -70,7 +78,7 @@ class Test(unittest.TestCase):
     self.fred = Node(self.main, [self.person], individual=True, name="fred")
     self.assertEqual(self.person.id, self.fred.id) # (both #256)
     self.vPerson, self.vFred = FakeVObject(self.person), FakeVObject(self.fred) # (person's first: found first)
-    self.view = FakeView([self.vPerson, self.vFred])
+    self.view = FakeView(self.main, [self.vPerson, self.vFred])
 
   def tearDown(self):
     Model._initCache()
@@ -91,7 +99,7 @@ class Test(unittest.TestCase):
     self.assertTrue(self.vPerson.connected)
 
   def test0300deletedBoxesKeptByModel(self):
-    # both gone (as if the view heard from both models): each comes back with its own model's "new"
+    # both gone (the view hears from main's super-model too): each comes back with its own model's "new"
     self.update(self.main, ("del", (self.fred.id,)))
     self.update(self.base, ("del", (self.person.id,)))
     self.assertFalse(self.vPerson.connected or self.vFred.connected)
@@ -100,6 +108,23 @@ class Test(unittest.TestCase):
     self.assertFalse(self.vPerson.connected)
     self.update(self.base, ("new", (self.person.id, self.person)))
     self.assertTrue(self.vPerson.connected)
+
+  def test0400superModelsOtherNewsIgnored(self):
+    # (its reasoning, and an object added to it: not shown here -- the stand-in has no _showReasoning() or _askName())
+    other = Node(self.base, [self.base.NODE], name="animal")
+    self.update(self.base, ("reasoned", ((), False)), ("reasoning cleared", ()), ("new", (other.id, other)))
+    self.assertTrue(self.vPerson.connected and self.vFred.connected)
+
+  def test0500superModelsDependentsAreViewsOfIt(self):
+    # a view observing a model whose objects it shows isn't a view of that model (see Model.unload())
+    class Watcher(Observer):
+      def __init__(self, model, url): self.model, self.url = model, url
+      def update(self, subject, *topics): pass
+    watcher = Watcher(self.main, "file:///main.snv")
+    self.main.addObserver(watcher)
+    self.base.addObserver(watcher)
+    self.assertIn(("view", watcher.url), self.main.dependents())
+    self.assertNotIn(("view", watcher.url), self.base.dependents())
 
 if __name__ == "__main__":
   unittest.main()
