@@ -67,7 +67,7 @@ import time
 from abc import ABC
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional, override, Iterable, Sequence
+from typing import Any, Optional, override, Iterable, Sequence, Collection
 from sn.view.graphics.vnodes import VNode
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
@@ -530,17 +530,24 @@ class LayoutHeuristic(ABC):
       elif referenceNode:
         return Direction.SUPER
     
-  def findOverlapping(self, rect:Sequence[float], exclude:list[int]=[]) -> list[int]:
+  def findOverlapping(self, rect:Sequence[float], exclude:Collection[int]=[], shapes:Collection[int]|None=None) -> list[int]:
     '''
     :param rect:
     :type rect: Sequence[float]
     :param exclude:
-    :type exclude: list[int]
+    :type exclude: Collection[int]
+    :param shapes: The view's 'vis/shape'-tagged canvas item ids, if the caller
+      has them (eg: a set, from *find_withtag()*): as *FindFree.placeNode()*
+      does, trying many places for one object -- asking Tk for each
+      overlapping item's tags, otherwise, takes most of the time.
+    :type shapes: Collection[int] | None
     :return: The (possible zero-length) list of 'vis/shape'-tagged tk.Canvas object ids
         that overlap with bounding box of *node*.
     :rtype: list[int]
     '''
-    overlapping = self.view.intersectTag(self.view.canvas.find_overlapping(*rect), 'vis/shape', exclude)
+    if shapes is not None:
+      return [i for i in self.view.canvas.find_overlapping(*rect) if i in shapes and i not in exclude]
+    overlapping = self.view.intersectTag(self.view.canvas.find_overlapping(*rect), 'vis/shape', list(exclude))
     return overlapping
     
   def __call__(self, node:Optional[VObject]=None, **kwargs):
@@ -972,6 +979,8 @@ class FindFree(LayoutHeuristic):
       h = rect[3] - rect[1]
       assert w>0
       assert h>0
+      shapes = set(self.view.canvas.find_withtag('vis/shape')) # (once: see findOverlapping())
+      exclude = set(exclude)
       
       for dist in range(0, maxRings): # the width/height of the rectangular scan
         yStart   = max(limit[1], rect[1]-dist*quanta)
@@ -983,7 +992,7 @@ class FindFree(LayoutHeuristic):
           xIncr  = quanta if y==yStart or y==yEnd else max(1, xEnd-xStart)
           for x in range(xStart, xEnd+1, xIncr):
             r = [x, y, x+w, y+h]
-            overlapping = self.findOverlapping(expandRect(r, expandFactor), exclude)
+            overlapping = self.findOverlapping(expandRect(r, expandFactor), exclude, shapes)
             if len(overlapping) == 0:
               return x,y
       return None # (nowhere free within maxRings)
