@@ -1143,24 +1143,15 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     if self.dragInfo is not None:
       self.view.addEventHandled(event)
       if self.dragInfo[4]: # indicated there was a <B1_Motion> event, ie: this was a drag: wrap up a move.
-        # If this was a multi-selection drag, onB1_Motion() moved every object
-        # in self.view.selected (not just self) via its own dX/dY loop. Only
-        # ever committing self's final position here left the other selected
-        # objects' moves un-recorded: they stayed visually moved with no
-        # Command on the queue, so a single undo() only restored self while
-        # everything else dragged along with it stayed put. Committing a
-        # context.move() for every selected object -- wrapped in a
-        # CompositeCommandMgr, the same mechanism this class already uses for
-        # multi-attribute edits (see onEditAttributes() above) -- bundles them
-        # into one CompositeCommand, so one undo()/redo() moves the whole
-        # group together, matching what the drag itself did.
+        # A multi-selection drag moved every object in self.view.selected (see
+        # onB1_Motion()), so each one's move is recorded -- all in one
+        # CompositeCommandMgr, so one undo()/redo() moves the whole group, as
+        # the drag did.
         #
-        # oldPos=... : pass each object's TRUE pre-drag position (captured in
-        # onButton_1(), before any <B1-Motion> tick moved anything) explicitly
-        # to _Move, rather than letting it fall back to capturing
-        # boundingBox() at do()-time -- which, for a live-dragged object,
-        # already reflects where the drag ENDED, not where it started. See
-        # _Move's oldPos docstring in sngView.py for the full explanation.
+        # _oldPos=... : each object's true pre-drag position (captured in
+        # onButton_1(), before any <B1-Motion> tick moved anything), given to
+        # _Move explicitly: its boundingBox() at do()-time is where the drag
+        # ended, not where it started (see _Move's _oldPos in sngContext.py).
         movedObjects = self.view.selected if self.selected() else [self]
         with CompositeCommandMgr(self.view.context):
           for n in movedObjects:
