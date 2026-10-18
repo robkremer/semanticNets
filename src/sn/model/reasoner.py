@@ -1310,16 +1310,19 @@ class Reasoner(ABC):
     self._constraintSpecs = cs
     return rs, cs
 
-  def isSystem(self, obj:Any) -> bool:
+  def isSystem(self, obj:Any, bases:list[Model]|None=None) -> bool:
     '''
     :param obj:
     :type obj: Any
+    :param bases: The base rules' models (see *baseRuleModels()*), if the
+      caller has them already: eg: to ask of many objects.
+    :type bases: list[Model] | None
     :returns: True iff *obj* is (or is made by) one of the base rules (see *BASE_RULES*).
     :rtype: bool
     '''
     if isinstance(obj, NewObject):
       obj = obj.rule
-    return isinstance(obj, GraphObject) and any(obj.model is m for m in baseRuleModels())
+    return isinstance(obj, GraphObject) and any(obj.model is m for m in (baseRuleModels() if bases is None else bases))
 
   def _finish(self, ret:Inferences) -> Inferences:
     '''
@@ -1361,10 +1364,11 @@ class Reasoner(ABC):
       if v.template is None and v.code in templates:
         v.template = templates[v.code]
     if not self.showSysRules:
-      ret.fired = [x for x in ret.fired if not self.isSystem(x[0])]
-      ret.ruleAttrs = [x for x in ret.ruleAttrs if not self.isSystem(x[0])]
-      ret.ruleIsa = [x for x in ret.ruleIsa if not self.isSystem(x[0])]
-      ret.newObjects = [x for x in ret.newObjects if not self.isSystem(x)]
+      bases = baseRuleModels() # (once: each call looks for their files, and gets their models)
+      ret.fired = [x for x in ret.fired if not self.isSystem(x[0], bases)]
+      ret.ruleAttrs = [x for x in ret.ruleAttrs if not self.isSystem(x[0], bases)]
+      ret.ruleIsa = [x for x in ret.ruleIsa if not self.isSystem(x[0], bases)]
+      ret.newObjects = [x for x in ret.newObjects if not self.isSystem(x, bases)]
     return ret
 
   def facts(self) -> list[Fact]:
