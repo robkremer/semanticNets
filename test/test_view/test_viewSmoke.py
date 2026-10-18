@@ -327,5 +327,20 @@ class Test(unittest.TestCase):
     self.assertNotIn("alice", {o.name for o in fresh.values()})
     self.assertTrue(self.app.replacingModel(path + ".none")) # (nothing in memory there: nothing to do)
 
+  def test1100asksNamesOnlyOfItsOwn(self):
+    'The view asks the name of a node made by its own command -- not of one a program (or another window) made.'
+    from sn.model.model import Node
+    v, m = self.view, self.model
+    asked:list[str] = []
+    v._askName = lambda mo: asked.append(mo.name)
+    v.context.new_node("person", name="eve", individual=True)
+    self.pump()
+    self.assertEqual(asked, ["eve"])
+    for i in range(20):
+      Node(m, [m["person"]], individual=True, name=f"made{i}")
+    self.pump()
+    self.assertEqual(asked, ["eve"])
+    self.assertIn("made0", self.shown()) # (shown, without asking)
+
 if __name__ == "__main__":
   unittest.main()

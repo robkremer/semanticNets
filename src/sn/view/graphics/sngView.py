@@ -543,9 +543,10 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
           if getattr(modelObj, "inferred", False): # (what "reason" concluded: shown when it's done -- see _showInferred())
             continue
           pasted = self.__dict__.get("_pasting", {}).pop(id(modelObj), None) is not None # (see showPasted())
-          if (modelObj.isType() or isinstance(modelObj, Node)) and self.canvas and not pasted:
-            # (now: asked later -- after_idle -- the editor came up blank, or unseen, when the
-            # object was made from a pop-up menu, and took all the input: the app seemed to hang)
+          made = self.__dict__.get("_madeHere", set())
+          madeHere = modelID in made # (by one of this view's commands: see ViewDoList.do() -- not by a program, or another window)
+          made.discard(modelID)
+          if (modelObj.isType() or isinstance(modelObj, Node)) and self.canvas and not pasted and madeHere:
             self._askName(modelObj)
           typ:type = type(modelObj)
           newObj:VObject|None = None

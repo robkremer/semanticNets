@@ -225,11 +225,18 @@ class ViewDoList(DoList):
     :rtype: Any
     :raises PermissionError: If *c* changes the model, and the view can't (see
       *SNGView.isModelEditor()*).
+
+    The ids of the objects *c* makes in the view's model are noted: the view
+    asks for the names of those (see *SNGView.update()*), not of objects made
+    elsewhere (eg: by a program, or in another window).
     '''
     finishTween(self.view)
     if not self.view.isModelEditor() and changesModel(c):
       raise PermissionError(self.view.lockedReason())
+    first = self.view.model.nextID # (ids only grow: the objects c makes have those from here)
     ret = super().do(c)
+    if self.view.model.nextID > first:
+      self.view.__dict__.setdefault("_madeHere", set()).update(range(first, self.view.model.nextID))
     if c.mutatedData and 0 <= self.index < len(self.queue) and self.queue[self.index] is c:
       try:
         bump = _BumpIntruders(self.view)

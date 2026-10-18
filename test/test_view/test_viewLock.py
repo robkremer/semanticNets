@@ -39,6 +39,7 @@ class FakeModel:
   def __init__(self, writeLocked:bool=False):
     self.locked = writeLocked
     self.name = "m"
+    self.nextID = 256 # (the next object's id: see ViewDoList.do())
   def writeLocked(self): return self.locked
 
 class FakeWindow:
