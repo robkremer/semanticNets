@@ -50,22 +50,15 @@ Created on May 14, 2026
 class ConvertingDict(dict[str, Any]):
   def __init__(self, context:ModelContext, iterable:Iterable=[]):
     '''
-    :param context:
-    :type context: ModelContext
-    :param iterable:
-    :type iterable: Iterable
+    The command parser's defaults (for *context*): a model's or an object's reference stored in one is
+    converted to it (see *__setitem__()*).
     '''
     super().__init__(iterable)
     self.context = context
     
   def typeCheck(self, obj:Any, typ:type) -> Any:
     '''
-    :param obj:
-    :type obj: Any
-    :param typ:
-    :type typ: type
-    :returns:
-    :rtype: Any
+    *obj*, if it's a *typ*; else a TypeError.
     '''
     if not isinstance(obj, typ):
       raise TypeError(f'Expected object of type {type.__name__}, but got type {obj.__class__.__name__}.')
@@ -74,12 +67,8 @@ class ConvertingDict(dict[str, Any]):
   @override
   def __setitem__(self, key:str, value:Any):
     '''
-    :param key:
-    :type key: str
-    :param value:
-    :type value: Any
-    :returns:
-    :rtype:
+    Set *key* to *value*: for "model", a model's URL as the model; for "node", "relation" or "object" (or a
+    key ending "_node", ...), a reference as the object, checked to be one.
     '''
     if key == "model" and not isinstance(value, Model):
       return super().__setitem__(key, Model.getDB(value))
@@ -154,20 +143,15 @@ class ModelCommand(Command):
 
 def changesModel(c:Command) -> bool:
   '''
-  :param c:
-  :type c: Command
   :returns: Whether *c* changes a model: it's a *ModelCommand*, or a
     composite command with one in it.
-  :rtype: bool
   '''
   return isinstance(c, ModelCommand) or any(changesModel(x) for x in getattr(c, "commands", ()))
 
 def _refuseInferred(doing:str, *objects:Any) -> None:
   '''
   :param doing: What would be done, for the message, eg: "remove".
-  :type doing: str
   :param objects: The objects it'd be done to (None for none).
-  :type objects: Any
   :raises PermissionError: If any of *objects* is inferred (see
     *GraphObject.inferred*): it's the reasoner's, until it's marked as
     asserted (see *ModelContext.mark_asserted()*).
@@ -193,13 +177,9 @@ def _lookup(text:str, model:Any, filtr:Callable|None=None) -> Any:
   *"big dog"*), and *GORef.eval()* only takes such a name quoted.
 
   :param text: An object's reference as typed (eg: "fred", "#12", "big dog").
-  :type text: str
   :param model: The model to look it up in.
-  :type model: Any
   :param filtr: As for *GORef.eval()*.
-  :type filtr: Callable | None
   :returns: The object.
-  :rtype: Any
   :raises NoSuchObjectError: If there's no object called *text*.
   '''
   kwargs = {} if filtr is None else {"filtr": filtr}
@@ -219,13 +199,10 @@ def _object(obj:Any, model:Any=None) -> Any:
   '''
   :param obj: An object, or (if the command line's decoder couldn't look it up)
     its name or reference as typed.
-  :type obj: Any
   :param model: The model to look a name up in. If it's *None*, a name is
     taken to be one the decoder (which looked in the default model) couldn't
     find, or found more than one object for.
-  :type model: Any
   :returns: *obj*, or the object it names (*None* stays *None*).
-  :rtype: Any
   :raises NoSuchObjectError: If there's no object called *obj*.
   '''
   if not isinstance(obj, str):
@@ -237,11 +214,8 @@ def _object(obj:Any, model:Any=None) -> Any:
 def _decodeObjects(objects:list[Any]|GraphObject|str, model:Model|None) -> list[GraphObject]:
   '''
   :param objects: Objects, or their names or references as typed (eg: "fred", "#12").
-  :type objects: list[Any] | GraphObject | str
   :param model: The model to look names up in.
-  :type model: Model | None
   :returns: The objects.
-  :rtype: list[GraphObject]
   :raises ValueError: If a name isn't an object's.
   '''
   ret:list[GraphObject] = []
@@ -259,13 +233,9 @@ def _parentsOf(parent:Any, kind:type, model:Model|None) -> list[Any]:
   :param parent: The parent or parents of a new object: objects, or their names
     as typed (the command line leaves them as strs, so a name that's ambiguous
     can be taken as the type of that name).
-  :type parent: Any
   :param kind: What each parent must be (*Node* or *Relation*).
-  :type kind: type
   :param model: The model to look names up in.
-  :type model: Model | None
   :returns: The parents.
-  :rtype: list[Any]
   :raises ValueError: If a parent isn't an object of type *kind*.
   '''
   ret:list[Any] = []
@@ -291,10 +261,7 @@ def _parentsOf(parent:Any, kind:type, model:Model|None) -> list[Any]:
 
 def _describe(clip:copying.Clip) -> str:
   '''
-  :param clip:
-  :type clip: copying.Clip
   :returns: What *clip* holds, for a message: eg: '"uncle rule" (and the 8 objects it contains)'.
-  :rtype: str
   '''
   names = ", ".join(f'"{clip.entries[i].original.name}"' for i in clip.selected[:4]) + (", ..." if len(clip.selected) > 4 else "")
   contains = clip.model.CONTAINS
@@ -344,8 +311,7 @@ class ModelContext(CommandContext):
   
   def __init__(self, model:Model):
     '''
-    :param model:
-    :type model: Model
+    A context for typed commands on *model*: its parser's defaults start with *model* as the "model".
     '''
     super().__init__(TopCommandParser("sn", defaults=ConvertingDict(self), description=HELP_DESCRIPTION))
     assert isinstance(self.parser, TopCommandParser)
@@ -354,8 +320,7 @@ class ModelContext(CommandContext):
   @override
   def _defineDecoders(self):
     '''
-    :returns:
-    :rtype:
+    Add the decoders for a model ("Model") and an object in it ("GraphObject") to the parser's.
     '''
     def getModel(s:str) -> Model:
       ret:Model = cast(Model, GORef.eval(s))
@@ -372,9 +337,6 @@ class ModelContext(CommandContext):
   def cache(self):
     '''
     Show models in memory.
-
-    :returns:
-    :rtype:
     '''
     return Model.AllDBs
     
@@ -383,11 +345,7 @@ class ModelContext(CommandContext):
     Checks the consistency of a Model or a GraphObject.
 
     :param object: The object to check. By default, checks the default model.
-    :type object: GraphObject|Model|None
     :param model: The model context in which to interpret *object* if necessary.
-    :type model: Model
-    :returns:
-    :rtype: list[str] | list[tuple[GraphObject, list[str]]]
     '''
     if object is not None and type(object) is str: # the environment failed to interpret the object
       raise KeyError(f'Object "{object}" not found in model "{model}".')
@@ -408,15 +366,10 @@ class ModelContext(CommandContext):
     too, until the next "reason" or "clear reasoning".
 
     :param model: The model to reason over. By default, the default model.
-    :type model: Model
     :param engine: The reasoner engine (see *sn.model.reasoner.Reasoner.create()*).
-    :type engine: str
     :param silent: Don't add what's inferred to the views of the model (they
       show only the problems), and report only a summary: eg: so that queries
       find what the rules conclude.
-    :type silent: bool
-    :returns:
-    :rtype: str
     '''
     from sn.model.reasoner import reason, summary
     if model is None:
@@ -430,9 +383,6 @@ class ModelContext(CommandContext):
     Forget the results of the last "reason" over a model (in every view of it, too).
 
     :param model: The model. By default, the default model.
-    :type model: Model
-    :returns:
-    :rtype: str
     '''
     from sn.model.reasoner import clearReasoning
     if model is None:
@@ -450,13 +400,8 @@ class ModelContext(CommandContext):
     model (relative to its file, where they're near it).
 
     :param add: A model file to add as a super-model: it must exist.
-    :type add: str
     :param remove: A super-model (its file) to remove.
-    :type remove: str
     :param model: The model. By default, the default model.
-    :type model: Model
-    :returns:
-    :rtype: str
     '''
     from util.persistence.pRef import PRDb
     if model is None:
@@ -490,13 +435,8 @@ class ModelContext(CommandContext):
     whose contents are a pattern with ?variables. Each line is one match.
 
     :param query: The query (or other context).
-    :type query: GraphObject
     :param model: Ignored: a query is answered from its own model.
-    :type model: Model
     :param engine: The reasoner engine (see *sn.model.reasoner.Reasoner.create()*).
-    :type engine: str
-    :returns:
-    :rtype: str
     '''
     from sn.model.reasoner import Reasoner
     if type(query) is str: # the environment failed to interpret the object
@@ -510,13 +450,6 @@ class ModelContext(CommandContext):
   def _formatAnswers(self, rows:list, model:Model) -> str:
     '''
     Answers from *Reasoner.answer()* as text: one line per match, "?var = value, ...".
-
-    :param rows:
-    :type rows: list
-    :param model:
-    :type model: Model
-    :returns:
-    :rtype: str
     '''
     if not rows:
       return "no"
@@ -532,13 +465,8 @@ class ModelContext(CommandContext):
     and results, eg: ans(X) :- holds(T,F,X), name(T,"owns"), name(F,"fred").
 
     :param query: The query.
-    :type query: str
     :param model: The model to reason over. By default, the default model.
-    :type model: Model
     :param engine: The reasoner engine (see *sn.model.reasoner.Reasoner.create()*).
-    :type engine: str
-    :returns:
-    :rtype: str
     '''
     from sn.model.reasoner import Reasoner
     if model is None:
@@ -556,19 +484,11 @@ class ModelContext(CommandContext):
     links), each as its name and #id, so later commands can refer to it.
 
     :param pattern: The text to look for (quoted if it has spaces).
-    :type pattern: str
     :param word: Match whole words only: not part of a longer one.
-    :type word: bool
     :param case: Match upper and lower case exactly.
-    :type case: bool
     :param regex: The pattern is a regular expression (eg: "^has-").
-    :type regex: bool
     :param supers: Look in the model's super-models too.
-    :type supers: bool
     :param model: The model to look in. By default, the default model.
-    :type model: Model
-    :returns:
-    :rtype: str
     '''
     import re
     from sn.model.model import makeRelationArrow
@@ -599,22 +519,16 @@ class ModelContext(CommandContext):
     Prints the string representation of the object to the logger.
 
     :param object: The object to show.
-    :type object: GraphObject|Model|None
     :param model: The model context in which to interpret *object* if necessary.
-    :type model: Model
     :param detail: If given, show more detail.
-    :type detail: bool
     :param format: Attempts to return the result in the specified format. Currently,
       it accepts "str", "repr", "xml", and "json".
-    :type format: str | None
     :returns: The string representation of the object
-    :rtype: str
     :raises MalformedIDError: if the form of the ID is not valid.
     :raises ValueError: If it isn't a valid URL.
     :raises FileNotFoundError: If the file or URL does not exist.
     :raises TypeError: If they type of the interpreted object is not a *GraphObject*.
     :raises urllib.error.URLError: If a remote URL cannot be reached.
-    
     '''
     if object is not None and type(object) is str: # the environment failed to interpret the object
       raise KeyError(f'Object "{object}" not found in model "{model}".')
@@ -651,13 +565,6 @@ class ModelContext(CommandContext):
     For "show --detail": the relations the last "reason" over the model inferred
     or found inherited (see *sn.model.reasoner.reason()*) -- all of them for a
     model, or those *object* takes part in -- or "" if there are no results.
-
-    :param object:
-    :type object: GraphObject | Model
-    :param model:
-    :type model: Model
-    :returns:
-    :rtype: str
     '''
     from sn.model.reasoner import reasoningFor, relationArrow
     reasoning = reasoningFor(model if isinstance(object, GraphObject) else object)
@@ -674,13 +581,8 @@ class ModelContext(CommandContext):
     Save a model to a file or url.
     
     :param model: The model to save. Defaults to the default model.
-    :type model: Model
     :param url: The url or file name to save the model to.
-    :type url: str
-    :param overwrite:
-    :type overwrite: bool
     :param format: The format to save the file or url in: a serialization strategy's name, eg: "XML2" (the default), "XML" or "JSON".
-    :type format: str
     '''
     assert model is not None
     model.save(url, overwrite=overwrite, format=format)
@@ -690,15 +592,11 @@ class ModelContext(CommandContext):
     Fetch attributes from a GraphObject.
     
     :param object: The GraphObject to get attributes from.
-    :type object: GraphObject
     :param key: Zero or more keys to look up.
-    :type key: list[str]
     :param model: The model to look in. Defaults to the default model.
-    :type model: Model
     :returns: if exactly *key* is given, it's value is returned. If more than
       one key is given, a *dict* of all those keys-to-values is returned. If 
       no keys are given, *dict* of all keys-to-values is returned.
-    :rtype: Any
     '''
     object = _object(object, model or self.defaults.get("model"))
     n = len(key)
@@ -711,11 +609,9 @@ class ModelContext(CommandContext):
     Fetch attributes from the Prefs object.
     
     :param key: Zero or more keys to look up.
-    :type key: list[str]
     :returns: if exactly *key* is given, it's value is returned. If more than
       one key is given, a *dict* of all those keys-to-values is returned. If 
       no keys are given, a *dict* of all keys-to-values is returned.
-    :rtype: Any
     '''
     n = len(key)
     if n == 1:
@@ -728,22 +624,14 @@ class ModelContext(CommandContext):
     Set the attribute of a *GraphObject*.
     
     :param object: The object who's attribute is to be set.
-    :type object: GraphObject
     :param key: The key in the key/value.
-    :type key: str
     :param value: The value in the key/value pair.
-    :type value: Any
     :param model: The model to look in. Defaults to the default model.
-    :type model: Model
     :param type: When creating a new attribute, this is the recorded value type.
       Default is str.
-    :type type: str
     :param restriction: When creating a new attribute, this is the inheritance
       restriction on the attribute. Legal values are "VAR", "VAR_DEFAULTED", 
       "CONST", "CONST_TYPEOVERRIDE", "TYPENAME". Default is "VAR" 
-    :type restriction: str
-    :returns:
-    :rtype: Any | None
     '''
     pass
     
@@ -754,20 +642,14 @@ class ModelContext(CommandContext):
       Set the attribute of an object.
       
       :param object: The object who's attribute is to be set.
-      :type object: GraphObject
       :param key: The key in the key/value.
-      :type key: str
       :param value: The value in the key/value pair.
-      :type value: Any
       :param model: The model to look in. Defaults to the default model.
-      :type model: Model
       :param type: When creating a new attribute, this is the recorded value type.
         Default is str.
-      :type type: str
       :param restriction: When creating a new attribute, this is the inheritance
         restriction on the attribute. Legal values are "VAR", "VAR_DEFAULTED", 
         "CONST", "CONST_TYPEOVERRIDE", "TYPENAME". Default is "VAR" 
-      :type restriction: str
       '''
       super().__init__("set attribute")
       object = _object(object, model)
@@ -824,7 +706,6 @@ class ModelContext(CommandContext):
     def __str__(self):
       '''
       :returns: A readable string for this object.
-      :rtype:
       '''
       return f'{super().__str__()} {self.object.getPRef().tostring()} {self.key} {self.value}{(" --type="+self.typ.__name__) if self.typ is not None else ""}{(" --restriction="+self.restrictionStr) if self.restrictionStr is not None else ""}'
 
@@ -835,13 +716,8 @@ class ModelContext(CommandContext):
     Set the attribute of a *GraphObject*.
     
     :param object: The object who's attribute is to be set.
-    :type object: GraphObject
     :param key: The key in the key/value.
-    :type key: str
     :param model: The model to look in. Defaults to the default model.
-    :type model: Model
-    :returns:
-    :rtype: Any | None
     '''
     pass
     
@@ -852,11 +728,8 @@ class ModelContext(CommandContext):
       Set the attribute of an object.
       
       :param object: The object who's attribute is to be set.
-      :type object: GraphObject
       :param key: The key in the key/value.
-      :type key: str
       :param model: The model to look in. Defaults to the default model.
-      :type model: Model
       '''
       super().__init__("set attribute")
       object = _object(object, model)
@@ -885,7 +758,6 @@ class ModelContext(CommandContext):
     def __str__(self):
       '''
       :returns: A readable string for this object.
-      :rtype:
       '''
       return f'{super().__str__()} {self.object.getPRef().tostring()} {self.key}'
 
@@ -930,15 +802,9 @@ class ModelContext(CommandContext):
       - query ? isa person -> Node("Fred", #21, <individual>), Node("Jane", #23, <individual>)
     
     :param objects: The objects in the expression (up to 3)
-    :type objects: list[str|GraphObject]
     :param astree: If True return a list result of <type> expression as a "tree list".
-    :type astree: bool
     :param keepdups: If True do not remove duplicates from a list result of <type> expression.
-    :type keepdups: bool
     :param model: The model to look in. Defaults to the default model.
-    :type model: Model
-    :returns:
-    :rtype:
     '''
     if isinstance(objects, str):
       objects = [objects]
@@ -1069,13 +935,6 @@ class ModelContext(CommandContext):
       - assert fred sibling gorge    -> Relation("sibling", #28, <individual>, #21 -> #26) 
                         {and IsaInstance("isa", #28, <individual>, #28 -> #23)}
                         Create a new relation instance "sibling" between "fred" and "gorge".
-    
-    :param objects:
-    :type objects: list[str | GraphObject]
-    :param type:
-    :type type: bool
-    :param model:
-    :type model: Optional[Model]
     '''
     pass
 
@@ -1084,14 +943,6 @@ class ModelContext(CommandContext):
       '''
       Assert a predicate in the model; ie: create an object of some type,
       add a parent type to an object, or create a new relation between objects.
-      
-      
-      :param objects:
-      :type objects: list[str | GraphObject]
-      :param type:
-      :type type: bool
-      :param model:
-      :type model: Optional[Model]
       '''
       def eval_(s:str|GraphObject, m:Model, filtr:Callable=lambda o:True) -> GraphObject:
         if isinstance(s, GraphObject):
@@ -1141,10 +992,6 @@ class ModelContext(CommandContext):
       
     @override
     def do(self) -> GraphObject:
-      '''
-      :returns:
-      :rtype: GraphObject
-      '''
       super().do()
       if self.artifact is not None: # this is a redo: just reconnect the object
         self.artifact._reconnect()
@@ -1191,10 +1038,6 @@ class ModelContext(CommandContext):
         
     @override
     def undo(self):
-      '''
-      :returns:
-      :rtype:
-      '''
       assert self.artifact is not None
       super().undo()
       if self.oldSrcDst:
@@ -1218,7 +1061,6 @@ class ModelContext(CommandContext):
     def __str__(self):
       '''
       :returns: A readable string for this object.
-      :rtype:
       '''
       def getName(obj:GraphObject|None):
         return obj.name if obj is not None else "None"
@@ -1232,11 +1074,8 @@ class ModelContext(CommandContext):
     Create a new model.
     
     :param url: The url (or file name) in which to create the model. Must not already exist.
-    :type url: str
     :param mode: The mode in which to open the model ("r" or "w"). Default "w".
-    :type mode: str
     :returns: The newly created model
-    :rtype: Model
     '''
     url = fixURL(url, extension=".xml", replaceExt=None, mode=mode)[0]
     if not isValidURL(url):
@@ -1256,18 +1095,13 @@ class ModelContext(CommandContext):
     false, the object will be an *individual*.
 
     :param parent: The direct parent or parents of the object from which they will inherit attributes.
-    :type parent: GraphObject
     :param name: The name of the new node. It need not be unique in the model, but that
       may lead to ambiguities in searching for it my name, so uniqueness would be good...
       If the name is not given, it will inherit it's name from the first parent if it's a type
       and if it's an individual, the name will be blank.
-    :type name: Optional[str]
-    :param individual: If True, this will be an individual, otherwise it will be a type. Defaults to True.
-    :type individual: bool
-    :param type: If True, this will be a type, otherwise it will be a individual. Defaults to True.
-    :type type: bool
+    :param individual: If True, it's an individual -- as it is if neither this nor *type* is given.
+    :param type: If True, it's a type.
     :param model: The Model in which to create the object. Default: the current default model.
-    :type model: Model
     '''
     pass
     
@@ -1280,18 +1114,13 @@ class ModelContext(CommandContext):
       missing the object will be an *individual*.
 
       :param parent: The direct parent or parents of the object from which they will inherit attributes.
-      :type parent: GraphObject
       :param name: The name of the new node. It need not be unique in the model, but that
         may lead to ambiguities in searching for it my name, so uniqueness would be good...
         If the name is not given, it will inherit it's name from the first parent if it's a type
         and if it's an individual, the name will be blank.
-      :type name: Optional[str]
-      :param individual: If True, this will be an individual, otherwise it will be a type. Defaults to True.
-      :type individual: bool
-      :param type: If True, this will be a type, otherwise it will be a individual. Defaults to True.
-      :type type: bool
+      :param individual: If True, it's an individual -- as it is if neither this nor *type* is given.
+      :param type: If True, it's a type.
       :param model: The Model in which to create the object. Default: the current default model.
-      :type model: Model
       '''
       # param checking...
       assert model is not None, "There is no Model specified."
@@ -1307,10 +1136,6 @@ class ModelContext(CommandContext):
     
     @override
     def do(self) -> Node:
-      '''
-      :returns:
-      :rtype: Node
-      '''
       super().do()
       with Subject.ChangeMgr(self.model, later=True):
         if self.node is None:
@@ -1321,10 +1146,6 @@ class ModelContext(CommandContext):
   
     @override
     def undo(self):
-      '''
-      :returns:
-      :rtype:
-      '''
       assert self.node is not None
       super().undo()
       with Subject.ChangeMgr(self.model, later=True):
@@ -1341,7 +1162,6 @@ class ModelContext(CommandContext):
     def __str__(self):
       '''
       :returns: A readable string for this object.
-      :rtype:
       '''
       name = f' --name={self.nodeName}' if self.nodeName is not None else ''
       #TODO: the 'self.parents' part is a bit of cluge as the python version takes a list and the argparse version only takes an singleton.
@@ -1353,7 +1173,6 @@ class ModelContext(CommandContext):
     Delete a *GraphObject*.
     
     :param object: The *GraphObject* to delete.
-    :type object: GraphObject
     '''
     pass
     
@@ -1363,7 +1182,6 @@ class ModelContext(CommandContext):
       Delete a object from it's model.
       
       :param object: The object to delete.
-      :type object: GraphObject
       '''
       # param checking...
       super().__init__("remove")
@@ -1395,7 +1213,6 @@ class ModelContext(CommandContext):
     def __str__(self):
       '''
       :returns: A readable string for this object.
-      :rtype:
       '''
       return f'{super().__str__()} {self.object.getPRef().tostring()}'
 
@@ -1407,11 +1224,8 @@ class ModelContext(CommandContext):
     to them meanwhile. Not undoable: it changes nothing.
 
     :param objects: The objects to copy.
-    :type objects: list[GraphObject]
     :param model: The model to look up the objects' names in. Default: the current model.
-    :type model: Model
     :returns: What was copied.
-    :rtype: str
     '''
     clip = copying.copyObjects(_decodeObjects(objects, model or self.defaults.get("model")))
     copying.clipboard = clip
@@ -1424,9 +1238,7 @@ class ModelContext(CommandContext):
     contains too). Undoing it puts them back (the clipboard keeps the copy).
 
     :param objects: The objects to cut.
-    :type objects: list[GraphObject]
     :param model: The model they must be in. Default: the current model.
-    :type model: Model
     '''
     pass
 
@@ -1435,11 +1247,6 @@ class ModelContext(CommandContext):
       '''
       Copy objects to the clipboard, and remove them from the model -- a
       context with its contents.
-
-      :param objects:
-      :type objects: list[GraphObject]
-      :param model:
-      :type model: Model | None
       '''
       super().__init__("cut")
       objects = _decodeObjects(objects, model)
@@ -1486,7 +1293,6 @@ class ModelContext(CommandContext):
     all be in the model, or in a model it builds on.
 
     :param model: The Model to paste into. Default: the current model.
-    :type model: Model
     '''
     pass
 
@@ -1494,9 +1300,6 @@ class ModelContext(CommandContext):
     def __init__(self, /, model:Model|None=None):
       '''
       Make new objects in the model, copying what was last cut or copied.
-
-      :param model:
-      :type model: Model | None
       '''
       super().__init__("paste")
       assert model is not None, "There is no Model specified."
@@ -1547,9 +1350,7 @@ class ModelContext(CommandContext):
     type with instances or subtypes (see *GraphObject.individualChangeProblem()*).
 
     :param object: The object.
-    :type object: GraphObject
     :param kind: "individual" or "type".
-    :type kind: str
     '''
     pass
 
@@ -1559,9 +1360,7 @@ class ModelContext(CommandContext):
       Make an object an individual, or a type.
 
       :param object: The object.
-      :type object: GraphObject
       :param kind: "individual" or "type".
-      :type kind: str
       '''
       super().__init__("set kind")
       if kind not in ("individual", "type"):
@@ -1602,7 +1401,6 @@ class ModelContext(CommandContext):
     too (see *GraphObject.assertedWith()*). Not in a write-locked model.
 
     :param object: The inferred object.
-    :type object: GraphObject
     '''
     pass
 
@@ -1612,7 +1410,6 @@ class ModelContext(CommandContext):
       Make an inferred object asserted.
 
       :param object: The inferred object.
-      :type object: GraphObject
       '''
       super().__init__("mark asserted")
       object = _object(object)
@@ -1626,9 +1423,6 @@ class ModelContext(CommandContext):
     def _set(self, inferred:bool) -> None:
       '''
       Mark *objects* inferred or not, and tell their views (they're drawn faded, or not).
-
-      :param inferred:
-      :type inferred: bool
       '''
       for o in self.objects:
         o.inferred = inferred
@@ -1657,7 +1451,6 @@ class ModelContext(CommandContext):
     def __str__(self):
       '''
       :returns: A readable string for this object.
-      :rtype:
       '''
       return f'{super().__str__()} {self.objects[0].getPRef().tostring() if self.objects else ""}'
 
@@ -1669,14 +1462,10 @@ class ModelContext(CommandContext):
     :param relation: The *Relation* to change.
     :type relation: Relation
     :param source: The new source, or None to leave it as it is.
-    :type source: GraphObject
     :param destination: The new destination, or None to leave it as it is.
-    :type destination: GraphObject
     :param clear_source: Remove the relation's own source, so it inherits its
       type's (an unterminated relation). Not with *source*.
-    :type clear_source: bool
     :param clear_destination: Likewise for the destination. Not with *destination*.
-    :type clear_destination: bool
     '''
     pass
 
@@ -1686,14 +1475,6 @@ class ModelContext(CommandContext):
       '''
       :param relation:
       :type relation: Relation
-      :param source:
-      :type source: GraphObject | None
-      :param destination:
-      :type destination: GraphObject | None
-      :param clear_source:
-      :type clear_source: bool
-      :param clear_destination:
-      :type clear_destination: bool
       '''
       super().__init__("reconnect")
       relation, source, destination = _object(relation), _object(source), _object(destination)
@@ -1743,7 +1524,6 @@ class ModelContext(CommandContext):
     def __str__(self):
       '''
       :returns: A readable string for this object.
-      :rtype:
       '''
       ends = [f'{k}={v.getPRef().tostring()}' for k, v in (("source", self.source), ("destination", self.destination)) if v is not None]
       return f'{super().__str__()} {self.relation.getPRef().tostring()} {" ".join(ends)}'
@@ -1761,24 +1541,17 @@ class ModelContext(CommandContext):
     false, the object will be an *individual*.
 
     :param parent: The direct parent or parents of the object from which they will inherit attributes.
-    :type parent: GraphObject|list[GraphObject]
     :param name: The name of the new node. It need not be unique in the model, but that
       may lead to ambiguities in searching for it my name, so uniqueness would be good...
       If the name is not given, it will inherit it's name from the first parent if it's a type
       and if it's an individual, the name will be blank.
-    :type name: Optional[str]
-    :param individual: If True, this will be an individual, otherwise it will be a type. Defaults to True.
-    :type individual: bool
-    :param type: If True, this will be a type, otherwise it will be a individual. Defaults to True.
-    :type type: bool
+    :param individual: If True, it's an individual -- as it is if neither this nor *type* is given.
+    :param type: If True, it's a type.
     :param destination: The object at the destination side of the relation. By default it 
       will inherit from the first parent.
-    :type destination: GraphObject|None
     :param source: The object at the source side of the relation. By default it 
       will inherit from the first parent.
-    :type source: GraphObject|None
     :param model: The Model in which to create the object. Default: the current default model.
-    :type model: Model
     '''
     pass
     
@@ -1795,24 +1568,17 @@ class ModelContext(CommandContext):
       missing the object will be an *individual*.
 
       :param parent: The direct parent or parents of the object from which they will inherit attributes.
-      :type parent: GraphObject [GraphObject ...]
       :param name: The name of the new relation. It need not be unique in the model, but that
         may lead to ambiguities in searching for it my name, so uniqueness would be good...
         If the name is not given, it will inherit it's name from the first parent if it's a type
         and if it's an individual, the name will be blank.
-      :type name: Optional[str]
-      :param individual: If True, this will be an individual, otherwise it will be a type. Defaults to True.
-      :type individual: bool
-      :param type: If True, this will be a type, otherwise it will be a individual. Defaults to True.
-      :type type: bool
+      :param individual: If True, it's an individual -- as it is if neither this nor *type* is given.
+      :param type: If True, it's a type.
       :param destination: The object at the destination side of the relation. By default it 
         will inherit from the first parent.
-      :type destination: GraphObject
       :param source: The object at the source side of the relation. By default it 
         will inherit from the first parent.
-      :type source: GraphObject
       :param model: The Model in which to create the object. Default: the current default model.
-      :type model: Model
       '''
       # param checking...
       assert model is not None, "There is no Model specified."
@@ -1838,10 +1604,6 @@ class ModelContext(CommandContext):
     
     @override
     def do(self) -> Relation:
-      '''
-      :returns:
-      :rtype: Relation
-      '''
       super().do()
       if self.relation is None:
         if len(self.parents) ==1 and self.parents[0] is self.model.ISA:
@@ -1854,10 +1616,6 @@ class ModelContext(CommandContext):
   
     @override
     def undo(self):
-      '''
-      :returns:
-      :rtype:
-      '''
       assert self.relation is not None
       super().undo()
       self.relation._disconnect()
@@ -1873,7 +1631,6 @@ class ModelContext(CommandContext):
     def __str__(self):
       '''
       :returns: A readable string for this object.
-      :rtype:
       '''
       name = f' --name={self.nodeName}' if self.nodeName is not None else ''
       #TODO: the 'self.parents' part is a bit of cluge as the python version takes a list and the argparse version only takes an singleton.
