@@ -132,6 +132,11 @@ class TestTerminalFlash(unittest.TestCase):
       terminal.terminalRegistry.unbindThread()
 
   def test_tkCallbackExceptionFlashes(self):
+    # (stderr routed to the terminal, as installGlobalIORouting() leaves it -- set
+    # here, as a test runner that captures each test's output, eg: PyDev's, or
+    # unittest -b, puts its own stream there after the first test's terminal routed it)
+    stderr = sys.stderr
+    sys.stderr = terminal.LineBufferedRoutingStream(terminal.terminalRegistry, style="stderr")
     terminal.terminalRegistry.bindThreadToTerminal(self.term)
     try:
       try:
@@ -143,6 +148,7 @@ class TestTerminalFlash(unittest.TestCase):
       self.assertIn("ZeroDivisionError", self.term.get("1.0", "end"))
     finally:
       terminal.terminalRegistry.unbindThread()
+      sys.stderr = stderr
 
   def test_safeIfDestroyedMidFlash(self):
     self.term.printLine("ERROR: oops", style="stderr")
