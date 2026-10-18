@@ -1386,6 +1386,8 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     :param _reading:
     :type _reading: bool
     '''
+    if hasattr(self, "_initialized"): # (PRDb.__new__() returned one that's in memory already, or that it's just read: its
+      return                          # observers -- eg: its views -- prefs and replacedModels mustn't be lost)
     PRDb.__init__(self, url, mode=mode, memoryResident=True, _reading=_reading)
     Subject.__init__(self)
     Dirtyable.__init__(self)
@@ -1423,7 +1425,7 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     self.CONDITION:Relation = GORef.eval("$sn#condition") #type: ignore[assignment]
     self.REQUIRED:Relation = GORef.eval("$sn#required") #type: ignore[assignment]
 
-    if hasattr(self, "_initialized") or _reading: # This means the __new__ method has returned an existing object, so don't truck over it!
+    if _reading: # (its nextID is read too)
       return
 
     self.nextID:int = 256
@@ -1786,7 +1788,7 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     '''
     ret:list[tuple[str, str]] = []
     for observer, _topics in self._observers:
-      if not getattr(observer, "_closed", False):
+      if not getattr(observer, "_closed", False) and getattr(observer, "model", self) is self: # (not a view of another model showing its objects: see SNGView._observeModel())
         ret.append(("view", getattr(observer, "url", repr(observer))))
     for url, db in list(PRDb.AllDBs.items()): # @UndefinedVariable
       if db is self or not isinstance(db, Model):

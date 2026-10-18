@@ -1184,8 +1184,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     self._eventHandled:Optional[tk.Event] = None
     "Set by a contained VObject/item-level handler (via addEventHandled()) to mark that it already handled a mouse event, so this canvas's own (separately-dispatched) widget-level binding for the same event -- e.g. onRightMouse() -- can skip its generic handling. See isEventHandled()/addEventHandled()/removeEventHandled()."
 
-    self._deletedGraphObjectsCache:dict[int,VObject] = dict[int,VObject]()
-    "Used by update to store deleted VObjects matching deleted GraphObjects in case they are restored."
+    self._deletedGraphObjectsCache:dict[tuple[int,int],VObject] = dict[tuple[int,int],VObject]()
+    """Used by update to store deleted VObjects matching deleted GraphObjects in case they are restored:
+    by (the id of) the model and the model object's id in it -- every model numbers its objects from 256,
+    and a view shows its model's super-models' objects too."""
     
     self._drawVersion:int = 0
     self.scrollRegion:tuple = (0, 0, 4000, 3000)
@@ -1272,6 +1274,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       count += 1
     if count:
       self.__dict__.pop("_byModelObject", None) # (see viewObjectsFor())
+      self._observeModel(new)
       self.setDirty()
       self.repaint()
     return count
@@ -1953,7 +1956,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       if replacing: # (not expected: start the index afresh)
         del self.__dict__["_byModelObject"]
       elif value.modelObject is not None:
-        index.setdefault(id(value.modelObject), []).append(value)
+        for key in self._indexKeys(value.modelObject):
+          index.setdefault(key, []).append(value)
+    if value.modelObject is not None:
+      self._observeModel(value.modelObject.db)
     return ret
     
   @override
@@ -1970,11 +1976,12 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     super()._unregister(_id)
     index = self.__dict__.get("_byModelObject") if self.__dict__.get("_byModelObjectOf") is self._db else None
     if index is not None and obj is not None and obj.modelObject is not None:
-      objs = index.get(id(obj.modelObject), [])
-      for i, o in enumerate(objs):
-        if o is obj:
-          del objs[i]
-          break
+      for key in self._indexKeys(obj.modelObject):
+        objs = index.get(key, [])
+        for i, o in enumerate(objs):
+          if o is obj:
+            del objs[i]
+            break
     self.setDirty()
     
   def detachFromModel(self) -> None:
@@ -1982,10 +1989,14 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     The view's window is closing: stop observing the model, and stop each of
     the view's objects observing its model object -- the model stays in memory
     (it may have other views), and its changes mustn't reach a window that's
-    gone. Notifications already on their way are ignored (see *_closed*).
+    gone; and stop observing the other models whose objects it shows (see
+    *_observeModel()*). Notifications already on their way are ignored (see
+    *_closed*).
     '''
     self._closed = True
     self.model.detach(self)
+    for model in self.__dict__.pop("_otherModels", {}).values():
+      model.detach(self)
     for vo in list(self._db.values()):
       if vo is None:
         continue
@@ -1995,6 +2006,24 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         continue
       if mo is not None:
         mo.detach(vo)
+
+  def _observeModel(self, model:Any) -> None:
+    '''
+    Hear about *model*'s objects being deleted, and put back (eg: by an undo
+    in another window), if it isn't the view's own model (always heard from):
+    eg, it's a super-model of that, and one of its objects is shown here (see
+    *_register()*). Kept up till the window closes (see *detachFromModel()*):
+    an object may be put back after its box here has gone.
+
+    :param model: The model of an object shown in the view.
+    :type model: Any
+    '''
+    if not isinstance(model, Model) or model is self.model or self.__dict__.get("_closed"):
+      return
+    observed:dict[int, Model] = self.__dict__.setdefault("_otherModels", {})
+    if id(model) not in observed:
+      observed[id(model)] = model
+      model.addObserver(self)
 
   def update(self, subject:Subject, *topics:tuple[str, tuple[Any, ...]])->None:
     '''
@@ -2009,6 +2038,11 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     assert isinstance(subject, Model), f'Expected Model, got {type(subject)}.'
     if getattr(self, "_closed", False): # (a notification sent before the window closed: see detachFromModel())
       return
+    own = subject is self.model
+    if not own: # (a model whose objects it shows: see _observeModel() -- only what's deleted from it, and put back, matters here)
+      topics = tuple(t for t in topics if t[0] in ("new", "del"))
+      if not topics:
+        return
     self.structureChanged() # (eg: an object retyped: maybe now a context window)
     logger.info(f'SNGView.update({subject.name}, {len(topics)} topics):')
     for t in topics:
@@ -2022,10 +2056,12 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
           
           # if this is one we've seen before, just restore it (unless that was done already: an
           # object's relations come back with it -- eg: when a paste or a cut is redone)
-          if modelID in self._deletedGraphObjectsCache:
-            vObject:VObject = self._deletedGraphObjectsCache[modelID]
+          vObject:VObject|None = self._deletedGraphObjectsCache.get((id(subject), modelID))
+          if vObject is not None:
             if not vObject._isConnected():
               vObject._reconnect()
+            continue
+          if not own: # (an object added to another model isn't shown here till it's asked for)
             continue
           
           modelObj = topicData[1]
@@ -2081,11 +2117,12 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
         case ["del", topicData]:
           modelID = topicData[0]
-          obj:VObject|None = self.findViewObjectForGraphObject(lambda vo: vo.modelObject is not None and vo.modelObject.id==modelID)
+          found = self._viewObjectsForID(subject, modelID)
+          obj:VObject|None = found[0] if found else None
           if obj is not None:
             dirty = self.isDirty()
             obj._disconnect()
-            self._deletedGraphObjectsCache[modelID] = obj
+            self._deletedGraphObjectsCache[(id(subject), modelID)] = obj
             if obj.isInferred() and not dirty: # (no longer inferred: not a change to the view -- see _showInferred())
               self.setDirty(False)
           
@@ -2810,17 +2847,47 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     index = self._viewObjectIndex()
     return [o for o in index.get(id(mObject), ()) if o.modelObject is mObject]
 
-  def _viewObjectIndex(self) -> dict[int, list[VObject]]:
+  def _viewObjectsForID(self, model:Model, modelID:int) -> list[VObject]:
     '''
-    :returns: The view's objects by (the id of) their model objects.
-    :rtype: dict[int, list[VObject]]
+    :param model: A model.
+    :type model: Model
+    :param modelID: The id of one of its objects.
+    :type modelID: int
+    :returns: The view objects in the display representing that object -- all
+      a model says of an object it's deleted (see *update()*) is its id: the
+      id alone isn't enough, as every model numbers its objects from 256, and
+      a view shows its model's super-models' objects too.
+    :rtype: list[VObject]
+    '''
+    return [o for o in self._viewObjectIndex().get((id(model), modelID), ())
+            if o.modelObject is not None and o.modelObject.db is model and o.modelObject.id == modelID]
+
+  @staticmethod
+  def _indexKeys(mo:GraphObject) -> tuple[int, tuple[int, int]]:
+    '''
+    :param mo: A model object.
+    :type mo: GraphObject
+    :returns: What a view object representing *mo* is indexed by (see
+      *_viewObjectIndex()*): (the id of) *mo*; and (the id of) its model and
+      its id in that.
+    :rtype: tuple[int, tuple[int, int]]
+    '''
+    return id(mo), (id(mo.db), mo.id)
+
+  def _viewObjectIndex(self) -> dict[int|tuple[int, int], list[VObject]]:
+    '''
+    :returns: The view's objects by (the id of) their model objects (see
+      *viewObjectsFor()*), and by (the id of) their model objects' models and
+      their ids in them (see *_viewObjectsForID()*).
+    :rtype: dict[int|tuple[int, int], list[VObject]]
     '''
     index = self.__dict__.get("_byModelObject")
     if index is None or self.__dict__.get("_byModelObjectOf") is not self._db: # (reading replaces the dict: see PRDb)
       index = {}
       for obj in self.values():
         if obj is not None and obj.modelObject is not None:
-          index.setdefault(id(obj.modelObject), []).append(obj)
+          for key in self._indexKeys(obj.modelObject):
+            index.setdefault(key, []).append(obj)
       self.__dict__["_byModelObject"] = index
       self.__dict__["_byModelObjectOf"] = self._db
     return index
