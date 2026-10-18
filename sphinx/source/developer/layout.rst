@@ -112,7 +112,7 @@ holds anything else it does and undoes -- eg: a tree layout's pins.
 Keeping a view arranged
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-The view's undo list, :py:class:`~sn.view.graphics.sngView.ViewDoList`, is
+The view's undo list, :py:class:`~sn.view.graphics.viewCommands.ViewDoList`, is
 where a dynamic layout gets its say: after each command that changes the
 view, it pushes out of context windows whatever doesn't belong in them, and
 then asks the view's layout to ``adjust()`` -- and adds the moves to the same

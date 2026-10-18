@@ -48,6 +48,56 @@ defaults, through a :py:class:`~sn.view.graphics.vobjects.Cache` (the
 effective values are computed once, and refreshed when an attribute
 changes).
 
+The view's parts
+----------------
+
+.. inheritance-diagram:: sn.view.graphics.sngView.SNGView
+   :parts: 1
+   :top-classes: sn.view.graphics.viewBase.ViewBase, util.abstractGraph.AbstractGraph, util.observer.Observer, util.dirtyable.Dirtyable
+
+:py:class:`~sn.view.graphics.sngView.SNGView` itself is the view as a
+database: making it, saving and reading it, observing its model, and
+finding the VObjects that show a model object. Everything else it does is in
+parts -- mixins, each a module of its own, that it inherits:
+
+:py:class:`~sn.view.graphics.viewViewport.ViewportMixin`
+  Zooming, scrolling, window and view coordinates, painting.
+
+:py:class:`~sn.view.graphics.viewReasoning.ReasoningMixin`
+  The reasoning toolbar, and showing what was inferred (below).
+
+:py:class:`~sn.view.graphics.viewLayouts.LayoutsMixin`
+  The dynamic, static and animated layouts, and the layout panel (see
+  :doc:`layout`).
+
+:py:class:`~sn.view.graphics.viewFiles.FilesMixin`
+  Saving, super-models, the model's preferences, the window's menu items,
+  locking the view.
+
+:py:class:`~sn.view.graphics.viewVisibility.VisibilityMixin`
+  Hidden and erased categories (below).
+
+:py:class:`~sn.view.graphics.viewContainment.ContainmentMixin`
+  Context windows: what belongs in each, and keeping the rest out (below).
+
+:py:class:`~sn.view.graphics.viewEditing.EditingMixin`
+  New objects and relations, cut, copy and paste, erasing and removing,
+  searching.
+
+:py:class:`~sn.view.graphics.viewInput.InputMixin`
+  The mouse, keys and menus (below).
+
+What one part uses of another -- the attributes the view sets up, and the
+methods one part calls on another -- is declared, for the type checker, in
+:py:class:`~sn.view.graphics.viewBase.ViewBase`, which every part inherits;
+at run time it adds nothing. A part's module mustn't import
+:py:mod:`sn.view.graphics.sngView` (which imports it), except while type
+checking: where a part hands the view to something else, it casts itself
+to *SNGView*, which it is. The view's commands are in
+:py:class:`~sn.view.graphics.sngContext.SNGContext` (see :doc:`architecture`),
+and its undo list, :py:class:`~sn.view.graphics.viewCommands.ViewDoList`,
+in :py:mod:`sn.view.graphics.viewCommands`.
+
 Drawing: shapes, decorators and connectors
 ------------------------------------------
 
@@ -99,7 +149,7 @@ Visibility
 ----------
 
 Whether a VObject is drawn is decided in one place,
-:py:meth:`SNGView.shouldHide() <sn.view.graphics.sngView.SNGView.shouldHide>`:
+:py:meth:`SNGView.shouldHide() <sn.view.graphics.viewVisibility.VisibilityMixin.shouldHide>`:
 it's in a hidden category; or it's a relation to something hidden; or it's a
 containment shown by position; or it's inside a collapsed (or hidden)
 window. :py:meth:`~sn.view.graphics.vobjects.VObject._applyHidden` applies
@@ -195,10 +245,10 @@ Mouse and key bindings are made by the view (``makeBindings``). Dragging is
 done live on the canvas, and committed as commands on release
 (``context.move``, ``context.resize``), so a drag is one undoable step.
 Making a relation uses an *elastic line*
-(:py:meth:`~sn.view.graphics.sngView.SNGView.elasticLineChoice`): a line
+(:py:meth:`~sn.view.graphics.viewInput.InputMixin.elasticLineChoice`): a line
 from the origin follows the mouse until a click picks the other end (or
 empty space, or **Esc**), then a callback makes the relation.
 
 Menus are built when they're opened, so they always reflect the current
-state; the background menu is in ``SNGView``, an object's in
+state; the background menu is the view's (``InputMixin.makeMenu``), an object's in
 ``VObject.makeMenu`` and its subclasses.

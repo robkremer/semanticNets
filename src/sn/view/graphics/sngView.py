@@ -1,3 +1,27 @@
+'''
+The graphical view (*SNGView*): a window's canvas of view objects (see
+*sn.view.graphics.vobjects*) showing the objects of one model (and of the
+models it builds on), saved as a ``.snv`` file. This module is the view as a
+database -- making it, saving and reading it, observing its model, finding
+the view objects of a model object; what else it does is in its parts, the
+mixins it inherits (see *viewBase*):
+
+  - *viewViewport.ViewportMixin*: zooming, scrolling, painting;
+  - *viewReasoning.ReasoningMixin*: showing reasoning;
+  - *viewLayouts.LayoutsMixin*: layouts, and the layout panel;
+  - *viewFiles.FilesMixin*: files, window menus, locking;
+  - *viewVisibility.VisibilityMixin*: hidden and erased categories;
+  - *viewContainment.ContainmentMixin*: context windows;
+  - *viewEditing.EditingMixin*: new objects, cut, copy and paste, erasing;
+  - *viewInput.InputMixin*: the mouse, keys and menus.
+
+Its commands are in *sngContext.SNGContext*, its undo list in
+*viewCommands.ViewDoList*.
+
+Created on Aug 21, 2026
+
+.. codeauthor:: Rob Kremer <robkremer@me.com>
+'''
 #################################################################################
 # (c) Copyright 2024-2026, Rob Kremer, MIT open source license.                 #
 #                                                                               #
@@ -57,14 +81,6 @@ from util.dirtyable import Dirtyable
 
 logger:sn.SNLogger = sn.getLogger(__name__)
 
-'''
-The Canvas that handles Semantic Nets visual graphics representing objects in
-one of more models (but having a single default model).
-
-Created on Aug 21, 2026
-
-@author: robkremer
-'''
 import tkinter as tk
 
 

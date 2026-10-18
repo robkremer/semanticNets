@@ -26,7 +26,7 @@
       AppPanedWidget
       SNGViewFrame
       sn.view.graphics.sngView.SNGView
-      sn.view.graphics.sngView.SNGContext
+      sn.view.graphics.sngContext.SNGContext
       sn.model.model.Model
     :parts: 2
     :private-bases:

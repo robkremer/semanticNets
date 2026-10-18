@@ -32,10 +32,21 @@ Submodules
    sn.view.graphics.replaceModelDialog
    sn.view.graphics.searchDialog
    sn.view.graphics.shapes
+   sn.view.graphics.sngContext
    sn.view.graphics.sngView
    sn.view.graphics.sourceWindow
    sn.view.graphics.treeLayout
    sn.view.graphics.utils
+   sn.view.graphics.viewBase
+   sn.view.graphics.viewCommands
+   sn.view.graphics.viewContainment
+   sn.view.graphics.viewEditing
+   sn.view.graphics.viewFiles
+   sn.view.graphics.viewInput
+   sn.view.graphics.viewLayouts
+   sn.view.graphics.viewReasoning
+   sn.view.graphics.viewViewport
+   sn.view.graphics.viewVisibility
    sn.view.graphics.visibilityDialog
    sn.view.graphics.vnodes
    sn.view.graphics.vobjects

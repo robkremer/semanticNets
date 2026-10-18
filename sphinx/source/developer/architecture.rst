@@ -69,7 +69,7 @@ defined on **context** classes:
      CommandContext [label="util.commandParser.CommandContext\n(undo, redo, help, ...)"];
      ModelContext [label="sn.controller.modelInterface.ModelContext\n(new node, set attribute, reason, ...)"];
      UIContext [label="sn.view.textUserInterface.UIContext\n(format)"];
-     SNGContext [label="sn.view.graphics.sngView.SNGContext\n(move, resize, collapse, represent, ...)"];
+     SNGContext [label="sn.view.graphics.sngContext.SNGContext\n(move, resize, collapse, represent, ...)"];
      SNGContext -> UIContext -> ModelContext -> CommandContext;
    }
 

@@ -596,7 +596,7 @@ class LayoutHeuristic(ABC):
   def adjust(self, command:Command) -> "LayoutMoves|None":
     '''
     As the view's dynamic layout: called after each command that changed the
-    view (see *sngView.ViewDoList*), to say what else to move. The command
+    view (see *viewCommands.ViewDoList*), to say what else to move. The command
     returned is done, and undone with *command*, as one.
 
     :param command: The command just done.
@@ -810,7 +810,7 @@ class LayoutMoves(Command):
   when it's undone, if it did before.
   '''
   isLayout = True
-  "So the view's dynamic layout doesn't adjust after it (see *sngView.ViewDoList*)."
+  "So the view's dynamic layout doesn't adjust after it (see *viewCommands.ViewDoList*)."
 
   def __init__(self, view, name:str, targets:dict[VObject, tuple[float, float]], animate:bool=True):
     '''
