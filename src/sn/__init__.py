@@ -409,6 +409,7 @@ def savePrefsIfChanged() -> None:
   doesn't rewrite the user's preferences file.
   '''
   if snPrefs.isDirty():
+    snFolder() # (on a first run there's no SN_FOLDER yet, and the save won't make it)
     snPrefs.save()
 
 atexit.register(savePrefsIfChanged)
