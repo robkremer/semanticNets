@@ -202,8 +202,10 @@ def convert(app:Application, xmlPath:str, folder:str|None=None) -> bool:
     if not messagebox.askokcancel(TITLE, "These files are already there:\n\n  " + "\n  ".join(existing)
                                   + "\n\nReplace them?", icon=messagebox.WARNING): # (no parent: see askForFile())
       return False
-    for p in existing:
-      os.remove(p)
+  if not app.replacingModel(modelPath): # (its window, if it's open, and the model in memory: they'd be added to)
+    return False
+  for p in existing:
+    os.remove(p)
   try:
     model = buildModel(xmlPath, modelPath)
   except ET.ParseError as ex:

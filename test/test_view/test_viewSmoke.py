@@ -38,6 +38,7 @@ Created on Oct 18, 2026
 '''
 import builtins
 import logging
+import os
 import sys
 import tempfile
 import time
@@ -104,9 +105,11 @@ class Test(unittest.TestCase):
 
   def tearDown(self):
     v = self.view
-    v.detachFromModel()
-    self.app.terminalRegistry.unregisterWindow(v.window)
-    v.window.destroy()
+    if not v._closed:
+      v.detachFromModel()
+      self.app.terminalRegistry.unregisterWindow(v.window)
+    if v.window.winfo_exists():
+      v.window.destroy()
     self.pump()
     Model._initCache()
     self.tmp.cleanup()
@@ -305,6 +308,24 @@ class Test(unittest.TestCase):
     self.assertIn(self.vo("alice"), v.selected)
     v.onMotion(self.event(x1, y1))
     self.assertEqual(v.validate(), 0) # (how many problems it found)
+
+  def test1000replacingModel(self):
+    'A model made afresh where one is open (eg: by a plugin): its window\'s closed and it\'s forgotten first, so what\'s made isn\'t added to it.'
+    from util.persistence.pRef import PRDb
+    v, m = self.view, self.model
+    self.app.windows[v.url] = v.window # (as if opened by openWindow())
+    path = str(self.folder / "family.snm")
+    self.assertTrue(self.app.replacingModel(path))
+    self.pump()
+    self.assertTrue(v._closed)
+    self.assertNotIn(v.url, self.app.windows)
+    self.assertFalse(v.window.winfo_exists())
+    self.assertNotIn(m.url, PRDb.AllDBs)
+    os.remove(path) # (as the plugins do, once it's forgotten)
+    fresh = Model(path)
+    self.assertIsNot(fresh, m)
+    self.assertNotIn("alice", {o.name for o in fresh.values()})
+    self.assertTrue(self.app.replacingModel(path + ".none")) # (nothing in memory there: nothing to do)
 
 if __name__ == "__main__":
   unittest.main()

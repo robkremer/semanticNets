@@ -157,8 +157,10 @@ def convert(app:Application, paths:list[str], options:Options, parent:tk.Misc|No
     if not messagebox.askokcancel(TITLE, "These files are already there:\n\n  " + "\n  ".join(existing)
                                   + "\n\nReplace them?", icon=messagebox.WARNING, **where):
       return False
-    for p in existing:
-      os.remove(p)
+  if not app.replacingModel(modelPath): # (its window, if it's open, and the model in memory: they'd be added to)
+    return False
+  for p in existing:
+    os.remove(p)
   model = buildModel(modelPath, modules)
   model.save()
   window = app.openWindow(modelPath) # (a new view of a model is made as <model>.snv: viewPath)

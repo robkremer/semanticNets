@@ -867,7 +867,7 @@ class Application(tk.Tk):
         del PRDb.AllDBs[url]
     self.installExamples(replace=True)
 
-  def closeModel(self, model:Model) -> None:
+  def closeModel(self, model:Model, askToSave:bool=True, quitIfNone:bool=True) -> bool:
     """The File menu's *Close model*: close every window on *model* (offering
     to save each changed view, as closing them by hand does), offer to save the
     model if it's changed, and forget it -- so opening it again reads the file
@@ -880,25 +880,53 @@ class Application(tk.Tk):
 
     :param model: The model.
     :type model: Model
-    :rtype: None
+    :param askToSave: Whether to offer to save the model and its changed
+      views. False when they're being replaced (see *replacingModel()*).
+    :type askToSave: bool
+    :param quitIfNone: Whether to quit if no window is left open. False when
+      another is about to be opened (see *replacingModel()*).
+    :type quitIfNone: bool
+    :returns: Whether it was closed.
+    :rtype: bool
     """
     users = sorted({url for kind, url in model.dependents() if kind == "model"})
     if users:
       messagebox.showerror(sn.NAME, f'"{os.path.basename(model.url)}" can\'t be closed while other models use it:\n\n  '
                            + "\n  ".join(users) + "\n\nModels stay in memory until you quit.")
-      return
+      return False
     for name, window in list(self.windows.items()):
       if window.view is not None and window.view.model is model:
-        self._closeWindow(name, quitIfLast=False)
-    sn.checkSaveModified(model, model.url, "model") # (now or never: once forgotten, quitting won't ask)
+        self._closeWindow(name, quitIfLast=False, askToSave=askToSave)
+    if askToSave:
+      sn.checkSaveModified(model, model.url, "model") # (now or never: once forgotten, quitting won't ask)
     try:
       model.unload()
     except RuntimeError: # (eg: a view of it that isn't in a window: it stays in memory, as before)
       logger.warning(f'Couldn\'t forget model "{model.url}".', exc_info=True)
     self._refreshDirectory()
-    if not self.windows and not self.directoryShown():
+    if quitIfNone and not self.windows and not self.directoryShown():
       self.rememberOpenWindows() # (none: it was closed on purpose, so it isn't reopened next time)
       self.quit()
+    return True
+
+  def replacingModel(self, path:str) -> bool:
+    """Before a model's file is made afresh, in place of the one that's there
+    (eg: by a plugin, once the user's agreed to replace it): if the model at
+    *path* is in memory -- eg: its window is open -- close its windows, without
+    offering to save them (they're being replaced), and forget it. Otherwise
+    *Model(path)* would hand back that model, with all it had, and what's made
+    would be added to it -- and its open views told of each new object.
+
+    :param path: The model's file (or URL).
+    :type path: str
+    :returns: False if it can't be forgotten (other models use it: see
+      *closeModel()*), and so mustn't be replaced; else True.
+    :rtype: bool
+    """
+    model = PRDb.AllDBs.get(PRDb.resolveURL(fixURL(path, None, replaceExt=None, mode="w")[0]))
+    if not isinstance(model, Model):
+      return True
+    return self.closeModel(model, askToSave=False, quitIfNone=False)
 
   def closeAllWindows(self) -> None:
     """Close every hosted window via *_closeWindow()*, so each view gets
