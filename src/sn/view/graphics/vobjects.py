@@ -61,14 +61,12 @@ from abc import abstractmethod
 
 from util.persistence.serialize import InstantiationInfo, ParamInfo, PropertyInfo
 from util.commandParser import CompositeCommandMgr
-from util.persistence.pRef import PRObject, PRDb, PReference #, DeletedObjectError
+from util.persistence.pRef import PReference
 from util.observer import Observer, Subject
 from util.utils import removeDuplicates, tag_bindRightMouse, tag_unbindRightMouse, s_CMD, s_SHIFT, s_ALT,\
   pointInPoly, showExceptionDialog
 from util.tooltip import CreateToolTip
-from util.command import CommandWrapper
-from util.attributeEditor import getEditedAttrsCommandObj, applyEditAttrsBox,\
-  editAttrsBox
+from util.attributeEditor import editAttrsBox
 from util.abstractGraph import AGObject
 from sn import hooks
 from sn.hooks import HookContext
@@ -89,7 +87,6 @@ if TYPE_CHECKING:
   from sn.view.graphics.sngView import SNGView
   from sn.view.graphics.vrelations import VRelation
 
-import logging
 logger:sn.SNLogger = sn.getLogger(__name__)
 
 VATTRIBUTES:dict[str,Any] = { 
@@ -285,7 +282,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     :type kwargs: Any
     '''
     from sn.view.graphics.shapes import Shape
-    from sn.view.graphics.vrelations import VRelation
     from sn.view.graphics.sngView import SNGView
 
     #check parameters
@@ -1751,7 +1747,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         edits = self._whereEdits(edits, nameEdit, typed)
       if not edits:
         return
-      with CompositeCommandMgr(self.view.context) as mgr:
+      with CompositeCommandMgr(self.view.context):
         for key,value in edits.items():
           if value is None:
             self.view.context.delete_attribute(mo, key)

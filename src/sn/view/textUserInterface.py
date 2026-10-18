@@ -447,7 +447,7 @@ if __name__ == '__main__':
   if m is None:
     m = snPrefs.get("model/defaultModel", storeDefault="temp.xml", storeType=str)
   if not isinstance(m, (Model,str)):
-    raise ValueError(f'No model found on the command line (--model or -m) and no default model found in preferences.')
+    raise ValueError('No model found on the command line (--model or -m) and no default model found in preferences.')
   model:Model|str = m
   command = namespace.command
   if len(command) > 0:

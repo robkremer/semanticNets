@@ -23,7 +23,7 @@
 The Semantic Nets package is a tool for ... 
 '''
 import atexit
-from typing import Any, override, cast
+from typing import Any, override
 import logging
 import os
 import sys

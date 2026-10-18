@@ -62,13 +62,11 @@ Created on Feb 15, 2025
 '''
 
 import sn
-import logging
 import time
 from abc import ABC
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Optional, override, Iterable, Sequence
-from sn.view.graphics.vnodes import VNode
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
 from util.utils import Point, expandRect

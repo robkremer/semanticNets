@@ -57,7 +57,7 @@ from pathlib import Path
 import tkinter as tk
 import tkinter.filedialog as filedialog
 from tkinter import messagebox
-from typing import cast
+from typing import cast, TYPE_CHECKING
 from types import NoneType
 from tkinter import ttk
 from sn import snPrefs
@@ -69,6 +69,8 @@ from sn.model.model import Model
 from sn.view.graphics import progress
 from sn.view.graphics.directoryWindow import DirectoryPane, ReadProgress, noteFolderOf, seedSearchPath, askModelURL
 from sn.model.directory import Entry, pathOf, isRemote
+if TYPE_CHECKING:
+  from sn.view.textUserInterface import SNTerminalWidget
 
 logger:sn.SNLogger = sn.getLogger(__name__)
 
@@ -277,7 +279,7 @@ class Application(tk.Tk):
   def doOpen(self, ): 
     'Respond to the "Open..." menu item.'
     filename = filedialog.askopenfilename(
-                title=f"Open a view (.snv) file or the default view for a model (.snm) file.",
+                title="Open a view (.snv) file or the default view for a model (.snm) file.",
                 filetypes=[("View files", "*.snv *.snm"), ("xml files", "*.xml"), ("All Files", "*.*")])
     if filename:
       self.openWindow(filename)
@@ -299,7 +301,7 @@ class Application(tk.Tk):
   def doNew(self, ): 
     'Respond to the "New..." menu item.'
     filename = filedialog.asksaveasfilename(
-                title=f"Specify a view (.snv) file (you will be asked for the corresponding model) or model (.snm) file to create a default view for.",
+                title="Specify a view (.snv) file (you will be asked for the corresponding model) or model (.snm) file to create a default view for.",
                 defaultextension=".snv",
                 filetypes=[("View files", "*.snv *.snm"), ("xml files", "*.xml"), ("All Files", "*.*")])
     if filename:
@@ -1115,7 +1117,7 @@ class AppWindow(tk.Toplevel):
     if self.view is not None: # (in another of the application's windows: eg: the attribute editor)
       self.view.onWindowFocusOut()
 
-  def _bindFocusRouting(self, widget: tk.Misc, terminal: "SNTerminalWidget") -> None: #type: ignore[name-defined]
+  def _bindFocusRouting(self, widget: tk.Misc, terminal: SNTerminalWidget) -> None:
     """Recursively bind <FocusIn>/<FocusOut> on this widget and all its
     descendants so that focusing ANY widget in the window (terminal or
     graphics editor) sets this window's terminal as the default stdio/input()
@@ -1127,7 +1129,6 @@ class AppWindow(tk.Toplevel):
     :type terminal: SNTerminalWidget
     :rtype: None
     """
-    e:tk.Event
     widget.bind("<FocusIn>", lambda e, t=terminal: self._root().terminalRegistry.onFocusIn(t), add="+") #type: ignore[attr-defined,call-overload]
     widget.bind("<FocusOut>", lambda e, t=terminal: self._root().terminalRegistry.onFocusOut(t), add="+") #type: ignore[attr-defined,call-overload]
     for child in widget.winfo_children():

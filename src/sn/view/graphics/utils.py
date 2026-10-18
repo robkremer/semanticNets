@@ -30,11 +30,10 @@ Created on Jan 18, 2025
 -----------
 '''
 
-import logging
 import sys
 import tkinter as tk
 from tkinter import ttk
-from typing import Any, Optional, Iterable, Callable, Sequence
+from typing import Any, Optional, Callable, Sequence
 import subprocess
 
 logger:sn.SNLogger = sn.getLogger(__name__)
@@ -262,7 +261,7 @@ def getSubMenu(menu:tk.Menu, name:str, makeIfNone:int|str|None=tk.END) -> Option
     assert index is not None and menu.type(index) == "cascade"
     submenu = menu.entrycget(index,'menu')
     submenu = menu.winfo_toplevel().nametowidget(submenu)
-  except Exception as ex:
+  except Exception:
     if makeIfNone is not None:
       assert isinstance(makeIfNone, (int, str))
       submenu = tk.Menu(menu) #TODO: should probably make an effort to put this in the right place
@@ -384,10 +383,10 @@ def addToMenuBar(path:str, command:Optional[Callable]=None, *, menu:Optional[tk.
   assert (command is None) != (menu is None), \
       'addToMenuBar(): pass exactly one of command= (add/replace a command item) or menu= (add/replace a cascade item).'
   segments = path.split("|")
-  assert len(segments) >= 1, f'addToMenuBar(): empty path.'
+  assert len(segments) >= 1, 'addToMenuBar(): empty path.'
   target = _getMenuBar()
   assert target is not None, \
-      f'addToMenuBar(): no default menu bar could be resolved (no default root, or it has no menu configured).'
+      'addToMenuBar(): no default menu bar could be resolved (no default root, or it has no menu configured).'
   for seg in segments[:-1]:
     target = getSubMenu(target, seg, makeIfNone=(cascadePositions or {}).get(seg, tk.END))
     assert target is not None # (made if it isn't there)
@@ -437,7 +436,7 @@ def addCheckToMenuBar(path:str, variable:tk.Variable, command:Optional[Callable]
   segments = path.split("|")
   target = _getMenuBar()
   assert target is not None, \
-      f'addCheckToMenuBar(): no default menu bar could be resolved (no default root, or it has no menu configured).'
+      'addCheckToMenuBar(): no default menu bar could be resolved (no default root, or it has no menu configured).'
   for seg in segments[:-1]:
     target = getSubMenu(target, seg, makeIfNone=(cascadePositions or {}).get(seg, tk.END))
     assert target is not None # (made if it isn't there)
@@ -465,7 +464,7 @@ def removeFromMenuBar(path:str) -> None:
   :rtype: None
   """
   segments = path.split("|")
-  assert len(segments) >= 1, f'removeFromMenuBar(): empty path.'
+  assert len(segments) >= 1, 'removeFromMenuBar(): empty path.'
   target = _getMenuBar()
   if target is None:
     return

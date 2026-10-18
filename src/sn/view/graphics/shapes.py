@@ -52,7 +52,6 @@ from math import cos, sin, pi
 from util.utils import allConcreteSubclasses
 from sn.view.graphics.vobjects import VObject
 
-import logging
 import weakref
 logger:sn.SNLogger = sn.getLogger(__name__)
 

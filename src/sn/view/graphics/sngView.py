@@ -26,16 +26,15 @@ from sn.model import names
 from sn.model.constraints import WHERE, CONSTRAINTS, CONSTRAINTS_NOTE, splitWhere, mergeConstraints, ConstraintError
 from util.attribute import Attribute, VAR
 from sn.model.model import Model, Node, Relation, Collection, IsaIndividual, SN_URL,\
-  GraphObject, GORef
+  GraphObject
 from sn.controller.modelInterface import ModelContext, changesModel
 
 from contextlib import contextmanager
 from functools import partial
 from typing import cast, override, Any, Iterable, Iterator, Callable, Optional, TYPE_CHECKING
-from util.utils import bindRightMouse, fixURL, isValidURL, urlExists, expandRect,\
+from util.utils import bindRightMouse, fixURL, urlExists, expandRect,\
   flattenPairs, s_SHIFT, s_CMD, s_ALT, normalizeRect
 from sn.view.graphics.utils import eventEqual, addToMenuBar, addCheckToMenuBar, removeFromMenuBar
-from util.terminal import inputAsync
 from util.persistence.pRef import PRDb, PReference
 from util.observer import Subject, Observer
 from util.attributeEditor import applyEditAttrsBox
@@ -66,7 +65,6 @@ import threading
 from pathlib import Path
 from util.abstractGraph import AbstractGraph
 from util.dirtyable import Dirtyable
-from copy import copy
 from collections import namedtuple
 
 logger:sn.SNLogger = sn.getLogger(__name__)
@@ -3423,8 +3421,6 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
       * set *self._selectionBoxInfo* to *None*.
     """
-    from sn.view.graphics.vnodes import VNode
-    from sn.view.graphics.vrelations import VRelation
     if self._dragZoom is not None: # a drag-zoom's done
       self._dragZoom = None
       self.canvas.configure(cursor=self._cursorBeforePan)
@@ -3655,8 +3651,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
   def _reportExempt(self) -> None:
     pending = self.__dict__.pop("_exemptPending", {})
-    for c, names in pending.items():
-      shown = ", ".join(dict.fromkeys(names)) # (once each, in order)
+    for c, labels in pending.items():
+      shown = ", ".join(dict.fromkeys(labels)) # (once each, in order)
       mode = "hidden" if self.hides.get(c) == "hide" else "erased"
       menu = "hide" if mode == "hidden" else "erase"
       logger.warning(f'{shown}: in the {mode} category "{c}", but shown anyway, as it was just made (or asked for). '

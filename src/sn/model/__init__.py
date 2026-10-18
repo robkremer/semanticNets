@@ -51,11 +51,7 @@ program to work.  Top model contains the following base objects:
 # SOFTWARE.                                                                     #
 #################################################################################
 from sn.model.model import Model, GraphObject, Node, Collection, Relation, IsaIndividual, SN_URL
-from util.attribute import Attribute, VAR_DEFAULTED, TYPENAME, VAR, CONST, LOCAL
-from util.persistence.pRef import PRDb
-import sys
-import atexit
-from util.utils import askUser
+from util.attribute import Attribute, VAR_DEFAULTED, VAR, LOCAL
 from util.observer import Subject
 from util.abstractGraph import AbstractGraph
 from util.dirtyable import Dirtyable
@@ -108,7 +104,7 @@ class TopModel(Model):
     self.ISA["reflexive"]  = Attribute(True, bool, LOCAL, "Object is a reflexive relation")
     self.ISA["transitive"] = Attribute(True, bool, LOCAL, "Object is a transitive relation")
     IsaIndividual(self, self.RELATION, self.TOP) #4 can't do this until after ISA exists
-    isaisa:IsaIndividual = IsaIndividual(self, self.ISA, self.RELATION) #5
+    IsaIndividual(self, self.ISA, self.RELATION) #5
 
     # now that we have the isa defined, fix up the name attribute (as it involves inheritance) 
     self.TOP.setAttr("name", Attribute("top", str, VAR_DEFAULTED, NAME_NOTE))

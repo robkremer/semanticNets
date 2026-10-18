@@ -19,7 +19,7 @@ def selftest() -> int:
     example are as expected, 1 if not.
   :rtype: int
   '''
-  import atexit, os, shutil, tempfile
+  import atexit, shutil, tempfile
   from pathlib import Path
   import sn
   from sn.model.model import Model

@@ -975,7 +975,7 @@ class ModelContext(CommandContext):
         if not (isinstance(objects[i], GraphObject) or isinstance(objects[i], Model) and expLen==1):
           raise ValueError(f"Expected a GraphObject at position {i+1}. Got {objects[i]}.")
     if nObjs == 0:
-      raise SyntaxError(f'Expected at least one GraphObject in expression.')
+      raise SyntaxError('Expected at least one GraphObject in expression.')
     
     # an "echo" expression...
     if expLen == 1:
@@ -1189,12 +1189,12 @@ class ModelContext(CommandContext):
             self.rel.connect(self.obj1, self.obj2)
             return self.artifact
           else:
-            raise SyntaxError(f'First and third arguments must both be type or both be individuals.')
+            raise SyntaxError('First and third arguments must both be type or both be individuals.')
         else: 
           self.artifact = Relation(self.model, [self.rel], individual=not self.typeParam, src=self.obj1, dst=self.obj2)
           return self.artifact
         
-      raise SyntaxError(f'Unrecognized expression')
+      raise SyntaxError('Unrecognized expression')
         
     @override
     def undo(self):
@@ -1319,7 +1319,7 @@ class ModelContext(CommandContext):
       :rtype: Node
       '''
       super().do()
-      with Subject.ChangeMgr(self.model, later=True) as cm:
+      with Subject.ChangeMgr(self.model, later=True):
         if self.node is None:
           self.node = Node(self.model, self.parents, self.individual, self.nodeName)
         else:
@@ -1334,7 +1334,7 @@ class ModelContext(CommandContext):
       '''
       assert self.node is not None
       super().undo()
-      with Subject.ChangeMgr(self.model, later=True) as cm:
+      with Subject.ChangeMgr(self.model, later=True):
         self.node._disconnect()
       return self.node
       

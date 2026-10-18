@@ -46,7 +46,7 @@ def checkModel(folder:str) -> None:
   from sn.model.reasoner import reason
   from sn import hooks
   from petsapp.build import buildPets
-  import petsapp.hooks
+  import petsapp.hooks # (registers its hooks: see the checks below)
   path = os.path.join(folder, "model", "pets.snm")
   os.makedirs(os.path.dirname(path))
   buildPets(path)

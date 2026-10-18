@@ -42,7 +42,7 @@ import re
 from typing import Any, override
 import clingo
 from sn.model.model import Model, GraphObject
-from sn.model.reasoner import Reasoner, Inferences, Violation, Sym, Fact, PROPERTIES, Pattern, patternOf, ruleOf, rules, ruleSpecs, constraintSpecs, NewObject, inferredNodeFor, \
+from sn.model.reasoner import Reasoner, Inferences, Violation, Sym, Fact, PROPERTIES, Pattern, patternOf, NewObject, inferredNodeFor, \
   sameClasses, _newObjectKey
 from sn.model.constraints import PRESENT, ValueVar, Not
 from sn.model.names import NameKind

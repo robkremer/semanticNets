@@ -40,7 +40,7 @@ import re
 import sys
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
-from typing import Iterator, Optional
+from typing import Iterator
 from urllib.parse import urljoin, urlparse, unquote
 from util.utils import fixURL, urlExists
 
