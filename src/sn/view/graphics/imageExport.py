@@ -80,9 +80,7 @@ class PDF:
   def __init__(self, box:list[float], scale:float=1.0):
     '''
     :param box: The part of the canvas to draw (x1, y1, x2, y2).
-    :type box: list[float]
     :param scale: Points per canvas pixel.
-    :type scale: float
     '''
     self.box, self.scale = box, scale
     self.ops:list[str] = []
@@ -93,7 +91,6 @@ class PDF:
   def pt(self, x:float, y:float) -> str:
     '''
     :returns: Canvas point (*x*, *y*) as PDF coordinates (y up, from the bottom left).
-    :rtype: str
     '''
     return f"{(x - self.box[0]) * self.scale:.2f} {(self.box[3] - y) * self.scale:.2f}"
 
@@ -130,7 +127,6 @@ class PDF:
   def bytes(self) -> bytes:
     '''
     :returns: The PDF file.
-    :rtype: bytes
     '''
     w, h = (self.box[2] - self.box[0]) * self.scale, (self.box[3] - self.box[1]) * self.scale
     content = zlib.compress("\n".join(self.ops).encode("latin-1"))
@@ -167,16 +163,12 @@ def _quad(s:Point, c:Point, e:Point) -> tuple[Point, Point, Point]:
 def splineSegments(pts:Sequence[Point], smooth:str, closed:bool) -> list[tuple[Point, ...]]:
   '''
   :param pts: An item's points.
-  :type pts: Sequence[Point]
   :param smooth: Its "smooth" option: "raw" (the points are a cubic Bezier
     curve's: end, control, control, end, ...), something true (a Tk spline:
     the quadratic B-spline through the midpoints of the points' segments, and
     the end points) or not (straight lines).
-  :type smooth: str
   :param closed: A polygon (or a line that ends where it starts).
-  :type closed: bool
   :returns: The path the item draws (see *PDF.path()*).
-  :rtype: list[tuple[Point, ...]]
   '''
   if len(pts) < 2:
     return [(pts[0],)] if pts else []
@@ -217,9 +209,7 @@ def arrowHead(tip:Point, toward:Point, width:float, shape:tuple[float, float, fl
   :param shape: Its "arrowshape": (d1, d2, d3) -- as far along the line from
     the tip to the neck, and to the trailing points, and how far the trailing
     points are out from the line's edge.
-  :type shape: tuple[float, float, float]
   :returns: The head's polygon, and where the line is to end (under the head).
-  :rtype: tuple[list[Point], Point]
   '''
   d1, d2, d3 = shape
   dx, dy = tip[0] - toward[0], tip[1] - toward[1]
@@ -246,7 +236,6 @@ class Renderer:
   def rgb(self, color:str) -> tuple[float, float, float]|None:
     '''
     :returns: Tk colour *color* as (r, g, b) in 0..1, or None if it's "" (none).
-    :rtype: tuple[float, float, float] | None
     '''
     if not color:
       return None
@@ -341,7 +330,6 @@ class Renderer:
   def wrap(self, text:str, f:tkfont.Font, width:float) -> list[str]:
     '''
     :returns: *text*'s lines, as a Tk text item *width* wide wraps it (at spaces).
-    :rtype: list[str]
     '''
     lines:list[str] = []
     for para in text.split("\n"):
@@ -423,15 +411,10 @@ class Renderer:
 
 def drawItems(canvas:tk.Canvas, items:Iterable[int], scale:float=1.0) -> bytes|None:
   '''
-  :param canvas:
-  :type canvas: tk.Canvas
   :param items: Canvas item ids, bottom first.
-  :type items: Iterable[int]
   :param scale: Points per canvas pixel.
-  :type scale: float
   :returns: A PDF of *items* (those that aren't hidden), on a white page just
     big enough for them, or None if there's nothing to draw.
-  :rtype: bytes | None
   '''
   shown = [i for i in items if canvas.itemcget(i, "state") != "hidden" and canvas.type(i) in ("rectangle", "oval", "polygon", "line", "text")]
   boxes = [b for b in (canvas.bbox(i) for i in shown) if b]
@@ -467,7 +450,6 @@ def copyImage(canvas:tk.Canvas, items:list[int]) -> tuple[int, int]:
   Put a picture of canvas items *items* (bottom first) on the system clipboard, as a PNG.
 
   :returns: The picture's size (canvas pixels).
-  :rtype: tuple[int, int]
   :raises RuntimeError: If there's nothing to draw, or it isn't macOS.
   '''
   if sys.platform != "darwin":

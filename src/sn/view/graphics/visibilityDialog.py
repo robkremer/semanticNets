@@ -44,11 +44,9 @@ MAX_HEIGHT = 420
 def typeTree[T: GraphObject](types:list[T]) -> list[tuple[T, int]]:
   '''
   :param types: Types (eg: relation types).
-  :type types: list[T]
   :returns: Them in tree order: each followed by its subtypes (those of
     *types* it's the first supertype of, among *types*), indented one more
     (the depth); siblings by name.
-  :rtype: list[tuple[T, int]]
   '''
   ids = {id(t) for t in types}
   byId = {id(t): t for t in types}
@@ -85,17 +83,10 @@ class TypesDialog(tk.Toplevel):
                options:list[tuple[str, bool]]=[]):
     '''
     :param parent: The window it's over.
-    :type parent: tk.Misc
-    :param title:
-    :type title: str
     :param types: The types to offer.
-    :type types: list[GraphObject]
     :param checked: The ids of those checked to start with.
-    :type checked: set[int]
     :param note: Said above the list, if anything.
-    :type note: str
     :param options: Other choices, below the list: (label, checked to start with).
-    :type options: list[tuple[str, bool]]
     '''
     super().__init__(parent)
     ownDialog(self, parent) # (over its parent's window, not full screen: see ownDialog())
@@ -152,7 +143,6 @@ class TypesDialog(tk.Toplevel):
     Show it (over its parent's window, in front), and wait for an answer.
 
     :returns: *result*.
-    :rtype: set[int] | None
     '''
     self.update_idletasks()
     if self.winfo_reqheight() > MAX_HEIGHT + 120:

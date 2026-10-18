@@ -66,7 +66,6 @@ def searchPath() -> list[Folder]:
 def setSearchPath(text:str) -> None:
   '''
   :param text: The new search path (see *sn.model.directory.parsePath()*).
-  :type text: str
   '''
   snPrefs[PATH_PREF] = text
 
@@ -75,10 +74,7 @@ def noteFolderOf(url:str) -> bool:
   A model or view at *url* has been opened, made or saved: add its folder to
   the search path if it isn't in it already.
 
-  :param url:
-  :type url: str
   :returns: Whether it was added.
-  :rtype: bool
   '''
   path = pathOf(url)
   if not path or isTemporary(path):
@@ -92,11 +88,8 @@ def noteFolderOf(url:str) -> bool:
 
 def isTemporary(path:str) -> bool:
   '''
-  :param path:
-  :type path: str
   :returns: Whether *path* is in a temporary folder (eg: a test's): its folder
     isn't added to the search path.
-  :rtype: bool
   '''
   import tempfile
   real = os.path.realpath(path)
@@ -107,9 +100,6 @@ def seedSearchPath(urls:list[str]) -> None:
   '''
   If the search path is empty (eg: the directory's never been used), start it
   with the folders of *urls* (eg: the files opened recently) that are there.
-
-  :param urls:
-  :type urls: list[str]
   '''
   current = snPrefs.get(PATH_PREF, "")
   if isinstance(current, str) and current.strip():
@@ -122,9 +112,7 @@ def seedSearchPath(urls:list[str]) -> None:
 def sizeText(size:int|None) -> str:
   '''
   :param size: A number of bytes.
-  :type size: int | None
   :returns: It, readably: eg, "12 KB", "3.4 MB".
-  :rtype: str
   '''
   if size is None:
     return ""
@@ -150,16 +138,8 @@ def askModelURL(parent:tk.Misc, title:str, kinds:tuple[str, ...]=("model", "view
   typed recently, and checking there's one of *kinds* there before it's taken
   (see *sn.model.directory.urlProblem()*).
 
-  :param parent:
-  :type parent: tk.Misc
-  :param title:
-  :type title: str
   :param kinds: "model", "view", or both.
-  :type kinds: tuple[str, ...]
-  :param prompt:
-  :type prompt: str
   :returns: The URL, or None if cancelled.
-  :rtype: str | None
   '''
   from util.urlDialog import askURL
   from sn.model.directory import urlProblem
@@ -176,9 +156,6 @@ def noteSaved(url:str) -> None:
   '''
   A model or view has been saved at *url*: add its folder to the search path
   (see *noteFolderOf()*), and show it as it is now in the model directory.
-
-  :param url:
-  :type url: str
   '''
   from sn.view.graphics.guiApp import Application
   app = Application.current
@@ -197,7 +174,6 @@ def repaint(widget:tk.Misc) -> None:
   *SNGView._drawAllAfterRead()*).
 
   :param widget: Any widget.
-  :type widget: tk.Misc
   '''
   widget.update_idletasks()
 
@@ -219,7 +195,6 @@ class DirectoryPane(ttk.Frame):
   def __init__(self, app:Application):
     '''
     :param app: The application: the pane fills its main window.
-    :type app: Application
     '''
     super().__init__(app, padding=6)
     self.app = app
@@ -303,9 +278,6 @@ class DirectoryPane(ttk.Frame):
     '''
     *path* -- a model or view -- has been saved, made or deleted: show it as
     it is now.
-
-    :param path:
-    :type path: str
     '''
     self.directory.update(path)
     self.refresh()
@@ -415,7 +387,6 @@ class DirectoryPane(ttk.Frame):
     Open the selected view, or the selected model in its default view.
 
     :param readOnly: Whether its model's to be write-locked (see *PRDb.writeLocked()*).
-    :type readOnly: bool
     '''
     entry = self.selectedEntry()
     if entry is None or entry.error or not (entry.path or entry.remote):

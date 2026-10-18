@@ -50,9 +50,7 @@ DEFAULTS:dict[str, float] = {"flowStrength": 6.0, "e": 1000.0, "k": 0.005, "heat
 def coolingLoss(cooling:float) -> str:
   '''
   :param cooling: The layout's *cooling*: what the temperature is multiplied by at each cool-down.
-  :type cooling: float
   :returns: How it's shown: the share of the temperature lost, eg: "30%".
-  :rtype: str
   '''
   return f"{(1.0 - cooling) * 100:.2g}%"
 
@@ -112,7 +110,6 @@ def statusText(layout:Any) -> str:
   :param layout: The animation layout.
   :type layout: FieldsLayout_threaded
   :returns: What it's doing, eg: "running: settling (T=0.49)".
-  :rtype: str
   '''
   if not layout.active:
     return "stopped"
@@ -133,9 +130,7 @@ class AnimationControls(ttk.Frame):
   def __init__(self, master:tk.Misc, view:SNGView):
     '''
     :param master: The widget it's in: the layout panel's page.
-    :type master: tk.Misc
     :param view: The view whose animation layout it sets.
-    :type view: SNGView
     '''
     super().__init__(master)
     self.view = view
@@ -209,7 +204,6 @@ class AnimationControls(ttk.Frame):
     :returns: The relation types the current can follow: "isa" first, then the
       model's own and its super-models' (eg: an ontology's), by name (see
       *layout.relationTypes()*).
-    :rtype: list[Relation]
     '''
     from sn.view.graphics.layout import relationTypes
     return relationTypes(self.view.model)
@@ -229,9 +223,7 @@ class AnimationControls(ttk.Frame):
     A slider was moved.
 
     :param attr: The layout's attribute it sets.
-    :type attr: str
     :param value: Its new position (the layout's value, but see *SCALED*).
-    :type value: float
     '''
     if attr in SCALED:
       value = SCALED[attr][1](value)
@@ -244,11 +236,8 @@ class AnimationControls(ttk.Frame):
   def _format(fmt:str|Callable[[float], str], value:float) -> str:
     '''
     :param fmt: A slider's value format (see *SLIDERS*).
-    :type fmt: str|Callable[[float], str]
     :param value: The layout's value.
-    :type value: float
     :returns: The value, as the slider shows it.
-    :rtype: str
     '''
     return fmt(value) if callable(fmt) else fmt.format(value)
 

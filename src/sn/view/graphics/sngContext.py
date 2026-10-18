@@ -47,10 +47,8 @@ class SNGContext(UIContext):
   @override
   def __init__(self, model:Model, view:SNGView):
     '''
-    :param model:
-    :type model: Model
-    :param view:
-    :type view: SNGView
+    A context for typed commands on *model* and *view*: its parser's defaults start with them (the "model" and
+    the "view").
     '''
     super().__init__(model)
     self.view:SNGView = view
@@ -60,8 +58,7 @@ class SNGContext(UIContext):
   @override
   def _defineDecoders(self):
     '''
-    :returns:
-    :rtype:
+    Add the decoder for a view object ("VObject") to a model context's (see *ModelContext._defineDecoders()*).
     '''
     def getVObject(s:str, d:dict, **kwargs) -> "VObject": #type: ignore[name-defined]
       try:
@@ -75,8 +72,7 @@ class SNGContext(UIContext):
     
   def _setView(self, view:SNGView):
     '''
-    :param view:
-    :type view: SNGView
+    The view the commands act on (and the parser's default "view").
     '''
     self.view = view
     self.defaults["view"] = self.view
@@ -85,23 +81,6 @@ class SNGContext(UIContext):
            _wasFloating:bool|None=None, _drag:bool=False):
     '''
     This is a dummy graphic command.
-
-    :param obj:
-    :type obj: VObject
-    :param x:
-    :type x: int | float
-    :param y:
-    :type y: int | float
-    :param _oldPos:
-    :type _oldPos: list[int] | None
-    :param adjustPos:
-    :type adjustPos: bool
-    :param _carry:
-    :type _carry: bool
-    :param _wasFloating:
-    :type _wasFloating: bool | None
-    :param _drag:
-    :type _drag: bool
     '''
     print ("dummy graphic command")
 
@@ -109,17 +88,10 @@ class SNGContext(UIContext):
     def __init__(self, obj:"VObject", x:int|float, y:int|float, _oldPos:list[int]|None=None, adjustPos:bool=True, _carry:bool=True, #type: ignore[name-defined]
                  _wasFloating:bool|None=None, _drag:bool=False):
       '''
-      :param obj:
-      :type obj: VObject
-      :param x:
-      :type x: int | float
-      :param y:
-      :type y: int | float
       :param adjustPos: [default=True] Passed to *obj.moveTo()*: whether to let
         the local layout heuristic (FindFree) nudge *obj* off anything it
         lands on. Moves that must land exactly where computed (eg: gathering
         outliers) pass False.
-      :type adjustPos: bool
       :param _oldPos: [Optional] The object's true position *before the drag
         that produced (x,y) began* -- eg: *self.dragInfo[0], self.dragInfo[1]*,
         captured in *VObject.onButton_1()* at mouse-down, before any
@@ -134,21 +106,17 @@ class SNGContext(UIContext):
         before the user picked it up. Passing the true pre-drag position
         explicitly is what lets a single *undo()* restore the whole move
         rather than just its last FindFree-driven leg.
-      :type _oldPos: Optional[list[int]]
       :param _carry: [default=True] Passed to *obj.moveTo()*: whether a context
         window carries what's inside it along. A move that's one of many (eg: a
         layout's) whose contents are moved by their own commands passes False:
         otherwise redoing or undoing it would move them twice.
-      :type _carry: bool
       :param _wasFloating: [Optional] For a relation's label placed by a layout:
         whether it floated (between its ends) before -- the move pins it (it
         no longer floats), and undoing it puts that back.
-      :type _wasFloating: bool | None
       :param _drag: [default=False] Whether it's the user dropping something they
         dragged (see *VObject.onB1_ButtonRelease()*), not a program moving it:
         eg: a tree layout pins a dragged node where it's dropped (see
         *treeLayout.TreeLayout.adjust()*).
-      :type _drag: bool
       '''
       super().__init__("move")
       self.drag:bool = _drag
@@ -201,7 +169,6 @@ class SNGContext(UIContext):
     def __str__(self):
       '''
       :returns: A readable string for this object.
-      :rtype:
       '''
       return f'{super().__str__()} {self.obj.name} {self.x} {self.y}'
 
@@ -209,23 +176,6 @@ class SNGContext(UIContext):
              userSized:bool=True, oldBB:list[int]|None=None, oldUserSized:bool|None=None):
     '''
     Set the bounding box of a view object (its position and size).
-
-    :param obj:
-    :type obj: VObject
-    :param x1:
-    :type x1: int
-    :param y1:
-    :type y1: int
-    :param x2:
-    :type x2: int
-    :param y2:
-    :type y2: int
-    :param userSized:
-    :type userSized: bool
-    :param oldBB:
-    :type oldBB: list[int] | None
-    :param oldUserSized:
-    :type oldUserSized: bool | None
     '''
     print ("dummy graphic command")
 
@@ -233,25 +183,12 @@ class SNGContext(UIContext):
     def __init__(self, obj:"VObject", x1:int, y1:int, x2:int, y2:int, #type: ignore[name-defined]
                  userSized:bool=True, oldBB:list[int]|None=None, oldUserSized:bool|None=None):
       '''
-      :param obj:
-      :type obj: VObject
-      :param x1:
-      :type x1: int
-      :param y1:
-      :type y1: int
-      :param x2:
-      :type x2: int
-      :param y2:
-      :type y2: int
       :param userSized: [default=True] Whether the result counts as sized by
         the user (so it's no longer fitted to its text) -- False for "fit to text".
-      :type userSized: bool
       :param oldBB: [Optional] The bounding box before -- for a resize that
         was already applied live (eg: a handle drag), since by *do()*-time
         the object already has its new box. Captured at *do()* if omitted.
-      :type oldBB: list[int] | None
       :param oldUserSized: [Optional] *obj.userSized* before; likewise.
-      :type oldUserSized: bool | None
       '''
       super().__init__("resize")
       self.obj:VObject = obj
@@ -289,18 +226,12 @@ class SNGContext(UIContext):
     def __str__(self):
       '''
       :returns: A readable string for this object.
-      :rtype:
       '''
       return f'{super().__str__()} {self.obj.name} {" ".join(str(v) for v in self.bb)}'
 
   def collapse(self, obj:"VObject", collapsed:bool=True): #type: ignore[name-defined]
     '''
     Show a context window as just its title bar (or, with *collapsed* False, in full).
-
-    :param obj:
-    :type obj: VObject
-    :param collapsed:
-    :type collapsed: bool
     '''
     print ("dummy graphic command")
 
@@ -309,11 +240,6 @@ class SNGContext(UIContext):
       '''
       Show a context window as just its title bar (or, with *collapsed* False,
       in full). See *VObject.setCollapsed()*.
-
-      :param obj:
-      :type obj: VObject
-      :param collapsed:
-      :type collapsed: bool
       '''
       super().__init__("collapse" if collapsed else "expand")
       self.obj:VObject = obj
@@ -339,7 +265,6 @@ class SNGContext(UIContext):
     def __str__(self):
       '''
       :returns: A readable string for this object.
-      :rtype:
       '''
       return f'{super().__str__()} {self.obj.name}'
 
@@ -362,10 +287,7 @@ class SNGContext(UIContext):
       
       :param object: One or more model objects.
       :type object: list[GraphObject|str]
-      :param objects:
-      :type objects: list[GraphObject | str]
       :param view: The view to add to.
-      :type view: SNGView
       :returns: None
       '''
       super().__init__("represent")
@@ -429,7 +351,6 @@ class SNGContext(UIContext):
     def __str__(self):
       '''
       :returns: A readable string for this object.
-      :rtype:
       '''
       return f'{super().__str__()} {" ".join([mo.name for mo in self.modelObjects])} --view {self.view}'
 
@@ -440,9 +361,7 @@ class SNGContext(UIContext):
     Delete a *GraphObject*.
     
     :param object: The *VObject* to delete from the view.
-    :type object: VObject
     :param others: More to delete with it, in the same command (see *SNGView.doErase()*).
-    :type others: list[VObject] | None
     '''
     pass
     
@@ -452,10 +371,8 @@ class SNGContext(UIContext):
       Delete a object from it's model.
       
       :param object: The object to delete from the view.
-      :type object: VObject
       :param others: More to delete with it -- else, if *object* is selected,
         the rest of the selection.
-      :type others: list[VObject] | None
       '''
       # param checking...
       super().__init__("remove")
@@ -491,7 +408,6 @@ class SNGContext(UIContext):
     def __str__(self):
       '''
       :returns: A readable string for this object.
-      :rtype:
       '''
       return f'{super().__str__()} {self.objects[0].getPRef().tostring()}'
 
@@ -505,11 +421,7 @@ class SNGContext(UIContext):
     beside them if that's taken -- or with their top left at (*x*, *y*).
 
     :param model: The Model to paste into. Default: the current model.
-    :type model: Model
     :param x: Where to put them (view coords), with *y*.
-    :type x: int | None
-    :param y:
-    :type y: int | None
     '''
     pass
 
@@ -518,15 +430,6 @@ class SNGContext(UIContext):
       '''
       Make new objects in the model, copying what was last cut or copied, and
       show them as the originals were shown.
-
-      :param model:
-      :type model: Model | None
-      :param x:
-      :type x: int | None
-      :param y:
-      :type y: int | None
-      :param view:
-      :type view: SNGView | None
       '''
       super().__init__(model=model)
       self.view:SNGView|None = view
@@ -553,9 +456,7 @@ class SNGContext(UIContext):
     won't bring in more of them.
 
     :param category: The category's name, eg: "types", "isa individuals".
-    :type category: str
     :param mode: "show", "hide" or "erase".
-    :type mode: str
     '''
     print ("dummy graphic command")
 
@@ -565,11 +466,7 @@ class SNGContext(UIContext):
       Show, hide or erase a category of objects in the view.
 
       :param category: The category's name, eg: "types", "isa individuals".
-      :type category: str
       :param mode: "show", "hide" or "erase".
-      :type mode: str
-      :param view:
-      :type view: SNGView | None
       '''
       super().__init__("visibility")
       assert view is not None
@@ -633,32 +530,19 @@ class SNGContext(UIContext):
     def __str__(self):
       '''
       :returns: A readable string for this object.
-      :rtype:
       '''
       return f'{super().__str__()} {self.category} {self.mode}'
 
   def expand(self, object:VObject, *, levels:int=0, _filter:Callable[[Any, Relation], bool]=lambda _vn, _mr: True):
     '''
     This is a dummy graphic command (the command is *_Expand*).
-
-    :param object:
-    :type object: VObject
-    :param levels:
-    :type levels: int
-    :param _filter:
-    :type _filter: Callable[[Any, Relation], bool]
     '''
     print ("dummy graphic command")
     
   class _Expand(Command):
     def __init__(self, object:VObject, *, levels:int=0, _filter:Callable[[Any, Relation], bool]=lambda _vn, _mr: True):
       '''
-      :param object:
-      :type object: VObject
-      :param levels:
-      :type levels: int
-      :param _filter:
-      :type _filter: Callable[[Any, Relation], bool]
+      A command to expand *object* by *levels* more levels, by the relations *_filter* allows.
       '''
       super().__init__("expand")
       self.obj:VObject = object
@@ -708,6 +592,5 @@ class SNGContext(UIContext):
     def __str__(self):
       '''
       :returns: A readable string for this object.
-      :rtype:
       '''
       return Command.__str__(self)

@@ -78,9 +78,7 @@ class ReasoningToolbar(ttk.Frame):
   def __init__(self, master:tk.Misc, view:SNGView):
     '''
     :param master: The widget it's in: the view's window.
-    :type master: tk.Misc
     :param view: The view whose model it reasons over.
-    :type view: SNGView
     '''
     super().__init__(master, padding=(self.PADDING, 2))
     self.view = view

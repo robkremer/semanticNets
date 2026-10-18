@@ -82,7 +82,6 @@ class Choice:
 def _types(rel:Relation) -> list[Relation]:
   '''
   :returns: *rel*'s own types (an isa link's is isa).
-  :rtype: list[Relation]
   '''
   if isinstance(rel, IsaIndividual):
     return [rel.model.ISA]
@@ -91,7 +90,6 @@ def _types(rel:Relation) -> list[Relation]:
 def _direction(rel:Relation, mo:GraphObject) -> str:
   '''
   :returns: Which way *rel* goes from *mo*: *OUT*, *IN*, or *BOTH* (symmetric).
-  :rtype: str
   '''
   try:
     if not isinstance(rel, IsaIndividual) and rel.isSymmetric():
@@ -103,7 +101,6 @@ def _direction(rel:Relation, mo:GraphObject) -> str:
 def follows(rel:Relation, mo:GraphObject, typ:Relation, direction:str) -> bool:
   '''
   :returns: Whether *rel*, attached to *mo*, is of *typ* (or a subtype) and goes *direction* from it.
-  :rtype: bool
   '''
   d = _direction(rel, mo)
   return (d == direction or d == BOTH or direction == BOTH) and any(t is typ or t.isa(typ) for t in _types(rel))
@@ -111,16 +108,12 @@ def follows(rel:Relation, mo:GraphObject, typ:Relation, direction:str) -> bool:
 def relationChoices(mo:GraphObject, rels:list[Relation], hidden:Callable[[Relation], bool]=lambda _r: False) -> list[Choice]:
   '''
   :param mo: The object being expanded.
-  :type mo: GraphObject
   :param rels: Its relations (eg: those the view would follow: see *VObject.expandableRelations()*).
-  :type rels: list[Relation]
   :param hidden: Whether a relation is in a hidden or erased category, or leads to something that is (see *Choice.hidden*).
-  :type hidden: Callable[[Relation], bool]
   :returns: The choices for "expand by relation...": each type and way round
     that *rels* are, and each type that two or more of those types (the same
     way round) are kinds of -- but not the system's *relation* -- with how
     many of *rels* each follows; by name.
-  :rtype: list[Choice]
   '''
   model = mo.model
   top = {id(getattr(model, "RELATION", None)), id(getattr(model, "TOP", None))}
@@ -146,14 +139,11 @@ def relationChoices(mo:GraphObject, rels:list[Relation], hidden:Callable[[Relati
 def choiceFilter(mode:str, chosen:list[Choice]) -> Callable[[Any, Relation], bool]:
   '''
   :param mode: "all", "all outgoing", "all incoming", or "chosen".
-  :type mode: str
   :param chosen: For "chosen": the choices to follow.
-  :type chosen: list[Choice]
   :returns: A filter for *VObject.expand()*: whether to follow a relation
     from the object being expanded (at each step: the same choices again).
     For "chosen", it has a true "showsHidden": the types were asked for by
     name, so they're followed, and shown, even in a hidden category.
-  :rtype: Callable[[Any, Relation], bool]
   '''
   def f(vo:Any, rel:Relation) -> bool:
     mo = vo.modelObject
@@ -176,14 +166,7 @@ class ExpandDialog(tk.Toplevel):
   '''
   def __init__(self, parent:tk.Misc, title:str, choices:list[Choice], levels:int=1):
     '''
-    :param parent:
-    :type parent: tk.Misc
-    :param title:
-    :type title: str
-    :param choices:
-    :type choices: list[Choice]
     :param levels: The levels to start with.
-    :type levels: int
     '''
     super().__init__(parent)
     ownDialog(self, parent) # (over its parent's window, not full screen: see ownDialog())
@@ -250,7 +233,6 @@ class ExpandDialog(tk.Toplevel):
     Show it (over its parent's window, in front), and wait for an answer.
 
     :returns: *result*.
-    :rtype: tuple[Callable[[Any, Relation], bool], int] | None
     '''
     self.update_idletasks()
     top = self.parent.winfo_toplevel()

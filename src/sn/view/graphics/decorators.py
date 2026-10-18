@@ -59,7 +59,6 @@ class Decorator(ABC):
   def __init__(self, owner, priority:int=0):
     '''
     :param owner: The *VObject* this decorator is attached to.
-    :type owner:
     :param priority: [int, default=0] Where this decorator draws relative to
       the owner's other decorators, lowest first -- see *VObject.draw()*,
       which draws *self.decorators.values()* sorted by this. Ties keep
@@ -71,7 +70,6 @@ class Decorator(ABC):
       since canvas stacking is one global list, not per-object (see
       *ShadowDecorator*, which needs exactly that and uses
       *canvas.tag_lower()* instead).
-    :type priority: int
     '''
     from sn.view.graphics.vobjects import VObject
     assert isinstance(owner, VObject)
@@ -86,8 +84,7 @@ class Decorator(ABC):
   @property
   def owner(self):
     '''
-    :returns:
-    :rtype:
+    The view object it decorates.
     '''
     return self._owner()
 
@@ -99,20 +96,15 @@ class Decorator(ABC):
   @abstractmethod
   def draw(self, fast=False, **kwargs):
     '''
-    :param fast:
-    :type fast:
-    :param kwargs:
-    :type kwargs:
+    Draw it (or draw it again), as its owner now is.
     '''
     pass
 
 class Text(Decorator):
   def __init__(self, owner, **kwargs):
     '''
-    :param owner:
-    :type owner:
-    :param kwargs:
-    :type kwargs:
+    A label for *owner*: its text centred, in the view's font, black -- unless *kwargs* (canvas text options)
+    say otherwise.
     '''
     super().__init__(owner)
     self.id = None # The id of the canvas item
@@ -127,12 +119,6 @@ class Text(Decorator):
       
   @override
   def draw(self, fast=False, **kwargs):
-    '''
-    :param fast:
-    :type fast:
-    :param kwargs:
-    :type kwargs:
-    '''
     if not fast:
       self.updateKwargs() # first update from the GraphObject.
     self.kwargs.update(kwargs) # then from the parameters
@@ -149,18 +135,14 @@ class Text(Decorator):
       
   def getCoords(self) -> tuple[int, int]:
     '''
-    :returns:
-    :rtype: tuple[int, int]
+    Where the text goes (window coords): the owner's centre.
     '''
     x, y = self.owner.centerPt() # centred exactly (with anchor and justify "center")
     return self.owner.view.viewToWindow(x,y)
       
   def setText(self, fast=False) -> str:
     '''
-    :param fast:
-    :type fast:
-    :returns:
-    :rtype: str
+    Take the owner's label text (see *labelText()*) as the text: it's returned.
     '''
     text = self.owner.labelText()
     self.kwargs['text'] = text
@@ -187,12 +169,7 @@ _layoutCache:dict[tuple, tuple[list[str], int, int]] = {}
 
 def _font(canvas, font:tuple) -> tkfont.Font:
   '''
-  :param canvas:
-  :type canvas:
-  :param font:
-  :type font: tuple
-  :returns:
-  :rtype: tkfont.Font
+  The font (family, size) for *canvas*: made once, then shared.
   '''
   f = _fonts.get(font)
   if f is None:
@@ -204,11 +181,6 @@ def textPieces(text:str) -> list[str]:
   Split *text* after each character in *BREAK_AFTER* -- but not just before a
   non-breaking space (eg: "age:\u00a030" stays together): the units a line is
   built from.
-
-  :param text:
-  :type text: str
-  :returns:
-  :rtype: list[str]
   '''
   pieces:list[str] = []
   cur = ""
@@ -228,16 +200,7 @@ def layoutText(canvas, text:str, font:tuple, wrap:float=0) -> tuple[list[str], i
   inside a piece, so a piece wider than *wrap* gets a line to itself and
   overflows. Cached.
 
-  :param canvas:
-  :type canvas:
-  :param text:
-  :type text: str
-  :param font:
-  :type font: tuple
-  :param wrap:
-  :type wrap: float
   :returns: (lines, width, height) in pixels of *font*.
-  :rtype: tuple[list[str], int, int]
   '''
   key = (text, font, int(wrap))
   ret = _layoutCache.get(key)
@@ -276,10 +239,7 @@ class WrappingText(Text):
 
   def __init__(self, owner, **kwargs):
     '''
-    :param owner:
-    :type owner:
-    :param kwargs:
-    :type kwargs:
+    A label for *owner* that wraps, and fits its box to it (see *fitOwner()*).
     '''
     super().__init__(owner, **kwargs)
     self._fitted:tuple|None = None
@@ -290,16 +250,13 @@ class WrappingText(Text):
   def baseFont(self) -> tuple:
     '''
     The font at zoom 1.0 -- ie: in view units, which is what boxes are measured in.
-
-    :returns:
-    :rtype: tuple
     '''
     return (self.owner.view._fontFace, int(self.owner.view._fontSize))
 
   def textInset(self) -> tuple[float, float]:
     '''
-    :returns:
-    :rtype: tuple[float, float]
+    How much of the owner's box (fractions of its width and height) the text can use: its shape's say, but at
+    least a tenth.
     '''
     fx, fy = self.owner._shape.textInset() if self.owner._shape is not None else (1.0, 1.0)
     return max(fx, 0.1), max(fy, 0.1)
@@ -307,9 +264,6 @@ class WrappingText(Text):
   def innerWidth(self) -> float:
     '''
     The usable width (view units) for text in the current box.
-
-    :returns:
-    :rtype: float
     '''
     bb = self.owner.boundingBox()
     return max(1.0, (bb[2] - bb[0]) * self.textInset()[0] - 2 * self.PAD)
@@ -320,11 +274,6 @@ class WrappingText(Text):
     box, the width chosen with it (see *preferredLayout()*), which may be
     wider than the box; otherwise (eg: sized by the user) the box's usable
     width. Text that doesn't fit overflows the shape, centred.
-
-    :param text:
-    :type text: str
-    :returns:
-    :rtype: float
     '''
     owner = self.owner
     if self._wrap is not None and not owner.userSized and owner.cache["vis/textModifiesBB"]:
@@ -334,24 +283,14 @@ class WrappingText(Text):
   def longestWord(self, text:str, font:tuple) -> int:
     '''
     The width of the widest unbreakable piece of *text* (see *textPieces()*), 0 if none.
-
-    :param text:
-    :type text: str
-    :param font:
-    :type font: tuple
-    :returns:
-    :rtype: int
     '''
     f = _font(self.owner.canvas, font)
     return max((f.measure(p.strip()) for p in textPieces(text.replace("\n", " "))), default=0)
 
   def preferredLayout(self, text:str) -> tuple[int, int, float]:
     '''
-    :param text:
-    :type text: str
     :returns: (box width, box height, text wrap width), in view units, for
       *text* when the box is sized automatically:
-    :rtype: tuple[int, int, float]
 
       1. The text is broken into lines (see *layoutText()*) so that the text
          block's own shape is as close as possible to "vis/aspectRatio"
@@ -403,11 +342,6 @@ class WrappingText(Text):
   def preferredSize(self, text:str) -> tuple[int, int]:
     '''
     The (width, height) of the automatically sized box for *text* (see *preferredLayout()*).
-
-    :param text:
-    :type text: str
-    :returns:
-    :rtype: tuple[int, int]
     '''
     w, h, _ = self.preferredLayout(text)
     return w, h
@@ -415,18 +349,12 @@ class WrappingText(Text):
   def lineHeight(self) -> float:
     '''
     The height (view units) of a box holding one line of text: the smallest useful box.
-
-    :returns:
-    :rtype: float
     '''
     return (_font(self.owner.canvas, self.baseFont()).metrics("linespace") + 2 * self.PAD) / self.textInset()[1]
 
   def preferredBoundingBox(self) -> list[int]:
     '''
     The owner\'s bounding box resized, about its centre, to *preferredSize()*.
-
-    :returns:
-    :rtype: list[int]
     '''
     w, h, _ = self.preferredLayout(super().setText())
     bb = self.owner.boundingBox()
@@ -465,10 +393,8 @@ class WrappingText(Text):
   @override
   def setText(self, fast=False):
     '''
-    :param fast:
-    :type fast:
-    :returns:
-    :rtype:
+    Take the owner's label text (see *labelText()*), with its own line breaks -- laid out at the base font, so
+    they're the same at every zoom: it's returned.
     '''
     text = super().setText(fast=fast)
     # Our own line breaks (Tk would only break at spaces), laid out at the base
@@ -482,16 +408,7 @@ class Marker:
   SIZE = [6,6]
   def __init__(self, owner, label:str, fg:str, bg:str, condition:Callable):
     '''
-    :param owner:
-    :type owner:
-    :param label:
-    :type label: str
-    :param fg:
-    :type fg: str
-    :param bg:
-    :type bg: str
-    :param condition:
-    :type condition: Callable
+    A marker on *owner*: *label* in *fg* on *bg*, shown while *condition()* is true.
     '''
     self.owner = owner
     self.label:str = label
@@ -506,10 +423,7 @@ class Marker:
     
   def draw(self, at:list[int]) -> bool:
     '''
-    :param at:
-    :type at: list[int]
     :return: *True* iff the item actually drew (ie: *self.condition()* returns *True*
-    :rtype: bool
     '''
     if not self.condition(self.owner):
       self.erase()
@@ -567,28 +481,14 @@ class MarkerWithTooltip(Marker):
   
   def __init__(self, owner, label:str, fg:str, bg:str, condition:Callable, tooltipFunc:Union[Callable,str]):
     '''
-    :param owner:
-    :type owner:
-    :param label:
-    :type label: str
-    :param fg:
-    :type fg: str
-    :param bg:
-    :type bg: str
-    :param condition:
-    :type condition: Callable
-    :param tooltipFunc:
-    :type tooltipFunc: Union[Callable, str]
+    A marker (see *Marker*) whose tooltip is *tooltipFunc*: the text, or a function that gives it.
     '''
     super().__init__(owner, label, fg, bg, condition)
     self.tooltipFunc = tooltipFunc
 
   def draw(self, at:list[int]) -> bool:
     '''
-    :param at:
-    :type at: list[int]
     :return: *True* iff the item actually drew (ie: *self.condition()* returns *True*
-    :rtype: bool
     '''
     self.tooltip:Optional[CreateToolTip] = None
     new = True if self.id is None else False
@@ -625,18 +525,14 @@ class ConstraintMarker(MarkerWithTooltip):
 
   def __init__(self, owner):
     '''
-    :param owner:
-    :type owner:
+    The constraint marker on *owner* (see *shown()*).
     '''
     super().__init__(owner, *self.OK, condition=self.shown, tooltipFunc=self.tip)
 
   @staticmethod
   def shown(owner) -> bool:
     '''
-    :param owner:
-    :type owner:
-    :returns:
-    :rtype: bool
+    Whether the marker is shown on *owner*: a variable with constraints, while the preferences show them.
     '''
     mo = owner.modelObject
     return mo is not None and mo.isVariable() and bool(mo.constraintsText()) \
@@ -644,8 +540,7 @@ class ConstraintMarker(MarkerWithTooltip):
 
   def tip(self) -> str:
     '''
-    :returns:
-    :rtype: str
+    The tooltip: the constraints (or why they can't be read).
     '''
     mo = self.owner.modelObject
     err = mo.constraintsError()
@@ -653,12 +548,6 @@ class ConstraintMarker(MarkerWithTooltip):
 
   @override
   def draw(self, at:list[int]) -> bool:
-    '''
-    :param at:
-    :type at: list[int]
-    :returns:
-    :rtype: bool
-    '''
     mo = self.owner.modelObject
     look = self.BAD if mo is not None and mo.constraintsError() else self.OK
     if (self.label, self.fg, self.bg) != look: # (the text and colours are set when the items are made)
@@ -671,8 +560,7 @@ class MarkerContainer(Decorator):
 
   def __init__(self, owner):
     '''
-    :param owner:
-    :type owner:
+    The markers on *owner*: errors (E), system object (S), type (T), and so on.
     '''
     Decorator.__init__(self, owner)
     self.markers = [
@@ -694,8 +582,7 @@ class MarkerContainer(Decorator):
   @override
   def delete(self):
     '''
-    :returns:
-    :rtype:
+    Delete the markers, and this.
     '''
     for m in self.markers:
       m.delete()
@@ -703,14 +590,6 @@ class MarkerContainer(Decorator):
 
   @override
   def draw(self, fast=False, **kwargs):
-    '''
-    :param fast:
-    :type fast:
-    :param kwargs:
-    :type kwargs:
-    :returns:
-    :rtype:
-    '''
     bb = self.owner.boundingBox()
     pt = [bb[0]-Marker.SIZE[0], bb[1]-Marker.SIZE[1]]
     for m in self.markers:
@@ -735,10 +614,8 @@ class Selected(Decorator):
 
   def __init__(self, owner, **kwargs):
     '''
-    :param owner:
-    :type owner:
-    :param kwargs:
-    :type kwargs:
+    The selection handles on *owner*'s corners: blue, outlined white, unless *kwargs* (canvas options) say
+    otherwise.
     '''
     super().__init__(owner)
     self.ids:dict[str, int] = {}
@@ -750,9 +627,6 @@ class Selected(Decorator):
   def cornerPoints(self) -> dict[str, tuple[float, float]]:
     '''
     The corners of the owner\'s bounding box, in window (canvas) coordinates.
-
-    :returns:
-    :rtype: dict[str, tuple[float, float]]
     '''
     x1, y1, x2, y2 = self.owner.view.viewToWindow(self.owner.boundingBox())
     return {"nw": (x1, y1), "ne": (x2, y1), "se": (x2, y2), "sw": (x1, y2)}
@@ -760,12 +634,9 @@ class Selected(Decorator):
   def handleAt(self, x:float, y:float) -> str|None:
     '''
     :param x: Canvas (window) coordinates.
-    :type x: float
     :param y: See *x*.
-    :type y: float
     :returns: The corner ("nw", "ne", "se" or "sw") whose handle is at (x, y),
       or None -- always None if the owner can't be resized.
-    :rtype: str | None
     '''
     if not self.owner.isResizable():
       return None
@@ -777,10 +648,7 @@ class Selected(Decorator):
 
   def draw(self, fast=False, **kwargs):
     '''
-    :param fast:
-    :type fast:
-    :param kwargs:
-    :type kwargs:
+    Draw the handles (or move them): hollow if the owner can't be resized.
     '''
     self.kwargs.update(kwargs)
     style = dict(self.kwargs)
@@ -820,24 +688,15 @@ class ContextFrame(Decorator):
 
   def __init__(self, owner):
     '''
-    :param owner:
-    :type owner:
+    A context window's frame, drawn behind its contents.
     '''
     super().__init__(owner, priority=-5)
     self.ids:dict[str, int] = {}
 
   def _item(self, key:str, create, coords, **opts) -> int:
     '''
-    :param key:
-    :type key: str
-    :param create:
-    :type create:
-    :param coords:
-    :type coords:
-    :param opts:
-    :type opts:
-    :returns:
-    :rtype: int
+    The canvas item for *key*: made by *create* at *coords* (with *opts*), or, if it's there, moved and
+    restyled.
     '''
     canvas = self.owner.canvas
     if key not in self.ids:
@@ -849,20 +708,13 @@ class ContextFrame(Decorator):
 
   def _drop(self, key:str) -> None:
     '''
-    :param key:
-    :type key: str
+    Delete the canvas item for *key*, if there is one.
     '''
     if key in self.ids:
       self.owner.canvas.delete(self.ids.pop(key))
 
   @override
   def draw(self, fast=False, **kwargs):
-    '''
-    :param fast:
-    :type fast:
-    :param kwargs:
-    :type kwargs:
-    '''
     o = self.owner
     canvas, view = o.canvas, o.view
     x1, y1, x2, y2 = o.boundingBox(fast=fast)
@@ -916,15 +768,6 @@ class ContextFrame(Decorator):
 def _blend(canvas, color:str, amount:float) -> str:
   '''
   *color* mixed *amount* of the way from white (0: white, 1: *color*).
-
-  :param canvas:
-  :type canvas:
-  :param color:
-  :type color: str
-  :param amount:
-  :type amount: float
-  :returns:
-  :rtype: str
   '''
   try:
     r, g, b = canvas.winfo_rgb(color)
@@ -947,10 +790,7 @@ class Highlight(Decorator):
 
   def __init__(self, owner, negative:bool=False):
     '''
-    :param owner:
-    :type owner:
     :param negative: Marks something negative (eg: "no"), in its own colour.
-    :type negative: bool
     '''
     super().__init__(owner, priority=-20)
     self.id:int|None = None
@@ -959,12 +799,6 @@ class Highlight(Decorator):
 
   @override
   def draw(self, fast=False, **kwargs):
-    '''
-    :param fast:
-    :type fast:
-    :param kwargs:
-    :type kwargs:
-    '''
     from sn.view.graphics.shapes import Oval
     canvas = self.owner.canvas
     color = snPrefs.get("gui/highlightColorNegative", storeDefault="#f4a3a3", storeType="color") if self.negative \
@@ -1007,20 +841,13 @@ class DisabledSlash(Decorator):
 
   def __init__(self, owner):
     '''
-    :param owner:
-    :type owner:
+    The slash drawn across *owner* while it's disabled.
     '''
     super().__init__(owner, priority=20) # (after the frame and text)
     self.id:int|None = None
 
   @override
   def draw(self, fast=False, **kwargs):
-    '''
-    :param fast:
-    :type fast:
-    :param kwargs:
-    :type kwargs:
-    '''
     mo = self.owner.modelObject
     if mo is None or not mo.isDisabled():
       self._erase()
@@ -1061,16 +888,13 @@ class ShadowDecorator(Decorator):
   def __init__(self, owner, offset:tuple[int,int]=(4,4), **kwargs):
     '''
     :param owner: The *VObject* this decorator is attached to.
-    :type owner:
     :param offset: [tuple[int,int], default=(4,4)] The (dx, dy) the shadow is
       shifted from the real shape, added directly to the coordinates
       *Shape.points()* / *Oval.boundingBox()* themselves work in -- see
       *draw()*, which otherwise mirrors *Shape.draw()* / *Oval.draw()*
       coordinate handling exactly so the shadow tracks the real shape.
-    :type offset: tuple[int,int]
     :param kwargs: extra tk canvas item options for the shadow item; "fill"
       and "outline" default to a plain grey/none if not given.
-    :type kwargs:
     '''
     # priority=-10 only orders this decorator among the owner's *own*
     # decorators (see Decorator.priority) -- the actual "always at the very
@@ -1086,10 +910,7 @@ class ShadowDecorator(Decorator):
 
   def _offsetPoints(self, points:list[float]) -> list[float]:
     '''
-    :param points:
-    :type points: list[float]
-    :returns:
-    :rtype: list[float]
+    *points* (x, y, x, y, ...) moved by the shadow's offset.
     '''
     dx, dy = self.offset
     return [p + (dx if i%2==0 else dy) for i, p in enumerate(points)]
@@ -1106,11 +927,6 @@ class ShadowDecorator(Decorator):
     marker *condition*\\ s, it's just re-derived every draw: Individuals get
     a shadow, Types don't. If *self.owner.modelObject.isType()*, any existing
     shadow item is erased and we return immediately.
-
-    :param fast:
-    :type fast:
-    :param kwargs:
-    :type kwargs:
     '''
     if not snPrefs.get("gui/shadowTypes", storeDefault=True, storeType=bool):
       self._erase()

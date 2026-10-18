@@ -56,9 +56,7 @@ def isEligible(obj:VObject) -> bool:
   is a body inside its window (see *Snapshot.owners*).
 
   :param obj: A view object.
-  :type obj: VObject
   :returns: True iff *obj* is laid out.
-  :rtype: bool
   '''
   mo = obj.modelObject
   if mo is None or not obj._isConnected() or obj.isHidden():
@@ -97,9 +95,7 @@ class Snapshot:
     :type flowRelation: Relation|None
 
     :param view: The view to lay out.
-    :type view: SNView
     :param relationWeights: The weight (0..1) of each relation type by name; "*" for the rest.
-    :type relationWeights: dict[str, float]
     '''
     homes = view.containmentHomes()
     self.objects:list[VObject] = [vo for vo in view.values() if vo is not None and (isEligible(vo) or self._placed(vo, homes))]
@@ -228,11 +224,8 @@ class Snapshot:
     an isa link: it just follows its ends.)
 
     :param vo: A view object.
-    :type vo: VObject
     :param homes: Where contained objects belong (see *SNGView.containmentHomes()*).
-    :type homes: dict
     :returns: True iff it's laid out in its pane.
-    :rtype: bool
     '''
     if not isinstance(vo, VRelation) or vo not in homes or vo.modelObject is None or not vo.modelObject.isIndividual() \
        or not vo._isConnected() or vo.isHidden():
@@ -251,11 +244,8 @@ class Snapshot:
     side, in the innermost window that has them both (or out on the canvas).
 
     :param i: An object's index.
-    :type i: int
     :param j: Another object's index.
-    :type j: int
     :returns: The pair (by index), in the same order; None if one is (in) the other.
-    :rtype: tuple[int, int] | None
     '''
     ci, cj = self.chains[i], self.chains[j]
     inJ = set(cj)
@@ -274,9 +264,7 @@ def rankOf(directed:list[tuple[int, int]]) -> dict[int, int]:
   objects.)
 
   :param directed: (src, dst) pairs of object indices.
-  :type directed: list[tuple[int, int]]
   :returns: Each object's rank.
-  :rtype: dict[int, int]
   '''
   dsts:dict[int, list[int]] = {}
   for s, d in directed:
@@ -300,13 +288,9 @@ def gap(snap:Snapshot, i:int, j:int) -> tuple[float, float, float]:
   (random if their centres coincide).
 
   :param snap: The graph.
-  :type snap: Snapshot
   :param i: An object's index.
-  :type i: int
   :param j: Another object's index.
-  :type j: int
   :returns: (gap, ux, uy).
-  :rtype: tuple[float, float, float]
   '''
   (xi, yi), (xj, yj) = snap.positions[i], snap.positions[j]
   dx, dy = xi - xj, yi - yj
@@ -320,13 +304,10 @@ def gap(snap:Snapshot, i:int, j:int) -> tuple[float, float, float]:
 def misalignment(snap:Snapshot, flow:tuple[float, float]) -> float:
   '''
   :param snap: The graph.
-  :type snap: Snapshot
   :param flow: The current's direction (a unit vector).
-  :type flow: tuple[float, float]
   :returns: How far, in all, the relations in *snap.directed* are from pointing
     upstream (from src to dst): the sum of their angles off it, each from 0
     (in line) to 1 (backwards).
-  :rtype: float
   '''
   tx, ty = -flow[0], -flow[1]
   total = 0.0
@@ -356,14 +337,10 @@ LEAP_LEAF = 50.0
 def stretch(snap:Snapshot, i:int, kMinDist:float) -> float:
   '''
   :param snap: The graph.
-  :type snap: Snapshot
   :param i: An object's index.
-  :type i: int
   :param kMinDist: The gap below which links don't pull.
-  :type kMinDist: float
   :returns: How stretched object *i*'s longest link is: its gap beyond *kMinDist*, by weight -- however many
     links it has (a hub isn't more stretched for having more of them).
-  :rtype: float
   '''
   return max((w * max(0.0, gap(snap, a, b)[0] - kMinDist) for a, b, w in snap.links if i in (a, b)), default=0.0)
 
@@ -385,13 +362,9 @@ def leap(snap:Snapshot, kMinDist:float, tries:int=20) -> tuple[list[int], float,
   contains.) Plain arithmetic: safe in a thread.
 
   :param snap: The graph.
-  :type snap: Snapshot
   :param kMinDist: The gap below which links don't pull.
-  :type kMinDist: float
   :param tries: How many places to try, for one far enough away.
-  :type tries: int
   :returns: (the object's index and its leaves', dx, dy), or None for no leap.
-  :rtype: tuple[list[int], float, float]|None
   '''
   top = [i for i in range(len(snap.objects)) if snap.owners[i] is None]
   movable = [i for i in top if i not in snap.pinned]
@@ -467,42 +440,26 @@ def forces(snap:Snapshot, e:float, gMaxDist:float, k:float, kMinDist:float, maxD
   Plain arithmetic: safe in a thread.
 
   :param snap: The graph.
-  :type snap: Snapshot
   :param e: The repulsive strength of objects for one another.
-  :type e: float
   :param gMaxDist: The furthest apart (between edges) objects repel one another.
-  :type gMaxDist: float
   :param k: The stiffness of the links.
-  :type k: float
   :param kMinDist: The gap below which links don't pull.
-  :type kMinDist: float
   :param maxDisplacement: The most an object moves (in x and in y) in one step.
-  :type maxDisplacement: float
   :param flow: The current's direction, a unit vector (see *FLOW_DIRECTIONS*); None for none.
-  :type flow: tuple[float, float]|None
   :param flowStrength: The most the current pushes an object in a step.
-  :type flowStrength: float
   :param flowSpacing: The gap (between edges, along the current) it puts between a relation's dst and src.
-  :type flowSpacing: float
   :param heat: The most each object is jiggled at random (in x and in y) in a step: lets the layout out of
     dead ends (eg: a tree pointing straight against the current), as in simulated annealing.
-  :type heat: float
   :param arranging: While the current is first arranging things: objects it layers repel one another only
     across it, so they can slide past one another to their layers (eg: a tree turning around). (Objects in the
     same layer always repel one another only across it: they're on one line.)
-  :type arranging: bool
   :param layerGain: The fraction of the way to its layer the current pulls an object in a step (up to *flowStrength*).
-  :type layerGain: float
   :param straighten: Put the objects the current layers onto their layers' lines: along the current, they move
     only toward their layers (other forces act on them only across it).
-  :type straighten: bool
   :param pull: The least a contained object outside its pane is moved toward it in a step (when it's further).
-  :type pull: float
   :param leaps: Objects (by index) that leap this step (see *leap()*), and how far: their moves, uncapped, instead
     of the forces' (with what's in them, as usual).
-  :type leaps: dict[int, tuple[float, float]]|None
   :returns: (dx, dy) for each object: how far it moves on the canvas (with its window's move).
-  :rtype: list[tuple[float, float]]
   '''
   n = len(snap.positions)
   fx, fy = [0.0] * n, [0.0] * n
@@ -614,15 +571,10 @@ class FieldsLayout():
                dtime=100):
     '''
     :param view: The view to lay out.
-    :type view: SNView
     :param e: The "gravitational constant": the repulsive strength of objects for one another.
-    :type e: float
     :param gMaxDist: The furthest apart (view units) objects repel one another.
-    :type gMaxDist: float
     :param k: The "spring constant" (stiffness) of relations.
-    :type k: float
     :param kMinDist: The distance below which relations don't pull.
-    :type kMinDist: float
     :param displacementSensitivity: An object moves only if it'd move at least this much (abs(dx) + abs(dy)); when none would, it's converged.
     :type displacementSensitivity: float
     :param maxDisplacement: The most an object moves (in x and in y) in one step: prevents wild jumps.
@@ -736,7 +688,6 @@ class FieldsLayout():
   def view(self) -> SNView:
     '''
     :returns: The view laid out.
-    :rtype: SNView
     :raises WeakrefError: If the view has gone.
     '''
     ret = self._view()
@@ -749,9 +700,7 @@ class FieldsLayout():
     Start the animation (or, if it's running, carry on).
 
     :param obj: Ignored (kept for compatibility: the whole view is laid out).
-    :type obj: Optional[VObject]
     :param autoOff: If True, stop when nothing moves much any more; else, run until *kill()*.
-    :type autoOff: bool
     '''
     if self.active:
       return
@@ -779,7 +728,6 @@ class FieldsLayout():
     dropped (see *_run*), and the run ends (see *_finish()*).
 
     :param obj: Ignored.
-    :type obj: Optional[VObject]
     '''
     if self.active:
       self._run += 1
@@ -790,7 +738,6 @@ class FieldsLayout():
     Queue the next step of this run, in *ms* (see *_step()*).
 
     :param ms: When (ms from now).
-    :type ms: int
     :param step: What it does.
     :type step: Callable[[], None]
     :raises WeakrefError: If the view has gone.
@@ -805,7 +752,6 @@ class FieldsLayout():
     running with no next step queued: stuck, with nothing to stop.
 
     :param run: The run it's for (see *_run*).
-    :type run: int
     :param step: What it does.
     :type step: Callable[[], None]
     '''
@@ -827,16 +773,13 @@ class FieldsLayout():
     setRelationWeight('isa', 1.0) will only make use of isa relations.
 
     :param relationName: A relation type's name, or "*" for all the others.
-    :type relationName: str
     :param weight: Its weight (clipped to 0..1): how strongly it pulls.
-    :type weight: float
     '''
     self.relationWeights[relationName] = max(0.0, min(1.0, float(weight)))
 
   def _snapshot(self) -> Snapshot:
     '''
     :returns: A snapshot of the view now (on the GUI thread).
-    :rtype: Snapshot
     '''
     flowing = self.flowDirection in FLOW_DIRECTIONS
     relation = (self.flowRelation or self.view.model.ISA) if flowing else None
@@ -845,9 +788,7 @@ class FieldsLayout():
   def _forces(self, snap:Snapshot) -> list[tuple[VObject, tuple[float, float]]]:
     '''
     :param snap: The graph.
-    :type snap: Snapshot
     :returns: (object, (dx, dy)) for the objects that should move this step.
-    :rtype: list[tuple[VObject, tuple[float, float]]]
     '''
     ret, self._misalignment, self._pins, self._leapt = self._work(snap)
     return ret
@@ -859,10 +800,8 @@ class FieldsLayout():
     another started (see *_run*).
 
     :param snap: The graph.
-    :type snap: Snapshot
     :returns: The moves (see *_forces()*), the misalignment (see *_cool()*), the pins (see *_pins*), and
       what leapt (see *_leapt*).
-    :rtype: tuple[list[tuple[VObject, tuple[float, float]]], float|None, set[int], set[int]]
     '''
     flow = FLOW_DIRECTIONS.get(self.flowDirection or "")
     # (how far, in all, the current's relations are from in line: see _cool(); None while there's no current)
@@ -902,7 +841,6 @@ class FieldsLayout():
     Do one step: snapshot, forces, moves (here, all on the GUI thread).
 
     :param autoOff: As for *__call__()*.
-    :type autoOff: bool
     '''
     try:
       changes = self._forces(self._snapshot())
@@ -919,9 +857,7 @@ class FieldsLayout():
     the run, recording it as one undoable command.
 
     :param changes: (object, (dx, dy)) to move.
-    :type changes: list[tuple[VObject, tuple[float, float]]]
     :param autoOff: As for *__call__()*.
-    :type autoOff: bool
     '''
     view = self.view # (gone: the run ends -- see _step())
     if view.suppressLocalLayout(): # (something's being dragged: don't fight the user -- try again later)
@@ -979,7 +915,6 @@ class FieldsLayout():
     do after an ordinary move.
 
     :param view: The view laid out.
-    :type view: SNView
     '''
     for vo in list(view.values()):
       if isinstance(vo, VRelation) and vo._isConnected() and not vo.isHidden() and vo.modelObject is not None \
@@ -1002,7 +937,6 @@ class FieldsLayout():
     a while, and starts slowly. Then it settles, as above.
 
     :param energy: The total of how far everything moved in the step.
-    :type energy: float
     '''
     if self._misalignment is None: # (no current this step: progress afresh if one starts)
       self._bestMisalignment = float("inf")
@@ -1069,7 +1003,6 @@ class FieldsLayout_threaded(FieldsLayout):
     runs in.
 
     :param autoOff: As for *FieldsLayout.__call__()*.
-    :type autoOff: bool
     '''
     snap = self._snapshot() # (on failing, the run ends: see _step())
     result:queue.SimpleQueue = queue.SimpleQueue()
@@ -1087,9 +1020,7 @@ class FieldsLayout_threaded(FieldsLayout):
     *_commitChanges()*); otherwise check again shortly.
 
     :param result: Where the thread leaves ((changes, misalignment, pins, leapt), error): see *_work()*.
-    :type result: queue.SimpleQueue
     :param autoOff: As for *FieldsLayout.__call__()*.
-    :type autoOff: bool
     '''
     try:
       (changes, self._misalignment, self._pins, self._leapt), error = result.get_nowait()

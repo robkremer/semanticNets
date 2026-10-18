@@ -49,7 +49,6 @@ class ReasoningMixin(ViewBase):
   def _reasoningToolbarShown(self) -> tk.BooleanVar:
     '''
     :returns: Whether this view's reasoning toolbar is shown -- what "View | Reasoning toolbar" shows (and sets).
-    :rtype: tk.BooleanVar
     '''
     var = self.__dict__.get("_reasoningToolbarVar")
     if var is None:
@@ -62,9 +61,7 @@ class ReasoningMixin(ViewBase):
     bottom of this view's window.
 
     :param show: True to show it; False to hide it.
-    :type show: bool
     :param changed: Whether it's a change to the view (it's saved with it), not the view being set up.
-    :type changed: bool
     '''
     from sn.view.graphics.reasoningToolbar import ReasoningToolbar
     if getattr(self, "_closed", False):
@@ -87,7 +84,6 @@ class ReasoningMixin(ViewBase):
     :returns: What the model's last "reason" found, in a line -- eg: "inferred:
       3 relations, 4 new objects; 1 error, 2 warnings" -- or "" if it hasn't
       been reasoned over (or that's been retracted).
-    :rtype: str
     '''
     from sn.model.reasoner import summary
     return summary(self.model)
@@ -98,9 +94,6 @@ class ReasoningMixin(ViewBase):
     The *sn.model.reasoner.Inferences* from the last "reason" over this view's
     model -- whether run from this view's menu, another view of the same model,
     or the command line (see *sn.model.reasoner.reason()*) -- or None.
-
-    :returns:
-    :rtype: Any
     '''
     from sn.model.reasoner import reasoningFor
     return reasoningFor(self.model)
@@ -112,10 +105,7 @@ class ReasoningMixin(ViewBase):
     other view of it show them (see *_showReasoning()*), as they do when
     "reason" is typed at the command line.
 
-    :param engine:
-    :type engine: str
     :param silent: See *reasonSilently()*.
-    :type silent: bool
     '''
     from sn.model.reasoner import reason, summary
     try:
@@ -152,9 +142,6 @@ class ReasoningMixin(ViewBase):
     *reasonSilently()*), when only those already shown stay.
     Called when the model reports a "reasoned" or "reasoning cleared" topic.
     Not a change to the view: it's left as clean (or dirty) as it was.
-
-    :param showInferred:
-    :type showInferred: bool
     '''
     dirty = self.isDirty()
     self._refreshStatusReports()

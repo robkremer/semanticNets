@@ -109,9 +109,7 @@ row below.'''
 def radius(size:tuple[float, float]) -> float:
   '''
   :param size: A box's (width, height).
-  :type size: tuple[float, float]
   :returns: The radius of the circle round it: half its diagonal.
-  :rtype: float
   '''
   return math.hypot(size[0], size[1]) / 2
 
@@ -311,22 +309,15 @@ def balloonPositions(roots:list[K], children:Mapping[K, Sequence[K]], sizes:Mapp
   for the rest of its subtree to be *spacing* clear of the parent).
 
   :param roots: The trees' roots.
-  :type roots: list[K]
   :param children: Each node's children, in order. Each node is laid out
     once: under the first parent it's met under, nearest the root.
-  :type children: Mapping[K, Sequence[K]]
   :param sizes: Each node's (width, height).
-  :type sizes: Mapping[K, tuple[float, float]]
   :param spacing: The least space between neighbouring balloons.
-  :type spacing: float
   :param edgeRoom: The space between a child (its circle) and its parent's, if
     not *spacing*: eg: for the label of the relation to it.
-  :type edgeRoom: Mapping[K, float] | None
   :param parentGap: The angle (radians) a node keeps clear of its children, toward its parent.
-  :type parentGap: float
   :returns: Where each node's centre goes, each tree's root at (0, 0); and
     each tree: its root, its nodes, and the radius of a circle round it.
-  :rtype: tuple[dict[K, tuple[float, float]], list[tuple[K, list[K], float]]]
   '''
   kept, kids = _forest(roots, children)
   b = _Balloons(kids, sizes, spacing, edgeRoom, parentGap)
@@ -359,19 +350,13 @@ def radialPositions(roots:list[K], children:Mapping[K, Sequence[K]], sizes:Mappi
   them further out, in proportion, if the wedges wouldn't otherwise fit round.
 
   :param roots: The trees' roots.
-  :type roots: list[K]
   :param children: Each node's children, in order (see *balloonPositions()*).
-  :type children: Mapping[K, Sequence[K]]
   :param sizes: Each node's (width, height).
-  :type sizes: Mapping[K, tuple[float, float]]
   :param spacing: The least space between neighbouring nodes.
-  :type spacing: float
   :param edgeRoom: The space between a child (its circle) and its parent's, if
     not *spacing*: eg: for the label of the relation to it.
-  :type edgeRoom: Mapping[K, float] | None
   :returns: Where each node's centre goes, each tree's root at (0, 0); and
     each tree: its root, its nodes, and the radius of a circle round it.
-  :rtype: tuple[dict[K, tuple[float, float]], list[tuple[K, list[K], float]]]
   '''
   kept, kids = _forest(roots, children)
   room = (lambda k: edgeRoom.get(k, spacing)) if edgeRoom else (lambda k: spacing)
@@ -459,18 +444,13 @@ def hubForest(nodes:Sequence[K], neighbours:Mapping[K, Sequence[K]], minSpokes:i
   the only hub of a group of its own.
 
   :param nodes: The nodes, in order.
-  :type nodes: Sequence[K]
   :param neighbours: What each is related to (both ways), in order.
-  :type neighbours: Mapping[K, Sequence[K]]
   :param minSpokes: The least neighbours a hub has.
-  :type minSpokes: int
   :param pinned: The nodes cut out of their groups.
-  :type pinned: Collection[K]
   :returns: Each connected group of more than one node (in the order of
     *nodes*; one cut out right after the group it's cut from): its hubs, in
     order round its ring, and each node's children (the hubs the roots); and
     the nodes related to nothing.
-  :rtype: tuple[list[tuple[list[K], dict[K, list[K]]]], list[K]]
   '''
   index = {n: i for i, n in enumerate(nodes)}
   nbrs = {n: list(dict.fromkeys(m for m in neighbours.get(n, ()) if m in index and m != n)) for n in nodes}
@@ -569,20 +549,13 @@ def hubPositions(hubs:list[K], children:Mapping[K, Sequence[K]], sizes:Mapping[K
   hub's balloon is all round it.
 
   :param hubs: The hubs, in order round the ring.
-  :type hubs: list[K]
   :param children: Each node's children (spokes, and their spokes).
-  :type children: Mapping[K, Sequence[K]]
   :param sizes: Each node's (width, height).
-  :type sizes: Mapping[K, tuple[float, float]]
   :param spacing: The least space between neighbouring balloons.
-  :type spacing: float
   :param edgeRoom: As for *balloonPositions()*.
-  :type edgeRoom: Mapping[K, float] | None
   :param parentGap: As for *balloonPositions()*.
-  :type parentGap: float
   :returns: Where each node's centre goes, the ring's middle at (0, 0); and
     the radius of a circle round them all.
-  :rtype: tuple[dict[K, tuple[float, float]], float]
   '''
   b = _Balloons(children, sizes, spacing, edgeRoom, parentGap, spread=HUB_SPREAD)
   out:dict[K, tuple[float, float]] = {}
@@ -615,24 +588,16 @@ def placeNearGroups(items:list[K], sizes:Mapping[K, tuple[float, float]], relate
   put anywhere.
 
   :param items: The nodes to put, in order.
-  :type items: list[K]
   :param sizes: Every node's (width, height).
-  :type sizes: Mapping[K, tuple[float, float]]
   :param related: What each of *items* is related to (in a group, or of *items*).
-  :type related: Mapping[K, Sequence[K]]
   :param groups: Where each group's nodes' centres are, from its middle: those
     put are added to the group they go in.
-  :type groups: list[dict[K, tuple[float, float]]]
   :param obstacles: For each group, boxes to keep clear of too (eg: relations' labels).
-  :type obstacles: list[list[Sequence[float]]] | None
   :param spacing: The least space between a node put and anything else.
-  :type spacing: float
   :param room: The space wanted between a node put and one it's related to
     (their circles: see *radius()*), if not *spacing*: eg: for the label of
     the relation between them.
-  :type room: Callable[[K, K], float] | None
   :returns: Those not put (related to nothing placed).
-  :rtype: list[K]
   '''
   roomFor = room or (lambda n, r: spacing)
   def box(n, c) -> list[float]:
@@ -686,16 +651,11 @@ def groupOffset(group:Mapping[K, tuple[float, float]], refs:Sequence[K], known:M
   (*current*: eg: just made).
 
   :param group: Where its nodes go (their top left), on its own.
-  :type group: Mapping[K, tuple[float, float]]
   :param refs: Which of them it's anchored by.
-  :type refs: Sequence[K]
   :param known: Where the nodes it knows are (their top left).
-  :type known: Mapping[K, tuple[float, float]]
   :param current: Where all the nodes are (their top left).
-  :type current: Mapping[K, tuple[float, float]]
   :returns: How far to move it (on whole units: so, if *group*'s on whole
     units, and as it was, it doesn't move); or None if none of its nodes is anywhere.
-  :rtype: tuple[float, float] | None
   '''
   for where, among in ((known, refs), (known, group), (current, refs), (current, group)):
     ns = [n for n in among if n in where and n in group]
@@ -714,15 +674,10 @@ def separateGroups(groups:Sequence[Mapping[K, tuple[float, float]]], offsets:Seq
   so a group may be in a gap in another.
 
   :param groups: Where each group's nodes go (their top left), on its own.
-  :type groups: Sequence[Mapping[K, tuple[float, float]]]
   :param offsets: How far each is moved, to start with.
-  :type offsets: Sequence[tuple[float, float]]
   :param sizes: Each node's (width, height).
-  :type sizes: Mapping[K, tuple[float, float]]
   :param gap: The least space between groups.
-  :type gap: float
   :returns: How far each is moved (on whole units, if *offsets* are).
-  :rtype: list[tuple[float, float]]
   '''
   index = _BoxIndex()
   placed:list[list[float]] = []
@@ -820,9 +775,7 @@ class _RoundLayout(LayoutHeuristic):
     '''
     :param dynamic: Whether it's for keeping things arranged: the pinned
       nodes roots of their own (see *pins*).
-    :type dynamic: bool
     :returns: What's arranged, each group laid out on its own.
-    :rtype: _Laid
     '''
     raise NotImplementedError
 
@@ -873,9 +826,7 @@ class _RoundLayout(LayoutHeuristic):
 
     :param fresh: The ids of the nodes just pinned (dropped: see *adjust()*):
       their groups go to the nearest clear place after the rest (from where they were dropped).
-    :type fresh: set[int]
     :returns: Where each node, and relation's label, goes (its top left).
-    :rtype: dict[VObject, tuple[float, float]]
     '''
     laid = self._lay(dynamic=True)
     sizes, spacing, known = laid.sizes, float(self.params["spacing"]), self.known
@@ -921,12 +872,9 @@ class _RoundLayout(LayoutHeuristic):
   def _adjustment(self, name:str, pinned:set[int]) -> LayoutMoves:
     '''
     :param name: What the undo menu calls it.
-    :type name: str
     :param pinned: Ids of nodes to pin now (see *pins*).
-    :type pinned: set[int]
     :returns: The moves that keep things arranged (see *compute()*), with
       *pinned* pinned, and what it knows updated: not done yet.
-    :rtype: LayoutMoves
     '''
     oldPins, oldKnown = set(self.pins), self.known
     self.pins |= pinned # (for compute(): put back below, and done by the command)
@@ -985,17 +933,12 @@ class _RoundLayout(LayoutHeuristic):
                      sizes:dict[VObject, tuple[float, float]], others:list[VObject]) -> dict[VObject, tuple[float, float]]:
     '''
     :param tree: A tree layout (see *_tree()*): for the rows of *others*.
-    :type tree: TreeLayout
     :param groups: Where each group's nodes' centres go, on its own.
-    :type groups: list[dict[VObject, tuple[float, float]]]
     :param sizes: Every node's (width, height).
-    :type sizes: dict[VObject, tuple[float, float]]
     :param others: The nodes not in a group.
-    :type others: list[VObject]
     :returns: Where they go (their top left): the groups one after another
       in rows (see *ROW_LENGTH*), from the top left of what's arranged, and
       *others* in rows after them (unless they're to be left where they are: see *OTHERS*, *HUB_OTHERS*).
-    :rtype: dict[VObject, tuple[float, float]]
     '''
     spacing = float(self.params["spacing"])
     gap = 2 * spacing
@@ -1027,11 +970,9 @@ class _RoundLayout(LayoutHeuristic):
                     edges:list[tuple[VObject, VObject, Any]]) -> dict[VObject, tuple[float, float]]:
     '''
     :param edges: (parent, child, relation): the relations whose labels to put.
-    :type edges: list[tuple[VObject, VObject, Any]]
     :returns: Where each relation's label goes (its top left): on the line
       between its parent's and child's centres, in the middle of the space
       between their circles (see *radius()*).
-    :rtype: dict[VObject, tuple[float, float]]
     '''
     ret:dict[VObject, tuple[float, float]] = {}
     for p, k, r in edges:
@@ -1053,12 +994,10 @@ class _RoundLayout(LayoutHeuristic):
                    edges:list[tuple[VObject, VObject, Any]]) -> dict[VObject, tuple[float, float]]:
     '''
     :param edges: The relations whose labels are put already (see *_labelTargets()*).
-    :type edges: list[tuple[VObject, VObject, Any]]
     :returns: Where the label of each other relation shown between the nodes
       arranged goes (its top left): midway between its ends' centres -- or,
       for more than one between the same two, side by side across the line
       between them, round the middle.
-    :rtype: dict[VObject, tuple[float, float]]
     '''
     done = {id(r) for _, _, r in edges}
     pairs:dict[tuple[int, int], list[VRelation]] = {}
@@ -1113,9 +1052,7 @@ class _TreeRoundLayout(_RoundLayout):
     :type view: SNGView
     :param relation: As for *TreeLayout*: the simple way to give the table
       (*relations*), for a single relation type.
-    :type relation: Any
     :param parentEnd: With *relation*: which end of its relations is the parent.
-    :type parentEnd: str | None
     :param kwargs: See *PARAMETERS*: relations (a *relationTable.RelationTable*,
       or its text: by default, as *relation* isa), spacing, others (see
       *OTHERS*), trees (see *TREES*).
@@ -1181,19 +1118,14 @@ class _TreeRoundLayout(_RoundLayout):
     it's been dropped.)
 
     :param roots: The trees' roots.
-    :type roots: list[VObject]
     :param kids: Each node's children: the joined trees' roots are added.
-    :type kids: dict[VObject, list[VObject]]
     :param pinned: The ids of the roots that are pinned (see *pins*).
-    :type pinned: set[int]
     :param related: What each root is related to, and by what, in order (see
       *TreeLayout.related()*: by the rows of the relation table that aren't
       ignored). If None, by any relation shown (see *treeLayout.isLink()*).
-    :type related: Callable[[VObject], list[tuple[VObject, Any]]] | None
     :returns: The roots of the trees there are now (in order); and each tree
       joined: (the node it's joined to, its root, the relation between them --
       or the relation type's link to its end: see *treeLayout.Terminal*).
-    :rtype: tuple[list[VObject], list[tuple[VObject, VObject, Any]]]
     '''
     if related is None:
       related = lambda n: [(r.dst if r.src is n else r.src, r) for r in sorted((r for r in n.relations if isLink(r)), key=lambda r: r._id)]
@@ -1267,15 +1199,10 @@ class _TreeRoundLayout(_RoundLayout):
     them (see *placeNearGroups()*).
 
     :param groups: Where each tree's nodes' centres go, from its root: those put are added.
-    :type groups: list[dict[VObject, tuple[float, float]]]
     :param others: The nodes in no tree.
-    :type others: list[VObject]
     :param sizes: Every node's (width, height).
-    :type sizes: dict[VObject, tuple[float, float]]
     :param edges: The tree relations (parent, child, relation).
-    :type edges: list[tuple[VObject, VObject, Any]]
     :returns: Those not put (related to no tree): for the rows.
-    :rtype: list[VObject]
     '''
     spacing = float(self.params["spacing"])
     ids = {id(n) for n in [*(n for g in groups for n in g), *others]}
@@ -1393,7 +1320,6 @@ class HubLayout(_RoundLayout):
       table, by those it doesn't ignore, and the relation types' links to
       their ends: see *follow*), by name; and a relation (or link) between
       each pair of them (the first made), both ways round.
-    :rtype: tuple[list[VObject], dict[VObject, list[VObject]], dict[tuple[VObject, VObject], Any]]
     '''
     name = lambda vo: (str(vo.modelObject.name).lower() if vo.modelObject is not None else "", vo._id)
     tree = self._tree()

@@ -127,10 +127,7 @@ class InputMixin(ViewBase):
     virtual key code, which Tk on macOS puts in the top byte of *event.keycode*)
     validates the view.
 
-    :param event:
-    :type event: tk.Event
     :returns: "break" if it was Option-V.
-    :rtype: str | None
     '''
     state = int(event.state)
     if (event.keycode >> 24) & 0xFF == VKEY_VALIDATE and not (s_CMD(state) or s_CTL(state) or s_SHIFT(state)):
@@ -143,7 +140,6 @@ class InputMixin(ViewBase):
     menu item does.
 
     :returns: "break"
-    :rtype: str
     '''
     self.validate(refresh=True)
     return "break"
@@ -165,15 +161,12 @@ class InputMixin(ViewBase):
     along the way when this class superseded it.
 
     :param _event: The Tk *<Enter>* event (unused).
-    :type _event: tk.Event
-    :rtype: None
     '''
     self.canvas.focus_set()
 
   def onUndo(self, event:tk.Event):
     '''
     :param event: The Tk event.
-    :type event: tk.Event
     '''
     self.context.undo()
     self.addEventHandled(event)
@@ -181,7 +174,6 @@ class InputMixin(ViewBase):
   def onRedo(self, event:tk.Event):
     '''
     :param event: The Tk event.
-    :type event: tk.Event
     '''
     self.context.redo()
     self.addEventHandled(event)
@@ -189,7 +181,6 @@ class InputMixin(ViewBase):
   def onMotion(self, event:tk.Event) -> None:
     """
     :param event: *event.x* and *event.y* contain the x,y coordinate of the click.
-    :type event: tk.Event
     :return: None
     
     If there's a _elasticLineChoiceData going on (elastic line), then continue the
@@ -202,7 +193,6 @@ class InputMixin(ViewBase):
       call *self.removeEventHandled()* and return.
 
     * If *self._makingRelaionFrom* is not *None*, redraw the "making relation" line.
-
     """
     if self.isEventHandled(event):
       self.removeEventHandled(event)
@@ -222,13 +212,10 @@ class InputMixin(ViewBase):
   def _relationTerminalNear(self, x:float, y:float) -> VRelation|None:
     '''
     :param x: Canvas (window) coordinates.
-    :type x: float
     :param y: See *x*.
-    :type y: float
     :returns: An editable relation with a terminal within reach of (x, y) --
       ie: one that a press there would grab (see *VRelation.grabTerminal()*)
       -- or None. Only objects drawn near (x, y) are examined.
-    :rtype: VRelation | None
     '''
     r = VRelation.TERMINAL_HIT_RADIUS
     items = self.canvas.find_overlapping(x - r, y - r, x + r, y + r)
@@ -261,9 +248,7 @@ class InputMixin(ViewBase):
     *VRelation.grabTerminal()*).
 
     :param event: The Tk event.
-    :type event: tk.Event
     :returns: True iff it did (so the caller shouldn't start its own drag).
-    :rtype: bool
     '''
     rel = self._relationTerminalNear(self.canvas.canvasx(event.x), self.canvas.canvasy(event.y))
     return rel is not None and rel.grabTerminal(event)
@@ -275,13 +260,6 @@ class InputMixin(ViewBase):
   def _handleNear(self, x:float, y:float) -> str|None:
     '''
     The corner of the selected object\'s resize handle at canvas (x, y), or None.
-
-    :param x:
-    :type x: float
-    :param y:
-    :type y: float
-    :returns:
-    :rtype: str | None
     '''
     from sn.view.graphics.decorators import Selected
     for obj in self.selected:
@@ -300,7 +278,6 @@ class InputMixin(ViewBase):
     pointer moves off.
 
     :param event: The Tk event.
-    :type event: tk.Event
     '''
     x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
     corner = self._handleNear(x, y)
@@ -325,7 +302,6 @@ class InputMixin(ViewBase):
     Stretch the elastic line (see *elasticLineChoice()*) to the cursor.
 
     :param event: The Tk event.
-    :type event: tk.Event
     '''
     assert self._elasticLineChoiceData is not None
     self.canvas.coords(self._elasticLineChoiceData.lineID,
@@ -335,7 +311,6 @@ class InputMixin(ViewBase):
   def onButton_1(self, event):
     """
     :param event: *event.x* and *event.y* contain the x,y coordinate of the click.
-    :type event:
     :return: *None*
     
     If the SHIFT or COMMAND key is pressed: start a drag-scroll (panning the
@@ -359,7 +334,6 @@ class InputMixin(ViewBase):
 
     * Otherwise unselect everything and start a selection box action by setting
       up *self._selectionBoxInfo*.
-
     """
     # ignore if making a relation
     # if self._makingRelationFrom is not None: return
@@ -410,7 +384,6 @@ class InputMixin(ViewBase):
   def onB1_Motion(self, event):
     """
     :param event: *event.x* and *event.y* contain the x,y coordinate of the click.
-    :type event:
     :return: None
     
     If we are either drag-scrolling or drag-drawing a multi-selection
@@ -425,7 +398,6 @@ class InputMixin(ViewBase):
 
     * If *self._selectionBoxInfo* is not *None*, redraw the elastic selection box,
       using *self._selectionBoxInfo[3]* to note that the selection box is active.
-
     """
     try:
       # check of a widget has handled the event
@@ -476,22 +448,15 @@ class InputMixin(ViewBase):
     
     :param originNode: The object to root the elastic line one (and used as the first
       parameter to *callback*.
-    :type originNode: VObject
     :param callback: The method to call after a selected selection.
-    :type callback: Callable[[VObject, VObject], Any]
     :param filter: Objects are only selected if *filter(<obj>)* returns True. 
       [Optional, default=always True]
-    :type filter: Callable[[VObject],bool]
     :param arrowHeads: 0=no arrowheads, 1=arrowhead at the origin, 2=arrowhead
       at the cursor, 3=arrowhead at both ends. For anything larger, just he lowest
       2 bits will be used. [Optional, default=2]
-    :type arrowHeads: int
-    :param color:
-    :type color: str
     :param onEmpty: If given, called with *originNode* when the line is dropped
       on empty space (no object at all under the cursor); otherwise that
       abandons the choice, as Escape always does (see *cancelElasticLine()*).
-    :type onEmpty: Callable[[VObject], Any] | None
     '''
     assert isinstance(originNode, VObject)
     arrowHeads %= 4 # strip any high bits
@@ -511,7 +476,6 @@ class InputMixin(ViewBase):
     Abandon an elastic-line choice in progress (bound to Escape) -- or, if there is none, clear the highlights.
 
     :param event: The Tk event.
-    :type event: tk.Event | None
     '''
     if self._elasticLineChoiceData is not None:
       self.canvas.delete(self._elasticLineChoiceData.lineID)
@@ -528,7 +492,6 @@ class InputMixin(ViewBase):
   def onB1_ButtonRelease(self, event:tk.Event) -> None:
     """
     :param event: *event.x* and *event.y* contain the x,y coordinate of the click.
-    :type event: tk.Event
     :return: None
     
     Depending on the context, finish creating a Relation or create a selection
@@ -620,7 +583,6 @@ class InputMixin(ViewBase):
   def onMouseWheel(self, event):
     """
     :param event: *event.delta* contains the scroll offset.
-    :type event:
     :return: None
     
     Y-axis scroll.
@@ -640,7 +602,6 @@ class InputMixin(ViewBase):
   def onShift_MouseWheel(self, event):
     """
     :param event: *event.delta* contains the scroll offset.
-    :type event:
     :return: None
     
     X-axis scroll.
@@ -660,11 +621,9 @@ class InputMixin(ViewBase):
   def isEventHandled(self, event:tk.Event) -> bool:
     """
     :param event: The event to test.
-    :type event: tk.Event
     :returns: *True* iff *event* is the same physical event most recently
       passed to *addEventHandled()* (and not yet cleared by
       *removeEventHandled()*).
-    :rtype: bool
 
     A canvas item's ``tag_bind`` callback and this canvas widget's own
     ``bind`` callback are dispatched independently by Tk, even for the
@@ -685,8 +644,6 @@ class InputMixin(ViewBase):
     generic handling.
 
     :param event: The event that was just handled.
-    :type event: tk.Event
-    :rtype: None
     """
     self._eventHandled = event
 
@@ -698,17 +655,13 @@ class InputMixin(ViewBase):
 
     :param event: Unused (kept for symmetry with *addEventHandled()* and
       the analogous methods elsewhere, e.g. *SNView*).
-    :type event: tk.Event
-    :rtype: None
     """
     self._eventHandled = None
 
   def onRightMouse(self, event:tk.Event): # -> Optional[tk.Menu]:
     """
     :param event: *event.x* and *event.y* contain the x,y coordinate of the click.
-    :type event: tk.Event
     :return: None or the result of *self.makeMenu()*.
-    :rtype:
 
     Called when the right mouse button is pressed (different for Mac and other OS's).
 
@@ -728,9 +681,7 @@ class InputMixin(ViewBase):
     """
     :param event: *event.x* and *event.y* contain the x,y coordinate of the click.
       (Only used for the location of a newly created node if that happens.)
-    :type event: tk.Event
     :return: The newly created menu.
-    :rtype: tk.Menu
 
     Create the popup menu for a *SNView* window. Does not display the menu,
     only creates it and returns it.
@@ -808,11 +759,6 @@ class InputMixin(ViewBase):
     The "Zoom" submenu: normal size, zoom in and out (about the middle of the
     window: see *zoomAbout()*), zoom to fit (see *zoomToFit()*), and some
     sizes; with their keys.
-
-    :param superMenu:
-    :type superMenu: tk.Menu
-    :returns:
-    :rtype: tk.Menu
     '''
     zoommenu = tk.Menu(superMenu)
     zoommenu.add_command(label="Normal Size", command=lambda: self.zoomAbout(1.0), accelerator=KEY_ZOOM_NORMAL[1])

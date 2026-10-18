@@ -100,21 +100,14 @@ def treePositions(roots:list[K], children:dict[K, list[list[K]]], sizes:Mapping[
   groups of a node's children *spacing* further apart.
 
   :param roots: The trees' roots.
-  :type roots: list[K]
   :param children: Each node's children, in groups (eg: by the type of
     relation to them), in order. Each node is laid out once: under the first
     parent it's met under (a node met again is left out there).
-  :type children: dict[K, list[list[K]]]
   :param sizes: Each node's (width, height).
-  :type sizes: Mapping[K, tuple[float, float]]
   :param direction: Which way the trees grow: one of *DIRECTIONS*.
-  :type direction: str
   :param spacing: The space between neighbouring nodes across a level.
-  :type spacing: float
   :param levelGaps: The space between depth *n* and depth *n* + 1, by *n*, if not *levelGap*.
-  :type levelGaps: dict[int, float] | None
   :param levelGap: The space between depths not in *levelGaps*.
-  :type levelGap: float
   :param compact: If False, each subtree is wholly after the one before it,
     across (its leaves after the last of the one before's). If True, each is
     only as far along as the depths they both have need: a subtree tucks in
@@ -123,11 +116,9 @@ def treePositions(roots:list[K], children:dict[K, list[list[K]]], sizes:Mapping[
     Reingold-Tilford tree drawing). The depths are the same either way; and
     either way, nothing overlaps, and the relations from parents to children
     don't cross.
-  :type compact: bool
   :returns: Where each node goes (its top left), with each tree's root at
     (0, 0) -- or, growing left or up, with its root's far side at 0 -- and
     each tree's nodes, and their bounding box (x1, y1, x2, y2), by root.
-  :rtype: tuple[dict[K, tuple[float, float]], list[tuple[K, list[float]]]]
   '''
   gaps = levelGaps or {}
   vertical, flip = _vertical(direction), _flip(direction)
@@ -230,7 +221,6 @@ def _packed(root:K, kidsOf:dict[K, list[list[K]]], depthOf:dict[K, int], crossSi
   with the middle of its first and last children.
 
   :returns: Each node's position across, the least 0.
-  :rtype: dict[K, float]
   '''
   def pack(n:K) -> tuple[dict[K, float], dict[int, list[float]]]:
     d, size = depthOf[n], crossSize(n)
@@ -265,13 +255,9 @@ def _packed(root:K, kidsOf:dict[K, list[list[K]]], depthOf:dict[K, int], crossSi
 def treeMembers(root:K, children:dict[K, list[list[K]]], positions:dict[K, Any]) -> list[K]:
   '''
   :param root: A tree's root (see *treePositions()*).
-  :type root: K
   :param children: As given to *treePositions()*.
-  :type children: dict[K, list[list[K]]]
   :param positions: What *treePositions()* returned.
-  :type positions: dict[K, Any]
   :returns: The nodes of its tree (as laid out: each under its first parent).
-  :rtype: list[K]
   '''
   ret = [root]
   seen = {root}
@@ -316,18 +302,13 @@ def nearestFree(size:tuple[float, float], at:tuple[float, float], index:_BoxInde
                 gap:float=20.0, bias:float=NEAR_BIAS, step:float=NEAR_STEP, maxRings:int=NEAR_MAX_RINGS) -> tuple[float, float]:
   '''
   :param size: A box's (width, height).
-  :type size: tuple[float, float]
   :param at: Where it'd best go (its top left).
-  :type at: tuple[float, float]
   :param index: The boxes it mustn't be on (or within *gap* of).
-  :type index: _BoxIndex
   :param direction: Which way the trees grow (see *DIRECTIONS*), or a unit
     vector (x, y): moving on that way costs what the distance is; back,
     *bias* times as much; across, the distance.
-  :type direction: str | tuple[float, float]
   :returns: The cheapest free place (its top left) on a *step* grid around *at*
     (looking out *maxRings* steps) -- or *at*, if there's none.
-  :rtype: tuple[float, float]
   '''
   w, h = size
   def cost(dx:float, dy:float) -> float:
@@ -364,17 +345,11 @@ def placeNear(items:list[K], sizes:Mapping[K, tuple[float, float]], related:dict
   nothing placed aren't put anywhere.
 
   :param items: The nodes to put, in order.
-  :type items: list[K]
   :param sizes: Their (width, height).
-  :type sizes: Mapping[K, tuple[float, float]]
   :param related: What each is related to (any of *placed*, or of *items*).
-  :type related: dict[K, list[K]]
   :param placed: Where the nodes already placed are: their boxes.
-  :type placed: Mapping[K, Sequence[float]]
   :param obstacles: Boxes to keep clear of too (*spacing*): eg: relations' labels.
-  :type obstacles: Sequence[Sequence[float]]
   :returns: Where each of *items* put goes (its top left); and those not put.
-  :rtype: tuple[dict[K, tuple[float, float]], list[K]]
   '''
   boxes = dict(placed)
   index = _BoxIndex([*boxes.values(), *obstacles])
@@ -407,12 +382,10 @@ def placeNear(items:list[K], sizes:Mapping[K, tuple[float, float]], related:dict
 def isMember(vo:VObject) -> bool:
   '''
   :param vo: A view object.
-  :type vo: VObject
   :returns: Whether *vo* is something the layouts that arrange nodes (tree,
     balloon, radial, hubs) arrange as a node: a node, or a relation type (it
     has a place of its own, as a node does) -- not an individual relation's
     label, which goes between its ends.
-  :rtype: bool
   '''
   mo = vo.modelObject
   return mo is not None and (isinstance(vo, VNode) or (isinstance(vo, VRelation) and mo.isType()))
@@ -420,11 +393,9 @@ def isMember(vo:VObject) -> bool:
 def isLink(r:Any) -> bool:
   '''
   :param r: A view object.
-  :type r: Any
   :returns: Whether *r* is a relation shown that relates two things laid out
     (see *isMember()*): an individual relation, connected and not hidden -- not
     a relation type: its ends are its domain and range, not things it relates.
-  :rtype: bool
   '''
   return isinstance(r, VRelation) and r.modelObject is not None and not r.modelObject.isType() \
          and r._isConnected() and not r.isHidden()
@@ -442,11 +413,8 @@ class Terminal:
   def __init__(self, relType:VRelation, end:VObject, which:int):
     '''
     :param relType: The relation type.
-    :type relType: VRelation
     :param end: Its source (domain) or destination (range).
-    :type end: VObject
     :param which: 0 for its source, 1 for its destination.
-    :type which: int
     '''
     self.src, self.dst, self.which = relType, end, which
 
@@ -460,9 +428,7 @@ def upgradeRelation(state:dict[str, str]) -> dict[str, str]:
   *relationTable.RelationTable.single()*): convert what an older version saved.
 
   :param state: What was saved (see *layout.LayoutHeuristic.upgradeParameters()*).
-  :type state: dict[str, str]
   :returns: It, converted.
-  :rtype: dict[str, str]
   '''
   if "relation" in state and "relations" not in state:
     state = dict(state)
@@ -560,10 +526,8 @@ class TreeLayout(LayoutHeuristic):
       single relation type (a *Relation*, or its name): it shapes the trees;
       every other relation pulls things together (see
       *relationTable.RelationTable.single()*). Not if *relations* is given.
-    :type relation: Any
     :param parentEnd: With *relation*: which end of its relations is the
       parent: "source" or "destination" (the default).
-    :type parentEnd: str | None
     :param kwargs: See *PARAMETERS*: relations (a *relationTable.RelationTable*,
       or its text: by default, as *relation* isa), direction (see *DIRECTIONS*),
       spacing, compact (see *treePositions()*), others (see *OTHERS*: static only).
@@ -611,12 +575,9 @@ class TreeLayout(LayoutHeuristic):
   def terminals(self, ids:set[int], nodes:Iterable[VObject]) -> list[Terminal]:
     '''
     :param ids: The ids (*id()*) of what's arranged.
-    :type ids: set[int]
     :param nodes: What's arranged.
-    :type nodes: Iterable[VObject]
     :returns: The links of the relation types among *nodes* to their own ends
       that are arranged too (see *Terminal*): source first.
-    :rtype: list[Terminal]
     '''
     ret:list[Terminal] = []
     for t in nodes:
@@ -629,14 +590,11 @@ class TreeLayout(LayoutHeuristic):
   def related(self, n:VObject, ids:set[int]) -> list[tuple[VObject, Any]]:
     '''
     :param n: Something arranged (see *isMember()*).
-    :type n: VObject
     :param ids: The ids (*id()*) of what's arranged.
-    :type ids: set[int]
     :returns: What else arranged *n* is related to by the rows of the table
       that aren't ignored (see *relationTable.ROLES*): each once, with the
       (first) relation -- or relation type's link to its end (see *Terminal*)
       -- between them; by relations in the order made, then the ends.
-    :rtype: list[tuple[VObject, Any]]
     '''
     terminalsCount = self.roles.role(None) != IGNORED
     ret:dict[int, tuple[VObject, Any]] = {}
@@ -657,10 +615,8 @@ class TreeLayout(LayoutHeuristic):
   def shaped(self, node:VObject) -> bool:
     '''
     :param node: Something arranged (see *isMember()*).
-    :type node: VObject
     :returns: Whether it's related to anything by a relation that shapes the
       trees (see *relationTable.SHAPES*): so it may be in a tree.
-    :rtype: bool
     '''
     if any(isLink(r) and self._isEdge(r.modelObject) for r in node.relations):
       return True
@@ -689,7 +645,6 @@ class TreeLayout(LayoutHeuristic):
       relations shown between them whose rows shape the trees (see
       *relations*), not to themselves -- and the relation types' links to
       their ends, if their row does (see *Terminal*).
-    :rtype: tuple[list[VObject], list[Any]]
     '''
     v = self.view
     windows = v.contextWindows()
@@ -713,13 +668,11 @@ class TreeLayout(LayoutHeuristic):
     :param dynamic: Whether it's for keeping things arranged (see the class
       doc): children in the order they are, new ones after; pinned nodes the
       roots of their own trees. Else children in order of name.
-    :type dynamic: bool
     :returns: The trees: their roots (in order across); each node's children,
       in groups (see the class doc); each child's tree relation (from its
       parent: a relation, or a relation type's link to an end -- see
       *Terminal*); the nodes in no tree; and the relations whose rows shape
       the trees that aren't tree relations (eg: to a second parent).
-    :rtype: tuple[list[VObject], dict[VObject, list[list[VObject]]], dict[VObject, Any], list[VObject], list[VRelation]]
     '''
     self._roles = None # (afresh: the model's relation types may have changed)
     nodes, edges = self.scope()
@@ -768,7 +721,6 @@ class TreeLayout(LayoutHeuristic):
       for the line to the widest label there (*MIN_LINE*), the label, and
       *LABEL_GAP* -- at least *MIN_LEVEL_GAP* (all there is between a relation
       type and its end: see *Terminal*).
-    :rtype: dict[int, float]
     '''
     vertical = _vertical(self.params["direction"])
     ret:dict[int, float] = {}
@@ -825,14 +777,11 @@ class TreeLayout(LayoutHeuristic):
   def compute(self, dynamic:bool, fresh:set[int]=set()) -> tuple[dict[VObject, tuple[float, float]], list[VRelation]]:
     '''
     :param dynamic: Whether it's for keeping things arranged (see the class doc).
-    :type dynamic: bool
     :param fresh: For *dynamic*: the ids of the nodes just pinned (dropped:
       see *adjust()*): where each was dropped, room is made for its subtree.
-    :type fresh: set[int]
     :returns: Where everything arranged goes (its top left: nodes and tree
       relations' labels); and the tree's type of relations that aren't tree
       relations (see *structure()*).
-    :rtype: tuple[dict[VObject, tuple[float, float]], list[VRelation]]
     '''
     roots, children, parentRel, others, loose = self.structure(dynamic)
     nodes = [*roots, *(k for gs in children.values() for g in gs for k in g), *others]
@@ -906,7 +855,6 @@ class TreeLayout(LayoutHeuristic):
     as the trees are deep (at least *MIN_ROW_LENGTH*).
 
     :returns: Where they go (their top left).
-    :rtype: dict[VObject, tuple[float, float]]
     '''
     vertical, spacing = _vertical(self.params["direction"]), float(self.params["spacing"])
     length = max([MIN_ROW_LENGTH] + [(b[3] - b[1]) if vertical else (b[2] - b[0]) for _, b in trees])
@@ -929,15 +877,10 @@ class TreeLayout(LayoutHeuristic):
     the trees' nodes and their relations' labels (see *placeNear()*).
 
     :param others: The nodes in no tree.
-    :type others: list[VObject]
     :param positions: Where the trees' nodes are going.
-    :type positions: dict[VObject, tuple[float, float]]
     :param sizes: Everything's (width, height).
-    :type sizes: dict[VObject, tuple[float, float]]
     :param parentRel: The tree relations (see *structure()*).
-    :type parentRel: dict[VObject, Any]
     :returns: Where those put go; and those related to nothing placed (for the rows).
-    :rtype: tuple[dict[VObject, tuple[float, float]], list[VObject]]
     '''
     ids = {id(n) for n in [*positions, *others]}
     related:dict[VObject, list[VObject]] = {n: [other for other, _ in self.related(n, ids)] for n in others}
@@ -966,19 +909,12 @@ class TreeLayout(LayoutHeuristic):
     the trees' boxes, so a tree can be dropped in a gap in another.
 
     :param trees: The trees, laid out on their own (see *treePositions()*), by root.
-    :type trees: list[tuple[VObject, list[float]]]
     :param children: As for *treePositions()*.
-    :type children: dict[VObject, list[list[VObject]]]
     :param rel: Where *treePositions()* put each node, in its own tree.
-    :type rel: dict[VObject, tuple[float, float]]
     :param others: The nodes in no tree.
-    :type others: list[VObject]
     :param fresh: The ids of the trees' roots just dropped.
-    :type fresh: set[int]
     :param gap: The space kept between nodes of different trees (and those in no tree).
-    :type gap: float
     :returns: Where they go (their top left): those that move.
-    :rtype: dict[VObject, tuple[float, float]]
     '''
     vertical = _vertical(self.params["direction"])
     known = self.known
@@ -1108,13 +1044,10 @@ class TreeLayout(LayoutHeuristic):
   def _adjustment(self, name:str, pinned:set[int]) -> LayoutMoves:
     '''
     :param name: What the undo menu calls it.
-    :type name: str
     :param pinned: Ids of nodes to pin now (see *pins*).
-    :type pinned: set[int]
     :returns: The moves that keep things arranged (see *compute()*), with
       *pinned* pinned, the relations that are no longer tree relations made to
       float, and what it knows updated: not done yet.
-    :rtype: LayoutMoves
     '''
     oldPins, oldKnown = set(self.pins), self.known
     self.pins |= pinned # (for compute(): put back below, and done by the command)

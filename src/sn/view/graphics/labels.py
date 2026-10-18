@@ -99,17 +99,11 @@ class TemplateError(ValueError):
 
 def expand(template:str, lookup:Callable[[str], str], call:Callable[[str], str]|None=None) -> str:
   '''
-  :param template:
-  :type template: str
-  :param lookup:
-  :type lookup: Callable[[str], str]
   :param call: Gives what a hook returns, for ``$(module:function)`` (see
     *sn.hooks*): *call(reference)* ("" for nothing). None: the template can't
     call hooks (``$(...)`` is a *TemplateError*).
-  :type call: Callable[[str], str] | None
   :returns: *template* with its substitutions made (see the module doc);
     *lookup(key)* gives a key's value ("" for none).
-  :rtype: str
   :raises TemplateError: If *template* is malformed (eg: an unclosed "${").
   '''
   out, i = _expand(template, 0, lookup, call, closer=None)
@@ -118,15 +112,6 @@ def expand(template:str, lookup:Callable[[str], str], call:Callable[[str], str]|
 def _call(t:str, i:int, call:Callable[[str], str]|None) -> tuple[str, int]:
   '''
   A hook's call, "(module:function)", starting at the "(": (what it returns, the index after its ")").
-
-  :param t:
-  :type t: str
-  :param i:
-  :type i: int
-  :param call:
-  :type call: Callable[[str], str] | None
-  :returns:
-  :rtype: tuple[str, int]
   '''
   j = t.find(")", i)
   if j < 0:
@@ -141,19 +126,6 @@ def _call(t:str, i:int, call:Callable[[str], str]|None) -> tuple[str, int]:
 def _expand(t:str, i:int, lookup:Callable[[str], str], call:Callable[[str], str]|None, closer:str|None) -> tuple[str, int]:
   '''
   Expand *t* from *i* up to (not including) an unnested *closer*: (text, index of the closer or end).
-
-  :param t:
-  :type t: str
-  :param i:
-  :type i: int
-  :param lookup:
-  :type lookup: Callable[[str], str]
-  :param call:
-  :type call: Callable[[str], str] | None
-  :param closer:
-  :type closer: str | None
-  :returns:
-  :rtype: tuple[str, int]
   '''
   out:list[str] = []
   depth = 0 # (literal "{"s in the text, which a "}" closes before *closer* does)
@@ -191,17 +163,6 @@ def _braced(t:str, i:int, lookup:Callable[[str], str], call:Callable[[str], str]
   '''
   A ${...} starting just after the "${": (its expansion, the index after its "}").
   Its key may be a hook's call: ${(module:function):+...}.
-
-  :param t:
-  :type t: str
-  :param i:
-  :type i: int
-  :param lookup:
-  :type lookup: Callable[[str], str]
-  :param call:
-  :type call: Callable[[str], str] | None
-  :returns:
-  :rtype: tuple[str, int]
   '''
   if t[i:i+1] == "(":
     key = t[i:t.find(")", i) + 1]
@@ -228,13 +189,11 @@ def _braced(t:str, i:int, lookup:Callable[[str], str], call:Callable[[str], str]
 def labelConstraints(mo:Any) -> str:
   '''
   :param mo: A model object.
-  :type mo: Any
   :returns: The constraints its label shows: a variable's own (see
     *GraphObject.constraintsText()*) -- or, for an individual relation of a
     variable type whose name it has (eg: a base rule's "?r" relations, of the
     type "?r {transitive, symmetric: false}"), its type's: they're what it
     stands for.
-  :rtype: str
   '''
   own = mo.constraintsText()
   if own or not mo.isIndividual() or not hasattr(mo, "localDst") or str(mo.getLocal("name", "") or "").strip():
@@ -244,10 +203,6 @@ def labelConstraints(mo:Any) -> str:
 def labelLookup(mo:Any) -> Callable[[str], str]:
   '''
   :returns: The *lookup* for *expand()* for model object *mo* (see the module doc for the keys).
-
-  :param mo:
-  :type mo: Any
-  :rtype: Callable[[str], str]
   '''
   def lookup(key:str) -> str:
     try:

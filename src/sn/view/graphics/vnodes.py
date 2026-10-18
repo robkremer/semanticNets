@@ -56,29 +56,11 @@ class VNode(VObject):
                x:Optional[int]=None, y:Optional[int]=None, x1:Optional[int]=None, y1:Optional[int]=None,
                **kwargs):
     '''
-    :param view:
-    :type view: SNGView
-    :param modelObject:
-    :type modelObject: GraphObject | str
-    :param shape:
-    :type shape: Any | str
-    :param x:
-    :type x: Optional[int]
-    :param y:
-    :type y: Optional[int]
-    :param x1:
-    :type x1: Optional[int]
-    :param y1:
-    :type y1: Optional[int]
-    :param kwargs:
-    :type kwargs:
+    A view object for node *modelObject* (or a reference to it) in *view*, drawn as *shape*, in the box (*x*,
+    *y*, *x1*, *y1*).
     '''
     super().__init__(view, modelObject, shape, x, y, x1, y1)
  
   @override
   def makeModelObjectSubtype(self, individual:bool) -> None:
-    '''
-    :param individual:
-    :type individual: bool
-    '''
     self.view.context.new_node(self.modelObject, name="", individual=individual, type=not individual, model=self.view.model) # type: ignore[arg-type]

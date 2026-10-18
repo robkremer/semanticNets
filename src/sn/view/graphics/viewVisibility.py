@@ -61,13 +61,6 @@ class VisibilityMixin(ViewBase):
   def isFiltered(self, mo:GraphObject, modes:Iterable[str]=("hide", "erase")) -> bool:
     '''
     True iff *mo* is in a category currently in one of *modes* (see *hides*).
-
-    :param mo:
-    :type mo: GraphObject
-    :param modes:
-    :type modes: Iterable[str]
-    :returns:
-    :rtype: bool
     '''
     active = [c for c, mode in self.hides.items() if mode in modes and c in self.categories.keys()]
     try:
@@ -80,11 +73,6 @@ class VisibilityMixin(ViewBase):
     Whether a new relation shouldn't be shown: it would bring an end in an
     erased category back into the view. (A relation that's in an erased
     category itself is shown, as anything made is: see *_exemptIfFiltered()*.)
-
-    :param rel:
-    :type rel: Relation
-    :returns:
-    :rtype: bool
     '''
     return any(e is not None and self.findViewObjectForGraphObject(e) is None and self.isFiltered(e, ("erase",))
                for e in (rel.localSrc, rel.localDst))
@@ -95,9 +83,6 @@ class VisibilityMixin(ViewBase):
     category, show it anyway -- hiding is "soft": it applies to what was there
     when the category was hidden, and hiding the category again hides this too
     -- and say so (one message for everything made at once).
-
-    :param vo:
-    :type vo: VObject
     '''
     mo = vo.modelObject
     if mo is None or vo.categoryExempt or not self.isFiltered(mo):
@@ -130,11 +115,6 @@ class VisibilityMixin(ViewBase):
     it's a relation to or from something hidden (it would lead nowhere), or a
     containment drawn as being inside its window (see *VRelation.inWindow()*);
     or it's inside a hidden context's window.
-
-    :param vo:
-    :type vo: VObject
-    :returns:
-    :rtype: bool
     '''
     mo = vo.modelObject
     if mo is None:
@@ -157,11 +137,6 @@ class VisibilityMixin(ViewBase):
   def _inCollapsedWindow(self, vo:VObject) -> bool:
     '''
     Whether *vo* is drawn inside a collapsed context window (see *VObject.setCollapsed()*), and so not shown.
-
-    :param vo:
-    :type vo: VObject
-    :returns:
-    :rtype: bool
     '''
     mo = vo.modelObject
     return any(w.collapsed and w is not vo and w.paneAt(vo.centerPt()) is not None and w.containmentOf(mo)
@@ -172,11 +147,6 @@ class VisibilityMixin(ViewBase):
     Whether *vo* is part of a shown context window's content (eg: an isa link
     in a rule's consequent): it's then shown whatever its category -- it's
     what the rule says, not clutter.
-
-    :param vo:
-    :type vo: VObject
-    :returns:
-    :rtype: bool
     '''
     mo = vo.modelObject
     return any(not w.isHidden() and not w.collapsed and w is not vo and w.containmentOf(mo) for w in self.contextWindows())
@@ -195,11 +165,6 @@ class VisibilityMixin(ViewBase):
     *relationCategory()*, *nodeCategory()*) are listed only while they're
     hidden or erased; "relation types..." and "node types..." choose them (see
     *chooseRelationCategories()*, *chooseNodeCategories()*).
-
-    :param mode:
-    :type mode: str
-    :returns:
-    :rtype: tk.Menu
     '''
     menu = tk.Menu(self.canvas)
     self._visibilityVars = getattr(self, "_visibilityVars", {}) # (keep the variables alive)
@@ -223,9 +188,7 @@ class VisibilityMixin(ViewBase):
     asked for.
 
     :param typ: The relation type, or its name.
-    :type typ: Relation | str
     :returns: The category's name: *RELATION_CATEGORY* and the type's: eg: "relations: imports".
-    :rtype: str
     '''
     name = str(typ if isinstance(typ, str) else typ.name)
     category = RELATION_CATEGORY + name
@@ -248,9 +211,7 @@ class VisibilityMixin(ViewBase):
     for.
 
     :param typ: The node type, or its name.
-    :type typ: Node | str
     :returns: The category's name: *NODE_CATEGORY* and the type's: eg: "nodes: person".
-    :rtype: str
     '''
     name = str(typ if isinstance(typ, str) else typ.name)
     category = NODE_CATEGORY + name
@@ -272,7 +233,6 @@ class VisibilityMixin(ViewBase):
     *relationCategory()*, *nodeCategory()*).
 
     :param text: What was saved: eg: "types=hide,relations: imports=erase".
-    :type text: str
     '''
     self.hides = dict(kv.split("=", 1) for kv in text.split(",") if "=" in kv)
     for category in self.hides:
@@ -358,9 +318,7 @@ class VisibilityMixin(ViewBase):
     or, if there are none, say so.
 
     :param objects: Model objects: nodes before relations.
-    :type objects: list[GraphObject]
     :param what: What they are, for the message if there are none: eg: "relations of those types".
-    :type what: str
     '''
     if not objects:
       from tkinter import messagebox
@@ -375,7 +333,6 @@ class VisibilityMixin(ViewBase):
     unchecked that were are shown again. Done as one undoable command.
 
     :param mode: "hide" or "erase".
-    :type mode: str
     '''
     from sn.view.graphics.visibilityDialog import TypesDialog
     types = [t for t in relationTypes(self.model) if t is not self.model.ISA]
@@ -402,7 +359,6 @@ class VisibilityMixin(ViewBase):
     undoable command.
 
     :param mode: "hide" or "erase".
-    :type mode: str
     '''
     from sn.view.graphics.visibilityDialog import TypesDialog
     types = nodeTypes(self.model)
@@ -427,9 +383,6 @@ class VisibilityMixin(ViewBase):
     make them its "constraints" attribute. Only variables have constraints;
     for anything else, or constraints that can't be read, the name stays as
     typed (and a message says why).
-
-    :param mo:
-    :type mo: GraphObject
     '''
     name, text = splitWhere(mo.name)
     if not names.isVariableName(name):

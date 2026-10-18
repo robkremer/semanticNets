@@ -52,9 +52,7 @@ _jobs:list[list] = [] # [label, done, total, when last reported]
 def begin(label:str, total:int|None=None) -> None:
   '''
   :param label: What's being done, eg: 'Reading "family.snm"'.
-  :type label: str
   :param total: How many steps there'll be, if that's known.
-  :type total: int | None
   '''
   _jobs.append([label, 0, total, 0.0])
   _report(force=True)
@@ -62,9 +60,7 @@ def begin(label:str, total:int|None=None) -> None:
 def step(done:int, total:int|None=None) -> None:
   '''
   :param done: How many steps of the current job are done.
-  :type done: int
   :param total: How many there'll be, if that's now known (or has changed).
-  :type total: int | None
   '''
   if not _jobs:
     return
@@ -80,7 +76,6 @@ def end(count:int=1) -> None:
 
   :param count: How many jobs are done: the current one, and those it's in
     (but not the one they're in): reported once.
-  :type count: int
   '''
   for _ in range(count):
     if _jobs:
@@ -91,11 +86,6 @@ def end(count:int=1) -> None:
 def task(label:str, total:int|None=None) -> Iterator[None]:
   '''
   A job (see *begin()*) for the duration of the context.
-
-  :param label:
-  :type label: str
-  :param total:
-  :type total: int | None
   '''
   begin(label, total)
   try:

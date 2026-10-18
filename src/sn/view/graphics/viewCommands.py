@@ -55,8 +55,8 @@ class _BumpIntruders(Command):
   '''
   def __init__(self, view:SNGView):
     '''
-    :param view:
-    :type view: SNGView
+    A command to bump things out of the context windows they don't belong in, in *view* (see
+    *SNGView.bumpIntruders()*).
     '''
     super().__init__("bump out of windows")
     self.view:SNGView|None = view
@@ -91,10 +91,7 @@ class _Bumped(CompositeCommand):
   '''
   def __init__(self, command:Command, bump:_BumpIntruders):
     '''
-    :param command:
-    :type command: Command
-    :param bump:
-    :type bump: _BumpIntruders
+    *command* and the bumping it caused (*bump*), done: undone together.
     '''
     super().__init__([command, bump])
     self.name = command.name
@@ -106,9 +103,6 @@ class _Bumped(CompositeCommand):
     Undo both -- then put the floating labels of the relations to and from
     what was bumped back between their ends: they were put back while what
     the command moved (eg: a window dropped on them) was still in the way.
-
-    :returns:
-    :rtype: Any
     '''
     ret = super().undo()
     bump = self.commands[1]
@@ -124,7 +118,6 @@ class _Bumped(CompositeCommand):
   def __str__(self):
     '''
     :returns: A readable string for this object.
-    :rtype:
     '''
     return str(self.commands[0])
 
@@ -136,10 +129,7 @@ class _Adjusted(CompositeCommand):
   '''
   def __init__(self, command:Command, adjustment:LayoutMoves):
     '''
-    :param command:
-    :type command: Command
-    :param adjustment:
-    :type adjustment: LayoutMoves
+    *command* and the layout adjustment it caused (*adjustment*), done: undone together.
     '''
     super().__init__([command, adjustment])
     self.name = command.name
@@ -149,7 +139,6 @@ class _Adjusted(CompositeCommand):
   def __str__(self):
     '''
     :returns: A readable string for this object.
-    :rtype:
     '''
     return str(self.commands[0])
 
@@ -165,8 +154,7 @@ class ViewDoList(DoList):
   '''
   def __init__(self, view:SNGView):
     '''
-    :param view:
-    :type view: SNGView
+    The undo/redo lists of *view*'s commands.
     '''
     super().__init__()
     self.view:SNGView = view
@@ -203,12 +191,9 @@ class ViewDoList(DoList):
   def _refuses(self, c:Command, doing:str) -> bool:
     '''
     :param c: The command about to be done, undone or redone.
-    :type c: Command
     :param doing: What's being done with it, for the message: eg, "undo".
-    :type doing: str
     :returns: Whether it's refused (with a warning): it changes the model, and
       the view can't (see *SNGView.isModelEditor()*).
-    :rtype: bool
     '''
     if self.view.isModelEditor() or not changesModel(c):
       return False
@@ -219,10 +204,6 @@ class ViewDoList(DoList):
   @override
   def do(self, c:Command) -> Any:
     '''
-    :param c:
-    :type c: Command
-    :returns:
-    :rtype: Any
     :raises PermissionError: If *c* changes the model, and the view can't (see
       *SNGView.isModelEditor()*).
 
@@ -278,14 +259,7 @@ class _ContainCreated(Command):
   '''
   def __init__(self, model:Model, typ:Relation, context:GraphObject, creator:Command):
     '''
-    :param model:
-    :type model: Model
-    :param typ:
-    :type typ: Relation
-    :param context:
-    :type context: GraphObject
-    :param creator:
-    :type creator: Command
+    A command to make *context* contain (by *typ*) what *creator* makes, once it's made.
     '''
     super().__init__("contain")
     self.model, self.typ, self.context, self.creator = model, typ, context, creator
@@ -293,10 +267,6 @@ class _ContainCreated(Command):
 
   @override
   def do(self) -> Relation|None:
-    '''
-    :returns:
-    :rtype: Relation | None
-    '''
     super().do()
     if self.relation is None:
       created = getattr(self.creator, "relation", None) or getattr(self.creator, "node", None)
@@ -309,10 +279,6 @@ class _ContainCreated(Command):
 
   @override
   def undo(self):
-    '''
-    :returns:
-    :rtype:
-    '''
     super().undo()
     if self.relation is not None:
       self.relation._disconnect()
@@ -331,16 +297,11 @@ def keptWith[T](keep:Iterable[T], objects:Iterable[T], ends:Callable[[T], tuple[
       is still seen to be in the rule) -- but not the rest of what's in it.
 
   :param keep: The objects to keep.
-  :type keep: Iterable[T]
   :param objects: Everything in the view.
-  :type objects: Iterable[T]
   :param ends: An object's ends (src, dst), if it's a relation (an end may
     be None: eg: a relation type's, dangling); else None.
-  :type ends: Callable[[T], tuple[T | None, T | None] | None]
   :param contents: What's in an object's window, if it's a context window; else nothing.
-  :type contents: Callable[[T], Iterable[T]]
   :returns: Those to keep, in no particular order (each once).
-  :rtype: list[T]
   '''
   # (by id(): view objects' own hashing is slow -- and *objects* can be many)
   objects = list(objects)

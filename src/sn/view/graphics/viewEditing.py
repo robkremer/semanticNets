@@ -64,12 +64,8 @@ class EditingMixin(ViewBase):
     *into*, contained in that context window's pane (one undo for both): eg:
     the menu on a rule's window, to edit it in place.
 
-    :param menu:
-    :type menu: tk.Menu
     :param at: Where the menu was asked for (view coords).
-    :type at: tuple[float, float]
     :param into: (a context window, the name of one of its panes: see *VObject.panes()*), or None.
-    :type into: tuple[VObject, str] | None
     '''
     self._newAt = None
     def make(t:GraphObject, individual:bool, ptype:type) -> None:
@@ -113,11 +109,6 @@ class EditingMixin(ViewBase):
     below *under* (its supertype), if that's given -- or wherever the view's
     dynamic layout puts it -- and then let that layout adjust the rest (see
     *ViewDoList.adjustAgain()*).
-
-    :param vo:
-    :type vo: VObject
-    :param under:
-    :type under: VObject | None
     '''
     if not vo._isConnected() or vo.isHidden():
       return
@@ -138,10 +129,8 @@ class EditingMixin(ViewBase):
     '''
     :param orAll: If nothing's selected, everything shown instead (as "select
       all" would select: see *selectAll()*).
-    :type orAll: bool
     :returns: The model objects of what's selected, in the order they're drawn
       (top to bottom, left to right).
-    :rtype: list[GraphObject]
     '''
     chosen = self.selected if self.selected or not orAll else self._shownObjects()
     vos = sorted((vo for vo in chosen if vo._isConnected() and vo.modelObject is not None),
@@ -155,11 +144,9 @@ class EditingMixin(ViewBase):
   def _geometryOf(self, objects:Iterable[GraphObject]) -> dict[int, dict[str, Any]]:
     '''
     :param objects: Model objects.
-    :type objects: Iterable[GraphObject]
     :returns: How this view shows each of *objects* that it shows (by *id()*
       of the object): what *showPasted()* needs to show a copy of it the same
       way (see *copying.Clip.geometry*).
-    :rtype: dict[int, dict[str, Any]]
     '''
     ret:dict[int, dict[str, Any]] = {}
     for mo in objects:
@@ -182,9 +169,6 @@ class EditingMixin(ViewBase):
     paste shows the copies the same way (see *showPasted()*). With *cut*,
     remove it from the model too (undoably) -- only what's selected: not
     everything, just because nothing is.
-
-    :param cut:
-    :type cut: bool
     '''
     from sn.model import copying
     objs = self._selectedModelObjects(orAll=not cut)
@@ -211,7 +195,6 @@ class EditingMixin(ViewBase):
 
     :param at: Where to put it (view coords: the top left of what's pasted), or
       None to put it where it was (or beside it, if that's taken).
-    :type at: tuple[float, float] | None
     '''
     try:
       if at is None:
@@ -228,7 +211,6 @@ class EditingMixin(ViewBase):
     ("Copy as picture" is always the canvas's: see *doCopyImage()*.)
 
     :param action: "cut", "copy", "paste", "select all" or "copy image".
-    :type action: str
     '''
     w = self.canvas.focus_get()
     if action == "copy image":
@@ -255,12 +237,8 @@ class EditingMixin(ViewBase):
     '''
     Cmd-X, Cmd-C, Cmd-V or Cmd-A on the canvas (see *_editAction()*).
 
-    :param event:
-    :type event: tk.Event
     :param action: "cut", "copy", "paste", "select all" or "copy image".
-    :type action: str
     :returns: "break": it's been dealt with.
-    :rtype: str
     '''
     self._editAction(action)
     self.addEventHandled(event)
@@ -272,7 +250,6 @@ class EditingMixin(ViewBase):
       what's selected, what's in any selected context windows (at any depth),
       and the relations between any of those -- as far as they're shown; or,
       if nothing's selected, everything shown.
-    :rtype: list[VObject]
     '''
     if not self.selected:
       return self._shownObjects()
@@ -327,12 +304,7 @@ class EditingMixin(ViewBase):
     Delete: erase what's selected from the view (see *doErase()*); Shift-Delete:
     remove it from the model (see *doRemove()*), after asking.
 
-    :param event:
-    :type event: tk.Event
-    :param fromModel:
-    :type fromModel: bool
     :returns: "break"
-    :rtype: str
     '''
     vos = [vo for vo in self.selected if vo._isConnected()]
     if not vos:
@@ -346,9 +318,6 @@ class EditingMixin(ViewBase):
   def doErase(self, vos:list[VObject]) -> None:
     '''
     Erase *vos* from this view (the model keeps their objects): one undo.
-
-    :param vos:
-    :type vos: list[VObject]
     '''
     vos = [vo for vo in vos if vo._isConnected()]
     if not vos:
@@ -365,9 +334,6 @@ class EditingMixin(ViewBase):
     *keptWith()*): the relations among the kept objects, the ends of the kept
     relations, and the context windows the kept objects are in. For working
     on a small part of a big view.
-
-    :param keep:
-    :type keep: list[VObject]
     '''
     from sn.view.graphics.vrelations import VRelation
     keep = [vo for vo in keep if vo._isConnected()]
@@ -390,10 +356,7 @@ class EditingMixin(ViewBase):
     the reasoner inferred (mark it asserted first), and what's in another
     model, or a write-locked one, or is a system object.
 
-    :param vos:
-    :type vos: list[VObject]
     :param confirm: Ask first (eg: for a key press, which is easily made by mistake).
-    :type confirm: bool
     '''
     from tkinter import messagebox
     if not self.isModelEditor():
@@ -432,13 +395,10 @@ class EditingMixin(ViewBase):
   def _pasteOffset(self, boxes:list[list[int]], at:tuple[int, int]|None) -> tuple[int, int]:
     '''
     :param boxes: Where the pasted objects were (their bounding boxes).
-    :type boxes: list[list[int]]
     :param at: Where the top left of them all is to go, or None.
-    :type at: tuple[int, int] | None
     :returns: How far to move them from where they were: to *at*; else not at
       all, if nothing's there now (eg: they were cut, or copied from another
       view); else the least distance to the right or down to where nothing is.
-    :rtype: tuple[int, int]
     '''
     if not boxes:
       return 0, 0
@@ -470,9 +430,7 @@ class EditingMixin(ViewBase):
     :param clip: What was pasted (a *copying.Clip*).
     :type clip: copying.Clip
     :param made: The new objects, by entry of *clip* (see *copying.pasteInto()*).
-    :type made: list[GraphObject]
     :param at: Where to put the top left of them all (view coords), or None.
-    :type at: tuple[int, int] | None
     '''
     from sn.view.graphics.vnodes import VNode
     pending = self.__dict__.setdefault("_pasting", {}) # (for update(): see there)
@@ -520,9 +478,7 @@ class EditingMixin(ViewBase):
     takes (as much of it as fits, from its top left).
 
     :param box: A rectangle, in view coords.
-    :type box: list[float]
     :param margin: Room to leave around it (canvas pixels).
-    :type margin: int
     '''
     c = self.canvas
     self.resetScrollRegion()
@@ -541,11 +497,8 @@ class EditingMixin(ViewBase):
 
   def findAGoodLocation(self, mObject:GraphObject) -> tuple[int,int]:
     '''
-    :param mObject:
-    :type mObject: GraphObject
     :returns: Where to start looking for a place for a new view object for
       *mObject* (see *_newObjectLocation()*).
-    :rtype: tuple[int, int]
     '''
     x, y, _ = self._newObjectLocation(mObject)
     return x, y
@@ -557,10 +510,7 @@ class EditingMixin(ViewBase):
     where the background menu making it was asked for, if it was; else just
     below its (first) supertype, if that's shown; else at the cursor.
 
-    :param mObject:
-    :type mObject: GraphObject
     :returns: (x, y, and the supertype's view object, if it's below that).
-    :rtype: tuple[int, int, VObject | None]
     '''
     if self._newAt is not None and mObject.isa(self._newAt[2]): # (once: see makeMenu())
       x, y, _ = self._newAt
@@ -585,7 +535,6 @@ class EditingMixin(ViewBase):
       the canvas (eg: the command came from the text terminal), the top-left
       of the visible part of the canvas instead, so the result is on screen.
       (0, 0) if there's no canvas.
-    :rtype: tuple[int, int]
     '''
     if not self.canvas:
       return 0, 0
@@ -604,9 +553,6 @@ class EditingMixin(ViewBase):
     endpoint is *vo*'s model object, but which were left dangling because it
     wasn't shown (eg: top -- see *VRelation._resolveEnd()* -- or an erased
     object), attach to it.
-
-    :param vo:
-    :type vo: VObject
     '''
     from sn.view.graphics.vrelations import VRelation
     if not vo._isConnected() or vo.modelObject is None: # (gone again meanwhile)
@@ -680,22 +626,14 @@ class EditingMixin(ViewBase):
     erased category; and so are any of those in the view in such a category.
 
     :param pattern: What to look for in names.
-    :type pattern: str
     :param wholeWord: See *nameMatcher()*.
-    :type wholeWord: bool
     :param matchCase: See *nameMatcher()*.
-    :type matchCase: bool
     :param regex: See *nameMatcher()*.
-    :type regex: bool
     :param wholeModel: Look in the model too, and show what's found.
-    :type wholeModel: bool
     :param superModels: With *wholeModel*: in its super-models too.
-    :type superModels: bool
     :param confirm: With *wholeModel*: asked, with how many objects would be
       shown, whether to show them (eg: there are a lot); None: they are.
-    :type confirm: Callable[[int], bool] | None
     :returns: The view objects highlighted, and how many were shown.
-    :rtype: tuple[list[VObject], int]
     :raises re.error: If *regex* and *pattern* isn't a good regular expression.
     '''
     from sn.model.model import nameMatcher
@@ -743,9 +681,6 @@ class EditingMixin(ViewBase):
   def makeRelationFrom(self, node:VObject, typ:Optional[Relation]=None):
     '''
     :param node: [VObject]
-    :type node: VObject
-    :param typ:
-    :type typ: Optional[Relation]
     '''
     assert isinstance(node, VObject)
     
@@ -777,13 +712,6 @@ class EditingMixin(ViewBase):
     Make an individual relation of type *typ* from *fromNode* to *toNode* --
     or, if *toNode* is None, with no destination of its own (so it inherits
     *typ*'s range: it's drawn to that, faded, or dangling if that's top).
-
-    :param fromNode:
-    :type fromNode: VObject
-    :param toNode:
-    :type toNode: VObject | None
-    :param typ:
-    :type typ: Relation
     '''
     assert isinstance(fromNode, VObject)
     assert toNode is None or isinstance(toNode, VObject)
@@ -813,9 +741,6 @@ class EditingMixin(ViewBase):
     '''
     Ask for a new object's name (and anything else about it), in the
     attribute editor -- unless it's gone (eg: undone).
-
-    :param mo:
-    :type mo: GraphObject
     '''
     if getattr(self, "_closed", False) or not mo._isConnected():
       return

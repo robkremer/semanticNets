@@ -75,20 +75,14 @@ class Shape:
     A method to be overridden by decsendant classes to indicate weather the
     class is "virtual" or not. Here, not being "virtual" indicates the class
     should not be directoy instantiated.
-
-    :returns:
-    :rtype:
     '''
     return False
 
   @classmethod
   def getShapeClass(cls, name:str):
     '''
-    :param name:
-    :type name: str
     :return: the class (<: *Shape* ) whose class name is *name* or *None* if there
             is no such class. 
-    :rtype:
     '''
     try:
       klass = globals()[name]
@@ -103,11 +97,9 @@ class Shape:
     '''
     :param name: [Optional[str] The name to to search for or *None* to return a 
       list of all known concrete subclasses of *Shape* .
-    :type name: Optional[str]
     :return: the class (<: *Shape* ) whose class name is *name* or *None* if there
             is no such class. If *name* is *None*, returns a list of all known 
             concrete subclasses of *Shape* .
-    :rtype: str | list[str]
     '''
     if name is None:
       classes = allConcreteSubclasses(Shape)
@@ -121,17 +113,12 @@ class Shape:
   def getShapeNames(cls):
     '''
     :return: a list of all known concrete subclasses of *Shape* .
-
-    :rtype:
     '''
     return Shape.shapeValidator()
 
   def __init__(self, vobject:VObject, **kwargs):
     """
     :param vobject: The "owner"
-    :type vobject: VObject
-    :param kwargs:
-    :type kwargs:
     """
     assert isinstance(vobject, VObject)
     self._vobject = weakref.ref(vobject)
@@ -155,9 +142,6 @@ class Shape:
   def vobject(self) -> VObject:
     '''
     The *VNode* that owns this shape. Implemented as a weakref under the covers.
-
-    :returns:
-    :rtype: VObject
     '''
     if self._vobject is None:
       raise LookupError("VObject appears to have been deleted.")
@@ -170,9 +154,6 @@ class Shape:
     """
     Templates always return a list of vertex points bound by a [0,0,1,1] rectangle.
     Subclasses should override this to yield their own shape vertices.
-
-    :returns:
-    :rtype:
     """
     return [0.0, 0.0, 
             1.0, 0.0, 
@@ -185,7 +166,6 @@ class Shape:
       centred rectangle that text can safely occupy inside this shape. The
       default is the whole box; shapes with cut-in sides or corners, or curved
       outlines, override this (or set *cutIn*) to keep text inside the outline.
-    :rtype: tuple[float, float]
     """
     cutIn = getattr(self, "cutIn", 0.0)
     return (1.0 - 2*cutIn, 1.0 - 2*cutIn)
@@ -194,12 +174,8 @@ class Shape:
     """
     :param rect: a rectangle taken as the bounding box for this Shape's points
           in VIEW coordinates. 
-    :type rect: Optional[list[float]]
-    :param fast:
-    :type fast:
     :return: Returns the vertex points fitted to *rect* if it's given, otherwise 
           *self.boundingBox()*\\ , in VEIW coordinates (not WINDOW coordinates).
-    :rtype: list[float]
           
     If subclasses have properly overridden the *template()* method, there should
     be no need to override this method.
@@ -212,17 +188,11 @@ class Shape:
                 pointsVector:Optional[list[float]]=None, fast=False) -> list[float]:
     """
     :param new: [list[int], len=4] The new boundng box
-    :type new: list[int | float]
     :param adj: [Optional[list[int]], len=4, default=[0,0,1,1]] The adjustment factor
         for the transformation [xoffset, yoffset, xmagnification, ymagnification].
-    :type adj: Optional[list[int]]
     :param pointsVector: [list[float], len=even, default=self.template()] A points-pair template with all 
           points 0.0>=p<=1.0. Usually from *self.template()* .
-    :type pointsVector: Optional[list[float]]
-    :param fast:
-    :type fast:
     :return: the transform of the points vector to fit the new bounding box
-    :rtype: list[float]
     """
     assert len(new) == 4
     if adj is None: adj = self.vobject.boundingBox(fast=fast)
@@ -271,9 +241,6 @@ class Shape:
     Check if the shape has changed, and if it has, replace *self* in self.vobject
     and return *True*, else return *False*. The caller should return immediately
     if this method returns *True*.
-
-    :returns:
-    :rtype: bool
     '''      
     try: # The shape attribute may not have been declared yet during initialization
       if self.vobject.cache["vis/shape"] != self.__class__.__name__:
@@ -285,12 +252,7 @@ class Shape:
     
   def draw(self, fast=False, **kwargs) -> int|None:
     '''
-    :param fast:
-    :type fast:
-    :param kwargs:
-    :type kwargs:
-    :returns:
-    :rtype: int | None
+    Draw it (or draw it again), as a polygon: its options from the object, then *kwargs*.
     '''
     if not fast and self.checkShape(): return None
     if not fast: # first update from the GraphObject.
@@ -315,12 +277,7 @@ class Rectangle(Shape):
 class RightParallelogram(Shape):
   def __init__(self, vnode, cutIn=0.05, **kwargs):
     '''
-    :param vnode:
-    :type vnode:
-    :param cutIn:
-    :type cutIn:
-    :param kwargs:
-    :type kwargs:
+    *cutIn*: how far in its corners are cut (a fraction of its size).
     '''
     self.cutIn = cutIn
     super().__init__(vnode, **kwargs)
@@ -332,9 +289,6 @@ class RightParallelogram(Shape):
     """
     Templates always return a list of vertex points bound by a [0,0,1,1] rectangle.
     Subclasses should override this to yield their own shape vertices.
-
-    :returns:
-    :rtype:
     """
     return [self.cutIn  , 0,
         1           , 0,
@@ -345,12 +299,7 @@ class RightParallelogram(Shape):
 class LeftParallelogram(Shape):
   def __init__(self, vnode, cutIn=0.05, **kwargs):
     '''
-    :param vnode:
-    :type vnode:
-    :param cutIn:
-    :type cutIn:
-    :param kwargs:
-    :type kwargs:
+    *cutIn*: how far in its corners are cut (a fraction of its size).
     '''
     self.cutIn = cutIn
     super().__init__(vnode, **kwargs)
@@ -362,9 +311,6 @@ class LeftParallelogram(Shape):
     """
     Templates always return a list of vertex points bound by a [0,0,1,1] rectangle.
     Subclasses should override this to yield their own shape vertices.
-
-    :returns:
-    :rtype:
     """
     return [0           , 0,
         1-self.cutIn, 0,
@@ -374,12 +320,7 @@ class LeftParallelogram(Shape):
 class FileFolder(Shape):
   def __init__(self, vnode, cutIn=0.05, **kwargs):
     '''
-    :param vnode:
-    :type vnode:
-    :param cutIn:
-    :type cutIn:
-    :param kwargs:
-    :type kwargs:
+    *cutIn*: how far in its corners are cut (a fraction of its size).
     '''
     self.cutIn = cutIn
     super().__init__(vnode, **kwargs)
@@ -391,9 +332,6 @@ class FileFolder(Shape):
     """
     Templates always return a list of vertex points bound by a [0,0,1,1] rectangle.
     Subclasses should override this to yield their own shape vertices.
-
-    :returns:
-    :rtype:
     """
     d = 0.3 # fraction the tab covers
     s = 0.02 # slope offset of the tab edge
@@ -408,12 +346,7 @@ class FileFolder(Shape):
 class TopPentagon(Shape):
   def __init__(self, vnode, cutIn=0.05, **kwargs):
     '''
-    :param vnode:
-    :type vnode:
-    :param cutIn:
-    :type cutIn:
-    :param kwargs:
-    :type kwargs:
+    *cutIn*: how far in its corners are cut (a fraction of its size).
     '''
     self.cutIn = cutIn
     super().__init__(vnode, **kwargs)
@@ -425,9 +358,6 @@ class TopPentagon(Shape):
     """
     Templates always return a list of vertex points bound by a [0,0,1,1] rectangle.
     Subclasses should override this to yield their own shape vertices.
-
-    :returns:
-    :rtype:
     """
     return [0,  0+self.cutIn,
         0.5,0,
@@ -438,12 +368,7 @@ class TopPentagon(Shape):
 class RightPentagon(Shape):
   def __init__(self, vnode, cutIn=0.05, **kwargs):
     '''
-    :param vnode:
-    :type vnode:
-    :param cutIn:
-    :type cutIn:
-    :param kwargs:
-    :type kwargs:
+    *cutIn*: how far in its corners are cut (a fraction of its size).
     '''
     self.cutIn = cutIn
     super().__init__(vnode, **kwargs)
@@ -455,9 +380,6 @@ class RightPentagon(Shape):
     """
     Templates always return a list of vertex points bound by a [0,0,1,1] rectangle.
     Subclasses should override this to yield their own shape vertices.
-
-    :returns:
-    :rtype:
     """
     return [0      ,    0,
         1-self.cutIn,    0,
@@ -468,12 +390,7 @@ class RightPentagon(Shape):
 class LeftPentagon(Shape):
   def __init__(self, vnode, cutIn=0.05, **kwargs):
     '''
-    :param vnode:
-    :type vnode:
-    :param cutIn:
-    :type cutIn:
-    :param kwargs:
-    :type kwargs:
+    *cutIn*: how far in its corners are cut (a fraction of its size).
     '''
     self.cutIn = cutIn
     super().__init__(vnode, **kwargs)
@@ -485,9 +402,6 @@ class LeftPentagon(Shape):
     """
     Templates always return a list of vertex points bound by a [0,0,1,1] rectangle.
     Subclasses should override this to yield their own shape vertices.
-
-    :returns:
-    :rtype:
     """
     return [self.cutIn, 0,
         1         , 0,
@@ -498,12 +412,7 @@ class LeftPentagon(Shape):
 class Hexagon(Shape):
   def __init__(self, vnode, cutIn=0.05, **kwargs):
     '''
-    :param vnode:
-    :type vnode:
-    :param cutIn:
-    :type cutIn:
-    :param kwargs:
-    :type kwargs:
+    *cutIn*: how far in its corners are cut (a fraction of its size).
     '''
     self.cutIn = cutIn
     super().__init__(vnode, **kwargs)
@@ -515,9 +424,6 @@ class Hexagon(Shape):
     """
     Templates always return a list of vertex points bound by a [0,0,1,1] rectangle.
     Subclasses should override this to yield their own shape vertices.
-
-    :returns:
-    :rtype:
     """
     return [self.cutIn  , 0,
         1-self.cutIn, 0,
@@ -530,13 +436,6 @@ class RoundedShape(Shape):
   def __init__(self, vnode, sharpness=1.5, **kwargs):
     """
     Based on https://stackoverflow.com/questions/44099594/how-to-make-a-tkinter-canvas-rectangle-with-rounded-corners.
-
-    :param vnode:
-    :type vnode:
-    :param sharpness:
-    :type sharpness:
-    :param kwargs:
-    :type kwargs:
     """
     self.sharpness = sharpness
     if "smooth" not in kwargs:
@@ -546,12 +445,8 @@ class RoundedShape(Shape):
 
   def points(self, rect:Optional[list[float]]=None, fast=False) -> list[float]: 
     '''
-    :param rect:
-    :type rect: Optional[list[float]]
-    :param fast:
-    :type fast:
-    :returns:
-    :rtype: list[float]
+    Its outline (in *rect*, or its object's box): the template's polygon with its corners rounded by
+    *sharpness*.
     '''
     sharpness = self.sharpness
     polyPoints = self.template()
@@ -605,21 +500,12 @@ class RoundedShape(Shape):
 
   @override
   def textInset(self) -> tuple[float, float]:
-    '''
-    :returns:
-    :rtype: tuple[float, float]
-    '''
     return (0.94, 0.88) # clear of the rounded corners
 
 class RoundedRectangle(RoundedShape):
   def __init__(self, vnode, sharpness=2, **kwargs):
     '''
-    :param vnode:
-    :type vnode:
-    :param sharpness:
-    :type sharpness:
-    :param kwargs:
-    :type kwargs:
+    *sharpness*: how sharp its corners are (see *RoundedShape*).
     '''
     assert isinstance(sharpness, (float,int))
     super().__init__(vnode, sharpness, **kwargs)
@@ -634,18 +520,11 @@ class Oval(Shape):
 
   @override
   def textInset(self) -> tuple[float, float]:
-    '''
-    :returns:
-    :rtype: tuple[float, float]
-    '''
     return (0.72, 0.72) # ~ the rectangle inscribed in an ellipse (1/sqrt(2) of each axis)
 
   def __init__(self, vnode, **kwargs):
     '''
-    :param vnode:
-    :type vnode:
-    :param kwargs:
-    :type kwargs:
+    An oval, filling its object's box.
     '''
     super().__init__(vnode, **kwargs)
 
@@ -669,7 +548,6 @@ class Oval(Shape):
     this polygon exists only for points()/containsPt() and other
     polygon-based geometry (e.g. connectors.py's boundary clipping).
 
-    :returns:
     :rtype: list[float]
     """
     n = self.vertexCount
@@ -683,12 +561,7 @@ class Oval(Shape):
 
   def draw(self, fast=False, **kwargs) -> int|None:
     '''
-    :param fast:
-    :type fast:
-    :param kwargs:
-    :type kwargs:
-    :returns:
-    :rtype: int | None
+    Draw it (or draw it again), as an oval: its options from the object, then *kwargs*.
     '''
     if not fast and self.checkShape(): return None
     if not fast: # first update from the GraphObject.

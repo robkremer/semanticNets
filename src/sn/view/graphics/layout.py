@@ -91,7 +91,6 @@ def labelPlacementLevel() -> int:
     to *level* squared rings out from there (10: 100, as for nodes). The time
     taken grows with the square of that, so a lot in a crowded view, as when
     showing a big model.
-  :rtype: int
   '''
   level = sn.snPrefs.get(LABEL_PLACEMENT_PREF, storeDefault=LABEL_PLACEMENT_DEFAULT, storeType=int) # (its note: see sn.PREFS)
   if not isinstance(level, (int, float, str)):
@@ -110,11 +109,8 @@ class Direction(Enum):
   
 def depth(obj:GraphObject) -> int:
   '''
-  :param obj:
-  :type obj: GraphObject
   :return: the isa-depth of *obj*: the number of isa steps on the longest path
     from *obj* up to the top (0 for the top itself).
-  :rtype: int
   '''
   i:int = -1
   p = [obj]
@@ -173,21 +169,17 @@ def registerLayout[T: type["LayoutHeuristic"]](cls:T) -> T:
 def layoutsFor(category:str) -> list[type["LayoutHeuristic"]]:
   '''
   :param category: One of *CATEGORIES*.
-  :type category: str
   :returns: The layout heuristics (in *LAYOUTS*) of that kind, in the order they were registered.
-  :rtype: list[type[LayoutHeuristic]]
   '''
   return [c for c in LAYOUTS.values() if category in c.CATEGORIES]
 
 def relationTypes(model:Model) -> list[Relation]:
   '''
   :param model: A model.
-  :type model: Model
   :returns: The relation types a layout can follow: isa, then the model's
     own and its super-models' (eg: an ontology it's built on: *values()* has
     only its own), but not the system's or the base rules' (see
     *Model.implicitSuperDBs()*), by name.
-  :rtype: list[Relation]
   '''
   implicit = model.implicitSuperDBs()
   models = [model] + [db for db in model.allSuperDBs() if isinstance(db, Model) and not any(db is i for i in implicit)]
@@ -204,11 +196,9 @@ def relationTypes(model:Model) -> list[Relation]:
 def nodeTypes(model:Model) -> list[Node]:
   '''
   :param model: A model.
-  :type model: Model
   :returns: Its node types (not relation types): its own and its
     super-models' (eg: an ontology it's built on), but not the system's or the
     base rules' (see *relationTypes()*), by name.
-  :rtype: list[Node]
   '''
   implicit = model.implicitSuperDBs()
   models = [model] + [db for db in model.allSuperDBs() if isinstance(db, Model) and not any(db is i for i in implicit)]
@@ -225,22 +215,16 @@ def nodeTypes(model:Model) -> list[Node]:
 def relationNamed(model:Model, name:str) -> Relation|None:
   '''
   :param model: A model.
-  :type model: Model
   :param name: A relation type's name.
-  :type name: str
   :returns: The first of *relationTypes()* with that name, if any.
-  :rtype: Relation | None
   '''
   return next((r for r in relationTypes(model) if r.name == name), None)
 
 def nodeNamed(model:Model, name:str) -> Node|None:
   '''
   :param model: A model.
-  :type model: Model
   :param name: A node type's name.
-  :type name: str
   :returns: The first of *nodeTypes()* with that name, if any.
-  :rtype: Node | None
   '''
   return next((n for n in nodeTypes(model) if n.name == name), None)
 
@@ -299,14 +283,11 @@ class LayoutHeuristic(ABC):
   def parametersFor(cls, category:str, current:dict[str, Any]|None=None) -> tuple[list[LayoutParameter], dict[str, Any]]:
     '''
     :param category: How it'll be used: *STATIC* or *DYNAMIC*.
-    :type category: str
     :param current: The values to start with, if not the defaults.
-    :type current: dict[str, Any] | None
     :returns: The parameters to ask for, for *category* (see
       *LayoutParameter.categories*), and all of them with the values to start
       with: what its dialog (see *askParameters()*), or its page in the layout
       panel (see *layoutPanel*), shows.
-    :rtype: tuple[list[LayoutParameter], dict[str, Any]]
     '''
     asked = [p for p in cls.PARAMETERS if category in p.categories]
     return asked, {p.name: (current or {}).get(p.name, p.default) for p in cls.PARAMETERS}
@@ -322,12 +303,9 @@ class LayoutHeuristic(ABC):
     :param view: The view it's for.
     :type view: SNGView
     :param category: How it'll be used: *STATIC* or *DYNAMIC*.
-    :type category: str
     :param current: The values to start with, if not the defaults.
-    :type current: dict[str, Any] | None
     :param parent: The window the dialog's over.
     :returns: The keyword arguments for its constructor, or None if the user cancelled.
-    :rtype: dict[str, Any] | None
     '''
     asked, values = cls.parametersFor(category, current)
     if not asked:
@@ -346,18 +324,14 @@ class LayoutHeuristic(ABC):
     :param view: The view it's for.
     :type view: SNGView
     :param name: The parameter changed.
-    :type name: str
     :param values: All the parameters' values, now.
-    :type values: dict[str, Any]
     :returns: The values to show.
-    :rtype: dict[str, Any]
     '''
     return values
 
   def parameters(self) -> dict[str, Any]:
     '''
     :returns: Its parameters' values: as keyword arguments for its constructor.
-    :rtype: dict[str, Any]
     '''
     return dict(self.params)
 
@@ -368,7 +342,6 @@ class LayoutHeuristic(ABC):
     :returns: What's saved with the view about it, as its dynamic layout (see
       *fromState()*): its name, parameters, and anything else it keeps (see
       *extraState()*): eg: "name=tree;relations=includes:shapes:source;direction=right;pins=12,40".
-    :rtype: str
     '''
     return self.encodeParameters(self.params, self.extraState())
 
@@ -377,12 +350,9 @@ class LayoutHeuristic(ABC):
     '''
     :param params: Values of its parameters (see *PARAMETERS*): a relation as a
       *Relation* or its name.
-    :type params: dict[str, Any]
     :param extra: Anything else to say (see *extraState()*).
-    :type extra: dict[str, str]
     :returns: Them as text: its name, then each parameter's value (see
       *decodeParameters()*): eg: "name=tree;relations=includes:shapes:source;direction=right".
-    :rtype: str
     '''
     parts = {"name": cls.NAME}
     for p in cls.PARAMETERS:
@@ -397,11 +367,9 @@ class LayoutHeuristic(ABC):
   def decodeParameters(text:str) -> "tuple[type[LayoutHeuristic], dict[str, Any], dict[str, str]]|None":
     '''
     :param text: What *encodeParameters()* made.
-    :type text: str
     :returns: The kind of layout it's of, its parameters' values (keyword
       arguments for its constructor: a relation by its name), and everything
       said (eg: for *restoreExtraState()*) -- or None if there's no such layout.
-    :rtype: tuple[type[LayoutHeuristic], dict[str, Any], dict[str, str]] | None
     '''
     state = dict(kv.split("=", 1) for kv in text.split(";") if "=" in kv)
     cls = LAYOUTS.get(state.get("name", ""))
@@ -423,10 +391,8 @@ class LayoutHeuristic(ABC):
     '''
     :param state: What *decodeParameters()* read: eg: saved by an older
       version, whose parameters were different.
-    :type state: dict[str, str]
     :returns: It, with any old parameters converted to the ones there are
       now. As it is, by default.
-    :rtype: dict[str, str]
     '''
     return state
 
@@ -434,7 +400,6 @@ class LayoutHeuristic(ABC):
     '''
     :returns: Anything else it keeps that's saved with the view (see *state()*):
       none, by default. (Values mustn't contain ";" or "=".)
-    :rtype: dict[str, str]
     '''
     return {}
 
@@ -443,7 +408,6 @@ class LayoutHeuristic(ABC):
     Put back what *extraState()* saved.
 
     :param state: What was saved (and the parameters).
-    :type state: dict[str, str]
     '''
     pass
 
@@ -453,9 +417,7 @@ class LayoutHeuristic(ABC):
     :param view: A view, being read.
     :type view: SNGView
     :param text: What *state()* saved.
-    :type text: str
     :returns: The layout it describes -- or None if there's no such layout.
-    :rtype: LayoutHeuristic | None
     '''
     decoded = LayoutHeuristic.decodeParameters(text)
     if decoded is None:
@@ -471,7 +433,6 @@ class LayoutHeuristic(ABC):
     '''
     :returns: Where to move things to arrange the view (their top left
       corners): only what's to move. None, by default.
-    :rtype: dict[VObject, tuple[float, float]]
     '''
     return {}
 
@@ -480,9 +441,7 @@ class LayoutHeuristic(ABC):
     Arrange the view (see *targets()*), as one undoable command.
 
     :param animate: Whether to move things smoothly (see *tween()*), rather than at once.
-    :type animate: bool
     :returns: The command, or None if nothing moved.
-    :rtype: LayoutMoves | None
     '''
     remember = getattr(self.view, "rememberLayoutParameters", None)
     if remember is not None: # (offered next time: see SNGView.lastLayoutParameters())
@@ -498,9 +457,6 @@ class LayoutHeuristic(ABC):
     '''
     Called by *arrange()* with the command it's about to do: eg: to add to
     what it undoes (see *LayoutMoves.also*). Nothing, by default.
-
-    :param cmd:
-    :type cmd: LayoutMoves
     '''
     pass
 
@@ -512,14 +468,8 @@ class LayoutHeuristic(ABC):
 
   def _setDirection(self, node:VObject, referenceNode:Optional[VObject], loc:Optional[Point]=None):
     '''
-    :param node:
-    :type node: VObject
-    :param referenceNode:
-    :type referenceNode: Optional[VObject]
-    :param loc:
-    :type loc: Optional[Point]
-    :returns:
-    :rtype:
+    Which way from *referenceNode* to put *node*: nearest *loc*, if there is one; else sideways, if there's no
+    *referenceNode*; else below it if *node* is its subtype, or above.
     '''
     if loc is not None:
       return Direction.NEAREST
@@ -533,18 +483,12 @@ class LayoutHeuristic(ABC):
     
   def findOverlapping(self, rect:Sequence[float], exclude:Collection[int]=[], shapes:Collection[int]|None=None) -> list[int]:
     '''
-    :param rect:
-    :type rect: Sequence[float]
-    :param exclude:
-    :type exclude: Collection[int]
     :param shapes: The view's 'vis/shape'-tagged canvas item ids, if the caller
       has them (eg: a set, from *find_withtag()*): as *FindFree.placeNode()*
       does, trying many places for one object -- asking Tk for each
       overlapping item's tags, otherwise, takes most of the time.
-    :type shapes: Collection[int] | None
     :return: The (possible zero-length) list of 'vis/shape'-tagged tk.Canvas object ids
         that overlap with bounding box of *node*.
-    :rtype: list[int]
     '''
     if shapes is not None:
       return [i for i in self.view.canvas.find_overlapping(*rect) if i in shapes and i not in exclude]
@@ -555,8 +499,6 @@ class LayoutHeuristic(ABC):
     '''
     Place *node* (see *placeNode()*) -- or, if it's None, everything (see *placeAll()*).
 
-    :param node:
-    :type node: Optional[VObject]
     :param kwargs: For *placeNode()*.
     '''
     if node is not None:
@@ -573,17 +515,11 @@ class LayoutHeuristic(ABC):
     *referenceNode*, its supertype), or dropped -- somewhere suitable. By
     default, it stays where it is.
 
-    :param node:
-    :type node: VObject
     :param referenceNode: What it's to go near, if anything.
-    :type referenceNode: Optional[VObject]
     :param direction: Which way from *referenceNode*.
-    :type direction: Direction
     :param loc: Where to start looking, if not where it is.
-    :type loc: Optional[Point]
     :param kwargs: Eg: "aggressive", "within" (see *FindFree.placeNode()*).
     :returns: Where it's put (its top left).
-    :rtype: Point | tuple[float, float]
     '''
     bb = node.boundingBox()
     return bb[0], bb[1]
@@ -603,9 +539,7 @@ class LayoutHeuristic(ABC):
     returned is done, and undone with *command*, as one.
 
     :param command: The command just done.
-    :type command: Command
     :returns: What to move (not done yet), or None for nothing (the default).
-    :rtype: LayoutMoves | None
     '''
     return None
 
@@ -614,10 +548,8 @@ LayoutHieristic = LayoutHeuristic
 def fitToText(vo:VObject) -> VObject:
   '''
   :param vo: A node or relation (its label) in a view: eg: just made.
-  :type vo: VObject
   :returns: It, sized to its text now -- as it would be when it's next drawn
     (see *decorators.WrappingText.fitOwner()*) -- so a layout can place it by its size.
-  :rtype: VObject
   '''
   from sn.view.graphics.decorators import WrappingText
   if vo._shape is None or vo._shape.id is None: # (not drawn yet: its shape -- and so the room for its text -- isn't set up)
@@ -631,12 +563,10 @@ def fitToText(vo:VObject) -> VObject:
 def layoutSize(vo:VObject) -> tuple[float, float]:
   '''
   :param vo: A node or relation (its label) in a view.
-  :type vo: VObject
   :returns: Its (width, height) as it'll be when it's moved: fitted to its
     text (see *fitToText()*), and at least the minimums a box is held to when
     it's set (see *VObject.boundingBox()*: "vis/minSize", and *VObject.minHeight()*)
     -- which a box first fitted to a little text may be smaller than.
-  :rtype: tuple[float, float]
   '''
   bb = fitToText(vo).boundingBox()
   w, h = bb[2] - bb[0], bb[3] - bb[1]
@@ -700,7 +630,6 @@ def _moveAll(view, moves:list[tuple[VObject, float, float]]) -> None:
   :param view:
   :type view: SNGView
   :param moves: (object, x, y).
-  :type moves: list[tuple[VObject, float, float]]
   '''
   touched:dict[int, VRelation] = {}
   for vo, x, y in moves:
@@ -793,7 +722,6 @@ def tween(view, moves:list[tuple[VObject, tuple[float, float], tuple[float, floa
   :param view:
   :type view: SNGView
   :param moves: (object, from, to): top left corners.
-  :type moves: list[tuple[VObject, tuple[float, float], tuple[float, float]]]
   '''
   finishTween(view)
   if not moves:
@@ -820,11 +748,8 @@ class LayoutMoves(Command):
     :param view:
     :type view: SNGView
     :param name: What the undo menu calls it.
-    :type name: str
     :param targets: Where things go (their top left corners): those already there are left out.
-    :type targets: dict[VObject, tuple[float, float]]
     :param animate: Whether to move them smoothly when it's first done.
-    :type animate: bool
     '''
     super().__init__(name)
     self.view = view
@@ -916,22 +841,7 @@ class FindFree(LayoutHeuristic):
                 within:Optional[list[float]]=None,
                 **kwargs) -> Point|tuple[float, float]:
     '''
-    :param node:
-    :type node: VObject
     :param within: Where it may be put (x1, y1, x2, y2: view coords), if not anywhere: eg: the visible part of the view.
-    :type within: Optional[list[float]]
-    :param referenceNode:
-    :type referenceNode: Optional[VObject]
-    :param direction:
-    :type direction: Direction
-    :param loc:
-    :type loc: Optional[Point]
-    :param aggressive:
-    :type aggressive: bool
-    :param kwargs:
-    :type kwargs:
-    :returns:
-    :rtype: Point | tuple[float, float]
     '''
     from sn.view.graphics.vrelations import VRelation
     expandFactor = self.expandFactor_relations \
@@ -1073,15 +983,10 @@ def intoRect(box:Sequence[float], rect:Sequence[float], margin:float=0.0, topMar
   in an axis it's too big for.
 
   :param box: [x1, y1, x2, y2].
-  :type box: Sequence[float]
   :param rect: [x1, y1, x2, y2].
-  :type rect: Sequence[float]
   :param margin: The space to leave inside *rect*'s edges.
-  :type margin: float
   :param topMargin: The space to leave at its top (default: *margin*).
-  :type topMargin: float | None
   :returns: (dx, dy).
-  :rtype: tuple[float, float]
   '''
   ret = []
   for k, before in ((0, margin), (1, margin if topMargin is None else topMargin)):
@@ -1101,10 +1006,7 @@ def intoRect(box:Sequence[float], rect:Sequence[float], margin:float=0.0, topMar
 
 def _median(values:list[float]) -> float:
   '''
-  :param values:
-  :type values: list[float]
-  :returns:
-  :rtype: float
+  The median of *values* (0 if there are none).
   '''
   if not values:
     return 0.0
@@ -1136,16 +1038,12 @@ def gatherAxisShifts(intervals:Sequence[tuple[float, float]], *,
   differences.
 
   :param intervals: (low, high) extents along one axis.
-  :type intervals: Sequence[tuple[float, float]]
   :param gapFactor: How many times the typical spacing a gap must exceed to
     count as stranding what lies beyond it.
-  :type gapFactor: float
   :param minGap: No gap smaller than this counts as stranding, however
     tightly packed the rest of the drawing is -- so a normal (if loose)
     layout is left alone.
-  :type minGap: float
   :returns: The shift for each interval, in the same order.
-  :rtype: list[float]
   '''
   n = len(intervals)
   shifts = [0.0] * n
@@ -1203,13 +1101,7 @@ def gatherShifts(boxes:list[list[float]], *, gapFactor:float=6.0, minGap:float=3
   only one axis is only pulled back on that axis.
 
   :param boxes: [x1, y1, x2, y2] bounding boxes.
-  :type boxes: list[list[float]]
-  :param gapFactor:
-  :type gapFactor: float
-  :param minGap:
-  :type minGap: float
   :returns: The (dx, dy) to move each box by, in the same order.
-  :rtype: list[tuple[float, float]]
   '''
   dxs = gatherAxisShifts([(b[0], b[2]) for b in boxes], gapFactor=gapFactor, minGap=minGap)
   dys = gatherAxisShifts([(b[1], b[3]) for b in boxes], gapFactor=gapFactor, minGap=minGap)
@@ -1229,13 +1121,9 @@ def freeSpotIn(box:Sequence[float], rect:Sequence[float], obstacles:Iterable[Seq
   brought from far away are set out tidily).
 
   :param box: [x1, y1, x2, y2].
-  :type box: Sequence[float]
   :param rect: [x1, y1, x2, y2].
-  :type rect: Sequence[float]
   :param obstacles: Boxes to keep clear of.
-  :type obstacles: Iterable[Sequence[float]]
   :returns: (dx, dy) -- or None if there's no room.
-  :rtype: tuple[float, float] | None
   '''
   obs = [o for o in obstacles]
   gx, gy = gap if isinstance(gap, tuple) else (gap, gap)
@@ -1301,19 +1189,13 @@ def freeSpotIn(box:Sequence[float], rect:Sequence[float], obstacles:Iterable[Seq
 def _gridSpan(lo:float, step:float, n:int, after:Callable[[float], bool], before:Callable[[float], bool]) -> range:
   '''
   :param lo: The first grid point.
-  :type lo: float
   :param step: The grid's spacing.
-  :type step: float
   :param n: The last grid point's index.
-  :type n: int
   :param after: Of a point: false up to some point, true from there on.
-  :type after: Callable[[float], bool]
   :param before: Of a point: true up to some point, false from there on.
-  :type before: Callable[[float], bool]
   :returns: The indices *i* (0 to *n*) of the grid points *lo* + *i* * *step*
     that are both *after* and *before* (found by bisection, testing the
     points just as they're written).
-  :rtype: range
   '''
   a, b = 0, n + 1
   while a < b: # (the first that's after)
@@ -1344,18 +1226,12 @@ def clearOf(box:Sequence[float], keepOut:Sequence[Sequence[float]], obstacles:Se
   is the nearest one there is, but not necessarily the very nearest point.
 
   :param box: [x1, y1, x2, y2].
-  :type box: Sequence[float]
   :param keepOut: Rects to stay out of.
-  :type keepOut: Sequence[Sequence[float]]
   :param obstacles: Rects not to land on (if that can be helped: if there's
     no such place, they're ignored).
-  :type obstacles: Sequence[Sequence[float]]
   :param within: A rect to stay in.
-  :type within: Sequence[float] | None
   :param gap: The clearance.
-  :type gap: float
   :returns: (dx, dy), (0, 0) if it's fine where it is -- or None if there's no place.
-  :rtype: tuple[float, float] | None
   '''
   w, h = box[2] - box[0], box[3] - box[1]
   def hits(x:float, y:float, rects:Sequence[Sequence[float]], g:float) -> bool:

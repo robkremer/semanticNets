@@ -67,13 +67,9 @@ class EditorCommandError(ValueError):
 def editorCommand(template:str, path:str, line:int) -> list[str]:
   '''
   :param template: The command (see the module doc).
-  :type template: str
   :param path: The file.
-  :type path: str
   :param line: The line (1-based).
-  :type line: int
   :returns: The command's words, filled in (see the module doc).
-  :rtype: list[str]
   :raises EditorCommandError: If it's malformed: eg: an unclosed quote, a
     "{" that isn't one of {path}, {line} or {url} (use "{{" for a "{"), or
     it's empty.
@@ -97,14 +93,10 @@ def openSource(path:str, line:int=1, end:int|None=None, parent:Any=None) -> None
   *SourceWindow*, with lines *line* to *end* highlighted.
 
   :param path: The file.
-  :type path: str
   :param line: The line (1-based).
-  :type line: int
   :param end: The last line of what to highlight, in the window here (an
     editor's told only *line*).
-  :type end: int | None
   :param parent: What it's opened from (for the window here), if anything.
-  :type parent: Any
   '''
   template = str(snPrefs.get(EDITOR_PREF, "") or "").strip()
   if template:
@@ -132,15 +124,10 @@ def showSource(path:str, line:int=1, end:int|None=None, parent:Any=None) -> Sour
   one, read afresh -- at *line*, with lines *line* to *end* highlighted.
 
   :param path: The file.
-  :type path: str
   :param line: The line (1-based).
-  :type line: int
   :param end: The last line to highlight; default: *line*.
-  :type end: int | None
   :param parent: What it's opened from, if anything.
-  :type parent: Any
   :returns: The window; None if the file can't be read (logged).
-  :rtype: SourceWindow | None
   '''
   path = os.path.abspath(path)
   try:
@@ -164,9 +151,7 @@ class SourceWindow(tk.Toplevel):
   def __init__(self, path:str, parent:Any=None):
     '''
     :param path: The file.
-    :type path: str
     :param parent: What it's opened from, if anything.
-    :type parent: Any
     '''
     root = parent.winfo_toplevel() if isinstance(parent, tk.Misc) else tk._get_default_root() #type: ignore[attr-defined]
     super().__init__(root)
@@ -198,12 +183,8 @@ class SourceWindow(tk.Toplevel):
     Show *text* (the file's), with lines *line* to *end* highlighted, and
     scrolled so that *line* is near the top.
 
-    :param text:
-    :type text: str
     :param line: The first line to highlight (1-based).
-    :type line: int
     :param end: The last.
-    :type end: int
     '''
     lines = text.split("\n")
     if lines and lines[-1] == "":

@@ -112,8 +112,6 @@ class Application(tk.Tk):
 
   def _noOp(self) -> None:
     """Root window has no close button the user can reach, but guard anyway.
-
-    :rtype: None
     """
     pass
   
@@ -137,8 +135,6 @@ class Application(tk.Tk):
     matter how many AppWindows get opened, so this belongs here rather
     than being (re-)registered — and guarded against re-registration —
     from every window.
-
-    :rtype: None
     """
     self.createcommand("tk::mac::ShowPreferences", self.openSettings)
 
@@ -160,8 +156,6 @@ class Application(tk.Tk):
     Called once, from __init__, alongside _installSettingsMenu() -- see its
     docstring for why this belongs here rather than being (re-)registered
     from every window.
-
-    :rtype: None
     """
     self.createcommand("tk::mac::Quit", self.onQuit)
     self.createcommand("::tk::mac::OpenDocument", self.onOpenDocument)
@@ -173,8 +167,6 @@ class Application(tk.Tk):
     command line. Each opens in a window, as with *Open...*.
 
     :param paths: The files' paths.
-    :type paths: str
-    :rtype: None
     """
     self._openedDocuments = True # (see startUp(): not then reopening the last session too)
     for p in paths:
@@ -188,8 +180,6 @@ class Application(tk.Tk):
     Python's normal interpreter shutdown entirely, so the *atexit*-registered
     *saveAtExit()*/*savePrefsIfChanged()* never run and unsaved models/views are
     silently lost. Call them explicitly here, then tear down.
-
-    :rtype: None
     """
     self.rememberOpenWindows() # (before they're closed: see reopenWindows())
     self.closeAllWindows() # each gets the same save check as closing it by hand
@@ -210,8 +200,7 @@ class Application(tk.Tk):
 
     Called once, from __init__, alongside _installSettingsMenu().
 
-    :returns:
-    :rtype: None
+    :returns: The menu bar.
     """
     menubar:tk.Menu = tk.Menu(self)
     
@@ -253,8 +242,6 @@ class Application(tk.Tk):
     in a packaged app, or else the project's built documentation.
 
     :param page: The page, relative to the documentation's top, eg: "user/index.html".
-    :type page: str
-    :rtype: None
     """
     import webbrowser
     for top in (sn.resourcePath("help"), sn.resourcePath("sphinx", "build", "html")):
@@ -270,8 +257,6 @@ class Application(tk.Tk):
     *sn.savePrefsIfChanged()*). Only the settings' values are shown: their
     types and qualifiers are fixed, and their notes -- documentation, from
     *sn.PREFS* -- are their names' tooltips.
-
-    :rtype: None
     """
     applyEditAttrsBox(self, snPrefs, title="Semantic Nets Preferences", hideColumns=("type", "qualifiers", "note"))
     self._fillRecentMenu() # (in case "gui/recentFiles" changed)
@@ -314,10 +299,7 @@ class Application(tk.Tk):
     :type name: str
     :param title: Window title. Defaults to name if not given.
     :type title: str
-    :param viewSpec:
-    :type viewSpec: Model | str
     :returns: The newly created Toplevel window.
-    :rtype: tk.Toplevel
     """
     from sn.view.graphics.sngView import SNGView
     assert isinstance(viewSpec, (Model,SNGView,str,NoneType))
@@ -437,11 +419,8 @@ class Application(tk.Tk):
     read from a copy (the base rules).
 
     :param model: The model.
-    :type model: Model
     :param viewURL: Where its view is (or will be) saved.
-    :type viewURL: str
     :returns: The window.
-    :rtype: tk.Toplevel | None
     '''
     from sn.view.graphics.sngView import SNGView
     if viewURL in self.windows:
@@ -474,7 +453,6 @@ class Application(tk.Tk):
   def directoryShown(self) -> bool:
     '''
     :returns: Whether the model directory is shown (see *showDirectory()*).
-    :rtype: bool
     '''
     return self.directoryPane is not None and self.state() != "withdrawn"
 
@@ -484,10 +462,7 @@ class Application(tk.Tk):
     views in the search path's folders. It's this, the app's main window --
     hidden while it isn't shown. (Window | Model Directory.)
 
-    :param show:
-    :type show: bool
     :param geometry: Its size and position, if not as it was.
-    :type geometry: str | None
     '''
     if show:
       if self.directoryPane is None:
@@ -526,9 +501,6 @@ class Application(tk.Tk):
     Models or views at *urls* have been opened, made or saved: add their
     folders to the search path (if they aren't in it), and show them in the
     model directory as they are now.
-
-    :param urls:
-    :type urls: str
     '''
     added = [noteFolderOf(url) for url in urls]
     pane = self.directoryPane
@@ -553,9 +525,7 @@ class Application(tk.Tk):
     :param readOnly: Whether to write-lock its model, so it can't be changed
       (nor saved). Not if the model's open already, and not locked: it's
       opened as it is then (and the user's told).
-    :type readOnly: bool
     :returns: Its window.
-    :rtype: tk.Toplevel | None
     '''
     if entry.remote: # (it can't be saved there)
       readOnly = True
@@ -611,7 +581,6 @@ class Application(tk.Tk):
     '''
     :returns: The views opened most recently, most recent first: each
       {"view": its URL, "model": its model's URL}.
-    :rtype: list[dict[str, str]]
     '''
     entries = snPrefs.get(self.RECENT_PREF, [])
     return [e for e in entries if isinstance(e, dict) and e.get("view")] if isinstance(entries, list) else []
@@ -625,11 +594,6 @@ class Application(tk.Tk):
     '''
     Put a view (and its model) at the top of the recently opened ones (see
     *recentFiles()*, and File | Open Recent).
-
-    :param viewURL:
-    :type viewURL: str
-    :param modelURL:
-    :type modelURL: str
     '''
     entries = [e for e in self.recentFiles() if e.get("view") != viewURL]
     self._setRecentFiles([{"view": viewURL, "model": modelURL}, *entries])
@@ -641,7 +605,6 @@ class Application(tk.Tk):
     more, say so, and take it off the list.
 
     :param entry: One of *recentFiles()*.
-    :type entry: dict[str, str]
     '''
     viewURL, modelURL = entry.get("view"), entry.get("model")
     spec = viewURL if viewURL and urlExists(viewURL) else modelURL if modelURL and urlExists(modelURL) else None
@@ -686,8 +649,6 @@ class Application(tk.Tk):
     position -- in the preferences, for *reopenWindows()* the next time the app
     starts. (When packaged as a .app, the app is normally started with no
     files to open, so this is how it comes back the way it was left.)
-
-    :rtype: None
     '''
     entries = []
     for window in self.windows.values():
@@ -712,7 +673,6 @@ class Application(tk.Tk):
     are gone.
 
     :returns: The number of windows reopened.
-    :rtype: int
     '''
     entries = snPrefs.get(self.OPEN_WINDOWS_PREF, [])
     count = 0
@@ -742,8 +702,6 @@ class Application(tk.Tk):
     show the model directory (see *showDirectory()*).
 
     :param files: Files named on the command line.
-    :type files: list[str]
-    :rtype: None
     '''
     files = [f for f in files if not f.startswith("-psn_")] # (a process serial number some macOS versions pass to an app)
     self.loadPlugins()
@@ -766,8 +724,6 @@ class Application(tk.Tk):
     older), and load the plugins (see *sn.plugins*): they add to the menu bar.
     Done on start-up (see *startUp()*), not when an Application's made, so
     that a script (eg: a test) that makes one gets the editor without them.
-
-    :rtype: None
     '''
     from sn import plugins
     plugins.installBundled()
@@ -779,8 +735,6 @@ class Application(tk.Tk):
     installed in (see *sn.plugins.PLUGINS_FOLDER*) in the Finder -- made, if
     it isn't there yet. (A plugin added or changed there is loaded when the
     editor next starts.)
-
-    :rtype: None
     '''
     import subprocess, webbrowser
     from sn import plugins
@@ -803,10 +757,8 @@ class Application(tk.Tk):
 
     :param replace: Whether to replace copies already there. If not (as on
       the first launch), an existing folder is left as it is.
-    :type replace: bool
 
     :returns: True iff any were opened.
-    :rtype: bool
     """
     if not sn.exampleNames():
       return False
@@ -830,8 +782,6 @@ class Application(tk.Tk):
     are lost) -- and open them. Their windows are closed first, and the models
     forgotten, so the new files are read afresh. (Any other files in the folder
     are left alone.)
-
-    :rtype: None
     """
     from util.persistence.pRef import PRDb
     target = os.path.expanduser(self.EXAMPLES_FOLDER)
@@ -879,15 +829,11 @@ class Application(tk.Tk):
     then.
 
     :param model: The model.
-    :type model: Model
     :param askToSave: Whether to offer to save the model and its changed
       views. False when they're being replaced (see *replacingModel()*).
-    :type askToSave: bool
     :param quitIfNone: Whether to quit if no window is left open. False when
       another is about to be opened (see *replacingModel()*).
-    :type quitIfNone: bool
     :returns: Whether it was closed.
-    :rtype: bool
     """
     users = sorted({url for kind, url in model.dependents() if kind == "model"})
     if users:
@@ -918,10 +864,8 @@ class Application(tk.Tk):
     would be added to it -- and its open views told of each new object.
 
     :param path: The model's file (or URL).
-    :type path: str
     :returns: False if it can't be forgotten (other models use it: see
       *closeModel()*), and so mustn't be replaced; else True.
-    :rtype: bool
     """
     model = PRDb.AllDBs.get(PRDb.resolveURL(fixURL(path, None, replaceExt=None, mode="w")[0]))
     if not isinstance(model, Model):
@@ -932,8 +876,6 @@ class Application(tk.Tk):
     """Close every hosted window via *_closeWindow()*, so each view gets
     exactly the same save check (and clean-up) on quitting as it would if
     the user closed its window individually.
-
-    :rtype: None
     """
     for name in list(self.windows):
       self._closeWindow(name, quitIfLast=False)
@@ -945,8 +887,6 @@ class Application(tk.Tk):
     as another file). One that isn't filed at all is still closed.
 
     :param window: The window.
-    :type window: AppWindow
-    :rtype: None
     """
     name = next((k for k, w in self.windows.items() if w is window), None)
     if name is None:
@@ -959,15 +899,11 @@ class Application(tk.Tk):
     """Close a specific hosted window and check whether the app should exit.
 
     :param name: The window's key, as passed to openWindow.
-    :type name: str
     :param quitIfLast: Quit the application if this was the last window.
       False when the caller is already quitting (see *closeAllWindows()*).
-    :type quitIfLast: bool
     :param askToSave: Whether to offer to save the window's view if it's
       changed. False when the user has already agreed to lose the changes
       (see *onInstallExamples()*).
-    :type askToSave: bool
-    :rtype: None
     """
     if quitIfLast and list(self.windows) == [name] and not self.directoryShown(): # closing the last window quits: remember it for next time
       self.rememberOpenWindows()
@@ -1000,15 +936,11 @@ class Application(tk.Tk):
 
   def quit(self) -> None:
     """Tear down the entire application, including the hidden root.
-
-    :rtype: None
     """
     self.destroy()
 
   def run(self) -> None:
     """Start the Tk event loop.
-
-    :rtype: None
     """
     self.mainloop()
 
@@ -1016,9 +948,7 @@ class Application(tk.Tk):
 def _filePath(url:str) -> str:
   '''
   :param url: A file's URL (eg: "file:///Users/me/family.snv").
-  :type url: str
   :returns: Its path.
-  :rtype: str
   '''
   from urllib.parse import urlparse, unquote
   parsed = urlparse(url)
@@ -1027,9 +957,7 @@ def _filePath(url:str) -> str:
 def _fileName(url:str) -> str:
   '''
   :param url: A file's URL.
-  :type url: str
   :returns: Its name (eg: "family.snv").
-  :rtype: str
   '''
   return os.path.basename(_filePath(url)) or url
 
@@ -1041,14 +969,8 @@ class AppWindow(tk.Toplevel):
 
   def __init__(self, tkdottk:tk.Tk, viewURL:str, geometry:str="300x400+20+20", **kwargs):
     '''
-    :param tkdottk:
-    :type tkdottk: tk.Tk
-    :param viewURL:
-    :type viewURL: str
-    :param geometry:
-    :type geometry: str
-    :param kwargs:
-    :type kwargs:
+    A window for the view at *viewURL*: titled with it, at *geometry*; closing it closes the view's window
+    (see *Application._closeWindowOf()*).
     '''
     from sn.view.graphics.sngView import SNGView
     
@@ -1084,7 +1006,6 @@ class AppWindow(tk.Toplevel):
 
     :param widget: The widget (and its children, recursively) to bind.
     :type widget: tk.Widget
-    :rtype: None
     """
     widget.bind("<FocusIn>", self._onWindowFocusIn, add="+")
     widget.bind("<FocusOut>", self._onWindowFocusOut, add="+")
@@ -1098,8 +1019,6 @@ class AppWindow(tk.Toplevel):
     window's *SNGView* (if any) know it's now the focused one.
 
     :param event: The Tk event.
-    :type event:
-    :rtype: None
     """
     if self.view is not None:
       self.view.onWindowFocusIn()
@@ -1115,8 +1034,6 @@ class AppWindow(tk.Toplevel):
     actually ended up.
 
     :param event: The Tk event.
-    :type event:
-    :rtype: None
     """
     self.after_idle(self._checkStillActive)
 
@@ -1124,8 +1041,6 @@ class AppWindow(tk.Toplevel):
     """Let this window's *SNGView* (if any) know focus has genuinely moved
     outside this window (as opposed to just moving between two of its own
     descendant widgets -- see *_onWindowFocusOut()*).
-
-    :rtype: None
     """
     app = self._root() #type: ignore[attr-defined]
     try:
@@ -1154,8 +1069,6 @@ class AppWindow(tk.Toplevel):
     :param widget: The widget (and its children, recursively) to bind.
     :type widget: tk.Widget
     :param terminal: This window's terminal — the routing target.
-    :type terminal: SNTerminalWidget
-    :rtype: None
     """
     widget.bind("<FocusIn>", lambda e, t=terminal: self._root().terminalRegistry.onFocusIn(t), add="+") #type: ignore[attr-defined,call-overload]
     widget.bind("<FocusOut>", lambda e, t=terminal: self._root().terminalRegistry.onFocusOut(t), add="+") #type: ignore[attr-defined,call-overload]
@@ -1181,7 +1094,6 @@ class AppPanedWidget(tk.PanedWindow):
   def __init__(self, parent:AppWindow, **kwargs):
     r"""
     :param parent: The parent *AppWindow*.
-    :type parent: AppWindow
     :param fixedAppFrame: [bool, default:False] Specifies whether the application *frame*
       is fixed-size or stretchable.
     :param commandParser: [CommandParser , default: an new *TygraCommandParser()* ] User input
@@ -1195,9 +1107,6 @@ class AppPanedWidget(tk.PanedWindow):
         - "bd" default = 4
         - "bg" default = "grey"
         - "borderwidth" default = 0
-
-    :param kwargs:
-    :type kwargs:
     """
     assert isinstance(parent, AppWindow)
     # fix up kwargs to contain the necessary defaults and create the PanedWindow (super).
@@ -1244,9 +1153,7 @@ class SNGViewFrame(tk.Frame):
   def __init__(self, parent:AppPanedWidget, **kwargs):
     '''
     :param parent: The master Widget.
-    :type parent: AppPanedWidget
     :param kwargs: Passed to *Canvas*.
-    :type kwargs:
     '''
     assert isinstance(parent, AppPanedWidget)
     # self.scrollRegion:list = [0,0,1000,1000]

@@ -63,8 +63,6 @@ class FilesMixin(ViewBase):
     here too, and this is the natural place for any save-view-specific
     behavior (confirmation, status message, ...) if/when it needs more than
     a plain save.
-
-    :rtype: None
     '''
     self.save(overwrite=True)
 
@@ -73,8 +71,6 @@ class FilesMixin(ViewBase):
     Save this view's model: the target of the "File | Save model" menu item
     (added/removed like "Save view": see *onWindowFocusIn()*). Not a model
     that's write-locked (eg: the system model).
-
-    :rtype: None
     '''
     model = self.model
     if model is None:
@@ -93,13 +89,10 @@ class FilesMixin(ViewBase):
     so, in the log, and flash the terminal pane to draw attention to it.
 
     :param what: "view" or "model", for the messages.
-    :type what: str
     :param db: The view or model.
     :type db: SNGView | Model
     :param extension: Its files' extension, eg: ".snv".
-    :type extension: str
     :param filetypes: For the file dialog.
-    :type filetypes: list[tuple[str, str]]
     '''
     from tkinter import filedialog, messagebox
     current = fixURL(db.url)[0]
@@ -130,8 +123,6 @@ class FilesMixin(ViewBase):
     '''
     Save a copy of this view in another file: the target of "File | Save view
     as..." (see *_saveCopy()*). This window stays on this view.
-
-    :rtype: None
     '''
     self._saveCopy("view", self, ".snv", [("View files", "*.snv"), ("All files", "*.*")])
 
@@ -139,8 +130,6 @@ class FilesMixin(ViewBase):
     '''
     Save a copy of this view's model in another file: the target of "File |
     Save model as..." (see *_saveCopy()*). This window stays on the model.
-
-    :rtype: None
     '''
     if self.model is not None:
       self._saveCopy("model", self.model, ".snm", [("Model files", "*.snm"), ("All files", "*.*")])
@@ -149,7 +138,6 @@ class FilesMixin(ViewBase):
   def _afterFileMenu() -> int:
     '''
     :returns: The menu bar position just after "File" (where "Edit" goes).
-    :rtype: int
     '''
     try:
       bar = tk._default_root.nametowidget(tk._default_root["menu"]) # type: ignore[attr-defined,union-attr] # @UndefinedVariable
@@ -164,8 +152,6 @@ class FilesMixin(ViewBase):
     isn't one (see *Model.unlistedModels()*) -- eg: an ontology's copy on the
     web in place of the local one (see *Model.replaceSuperModel()*); and show
     the same objects of the new one in its open views.
-
-    :rtype: None
     '''
     from tkinter import messagebox
     from sn.view.graphics.replaceModelDialog import ReplaceModelDialog
@@ -202,8 +188,6 @@ class FilesMixin(ViewBase):
     taking its URL (eg: on the web: see *askModelURL()*), and set from
     the edited list (see *Model.setSuperModels()*): if that can't be done,
     nothing is changed, and the reasons are shown.
-
-    :rtype: None
     '''
     from tkinter import filedialog, messagebox
     from util.attributeEditor import editAttrsBox
@@ -257,8 +241,6 @@ class FilesMixin(ViewBase):
     Close this view's model: the target of the "File | Close model" menu item
     (added/removed like "Save view": see *onWindowFocusIn()*). See
     *Application.closeModel()*.
-
-    :rtype: None
     '''
     if self.model is not None:
       self.root.closeModel(self.model)
@@ -274,8 +256,6 @@ class FilesMixin(ViewBase):
     on the way in, this is enough to guarantee "Save view" always targets
     whichever view the user is actually looking at -- no shared
     "currently active view" bookkeeping needed anywhere else.
-
-    :rtype: None
     '''
     addToMenuBar("File|Save view", self.doSaveView)
     addToMenuBar("File|Save view as...", self.doSaveViewAs)
@@ -316,8 +296,6 @@ class FilesMixin(ViewBase):
     guaranteed to first fire a Tk focus-out event). Safe to call even if
     this view never added the item (e.g. its window was never focused) --
     *removeFromMenuBar()* is a no-op in that case.
-
-    :rtype: None
     '''
     removeFromMenuBar("File|Save view")
     removeFromMenuBar("File|Save view as...")
@@ -350,7 +328,6 @@ class FilesMixin(ViewBase):
     '''
     :returns: The "File | Open super model" cascade: an item for each of this
       view's model's super-models (see *superModelView()*), nearest first.
-    :rtype: tk.Menu
     '''
     from sn.view.graphics.utils import _getMenuBar, getSubMenu
     from sn.model.reasoner import baseRulesSource
@@ -383,10 +360,8 @@ class FilesMixin(ViewBase):
     (see *SN_VIEW*).
 
     :param model: A super-model.
-    :type model: Model
     :returns: (the URL of the model's file -- or "" for sn, which has none --
       and the URL of its view).
-    :rtype: tuple[str, str]
     '''
     import importlib.resources
     from pathlib import Path
@@ -403,7 +378,6 @@ class FilesMixin(ViewBase):
     base rules, of the file they come from (read-only).
 
     :param model: The super-model.
-    :type model: Model
     '''
     app = self.window._root() # type: ignore[attr-defined]
     src, viewURL = self.superModelView(model)
@@ -416,7 +390,6 @@ class FilesMixin(ViewBase):
     :returns: Whether the model can be changed in this view: it isn't locked
       (see *setEditLocked()*), and the model isn't write-locked. Either way,
       the view itself can be (eg: moving things, or erasing them from view).
-    :rtype: bool
     '''
     return not self.__dict__.get("_editLocked", False) and not self.model.writeLocked()
 
@@ -424,7 +397,6 @@ class FilesMixin(ViewBase):
     '''
     :returns: Why the model can't be changed in this view (see
       *isModelEditor()*), for a message.
-    :rtype: str
     '''
     if self.model.writeLocked():
       return f'"{self.model.name}" is write-locked: it can\'t be changed here.'
@@ -434,7 +406,6 @@ class FilesMixin(ViewBase):
     '''
     :returns: Whether the user's locked this view, so it can't change the
       model (see *setEditLocked()*).
-    :rtype: bool
     '''
     return self.__dict__.get("_editLocked", False)
 
@@ -443,7 +414,6 @@ class FilesMixin(ViewBase):
     :returns: Whether the model can't be changed in this view (see
       *isModelEditor()*) -- what "Edit | Lock view" shows (and sets: see
       *_onLockViewItem()*).
-    :rtype: tk.BooleanVar
     '''
     var = self.__dict__.get("_editLockedVarObj")
     if var is None:
@@ -465,10 +435,7 @@ class FilesMixin(ViewBase):
     only how it's shown -- or unlock it. Not other views of the model. It's
     saved with the view. A write-locked model's view can't be unlocked.
 
-    :param locked:
-    :type locked: bool
     :returns: Whether it's done (unlocking a write-locked model's view isn't).
-    :rtype: bool
     '''
     if not locked and self.model.writeLocked():
       logger.warning(self.lockedReason())

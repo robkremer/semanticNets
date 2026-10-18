@@ -63,7 +63,6 @@ class ViewportMixin(ViewBase):
     '''
     :returns: The size of the view's text at its zoom: at least 1 (a size of 0
       is Tk's default size: big, at a small zoom).
-    :rtype: int
     '''
     return max(1, int(self._fontSize * self._scale))
 
@@ -113,10 +112,8 @@ class ViewportMixin(ViewBase):
     alone does: so things don't jump away).
 
     :param scale: The zoom: 1 is normal size.
-    :type scale: float
     :param centre: The point (view units) to have at the middle of the window,
       if not the one there now.
-    :type centre: tuple[float, float] | None
     '''
     x, y = centre if centre is not None else self._windowCentre()
     self.zoom(min(self.MAX_ZOOM, max(self.MIN_ZOOM, scale)))
@@ -141,9 +138,7 @@ class ViewportMixin(ViewBase):
     """
     :param scale: the absolute scale, where 1.0 is "no scaling", unless *delta* is true, in which
             case, multiplier for the current scale (so numbers like 0.9 and 1.1 make sense).
-    :type scale: float
     :param delta: True to do relative scaling, False to do absolute scaling.
-    :type delta:
     """
     oldScale = self._scale
     if delta:
@@ -169,7 +164,6 @@ class ViewportMixin(ViewBase):
     :returns: What's saved with the view about what's shown in its window (see
       *_restoreViewport()*): its zoom, and the point at its top left, in view
       units (as the view's objects are placed): eg: "zoom=0.8;x=120.0;y=-40.0".
-    :rtype: str
     '''
     try:
       x, y = self.windowToView(self.canvas.canvasx(0), self.canvas.canvasy(0))
@@ -206,10 +200,8 @@ class ViewportMixin(ViewBase):
     :param args: Either a single list argument or multiple float parameters. In either case there
           must be an even number of items, taken as x,y pairs. Since scaling is x:y equal, this "even"
           limitation is relaxed here.
-    :type args:
     :return: A list converted coordinates where the evens are x coordinates and the odds are y coordinates
           converted from view to window coordinates.
-    :rtype: list[float]
     """
     if len(args) == 1 and isinstance(args[0], Iterable):
       args = args[0] # type: ignore[assignment]
@@ -223,10 +215,8 @@ class ViewportMixin(ViewBase):
     :param args: Either a single list argument or multiple float parameters. In either case there
           must be an even number of items, taken as x,y pairs. Since scaling is x:y equal, this "even"
           limitation is relaxed here.
-    :type args:
     :return: A list converted coordinates where the evens are x coordinates and the odds are y coordinates
           converted from window to view coordinates.
-    :rtype: list[float]
     """
     if len(args) == 1 and isinstance(args[0], Iterable):
       args = args[0] # type: ignore[assignment]
@@ -298,7 +288,6 @@ class ViewportMixin(ViewBase):
   def repaint(self, event=None):
     '''
     :param event: The Tk event.
-    :type event:
     '''
     self.freshPaint()
     for obj in self.context.view.values():
@@ -316,7 +305,6 @@ class ViewportMixin(ViewBase):
     :param shrink: [default=False] Normally the region only grows (see below);
       True fits it to the drawing even if that makes it smaller -- for an
       explicit user request, when the view jumping to fit is expected.
-    :type shrink: bool
 
     Called by *VObject.draw()* whenever a *VObject*'s bounding box no longer
     fits inside the existing region -- e.g. after it's been dragged past the
@@ -328,8 +316,6 @@ class ViewportMixin(ViewBase):
       leave the region silently not grown (eg: when dragging past the edge).
       *self.scrollRegion* is kept in step with the canvas's, as *moveTo()*'s
       clamp compares against it.
-
-    :rtype: None
     '''
     bb = self.canvas.bbox("all")
     if bb is None:  # nothing drawn yet -- nothing to size the region to

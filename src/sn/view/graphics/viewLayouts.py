@@ -60,7 +60,6 @@ class LayoutsMixin(ViewBase):
     :returns: What's saved with the view about its animation layout: its
       settings -- eg:
       "direction=down;follows=isa;labels=1;flowStrength=6.0;e=1000.0;k=0.005;heat=6.0;cooling=0.7;leaps=0.05".
-    :rtype: str
     '''
     layout = self.animationLayout()
     parts = {"direction": layout.flowDirection or "none",
@@ -102,9 +101,7 @@ class LayoutsMixin(ViewBase):
     the menu) -- marking the view changed, as they're saved with it.
 
     :param attr: The layout's attribute, eg: "flowDirection" or "heat".
-    :type attr: str
     :param value: Its new value.
-    :type value: Any
     '''
     layout = self.animationLayout()
     if getattr(layout, attr, None) != value:
@@ -114,7 +111,6 @@ class LayoutsMixin(ViewBase):
   def _layoutPanelShown(self) -> tk.BooleanVar:
     '''
     :returns: Whether this view's layout panel is shown -- what "View | Layout panel" shows (and sets).
-    :rtype: tk.BooleanVar
     '''
     var = self.__dict__.get("_layoutPanelVar")
     if var is None:
@@ -136,11 +132,8 @@ class LayoutsMixin(ViewBase):
     a narrow strip is there instead, which opens it.
 
     :param show: True to show it; False to hide it.
-    :type show: bool
     :param category: The kind of layout to show (of *layout.CATEGORIES*), if not the one it shows.
-    :type category: str | None
     :param name: The layout to show, of that kind (see *layoutPanel.LayoutPanel.show()*).
-    :type name: str | None
 
     In a window that isn't shown (eg: one being read, or a hidden one, as in
     tests), the panel is made only once it is (see *_showPanelWhenMapped()*):
@@ -175,9 +168,7 @@ class LayoutsMixin(ViewBase):
     *showLayoutPanel()*) -- if it's still to be shown then.
 
     :param category: As for *showLayoutPanel()*.
-    :type category: str | None
     :param name: As for *showLayoutPanel()*.
-    :type name: str | None
     '''
     split = self.layoutSplit()
     self._panelPage = (category, name) # (the latest asked for)
@@ -195,7 +186,6 @@ class LayoutsMixin(ViewBase):
     :returns: The split between the canvas and the layout panel (or the strip
       that opens it): see *layoutPanel.LayoutSplit*. Made (replacing the
       canvas's pane) when the view's window is.
-    :rtype: LayoutSplit
     '''
     from sn.view.graphics.layoutPanel import LayoutSplit
     split = self.__dict__.get("_layoutSplit")
@@ -208,7 +198,6 @@ class LayoutsMixin(ViewBase):
     :returns: What's saved with the view about its layout panel: whether it's
       shown, and what *layoutPanel.LayoutPanel.savedState()* says (if it's been
       made) -- eg: "shown=1;page=static;static=tree;width=340".
-    :rtype: str
     '''
     panel = self.__dict__.get("_layoutPanel")
     shown = "shown=" + ("1" if self._layoutPanelShown().get() else "0")
@@ -260,9 +249,7 @@ class LayoutsMixin(ViewBase):
     (dsts upstream of srcs: eg: "isa" flowing down gives a class diagram).
 
     :param parent: The menu it's a submenu of.
-    :type parent: tk.Menu
     :returns: The submenu.
-    :rtype: tk.Menu
     '''
     from sn.view.graphics.animatedLayouts import FLOW_DIRECTIONS
     layout = self.animationLayout()
@@ -322,9 +309,7 @@ class LayoutsMixin(ViewBase):
     arrange or use it there; one without is done (or used) straight away.
 
     :param parent: The menu it's a submenu of.
-    :type parent: tk.Menu
     :returns: The submenu.
-    :rtype: tk.Menu
     '''
     menu = tk.Menu(parent)
     menu.add_command(label="layout panel...", command=lambda: self.showLayoutPanel(True))
@@ -349,12 +334,10 @@ class LayoutsMixin(ViewBase):
   def lastLayoutParameters(self, cls:type[LayoutHeuristic]) -> dict[str, Any]|None:
     '''
     :param cls: A kind of layout.
-    :type cls: type[LayoutHeuristic]
     :returns: The parameters it was last used with in this view (see
       *rememberLayoutParameters()*: saved with the view) -- or, if it hasn't
       been, those it's being used with as its dynamic layout -- if any: what
       its dialog starts with.
-    :rtype: dict[str, Any] | None
     '''
     remembered = self.__dict__.setdefault("_layoutParameters", {}).get(cls.NAME)
     if remembered is not None:
@@ -374,9 +357,7 @@ class LayoutsMixin(ViewBase):
     in no tree as it was.
 
     :param layout: A layout of this view, being used.
-    :type layout: LayoutHeuristic
     :param category: How it's used: *STATIC* or *DYNAMIC*.
-    :type category: str
     '''
     if not layout.PARAMETERS:
       return
@@ -390,7 +371,6 @@ class LayoutsMixin(ViewBase):
     :returns: What's saved with the view of the layouts' last parameters (see
       *rememberLayoutParameters()*): each as *layout.LayoutHeuristic.encodeParameters()*
       says, separated by "|".
-    :rtype: str
     '''
     from sn.view.graphics.layout import LAYOUTS
     return "|".join(LAYOUTS[name].encodeParameters(params) for name, params in self.__dict__.get("_layoutParameters", {}).items()
@@ -401,7 +381,6 @@ class LayoutsMixin(ViewBase):
     Put back the layouts' last parameters saved with the view (see *_layoutParametersState()*).
 
     :param text: What was saved.
-    :type text: str
     '''
     remembered = self.__dict__.setdefault("_layoutParameters", {})
     for part in text.split("|"):
@@ -416,7 +395,6 @@ class LayoutsMixin(ViewBase):
     parameters, if it has any), as one undoable command.
 
     :param cls: The kind of layout.
-    :type cls: type[LayoutHeuristic]
     '''
     kwargs = cls.askParameters(self, STATIC, self.lastLayoutParameters(cls), parent=self.window)
     if kwargs is None:
@@ -430,7 +408,6 @@ class LayoutsMixin(ViewBase):
     stays on the view's dynamic layout till then.
 
     :param cls: The kind of layout.
-    :type cls: type[LayoutHeuristic]
     '''
     if getattr(self, "_layoutVar", None) is not None:
       self._layoutVar.set(self.localLayout.NAME)
@@ -442,7 +419,6 @@ class LayoutsMixin(ViewBase):
     its parameters, if it has any).
 
     :param cls: The kind of layout.
-    :type cls: type[LayoutHeuristic]
     '''
     kwargs = cls.askParameters(self, DYNAMIC, self.lastLayoutParameters(cls), parent=self.window)
     if kwargs is None: # (cancelled: the menu shows the one there still is)
@@ -458,7 +434,6 @@ class LayoutsMixin(ViewBase):
     Saved with the view.
 
     :param layout: A dynamic layout of this view.
-    :type layout: LayoutHeuristic
     '''
     finishTween(self)
     self.__dict__.pop("_pendingLayout", None) # (set before a read view's saved one was put back: this one wins)

@@ -94,9 +94,7 @@ class LayoutPanel(ttk.Frame):
   def __init__(self, master:tk.Misc, view:SNGView):
     '''
     :param master: The widget it's in: the split beside the view's canvas.
-    :type master: tk.Misc
     :param view: The view whose layouts it's for.
-    :type view: SNGView
     '''
     super().__init__(master, padding=(8, 6, 4, 4))
     self.view = view
@@ -172,10 +170,8 @@ class LayoutPanel(ttk.Frame):
     Show a kind of layout, and (unless it's "animate") one of them.
 
     :param category: Of *layout.CATEGORIES*.
-    :type category: str
     :param name: The layout's name (in *layout.LAYOUTS*): by default, the one
       last shown for *category* -- or, for "keep arranged", the view's.
-    :type name: str | None
     '''
     self._keepDraft()
     if name is not None:
@@ -187,7 +183,6 @@ class LayoutPanel(ttk.Frame):
   def current(self) -> tuple[str, str|None]:
     '''
     :returns: The kind of layout shown, and the layout (None for "animate").
-    :rtype: tuple[str, str | None]
     '''
     category = self.category.get()
     return category, None if category == ANIMATED else self.chosen.get(category)
@@ -205,7 +200,6 @@ class LayoutPanel(ttk.Frame):
     hide it, for "animate".
 
     :param category: Of *layout.CATEGORIES*.
-    :type category: str
     '''
     if category == ANIMATED:
       self.list.pack_forget()
@@ -226,7 +220,6 @@ class LayoutPanel(ttk.Frame):
   def _listText(self, category:str, name:str) -> str:
     '''
     :returns: How a layout's listed: for "keep arranged", the view's is ticked.
-    :rtype: str
     '''
     if category != DYNAMIC:
       return name
@@ -266,9 +259,7 @@ class LayoutPanel(ttk.Frame):
     Make the page for a layout: its name and its parameters (its buttons are in the bar: see *_showBar()*).
 
     :param category: *STATIC* or *DYNAMIC*.
-    :type category: str
     :param cls: The layout.
-    :type cls: type[LayoutHeuristic]
     '''
     bold = tkfont.nametofont("TkDefaultFont").copy()
     bold.configure(weight="bold")
@@ -291,7 +282,6 @@ class LayoutPanel(ttk.Frame):
     Show the buttons for a kind of layout in the bar (see *bar*).
 
     :param category: Of *layout.CATEGORIES*.
-    :type category: str
     '''
     shown, hidden = (self.animationBar, self.layoutBar) if category == ANIMATED else (self.layoutBar, self.animationBar)
     hidden.pack_forget()
@@ -304,7 +294,6 @@ class LayoutPanel(ttk.Frame):
     '''
     :returns: The page's values (as keyword arguments for the layout's
       constructor) -- or None, having said why, if one won't do.
-    :rtype: dict[str, Any] | None
     '''
     return self.form.read() if self.form is not None else dict(self.values)
 
@@ -313,7 +302,6 @@ class LayoutPanel(ttk.Frame):
     Keep the page's values (if it's a layout's), to show again when it's shown again.
 
     :param page: What the page is for (see *_page*): by default, what it's for now.
-    :type page: tuple[str, str | None] | None
     '''
     category, name = page if page is not None else self._page
     if self.form is not None and name is not None:
@@ -373,9 +361,6 @@ class LayoutPanel(ttk.Frame):
     '''
     Let the mouse wheel scroll the page over *widget* and everything in it
     (see *SCROLL_TAG*).
-
-    :param widget:
-    :type widget: tk.Misc
     '''
     tags = widget.bindtags()
     if SCROLL_TAG not in tags:
@@ -433,7 +418,6 @@ class LayoutPanel(ttk.Frame):
     '''
     :returns: What's saved with the view about the panel, besides whether it's
       shown: what's chosen and how wide it is -- eg: "page=static;static=tree;dynamic=avoid overlaps;width=340".
-    :rtype: str
     '''
     if self.winfo_ismapped() and self.winfo_width() > 1:
       self.width = self.winfo_width()
@@ -443,9 +427,6 @@ class LayoutPanel(ttk.Frame):
   def setSavedState(self, state:dict[str, str]) -> None:
     '''
     Put back what *savedState()* saved (parsed): what's chosen, and how wide it is.
-
-    :param state:
-    :type state: dict[str, str]
     '''
     for category in (STATIC, DYNAMIC):
       if state.get(category) in LAYOUTS:
@@ -477,7 +458,6 @@ class LayoutSplit(tk.PanedWindow):
   def __init__(self, view:SNGView):
     '''
     :param view: The view whose window it's in.
-    :type view: SNGView
     '''
     paned = view.window.appPanedWidget
     canvasFrame = paned.canvasFrame
@@ -512,9 +492,6 @@ class LayoutSplit(tk.PanedWindow):
   def showPanel(self, panel:LayoutPanel) -> None:
     '''
     Show *panel* (as wide as it was: its *width*) instead of the strip.
-
-    :param panel:
-    :type panel: LayoutPanel
     '''
     self.panel = panel
     if self._shown(self.strip):
@@ -534,7 +511,6 @@ class LayoutSplit(tk.PanedWindow):
   def _place(self, width:int) -> None:
     '''
     :param width: How wide (pixels) the pane at the right is to be: the sash is moved to suit.
-    :type width: int
     '''
     self.update_idletasks()
     self.sash_place(0, max(0, self.winfo_width() - width - self.SASH_WIDTH), 1)

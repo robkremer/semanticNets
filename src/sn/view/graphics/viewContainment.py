@@ -54,12 +54,9 @@ def rectArea(r:Sequence[float]) -> float:
 def paneAt(panes:Mapping[str, Sequence[float]], pt:Sequence[float]) -> str|None:
   '''
   :param panes: A window's panes (see *VObject.panes()*), by name.
-  :type panes: Mapping[str, Sequence[float]]
   :param pt: A point.
-  :type pt: Sequence[float]
   :returns: The pane *pt* is in (edges included: on the divider, the first,
     the left one), or None.
-  :rtype: str | None
   '''
   for name, (x1, y1, x2, y2) in panes.items():
     if x1 <= pt[0] <= x2 and y1 <= pt[1] <= y2:
@@ -71,11 +68,8 @@ def windowAt[W](pt:Sequence[float], windows:Mapping[W, tuple[Sequence[float], Ma
   The innermost window with a pane at *pt*: what's dropped there goes in it.
 
   :param pt: A point.
-  :type pt: Sequence[float]
   :param windows: The windows: each one's (box, panes).
-  :type windows: Mapping[W, tuple[Sequence[float], Mapping[str, Sequence[float]]]]
   :returns: Of those with a pane at *pt*, the smallest (the first, of equals); or None.
-  :rtype: W | None
   '''
   return min((w for w, (_, panes) in windows.items() if paneAt(panes, pt) is not None),
              key=lambda w: rectArea(windows[w][0]), default=None)
@@ -88,15 +82,11 @@ def homeWindow[W](center:Sequence[float], windows:Mapping[W, tuple[Sequence[floa
   smallest (the innermost, if they're nested).
 
   :param center: Its centre.
-  :type center: Sequence[float]
   :param windows: The windows that have it: each one's (box, panes).
-  :type windows: Mapping[W, tuple[Sequence[float], Mapping[str, Sequence[float]]]]
   :param biggerThan: Only windows bigger than this (an area): for a window,
     its own area -- a window belongs only in a bigger one (so nesting can't
     go round in circles).
-  :type biggerThan: float | None
   :returns: The window; or None, if there's none (bigger).
-  :rtype: W | None
   '''
   cands = [w for w in windows if biggerThan is None or rectArea(windows[w][0]) > biggerThan]
   inside = [w for w in cands if paneAt(windows[w][1], center) is not None]
@@ -114,15 +104,10 @@ def homePane(panes:Mapping[str, Sequence[float]], center:Sequence[float], *,
   somewhere not in a pane).
 
   :param panes: The window's panes, by name.
-  :type panes: Mapping[str, Sequence[float]]
   :param center: Its centre.
-  :type center: Sequence[float]
   :param says: If the window contains it: whether its containment says it's in a pane.
-  :type says: Callable[[str], bool] | None
   :param used: If it doesn't: the panes in which the window's contents use it (None: not in a pane).
-  :type used: Collection[str | None] | None
   :returns: The pane's name, or *BOTH_PANES*.
-  :rtype: str
   '''
   if len(panes) == 1:
     return next(iter(panes))
@@ -141,7 +126,6 @@ def sharedPane(a:str, b:str) -> str:
   :returns: The pane a relation belongs in whose ends belong in panes *a* and
     *b* of the same window: theirs; or, if they differ, the one that isn't
     astride the divider (*BOTH_PANES*), or astride it if neither is.
-  :rtype: str
   '''
   panes = {a, b}
   if len(panes) > 1:
@@ -151,12 +135,9 @@ def sharedPane(a:str, b:str) -> str:
 def homeRect(panes:Mapping[str, Sequence[float]], pane:str) -> list[float]:
   '''
   :param panes: A window's panes, by name.
-  :type panes: Mapping[str, Sequence[float]]
   :param pane: One of them, or *BOTH_PANES* (for a window with two).
-  :type pane: str
   :returns: The area what belongs in *pane* is kept in: the pane; or, for
     *BOTH_PANES*, a band astride the divider, a third of the window wide.
-  :rtype: list[float]
   '''
   if pane != BOTH_PANES:
     return list(panes[pane])
@@ -180,21 +161,14 @@ def containmentMove(panes:Mapping[str, Sequence[float]], old:Sequence[float]|Non
   isa link to a type outside).
 
   :param panes: The window's panes, by name (where it is now).
-  :type panes: Mapping[str, Sequence[float]]
   :param old: Its centre before (a relation's: its label's), or None if it's new.
-  :type old: Sequence[float] | None
   :param target: Whether the window is the one it's landed in.
-  :type target: bool
   :param contained: Whether the window contains it now.
-  :type contained: bool
   :param windowMove: If the window moved too: its centre (before, after) --
     whether it was in the window is judged by where it was relative to it.
-  :type windowMove: tuple[Sequence[float], Sequence[float]] | None
   :param endCentres: If it's a relation dragged along by its ends: their centres.
-  :type endCentres: Sequence[Sequence[float]] | None
   :returns: "in" (to be contained by the pane it's landed in: the caller
     checks it isn't already), "out" (no longer contained), or None (left be).
-  :rtype: str | None
   '''
   if endCentres is not None:
     endsIn = sum(1 for c in endCentres if paneAt(panes, c) is not None)
@@ -227,9 +201,6 @@ class ContainmentMixin(ViewBase):
     The view objects drawn as context windows (see *VObject.isContextWindow()*).
     Asked for every object each time one's drawn, so remembered until the
     view or model changes (see *structureChanged()*).
-
-    :returns:
-    :rtype: list[VObject]
     '''
     version = self.__dict__.get("_structureVersion", 0)
     cached = self.__dict__.get("_contextWindowsCache")
@@ -269,12 +240,9 @@ class ContainmentMixin(ViewBase):
     if neither is.
 
     :param among: Just these view objects (default: all of them).
-    :type among: Iterable[VObject] | None
     :param window: Just what this window contains (and its contents use), as
       if it were the only one (default: all the windows).
-    :type window: VObject | None
     :returns: Each contained view object: (its window, the pane's name).
-    :rtype: dict[VObject, tuple[VObject, str]]
     '''
     m = self.model
     byObj:dict[int, dict[VObject, list[Relation]]] = {} # id(contained model object) -> {window: its containments of it}
@@ -339,11 +307,8 @@ class ContainmentMixin(ViewBase):
     astride the divider, a third of the window wide.
 
     :param w: A context window.
-    :type w: VObject
     :param pane: One of its panes' names, or *BOTH_PANES*.
-    :type pane: str
     :returns: [x1, y1, x2, y2].
-    :rtype: list[float]
     '''
     return homeRect(w.panes(), pane)
 
@@ -352,12 +317,8 @@ class ContainmentMixin(ViewBase):
 
   def windowChain(self, vo:VObject, homes:dict[VObject, tuple[VObject, str]]) -> list[VObject]:
     '''
-    :param vo:
-    :type vo: VObject
     :param homes: As from *containmentHomes()* (for *vo* and the windows, at least).
-    :type homes: dict[VObject, tuple[VObject, str]]
     :returns: The window *vo* belongs in, the window that one's in, and so on out.
-    :rtype: list[VObject]
     '''
     ret:list[VObject] = []
     w = homes.get(vo, (None, ""))[0]
@@ -373,13 +334,7 @@ class ContainmentMixin(ViewBase):
     that *w* is in; or it's a relation to or from *w*, or *w*'s containment of
     something (drawn as being inside it).
 
-    :param vo:
-    :type vo: VObject
-    :param w:
-    :type w: VObject
     :param homes: As from *containmentHomes()* (for *vo* and the windows, at least).
-    :type homes: dict[VObject, tuple[VObject, str]]
-    :rtype: bool
     '''
     if vo is w or w in self.windowChain(vo, homes) or vo in self.windowChain(w, homes):
       return True
@@ -391,7 +346,6 @@ class ContainmentMixin(ViewBase):
   def _visibleWindows(self) -> list[VObject]:
     '''
     :returns: The context windows that are drawn.
-    :rtype: list[VObject]
     '''
     return [w for w in self.contextWindows() if not w.isHidden()]
 
@@ -403,18 +357,11 @@ class ContainmentMixin(ViewBase):
     it in its own pane if it's in it now (see *containmentHomes()*), and off
     *obstacles* if it can be (see *layout.clearOf()*).
 
-    :param vo:
-    :type vo: VObject
     :param box: Its box, there.
-    :type box: list[float]
     :param homes: As from *containmentHomes()* (for *vo* and the windows, at least).
-    :type homes: dict[VObject, tuple[VObject, str]]
     :param obstacles: Boxes not to land on.
-    :type obstacles: list[list[float]]
     :param gap: The clearance (default: *BUMP_GAP*).
-    :type gap: float | None
     :returns: (dx, dy) -- (0, 0) if it's clear already -- or None if there's no place.
-    :rtype: tuple[float, float] | None
     '''
     windows = self._visibleWindows()
     keepOut = [list(w.boundingBox()) for w in windows if w is not vo and not self.belongsIn(vo, w, homes)]
@@ -433,7 +380,6 @@ class ContainmentMixin(ViewBase):
     :returns: Whether *vo* overlaps window *w* without belonging in it (see
       *belongsIn()*). Of two windows overlapping, neither in the other, the
       smaller is the one that\'s in the way.
-    :rtype: bool
     '''
     if vo is w or self.belongsIn(vo, w, homes):
       return False
@@ -457,7 +403,6 @@ class ContainmentMixin(ViewBase):
     after every command (see *ViewDoList*), not in the middle of a drag.
 
     :returns: (object, its box before, after) for each one moved, in order.
-    :rtype: list[tuple[VObject, list[int], list[int]]]
     '''
     windows = self._visibleWindows()
     if not windows:
@@ -530,10 +475,7 @@ class ContainmentMixin(ViewBase):
     everything: see *restackWindows()*). One spatial query
     (find_overlapping()) each.
 
-    :param item:
-    :type item: int
     :param ownerTag: The tag of the view object it's the shadow of.
-    :type ownerTag: str
     '''
     c = self.canvas
     bb = c.bbox(item)
@@ -547,11 +489,6 @@ class ContainmentMixin(ViewBase):
     '''
     Whether *vo* takes part in containment-by-position: not containment
     relations themselves, nor relations to or from a window.
-
-    :param vo:
-    :type vo: VObject
-    :returns:
-    :rtype: bool
     '''
     mo = vo.modelObject
     if mo is None or vo.isHidden() or vo.isInferred(): # (not what can't be seen, or the reasoner's: see GraphObject.inferred)
@@ -567,23 +504,13 @@ class ContainmentMixin(ViewBase):
   def _windowAt(self, pt, exclude:Iterable[VObject]=()) -> VObject|None:
     '''
     The innermost context window with a pane at *pt* (view coords), other than those in *exclude*.
-
-    :param pt:
-    :type pt:
-    :param exclude:
-    :type exclude: Iterable[VObject]
-    :returns:
-    :rtype: VObject | None
     '''
     return windowAt(pt, {w: (w.boundingBox(), w.panes()) for w in self.contextWindows()
                          if w not in exclude and not w.collapsed}) # (not a collapsed one: what's dropped there couldn't be seen)
 
   def _paneType(self, pane:str) -> Relation:
     '''
-    :param pane:
-    :type pane: str
-    :returns:
-    :rtype: Relation
+    The containment relation type a pane stands for (eg: "antecedent": antecedent).
     '''
     m = self.model
     return {"contains": m.CONTAINS, "antecedent": m.ANTECEDENT, "consequent": m.CONSEQUENT,
@@ -595,17 +522,6 @@ class ContainmentMixin(ViewBase):
     *toNode* whose label will sit (midway between them) in a context window's
     pane is contained by it -- eg: one drawn between two things in a rule's
     antecedent is part of the antecedent.
-
-    :param mgr:
-    :type mgr: CompositeCommandMgr
-    :param creator:
-    :type creator: Command
-    :param typ:
-    :type typ: Relation
-    :param fromNode:
-    :type fromNode: VObject
-    :param toNode:
-    :type toNode: VObject
     '''
     if typ.isa(self.model.CONTAINS) or any(e.isContextWindow() for e in (fromNode, toNode) if not isinstance(e, VRelation)):
       return
@@ -644,11 +560,6 @@ class ContainmentMixin(ViewBase):
     moving ?x in a rule would pull in, eg: its isa link to a type outside.)
 
     Call inside a *CompositeCommandMgr*, so it's undone with the move.
-
-    :param oldCenters:
-    :type oldCenters: dict[VObject, tuple[float, float] | None]
-    :param draggedAlong:
-    :type draggedAlong: Iterable[VObject]
     '''
     if not self.isModelEditor(): # (containment's in the model: a locked view just moves things)
       return
@@ -701,7 +612,6 @@ class ContainmentMixin(ViewBase):
     (their labels) aren't moved: they follow their ends.
 
     :param w: A context window (see *VObject.isContextWindow()*).
-    :type w: VObject
     '''
     if not w.isContextWindow():
       return

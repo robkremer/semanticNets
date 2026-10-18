@@ -67,13 +67,11 @@ _CODES = {SHAPES: "shapes", PULLS: "pulls", IGNORED: "ignored"}
 def defaultParentEnd(name:str) -> str:
   '''
   :param name: A relation type's name, or *TERMINALS*.
-  :type name: str
   :returns: Which end of its relations is usually the parent (see
     *PARENT_ENDS*): the destination for isa and has-* relations (a subtype isa
     its type; a child has-parent its parent), and for the relation types' own
     ends (a relation type goes under its domain and range); the source
     otherwise (eg: a package includes its modules).
-  :rtype: str
   '''
   return "destination" if name in ("isa", TERMINALS) or name.startswith("has-") else "source"
 
@@ -111,14 +109,11 @@ class RelationTable:
   def single(cls, relation:Any, parentEnd:str|None=None) -> RelationTable:
     '''
     :param relation: A relation type (a *Relation*), or its name.
-    :type relation: Any
     :param parentEnd: Which end of its relations is the parent (see
       *PARENT_ENDS*): if None, the usual (see *defaultParentEnd()*).
-    :type parentEnd: str | None
     :returns: The table that's like a single relation type, as layouts took
       before there were tables: it shapes the trees; every other relation, and
       the relation types' ends (last), pull things together.
-    :rtype: RelationTable
     '''
     name = str(getattr(relation, "name", relation))
     return cls([RelationRow(name, SHAPES, parentEnd or ""), RelationRow(TERMINALS, PULLS)])
@@ -129,7 +124,6 @@ class RelationTable:
       (see *layout.LayoutHeuristic.encodeParameters()*): each row's relation
       type's name (%-quoted), role and parent end, separated by ":", and the
       rows by ",": eg: "isa:shapes:destination,likes:pulls:source".
-    :rtype: str
     '''
     return ",".join(f"{quote(r.relation, safe='')}:{_CODES[r.role]}:{r.parentEnd}" for r in self.rows)
 
@@ -137,8 +131,6 @@ class RelationTable:
   def decode(cls, text:str) -> RelationTable:
     '''
     :param text: What *encode()* made (rows it can't read are left out).
-    :type text: str
-    :rtype: RelationTable
     '''
     roles = {code: role for role, code in _CODES.items()}
     rows:list[RelationRow] = []
@@ -167,16 +159,13 @@ class RelationTable:
   def expanded(self, model:Model, shown:Iterable[Relation]) -> RelationTable:
     '''
     :param model: The view's model.
-    :type model: Model
     :param shown: The relation types of the relations shown in the view.
-    :type shown: Iterable[Relation]
     :returns: The table with a row for each of *shown* that hasn't one (for
       the layout's dialog), doing the same as the table did: a subtype of a
       relation type with a row goes after that row (and the subtypes after it
       before it), with its role and parent end; one no row covers goes before
       the row for the relation types' ends (see *TERMINALS*), pulling things
       together. And that row, last, if it isn't there.
-    :rtype: RelationTable
     '''
     rows = list(self.rows)
     if not any(r.relation == TERMINALS for r in rows):
@@ -230,10 +219,8 @@ class RelationRoles:
   def rowOfType(self, t:Relation) -> tuple[int, RelationRow]|None:
     '''
     :param t: A relation type.
-    :type t: Relation
     :returns: The row (and its index) that covers it: its own, or else its
       nearest supertype's (the earliest row, of those as near) -- if any.
-    :rtype: tuple[int, RelationRow] | None
     '''
     if id(t) in self._cache:
       return self._cache[id(t)]
@@ -263,10 +250,8 @@ class RelationRoles:
   def rowOf(self, mo:Relation) -> tuple[int, RelationRow]|None:
     '''
     :param mo: An individual relation.
-    :type mo: Relation
     :returns: The row (and its index) that covers its relation type (see
       *rowOfType()*), if any.
-    :rtype: tuple[int, RelationRow] | None
     '''
     t = self.typeOf(mo)
     return self.rowOfType(t) if t is not None else None
@@ -318,7 +303,6 @@ def shownRelationTypes(view:Any) -> list[Relation]:
   :returns: The relation types of the relations shown in it (not hidden): isa
     for isa links; else each relation's first relation type -- each once, in
     the order they were made.
-  :rtype: list[Relation]
   '''
   from sn.view.graphics.vrelations import VRelation
   ret:dict[int, Relation] = {}

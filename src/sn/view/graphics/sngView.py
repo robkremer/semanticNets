@@ -92,18 +92,8 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
 
   def __new__(cls, url:str, model:Model, *, mode="w", geometry:str="300x400+20+20", _reading:bool=False):
     '''
-    :param url:
-    :type url: str
-    :param model:
-    :type model: Model
-    :param mode:
-    :type mode:
-    :param geometry:
-    :type geometry: str
-    :param _reading:
-    :type _reading: bool
-    :returns:
-    :rtype:
+    The view at *url* (by default, beside *model*'s file): the one in memory, if there is one (see
+    *PRDb.__new__()*).
     '''
     if url is None:
       url = fixURL(model.url, extension=".snv", replaceExt=True, mode="w")[0]
@@ -111,16 +101,8 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
 
   def __init__(self, url:str, model:Model, *, mode="w", geometry:str="300x400+20+20", _reading:bool=False):
     '''
-    :param url:
-    :type url: str
-    :param model:
-    :type model: Model
-    :param mode:
-    :type mode:
-    :param geometry:
-    :type geometry: str
-    :param _reading:
-    :type _reading: bool
+    A view of *model*, saved at *url*, in a new window (at *geometry*) -- unless it's one in memory already
+    (see *__new__()*).
     '''
     if hasattr(self, "_initialized"): # This means the __new__ method has returned an existing object, so don't truck over it!
       return
@@ -233,9 +215,6 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
     (if any: eg, deleted from an ontology it uses). They're shown as missing
     (see *VObject.validate()*: their status reports say why, and offer to
     erase them).
-
-    :param url:
-    :type url: str
     '''
     super()._wasRead(url)
     unresolved = self.__dict__.pop("_unresolved", [])
@@ -250,12 +229,7 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
     Its model has put *new* in *old*'s place (see *Model.replaceSuperModel()*):
     its objects showing objects of *old* show the same objects of *new*.
 
-    :param old:
-    :type old: Model
-    :param new:
-    :type new: Model
     :returns: How many of its objects were changed.
-    :rtype: int
     '''
     count = 0
     for vo in list(self._db.values()):
@@ -284,7 +258,6 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
     :returns: What's in the head of its file (see *PRDb.serializationHeader()*;
       its model's URL is there too: see *getInstantiationInfo()*), and the
       version of the structures it's saved in (see *sn.SCHEMA_VERSION*).
-    :rtype: dict[str, Any]
     '''
     return {**super().serializationHeader(), "schema": sn.SCHEMA, "schemaVersion": sn.SCHEMA_VERSION}
 
@@ -358,14 +331,6 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
   
   @override
   def save(self, saveas:Optional[str]=None, overwrite=False, format:str=DEFAULT_STRATEGY) -> None:
-    '''
-    :param saveas:
-    :type saveas: Optional[str]
-    :param overwrite:
-    :type overwrite:
-    :param format:
-    :type format: str
-    '''
     finishTween(self) # (a layout's smooth move under way: saved where it's going)
     super().save(saveas=saveas, overwrite=overwrite, format=format)
     if saveas is None: # (saving a copy elsewhere doesn't save this: see PRDb.save())
@@ -382,13 +347,6 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
     *This violates subsumption rules, but that's what we want here!* 
     
     Also sets the dirty bit and notifies any observers ("add GraphObject" (GraphObject))
-
-    :param value:
-    :type value: VObject
-    :param _id:
-    :type _id: Optional[int]
-    :returns:
-    :rtype: int
     '''
     assert isinstance(value, VObject), \
         f'Models are restricted to containing only GraphObject subtypes; got a {value.__class__.__name__} type.'
@@ -412,9 +370,6 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
     Overrides the 
     :py:meth:`parent method <pythonUtils:util.persistence.pRef.PRDb._register>`
     to also set the dirty bit and notify any observers () 
-
-    :param _id:
-    :type _id: int
     '''
     obj = self._db.get(_id)
     super()._unregister(_id)
@@ -460,7 +415,6 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
     an object may be put back after its box here has gone.
 
     :param model: The model of an object shown in the view.
-    :type model: Any
     '''
     if not isinstance(model, Model) or model is self.model or self.__dict__.get("_closed"):
       return
@@ -475,15 +429,12 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
   def _changesManyBoxes(self, subject:Model, topics:tuple[tuple[str, tuple[Any, ...]], ...]) -> bool:
     '''
     :param subject: The model notifying (see *update()*).
-    :type subject: Model
     :param topics: What it says.
-    :type topics: tuple[tuple[str, tuple[Any, ...]], ...]
     :returns: Whether at least *BATCHED_UPDATE_BOXES* of *topics* take one of
       this view's boxes out ("del"), or put one back ("new"). Not just how
       many "del"s and "new"s there are: they may be of objects it doesn't
       show (eg: reasoning cleared, or a super-model's objects removed in
       another window), and then the pass over the canvas would be wasted.
-    :rtype: bool
     '''
     n = 0
     for t in topics:
@@ -498,10 +449,8 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
 
   def update(self, subject:Subject, *topics:tuple[str, tuple[Any, ...]])->None:
     '''
-    :param subject:
-    :type subject: Subject
-    :param topics:
-    :type topics: tuple[str, tuple[Any, ...]]
+    A model it observes changed (*topics*: what happened): show it -- new objects drawn, deleted ones taken
+    out, changed ones redrawn.
     '''
     from sn.view.graphics.vobjects import VObject
     from sn.view.graphics.vnodes import VNode
@@ -606,10 +555,8 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
 
   def suppressLocalLayout(self, suppress:str|bool|None=None):
     '''
-    :param suppress:
-    :type suppress: str | bool | None
-    :returns:
-    :rtype:
+    Whether the dynamic layout is held off (eg: while reading); with *suppress* (a bool, or "true", "yes", ...
+    ), set it first.
     '''
     if suppress is not None:
       if isinstance(suppress, str):
@@ -622,13 +569,9 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
   def intersectTag(self, ids:Iterable[int], tag:str, exclude:list[int]|int=[]) -> list[int]:
     '''
     :param ids: [Iterable[int]] An *Iterable* of *ints* representing *Canvas* ids.
-    :type ids: Iterable[int]
     :param tag: [str] A *str* *Canvas* tag.
-    :type tag: str
     :param exclude: [list[int] or int, default=[]] A list of *int* representing *Canvas* ids.
-    :type exclude: list[int] | int
     :return: A list of all ids in *ids* that have tag *tag* that are not in *exclude*.
-    :rtype: list[int]
 
     Used by *sn.view.graphics.layout.LayoutHieristic.findOverlapping()* (e.g. FindFree) to
     filter the results of *self.canvas.find_overlapping()* down to just the shape items
@@ -655,19 +598,14 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
     *mObject* in the view) a VObect that represents *mObject*.
     
     :param mObject: A model object.
-    :type mObject: GraphObject
     :param atPoint: [Optional, 2-Tuple[float]] The point where the new object
         should be displayed if it has to be created.
-    :type atPoint: tuple[float, float] | None
     :param expand: [Optional[int], default=None] The number of hops to expand.
-    :type expand: int
     :param filter: Optional[Callable[[Self, Relation], bool]] A function *selfxRelation->bool*
         where that relation will only be expanded if the function returns *True*
-    :type filter: Callable[[Any, Relation], bool]
     :return: If there is a *VObject* currently in the display representing *mObject* then
         that is returned, otherwise an attempt is make to create such an object referencing
         *mObject* and that is returned.
-    :rtype: VObject
     '''
     from sn.view.graphics.vrelations import VRelation
     from sn.view.graphics.vobjects import VObject
@@ -718,9 +656,7 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
   def findViewObjectForGraphObject(self, mObject:GraphObject|Callable[[VObject],bool]) -> VObject|None:
     '''
     :param mObject: A model object or a boolean function taking a VObject
-    :type mObject: GraphObject|Callable[[VObject],bool]
     :return: A *VObject* currently in the display representing *mObject*, or *None* if there is not such object.
-    :rtype: VObject | None
     '''
     if isinstance(mObject, GraphObject):
       found = self.viewObjectsFor(mObject)
@@ -734,12 +670,10 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
   def viewObjectsFor(self, mObject:GraphObject) -> list[VObject]:
     '''
     :param mObject: A model object.
-    :type mObject: GraphObject
     :returns: The view objects in the display representing *mObject* (normally
       at most one), in the view's order. Looked up in an index, made when first
       needed and kept up to date as objects come and go (see *_register()*,
       *_unregister()*).
-    :rtype: list[VObject]
     '''
     index = self._viewObjectIndex()
     return [o for o in index.get(id(mObject), ()) if o.modelObject is mObject]
@@ -747,14 +681,11 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
   def _viewObjectsForID(self, model:Model, modelID:int) -> list[VObject]:
     '''
     :param model: A model.
-    :type model: Model
     :param modelID: The id of one of its objects.
-    :type modelID: int
     :returns: The view objects in the display representing that object -- all
       a model says of an object it's deleted (see *update()*) is its id: the
       id alone isn't enough, as every model numbers its objects from 256, and
       a view shows its model's super-models' objects too.
-    :rtype: list[VObject]
     '''
     return [o for o in self._viewObjectIndex().get((id(model), modelID), ())
             if o.modelObject is not None and o.modelObject.db is model and o.modelObject.id == modelID]
@@ -763,11 +694,9 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
   def _indexKeys(mo:GraphObject) -> tuple[int, tuple[int, int]]:
     '''
     :param mo: A model object.
-    :type mo: GraphObject
     :returns: What a view object representing *mo* is indexed by (see
       *_viewObjectIndex()*): (the id of) *mo*; and (the id of) its model and
       its id in that.
-    :rtype: tuple[int, tuple[int, int]]
     '''
     return id(mo), (id(mo.db), mo.id)
 
@@ -776,7 +705,6 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
     :returns: The view's objects by (the id of) their model objects (see
       *viewObjectsFor()*), and by (the id of) their model objects' models and
       their ids in them (see *_viewObjectsForID()*).
-    :rtype: dict[int|tuple[int, int], list[VObject]]
     '''
     index = self.__dict__.get("_byModelObject")
     if index is None or self.__dict__.get("_byModelObjectOf") is not self._db: # (reading replaces the dict: see PRDb)
@@ -791,10 +719,8 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
 
   def validate(self, refresh:bool=False) -> int:
     '''
-    :param refresh:
-    :type refresh: bool
-    :returns:
-    :rtype: int
+    Validate every view object (see *VObject.validate()*), and look for model objects shown more than once,
+    logging what's found (and repainting, if *refresh*): how many faults.
     '''
     errCount = 0
     vobjs:list[VObject] = list(self._db.values())
@@ -849,9 +775,6 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
     '''
     True iff it, or one of its objects, has changed since it was saved --
     not counting inferred objects (see *GraphObject.inferred*): they aren't saved.
-
-    :returns:
-    :rtype: bool
     '''
     if Dirtyable.isDirty(self):
       return True
@@ -869,8 +792,6 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
     time the work actually produces output.
 
     :param fn: The work to run.
-    :type fn: Callable[[], None]
-    :rtype: None
     """
     terminal = self.terminal  # set by AppPanedWidget after construction
     registry = terminal.registry

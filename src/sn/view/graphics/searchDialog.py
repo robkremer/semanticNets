@@ -55,7 +55,6 @@ class SearchDialog(tk.Toplevel):
   def __init__(self, view:SNGView):
     '''
     :param view: The view to search.
-    :type view: SNGView
     '''
     super().__init__(view.canvas)
     ownDialog(self, view.canvas) # (over the view's window, not full screen: see ownDialog())
@@ -127,9 +126,7 @@ class SearchDialog(tk.Toplevel):
   def confirm(self, n:int) -> bool:
     '''
     :param n: How many objects from the model aren't in the view.
-    :type n: int
     :returns: Whether to show them: yes, unless there are a lot and the user says not.
-    :rtype: bool
     '''
     if n <= CONFIRM_OVER:
       return True

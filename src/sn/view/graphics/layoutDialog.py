@@ -54,20 +54,15 @@ class LayoutForm(ttk.Frame):
                wrap:int=360, compact:bool=False):
     '''
     :param parent: What it's in.
-    :type parent: tk.Misc
     :param cls: The layout heuristic's class (see *LayoutHeuristic.parameterChanged()*).
     :type cls: type[LayoutHeuristic]
     :param asked: The parameters to ask for.
-    :type asked: list[LayoutParameter]
     :param values: All its parameters' values to start with (a relation as a *Relation* or its name).
-    :type values: dict[str, Any]
     :param view: The view it's for: its model's relation types are the choices for a relation.
     :type view: SNGView
     :param wrap: How wide (pixels) the parameters' notes are, before they wrap (see *setWrap()*).
-    :type wrap: int
     :param compact: Whether it's laid out narrow: each parameter's name above its entry, and a table of
       relation types a row on two lines (see *RelationTableEditor*).
-    :type compact: bool
     '''
     super().__init__(parent)
     self.cls, self.view, self.asked = cls, view, asked
@@ -132,7 +127,6 @@ class LayoutForm(ttk.Frame):
   def setWrap(self, wrap:int) -> None:
     '''
     :param wrap: How wide (pixels) the parameters' notes are now, before they wrap.
-    :type wrap: int
     '''
     for note in self.notes:
       if int(str(note.cget("wraplength")) or 0) != wrap:
@@ -148,10 +142,8 @@ class LayoutForm(ttk.Frame):
   def read(self, complain:bool=True) -> dict[str, Any]|None:
     '''
     :param complain: Whether to say why, if a number isn't one.
-    :type complain: bool
     :returns: All the parameters' values, with those asked for as shown -- or
       None if a number isn't one.
-    :rtype: dict[str, Any] | None
     '''
     ret = dict(self.values)
     for p in self.asked:
@@ -182,9 +174,6 @@ class LayoutForm(ttk.Frame):
     '''
     The user changed parameter *name*: let the layout change the others to
     suit (see *LayoutHeuristic.parameterChanged()*).
-
-    :param name:
-    :type name: str
     '''
     values = self.read()
     if values is None:
@@ -207,15 +196,10 @@ class LayoutDialog(tk.Toplevel):
   def __init__(self, parent:tk.Misc, title:str, cls:Any, asked:list[LayoutParameter], values:dict[str, Any], view:Any):
     '''
     :param parent: The window it's over.
-    :type parent: tk.Misc
-    :param title:
-    :type title: str
     :param cls: The layout heuristic's class (see *LayoutHeuristic.parameterChanged()*).
     :type cls: type[LayoutHeuristic]
     :param asked: The parameters to ask for.
-    :type asked: list[LayoutParameter]
     :param values: All its parameters' values to start with (a relation as a *Relation* or its name).
-    :type values: dict[str, Any]
     :param view: The view it's for: its model's relation types are the choices for a relation.
     :type view: SNGView
     '''
@@ -261,11 +245,8 @@ class RelationTableEditor(ttk.Frame):
   def __init__(self, parent:tk.Misc, table:RelationTable, compact:bool=False):
     '''
     :param parent: What it's in.
-    :type parent: tk.Misc
     :param table: The table to start with.
-    :type table: RelationTable
     :param compact: Whether it's laid out narrow, a row on two lines.
-    :type compact: bool
     '''
     super().__init__(parent)
     self.compact = compact

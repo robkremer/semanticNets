@@ -79,28 +79,18 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
         _bb:Optional[list]=None):
     """  
     :param canvas: [Required] The TGView object for this object.
-    :param view:
-    :type view: SNGView
     :param modelObject: [Required if creating a view object only (*_id* is *None*)]
       The *Relation* object to server as the modelObject for this view object.
-    :type modelObject: Relation | str
     :param typ: [Required if creating a modelObject object (*_id* is *None* and 
       *modelObject* is *None*)] A *Relation* used to create an ISA parent relation from
       the new *Relation*. 
-    :type typ: Relation | None
     :param shape: [Union[tygra.view.shapes.Shape, str], default=...shapes.Rectangle] The basic shape of this object.
-    :type shape: Union[Any, str]
     :param x: The upper left corner x coordinate
-    :type x: Optional[int]
     :param y: The upper left corner y coordinate
-    :type y: Optional[int]
     :param x1: The lower right corner x coordinate
-    :type x1: Optional[int]
     :param y1: The lower right corner y coordinate
-    :type y1: Optional[int]
     :param floating: [Default True] weather or not the relation should be floating.
       Normally ONLY used when unserializing.
-    :type floating: Optional[bool]
     
     This class has to take special measures to avoid an address fault because Relations
     may reference other relations, so there is no way to ensure that toNode and fromNode
@@ -108,9 +98,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     been an address fault in *self.getArgs()*, it will have put the str isString in place
     of the pointer.  The pointer(s) will be properly instantiated (etc) on a second 
     pass when the owner container calls the *self._post__init__()* method.
-
-    :param _bb:
-    :type _bb: Optional[list]
     """
     if isinstance(modelObject, str):
       try:
@@ -161,21 +148,12 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
 
   @override
   def makeModelObjectSubtype(self, individual:bool) -> None:
-    '''
-    :param individual:
-    :type individual: bool
-    '''
     self.view.context.new_relation(self.modelObject, name="", individual=individual, type=not individual, model=self.view.model) # type: ignore[arg-type]
 
   def connect(self, source:VObject|None=None, destination:VObject|None=None):
     '''
     Determine the connecting objects from self.modelObject, and invoke the super version
     with from that.
-
-    :param source:
-    :type source: VObject | None
-    :param destination:
-    :type destination: VObject | None
     '''
     if self.view.reading or self.modelObject is None:
       return
@@ -207,11 +185,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
         a line to top says nothing, and would drag top into the view. (A
         relation whose *own* end is top -- eg: the relation and isa types --
         is drawn to top if top is already shown, but never adds it.)
-
-    :param end:
-    :type end: str
-    :returns:
-    :rtype: VObject | None
     '''
     mo = self.modelObject
     assert mo is not None
@@ -230,9 +203,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
   def inheritedEnds(self) -> dict[str, bool]:
     '''
     {"src": bool, "dst": bool}: which ends aren't the relation's own (see *_resolveEnd()*).
-
-    :returns:
-    :rtype: dict[str, bool]
     '''
     d = self.__dict__.get("_inheritedEnds")
     if d is None:
@@ -242,11 +212,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
   def _faded(self, color:str) -> str:
     '''
     *color* blended toward the canvas background (see *INHERITED_FADE*); "" stays "".
-
-    :param color:
-    :type color: str
-    :returns:
-    :rtype: str
     '''
     if not color:
       return color
@@ -339,7 +304,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
   def validate(self) -> list[str]:
     """
     :return: The list of errors or inconsistencies in this *VNode*. 
-    :rtype: list[str]
     
     Validate the VNode, print any violations to *self.tgmodel.logger*
     and return the number of violations.
@@ -368,7 +332,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     *SNGView._pinRelationTypes()*).
 
     :param value: If given, whether it floats from now on.
-    :type value: Optional[bool]
     :returns: Whether it floats.
     :rtype: bool
     '''
@@ -385,10 +348,7 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
 
   def draw(self, fast=False, **kwargs):
     '''
-    :param fast:
-    :type fast:
-    :param kwargs:
-    :type kwargs:
+    Draw it (or draw it again): its label, as a view object does, then its connector, by its line type.
     '''
     if self._drawVersion >= self.view._drawVersion or not self._isConnected(): # (see VObject.draw())
       return
@@ -421,7 +381,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     :returns: The width its line is drawn: "vis/lineWidth" -- or, while it's
       selected, more than twice that (*selectedLineWidth()*), so it stands out
       among many (eg: to follow it across a big graph).
-    :rtype: float
     '''
     width = float(self.cache['vis/lineWidth'])
     return self.selectedLineWidth(width) if self.selected() else width
@@ -430,9 +389,7 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
   def selectedLineWidth(width:float) -> float:
     '''
     :param width: A relation's line's width (see "vis/lineWidth").
-    :type width: float
     :returns: Its width while it's selected: 2 * *width* + 1 (eg: 1 -> 3, 2 -> 5).
-    :rtype: float
     '''
     return 2 * width + 1
 
@@ -457,7 +414,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     :returns: Extra options for this relation's line: an inferred one's dashes
       (see *INFERRED_DASH*); none for any other (said explicitly: the line's
       canvas items are reused, eg: when one is marked as asserted).
-    :rtype: dict[str, Any]
     '''
     if not self.isInferred():
       return {"dash": ""}
@@ -469,9 +425,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     context's window -- which says it already, so the arc isn't drawn. (Its
     arc shows when the contained thing is elsewhere: out in the "real world",
     or in another context's window.)
-
-    :returns:
-    :rtype: bool
     '''
     mo = self.modelObject
     if mo is None or not mo.isIndividual() or not mo.isa(mo.model.CONTAINS):
@@ -482,10 +435,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
 
   def reposition(self, aggressive:bool=False, suppressDraw:bool=False, adjustPos:bool=True, place:bool=False):
     '''
-    :param aggressive:
-    :type aggressive: bool
-    :param suppressDraw:
-    :type suppressDraw: bool
     :param adjustPos: [default=True] When *True* (the normal case, e.g. called
       once at the end of a drag), a relation that isn't centred between its
       *src*/*dst* also gets a full *self.adjustPos()* call, which may invoke
@@ -495,10 +444,8 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
       positions, but skips that extra layout-heuristic call, so a relation
       doesn't jump to a FindFree-computed spot on every single mouse-motion
       tick while something it's connected to is being dragged.
-    :type adjustPos: bool
     :param place: [default=False] Put it between its ends even if it doesn't
       float (eg: a new relation type, once: see *floating()*).
-    :type place: bool
     '''
     if not self.floating() and not place:
       if not suppressDraw:
@@ -541,12 +488,7 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
       *SNGView.belongsIn()*: eg: a relation between something in a rule and
       something outside it, whose ends' midpoint is in the rule's window).
 
-    :param x:
-    :type x: float
-    :param y:
-    :type y: float
     :returns: The centre for the label.
-    :rtype: tuple[float, float]
     '''
     from sn.view.graphics.layout import intoRect
     mo = self.modelObject
@@ -573,13 +515,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     swallow the label of a relation to something close by. If they overlap
     (either's centre is inside the other), or it's a self-loop, midway between
     the centres.
-
-    :param a:
-    :type a: VObject
-    :param b:
-    :type b: VObject
-    :returns:
-    :rtype: tuple[float, float]
     '''
     ca, cb = a.centerPt(), b.centerPt()
     if a is b or ca == cb or a.containsPt(cb) or b.containsPt(ca):
@@ -588,25 +523,13 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
 
   def findEndPoints(self, frm:VObject, to:VObject):
     '''
-    :param frm:
-    :type frm: VObject
-    :param to:
-    :type to: VObject
-    :returns:
-    :rtype:
+    Where its connector meets the edges of *frm* and *to*, on the line between their centres.
     '''
     return (self.findIntersection(to.centerPt(), frm), self.findIntersection(frm.centerPt(), to))
 
   def findIntersection(self, p1, node):
     """
     p2 is the center of node
-
-    :param p1:
-    :type p1:
-    :param node:
-    :type node:
-    :returns:
-    :rtype:
     """
     p2 = node.centerPt()
     while not self.arePtsClose(p1, p2):
@@ -620,13 +543,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
   def arePtsClose(self, p1, p2):
     """
     Return True iff the two points are close to one another.
-
-    :param p1:
-    :type p1:
-    :param p2:
-    :type p2:
-    :returns:
-    :rtype:
     """
     return abs(p1[0] - p2[0]) < VRelation.granularity and abs(p1[1] - p2[1]) < VRelation.granularity
 
@@ -634,10 +550,7 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
 
   def notifyNodeMove(self, node, adjustPos:bool=True):  # , direction):
     '''
-    :param node:
-    :type node:
-    :param adjustPos:
-    :type adjustPos: bool
+    An end moved: put it where it belongs now (see *reposition()*).
     '''
     self.reposition(adjustPos=adjustPos)
     
@@ -646,8 +559,7 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
 
   def addViewMenuItems(self, menu:tk.Menu):
     '''
-    :param menu:
-    :type menu: tk.Menu
+    Add the view's items to *menu*: an individual relation's "floating", then a view object's.
     '''
     if self.modelObject is not None and self.modelObject.isIndividual():
       self._menuFloating = tk.BooleanVar()
@@ -658,10 +570,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
   
   @override
   def addModelEditingMenuItems(self, menu:tk.Menu):
-    '''
-    :param menu:
-    :type menu: tk.Menu
-    '''
     super().addModelEditingMenuItems(menu)
     # Never offered for system relations (those in the always-in-memory sn model), or inferred ones.
     if self.modelObject is None or self.modelObject.isSystemObject() or self.isInferred():
@@ -678,7 +586,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     :returns: True iff the user may change this relation's src/dst here: not
       a system relation or an inferred one (see *GraphObject.inferred*), and
       in an editor view of the relation's own model.
-    :rtype: bool
     '''
     mo = self.modelObject
     return mo is not None and not mo.isSystemObject() and not mo.inferred \
@@ -687,13 +594,10 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
   def _terminalAt(self, x:float, y:float) -> str|None:
     '''
     :param x: Canvas (window) coordinates, eg: from *canvasx(event.x)*.
-    :type x: float
     :param y: See *x*.
-    :type y: float
     :returns: "src" or "dst" if (x, y) is within *TERMINAL_HIT_RADIUS* of that
       end of the drawn connector -- but not over either connected shape --
       otherwise None.
-    :rtype: str | None
     '''
     info = getattr(self, "connectInfo", None)
     if info is None:
@@ -733,9 +637,7 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     *SNGView.onB1_ButtonRelease()*.
 
     :param event: The Tk event.
-    :type event:
     :returns: True iff it did (so the caller shouldn't start its own drag).
-    :rtype: bool
     '''
     if not self._endpointsEditable():
       return False
@@ -754,9 +656,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     else it's the usual drag (moving and anchoring the label).
 
     :param event: The Tk event.
-    :type event:
-    :returns:
-    :rtype:
     '''
     if not (s_CMD(event.state) or s_ALT(event.state)) and self.grabTerminal(event): # (Cmd/Option: the view pans/zooms -- see VObject.onButton_1())
       return 'break'
@@ -774,9 +673,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     it mustn't make an isa cycle (eg: a type its own type).
     Dropping the line on empty space clears the end instead (the relation then
     inherits its type's), except for an isa link, which needs both ends.
-
-    :param end:
-    :type end: str
     '''
     assert end in ("src", "dst")
     other = self.dst if end == "src" else self.src
@@ -815,11 +711,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     Follow changes to the model relation's endpoints ("mod src"/"mod dst"
     topics -- see *Relation._endpointChanged()*); anything else is handled
     by *VObject.update()*.
-
-    :param subject:
-    :type subject:
-    :param topics:
-    :type topics: tuple[str, tuple[Any, ...]]
     '''
     if getattr(self.view, "_closed", False): # (sent before the view's window closed: see SNGView.detachFromModel())
       return
@@ -842,7 +733,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
   def _toggleFloatingAnchor(self, event=None):
     '''
     :param event: The Tk event.
-    :type event:
     '''
     self.floating(self._menuFloating.get())
     if self.floating():
@@ -854,14 +744,12 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
   def onEnter(self, event):
     '''
     :param event: The Tk event.
-    :type event:
     '''
     self.canvas.configure(cursor="sb_h_double_arrow")
     
   def onB1_ButtonRelease(self, event):
     '''
     :param event: The Tk event.
-    :type event:
     '''
     if self.dragInfo is not None and self.dragInfo[4]:
       self.floating(False)
