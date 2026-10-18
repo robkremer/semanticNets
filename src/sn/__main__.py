@@ -17,7 +17,6 @@ def selftest() -> int:
   '''
   :returns: The exit status: 0 if the reasoner's conclusions about the family
     example are as expected, 1 if not.
-  :rtype: int
   '''
   import atexit, shutil, tempfile
   from pathlib import Path
@@ -48,9 +47,7 @@ def selftestPlugins(folder:str) -> list[str]:
   pythonParser of its own parser.py. (Not registered: there's no editor.)
 
   :param folder: A scratch folder.
-  :type folder: str
   :returns: What's wrong: empty if nothing is.
-  :rtype: list[str]
   '''
   import importlib, os, traceback
   from sn import plugins

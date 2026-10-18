@@ -93,10 +93,8 @@ _FOLDER_NAME = re.compile(r"[A-Za-z_]\w*")
 def version(text:str) -> tuple[int, ...]:
   '''
   :param text: A version: eg: "1.2.10".
-  :type text: str
   :returns: It, to compare with another: eg: (1, 2, 10). (A part that isn't a
     number counts as 0.)
-  :rtype: tuple[int, ...]
   '''
   return tuple(int(p) if p.isdigit() else 0 for p in str(text).strip().split("."))
 
@@ -134,9 +132,7 @@ class Manifest:
   def read(cls, folder:str|Traversable) -> Manifest:
     '''
     :param folder: A plugin's folder (or one in a zip file: see *bundledFolder()*).
-    :type folder: str | Traversable
     :returns: Its description.
-    :rtype: Manifest
     :raises PluginError: If it isn't a plugin's folder, or its *MANIFEST* can't be read.
     '''
     source = Path(folder) if isinstance(folder, str) else folder
@@ -157,7 +153,6 @@ def bundledFolder() -> Traversable:
   :returns: Where the plugins that come with the program are: the project's
     ``plugins/`` (or a packaged app's bundled copy: see *sn.resourcePath()*);
     or, in a .pyz, its ``plugins/`` (a folder in the zip file).
-  :rtype: Traversable
   '''
   path = sn.resourcePath("plugins")
   if os.path.isdir(path):
@@ -170,10 +165,8 @@ def bundledFolder() -> Traversable:
 def manifests(folder:str|Traversable) -> list[Manifest]:
   '''
   :param folder: A folder of plugins (or one in a zip file: see *bundledFolder()*).
-  :type folder: str | Traversable
   :returns: The descriptions of the plugins in it (folders with a *MANIFEST*),
     by folder name; any that can't be read are logged, and left out.
-  :rtype: list[Manifest]
   '''
   ret:list[Manifest] = []
   top = Path(folder) if isinstance(folder, str) else folder
@@ -195,11 +188,8 @@ def installBundled(source:str|Traversable|None=None, target:str|None=None) -> li
   their models and views refer to where they now are (see *_relocate()*).
 
   :param source: Where the plugins that come with the program are (by default, *bundledFolder()*).
-  :type source: str | Traversable | None
   :param target: The plugins folder (by default, *PLUGINS_FOLDER*).
-  :type target: str | None
   :returns: The plugins copied (their folders' names).
-  :rtype: list[str]
   '''
   ret = []
   for m in manifests(source if source is not None else bundledFolder()):
@@ -228,11 +218,8 @@ NOT_INSTALLED = ("__pycache__", "*.pyc", "*.log", ".gitignore", ".DS_Store")
 def installed(manifest:Manifest, path:str) -> bool:
   '''
   :param manifest: A plugin's description.
-  :type manifest: Manifest
   :param path: A file or folder in its folder, as a path in it, with "/" (eg: "examples/books.xml").
-  :type path: str
   :returns: Whether it's installed (see *installBundled()*): it isn't one of *NOT_INSTALLED*, nor its *Manifest.exclude*.
-  :rtype: bool
   '''
   name = path.rpartition("/")[2]
   return not any(fnmatch.fnmatch(name, p) for p in NOT_INSTALLED) and not any(fnmatch.fnmatch(path, p) for p in manifest.exclude)
@@ -262,7 +249,6 @@ def _relocate(folder:str) -> None:
   they're read (as *sn.copyExamples()* does for the example models).
 
   :param folder: The plugin's folder, in the plugins folder.
-  :type folder: str
   '''
   pattern = re.compile(r'file://[^"\'<>\s]*/' + re.escape(os.path.basename(folder)) + "/")
   uri = Path(folder).as_uri() + "/"
@@ -283,10 +269,8 @@ def _relocate(folder:str) -> None:
 def namespace(folder:str) -> types.ModuleType:
   '''
   :param folder: The plugins folder.
-  :type folder: str
   :returns: The package plugins are imported in (*NAMESPACE*), whose path is
     *folder* -- made, if it isn't there yet (or is another folder's).
-  :rtype: types.ModuleType
   '''
   ns = sys.modules.get(NAMESPACE)
   if ns is None or list(getattr(ns, "__path__", [])) != [folder]:
@@ -301,11 +285,8 @@ def importBundled(id:str, module:str="") -> types.ModuleType:
   is (see *bundledFolder()*) -- not installed, nor registered -- or a module in it.
 
   :param id: The plugin's folder name: eg: "pythonParser".
-  :type id: str
   :param module: A module in it (eg: "parser"); by default, the plugin's package itself.
-  :type module: str
   :returns: It.
-  :rtype: types.ModuleType
   '''
   namespace(str(bundledFolder()).rstrip("/")) # (a zip file's folder is imported from by zipimport)
   return importlib.import_module(f"{NAMESPACE}.{id}" + (f".{module}" if module else ""))
@@ -318,9 +299,7 @@ class PluginContext:
   def __init__(self, app:Any, manifest:Manifest):
     '''
     :param app: The editor (an *Application*: anything with a *menubar*, a tk.Menu).
-    :type app: Any
     :param manifest: The plugin's description.
-    :type manifest: Manifest
     '''
     self.app = app
     "The editor."
@@ -341,11 +320,8 @@ class PluginContext:
   def pref(self, key:str, default:Any=None) -> Any:
     '''
     :param key: One of the plugin's preferences (see *prefKey()*).
-    :type key: str
     :param default: Its value, if it hasn't one.
-    :type default: Any
     :returns: Its value.
-    :rtype: Any
     '''
     return snPrefs.get(self.prefKey(key), default)
 
@@ -359,9 +335,7 @@ class PluginContext:
       "Python/Recent" (``/`` separates them). A top-level menu that isn't
       there is added before the Window menu (or at the end, if there's none),
       and a submenu that isn't there at the end of its menu.
-    :type path: str
     :returns: It.
-    :rtype: tk.Menu
     '''
     menu:tk.Menu = self.app.menubar
     for depth, label in enumerate(p.strip() for p in path.split("/")):
@@ -383,11 +357,8 @@ class PluginContext:
     :param path: Where: its menu's path (see *menu()*) and its label, eg:
       "Tools/Python Parser...", "Python/Recent/Last one"; just a label puts it
       in the *TOOLS_MENU*.
-    :type path: str
     :param command: What it does. (An exception it raises is logged, and shown.)
-    :type command: Callable[[], Any]
     :param options: Other options for the item (eg: accelerator).
-    :type options: Any
     '''
     menuPath, _, label = path.rpartition("/")
     def run() -> None:
@@ -440,11 +411,8 @@ def load(app:Any, manifest:Manifest) -> Plugin:
   (its ``register(ctx)``).
 
   :param app: The editor.
-  :type app: Any
   :param manifest: The plugin's description.
-  :type manifest: Manifest
   :returns: It.
-  :rtype: Plugin
   :raises PluginError: If it's for a later sn, or can't be imported, or registered.
   '''
   if version(manifest.snVersion) > version(sn.VERSION):
@@ -472,11 +440,8 @@ def loadAll(app:Any, folder:str|None=None) -> dict[str, Plugin]:
   preference lists -- noting those that can't be in *problems* (and the log).
 
   :param app: The editor.
-  :type app: Any
   :param folder: The plugins folder (by default, *PLUGINS_FOLDER*).
-  :type folder: str | None
   :returns: The plugins loaded (*loaded*).
-  :rtype: dict[str, Plugin]
   '''
   disabled = snPrefs.get(DISABLED_PREF, [])
   disabled = {str(d).strip() for d in disabled} if isinstance(disabled, list) else set()

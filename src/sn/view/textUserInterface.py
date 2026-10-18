@@ -97,19 +97,13 @@ formatOptions:dict[str, dict[str,Callable[[GraphObject],str]]] = {
 
 def getFormatter(typeName:str) -> Callable:
   '''
-  :param typeName:
-  :type typeName: str
-  :returns:
-  :rtype: Callable
+  The formatter for objects of type *typeName*, as set (see *UIContext._format()*).
   '''
   return formatOptions[typeName][formatters[typeName]]
 
 def getKindMarkStr(go:GraphObject):
   '''
-  :param go:
-  :type go: GraphObject
-  :returns:
-  :rtype:
+  The mark shown before a type's name ("" for an individual).
   '''
   if go.isType():
     return kindMarkerStr
@@ -123,12 +117,8 @@ class UIContext(ModelContext):
   
   def _format(self, typeName:str|None=None, format:str|None=None, /) -> str|list[str]|None: # @ReservedAssignment
     '''
-    :param typeName:
-    :type typeName: str | None
-    :param format:
-    :type format: str | None
-    :returns:
-    :rtype: str | list[str] | None
+    Show (or set) how objects of type *typeName* are printed: with *format*, set it; without, list the
+    formats; without *typeName*, list the types.
     '''
     global formatters
     global formatOptions
@@ -152,11 +142,6 @@ class UIContext(ModelContext):
     Set the output format for graphObjects.
     
     :param format: one of str, repr, name, qname, id, simple.
-    :type format: str
-    :param kindMarker:
-    :type kindMarker: str | None
-    :returns:
-    :rtype:
     '''
     global graphObjectFormatter
     global kindMarkerStr
@@ -170,9 +155,6 @@ class UIContext(ModelContext):
     For debugging.
     
     :param string: prints this string to stdout.
-    :type string: str
-    :param stderr:
-    :type stderr: bool
     '''
     if stderr:
       print(string, file=sys.stderr)
@@ -184,7 +166,6 @@ class UIContext(ModelContext):
     For debugging.
     
     :param string: Sends this string to the logger as a WARNING.
-    :type string: str
     '''    
     logger.print(logging.WARNING, string)
     
@@ -193,7 +174,6 @@ class UIContext(ModelContext):
     For debugging.
     
     :param string: raises an exception with this string as the message.
-    :type string: str
     '''    
     raise Exception(string)
     
@@ -202,9 +182,6 @@ class UIContext(ModelContext):
     For debugging.
     
     :param string: raises an exception with this string as the message.
-    :type string: str
-    :returns:
-    :rtype: str
     '''    
     return input(string)
     
@@ -213,22 +190,13 @@ class UIContext(ModelContext):
     Set the output format for Models.
     
     :param format: one of str, repr.
-    :type format: str
-    :returns:
-    :rtype:
     '''      
     return self._format("Model", format)
       
 def printLists(obj:Any, nCarrets=1, contextModel=None) -> str|None:
   '''
-  :param obj:
-  :type obj: Any
-  :param nCarrets:
-  :type nCarrets:
-  :param contextModel:
-  :type contextModel:
-  :returns:
-  :rtype: str | None
+  *obj* (a model, an object, a list, ...) as text, as the terminal prints a result: each item on its own line,
+  indented *nCarrets* deep.
   '''
   buf:str = ""
   
@@ -277,10 +245,8 @@ class SNAbstractTerminal:
   
   def __init__(self, model:Model|str, context:ModelContext|None=None):
     '''
-    :param model:
-    :type model: Model | str
-    :param context:
-    :type context: ModelContext | None
+    A terminal for typed commands on *model* (by default, the preferences' default model), in *context* (by
+    default, a new one).
     '''
     # get *model*: the default model from command line or prefs
     if model is None:
@@ -305,8 +271,7 @@ class SNAbstractTerminal:
 
   def getPrompt(self):
     '''
-    :returns:
-    :rtype:
+    The prompt: the default model's name.
     '''
     return f'{"" if self.context.defaults["model"] is None else ("@"+self.context.defaults["model"].name)}{CARRET} '
 
@@ -330,41 +295,10 @@ class SNTerminalWidget(SNAbstractTerminal, TerminalWidget):
                      fg="darkblue",
                      **kwargs):
     '''
-    :param model:
-    :type model: Model | str
     :param master:
     :type master: tk.Widget
-    :param context:
-    :type context: ModelContext | None
-    :param registry:
-    :type registry: TerminalRegistry | None
-    :param stderrfg:
-    :type stderrfg: str
-    :param stdoutfg:
-    :type stdoutfg: str
-    :param promptfg:
-    :type promptfg: str
-    :param queryfg:
-    :type queryfg: str
-    :param resultfg:
-    :type resultfg: str
-    :param queryFont:
-    :type queryFont: tuple[str, int, str] | None
-    :param queryFlashColor:
-    :type queryFlashColor: str | None
-    :param queryFlashCount:
-    :type queryFlashCount: int
-    :param queryFlashIntervalMs:
-    :type queryFlashIntervalMs: int
     :param errorFlashCount: How many times to flash when a warning, error or
       exception is printed (once per burst; 0 for never).
-    :type errorFlashCount: int
-    :param bg:
-    :type bg:
-    :param fg:
-    :type fg:
-    :param kwargs:
-    :type kwargs:
     '''
     SNAbstractTerminal.__init__(self, model, context)
     if "wrap" not in kwargs:
@@ -390,22 +324,7 @@ class SNPlainTextTerminal(SNAbstractTerminal, PlainTextTerminal):
                      resultfg:str="blue",
                      **kwargs):
     '''
-    :param model:
-    :type model: Model | str
-    :param context:
-    :type context: ModelContext | None
-    :param stderrfg:
-    :type stderrfg: str
-    :param stdoutfg:
-    :type stdoutfg: str
-    :param promptfg:
-    :type promptfg: str
-    :param queryfg:
-    :type queryfg: str
-    :param resultfg:
-    :type resultfg: str
-    :param kwargs:
-    :type kwargs:
+    A plain-text terminal for typed commands on *model*, in the colours given.
     '''
     SNAbstractTerminal.__init__(self, model, context=context)
     PlainTextTerminal.__init__(self, self.context.parser.parseLine, prompt=self.getPrompt, #type: ignore[arg-type]

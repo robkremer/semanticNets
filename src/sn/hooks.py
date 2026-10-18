@@ -122,9 +122,7 @@ _reported:set[str] = set()
 def reference(fn:Callable) -> str:
   '''
   :param fn: A function (or a class's method).
-  :type fn: Callable
   :returns: The reference that names it: ``module:qualified.name``.
-  :rtype: str
   '''
   return f"{fn.__module__}:{fn.__qualname__}"
 
@@ -140,12 +138,9 @@ def hook[F:Callable](fn:F|None=None, *, appliesTo:Callable[[Any, HookContext], b
   its instances, that means nothing on the type itself.
 
   :param fn: The function.
-  :type fn: F | None
   :param appliesTo: Whether it applies to an object (used as *context* says):
     called as ``appliesTo(obj, context)``. Default: it applies to everything.
-  :type appliesTo: Callable[[Any, HookContext], bool] | None
   :returns: *fn* itself; or, without *fn*, a decorator that makes it a hook.
-  :rtype: Any
   '''
   if fn is None:
     return lambda f: hook(f, appliesTo=appliesTo)
@@ -165,7 +160,6 @@ def hook[F:Callable](fn:F|None=None, *, appliesTo:Callable[[Any, HookContext], b
 def isReference(text:Any) -> TypeGuard[str]:
   '''
   :param text: An attribute's value.
-  :type text: Any
   :returns: Whether it's written as a reference (``module:function``) --
     whether or not there's such a hook.
   :rtype: bool
@@ -175,9 +169,7 @@ def isReference(text:Any) -> TypeGuard[str]:
 def canonical(ref:str) -> str:
   '''
   :param ref: A reference: ``module:function``.
-  :type ref: str
   :returns: It, stripped -- and naming where its module is now, if it's moved (see *MOVED*).
-  :rtype: str
   '''
   ref = ref.strip()
   for old, new in MOVED.items():
@@ -190,7 +182,6 @@ def trustedModules() -> list[str]:
   :returns: The modules and packages whose hooks can be imported: sn's own
     (*TRUSTED_MODULES*), those the program trusts (see *trust()*), and those
     in the "hooks/trustedModules" preference.
-  :rtype: list[str]
   '''
   pref = snPrefs.get(TRUSTED_PREF, [])
   return list(TRUSTED_MODULES) + _trustedPackages \
@@ -203,9 +194,7 @@ def trust(package:str, trusted:bool=True) -> None:
   plugin, once it's loaded (see *sn.plugins*).
 
   :param package: A module's or package's dotted name.
-  :type package: str
   :param trusted: Whether to trust it, or stop.
-  :type trusted: bool
   '''
   if trusted and package not in _trustedPackages:
     _trustedPackages.append(package)
@@ -218,11 +207,9 @@ def trust(package:str, trusted:bool=True) -> None:
 def trusted(module:str) -> bool:
   '''
   :param module: A module's dotted name.
-  :type module: str
   :returns: Whether it can be imported to find hooks in it: it's one of
     *trustedModules()*, or in one of them (eg: "a.b.c" is in "a.b", but
     "a.bc" isn't).
-  :rtype: bool
   '''
   return any(module == t or module.startswith(t + ".") for t in trustedModules())
 
@@ -231,10 +218,8 @@ def problem(ref:str) -> str|None:
   Find the hook *ref* names, importing its module if it needs to (and may).
 
   :param ref: A reference: ``module:function``.
-  :type ref: str
   :returns: Why it can't be called -- eg: it isn't a reference, its module
     isn't trusted, or there's no such hook -- or None if it can.
-  :rtype: str | None
   '''
   ref = canonical(ref) if isinstance(ref, str) else ref
   if not isReference(ref):
@@ -251,9 +236,7 @@ def problem(ref:str) -> str|None:
 def _find(ref:str) -> str|None:
   '''
   :param ref: A reference that isn't a known hook.
-  :type ref: str
   :returns: Why it can't be called; or None if importing its module made it a hook.
-  :rtype: str | None
   '''
   module = ref.partition(":")[0]
   if not trusted(module):
@@ -270,10 +253,8 @@ def _find(ref:str) -> str|None:
 def resolve(ref:str) -> Hook|None:
   '''
   :param ref: A reference: ``module:function``.
-  :type ref: str
   :returns: The hook it names (importing its module if it needs to and may:
     see *problem()*), or None if it can't be called (logged once).
-  :rtype: Hook | None
   '''
   why = problem(ref)
   if why is not None:
@@ -286,16 +267,11 @@ def call(ref:str, obj:Any, context:HookContext|None=None, default:Any=None) -> A
   Call the hook *ref* names, on *obj*.
 
   :param ref: A reference: ``module:function``.
-  :type ref: str
   :param obj: The model object it's for.
-  :type obj: Any
   :param context: How it's being used.
-  :type context: HookContext | None
   :param default: What to return if it can't be called, or fails.
-  :type default: Any
   :returns: What it returns; or *default* if it can't be called, or raises an
     exception (logged: once, if it can't be called; each time, if it fails).
-  :rtype: Any
   '''
   fn = resolve(ref)
   if fn is None:
@@ -309,16 +285,12 @@ def call(ref:str, obj:Any, context:HookContext|None=None, default:Any=None) -> A
 def applies(ref:str, obj:Any, context:HookContext|None=None) -> bool:
   '''
   :param ref: A reference: ``module:function``.
-  :type ref: str
   :param obj: A model object.
-  :type obj: Any
   :param context: How it'd be used.
-  :type context: HookContext | None
   :returns: Whether the hook applies to *obj*: its *appliesTo* test (see
     *hook()*) says so, or it hasn't one. One that can't be called applies (to
     be shown, but disabled: see *resolve()*); one whose test fails doesn't
     (logged).
-  :rtype: bool
   '''
   if resolve(ref) is None:
     return True
@@ -334,13 +306,10 @@ def applies(ref:str, obj:Any, context:HookContext|None=None) -> bool:
 def hookAttributes(obj:Any, prefix:str) -> dict[str, str]:
   '''
   :param obj: A model object (or anything with attributes: keys() and get()).
-  :type obj: Any
   :param prefix: The start of the attributes' keys: eg: ".menu/".
-  :type prefix: str
   :returns: Its attributes -- its own and those it inherits (eg: from its
     types) -- whose keys start with *prefix*, and whose values are references:
     key without the prefix (eg: "Show source") -> reference, sorted by key.
-  :rtype: dict[str, str]
   '''
   ret:dict[str, str] = {}
   for key in sorted(k for k in obj.keys() if isinstance(k, str) and k.startswith(prefix) and len(k) > len(prefix)):
@@ -355,9 +324,7 @@ def hookAttributes(obj:Any, prefix:str) -> dict[str, str]:
 def _report(key:str, message:str) -> None:
   '''
   :param key: What it's about: logged only the first time.
-  :type key: str
   :param message: The problem.
-  :type message: str
   '''
   if key not in _reported:
     _reported.add(key)

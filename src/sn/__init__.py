@@ -49,11 +49,6 @@ class SNLogger(logging.Logger):
     '''
     Intended to mimic the print system command but allowing for redirection 
     and multiple destinations if necessary.
-
-    :param args:
-    :type args:
-    :param kwargs:
-    :type kwargs:
     '''
     print(*args, **kwargs)
     
@@ -77,9 +72,7 @@ def resourcePath(*parts:str) -> str:
   :param parts: A path relative to the project's top folder (eg: "sphinx"),
     or, in a packaged app, to its bundled resources (where the build puts the
     same things under the same names).
-  :type parts: str
   :returns: The full path (which may not exist).
-  :rtype: str
   '''
   base = getattr(sys, "_MEIPASS", None) or os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
   return os.path.join(base, *parts)
@@ -91,7 +84,6 @@ def exampleNames() -> list[str]:
   '''
   :returns: The example models' files that come with the program (package data:
     *sn/examples/*), eg: ["animals.snm", "animals.snv", ...].
-  :rtype: list[str]
   '''
   import importlib.resources
   try:
@@ -108,11 +100,8 @@ def copyExamples(target:str, names:list[str]|None=None) -> list[str]:
   isn't taken to have been moved when it's opened.
 
   :param target: The folder to copy them to.
-  :type target: str
   :param names: The files to copy (eg: ["family.snm", "family.snv"]); by default, all of them.
-  :type names: list[str]|None
   :returns: The paths of the copies.
-  :rtype: list[str]
   '''
   import importlib.resources
   from pathlib import Path
@@ -133,9 +122,7 @@ def getLogger(name:str) -> SNLogger:
   This may be either created of just returned, depending on if it exists already.
   
   :param name: Always call this with the __name__ variable for the file.
-  :type name: str
   :returns: The properly typed SNLogger for created.
-  :rtype: SNLogger
   '''
   if name == "__main__":
     mainModuleFile = sys.modules["__main__"].__file__
@@ -155,17 +142,12 @@ class SNPrefs(Prefs):
 
   @override
   def getSupers[T:AttributedObject](self)->list[T]: # type: ignore[override]
-    '''
-    :returns:
-    :rtype: list[T]
-    '''
     return []
 
   @override
   def isIndividual(self)->bool:
     '''
-    :returns:
-    :rtype: bool
+    False (unlike a plain *Prefs*).
     '''
     return False
   
@@ -283,7 +265,6 @@ def renamePrefs(prefs:Prefs) -> None:
   already under the new name is kept (and the old one dropped).
 
   :param prefs: The preferences.
-  :type prefs: Prefs
   '''
   for old, new in RENAMED_PREFS.items():
     if old not in prefs.keys():
@@ -300,7 +281,6 @@ def initPrefs(prefs:Prefs) -> None:
   user's: see *Attribute.userNote* -- so adding them doesn't change the file.)
 
   :param prefs: The preferences.
-  :type prefs: Prefs
   '''
   for key, (typ, default, note) in PREFS.items():
     attr = dict.get(prefs, key) # (the stored Attribute itself: getAttr() gives a copy)
@@ -318,9 +298,7 @@ copies of models and views read from the web (*cache/*: see
 def snFolder(*parts:str) -> str:
   '''
   :param parts: A path within *SN_FOLDER* (eg: "cache").
-  :type parts: str
   :returns: It -- made, if it isn't there.
-  :rtype: str
   '''
   path = os.path.join(SN_FOLDER, *parts)
   os.makedirs(path, exist_ok=True)
@@ -356,10 +334,7 @@ def applyURLAliases(entries:Any) -> list[str]:
   "old -> new" -- the URL aliases (see *PRDb.aliases*), in place of those it
   made before.
 
-  :param entries:
-  :type entries: Any
   :returns: The entries that couldn't be made sense of.
-  :rtype: list[str]
   '''
   from util.persistence.pRef import PRDb
   from util.utils import fixURL
@@ -430,11 +405,8 @@ def checkSaveModified(obj, url:str, kind:str) -> None:
     (anything exposing *writeLocked()*, *isDirty()* and *save()*).
   :type obj: util.persistence.pRef.PRDb
   :param url: *obj*'s URL, used only in the confirmation dialog's message.
-  :type url: str
   :param kind: A lowercase human-readable noun for the confirmation dialog,
     e.g. "model" or "view".
-  :type kind: str
-  :rtype: None
 
   If the environment variable SN_NO_SAVE_PROMPT is set (to anything), nothing
   is asked and nothing is saved -- for automated runs, such as tests, which
@@ -447,10 +419,7 @@ def checkSaveModified(obj, url:str, kind:str) -> None:
 
 def _displayPath(url:str) -> str:
   '''
-  :param url:
-  :type url: str
   :returns: *url* as the user knows it: a local file's path (eg: "~/models/family.snv"), or else the URL.
-  :rtype: str
   '''
   from urllib.parse import urlparse, unquote
   parsed = urlparse(url)
