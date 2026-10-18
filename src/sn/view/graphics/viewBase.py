@@ -60,6 +60,28 @@ if TYPE_CHECKING:
 else:
   _ViewGraph = object
 
+# The keys a view binds, and its menus show: (Tk event, as the menu shows it).
+KEY_UNDO =                  ('<Command-KeyPress-z>'       , 'cmd+z')
+KEY_REDO =                  ('<Shift-Command-KeyPress-Z>' , 'shift+cmd+Z')
+KEY_REPAINT =               ('<Command-KeyPress-r>'       , 'cmd+r')
+KEY_CUT =                   ('<Command-KeyPress-x>'       , 'Command-X')
+KEY_COPY =                  ('<Command-KeyPress-c>'       , 'Command-C')
+KEY_PASTE =                 ('<Command-KeyPress-v>'       , 'Command-V')
+KEY_COPY_IMAGE =            ('<Shift-Command-KeyPress-C>' , 'Shift-Command-C')
+KEY_SELECT_ALL =            ('<Command-KeyPress-a>'       , 'Command-A')
+KEY_ERASE =                 ('<KeyPress-BackSpace>', '<KeyPress-Delete>')
+"Erase what's selected from the view: the Mac's delete key (BackSpace), or forward delete."
+KEY_REMOVE =                ('<Shift-KeyPress-BackSpace>', '<Shift-KeyPress-Delete>')
+"Remove what's selected from the model (after asking)."
+KEY_CLEAR_HIGHLIGHTS =      ('<Escape>'                   , 'esc')
+KEY_VALIDATE =              ('<Command-KeyPress-v>'       , 'cmd+v')
+KEY_TOGGLE_FIELDS_LAYOUT =  ('<Command-KeyPress-f>'       , 'cmd+f') # (not bound: see KEY_FIND)
+KEY_FIND =                  ('<Command-KeyPress-f>'       , 'Command-F')
+KEY_ZOOM_IN =               ('<Command-KeyPress-equal>'   , 'Command-+') # (also <Command-KeyPress-plus>: shifted, on most keyboards)
+KEY_ZOOM_OUT =              ('<Command-KeyPress-minus>'   , 'Command--')
+KEY_ZOOM_NORMAL =           ('<Command-KeyPress-0>'       , 'Command-0')
+KEY_ZOOM_FIT =              ('<Command-KeyPress-9>'       , 'Command-9')
+
 class ViewBase(_ViewGraph):
   '''
   What every part of a view (*sn.view.graphics.sngView.SNGView*) may use of
