@@ -28,23 +28,36 @@ Docstrings
 ----------
 
 Docstrings are reStructuredText, and are the API reference (see
-:doc:`overview`), so every module, class and public function has one. They
-say what something is *for* and *why* it is the way it is; the parameters
-are given in Sphinx's field lists:
+:doc:`overview`), so every module, class and public function has one -- at
+least a line saying what it does or gives. They say what something is *for*
+and *why* it is the way it is; the parameters are given in Sphinx's field
+lists:
 
 .. code-block:: python
 
-   def gap(snap:Snapshot, i:int, j:int) -> tuple[float, float, float]:
+   def gap(snap:Snapshot, i:int, j:int, *, fast:bool=False) -> tuple[float, float, float]:
      '''
      The gap between two objects' edges ...
 
      :param snap: The layout's snapshot.
-     :type snap: Snapshot
      :param i: An object's index in *snap*.
-     :type i: int
      :returns: ...
-     :rtype: tuple[float, float, float]
      '''
+
+The types are the annotations' -- the API reference shows them with each
+parameter and the return value (``autodoc_typehints = "description"`` in
+``conf.py``) -- so a docstring doesn't repeat them: no ``:type x:`` or
+``:rtype:`` that says what the signature says. A field is there for what it
+adds:
+
+- ``:param x:`` says what *x* is for (not just that it's there: *fast*,
+  above, needs no field);
+- ``:returns:`` says what's returned (an empty one says nothing);
+- ``:type x:`` or ``:rtype:`` only to say more than the annotation does (eg:
+  for a parameter that has none, or is annotated ``Any``).
+
+A method marked ``@override`` that has nothing to add to what it overrides
+has no docstring: the API reference shows the overridden method's.
 
 Names of other things are in *italics* (eg: *SNGView.shouldHide()*), or
 cross-referenced (``:py:meth:`...```) where the link is worth having. A

@@ -128,6 +128,11 @@ html_favicon = "./images/sn-favicon.png"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 
+autodoc_typehints = "description"
+"""Parameter and return types come from the annotations, shown with each one's
+description (docstrings don't repeat them: see developer/conventions.rst).
+Every parameter's type is shown, documented or not."""
+
 autodoc_default_options = {
     'members': True,
     'member-order': 'bysource',
@@ -144,3 +149,18 @@ autodoc_default_options = {
 #    :width: 43
 #    :alt: TyGra
 # """
+def _orderFields(app, domain, objtype, contentnode):
+  '''
+  An object's fields in order: its parameters, what it returns (and its type),
+  then the rest (eg: what it raises) -- as the types *autodoc_typehints* adds
+  for what a docstring doesn't mention come after the docstring's own fields.
+  '''
+  from docutils import nodes
+  ranks = {"param": 0, "parameter": 0, "arg": 0, "argument": 0, "key": 0, "keyword": 0, "type": 0, "kwtype": 0,
+           "returns": 1, "return": 1, "rtype": 1}
+  rank = lambda f: ranks.get(f[0].astext().split()[0], 2) if isinstance(f, nodes.field) else 2
+  for fieldList in [c for c in contentnode.children if isinstance(c, nodes.field_list)]:
+    fieldList.children = sorted(fieldList.children, key=rank) # (stable: each kind keeps its order)
+
+def setup(app):
+  app.connect("object-description-transform", _orderFields, priority=600) # (after autodoc's typehints: 500)
