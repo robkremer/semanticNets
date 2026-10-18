@@ -842,7 +842,7 @@ def drawSmoothConnector(source: Optional[VObject], label: VObject, destination: 
   else:
     # Boundary clip failed (eg: the label overlaps both ends, side by side):
     # that half isn't drawn, and what was drawn before is deleted -- kept, it
-    # stayed where the relation used to be (eg: after a layout moved
+    # would stay where the relation was (eg: after a layout moved
     # everything), an arrowhead on its own. (Its ids stay None: the next draw
     # that can draw it makes it afresh.)
     _deleteItems(canvas, prior.sourceLineID, prior.sourceTerminatorID, prior.labelNearTerminatorID)

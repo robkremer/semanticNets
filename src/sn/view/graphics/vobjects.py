@@ -280,11 +280,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     :param kwargs: Passed on to *super().__init__()*. *VObject* is normally
       combined with *AGRelation* via multiple inheritance (see *VRelation*),
       and the two share *AGObject* as a common ancestor -- calling *super()*
-      cooperatively here (instead of separately naming *AGObject* and
-      *PRObject*, as this used to) ensures that shared ancestor's *__init__*
-      -- which registers this object with *view* -- runs exactly once no
-      matter which subclass is being constructed, rather than once per
-      inheritance path. *kwargs* is how *AGRelation*'s own *src*/*dst*
+      cooperatively here (not separately naming *AGObject* and *PRObject*)
+      ensures that shared ancestor's *__init__* -- which registers this
+      object with *view* -- runs exactly once no matter which subclass is
+      being constructed, not once per inheritance path. *kwargs* is how *AGRelation*'s own *src*/*dst*
       constructor arguments -- which *VObject* has no use for itself -- get
       carried through to it along that same chain.
     :type kwargs: Any
@@ -328,12 +327,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     # explanation of the diamond). This single cooperative super().__init__()
     # call reaches AGObject.__init__() -- and hence PRObject.__init__(),
     # which registers this object with *view* -- exactly once, however many
-    # inheritance paths lead here. It used to be followed by a second,
-    # separate PRObject.__init__(self, view) call further down (plus explicit
-    # Dirtyable.__init__(self)/Observer.__init__(self) calls) -- that separate
-    # call was the actual double-registration bug: every VObject was already
-    # affected, not just VRelation, since Dirtyable/Observer are also reached
-    # automatically via this same chain.
+    # inheritance paths lead here. Dirtyable and Observer are reached along the
+    # same chain: don't call PRObject.__init__(), Dirtyable.__init__() or
+    # Observer.__init__() separately as well -- a second PRObject.__init__()
+    # would register every VObject (not just a VRelation) twice.
     super().__init__(db=view, **kwargs)
     assert self._id is not None
     
@@ -1907,9 +1904,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       # adjustPos is True -- the drag-release call (onB1_ButtonRelease() ->
       # SNGContext._Move.do()) calls moveTo(x, y) with (x,y) equal to
       # wherever the drag already left the node, specifically *to* trigger
-      # adjustPos()/FindFree overlap resolution at that spot. Returning here
-      # regardless of adjustPos used to make that call a complete no-op, so
-      # two objects dropped on top of each other would just stay stacked.
+      # adjustPos()/FindFree overlap resolution at that spot: skipping it
+      # would leave two objects dropped on top of each other stacked.
       return
     self.boundingBox([x, y, x+bb[2]-bb[0], y+bb[3]-bb[1]])
     if adjustPos:
@@ -1921,8 +1917,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         # Pass adjustPos through: during a live drag (adjustPos=False) relations
         # should still visually track this node's new position, but shouldn't
         # each run their own full adjustPos()/FindFree placement on every single
-        # mouse-motion tick -- that's what was producing big visual jumps while
-        # dragging. The full layout resolution now happens once, when moveTo()
+        # mouse-motion tick (which makes big visual jumps while dragging). The
+        # full layout resolution happens once, when moveTo()
         # is called with the default adjustPos=True (e.g. on button-release).
         r.notifyNodeMove(self, adjustPos=adjustPos)
 

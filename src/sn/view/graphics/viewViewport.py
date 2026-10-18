@@ -322,14 +322,12 @@ class ViewportMixin(ViewBase):
     fits inside the existing region -- e.g. after it's been dragged past the
     SE edge -- so the canvas grows to keep the object reachable/visible.
 
-    :note: This used to swallow every exception (bare ``except: pass``),
-      which is exactly why the drag-past-the-edge case silently never grew
-      the region: *self.canvas.bbox("all")* returns *None* when the canvas
-      has nothing drawn on it yet, and ``expandRect(None, 100)`` raises
-      *TypeError* -- caught and discarded here without a trace. That's now
-      handled explicitly below instead of masked. It also never updated
-      *self.scrollRegion* on success, so even a "successful" reset left
-      *moveTo()*'s clamp still comparing against the stale old region.
+    :note: Nothing's caught here: *self.canvas.bbox("all")* is *None* while
+      nothing's drawn, which is checked for (``expandRect(None, 100)`` would
+      raise *TypeError*); anything else is a real fault, and masking it would
+      leave the region silently not grown (eg: when dragging past the edge).
+      *self.scrollRegion* is kept in step with the canvas's, as *moveTo()*'s
+      clamp compares against it.
 
     :rtype: None
     '''

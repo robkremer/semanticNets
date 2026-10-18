@@ -128,8 +128,8 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     # *VRelation* inherits from both *VObject* and *AGRelation*, which both
     # in turn share *AGObject* as a common ancestor -- the same diamond shape
     # as *sn.model.model.Relation* (see its __init__ for the full
-    # explanation). A single cooperative super().__init__() call, instead of
-    # the old separate VObject.__init__()/AGRelation.__init__() calls, lets
+    # explanation). A single cooperative super().__init__() call, not
+    # separate VObject.__init__()/AGRelation.__init__() calls, lets
     # the MRO run AGObject.__init__() (and hence PRObject.__init__(), which
     # registers this object with *view*) exactly once instead of once per
     # inheritance path.

@@ -229,11 +229,10 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     :param kwargs: Passed on to *super().__init__()*. *GraphObject* is normally
       combined with *AGRelation* via multiple inheritance (see *Relation*),
       and the two share *AGObject* as a common ancestor -- calling *super()*
-      cooperatively here (instead of naming *AGObject* and *AttributedObject*
-      directly, as this used to) ensures that shared ancestor's *__init__*
-      -- which registers this object with *db* -- runs exactly once no
-      matter which subclass is being constructed, rather than once per
-      inheritance path. *kwargs* is how *AGRelation*'s own *src*/*dst*
+      cooperatively here (not naming *AGObject* and *AttributedObject*
+      directly) ensures that shared ancestor's *__init__* -- which registers
+      this object with *db* -- runs exactly once no matter which subclass is
+      being constructed, not once per inheritance path. *kwargs* is how *AGRelation*'s own *src*/*dst*
       constructor arguments -- which *GraphObject* has no use for itself --
       get carried through to it along that same chain.
     :type kwargs: Any
@@ -2018,11 +2017,11 @@ class AllModelCollection(Collection, PRDbContainer):
     # Same shape of diamond as *Relation* (see its __init__ for the full
     # explanation): *AllModelCollection* inherits from both *Collection*
     # (-> ... -> AGObject -> PRObject) and *PRDbContainer* (-> PRContainer ->
-    # PRObject, neither of which override __init__ at all). The old separate
-    # Collection.__init__()/PRDbContainer.__init__() calls each independently
-    # walked down to PRObject.__init__() -- which registers this object with
-    # *model* -- registering it twice. A single cooperative super().__init__()
-    # call lets the MRO run it exactly once instead.
+    # PRObject, neither of which override __init__ at all). Separate
+    # Collection.__init__()/PRDbContainer.__init__() calls would each walk down
+    # to PRObject.__init__() -- which registers this object with *model* --
+    # registering it twice. A single cooperative super().__init__() call lets
+    # the MRO run it exactly once.
     super().__init__(model, [Model.getDB("$sn").COLLECTION], individual=True, name=model.name)
   
   @override
@@ -2100,11 +2099,10 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]): #type: ignore[misc]
 
     # *Relation* inherits from both *GraphObject* and *AGRelation*, which both
     # in turn inherit from *AGObject* -- a single cooperative super().__init__()
-    # call here (instead of the old separate GraphObject.__init__() /
-    # AGRelation.__init__() calls) lets Python's MRO run *AGObject.__init__()*
-    # (and hence *PRObject.__init__()*, which registers this object with *db*)
-    # exactly once, instead of once per inheritance path -- that double
-    # registration was the actual bug this replaced. All the constructor
+    # call here (not separate GraphObject.__init__() / AGRelation.__init__()
+    # calls) lets Python's MRO run *AGObject.__init__()* (and hence
+    # *PRObject.__init__()*, which registers this object with *db*) exactly
+    # once, not once per inheritance path (registering it twice). All the constructor
     # arguments for both bases are passed here as keywords; each base
     # consumes the ones it recognizes and forwards the rest via its own
     # **kwargs (see *GraphObject.__init__()* and *AGRelation.__init__()*).

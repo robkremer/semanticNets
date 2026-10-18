@@ -632,9 +632,7 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
 
     Used by *sn.view.graphics.layout.LayoutHieristic.findOverlapping()* (e.g. FindFree) to
     filter the results of *self.canvas.find_overlapping()* down to just the shape items
-    it cares about. This was previously only defined on *view.py*'s (unused-at-runtime)
-    *SNView*, not on this, the actual *SNGView* class that *VObject.view* is -- so any
-    local-layout call that hit an overlap raised AttributeError here instead of resolving it.
+    it cares about: so it must be defined on *SNGView*, the class *VObject.view* is.
     '''
     if isinstance(exclude, int): exclude = [exclude]
     if not self.canvas:
