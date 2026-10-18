@@ -60,6 +60,7 @@ from sn.view.graphics import progress
 from sn.view.graphics.directoryWindow import noteSaved
 from sn.view.graphics.viewCommands import ViewDoList, _ContainCreated, keptWith # (ViewDoList, keptWith: imported from here elsewhere too)
 from sn.view.graphics.sngContext import SNGContext
+from sn.view.graphics.viewBase import ViewBase
 import os
 import threading
 from pathlib import Path
@@ -106,7 +107,7 @@ NODE_CATEGORY = "nodes: "
 "How a node type's category (for hiding or erasing its individuals) is named: see *SNGView.nodeCategory()*."
 
 
-class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
+class SNGView(ViewBase, AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   '''
   The persistent container of VObjects.
   '''
