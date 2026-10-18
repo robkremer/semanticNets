@@ -1193,8 +1193,10 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     self._eventHandled:Optional[tk.Event] = None
     "Set by a contained VObject/item-level handler (via addEventHandled()) to mark that it already handled a mouse event, so this canvas's own (separately-dispatched) widget-level binding for the same event -- e.g. onRightMouse() -- can skip its generic handling. See isEventHandled()/addEventHandled()/removeEventHandled()."
 
-    self._deletedGraphObjectsCache:dict[int,VObject] = dict[int,VObject]()
-    "Used by update to store deleted VObjects matching deleted GraphObjects in case they are restored."
+    self._deletedGraphObjectsCache:dict[tuple[int,int],VObject] = dict[tuple[int,int],VObject]()
+    """Used by update to store deleted VObjects matching deleted GraphObjects in case they are restored:
+    by (the id of) the model and the model object's id in it -- every model numbers its objects from 256,
+    and a view shows its model's super-models' objects too."""
     
     self._drawVersion:int = 0
     self.scrollRegion:tuple = (0, 0, 4000, 3000)
@@ -2032,8 +2034,8 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
           
           # if this is one we've seen before, just restore it (unless that was done already: an
           # object's relations come back with it -- eg: when a paste or a cut is redone)
-          if modelID in self._deletedGraphObjectsCache:
-            vObject:VObject = self._deletedGraphObjectsCache[modelID]
+          vObject:VObject|None = self._deletedGraphObjectsCache.get((id(subject), modelID))
+          if vObject is not None:
             if not vObject._isConnected():
               vObject._reconnect()
             continue
@@ -2091,11 +2093,15 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
         case ["del", topicData]:
           modelID = topicData[0]
-          obj:VObject|None = self.findViewObjectForGraphObject(lambda vo: vo.modelObject is not None and vo.modelObject.id==modelID)
+          # (the id's only unique in subject: a super-model's object can have it too. Not looked
+          # up in _viewObjectIndex(): by now the model object's gone from subject, so all there is
+          # to go on is its id)
+          obj:VObject|None = self.findViewObjectForGraphObject(lambda vo: vo.modelObject is not None and vo.modelObject.id==modelID
+                                                                                    and vo.modelObject.model is subject)
           if obj is not None:
             dirty = self.isDirty()
             obj._disconnect()
-            self._deletedGraphObjectsCache[modelID] = obj
+            self._deletedGraphObjectsCache[(id(subject), modelID)] = obj
             if obj.isInferred() and not dirty: # (no longer inferred: not a change to the view -- see _showInferred())
               self.setDirty(False)
           
