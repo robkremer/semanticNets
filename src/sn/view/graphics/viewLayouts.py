@@ -141,11 +141,18 @@ class LayoutsMixin(ViewBase):
     :type category: str | None
     :param name: The layout to show, of that kind (see *layoutPanel.LayoutPanel.show()*).
     :type name: str | None
+
+    In a window that isn't shown (eg: one being read, or a hidden one, as in
+    tests), the panel is made only once it is (see *_showPanelWhenMapped()*):
+    Tk on macOS keeps redrawing a never-shown window with ttk widgets in its
+    split, at idle, so *update()* wouldn't return.
     '''
     from sn.view.graphics.layoutPanel import LayoutPanel
     split = self.layoutSplit()
     panel:LayoutPanel|None = self.__dict__.get("_layoutPanel")
-    if show:
+    if show and panel is None and not split.winfo_ismapped():
+      self._showPanelWhenMapped(category, name)
+    elif show:
       if panel is None:
         panel = self._layoutPanel = LayoutPanel(split, cast("SNGView", self))
         saved = self.__dict__.pop("_unbuiltLayoutPanel", None) # (read with the view: see _restoreLayoutPanel())
@@ -161,6 +168,27 @@ class LayoutsMixin(ViewBase):
     if self._layoutPanelShown().get() != show:
       self._layoutPanelShown().set(show)
       self.setDirty() # (saved with the view)
+
+  def _showPanelWhenMapped(self, category:str|None, name:str|None) -> None:
+    '''
+    Make and show the layout panel once its window's shown (see
+    *showLayoutPanel()*) -- if it's still to be shown then.
+
+    :param category: As for *showLayoutPanel()*.
+    :type category: str | None
+    :param name: As for *showLayoutPanel()*.
+    :type name: str | None
+    '''
+    split = self.layoutSplit()
+    self._panelPage = (category, name) # (the latest asked for)
+    if self.__dict__.get("_panelMapBinding"):
+      return
+    def mapped(_event:tk.Event) -> None:
+      split.unbind("<Map>", self.__dict__.pop("_panelMapBinding"))
+      page = self.__dict__.pop("_panelPage")
+      if self._layoutPanelShown().get():
+        self.showLayoutPanel(True, *page)
+    self._panelMapBinding = split.bind("<Map>", mapped, add="+")
 
   def layoutSplit(self) -> LayoutSplit:
     '''
@@ -184,8 +212,8 @@ class LayoutsMixin(ViewBase):
     '''
     panel = self.__dict__.get("_layoutPanel")
     shown = "shown=" + ("1" if self._layoutPanelShown().get() else "0")
-    if panel is None:
-      return self.__dict__.get("_unbuiltLayoutPanel", shown) # (as it was read, if it's never been shown)
+    if panel is None: # (as it was read, if it's never been made -- shown or not, as it is now)
+      return ";".join([shown, *(kv for kv in self.__dict__.get("_unbuiltLayoutPanel", "").split(";") if kv and not kv.startswith("shown="))])
     return shown + ";" + panel.savedState()
 
   def _restoreLayoutPanel(self) -> None:
