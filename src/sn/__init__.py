@@ -126,13 +126,6 @@ def copyExamples(target:str, names:list[str]|None=None) -> list[str]:
       fd.write(text.replace(EXAMPLES_PLACEHOLDER, Path(target).as_uri()))
     ret.append(path)
   return ret
-# logging.setLoggerClass(SNLogger)
-# logFileName = SHORT_NAME+'.log'
-# if os.path.isfile(logFileName): os.remove(logFileName)
-# fileHandler = logging.FileHandler(logFileName)
-# fileHandler.setFormatter(logging.Formatter('**%(levelname)s: %(name)s: %(message)s\n  at %(filename)s, func=%(funcName)s, line=%(lineno)d', style='%'))
-# errStreamHandler = logging.StreamHandler(sys.stderr)
-# logging.basicConfig(force=True, level=logging.INFO, handlers=[fileHandler, errStreamHandler]) #output to file and stderr 
 
 def getLogger(name:str) -> SNLogger:
   '''
@@ -408,22 +401,6 @@ logger.setLevel(logging.getLevelNamesMapping()[snPrefs.get("loggingLevel",
                                                            storeDefault="DEBUG", 
                                                            storeType='choices[DEBUG,INFO,WARNING,ERROR,CRITICAL]').upper() # type: ignore[union-attr]
                                               ])
-
-# # insure PYTHONPATH includes Tygra's directory (required to resolve classes at runtime, eg: Roles as types in Attributes)
-# thisDir = str(pathlib.Path(__file__).parent.parent.resolve())
-# if thisDir not in sys.path:
-#   sys.path.append(thisDir)
-#   logger.warning(f'Added "{thisDir}" to PYTHONPATH:\n  {sys.path}')
-# else:
-#   logger.debug(f'PYTHONPATH already contains "{thisDir}":\n  {sys.path}')
-#
-# def registerAtExit(): # prevent circular imports
-#   from util.persistence import PRDb
-#   atexit.register(PRDb.atexit)
-#   atexit.register(tygraPrefs.save)
-#   atexit.register(fileHandler.close)
-#
-# registerAtExit()
 
 def savePrefsIfChanged() -> None:
   '''

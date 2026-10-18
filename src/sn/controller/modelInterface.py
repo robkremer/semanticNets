@@ -26,8 +26,6 @@ import sn
 from sn.model.model import GraphObject, Model, Node, Relation, GORef,\
   Collection, IsaIndividual
 from sn.model import copying
-#import util.persistence.pRef as pRef
-#from util.persistence.pRef import PReference
 import logging
 from types import NoneType
 from typing import override, Any, Optional, Iterable, Callable, cast
@@ -375,7 +373,6 @@ class ModelContext(CommandContext):
         #print(ex)
         raise ex
     super()._defineDecoders()
-    #self.decoders["GraphObject"] = lambda s, d=self.defaults, **kwargs: GORef.eval(s, d["model"] if kwargs.get("model") is None else kwargs["model"]) #type: ignore[misc]
     self.decoders["GraphObject"] = lambda s, d=self.defaults, **kwargs: getGO(s,d,**kwargs)
     self.decoders["Model"] = getModel #lambda s: GORef.eval(s)
     
@@ -407,8 +404,6 @@ class ModelContext(CommandContext):
       ret = model.validate()
     else:
       ret = object.validate()
-    # if not ret:
-    #   print("OK")
     return ret
 
 
@@ -1902,24 +1897,18 @@ if __name__ == '__main__':
   printx('context.show(detail=True)')
   printx('context.parser.parseLine("show --detail")')
   printx('context.parser.parseLine("show")')
-  # try:
   m = Model("y.xml")
-  # except Exception as ex:
-  #   m = Model.getDB("y.xml")
   m.save()
   printx('context.default("model", m) # m == y.xml')
   print('-------- should be y.xml now -------------')
   printx('context.show(detail=True)')
   printx('context.parser.parseLine("undo")')
   print('-------- should be temp.xml now -------------')
-  #printx("context.parser.parseLine('help default')")
   printx('context.show()')
   printx('context.parser.parseLine("default model y.xml")')
   print('-------- should be y.xml now -------------')
   printx('context.parser.parseLine("show")')
-  #print(context.parser.parseLine("help"))
   print("-------")
-  #printx('context.show("#1")')
   printx('context.parser.parseLine("show 1 --d")')
   printx('context.show(detail=True)')
     

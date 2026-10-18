@@ -45,7 +45,6 @@ import tkinter.font as tkfont
 from typing import override, Callable, Optional, Union, Any
 import sn
 from sn import snPrefs
-#from sn.view import tooltip
 from util.tooltip import CreateToolTip
 
 logger:sn.SNLogger = sn.getLogger(__name__)
@@ -535,9 +534,7 @@ class Marker:
                    at[1]+Marker.SIZE[1]]),
                    **self.kwargs2)
       self.id   = self.owner.canvas.create_text(self.owner.view.viewToWindow(at[0])[0], self.owner.view.viewToWindow(at[1])[0], **self.kwargs)
-      #self.id   = self.owner.canvas.create_text(at[0], at[1], **self.kwargs)
     else:   
-      #self.kwargs.update(kwargs)
       if self.id is not None:
         self.owner.canvas.coords(self.id2, 
                   self.owner.view.viewToWindow(
@@ -722,100 +719,6 @@ class MarkerContainer(Decorator):
     return Decorator.draw(self, fast, **kwargs)
 
   
-# class Marker2(Decorator):
-#   def __init__(self, owner, **kwargs):
-#     super().__init__(owner)
-#     self.kwargs = kwargs
-#     self.offset = (-3,-3)
-#     self.size = (6,6) # actually, this is half of the size
-#
-#   def delete(self):
-#     if self.deleted: return
-#     super().delete()
-#     self.kwargs = None
-#
-#   def getOffset(self) -> list:
-#     offset = [self.offset[0]+self.owner.markerDecoratorOffset, self.offset[1]]
-#     self.owner.markerDecoratorOffset += (2 * self.size[0] + 1)
-#     return offset
-#
-# class CircleMarker(Marker):
-#   def __init__(self, owner, **kwargs):
-#     super().__init__(owner, **kwargs)
-#     self.id2 = None
-#
-#   @abstractmethod
-#   def setArgs(self):
-#     pass
-#
-#   def draw(self, fast=False, **kwargs):
-#     if self.id is None:       
-#       self.kwargs["state"] = "normal"
-#       self.kwargs["tags"] = [self.owner.tag, 'text']
-#       if "justify" not in self.kwargs: self.kwargs["justify"] = "center"
-#       if "anchor"   not in self.kwargs: self.kwargs["anchor"]  = "center"
-#       if "font"     not in self.kwargs: self.kwargs["font"]    = ("TkSmallCaptionFont", int(self.owner.view._fontSize * self.owner.view._scale))
-#       if "fill"     not in self.kwargs: self.kwargs["fill"]    = "white"
-#       self.setArgs()
-#       x, y, _, _ = self.owner.boundingBox(fast=fast)
-#       offset = self.getOffset()
-#       self.id2 = self.owner.canvas.create_oval(
-#                   self.owner.view.viewToWindow(
-#                   [x+offset[0]-self.size[0], 
-#                    y+offset[1]-self.size[1], 
-#                    x+offset[0]+self.size[0], 
-#                    y+offset[1]+self.size[1]]),
-#                    **self.kwargs2)
-#       self.id   = self.owner.canvas.create_text(x+offset[0], y+offset[1], **self.kwargs)
-#     else:   
-#       self.kwargs.update(kwargs)
-#       if self.id is not None:
-#         self.setArgs()
-#         x, y, _, _ = self.owner.boundingBox(fast=fast)
-#         offset = self.getOffset()
-#         self.owner.canvas.coords(self.id2, 
-#                   self.owner.view.viewToWindow(
-#                   [x+offset[0]-self.size[0], 
-#                    y+offset[1]-self.size[1], 
-#                    x+offset[0]+self.size[0], 
-#                    y+offset[1]+self.size[1]]))
-#         self.owner.canvas.coords(self.id, self.owner.view.viewToWindow([x+offset[0], y+offset[1]]))
-#         self.kwargs["font"] = ("TkSmallCaptionFont", int(self.owner.view._fontSize * self.owner.view._scale))
-#         self.owner.canvas.itemconfigure(self.id, **self.kwargs)
-#         self.owner.canvas.itemconfigure(self.id2, **self.kwargs2)
-#
-#   def delete(self):
-#     if self.deleted: return
-#     super().delete()
-#     self.owner.canvas.delete(self.id)
-#     self.owner.canvas.delete(self.id2)
-#     self.kwargs2 = None
-#
-# class TypeMarker(CircleMarker):
-#   def __init__(self, owner, **kwargs):
-#     super().__init__(owner, **kwargs)
-#     self.kwargs2 = {"tags": [self.owner.tag], "fill": "grey", "outline": ""}
-#
-#   def setArgs(self):
-#     label = ""
-#     if self.owner.modelObject.isSystemObject():
-#       label += "S"
-#     if self.owner.modelObject.isType():
-#       label += "T"
-#     self.kwargs["text"] = label
-#     self.kwargs["fill"] = "lawn green"
-#
-#     self.kwargs2["fill"] = "black" if self.owner.modelObject.isSystemObject else "grey"
-#
-# class ErrorMarker(CircleMarker):
-#   def __init__(self, owner, **kwargs):
-#     super().__init__(owner, **kwargs)
-#     self.kwargs2 = {"tags": [self.owner.tag], "fill": "red", "outline": ""}
-#
-#   def setArgs(self):
-#     self.kwargs["text"] = "X"      
-#     self.kwargs2["fill"] = "red"
-    
 class Selected(Decorator):
   '''
   Marks the owner as selected with a small square handle at each corner of

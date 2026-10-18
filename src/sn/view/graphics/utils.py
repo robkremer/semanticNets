@@ -128,12 +128,10 @@ def pointInPoly(pt:Sequence[float], poly:Sequence[float]) -> bool:
   :return: *True* iff the give *pt* lies inside *poly*.
   :rtype: bool
   """
-  #import numpy as np
   import matplotlib.path as mplPath
   arr = []
   for i in range(0, len(poly), 2):
     arr.append((poly[i], poly[i+1]))
-  #bbPath = mplPath.Path(np.array(arr))
   bbPath = mplPath.Path(arr)
   return bbPath.contains_point(pt) # type: ignore[arg-type]
 

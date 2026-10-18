@@ -933,11 +933,6 @@ class FindFree(LayoutHeuristic):
     if direction == Direction.UNSPECIFIED:
       if loc is not None:
         direction = Direction.NEAREST
-      # elif isinstance(node, VIsa):
-      #   if referenceNode is not None and node.modelObject.to == referenceNode.modelObject:
-      #     direction = Direction.SUPER
-      #   else:
-      #     direction = Direction.SUB
       elif referenceNode is not None:
         if node.modelObject.isa(referenceNode.modelObject): # type: ignore[union-attr, arg-type]
           direction = Direction.SUB
@@ -948,7 +943,6 @@ class FindFree(LayoutHeuristic):
       else:
         direction = Direction.LATERAL
         
-    #direction = Direction.NEAREST # Get rid of this!!!! 
     assert direction != Direction.UNSPECIFIED   
         
     maxRings = 100 # (how far out to look for a free spot: see LABEL_PLACEMENT_PREF)

@@ -49,8 +49,6 @@ from util.terminal import TerminalWidget, PlainTextTerminal
 
 logger:sn.SNLogger = sn.getLogger(__name__)
 
-# CARRET      = "\u298A"
-# BACK_CARRET = "\u2989"
 CARRET      = "\u23F5"      
 BACK_CARRET = "\u23F4"
 RIGHT_ARROW = "\u279C"
@@ -278,40 +276,13 @@ def printLists(obj:Any, nCarrets=1, contextModel=None) -> str|None:
 class SNAbstractTerminal:
   
   def __init__(self, model:Model|str, context:ModelContext|None=None):
-    # # interpret the command line
-    # args:dict = {"suggest_on_error":True} if sys.version_info[0]>=3 and sys.version_info[1]>=14 else dict()
-    # commandLineParser = argparse.ArgumentParser(**args, description=\
-    #   '''Command line interface for Semantic Nets. Running this program (without
-    #   the "--" argument to execute a subcommand) runs in interactive command environment.''')
-    # commandLineParser.add_argument("--model", "-m", help=\
-    #   '''Set the default model for all commands. Default is whatever was last 
-    #   used by the program, or if that's not available, "temp.xml" in the 
-    #   current directory if it exists or created in memory if it doesn't exist.''')
-    # commandLineParser.add_argument("--verbose", "-v", action='store_true', 
-    #                                help="Print helpful info to debug the command line.")
-    # commandLineParser.add_argument("command", nargs="*", \
-    #                                help='Execute the command that follows "--" and exit.')
-    # commandLineParser.add_argument("--gui", "-g", action='store_true', 
-    #                                help=\
-    #   'Rather than run directy on the present terminal, run it in it\'s own separate window.')
-    # namespace:argparse.Namespace = commandLineParser.parse_args()
-    #
-    # if namespace.verbose:
-    #   print("Command line:")
-    #   for k,v in vars(namespace).items():
-    #     if k == "command":
-    #       v = " ".join(v)
-    #     print(f'  {k:>10}: {v}')
-    
-    # get *modelName*: the default model from command line or prefs
-    
-    
     '''
     :param model:
     :type model: Model | str
     :param context:
     :type context: ModelContext | None
     '''
+    # get *model*: the default model from command line or prefs
     if model is None:
       model = cast(str, sn.snPrefs.get("model/defaultModel", storeDefault="temp.xml", storeType=str))
     if isinstance(model, str):
@@ -325,18 +296,8 @@ class SNAbstractTerminal:
       assert isinstance(context, ModelContext)
       assert context.defaults["model"] == model
       self.context = context
-  
-    #  if there is an command after "--" on the command line, execute it and exit.
-    # command = namespace.command
-    # if len(command) > 0:
-    #   if namespace.verbose:
-    #     printBanner()
-    #   result = context.parser.parse(command)
-    #   printLists(result, contextModel=context.defaults["model"])
-    #   exit()
     
     self.printBanner()
-    #context.defaults["model"].isDirty()
 
   def printBanner(self):
     print(f'{sn.NAME} {sn.VERSION} command line interface under Python {sys.version_info[0]}.{sys.version_info[1]}.{sys.version_info[2]}') #type: ignore[attr-defined]

@@ -68,7 +68,6 @@ from util.abstractGraph import AbstractGraph
 from util.dirtyable import Dirtyable
 from copy import copy
 from collections import namedtuple
-#from sn.view.graphics.vobjects import VObject
 
 logger:sn.SNLogger = sn.getLogger(__name__)
 
@@ -104,7 +103,6 @@ KEY_ZOOM_NORMAL =           ('<Command-KeyPress-0>'       , 'Command-0')
 KEY_ZOOM_FIT =              ('<Command-KeyPress-9>'       , 'Command-9')
 
 class SNGContext(UIContext):
-  #from sn.view.graphics.vobjects import VObject
   @override
   def __init__(self, model:Model, view:SNGView):
     '''
@@ -441,8 +439,6 @@ class SNGContext(UIContext):
         assert isinstance(temp, GraphObject)
         self.modelObjects.append(temp)
       self.vobjects:list[VObject] = []
-          
-        #assert isinstance(n, GraphObject), f'Expected GraphObject, got {type(n)}.'
   
     @override
     def do(self) -> None:
@@ -493,7 +489,6 @@ class SNGContext(UIContext):
       :returns: A readable string for this object.
       :rtype:
       '''
-      params = ' '.join([mo.name for mo in self.modelObjects])
       return f'{super().__str__()} {" ".join([mo.name for mo in self.modelObjects])} --view {self.view}'
 
 
@@ -1095,7 +1090,6 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
   The persistent container of VObjects.
   '''
 
-  # makingRelationData = namedtuple('makingRelationData', 'originNode typ lineID')
   ElasticLineChoiceData:tuple[VObject, int, Callable[[VObject],bool], Callable[[VObject,VObject],Any]] \
             = namedtuple('ElasticLineChoiceData', 'originNode lineID filter callback onEmpty', defaults=(None,))
 
@@ -1180,7 +1174,6 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     self._closed:bool = False
     "Set when the view's window is closed (see *detachFromModel()*): it then ignores the model's updates."
     
-    # self.context._setView(self) # make this view the view of the context. #TODO: hackey ...
     self.selected:set[VObject] = set()
     'The set of currently selected VObjects.'
     self._suppressLocalLayout = False
@@ -1309,7 +1302,6 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       slf.__dict__["_firstDrawsDeferred"] = True
       slf.canvas.after_idle(lambda slf=slf: [slf.applyVisibility(), slf._restoreAnimationState(), slf._restoreLayoutState(), slf._restoreLayoutPanel(), slf._drawAllAfterRead(), slf.canvas.after_idle(slf._pinRelationTypes), slf.resetScrollRegion(), slf._restoreViewport(), slf.setDirty(False)]) # type: ignore[misc]
     ret:InstantiationInfo = super().getInstantiationInfo()
-    # ret.class_ = cls
     # (its model's URL relative to the view's file if they're side by side -- see PRDb.relativeURL() -- so
     # a view and model copied together stay together; a relative URL is resolved against the view's file on reading)
     def readModel(m:Any) -> Model: # (one already in memory -- eg: the system model, sn, which has no file -- as is)
@@ -2805,7 +2797,6 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       for obj in self.values():
         if obj is not None and mObject(obj):  # already displayed?
           return obj
-    # raise AttributeError(f'Expected a param of type GraphObject, but got type {mObject.__class__.__name__}')
     return None
 
   def viewObjectsFor(self, mObject:GraphObject) -> list[VObject]:
@@ -2894,8 +2885,6 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     self.__dict__["_nextGridPoint"] = nextPoint
     try:
       for mnode in self.model.values():
-        # if self.categories.isCategory(mnode, self.hiddenCategories):
-        #   continue
         if self.isFiltered(mnode):
           continue
         vObj = self.findViewObjectForGraphObject(mnode)
@@ -2904,54 +2893,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
           self.localLayout(n)
     finally:
       del self.__dict__["_nextGridPoint"]
-    # for mrel in self.model.relations:
-    #   if self.categories.isCategory(mrel, self.hiddenCategories) or \
-    #       all(map(lambda obj: self.categories.isCategory(obj, self.hiddenCategories), 
-    #               map(lambda role: role["filler"], list(chain(mrel.roles.values()))))):
-    #     continue  
-    #   vObj = self.findViewObjectForGraphObject(mrel)
-    #   if vObj is None:
-    #     try:
-    #       r = self.makeViewObjectForGraphObject(mrel)
-    #       self.localLayout(r)
-    #     except Exception as ex:
-    #       logger.write(f'Could not instantiate VObject for {type(mrel).__name__} {mrel.idString} "{mrel["label"]}": {type(ex).__name__}("{ex}")', level='warning', exception=ex)
 
-
-# class SNCanvas(tk.Canvas):
-#   '''
-#   classdocs
-#   '''
-#
-#   def __init__(self, master:SNGViewFrame, **kwargs):
-#     '''
-#     Constructor
-#     '''
-#     #assert isinstance(master, SNGViewFrame), f'Expected SNGViewFrame, got {type(master)}'
-#     tk.Canvas.__init__(self, master, kwargs)
-#     self.create_text(10, 10, text=f'Model: {self.model}')
-#     #self.after(30, print, "hello from the graphics display")
-#
-#     self._scale:float = 1.0
-#     self._fontFace:str = "Arial"
-#     self._fontSize:float = 10.0
-#
-#     self._eventHandled:Optional[tk.Event] = None
-#     "Set by a contained VObject/item-level handler (via addEventHandled()) to mark that it already handled a mouse event, so this canvas's own (separately-dispatched) widget-level binding for the same event -- e.g. onRightMouse() -- can skip its generic handling. See isEventHandled()/addEventHandled()/removeEventHandled()."
-#
-#     self.makeBindings()
-#     self._drawVersion:int = 0
-#     self.scrollRegion:tuple = (0, 0, 4000, 3000)
-#
-
-  # @property
-  # def model(self) -> Model:
-  #   return cast(SNGViewFrame, self.master).model
-  #
-  # @property
-  # def context(self) -> ModelContext:
-  #   return cast(SNGViewFrame, self.master).context
-    
   # ---- Event handling --------------------------------------------------------
 
   def makeBindings(self):
@@ -3000,12 +2942,6 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
 
     # find objects by name
     self.canvas.bind(KEY_FIND[0], lambda _e: self.openSearchDialog())
-    
-    # # validate
-    # self.canvas.bind(KEY_VALIDATE[0], lambda _x: self.validate(refresh=True))
-    #
-    # # fields layout
-    # self.canvas.bind(KEY_TOGGLE_FIELDS_LAYOUT[0], lambda _x: self.onToggleFieldsLayout())
 
   def onEnter(self, _event:tk.Event) -> None:
     '''
@@ -3507,35 +3443,6 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       self.removeEventHandled(event)
       return None
     
-    # # Handle elastic line object selection for making a Relation
-    # if self._makingRelationFrom is not None:
-    #   self.canvas.delete(self._makingRelationFrom.lineID)
-    #   ids = self.canvas.find("closest", self.canvas.canvasx(event.x), self.canvas.canvasy(event.y))  # find selected objects
-    #   typeList:list[VObject]
-    #   if isinstance(self._makingRelationFrom.node, VRelation):
-    #     typeList = [r for r in self._db.values() if isinstance(r,VRelation)]
-    #   elif isinstance(self._makingRelationFrom.node, VNode):
-    #     typeList = [r for r in self._db.values() if isinstance(r,VNode)]
-    #   else:
-    #     typeList = []
-    #   item = None
-    #   for n in typeList:
-    #     for _id in ids:
-    #       tags = self.canvas.gettags(_id)
-    #       if n.tag in tags:
-    #         item = n  # this object is selected
-    #         break
-    #     else:
-    #       continue  # only executed if the inner loop did NOT break
-    #     break  # only executed if the inner loop DID break
-    #   if item is not None:
-    #     logger.debug(f"making relation from {self._makingRelationFrom.node} to {item} of type {self._makingRelationFrom.typ}.")
-    #     self.makeRelation(self._makingRelationFrom.node, item, self._makingRelationFrom.typ)
-    #   else:
-    #     logger.debug("Relation's toNode must match the being a node/relation with the from Node.")
-    #   self._makingRelationFrom = None
-    #   return
-      
     # Handle elastic line object selection for making a Relation
     if self._elasticLineChoiceData is not None:
       self.canvas.delete(self._elasticLineChoiceData.lineID)
@@ -3638,10 +3545,6 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       
     
     if typ is None or (isinstance(typ, Relation) and typ.isType()):
-      # lineID = self.canvas.create_line(
-      #   self.viewToWindow(flattenPairs([node.centerPt(), node.centerPt()])),
-      #   fill="cyan", width=3, arrow=tk.LAST)
-      # self._makingRelationFrom = SNGView.makingRelationData(node, typ, lineID)
       # Dropped on empty space: a relation with no destination of its own -- it
       # inherits its type's range ("John -has-> <some phone>"). Not for isa:
       # an isa link needs both ends.
@@ -3685,22 +3588,13 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
         logger.error(f'"{end.name}" is inferred: mark it as asserted to relate it.')
         return
     try:
-      # rel:GraphObject
-      # if typ is self.model.ISA: #isinstance(typ, IsaIndividual):
-      #   rel = IsaIndividual(self.model, src=fromNode.modelObject, dst=toNode.modelObject)
-      # else:
-      #   rel = Relation(self.model, parents=[typ], 
-      #                  src=fromNode.modelObject, dst=toNode.modelObject, 
-      #                  individual=True)
-      # self.makeViewObjectForGraphObject(rel)
       with CompositeCommandMgr(self.context) as mgr: # (one undo, with any containment it lands in)
         self.context.new_relation([typ], individual=True, destination=None if toNode is None else toNode.modelObject,
                                   source=fromNode.modelObject, model=self.model)
         if toNode is not None and mgr.commands:
           self._containNewRelation(mgr, mgr.commands[-1], typ, fromNode, toNode)
-    except Exception as ex:
+    except Exception:
       logger.exception("SNView.makeRelation():")
-#       raise ex
 
   def isFiltered(self, mo:GraphObject, modes:Iterable[str]=("hide", "erase")) -> bool:
     '''
@@ -4752,8 +4646,6 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
       modelEditMenu.add_command(label="paste here", command=lambda: self.doPaste(at=(clickAt[0], clickAt[1])),
                                 state=tk.NORMAL if copying.clipboard is not None else tk.DISABLED)
       modelEditMenu.add_separator()
-      # bgMenu.add_cascade(label="new instance of Collection", menu=makeModelSubmenu(individual=True, ptype=Collection))
-      # bgMenu.add_cascade(label="new subtype of Collection", menu=makeModelSubmenu(individual=False, ptype=Collection))
     if snPrefs.get("gui/debugMenus", storeDefault=False, storeType=bool):
       modelEditMenu.add_command(label="validate", command=lambda o=self: o.context.view.validate(refresh=True), accelerator=KEY_VALIDATE[1]) #type: ignore[misc]
     modelEditMenu.add_command(label="refresh all caches", command=self.refreshAllCaches)
@@ -4785,46 +4677,6 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     reasonMenu.add_command(label="reason silently", command=self.reasonSilently)
     reasonMenu.add_command(label="clear reasoning", command=self.clearReasoning,
                        state=tk.NORMAL if self.reasoning is not None else tk.DISABLED)
-    # bgMenu.add_command(label="toggle field layout", command=self.onToggleFieldsLayout, accelerator=KEY_TOGGLE_FIELDS_LAYOUT[1])
-    # bgMenu.add_command(label="show animation controls", command=self.onShowAnimationControls)
-    # # from sn.view.animatedLayouts import testBones
-    # # bgMenu.add_command(label="test bones", command=lambda s=self: testBones(s))
-    #
-    
-    # "hide/enable" menu
-    # hideEnableMenu = tk.Menu(self)
-    # for name in self.categories.keys():
-    #   hideEnableMenu.add_command(label=f'{"enable" if name in self.hiddenCategories else "hide"} {name}',
-    #       command = lambda n=name: self.toggleCategory(n))
-    # bgMenu.add_cascade(label="hide/enable", menu=hideEnableMenu)
-    # bgMenu.add_separator()
-    
-    # "local layout" menu
-    # localLayoutsMenu = tk.Menu(self)
-    # self.suppressLocalLayoutButton = tk.BooleanVar(value=self._suppressLocalLayout)
-    # self.radio = tk.StringVar(value=self.localLayoutName)
-    # for name, obj in self.layoutObjects.items():
-    #   if obj.isLocal():
-    #     localLayoutsMenu.add_radiobutton(label=name, variable=self.radio, value=name, \
-    #         command=lambda lo=obj, name=name: self.setLocalLayout(lo, name=name))
-    # localLayoutsMenu.add_separator()
-    # localLayoutsMenu.add_checkbutton(label="suppress autolayout", variable=self.suppressLocalLayoutButton,
-    #     onvalue=True, offvalue=False,
-    #     command=lambda val=not self.suppressLocalLayout(): self.suppressLocalLayout(val))
-    # bgMenu.add_cascade(label="local layout", menu=localLayoutsMenu)
-    
-    # "global layout" menu
-    # layoutsMenu = tk.Menu(self.canvas)
-    # for name, obj in self.layoutObjects.items():
-    #   if obj.isGlobal() and not obj.isLocal():
-    #     layoutsMenu.add_command(label=name, command=obj)
-    # layoutsMenu.add_separator()
-    # for name, obj in self.layoutObjects.items():
-    #   if obj.isGlobal() and obj.isLocal():
-    #     layoutsMenu.add_command(label=name, command=obj)
-    # bgMenu.add_cascade(label="global layout", menu=layoutsMenu)
-    # bgMenu.add_command(label="reset scroll region", command=self.setScrollRegion)
-
 
     return bgMenu
 
@@ -5089,7 +4941,6 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     """
     if len(args) == 1 and isinstance(args[0], Iterable):
       args = args[0] # type: ignore[assignment]
-    #assert len(args) % 2 == 0, f'args = {args}'
     ret = []
     for n in args:
       ret.append(n * self._scale)
@@ -5107,7 +4958,6 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     """
     if len(args) == 1 and isinstance(args[0], Iterable):
       args = args[0] # type: ignore[assignment]
-    #assert len(args) % 2 == 0, f'args = {args}'
     ret = []
     for n in args:
       ret.append(n / self._scale)

@@ -70,7 +70,6 @@ from util.utils import removeDuplicates, delOne, extendsDoc
 from typing import override, cast, Generator, Callable, Optional,\
   Iterable, overload, Iterator, Any
 from util.attribute import AttributedObject, Attribute, NOVALUE, coerceValue
-#from docutils.nodes import description
 from util.observer import Subject
 import sn
 from util.dirtyable import Dirtyable

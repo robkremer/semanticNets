@@ -1037,20 +1037,6 @@ class AppWindow(tk.Toplevel):
     self.appPanedWidget.pack(fill=tk.BOTH, side=tk.RIGHT, expand=True, padx=0, pady=0)
 
     self.option_add('*tearOff', tk.FALSE)
-    # self.tkTop.protocol("WM_DELETE_WINDOW", self.onClosing)
-
-    # This window's terminal is the single routing target for BOTH the
-    # SNTerminalWidget itself and the graphics editor (SNGFrame) — bind
-    # focus on every widget in the window (not just the terminal) so that
-    # clicking into the graphics editor also makes its output land here.
-    # terminal = self.appPanedWidget.textDisplayFrame
-    # self._bindFocusRouting(self, terminal)
-
-    # Also register this window/terminal pair directly, independent of Tk
-    # focus — lets TerminalRegistry's active-window fallback (wm stackorder)
-    # find this terminal even for interactions (e.g. SNCanvas's right-click
-    # popup menu) that never move Tk's logical keyboard focus at all.
-    #self._root().terminalRegistry.registerWindow(self, terminal)
 
     self._bindFocusTracking(self)
 
@@ -1191,7 +1177,6 @@ class AppPanedWidget(tk.PanedWindow):
     if "handlesize" not in kwargs: kwargs["handlesize"] = 8
     if "sashwidth" not in kwargs: kwargs["sashwidth"] = 6
     if "sashrelief" not in kwargs: kwargs["sashrelief"] = "ridge"  # "groove"#"sunken"#
-    #if "bd" not in kwargs: kwargs["bd"] = 20
     if "bg" not in kwargs: kwargs["bg"] = "darkgrey" #lightgrey"
     if "borderwidth" not in kwargs: kwargs["borderwidth"] = 0
 
@@ -1221,7 +1206,6 @@ class AppPanedWidget(tk.PanedWindow):
     # (runBackgroundWork below) without having to walk back up through
     # winfo_toplevel()/_root() to find them.
     self.canvasFrame.registry = terminalRegistry
-    # self.canvasFrame.terminal = self.canvasFrame.terminal
 
     self.pack(fill=tk.BOTH, expand=True)
 

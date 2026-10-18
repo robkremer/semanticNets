@@ -373,16 +373,11 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     self.tag = f"VO{next(VObject._tagCounter)}"
     "This object's canvas tag: every canvas item drawn for it carries it. Deliberately NOT derived from *self._id*, which loading a view from a file may change after construction."
     
-    # self.relations:list[VRelation] = []
-    # 'CAUTION: This list of referenced relations MUST have exactly a one-to-one relation with every connecting role of every connecting relation.'
-    
     self.decorators:dict[str, Decorator] = dict()
     self.makeDecorators()
     
     if self.modelObject is not None:
       self.modelObject.addObserver(self)
-    # if _id is None: # being created by the user (not reading from persistent store)
-    #   self._post__init__()
     
     self.validate()
     
@@ -408,12 +403,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     self.view.freshPaint()
     self.draw()
     self.makeBindings()
-    
-  # def _post__init__(self):
-  #   self.view.freshPaint()
-  #   self.draw()
-  #   self.makeBindings()
-  #   #self.adjustPos()
     
   # ---- PERSISTENCE -----------------------------------------------------------
     
@@ -455,8 +444,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     '''
     n = "?" if self.modelObject is None else self.modelObject["name"]
     return str(n)
-    # assert n is None or type(n) is str, f'Expecting type str|None, got {n.__class__.__name__}'
-    # return "" if n is None else n
     
   @property
   def modelObject(self) -> GraphObject|None:
@@ -465,15 +452,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     :rtype: GraphObject
     :raises ReferenceError: if there is not corresponding model object (deleted?)
     '''
-    # try:
-    #   ret:GraphObject|None = self._modelObject
-    #   assert isinstance(ret, GraphObject)
-    # except:
-    #   logger.exception("Can't access model object.")
-    #   ret = None
-    # if ret is None:
-    #   raise ReferenceError("model object not found.")
-    # return ret
     return self._modelObject
   
   @property
@@ -532,8 +510,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         if bb[3]-bb[1] < minY:
           bb[3] = bb[1]+minY
       
-      # self.view.freshPaint()
-      # self.draw()
       self.setDirty()
 
     return self._boundingBox
@@ -919,7 +895,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         self._shape.draw()
         self.canvas.lift(newShape.id, oldShape.id)
         oldShape.delete()
-        #self.updateFromAttrs(['vis/fillColor', 'vis/borderColor'])
         self.makeBindings()
       self.setDirty()
     return type(self._shape).__name__ if self._shape is not None else None
@@ -937,25 +912,17 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       """
       if getattr(self.view, "_closed", False): # (sent before the view's window closed: see SNGView.detachFromModel())
         return
-      rm = False # flag for checking if "rm" is one of the topics
       try: # if this is a deletion, the object will fail validation on access
         assert subject is self.modelObject
-      # except DeletedObjectError as ex:
-      #   #assert subject is self._modelObject() #access without the checks
-      #   #subject = subject()
-      #   rm = True
-      #   rmEx = ex
-      except Exception as ex:
+      except Exception:
         logger.exception(f'{self.name}.update({subject}, {topics}): Unexpected subject.')
         return
-      #logger.info(f"VObject.update({subject}, {topics}): executing.")
       vChanged = False
       for topic in topics:
         topicName = topic[0]
         if topicName == "new attribute" or topicName == "mod attribute": # no point in changing an object we're removing!
           attname, value = topic[1]
           if attname in VATTRIBUTES:
-            #self.cache.refresh(attname)
             self.cache[attname] = value
             vChanged = True
           else: # (the label may show any attribute: see labelText())
@@ -975,10 +942,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         else:
           logger.warning(f'{self.name}: Unknown update({self.modelObject.name}, {topic})')
         
-      
-      # if rm: # we had a DeletedObjectError WITHOUT a "rm" topic -- something's wrong
-      #   raise rmEx # is only in scope if rm is True
-            
       if vChanged:
         self.view.freshPaint()
         self.draw() 
@@ -1081,8 +1044,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     self.canvas.tag_bind(bindObj, "<Double-Button-1>", self.onDouble_1)
     self.canvas.tag_bind(bindObj, "<Enter>", self.onEnter)
     self.canvas.tag_bind(bindObj, "<Leave>", self.onLeave)
-  # self.tooltip = CreateToolTip(self.canvas, self.tooltipFunc, bindObj, 
-    #                              waitTime=1000, wrapLength=250, background="#FFFFC0")
     self.tooltip = CreateToolTip(self.canvas, self.tooltipFunc, self._shape.id, 
                                  waitTime=1000, wrapLength=self.tooltipWrap, background="#FFFFC0", # type: ignore[arg-type] # (CreateToolTip takes a callable too)
                                  font=self.tooltipFont)
@@ -1178,7 +1139,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     if self.view.grabTerminalNear(event):
       return 'break'
     self.view.addEventHandled(event)
-    #print(f'onButton_1() event x={event.x}, y={event.y}, selected={self.selected()}')
     winX = self.canvas.canvasx(event.x) # convert widget-relative coords to canvas coords (accounts for scroll position)
     winY = self.canvas.canvasy(event.y)
     r = self.boundingBox()
@@ -1236,7 +1196,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       # step, which (positions being whole numbers) loses the fractions, and
       # the object falls behind the pointer.
       dX, dY = self.view.windowToView(winX - self.dragInfo[2], winY - self.dragInfo[3])
-      #print(f'onB1_Motion() event({event.x},{event.y}), d=({dX},{dY}), selected={self.selected()}')
       self.view.freshPaint()
       # allowOverScrollRegionSE=True: a live drag needs to actually be able to
       # cross the SE edge of the current scroll region -- moveTo() otherwise
@@ -1247,8 +1206,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         n.moveTo(round(start[0] + dX), round(start[1] + dY), adjustPos=False, fast=False, allowOverScrollRegionSE=True)
       self.dragInfo = (*self.dragInfo[:4], True) # x,y,press-x,press-y,drag-motion-event-occurred
       return 'break'
-    #else:
-      #print(f'non-drag onB1_Motion() event x={event.x}, y={event.y}')
 
 
   def onDouble_1(self, event):
@@ -1288,7 +1245,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     :returns:
     :rtype:
     """
-    #from sn.view.vcommands import MoveCommand
     # Whatever the press was for, put back the suppression state it changed
     # (see onButton_1()) -- for a click too, and for the second press of a
     # double-click (which clears dragInfo): left suppressed, the animation
@@ -1313,15 +1269,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     if self.dragInfo is not None:
       self.view.addEventHandled(event)
       if self.dragInfo[4]: # indicated there was a <B1_Motion> event, ie: this was a drag: wrap up a move.
-        # if False: #self.canvas.fieldsLayoutObj.active:
-        #   bb = self.boundingBox()
-        #   x, y, _, _ = bb
-        #   if self.overlaps(bb, spacing=[20,10]):
-        #     self.canvas.fieldsLayoutObj(self)
-        # else:
-        #   x, y = self.adjustPos()
-        # #record a move command
-        # self.canvas.doList.do(MoveCommand(self, (x, y), (self.dragInfo[0], self.dragInfo[1]), suppressFirst=False))
         # If this was a multi-selection drag, onB1_Motion() moved every object
         # in self.view.selected (not just self) via its own dX/dY loop. Only
         # ever committing self's final position here left the other selected
@@ -1450,11 +1397,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       m.add_command(label="(the model can't be changed in this view)", state=tk.DISABLED)
       m.add_separator()
     self.addViewMenuItems(m)
-    # m.add_separator()
-    # self.addDeletionMenuItems(m)
-    # if app.DEBUG_MENUS:
-    #   m.add_separator()
-    #   m.add_command(label='validate', command=self.validate)
     if len(self._statusReport)>0:
       def show(slf):
         pass
@@ -1477,14 +1419,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       m.add_command(label="refresh cache", command=refreshCache)
     return m
     
-  # def _setCatchNewObjects(self):
-  #   self._oldCatchNewObjects = self.canvas.shouldCatchNewObjects
-  #   self.canvas.shouldCatchNewObjects = True
-  #
-  # def _resetCatchNewObjects(self):
-  #   self.canvas.shouldCatchNewObjects = self._oldCatchNewObjects
-  #
-
   def _systemLocked(self) -> bool:
     '''
     :returns: Whether its model object can't be edited here: it's a system
@@ -1772,99 +1706,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     raise NotImplementedError("Must implement VObject.makeSubtypeMenuItemFun().")
     
   def addViewMenuItems(self, menu:tk.Menu):
-    # from sn.view.vcommands import ExpandCommand, RemoveFromViewCommand
-    # INSTANCE = "IsaIndividual (instance)"
-    # SUBTYPE = "IsaIndividual (subtype)"
-    # collect info about the relations
-    # types = dict()  # {name: (modelOutgoingCount, modelIncomingCount, 
-    #         #         viewOutgoingCount,  viewIncomingCount,  otherIsaTypeCount)}
-    # types[INSTANCE] = (0,0,0,0)
-    # types[SUBTYPE]  = (0,0,0,0)
-    # total = (0,0)
-    # for rr in self.modelObject.referencers:
-    #   # get the VNode that matches the Node (if any)
-    #   r = rr() # resolve the lazy reference
-    #   vRelation = None
-    #   for rv in self.relations:
-    #     if rv.modelObject is r:
-    #       vRelation = rv
-    #       break
-    #
-    #   # abort if this relation (r) is in a hidden category
-    #   if self.canvas.categories.isCategory(r, self.canvas.hiddenCategories): continue
-    #
-    #   name = r.name
-    #   if name != "IsaIndividual":
-    #     if name not in types: # add the name of the relation upon encountering a new one
-    #       types[name] = (0,0,0,0)
-    #     t = types[name]
-    #   if r.to is self.modelObject: # we're the toNode: increment incoming model and (maybe) view count 
-    #     if name == "IsaIndividual":
-    #       name = SUBTYPE if r.from_['type'] else INSTANCE
-    #       t = types[name]
-    #     t = (t[0], t[1]+1, t[2], t[3]+(0 if vRelation is None else 1))
-    #   else: # we're the froNode: increment outgoing model and (maybe) view count
-    #     if name == "IsaIndividual":
-    #       name = SUBTYPE if r.to['type'] else INSTANCE
-    #       t = types[name]
-    #     t = (t[0]+1, t[1], t[2]+(0 if vRelation is None else 1), t[3])
-    #   types[name] = t
-    #   total = (total[0]+1, total[1]+(0 if vRelation is None else 1))
-    # if types[INSTANCE] == (0,0,0,0): del types[INSTANCE]
-    # if types[SUBTYPE]  == (0,0,0,0): del types[SUBTYPE]
-    #
-    # # the expand menus
-    # expMenu = tk.Menu(menu)
-    # for k,v in types.items():
-    #   subMenu = tk.Menu(expMenu)
-    #   if v[0] > 0:
-    #     if k == INSTANCE:
-    #       filtr = lambda vn, mr: \
-    #               mr.name == "IsaIndividual" and vn.modelObject is mr.from_ and not mr.to['type']
-    #     elif k == SUBTYPE:
-    #       filtr = lambda vn, mr: \
-    #               mr.name == "IsaIndividual" and vn.modelObject is mr.from_ and mr.to['type']
-    #     else:
-    #       filtr = lambda vn, mr, label=k: \
-    #               mr.name == label and vn.modelObject is mr.from_
-    #     subMenu.add_command(label=f'outgoing ({v[0]})', \
-    #         command=lambda f=filtr: self.canvas.doList.do(ExpandCommand(self, filtr=f)))
-    #   if v[1] > 0:
-    #     if k == INSTANCE:
-    #       filtr = lambda vn, mr: \
-    #               mr.name == "IsaIndividual" and vn.modelObject is mr.to and not mr.from_['type']
-    #     elif k == SUBTYPE:
-    #       filtr = lambda vn, mr: \
-    #               mr.name == "IsaIndividual" and vn.modelObject is mr.to and mr.from_['type']
-    #     else:
-    #       filtr = lambda vn, mr, label=k: \
-    #               mr.name == label and vn.modelObject is mr.to
-    #     subMenu.add_command(label=f'incoming ({v[1]})', \
-    #         command=lambda f=filtr: self.canvas.doList.do(ExpandCommand(self, filtr=f)))
-    #   if v[0] > 0 and v[1] > 0:
-    #     if k == INSTANCE:
-    #       filtr = lambda vn, mr: \
-    #               mr.name == "IsaIndividual" and not mr.from_['type']
-    #     elif k == SUBTYPE:
-    #       filtr = lambda vn, mr: \
-    #               mr.name == "IsaIndividual" and mr.from_['type']
-    #     else:
-    #       filtr = lambda vn, mr, label=k: \
-    #               mr.name == label
-    #     subMenu.add_command(label=f'both ({v[0]+v[1]})', \
-    #         command=lambda f=filtr: self.canvas.doList.do(ExpandCommand(self, filtr=f)))
-    #   subMenu.add_separator()
-    #   for mrr in self.modelObject.referencers:
-    #     mr = mrr()
-    #     if k in [INSTANCE, SUBTYPE]: name = "IsaIndividual"
-    #     else: name = k
-    #     if mr.name == name:
-    #       arrow = '->' if mr.from_ is self.modelObject else '<-'
-    #       other = mr.to if mr.from_ is self.modelObject else mr.from_
-    #       filtr = lambda vn, mr, theMr=mr: mr is theMr
-    #       subMenu.add_command(label=f'{k} {arrow} {other.name}',
-    #             command = lambda f=filtr: self.canvas.doList.do(ExpandCommand(self, filtr=f)))
-    #   expMenu.add_cascade(menu=subMenu, label=f'expand {k} relations ({v[0]+v[1]})')
     '''
     :param menu:
     :type menu: tk.Menu
@@ -1980,11 +1821,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     if notIsIsa and self.modelObject is not None and self.modelObject.isType() and \
         snPrefs.get("gui/shadowTypes", storeDefault=True, storeType=bool): # (its note: see sn.PREFS)
       self.decorators["shadow"] = ShadowDecorator(self)
-    # try:
-    #   if self.modelObject.isType() or self.modelObject.isSystemObject:
-    #     self.decorators["typeMarker"] = TypeMarker(self)
-    # except Exception as ex:
-    #   self.canvas.logger.write(f"failed to make 'typeMarker': {type(ex).__name__}: {ex}.", level="warning", exception=ex)
 
   def draw(self, fast=False, **kwargs):#, rect=None):
     '''
@@ -2076,20 +1912,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       # regardless of adjustPos used to make that call a complete no-op, so
       # two objects dropped on top of each other would just stay stacked.
       return
-    # sr = self.view.scrollRegion
-    # if x<sr[0]: x = sr[0]
-    # if y<sr[1]: y = sr[1]
-    # if not allowOverScrollRegionSE:
-    #   if x+bb[2]-bb[0]>sr[2]: x = sr[2]-(bb[2]-bb[0])
-    #   if y+bb[3]-bb[1]>sr[3]: y = sr[3]-(bb[3]-bb[1])
     self.boundingBox([x, y, x+bb[2]-bb[0], y+bb[3]-bb[1]])
     if adjustPos:
       #The traditional way 
       self.adjustPos(fast=fast)
-      
-      # use the field animation layout
-      # if hasattr(self.canvas, "fieldsLayoutObj") and self.canvas.fieldsLayoutObj is not None and self.overlaps(spacing=[20, 10]):
-      #   self.canvas.fieldsLayoutObj.nextFrame(activeNodes=[self])
       
     if not fast:
       for r in self.relations:
@@ -2403,15 +2229,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         if name in self.cache:
           val = self.cache[name]
           tip += f'\n  "{name}": {str(val)} ({type(val).__name__})'
-      # if hasattr(self.cache, "_roles"):
-      #   tip += f'\n  "_roles": {str(self.cache._roles)}'
-      #   for r in self.cache._roles:
-      #     tip += f'\n  "_{r}__filler":'
-      #     if hasattr(self.cache, f'_{r}__filler'):
-      #       #tip += ": "
-      #       objs = getattr(self.cache, f'_{r}__filler')
-      #       for obj in objs:
-      #         tip += f' {obj.getRelativeStringInContext(self.canvas)},'
     return tip
   
   def notifyDecoratorDeletion(self, decorator):
@@ -2492,27 +2309,6 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         r.draw()
     self._detachedTypeEnds = []
 
-  # def setHidden(self, hide:bool=True):
-  #   '''
-  #   "Unhooks" ("rehooks") from the view's list of objects and sets the graphics objects to
-  #   state="hidden" ("normal"). Note that Nodes' .relations and Relations' arcs are not
-  #   updated.  
-  #   '''
-  #   if hide == self._hidden:
-  #     return
-  #   if hide:
-  #     if not self.isHidable():
-  #       logger.error("Cannot hid an object that has any non-individual relations.")
-  #     PRDb.remove(self.view, self._id) # both PRDb and SNCanvas have __setitem__()
-  #     self.canvas.itemconfigure(self.tag, state="hidden")
-  #   else:
-  #     PRDb.__setitem__(self.view, self._id, self) # both PRDb and SNCanvas have __setitem__()
-  #     self.canvas.itemconfigure(self.tag, state="normal")
-  #   self.setDirty()
-  #
-  # def isHidden(self):
-  #   return self._hidden
-  #
   def isHidable(self) -> bool:
     '''
     An object is "hidable" only if ALL it's relations are instances.
@@ -2520,21 +2316,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     :returns:
     :rtype: bool
     '''
-    # for r in self.relations:
-    #   if r.modelObject.isType() and not r.isHidden():
-    #     return False 
     return True
 
-  # ---- RELATIONS -------------------------------------------------------------
-
-  # def addRelation(self, relation): #, direction):
-  #   from sn.view.graphics.vrelations import VRelation
-  #   if not isinstance(relation, VRelation):
-  #     raise TypeError("VNode.addRelation(): first argument must be of type VRelation.")
-  #   self.relations.append(relation) #(relation, direction))
-  #   #  relation.model.addObserver(self) # observer the relation MODEL
-
-        
   # ---- Debugging support -----------------------------------------------------
   
   @override
@@ -2567,8 +2350,3 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     :rtype:
     '''
     return self.__str__()
-  
-  # def __hash__(self):
-  #   return hash(self.idString)
-    
-

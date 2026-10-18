@@ -52,12 +52,6 @@ class SNAttributedObject(AttributedObject):
     
   '''
 
-  # def __init__(self):
-  #   '''
-  #   Constructor
-  #   '''
-  #   super().__init__(self)
-
   @override
   def __setitem__(self, key:str, value:SerializableType)->None:
     '''

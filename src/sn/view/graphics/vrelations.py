@@ -22,7 +22,7 @@
 """
 vrelations.py
 
-Implements VRelation and VIsa classes.
+Implements the VRelation class.
 
   .. inheritance-diagram:: VRelation
       :parts: 3
@@ -138,8 +138,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
       if not isinstance(typ, Relation):
         raise TypeError(f'VRelation._init_(): "typ" argument a subtyp of Relation object; got object of class {typ(typ).__name__}.')
 
-    # self.init = {"typ": typ, "_bb": _bb}  # pass these parameters to self for _post__init__()      
-
     # *VRelation* inherits from both *VObject* and *AGRelation*, which both
     # in turn share *AGObject* as a common ancestor -- the same diamond shape
     # as *sn.model.model.Relation* (see its __init__ for the full
@@ -151,35 +149,18 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     super().__init__(view, x=x, y=y, x1=x1, y1=y1, shape=shape, modelObject=modelObject, src=None, dst=None)
     assert isinstance(self.modelObject, (Relation,NoneType))
  
-    # Done by AbstractGraph
-    # if not self.view.reading: # can't do an expansion while things aren't settled yet...
-    #   self._connect()
-          
     # (a relation type never floats: it has a place of its own, as a node does -- one read
     # from an old view that floated is pinned once the view's drawn: see SNGView._pinRelationTypes())
     isType = self.modelObject is not None and self.modelObject.isType()
     self._floatingAnchor = (True if floating is None else floating) and not (isType and (floating is None or not view.reading))
     place = isType and floating is None and x is None # (a new relation type: put between its ends once, then it stays)
-    # self._redrawExecuting = False
     
     # (not if it's been taken out of the view meanwhile: that would draw it again -- see VObject._firstDraw())
     # (nor while a view's being read: its label is where it was saved; if an end's size changes as it's first drawn, it repositions this then)
     self.canvas.after(0, lambda slf=self, place=place: slf.reposition(aggressive=True, place=place) #type: ignore[misc]
                       if slf._isConnected() and not slf.view.__dict__.get("_firstDrawsDeferred") and not slf.__dict__.get("_drawnWithView") else None)
-    # self.canvas.freshPaint()
-    # self.draw()
     self.connectInfo:ConnectorIDs|None = None
           
-  # def _post__init__(self):
-  #   """
-  #   If one or more of the terminal nodes' models had been deleted in the model, then
-  #   we will fail to get the address of the terminal nodes, in which case, we will throw
-  #   a KeyError exception.
-  #   """
-  #   if self.modelObject is not self.modelObject.container.relation:
-  #     self._connectRoles()
-  #   super()._post__init__()
-    
   @classmethod
   @override
   def getInstantiationInfo(cls)->InstantiationInfo:
@@ -366,47 +347,8 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
           else: # a circle terminator
             canvas.itemconfigure(i, outline=lineColor, fill=fillColor)
    
-    
-  # def _connectRoles(self):
-  #   '''
-  #   Establishes all the connectors for the VRelation, both in the view and in the
-  #   cache, based on it's referent *Relation* in the model by:
-  #
-  #     - makes sure every connected VOjbect is in the view
-  #     - adds *self* to the relations of those VObjects
-  #     - instantiates self.cache._roles to the list of roles in the model object
-  #     - instantiates all self.cache._<roleName>__filler to the list of fillers for each role name
-  #   '''
-  #   # roles = []
-  #   # for roleName, roleObj in self.modelObject.roles.items():
-  #   #   roleFillers = roleObj['filler']
-  #   #   roles.append(roleName)
-  #   #   nodes = []
-  #   #   for roleFiller in roleFillers:
-  #   #     mObj = roleFiller()  # PReference -> ModelBbject
-  #   #     node = self.canvas.makeViewObjectForGraphObject(mObj)
-  #   #     # nodes.append(weakref.ref(node))
-  #   #     nodes.append(node)
-  #   #     node.addRelation(self)
-  #   #   setattr(self.cache, f'_{roleName}__filler', nodes)
-  #   snode = self.view.makeViewObjectForGraphObject(self.modelObject.src)
-  #   self.src = snode
-  #   snode.dst = self
-  #
-  #   # setattr(self.cache, '_roles', roles)
-    
-  # def register(self):
-  #   self.canvas.relations.append(self)
-
-  # def makeDecorators(self):
-  #   from sn.view.decorators import Text, TypeMarker
-  #   self.decorators["text"] = Text(self, text=self.modelObject.name, fill="blue")
-  #   if self.modelObject.get("type") or self.modelObject.isSystemObject():
-  #     self.decorators["typeMarker"] = TypeMarker(self)
-
   ### DESTRUCTOR ########################################################################
 
-    
   def _getConnectedVObjects(self) -> List[VObject]:
     '''
     :returns:
@@ -436,35 +378,8 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     - The model is valid (calls *self.modelObject.validate()*\\ ).
     """
     self.errors = super().validate()
-    
-    # for roleName in (self.cache._roles if hasattr(self.cache, "_roles") else []):
-    #   fillers = getattr(self.cache, f'_{roleName}__filler')
-    #   for filler in fillers:
-    #     if isinstance(filler, PReference):
-    #       filler = filler()
-    #
-    #     if not isinstance(filler, VObject):
-    #       self.errors.append(f'{roleName}.filler containers item of type {filler.__class__.__name__}; should be a subtype of VObject.')
-    #     else:
-    #       if self.modelObject is not None and not isinstance(self.modelObject, Relation):
-    #         self.errors.append(f'self.modelObejct is of type "{self.modelObject.__class__.__name__}", but it should be of type Relation.') 
-    #       elif filler.modelObject not in map(lambda x: x(), self.modelObject[_toFillerAttrName(roleName)]):
-    #         self.errors.append(f'the filler "{str(filler.modelObject)}" at {id(filler.modelObject)} of role "{roleName}" does not occur in the corresponding model object ({str(self.modelObject[_toFillerAttrName(roleName)])} ({str(list(map(lambda x: id(x()), self.modelObject[_toFillerAttrName(roleName)])))})).') 
-          
-    # if errCount == 0:
-    #   if 'error' in self.decorators:
-    #     self.removeDecorator('error')
-    #     self.draw()
-    # elif 'error' not in self.decorators:
-    #   self.decorators['error'] = ErrorMarker(self)
-    #   self.draw()
     return self.errors
   
-  # ### ATTRIBUTES #######################################################################
-  #
-  # def notifyAttrChanged(self, attrsObj:AttributedObject, name:str, value:Any):
-  #   super().notifyAttrChanged(attrsObj, name, value)
-
   ### DECORATORS #######################################################################
 
   ### GETTERS AND SETTERS ##############################################################
@@ -493,114 +408,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
 
   ### DRAWING ##########################################################################
 
-  # @dataclass
-  # class RoleInfo:
-  #   vobject:weakref.ref  # VObject
-  #   nearPt:Optional[Tuple[int, int]] = None
-  #   farPt:Optional[Tuple[int, int]] = None
-  #   lineID:Optional[int] = None
-  #   nearShapeID:Optional[int] = None
-  #   farShapeID:Optional[int] = None
-  #   labelID:Optional[int] = None
-  #   mark:bool = False
-  #
-  #   def eraseView(self, canvas):
-  #     if self.lineID is not None: 
-  #       canvas.delete(self.lineID)
-  #       self.lineID = None
-  #     if self.nearShapeID is not None: 
-  #       canvas.delete(self.nearShapeID)
-  #       self.nearShapeID = None
-  #     if self.farShapeID  is not None: 
-  #       canvas.delete(self.farShapeID)
-  #       self.farShapeID = None
-  #     if self.labelID  is not None: 
-  #       canvas.delete(self.labelID)
-  #       self.labelID = None    
-    
-  # def updateRoleRelatedVObjects(self) -> dict[str, list[RoleInfo]]:
-  #   '''
-  #   :return: *self.roles*, which is a dict of <rolename> to a list of RoleInfo, which is a VObject with its
-  #       near- and far- connection points, etc
-  #
-  #   Collects the info from the model object and updates *self.roles*, adding any
-  #   new roles or objects connected with roles, updates the position of any
-  #   existing ones, and removeing any deleted roles or objects connected.
-  #   '''
-  #   for rilist in self.roles.values():
-  #     for ri in rilist:
-  #       ri.mark = False
-  #   showInheritedRoles = snPrefs.get("gui/showInheritedRoles", storeDefault=False)
-  #   #for k, v in   self.modelObject.items() if showInheritedRoles else self.modelObject._attrs.items():
-  #   for k, v in   self.modelObject.items() if showInheritedRoles else self.modelObject.get.items():
-  #     if k.endswith(".filler"):  # iterating the rolenames
-  #       if not showInheritedRoles:
-  #         v = v.value
-  #
-  #       roleName = k[1:-7]
-  #
-  #       # add the roleName to self.roles if it isn't already there
-  #       if roleName not in self.roles:
-  #         self.roles[roleName] = []
-  #
-  #       # get all the referenced VObjects
-  #       vObjs = []
-  #       for ref in v:
-  #         vObjs.append(self.canvas.makeViewObjectForGraphObject(ref()))
-  #
-  #       # mark the objects in self.roles so we don't delete it
-  #       for o in vObjs:
-  #         role = [r for r in self.roles[roleName] if r.vobject() is o]
-  #         if len(role) == 0:  # add the object to the role if necessary
-  #           role = VRelation.RoleInfo(weakref.ref(o))
-  #           self.roles[roleName].append(role)
-  #         else:
-  #           assert len(role) == 1
-  #           role = role[0]
-  #         role.mark = True
-  #
-  #       # delete any outdated items from self.roles (removing the graphics from the canvas) 
-  #       for r in self.roles[roleName]:
-  #         if r.mark:
-  #           r.mark = False
-  #         else:  # delete from this role's list
-  #           r.eraseView(self.canvas.canvas)
-  #           self.roles[roleName].remove(r)
-  #
-  #   self._findPoints(self.roles)
-  #   return self.roles
-  #
-  # def _findPoints(self, roles:dict[str, list[RoleInfo]]):
-  #   '''
-  #   :param roles: a dict of list of RoleInfo to fill out the RoleInfo points information
-  #     based on the each RoleInfo's vobject.
-  #   :return: The parameter with the points info filled out.
-  #
-  #   The points info that this method fills out accounts for multiple roles that 
-  #   refer to the same *VObject* by shifting the endponts, by 4 in the x or y 
-  #   direction to avoid overdrawing lines.
-  #   '''
-  #   objCounts:dict[int, int] = dict()  # dict[id:count] count the objects we are drawing to so that we can avoid drawing lines over one another
-  #   for infoList in roles.values():
-  #     for info in infoList:  # count this object so that we can avoid drawing lines over one another
-  #       if info.vobject() is None:  # TODO: Need to delete this component...
-  #         pass
-  #       if id(info.vobject()) in objCounts:
-  #         objCounts[id(info.vobject())] += 1
-  #       else:
-  #         objCounts[id(info.vobject())] = 1 
-  #
-  #       info.nearPt, info.farPt = self.findEndPoints(self, info.vobject())
-  #
-  #       count = objCounts[id(info.vobject())]
-  #       if count > 0:
-  #         if abs(info.nearPt[0] - info.farPt[0]) > abs(info.nearPt[1] - info.farPt[1]): 
-  #           info.nearPt = (info.nearPt[0]        , info.nearPt[1] + 4 * count)
-  #           info.farPt = (info.farPt [0]        , info.farPt [1] + 4 * count)
-  #         else:
-  #           info.nearPt = (info.nearPt[0] + 4 * count, info.nearPt[1])
-  #           info.farPt = (info.farPt [0] + 4 * count, info.farPt [1])
-  
   def parseEndShape(self, shape:str) -> Optional[Tuple[str, list]]:
     '''
     :param shape: A shape string of the form **{** circle(<diameter>) **|** arrow(<len>,<hypotenuse>,<close>) **}**.
@@ -630,65 +437,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
       args = []
     return shapeName, args
 
-  # def drawEndShape(self, shape:str, line:list, ID:int , lineColor:str, fillColor:str) -> Optional[int]:
-  #   '''
-  #   :return: the ID of the drawn shape (if any)
-  #   '''
-  #   shape = self.parseEndShape(shape)
-  #   if shape is None:
-  #     if ID is not None:  # need to delete the old end shape
-  #       self.canvas.canvas.delete(ID)
-  #     return None
-  #   shapeName, args = shape
-  #
-  #   if shapeName == "circle":
-  #     if ID is not None and self.canvas.canvas.type(ID) != "oval":  # need to delete the old none-oval and draw a new oval
-  #       self.canvas.canvas.delete(ID)
-  #       ID = None
-  #
-  #     # fill in defaults
-  #     diam = 5 if len(args) == 0 else args[0]
-  #     radius = diam / 2.0
-  #
-  #     if ID is None:  # new circle
-  #       ID = self.canvas.canvas.create_oval(
-  #           self.view.viewToWindow([line[2] - radius, line[3] - radius, line[2] + radius, line[3] + radius]),
-  #           fill=fillColor, outline=lineColor, tags=[self.tag])
-  #     else:  # repaint existing circle
-  #       self.canvas.canvas.coords(ID,
-  #           self.view.viewToWindow([line[2] - radius, line[3] - radius, line[2] + radius, line[3] + radius]))
-  #       self.canvas.canvas.itemconfigure(ID, fill=fillColor, outline=lineColor)
-  #
-  #     # TODO: fill this in
-  #
-  #   elif shapeName == "arrow":
-  #     if ID is not None and self.canvas.canvas.type(ID) != "line":  # need to delete the old none-oval and draw a new oval
-  #       self.canvas.canvas.delete(ID)
-  #       ID = None
-  #
-  #     # fill in defaults
-  #     # defArgs = [8, 10, 3]
-  #     n = len(args)
-  #     if n == 0:
-  #       args = [8, 10, 3]
-  #     elif n == 1:
-  #       args = [args[0], args[0] * 1.25, args[0] * 0.375]
-  #     elif n == 2:
-  #       args = [args[0], args[1], args[0] * 0.375]
-  #     elif n > 3:
-  #       args = args[:3]
-  #
-  #     if ID is None:  # new line
-  #       ID = self.canvas.canvas.create_line(
-  #           self.view.viewToWindow(line),
-  #           fill=lineColor, tags=[self.tag], arrow=tk.LAST, arrowshape=tuple(self.view.viewToWindow(args)))
-  #     else:  # repaint existing line
-  #       self.canvas.canvas.coords(ID,
-  #           self.view.viewToWindow(line))
-  #       self.canvas.canvas.itemconfigure(ID, fill=lineColor, arrow=tk.LAST, arrowshape=tuple(self.view.viewToWindow(args)))
-  #
-  #   return ID
-    
   def draw(self, fast=False, **kwargs):
     '''
     :param fast:
@@ -701,58 +449,8 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     super().draw(fast=fast, **kwargs)
     if self.modelObject is None:
       return
-    # self.reposition(suppressDraw=True)
     if self.modelObject.isSystemObject() and self.modelObject.name == "relation":
       return
-    # self.updateRoleRelatedVObjects()
-    # for role, infoList in self.roles.items():
-    #   if not fast:
-    #     color = self.modelObject.get(f"{role}.lineColor"   , "black")
-    #     width = self.modelObject.get(f"{role}.lineWidth"   , 1)
-    #     kwargs = {"fill": color, "width": width}
-    #   else:
-    #     kwargs = dict()
-    #   for info in infoList:  # count this object so that we can avoid drawing lines over one another
-    #     # draw lines
-    #     if info.lineID is None:  # new line
-    #       info.lineID = self.canvas.canvas.create_line(
-    #           self.view.viewToWindow(flattenPairs([info.nearPt, info.farPt])),
-    #           tags=[self.tag], **kwargs)
-    #     else:  # repaint existing line
-    #       self.canvas.canvas.coords(info.lineID,
-    #           self.view.viewToWindow(flattenPairs([info.nearPt, info.farPt])))
-    #       self.canvas.canvas.itemconfigure(info.lineID, **kwargs)
-    #
-    #     # draw role labels
-    #     if snPrefs.get("gui/showRoleLabels", storeDefault=False):
-    #       anchor:str = ("n" if info.nearPt[1] < info.farPt[1] else "s") + \
-    #                    ("w" if info.nearPt[0] < info.farPt[0] else "e")
-    #       if info.labelID is None:
-    #         info.labelID = self.canvas.canvas.create_text(info.nearPt[0], info.nearPt[1], text=role,
-    #             fill="gray50", font=('Helvetica', 10, 'italic'), tags=[self.tag],
-    #             anchor=anchor)
-    #         assert info.labelID is not None
-    #       else:
-    #         self.canvas.canvas.coords(info.labelID,
-    #             self.view.viewToWindow(info.nearPt[0], info.nearPt[1]))
-    #         self.canvas.canvas.itemconfigure(info.labelID,
-    #             anchor=anchor)
-    #     else:
-    #       if info.labelID is not None:
-    #         self.canvas.canvas.delete(info.labelID)
-    #         info.labelID = None
-    #
-    #     # draw end shapes (arrowheads)
-    #     if not fast:  # if we're fast don't bother with the end shapes
-    #       fillColor = self.modelObject.get(f"{role}.fillColor"   , "")
-    #       nearEndShape = self.modelObject.get(f"{role}.nearEndShape", "")
-    #       farEndShape = self.modelObject.get(f"{role}.farEndShape" , "")
-    #       info.nearShapeID = self.drawEndShape(nearEndShape, [info.farPt[0], info.farPt[1], info.nearPt[0], info.nearPt[1]],
-    #                                            info.nearShapeID, color, fillColor)
-    #       info.farShapeID = self.drawEndShape(farEndShape, [info.nearPt[0], info.nearPt[1], info.farPt[0], info.farPt[1]],
-    #                                            info.farShapeID, color, fillColor)
-    # if self.view.reading: # need to wait until after all are displayed before expanding
-    #   return
     terminators = ConnectorTerminators(self.cache['vis/terminator1'], self.cache['vis/terminator2'], self.cache['vis/terminator3'], self.cache['vis/terminator4'])
     lineType = self.cache['vis/lineType']
     if lineType == "straight":
@@ -856,16 +554,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
       float (eg: a new relation type, once: see *floating()*).
     :type place: bool
     '''
-    # connectedObjects = self._getConnectedVObjects()
-    # if self.floating() and len(connectedObjects) > 1 and self.modelObject.isIndividual():
-    #   if len(set(connectedObjects)) <= 1:  # if all the objects are the same
-    #     c = connectedObjects[0].centerPt()
-    #     ctr = (c[0] + self.view.model._top.get('vis/minSize', 20) * 1.5, c[1])
-    #   else:
-    #     ctr = midpoint(*map(lambda obj: obj.centerPt(), connectedObjects))
-    #   self.moveToCenterOn(ctr[0], ctr[1])
-    # else:
-    #   self.adjustPos(aggressive=aggressive)
     if not self.floating() and not place:
       if not suppressDraw:
         self.draw()
@@ -1214,27 +902,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     if self.floating():
       self.draw()
       
-  # def addModelEditingMenuItems(self, menu:tk.Menu):
-  #   disabled = self.modelObject.isSystemObject() or not self.view.isModelEditor
-  #   menu.add_command(label=f"{'show' if disabled else 'edit'} attributes", \
-  #     command=lambda disabled=disabled: self.onEditAttributes(disabled=disabled))    #menu.add_cascade(menu=self.makeMakeRelationMenu(menu), label='make relation')
-  #   if self.modelObject.isType():
-  #     menu.add_command(label='make instance', command=lambda: self._doNewNodeCommand(individual=True))
-  #     menu.add_command(label='make subtype', command=lambda: self._doNewNodeCommand(individual=False))
-  #   menu.add_separator()
-    
-  # @override
-  # def _doNewNodeCommand(self, individual:bool):
-  #   from util.command import CommandWrapper
-  #   cmd = CommandWrapper(
-  #             NewModelRelationCommand(self.view.model, parent=self.modelObject, individual=individual),
-  #             setup=self._setCatchNewObjects,
-  #             teardown=self._resetCatchNewObjects)
-  #   node = self.canvas.doList.do(cmd)
-  #   applyEditAttrsBox(self.canvas.canvas, node, title=str(node), editKey="name")
-  #   vnode = self.canvas.findViewObjectForGraphObject(node)
-  #   vnode.draw()
-
   ### Event handling ###################################################################
 
   @override
@@ -1253,22 +920,3 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     if self.dragInfo is not None and self.dragInfo[4]:
       self.floating(False)
     super().onB1_ButtonRelease(event)
-
-  ### Debugging support ################################################################
-  
-# class VIsa(VRelation):
-#
-#   def __init__(self, tgview,
-#       modelObject=None, typ:Relation=None,
-#       shape:Union[Any, str]="Oval",
-#       x:Optional[int]=None, y:Optional[int]=None, x1:Optional[int]=None, y1:Optional[int]=None,
-#       _bb:Optional[list]=None,
-#       floating:Optional[bool]=None):
-#     super().__init__(tgview, modelObject=modelObject, typ=typ, shape=shape, _bb=_bb, floating=floating, x=x, y=y, x1=x1, y1=y1)
-#
-#   # def _post__init__(self):
-#   #   super()._post__init__()
-#
-#   def addModelEditingMenuItems(self, menu:tk.Menu):
-#     pass  # we don't want to allow user editing of attributes or relations on isa's.
-

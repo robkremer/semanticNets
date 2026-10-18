@@ -285,8 +285,6 @@ class Shape:
     return False
     
   def draw(self, fast=False, **kwargs) -> int|None:
-    # if self.vobject is None: #premature update during a shape change?
-    #   return None
     '''
     :param fast:
     :type fast:
