@@ -79,8 +79,7 @@ class _Present:
   _instance:_Present|None = None
   def __new__(cls):
     '''
-    :returns:
-    :rtype:
+    The one *_Present*.
     '''
     if cls._instance is None:
       cls._instance = super().__new__(cls)
@@ -88,7 +87,6 @@ class _Present:
   def __repr__(self) -> str:
     '''
     :returns: A string representation of this object.
-    :rtype: str
     '''
     return "PRESENT"
 
@@ -100,7 +98,6 @@ class ValueVar(str):
   def __repr__(self) -> str:
     '''
     :returns: A string representation of this object.
-    :rtype: str
     '''
     return f"ValueVar({str.__repr__(self)})"
 
@@ -114,27 +111,21 @@ class Not:
   def __init__(self, value:Any):
     '''
     :param value: The value it mustn't have: as a constraint's value (see *parseConstraints()*).
-    :type value: Any
     '''
     self.value = value
   def __eq__(self, other:object) -> bool:
     '''
-    :param other:
-    :type other: object
-    :returns:
-    :rtype: bool
+    Whether *other* is a *Not* of the same value (of the same type).
     '''
     return isinstance(other, Not) and type(self.value) is type(other.value) and self.value == other.value
   def __hash__(self) -> int:
     '''
-    :returns:
-    :rtype: int
+    The hash of its value (as *__eq__()* compares them).
     '''
     return hash(("Not", self.value))
   def __repr__(self) -> str:
     '''
     :returns: A string representation of this object.
-    :rtype: str
     '''
     return f"Not({self.value!r})"
 
@@ -147,20 +138,16 @@ and of its key in the parsed constraints (see *parseConstraints()*).
 def isNegated(key:str) -> bool:
   '''
   :param key: A key of parsed constraints (see *parseConstraints()*).
-  :type key: str
   :returns: True iff it's a negated constraint's ("not gender").
-  :rtype: bool
   '''
   return key.startswith(NOT)
 
 def constraintItems(constraints:dict[str, Any]) -> list[tuple[str, Any]]:
   '''
   :param constraints: Parsed constraints (see *parseConstraints()*).
-  :type constraints: dict[str, Any]
   :returns: Each constraint as (attribute key, value): a negated one's value
     a *Not*, one for each of its values. Eg: {"alive": PRESENT, "not gender":
     ("female",)} -> [("alive", PRESENT), ("gender", Not("female"))].
-  :rtype: list[tuple[str, Any]]
   '''
   ret:list[tuple[str, Any]] = []
   for k, v in constraints.items():
@@ -180,11 +167,8 @@ _VALUE_VAR_STEM = re.compile(r"\w+$")
 
 def _isValueVar(v:str) -> bool:
   '''
-  :param v:
-  :type v: str
   :returns: True iff *v* is a well-formed value variable: a variable's name
     (see *sn.model.names*; its kind doesn't matter) with a word for a stem.
-  :rtype: bool
   '''
   return names.isVariableName(v) and bool(_VALUE_VAR_STEM.match(names.stem(v)))
 _NUMBERISH = re.compile(r"[-+]?(\d|\.\d)")
@@ -192,13 +176,6 @@ _NUMBERISH = re.compile(r"[-+]?(\d|\.\d)")
 def _split(text:str, sep:str) -> list[str]:
   '''
   Split *text* at *sep* characters that aren\'t inside quotes.
-
-  :param text:
-  :type text: str
-  :param sep:
-  :type sep: str
-  :returns:
-  :rtype: list[str]
   '''
   parts, cur, quote = [], "", None
   for ch in text:
@@ -221,12 +198,8 @@ def _split(text:str, sep:str) -> list[str]:
 
 def _value(text:str, key:str) -> Any:
   '''
-  :param text:
-  :type text: str
-  :param key:
-  :type key: str
-  :returns:
-  :rtype: Any
+  The value written in *text* (for *key*, in messages): a quoted string, true or false, a number, or else the
+  text itself.
   '''
   v = text.strip()
   if v == "":
@@ -250,14 +223,11 @@ def _value(text:str, key:str) -> Any:
 
 def parseConstraints(text:str|None) -> dict[str, Any]:
   '''
-  :param text:
-  :type text: str | None
   :returns: The constraints in *text* (see the module doc), in order: key ->
     PRESENT, a number, a bool, text (str), or a *ValueVar*. A negated one's key
     is "not " and its key (eg: "not gender"), and its value is a tuple of
     those values, one for each time it's given (eg: ("female",)). (See
     *constraintItems()*.)
-  :rtype: dict[str, Any]
   :raises ConstraintError: If *text* can't be parsed.
   '''
   ret:dict[str, Any] = {}
@@ -292,10 +262,7 @@ def parseConstraints(text:str|None) -> dict[str, Any]:
 
 def _formatValue(v:Any) -> str:
   '''
-  :param v:
-  :type v: Any
-  :returns:
-  :rtype: str
+  *v* written as *_value()* reads it: quoted if it would otherwise read as something else.
   '''
   if isinstance(v, bool):
     return "true" if v else "false"
@@ -311,10 +278,6 @@ def _formatValue(v:Any) -> str:
 def formatConstraints(constraints:dict[str, Any]) -> str:
   '''
   :returns: *constraints* (as from *parseConstraints()*) as text, eg: "alive, age: 30".
-
-  :param constraints:
-  :type constraints: dict[str, Any]
-  :rtype: str
   '''
   def one(k:str, v:Any) -> str:
     return k if v is PRESENT else f"{k}: {_formatValue(v)}"
@@ -325,11 +288,6 @@ def splitWhere(text:str) -> tuple[str, str|None]:
   Split a name as typed at ":where:", eg: "?p :where: alive, age: 30" ->
   ("?p", "alive, age: 30"). The constraints part is None if there's no
   ":where:" (and "" if it's empty).
-
-  :param text:
-  :type text: str
-  :returns:
-  :rtype: tuple[str, str | None]
   '''
   name, sep, rest = text.partition(WHERE)
   return (name.strip(), rest.strip()) if sep else (text.strip(), None)
@@ -338,14 +296,7 @@ def mergeConstraints(old:str|None, new:str) -> str:
   '''
   *new*'s constraints added to (or replacing the same keys in) *old*'s, as
   text. If *old* can't be parsed, *new* replaces it.
-  :param old:
-  :type old: str | None
-  :param new:
-  :type new: str
   :raises ConstraintError: If *new* can't be parsed.
-
-  :returns:
-  :rtype: str
   '''
   added = parseConstraints(new)
   try:
@@ -360,10 +311,7 @@ def migrateConstraints(model) -> list[str]:
   other than its name, note, "vis/..." and "constraints" -- into its
   "constraints" attribute (see the module doc).
 
-  :param model:
-  :type model:
   :returns: A message for each variable converted.
-  :rtype: list[str]
   '''
   from util.attribute import Attribute, VAR
   msgs:list[str] = []

@@ -41,7 +41,6 @@ class ModelPrefs(AttributedObject):
   def getSupers[T:AttributedObject](self) -> list[T]:
     '''
     :returns: None: preferences don't inherit.
-    :rtype: list[T]
     '''
     return []
 
@@ -49,7 +48,6 @@ class ModelPrefs(AttributedObject):
   def isIndividual(self) -> bool:
     '''
     :returns: False (as for *sn.SNPrefs*: so their types are their own).
-    :rtype: bool
     '''
     return False
 
@@ -59,7 +57,6 @@ def initModelPrefs(prefs:ModelPrefs) -> None:
   and its note, unless the user has written their own (as *sn.initPrefs()*).
 
   :param prefs: A model's preferences.
-  :type prefs: ModelPrefs
   '''
   for key, (typ, default, note) in MODEL_PREFS.items():
     attr = dict.get(prefs, key) # (the stored Attribute itself: getAttr() gives a copy)

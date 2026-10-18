@@ -64,7 +64,6 @@ class NameKind(Enum):
   def isVariable(self) -> bool:
     '''
     :returns: True iff this is a variable's kind.
-    :rtype: bool
     '''
     return self is not NameKind.CONSTANT
 
@@ -86,11 +85,9 @@ class NameGrammar:
     THE place a name's kind is decided.
 
     :param name: An object's name.
-    :type name: str
     :returns: Its kind, and its stem: the name without the syntax that makes
       it a variable, eg: (NameKind.INDIVIDUAL, "x") for "?x". A constant's
       stem is its name.
-    :rtype: tuple[NameKind, str]
     '''
     if name and name[0] in self.PREFIXES:
       return self.PREFIXES[name[0]], name[1:]
@@ -99,10 +96,8 @@ class NameGrammar:
   def isHidden(self, name:str) -> bool:
     '''
     :param name: An object's name.
-    :type name: str
     :returns: True iff it's a hidden variable's: one that answers don't report
       (see the module doc) -- by default, one whose stem starts with "_".
-    :rtype: bool
     '''
     kind, stem = self.parse(name)
     return kind.isVariable and stem.startswith("_")
@@ -110,7 +105,6 @@ class NameGrammar:
   def describe(self) -> str:
     '''
     :returns: The grammar in words, for notes and messages.
-    :rtype: str
     '''
     return ('a name starting with "?" is an individual variable (it matches individuals), '
             'with "^" a type variable (it matches types), and with "!" an "any" variable '
@@ -123,9 +117,6 @@ grammar:NameGrammar = NameGrammar()
 def setGrammar(g:NameGrammar) -> None:
   '''
   Install *g* as the grammar of names.
-
-  :param g:
-  :type g: NameGrammar
   '''
   global grammar
   grammar = g
@@ -133,35 +124,24 @@ def setGrammar(g:NameGrammar) -> None:
 def nameKind(name:object) -> NameKind:
   '''
   :param name: A name -- anything else (eg: None, during construction) is a constant.
-  :type name: object
   :returns: Its kind, per the grammar in use.
-  :rtype: NameKind
   '''
   return grammar.parse(name)[0] if isinstance(name, str) else NameKind.CONSTANT
 
 def isVariableName(name:object) -> bool:
   '''
-  :param name:
-  :type name: object
   :returns: True iff *name* is a variable's, per the grammar in use.
-  :rtype: bool
   '''
   return nameKind(name).isVariable
 
 def isHiddenName(name:object) -> bool:
   '''
-  :param name:
-  :type name: object
   :returns: True iff *name* is a hidden variable's, per the grammar in use (see *NameGrammar.isHidden()*).
-  :rtype: bool
   '''
   return isinstance(name, str) and grammar.isHidden(name)
 
 def stem(name:str) -> str:
   '''
-  :param name:
-  :type name: str
   :returns: *name* without the syntax that makes it a variable (see *NameGrammar.parse()*).
-  :rtype: str
   '''
   return grammar.parse(name)[1]

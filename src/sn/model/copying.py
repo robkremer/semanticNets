@@ -108,7 +108,6 @@ class Clip:
   def originals(self) -> list[GraphObject]:
     '''
     :returns: The copied objects, in entry order.
-    :rtype: list[GraphObject]
     '''
     return [e.original for e in self.entries]
 
@@ -116,7 +115,6 @@ class Clip:
     '''
     :returns: The objects the copies refer to but which aren't copied (types,
       and relations' ends), each once.
-    :rtype: list[GraphObject]
     '''
     ret:list[GraphObject] = []
     for e in self.entries:
@@ -134,11 +132,9 @@ one for the whole application, so it can be pasted into any view.
 def contents(context:GraphObject) -> list[GraphObject]:
   '''
   :param context: Any object.
-  :type context: GraphObject
   :returns: The (asserted) containment relations from *context* (relations
     that isa *contains*: eg: a rule's antecedent relations), each followed by
     what it contains. Empty if it isn't a context.
-  :rtype: list[GraphObject]
   '''
   model = context.model
   contains = getattr(model, "CONTAINS", None)
@@ -155,12 +151,10 @@ def contents(context:GraphObject) -> list[GraphObject]:
 def closure(objects:Iterable[GraphObject]) -> list[GraphObject]:
   '''
   :param objects: The objects asked for.
-  :type objects: Iterable[GraphObject]
   :returns: What's copied when *objects* are: them, the contents of any that
     are contexts (at any depth: see *contents()*), and the isa links of all
     of those -- each once, in that order. Not anything inferred, nor anything
     that's been deleted.
-  :rtype: list[GraphObject]
   '''
   ret:list[GraphObject] = []
   seen:set[int] = set()
@@ -181,10 +175,7 @@ def closure(objects:Iterable[GraphObject]) -> list[GraphObject]:
 
 def _kind(o:GraphObject) -> str|None:
   '''
-  :param o:
-  :type o: GraphObject
   :returns: What *Entry.kind* copies *o*, or None if it can't be copied.
-  :rtype: str | None
   '''
   if isinstance(o, IsaIndividual):
     return "isa"
@@ -199,9 +190,7 @@ def copyObjects(objects:Iterable[GraphObject]) -> Clip:
   Take a snapshot of *objects* and what comes with them (see *closure()*).
 
   :param objects: What's asked for (eg: what's selected in a view).
-  :type objects: Iterable[GraphObject]
   :returns: The snapshot.
-  :rtype: Clip
   :raises ValueError: If there's nothing that can be copied.
   '''
   asked = [o for o in objects if o is not None]
@@ -225,10 +214,7 @@ def copyObjects(objects:Iterable[GraphObject]) -> Clip:
 
 def _copyAttribute(a:Attribute) -> Attribute:
   '''
-  :param a:
-  :type a: Attribute
   :returns: A copy of *a* (and of its value), as given (not inferred).
-  :rtype: Attribute
   '''
   ret = Attribute(copy.deepcopy(a.value), a.type, a.restriction, a.note)
   ret.userNote = a.userNote
@@ -236,11 +222,8 @@ def _copyAttribute(a:Attribute) -> Attribute:
 
 def visibleModels(model:Model) -> list[Model]:
   '''
-  :param model:
-  :type model: Model
   :returns: The models whose objects *model*'s objects may refer to: itself,
     and those it builds on.
-  :rtype: list[Model]
   '''
   ret:list[Model] = [model]
   for m in [*model.allSuperDBs(), *model.implicitSuperDBs()]:
@@ -250,15 +233,11 @@ def visibleModels(model:Model) -> list[Model]:
 
 def pasteProblem(clip:Clip|None, model:Model) -> str|None:
   '''
-  :param clip:
-  :type clip: Clip | None
   :param model: Where it's to be pasted.
-  :type model: Model
   :returns: Why *clip* can't be pasted into *model*, or None if it can: the
     objects the copies would refer to (see *Clip.externals()*) must still be
     there, and be in *model* or in a model it builds on -- a model can't
     refer to one it doesn't know about.
-  :rtype: str | None
   '''
   if clip is None or not clip.entries:
     return "There's nothing to paste: cut or copy something first."
@@ -278,12 +257,7 @@ def pasteInto(clip:Clip, model:Model) -> list[GraphObject]:
   '''
   Make new objects in *model* from *clip*, with new ids.
 
-  :param clip:
-  :type clip: Clip
-  :param model:
-  :type model: Model
   :returns: The new objects, by entry (as *clip.entries*).
-  :rtype: list[GraphObject]
   :raises ValueError: If it can't be pasted there (see *pasteProblem()*).
   '''
   problem = pasteProblem(clip, model)
@@ -320,11 +294,9 @@ def pasteInto(clip:Clip, model:Model) -> list[GraphObject]:
 def cutObjects(clip:Clip) -> list[GraphObject]:
   '''
   :param clip: What's being cut (see *copyObjects()*).
-  :type clip: Clip
   :returns: What cutting removes: what was copied, except what came with a
     context (see *contents()*) that another context, not being cut, contains
     too -- it's still that one's.
-  :rtype: list[GraphObject]
   '''
   objs = clip.originals()
   cut = {id(o) for o in objs}
@@ -342,10 +314,7 @@ def removeObjects(objects:Iterable[GraphObject]) -> list[GraphObject]:
   *GraphObject._disconnect()*), so one may already be gone when its turn comes:
   it's skipped.
 
-  :param objects:
-  :type objects: Iterable[GraphObject]
   :returns: Those that were taken out, in order: what to give *restoreObjects()*.
-  :rtype: list[GraphObject]
   '''
   ret:list[GraphObject] = []
   for o in objects:
@@ -361,7 +330,6 @@ def restoreObjects(removed:list[GraphObject]) -> None:
   skipped.
 
   :param removed: What *removeObjects()* returned.
-  :type removed: list[GraphObject]
   '''
   for o in reversed(removed):
     if not o._isConnected():

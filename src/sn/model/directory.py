@@ -60,11 +60,8 @@ _SCHEME = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 
 def isRemote(url:str) -> bool:
   '''
-  :param url:
-  :type url: str
   :returns: Whether *url* is somewhere other than this computer's files (eg:
     "https://..."): not a path, nor a "file:" URL.
-  :rtype: bool
   '''
   return bool(_SCHEME.match(url)) and not url.lower().startswith("file:")
 
@@ -92,9 +89,7 @@ class Folder:
   def covers(self, folder:str) -> bool:
     '''
     :param folder: A folder's path.
-    :type folder: str
     :returns: Whether the files in *folder* are in this part of the search path.
-    :rtype: bool
     '''
     if self.remote:
       return False
@@ -123,9 +118,7 @@ def parsePath(text:str) -> list[Folder]:
     if the folders below it are included too; "~" is the home folder -- or the
     URL of a model or view somewhere else (eg: "https://..."). Blank parts are
     ignored, and so are repeats.
-  :type text: str
   :returns: Its parts, in order.
-  :rtype: list[Folder]
   '''
   text = text or ""
   separators = SEPARATORS if "://" in text else SEPARATORS + os.pathsep
@@ -147,33 +140,24 @@ def parsePath(text:str) -> list[Folder]:
 
 def formatPath(folders:list[Folder]) -> str:
   '''
-  :param folders:
-  :type folders: list[Folder]
   :returns: *folders* as a search path (see *parsePath()*): folders as "file:" URLs.
-  :rtype: str
   '''
   return SEPARATORS[0].join(str(f) for f in folders)
 
 def covered(folders:list[Folder], folder:str) -> bool:
   '''
   :param folders: A search path.
-  :type folders: list[Folder]
   :param folder: A folder's path.
-  :type folder: str
   :returns: Whether *folder*'s files are in the search path.
-  :rtype: bool
   '''
   return any(f.covers(folder) for f in folders)
 
 def withFolder(text:str, folder:str) -> str|None:
   '''
   :param text: A search path.
-  :type text: str
   :param folder: A folder's path.
-  :type folder: str
   :returns: *text* with *folder* added at the end, if it isn't covered by it
     already (see *covered()*); else None.
-  :rtype: str | None
   '''
   folders = parsePath(text)
   if covered(folders, folder):
@@ -183,12 +167,10 @@ def withFolder(text:str, folder:str) -> str|None:
 def filesIn(folders:list[Folder]) -> Iterator[str]:
   '''
   :param folders: A search path.
-  :type folders: list[Folder]
   :returns: The paths of the models and views in *folders* (see
     *EXTENSIONS*), each once; not in hidden folders, nor hidden files. Folders
     that aren't there are skipped. Remote parts of the search path are given
     as they are: their URLs.
-  :rtype: Iterator[str]
   '''
   seen:set[str] = set()
   def inFolder(path:str) -> Iterator[str]:
@@ -238,10 +220,8 @@ def peekFile(path:str) -> dict[str, str]:
   few kilobytes of megabytes.) Both XML formats (XML, XML2) are understood.
 
   :param path: The file's path.
-  :type path: str
   :returns: "type": the class of the object in it (its fully qualified name);
     and those of *PEEKED*, and of the header's "previousURL", that are there.
-  :rtype: dict[str, str]
   :raises ValueError: If it isn't a file of that kind (or can't be read).
   '''
   try:
@@ -255,11 +235,8 @@ def peekURL(url:str) -> tuple[dict[str, str], dict[str, str]]:
   Like *peekFile()*, for a model or view at a URL (eg: on the web): only the
   start of it is fetched.
 
-  :param url:
-  :type url: str
   :returns: What *peekFile()* does; and the response's headers (eg:
     "Content-Length", "Last-Modified").
-  :rtype: tuple[dict[str, str], dict[str, str]]
   :raises FileNotFoundError: If there's nothing there.
   :raises ValueError: If it isn't a model or view (or can't be fetched).
   '''
@@ -345,20 +322,15 @@ def _peek(stream, name:str) -> dict[str, str]:
 def urlOf(path:str) -> str:
   '''
   :param path: A file's path.
-  :type path: str
   :returns: Its URL, as the program makes it (see *fixURL()*): eg, so it can
     be found among the open windows' views.
-  :rtype: str
   '''
   return fixURL(path, replaceExt=None, mode="w")[0]
 
 def pathOf(url:str) -> str|None:
   '''
-  :param url:
-  :type url: str
   :returns: The path of the file at *url*, if it's a file URL; else None (eg:
     the system model, "sn:/sn").
-  :rtype: str | None
   '''
   u = urlparse(url)
   return unquote(u.path) if u.scheme == "file" else None
@@ -421,12 +393,9 @@ class Entry:
 def scanFile(path:str, onPath:bool=True) -> Entry:
   '''
   :param path: A model's or view's file.
-  :type path: str
   :param onPath: Whether it's in the search path (see *Entry.onPath*).
-  :type onPath: bool
   :returns: Its entry: read with *peekFile()*. If it can't be read, the
     entry's *error* says why.
-  :rtype: Entry
   '''
   ext = os.path.splitext(path)[1]
   entry = Entry(path=path, kind=EXTENSIONS.get(ext, "model"), onPath=onPath)
@@ -454,13 +423,6 @@ def scanURL(url:str, onPath:bool=True) -> Entry:
   Like *scanFile()*, for a model or view at a URL (eg: on the web): read with
   *peekURL()*. When it was changed and its size are what the server says (if
   it does); when it was made isn't known.
-
-  :param url:
-  :type url: str
-  :param onPath:
-  :type onPath: bool
-  :returns:
-  :rtype: Entry
   '''
   ext = os.path.splitext(urlparse(url).path)[1]
   entry = Entry(path="", kind=EXTENSIONS.get(ext, "model"), url=url, onPath=onPath)
@@ -527,15 +489,11 @@ def _kindOf(typeName:str) -> str|None:
 def modelURLOf(viewURL:str, model:str, storedURL:str|None=None) -> str:
   '''
   :param viewURL: Where a view is.
-  :type viewURL: str
   :param model: Its model's URL, as it's written in it: perhaps relative to it.
-  :type model: str
   :param storedURL: The URL written in it (where it was when it was saved: if
     it's been copied, its model may have been left there -- see
     *PRDb.absoluteURL()*).
-  :type storedURL: str | None
   :returns: The model's URL.
-  :rtype: str
   '''
   from util.persistence.pRef import PRDb
   if not PRDb.isRelativeURL(model):
@@ -563,10 +521,8 @@ class Directory:
     so a window can show them as they're found (and stay responsive).
 
     :param folders: The search path.
-    :type folders: list[Folder]
     :returns: Each entry, as it's found: then the models views refer to that
       aren't in *folders*.
-    :rtype: Iterator[Entry]
     '''
     self.entries = {}
     for path in filesIn(folders):
@@ -581,7 +537,6 @@ class Directory:
     folder that isn't in the search path, or on the web).
 
     :returns: Those added.
-    :rtype: Iterator[Entry]
     '''
     for entry in list(self.entries.values()):
       url = entry.modelURL
@@ -602,10 +557,7 @@ class Directory:
     Read *path* again (eg: it's been saved, or deleted): its entry is replaced,
     or taken out if it's gone and no view refers to it.
 
-    :param path:
-    :type path: str
     :returns: Its new entry, if it has one.
-    :rtype: Entry | None
     '''
     entry = scanFile(path)
     old = self.entries.get(entry.url)
@@ -623,7 +575,6 @@ class Directory:
     :returns: The models, sorted by name (then folder), each with its views --
       sorted by name -- in its *views*. Views whose models aren't models in
       the directory (eg: the system model) come under an entry made for it.
-    :rtype: list[Entry]
     '''
     models:dict[str, Entry] = {}
     for e in self.entries.values():
@@ -644,13 +595,10 @@ class Directory:
 def urlProblem(url:str, kinds:tuple[str, ...]=("model", "view")) -> str|None:
   '''
   :param url: Where a model or view should be (eg: typed by the user).
-  :type url: str
   :param kinds: What it should be: "model", "view", or either.
-  :type kinds: tuple[str, ...]
   :returns: What's wrong with it -- there's nothing there, or it isn't one of
     *kinds* -- or None if it's all right. Only its start is read (see
     *scanFile()*, *scanURL()*).
-  :rtype: str | None
   '''
   path = pathOf(url)
   entry = scanFile(path) if path is not None else scanURL(url)
@@ -669,8 +617,6 @@ def moveToTrash(path:str) -> None:
   Move a file to the Trash (on macOS, where the Finder's "Put Back" can
   restore it).
 
-  :param path:
-  :type path: str
   :raises OSError: If it can't be moved there (eg: on another platform:
     nothing's deleted then).
   '''

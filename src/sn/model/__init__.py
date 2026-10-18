@@ -74,15 +74,6 @@ class TopModel(Model):
     Builds the base model for the SN application. This is required to always be
     in the in-memory models under the name "sn" (access as "$sn" in a URL, don't
     forget to escape it on a command line as "\\$sn"
-
-    :param url:
-    :type url: str
-    :param mode:
-    :type mode:
-    :param memoryResident:
-    :type memoryResident: bool
-    :param _reading:
-    :type _reading: bool
     '''
     # explicitly DON'T call Model's constructor
     AbstractGraph.__init__(self, url, mode=mode, memoryResident=memoryResident, _reading=_reading)

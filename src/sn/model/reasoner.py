@@ -121,9 +121,7 @@ def parseCardinality(text:Any) -> tuple[int, int|None]:
   :param text: A cardinality: "min..max" (eg: "1..1", "0..1", "1..*"), "n"
     (exactly n), or "(min,max)" / "min,max". The max may be "*" or "n" (or
     missing: "1..") for any number.
-  :type text: Any
   :returns: (min, max), max None for any number.
-  :rtype: tuple[int, int | None]
   :raises ValueError: If it can't be read, or min > max.
   '''
   t = str(text).strip()
@@ -184,7 +182,6 @@ class Sym(str):
   def __repr__(self) -> str:
     '''
     :returns: A string representation of this object.
-    :rtype: str
     '''
     return f'Sym({str.__repr__(self)})'
 
@@ -207,11 +204,6 @@ class NewObject:
   def label(self, relativeTo:Model|None=None) -> str:
     '''
     How it\'s named in messages, eg: "(new ?m for ?p=alice)", with objects named relative to *relativeTo*.
-
-    :param relativeTo:
-    :type relativeTo: Model | None
-    :returns:
-    :rtype: str
     '''
     match = ", ".join(f"{n}={_label(v, relativeTo)}" for n, v in self.bindings)
     return f"(new {self.variable}{' for ' + match if match else ''})"
@@ -219,7 +211,6 @@ class NewObject:
   def __str__(self) -> str:
     '''
     :returns: A readable string for this object.
-    :rtype: str
     '''
     return self.label()
 
@@ -240,20 +231,12 @@ class Violation:
   def message(self) -> str:
     '''
     The message, with objects named relative to the subject\'s model.
-
-    :returns:
-    :rtype: str
     '''
     return self.messageIn(self.subject.model)
 
   def messageIn(self, relativeTo:Model|None) -> str:
     '''
     The message, with objects named relative to *relativeTo* (see *GraphObject.tostring()*).
-
-    :param relativeTo:
-    :type relativeTo: Model | None
-    :returns:
-    :rtype: str
     '''
     template = self.template or _MESSAGES.get(self.code) or ("{0}: " + self.code + "".join(f" {{{i}}}" for i in range(1, len(self.args) + 1)))
     labels = [_label(x, relativeTo) for x in (self.subject,) + self.args]
@@ -266,7 +249,6 @@ class Violation:
   def __str__(self) -> str:
     '''
     :returns: A readable string for this object.
-    :rtype: str
     '''
     return f'{self.severity[0].upper()}: {self.message}'
 
@@ -311,9 +293,6 @@ class Inferences:
     '''
     ({(id(src), id(type)): [dst...]}, {(id(dst), id(type)): [src...]}) over
     *holds*, built on first use: results don't change once made.
-
-    :returns:
-    :rtype: tuple[dict, dict]
     '''
     idx = self.__dict__.get("_idx")
     if idx is None:
@@ -328,35 +307,18 @@ class Inferences:
   def related(self, src:GraphObject, relType:Relation) -> list[GraphObject]:
     '''
     Everything *src* is related to under *relType* (asserted or inferred).
-
-    :param src:
-    :type src: GraphObject
-    :param relType:
-    :type relType: Relation
-    :returns:
-    :rtype: list[GraphObject]
     '''
     return list(self._index()[0].get((id(src), id(relType)), []))
 
   def relatedFrom(self, dst:GraphObject, relType:Relation) -> list[GraphObject]:
     '''
     Everything related to *dst* under *relType* (asserted or inferred).
-
-    :param dst:
-    :type dst: GraphObject
-    :param relType:
-    :type relType: Relation
-    :returns:
-    :rtype: list[GraphObject]
     '''
     return list(self._index()[1].get((id(dst), id(relType)), []))
 
   def newFacts(self) -> list[tuple[Relation, GraphObject, GraphObject]]:
     '''
     The inferred and inherited relation triples (each once) -- ie: not asserted.
-
-    :returns:
-    :rtype: list[tuple[Relation, GraphObject, GraphObject]]
     '''
     seen:set[tuple[int, int, int]] = set()
     ret = []
@@ -371,13 +333,6 @@ class Inferences:
     What the rules (or just *rule*) concluded that's new -- relations not
     already asserted, attributes, isa links and new objects -- one line each,
     with the rule that concluded it. Objects are named relative to *model*.
-
-    :param rule:
-    :type rule: GraphObject | None
-    :param model:
-    :type model: Model | None
-    :returns:
-    :rtype: list[str]
     '''
     new = {(id(t), id(s), id(d)) for t, s, d in self.inferred}
     by = lambda r: "" if rule is not None else f"   (by {_label(r, model)})"
@@ -400,11 +355,6 @@ class Inferences:
   def ruleObjects(self, rule:GraphObject) -> list[GraphObject]:
     '''
     The model objects *rule* concluded something about (not new objects).
-
-    :param rule:
-    :type rule: GraphObject
-    :returns:
-    :rtype: list[GraphObject]
     '''
     ret:dict[int, GraphObject] = {}
     new = {(id(t), id(s), id(d)) for t, s, d in self.inferred}
@@ -418,10 +368,7 @@ class Inferences:
 
   def violationsFor(self, subject:GraphObject) -> list[Violation]:
     '''
-    :param subject:
-    :type subject: GraphObject
-    :returns:
-    :rtype: list[Violation]
+    The violations about *subject*.
     '''
     return [v for v in self.violations if v.subject is subject]
 
@@ -429,10 +376,8 @@ class Inferences:
     '''
     :param model: If given, leave out findings that only involve system
       objects (those of the always-in-memory "sn" model) -- noise to a user.
-    :type model: Model | None
     :returns: A readable summary: violations, new relations (inferred and
       inherited) and suggested classifications.
-    :rtype: str
     '''
     def relevant(*objs:Any) -> bool:
       return model is None or any(isinstance(o, GraphObject) and not o.isSystemObject() for o in objs)
@@ -489,20 +434,15 @@ class Pattern:
 
 def patternOf(context:GraphObject, parts:tuple[GraphObject, ...]|None=None, outer:Pattern|None=None) -> Pattern:
   '''
-  :param context:
-  :type context: GraphObject
   :param parts: The "contains"-family relation types to read the pattern from.
     By default, all of them other than "consequent", "definiendum" and "required": so for a
     rule, its antecedent, for a definition, its definiens, and for a
     requirement, its condition.
-  :type parts: tuple[GraphObject, ...] | None
   :param outer: The pattern this one's evaluated within, if any (eg: a
     requirement's condition, for its required part): its value variables have
     values here too.
-  :type outer: Pattern | None
   :returns: The *Pattern* of *context*: everything it contains (through
     *parts*).
-  :rtype: Pattern
 
     - A contained relation must hold, between its (local) ends, for each of its
       types; an end it doesn't have is "something".
@@ -556,15 +496,12 @@ def patternOf(context:GraphObject, parts:tuple[GraphObject, ...]|None=None, oute
 
 def variableGroups(pat:Pattern) -> list[list[str]]:
   '''
-  :param pat:
-  :type pat: Pattern
   :returns: *pat*'s variables' names, in groups of those related to each
     other: through its relations (and their types, if they're variables), its
     isa links, its "distinct"s, and their constraints' value variables (eg:
     "age: ?a" on two of them). Not through constants: ?a -likes-> fred and ?b
     -likes-> fred don't relate ?a and ?b -- every ?a pairs with every ?b.
     Each group is sorted; the groups are in order of their first names.
-  :rtype: list[list[str]]
   '''
   parent:dict[tuple[str, str], tuple[str, str]] = {}
   def find(k:tuple[str, str]) -> tuple[str, str]:
@@ -597,15 +534,12 @@ def variableGroups(pat:Pattern) -> list[list[str]]:
 def patternWarnings(pat:Pattern, part:str) -> list[tuple[str, tuple[Any, ...]]]:
   '''
   :param pat: A query's, rule's, definition's, constraint's or requirement's pattern.
-  :type pat: Pattern
   :param part: What it is, for the message: eg: "antecedent", "condition".
-  :type part: str
   :returns: A "pattern_disconnected" warning (violation code, args) if its
     variables are in groups that aren't related to each other (see
     *variableGroups()*): every match of one pairs with every match of the
     others -- which is seldom meant (eg: "?x -likes-> fred" and "?y" pairs
     each one who likes fred with everything). Else [].
-  :rtype: list[tuple[str, tuple[Any, ...]]]
   '''
   groups = variableGroups(pat)
   if len(groups) < 2:
@@ -615,12 +549,10 @@ def patternWarnings(pat:Pattern, part:str) -> list[tuple[str, tuple[Any, ...]]]:
 def reportedAnswers(rows:list[dict[GraphObject, Any]]) -> list[dict[GraphObject, Any]]:
   '''
   :param rows: A query's answers (see *Reasoner.answer()*).
-  :type rows: list[dict[GraphObject, Any]]
   :returns: Them as they're reported: without their hidden variables (eg:
     ?_b: see *names.isHiddenName()*), and once each -- eg: who has a brother,
     once, however many brothers they have. [{}] (yes) if there were answers
     but all their variables are hidden.
-  :rtype: list[dict[GraphObject, Any]]
   '''
   ret:list[dict[GraphObject, Any]] = []
   seen:set[tuple] = set()
@@ -635,14 +567,12 @@ def reportedAnswers(rows:list[dict[GraphObject, Any]]) -> list[dict[GraphObject,
 def unusedVariables(objects:list[GraphObject]) -> list[GraphObject]:
   '''
   :param objects: A model's objects (and its super-models').
-  :type objects: list[GraphObject]
   :returns: The variables among them (see *GraphObject.isVariable()*) that
     aren't in any context's pattern: not contained by one, nor an end or a
     type of a relation it contains, nor a type of such a variable. As
     variables, they -- and their relations -- aren't facts, so they're ignored:
     eg: a node named ?mother2 to say that two people have the same, unknown,
     mother.
-  :rtype: list[GraphObject]
   '''
   used:set[int] = set()
   pending:list[GraphObject] = []
@@ -672,9 +602,7 @@ def unusedVariables(objects:list[GraphObject]) -> list[GraphObject]:
 def queryWarnings(context:GraphObject) -> list[str]:
   '''
   :param context: A query (or any context) about to be answered.
-  :type context: GraphObject
   :returns: Warnings about its pattern (see *patternWarnings()*), as messages.
-  :rtype: list[str]
   '''
   return [_MESSAGES[code].format(context.name, *args) for code, args in patternWarnings(patternOf(context), "query")]
 
@@ -705,11 +633,8 @@ class RuleSpec:
 
 def ruleOf(rule:GraphObject) -> RuleSpec:
   '''
-  :param rule:
-  :type rule: GraphObject
   :returns: The *RuleSpec* of *rule*: its antecedent is *patternOf(rule)*; its
     consequent is what it contains through "consequent" relations:
-  :rtype: RuleSpec
 
     - A relation concludes a relation, between its (local) ends, for each of
       its types -- which may be variables.
@@ -728,8 +653,6 @@ def ruleOf(rule:GraphObject) -> RuleSpec:
 
 def definitionSpecs(definition:GraphObject) -> list[RuleSpec]:
   '''
-  :param definition:
-  :type definition: GraphObject
   :returns: The two rules a definition amounts to: its definiens (the meaning)
     implies its definiendum (the term defined), and its definiendum implies its
     definiens -- each part of it. Eg: defining ?X -brother-> ?Y as ?X
@@ -737,7 +660,6 @@ def definitionSpecs(definition:GraphObject) -> list[RuleSpec]:
     who are male, and from a brother both that they're full siblings and that
     he's male. See *ruleOf()*; in the second direction (the definiens as
     conclusions):
-  :rtype: list[RuleSpec]
 
     - its variables' types (as drawn) are concluded, as well as their
       constraints -- they're part of the meaning;
@@ -757,17 +679,6 @@ def _spec(rule:GraphObject, parts:tuple[GraphObject, ...]|None, consequentType:G
   *consequentType* as the consequent (see *ruleOf()*). With *meaning* (the
   consequent is a definiens: see *definitionSpecs()*), the consequent's
   variables' types are concluded too, and its "distinct"s are left out.
-
-  :param rule:
-  :type rule: GraphObject
-  :param parts:
-  :type parts: tuple[GraphObject, ...] | None
-  :param consequentType:
-  :type consequentType: GraphObject
-  :param meaning:
-  :type meaning: bool
-  :returns:
-  :rtype: RuleSpec
   '''
   m = rule.model
   spec = RuleSpec(rule, patternOf(rule, parts))
@@ -831,12 +742,6 @@ def _spec(rule:GraphObject, parts:tuple[GraphObject, ...]|None, consequentType:G
 def rules(objects:list[GraphObject], kind:str="RULE") -> list[GraphObject]:
   '''
   :returns: The rules (or with *kind* "DEFINITION" or "CONSTRAINT", definitions or constraints) among *objects*: individuals that isa "rule" ("definition", "constraint").
-
-  :param objects:
-  :type objects: list[GraphObject]
-  :param kind:
-  :type kind: str
-  :rtype: list[GraphObject]
   '''
   return _contexts(objects).get(kind, [])
 
@@ -845,9 +750,6 @@ def _contexts(objects:list[GraphObject]) -> dict[str, list[GraphObject]]:
   :returns: The rules, definitions and constraints among *objects*, in one
     pass: "RULE" -> the rules, ... (see *rules()*). Not disabled ones (see
     *GraphObject.isDisabled()*): they're ignored.
-  :param objects:
-  :type objects: list[GraphObject]
-  :rtype: dict[str, list[GraphObject]]
   '''
   ret:dict[str, list[GraphObject]] = {}
   for o in objects:
@@ -903,15 +805,12 @@ CONSTRAINT_ATTRIBUTES:dict[str, str] = {
 
 def constraintOf(constraint:GraphObject) -> ConstraintSpec:
   '''
-  :param constraint:
-  :type constraint: GraphObject
   :returns: The *ConstraintSpec* of *constraint*: its pattern is what it
     contains (see *patternOf()*) -- for a requirement, its condition, and its
     *required* what's in its required pane -- and the rest is from its attributes (see
     *CONSTRAINT_ATTRIBUTES*). Eg: a constraint named "irreflexive" containing
     ?a -^r-> ?a, with ^r {irreflexive} and report "^r, ?a", reports each
     irreflexive relation type relating something to itself.
-  :rtype: ConstraintSpec
   '''
   pat = patternOf(constraint) # (a requirement's condition: not its "required" pane, which isa consequent)
   def attr(key:str) -> str|None:
@@ -961,20 +860,12 @@ def constraintOf(constraint:GraphObject) -> ConstraintSpec:
 def constraintSpecs(objects:list[GraphObject]) -> list[ConstraintSpec]:
   '''
   :returns: The constraints among *objects*, as *ConstraintSpec* objects.
-
-  :param objects:
-  :type objects: list[GraphObject]
-  :rtype: list[ConstraintSpec]
   '''
   return [constraintOf(c) for c in rules(objects, "CONSTRAINT")]
 
 def ruleSpecs(objects:list[GraphObject]) -> list[RuleSpec]:
   '''
   :returns: Everything the rules and definitions among *objects* amount to, as *RuleSpec* objects.
-
-  :param objects:
-  :type objects: list[GraphObject]
-  :rtype: list[RuleSpec]
   '''
   return [ruleOf(r) for r in rules(objects)] + [s for d in rules(objects, "DEFINITION") for s in definitionSpecs(d)]
 
@@ -1007,11 +898,9 @@ _readingBase:list[bool] = []
 def baseRulesSource(model:Model) -> str|None:
   '''
   :param model: A model.
-  :type model: Model
   :returns: If *model* is one of the base rules (see *baseRuleModels()*),
     the URL of the file it's read from -- for package data, the package's own
     file, not the copy it's actually read from -- else None.
-  :rtype: str|None
   '''
   path = urlparse(model.url).path if model.url.startswith("file:") else None
   for src in BASE_RULES:
@@ -1025,10 +914,8 @@ def baseRulesSource(model:Model) -> str|None:
 def _baseURL(src:str|Traversable) -> str:
   '''
   :param src: One of *BASE_RULES*.
-  :type src: str | Traversable
   :returns: Its URL: package data's is that of a copy in a temporary folder,
     made to refer to where it then is (made the first time).
-  :rtype: str
   '''
   if isinstance(src, str):
     return src
@@ -1059,7 +946,6 @@ def baseRuleModels() -> list[Model]:
     *BASE_RULES_PLACEHOLDER* -- is read from a copy in a temporary folder,
     made to refer to where it then is. (None while they're being read: see
     *Model.implicitSuperDBs()*.)
-  :rtype: list[Model]
   '''
   if _readingBase:
     return []
@@ -1109,10 +995,7 @@ class Reasoner(ABC):
 
   def __init_subclass__(cls, engine:str|None=None, **kwargs): # @NoSelf (implicitly a classmethod)
     '''
-    :param engine:
-    :type engine: str | None
-    :param kwargs:
-    :type kwargs:
+    A subclass made with an *engine* name is the reasoner for that engine (see *create()*).
     '''
     super().__init_subclass__(**kwargs)
     if engine is not None:
@@ -1121,14 +1004,8 @@ class Reasoner(ABC):
   @classmethod
   def create(cls, model:Model, engine:str="clingo", **kwargs) -> Reasoner:
     '''
-    :param model:
-    :type model: Model
-    :param engine:
-    :type engine: str
-    :param kwargs:
-    :type kwargs:
-    :returns:
-    :rtype: Reasoner
+    A reasoner over *model* by *engine* (its module, sn.model.<engine>Reasoner, imported if need be); *kwargs*
+    are its constructor's.
     '''
     if engine not in cls.engines:
       import_module(f'sn.model.{engine}Reasoner')
@@ -1136,13 +1013,10 @@ class Reasoner(ABC):
 
   def __init__(self, model:Model, showSysRules:bool|None=None):
     '''
-    :param model:
-    :type model: Model
     :param showSysRules: Whether the base rules (see *BASE_RULES*) show in
       the results: their objects as data, and their conclusions as rule
       conclusions (rather than plain inferences). By default, as the
       "reasoner/showSysRules" preference says.
-    :type showSysRules: bool | None
     '''
     self.model = model
     if showSysRules is None:
@@ -1157,9 +1031,6 @@ class Reasoner(ABC):
     Reason over the current state of the model. An engine reasons with the
     rules, definitions and constraints of *ruleObjects()* (so including the
     base rules), and passes what it finds through *_finish()*.
-
-    :returns:
-    :rtype: Inferences
     '''
 
   def answer(self, context:GraphObject) -> list[dict[GraphObject, GraphObject]]:
@@ -1167,13 +1038,10 @@ class Reasoner(ABC):
     Answer the query a context describes (see *patternOf()*) against the
     model, including what the reasoner infers.
 
-    :param context:
-    :type context: GraphObject
     :returns: One dict per match, mapping each of the pattern's variables to
       the object it matched. A pattern without variables gives [{}] if it
       holds, [] if not. An individual variable matches individuals, a type
       variable types, and a variable used as a relation's type relation types.
-    :rtype: list[dict[GraphObject, GraphObject]]
     '''
     raise NotImplementedError(f'{type(self).__name__} can\'t answer queries.')
 
@@ -1181,11 +1049,8 @@ class Reasoner(ABC):
     '''
     Run a query in the engine's native language (see :py:attr:`language`).
 
-    :param query:
-    :type query: str
     :returns: Answer tuples, with the engine's object references mapped back
       to *GraphObjects*.
-    :rtype: list[tuple[Any, ...]]
     '''
     raise NotImplementedError(f'{type(self).__name__} has no native query language.')
 
@@ -1196,57 +1061,31 @@ class Reasoner(ABC):
   def related(self, src:GraphObject, relType:Relation) -> list[GraphObject]:
     '''
     :returns: Everything *src* is related to under *relType*, asserted or inferred.
-
-    :param src:
-    :type src: GraphObject
-    :param relType:
-    :type relType: Relation
-    :rtype: list[GraphObject]
     '''
     return self.run().related(src, relType)
 
   def relatedFrom(self, dst:GraphObject, relType:Relation) -> list[GraphObject]:
     '''
     :returns: Everything related to *dst* under *relType*, asserted or inferred.
-
-    :param dst:
-    :type dst: GraphObject
-    :param relType:
-    :type relType: Relation
-    :rtype: list[GraphObject]
     '''
     return [s for t,s,d in self.run().holds if d is dst and t is relType]
 
   def isa(self, obj:GraphObject, typ:GraphObject) -> bool:
     '''
-    :param obj:
-    :type obj: GraphObject
-    :param typ:
-    :type typ: GraphObject
-    :returns:
-    :rtype: bool
+    Whether *obj* isa *typ*, as reasoned (see *run()*).
     '''
     return any(x is obj and t is typ for x,t in self.run().isa)
 
   def instances(self, typ:GraphObject, individualsOnly:bool=True) -> list[GraphObject]:
     '''
     :returns: Every (individual) object that isa *typ*, other than *typ* itself.
-
-    :param typ:
-    :type typ: GraphObject
-    :param individualsOnly:
-    :type individualsOnly: bool
-    :rtype: list[GraphObject]
     '''
     return [x for x,t in self.run().isa if t is typ and x is not typ
             and (x.isIndividual() or not individualsOnly)]
 
   def violations(self, subject:GraphObject|None=None) -> list[Violation]:
     '''
-    :param subject:
-    :type subject: GraphObject | None
-    :returns:
-    :rtype: list[Violation]
+    The violations found by reasoning (see *run()*): all of them, or those about *subject*.
     '''
     return [v for v in self.run().violations if subject is None or v.subject is subject]
 
@@ -1257,7 +1096,6 @@ class Reasoner(ABC):
     :returns: The objects of the model and (transitively) its super-models --
       but not the base rules' (see *BASE_RULES*), unless it's one of them:
       they're rules, not data (see *ruleObjects()*).
-    :rtype: list[GraphObject]
     '''
     return [obj for m in self.dataModels() for obj in list(m.values()) if not getattr(obj, "inferred", False)]
 
@@ -1265,7 +1103,6 @@ class Reasoner(ABC):
     '''
     :returns: The model and (transitively) its super-models -- but not the base
       rules (see *BASE_RULES*), unless it's one of them (see *objects()*).
-    :rtype: list[Model]
     '''
     base = [m for m in baseRuleModels() if m is not self.model]
     models:list[Model] = []
@@ -1281,7 +1118,6 @@ class Reasoner(ABC):
     '''
     :returns: What the rules, definitions and constraints are read from:
       *objects()*, and the base rules' (see *BASE_RULES*).
-    :rtype: list[GraphObject]
     '''
     ret = self.objects()
     have = {id(o.model) for o in ret}
@@ -1292,7 +1128,6 @@ class Reasoner(ABC):
     :returns: The rules and definitions (see *ruleSpecs()*), and the
       constraints (see *constraintSpecs()*), of *ruleObjects()*. (The base
       rules' are read once: they're read-only.)
-    :rtype: tuple[list[RuleSpec], list[ConstraintSpec]]
     '''
     objs = self.objects()
     have = {id(o.model) for o in objs}
@@ -1312,13 +1147,9 @@ class Reasoner(ABC):
 
   def isSystem(self, obj:Any, bases:list[Model]|None=None) -> bool:
     '''
-    :param obj:
-    :type obj: Any
     :param bases: The base rules' models (see *baseRuleModels()*), if the
       caller has them already: eg: to ask of many objects.
-    :type bases: list[Model] | None
     :returns: True iff *obj* is (or is made by) one of the base rules (see *BASE_RULES*).
-    :rtype: bool
     '''
     if isinstance(obj, NewObject):
       obj = obj.rule
@@ -1339,10 +1170,7 @@ class Reasoner(ABC):
         rule conclusions (*fired*, ...): what they conclude is in *holds*,
         *inferred*, ... as any inference is.
 
-    :param ret:
-    :type ret: Inferences
     :returns: *ret*, changed.
-    :rtype: Inferences
     '''
     def order(x:Any) -> tuple:
       return (str(x.model.url), x._id) if isinstance(x, GraphObject) else ("", str(x))
@@ -1377,7 +1205,6 @@ class Reasoner(ABC):
       the module documentation for the vocabulary. With *showSysRules*, the
       base rules too (see *BASE_RULES*). What a previous "reason" inferred
       isn't among them (see *withoutInferences()*).
-    :rtype: list[Fact]
     '''
     with withoutInferences([*self.dataModels(), *baseRuleModels()]):
       return self._facts()
@@ -1385,7 +1212,6 @@ class Reasoner(ABC):
   def _facts(self) -> list[Fact]:
     '''
     :returns: *facts()*, with the inferred objects out of the way.
-    :rtype: list[Fact]
     '''
     out:list[Fact] = []
     for key in ("top", "relation", "isa", "node", "collection"):
@@ -1443,12 +1269,8 @@ class Reasoner(ABC):
 
   def _relationFacts(self, rel:Relation, ref) -> list[Fact]:
     '''
-    :param rel:
-    :type rel: Relation
-    :param ref:
-    :type ref:
-    :returns:
-    :rtype: list[Fact]
+    The facts about relation *rel*: its ends (its own and inherited), and, for an individual relation that
+    isn't a pattern, that it relates them (*ref* refers to an end).
     '''
     out:list[Fact] = []
     if rel.localSrc is not None:
@@ -1498,15 +1320,8 @@ def reason(model:Model, engine:str="clingo", silent:bool=False) -> Inferences:
   and aren't updated as it's edited: they're a snapshot until the next
   *reason()* or *clearReasoning()*.
 
-  :param model:
-  :type model: Model
-  :param engine:
-  :type engine: str
   :param silent: True if views shouldn't show what's inferred (eg: just so
     that queries find it): they show only the problems (see *SNGView._showReasoning()*).
-  :type silent: bool
-  :returns:
-  :rtype: Inferences
   '''
   reasoner = Reasoner.create(model, engine)
   ret = reasoner.run()
@@ -1517,12 +1332,9 @@ def reason(model:Model, engine:str="clingo", silent:bool=False) -> Inferences:
 
 def summary(model:Model) -> str:
   '''
-  :param model:
-  :type model: Model
   :returns: What *model*'s last "reason" found, in a line -- eg: "inferred:
     3 relations, 4 new objects; 1 error, 2 warnings" -- or "" if it hasn't
     been reasoned over (or that's been retracted).
-  :rtype: str
   '''
   r = reasoningFor(model)
   if r is None:
@@ -1539,9 +1351,6 @@ def summary(model:Model) -> str:
 def clearReasoning(model:Model) -> None:
   '''
   Forget *model*\'s reasoning results; observers are told with a ("reasoning cleared", ()) topic.
-
-  :param model:
-  :type model: Model
   '''
   with model.inferring(*model.allSuperDBs()): #type: ignore[arg-type]
     for obj in [*_inferredRelations(model).values(), *model.inferredObjects()]: # (relations first: then the new objects)
@@ -1563,7 +1372,6 @@ def withoutInferences(models:list[Model]) -> Iterator[None]:
   concerned, nothing happened.
 
   :param models: The models.
-  :type models: list[Model]
   '''
   models = [m for i, m in enumerate(models) if not any(m is n for n in models[:i])]
   objs = [o for m in models for o in m.inferredObjects()]
@@ -1602,10 +1410,8 @@ def withoutInferences(models:list[Model]) -> Iterator[None]:
 def _inferredAttributes(models:list[Model]) -> list[tuple[GraphObject, str, Attribute]]:
   '''
   :param models: Some models.
-  :type models: list[Model]
   :returns: The inferred attributes (see *Attribute.inferred*) of their
     objects: (object, key, attribute).
-  :rtype: list[tuple[GraphObject, str, Attribute]]
   '''
   return [(o, k, a) for m in models for o in list(m.values()) if o is not None
           for k, a in list(dict.items(o)) if isinstance(a, Attribute) and a.inferred]
@@ -1613,11 +1419,9 @@ def _inferredAttributes(models:list[Model]) -> list[tuple[GraphObject, str, Attr
 def _inferredRelations(model:Model) -> dict[tuple[int, int, int], Relation]:
   '''
   :param model: A model.
-  :type model: Model
   :returns: *model*'s inferred relations -- not the isa links of inferred
     relations, which go with them -- by (id(type), id(src), id(dst)); an isa
     link's type is the model's ISA.
-  :rtype: dict[tuple[int, int, int], Relation]
   '''
   ret:dict[tuple[int, int, int], Relation] = {}
   for o in model.inferredObjects():
@@ -1639,7 +1443,6 @@ def _inferredRelations(model:Model) -> dict[tuple[int, int, int], Relation]:
 def sameClasses(pairs:list[tuple[Any, Any]]) -> dict[NewObject, GraphObject|NewObject]:
   '''
   :param pairs: Pairs of objects that must be the same (see *Inferences.same*).
-  :type pairs: list[tuple[Any, Any]]
   :returns: For each invented object (*NewObject*) among them, what stands for
     its class -- the objects all the same as it: the model's object, if
     there's just one in the class (the invented ones are it); else one of the
@@ -1647,7 +1450,6 @@ def sameClasses(pairs:list[tuple[Any, Any]]) -> dict[NewObject, GraphObject|NewO
     cardinality -- its name is the user's -- then the shortest name, then the
     first by name). (Two of the model's objects can't be the same: that's reported --
     see *CARDINALITY* -- and their invented ones stay invented.)
-  :rtype: dict[NewObject, GraphObject | NewObject]
   '''
   key = lambda o: ("g", id(o)) if isinstance(o, GraphObject) else ("n", _newObjectKey(o)) # (by identity: see _newObjectKey())
   parent:dict[tuple, tuple] = {}
@@ -1686,9 +1488,6 @@ def mergeSame(ret:Inferences) -> None:
   a class (or weren't merged) are left in *newObjects*. (What the engine
   concluded about the model's objects -- *holds*, ... -- already includes what
   it concluded about the invented ones that are them.) *ret.merged* is set.
-
-  :param ret:
-  :type ret: Inferences
   '''
   m = sameClasses(ret.same)
   ret.merged = m
@@ -1713,22 +1512,17 @@ def mergeSame(ret:Inferences) -> None:
 def _newObjectKey(n:NewObject) -> tuple:
   '''
   :param n: An object a rule concluded exists.
-  :type n: NewObject
   :returns: What identifies it from one "reason" to the next: the rule, the
     variable, and the match (by identity, for the model's objects).
-  :rtype: tuple
   '''
   return (id(n.rule), n.variable, tuple((name, id(v) if isinstance(v, GraphObject) else repr(v)) for name, v in n.bindings))
 
 def _newObjectName(n:NewObject, model:Model|None) -> str:
   '''
   :param n: An object a rule concluded exists.
-  :type n: NewObject
   :param model: The model it's made in (objects are named relative to it).
-  :type model: Model
   :returns: The name of the inferred node made for it, eg: "(m for alice)" --
     not a variable's name (see *sn.model.names*: it isn't a pattern).
-  :rtype: str
   '''
   what = names.stem(n.variable) or "new"
   match = ", ".join(v.name if isinstance(v, GraphObject) else str(v) for _, v in n.bindings)
@@ -1737,13 +1531,10 @@ def _newObjectName(n:NewObject, model:Model|None) -> str:
 def inferredNodeFor(model:Model, n:Any) -> Any:
   '''
   :param model: A model that's been reasoned over.
-  :type model: Model
   :param n: Anything: eg: an answer's value.
-  :type n: Any
   :returns: If *n* is an object a rule concluded exists (see *NewObject*), the
     inferred node made for it in *model* (see *materialize()*), if there is one;
     otherwise *n*.
-  :rtype: Any
   '''
   if not isinstance(n, NewObject):
     return n
@@ -1769,11 +1560,8 @@ def materialize(model:Model, inferences:Inferences, models:list[Model]) -> None:
   "rule" (a relation the rules gave a new object), or "new" (a new object).
 
   :param model: The model reasoned over.
-  :type model: Model
   :param inferences: What the reasoner concluded.
-  :type inferences: Inferences
   :param models: *model* and its super-models.
-  :type models: list[Model]
   '''
   want:dict[tuple[int, int, int], tuple[GraphObject, Any, Any]] = {}
   kinds:dict[tuple[int, int, int], str] = {}
@@ -1865,20 +1653,12 @@ def materialize(model:Model, inferences:Inferences, models:list[Model]) -> None:
 def reasoningFor(model:Model|None) -> Inferences|None:
   '''
   The results of the last *reason()* over *model*, or None.
-
-  :param model:
-  :type model: Model | None
-  :returns:
-  :rtype: Inferences | None
   '''
   return getattr(model, "reasoning", None)
 
 def _kind(obj:GraphObject) -> str:
   '''
-  :param obj:
-  :type obj: GraphObject
-  :returns:
-  :rtype: str
+  What kind of object *obj* is, for the reasoner's facts: "isa", "relation", "node" or "top".
   '''
   if isinstance(obj, IsaIndividual):
     return "isa"
@@ -1891,13 +1671,6 @@ def _kind(obj:GraphObject) -> str:
 def _label(x:Any, relativeTo:Model|None=None) -> str:
   '''
   How an object is named in messages: see *GraphObject.tostring()*\'s "friendly" format.
-
-  :param x:
-  :type x: Any
-  :param relativeTo:
-  :type relativeTo: Model | None
-  :returns:
-  :rtype: str
   '''
   if isinstance(x, GraphObject):
     return x.tostring(relativeTo=relativeTo, format="friendly")
@@ -1908,10 +1681,5 @@ def _label(x:Any, relativeTo:Model|None=None) -> str:
 def relationArrow(relType:Relation) -> str:
   '''
   A relation type as an arrow, as in the conceptual graphs literature: -name->
-
-  :param relType:
-  :type relType: Relation
-  :returns:
-  :rtype: str
   '''
   return f'-{relType.name}->'

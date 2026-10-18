@@ -63,12 +63,8 @@ class ClingoReasoner(Reasoner, engine="clingo"):
 
   def __init__(self, model:Model, rules:Path|str|Traversable=RULES, showSysRules:bool|None=None):
     '''
-    :param model:
-    :type model: Model
     :param rules: The rule base: a file, or package data (see *RULES*).
-    :type rules: Path | str | Traversable
     :param showSysRules: See *Reasoner.__init__()*.
-    :type showSysRules: bool | None
     '''
     super().__init__(model, showSysRules=showSysRules)
     self.rules:Path|Traversable = Path(rules) if isinstance(rules, str) else rules
@@ -81,10 +77,8 @@ class ClingoReasoner(Reasoner, engine="clingo"):
 
   def _term(self, x:Any) -> str:
     '''
-    :param x:
-    :type x: Any
-    :returns:
-    :rtype: str
+    The clingo term for a fact's argument: an object is o(n), numbered as it's first met; a symbol, bool,
+    number or string as itself.
     '''
     if isinstance(x, GraphObject):
       n = self._ids.get(id(x))
@@ -103,10 +97,7 @@ class ClingoReasoner(Reasoner, engine="clingo"):
 
   def _program(self, facts:list[Fact]) -> str:
     '''
-    :param facts:
-    :type facts: list[Fact]
-    :returns:
-    :rtype: str
+    The clingo program stating *facts*, one a line (objects numbered afresh: see *_term()*).
     '''
     self._ids.clear()
     self._objs.clear()
@@ -116,14 +107,9 @@ class ClingoReasoner(Reasoner, engine="clingo"):
 
   def _solve(self, program:str="", facts:str|None=None) -> list[clingo.Symbol]:
     '''
-    :param program:
-    :type program: str
     :param facts: The model's facts, already rendered (see *_program()*) -- for
       a *program* that refers to objects by their o(N) terms, which must come
       from the same rendering. Rendered afresh if None.
-    :type facts: str | None
-    :returns:
-    :rtype: list[clingo.Symbol]
     '''
     ctl = clingo.Control(["--warn=none"])
     ctl.add("base", [], self.rules.read_text(encoding="utf-8"))
@@ -140,11 +126,6 @@ class ClingoReasoner(Reasoner, engine="clingo"):
   def _value(self, sym:clingo.Symbol) -> Any:
     '''
     Map a clingo symbol back to a GraphObject (for o(N)) or a Python value.
-
-    :param sym:
-    :type sym: clingo.Symbol
-    :returns:
-    :rtype: Any
     '''
     if sym.type == clingo.SymbolType.Function:
       if sym.name == "o" and len(sym.arguments) == 1:
@@ -164,10 +145,6 @@ class ClingoReasoner(Reasoner, engine="clingo"):
 
   @override
   def run(self) -> Inferences:
-    '''
-    :returns:
-    :rtype: Inferences
-    '''
     ret = Inferences()
     facts = self._program(self.facts()) # (numbers the objects the rules refer to)
     for sym in self._solve(self._rulesProgram(), facts):
@@ -200,15 +177,6 @@ class ClingoReasoner(Reasoner, engine="clingo"):
     types if used as one, whatever their kind. A query's variables also range over the objects rules create; a
     rule's (*forRule*: a rule that creates objects) don't -- or it could go on
     creating objects forever.
-
-    :param pat:
-    :type pat: Pattern
-    :param var:
-    :type var: dict[str, str]
-    :param forRule:
-    :type forRule: bool
-    :returns:
-    :rtype: list[str]
     '''
     dom, ind = ("base", "individual") if forRule else ("data", "any_individual")
     def term(x:GraphObject|None) -> str:
@@ -244,11 +212,6 @@ class ClingoReasoner(Reasoner, engine="clingo"):
   def _varNames(pat:Pattern) -> dict[str, str]:
     '''
     A clingo variable for each of *pat*\'s variable names, in answer order.
-
-    :param pat:
-    :type pat: Pattern
-    :returns:
-    :rtype: dict[str, str]
     '''
     return {name: f"V{i}" for i, name in enumerate(dict.fromkeys(v.name for v in pat.variables))}
 
@@ -259,11 +222,6 @@ class ClingoReasoner(Reasoner, engine="clingo"):
     ``ans(V0,...) :- <a holds/3 literal per relation, isa_star/2 per type, ...>``,
     over the reasoner's results (including what the model's rules conclude) --
     so matches include inferred relations. See *_patternBody()*.
-
-    :param context:
-    :type context: GraphObject
-    :returns:
-    :rtype: list[dict[GraphObject, GraphObject]]
     '''
     pat = patternOf(context)
     if pat.errors:
@@ -304,17 +262,6 @@ class ClingoReasoner(Reasoner, engine="clingo"):
     The term for the object *rule* creates for its consequent variable *name*
     in each match: new(Rule,Name,((Var,Value),...)) -- a function of the match,
     so one object per match (see *NewObject*).
-
-    :param rule:
-    :type rule: GraphObject
-    :param name:
-    :type name: str
-    :param matched:
-    :type matched: list[str]
-    :param var:
-    :type var: dict[str, str]
-    :returns:
-    :rtype: str
     '''
     pairs = "".join(f"({_str(n)},{var[n]})," for n in matched)
     return f"new({self._term(rule)},{_str(name)},({pairs}))"
@@ -327,15 +274,6 @@ class ClingoReasoner(Reasoner, engine="clingo"):
     the types they say (asserted relations and types only, so that the program
     stays stratified) -- and the literal to
     test it with. ("", "") if there's nothing to test.
-
-    :param spec:
-    :type spec:
-    :param var:
-    :type var: dict[str, str]
-    :param n:
-    :type n: int
-    :returns:
-    :rtype: tuple[str, str]
     '''
     new = {x.name for x in spec.new}
     exist = {name: f"E{i}" for i, name in enumerate(sorted(new))}
@@ -366,9 +304,6 @@ class ClingoReasoner(Reasoner, engine="clingo"):
     over the condition's variables. A rule or
     constraint with problems isn't used: its problems are reported as
     violations. Call after rendering the facts (see *_program()*).
-
-    :returns:
-    :rtype: str
     '''
     out:list[str] = []
     rules, constraints = self.specs()
@@ -435,12 +370,8 @@ class ClingoReasoner(Reasoner, engine="clingo"):
     '''
     :param query: Extra clingo rules defining the predicate *answer*; objects
       can be named with ``name(O,"...")``.
-    :type query: str
-    :param answer:
-    :type answer: str
     :returns: The argument tuples of every *answer* atom, with ``o(N)`` terms
       mapped back to *GraphObjects*.
-    :rtype: list[tuple[Any, ...]]
     '''
     facts = self._program(self.facts()) # (numbers the objects the rules refer to)
     program = self._rulesProgram() + "\n" + query + f'\n#show {answer}/{_arity(query, answer)}.'
@@ -453,24 +384,12 @@ _SYMBOL = re.compile(r"_*[a-z]\w*$")
 def _str(s:str) -> str:
   '''
   A clingo string literal.
-
-  :param s:
-  :type s: str
-  :returns:
-  :rtype: str
   '''
   return '"' + s.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n') + '"'
 
 def _arity(program:str, pred:str) -> int:
   '''
   The arity of the first head occurrence of *pred* in *program*.
-
-  :param program:
-  :type program: str
-  :param pred:
-  :type pred: str
-  :returns:
-  :rtype: int
   '''
   start = program.find(pred + "(")
   if start < 0:
