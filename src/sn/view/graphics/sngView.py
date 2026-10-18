@@ -2020,7 +2020,7 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
     if getattr(self, "_closed", False): # (a notification sent before the window closed: see detachFromModel())
       return
     self.structureChanged() # (eg: an object retyped: maybe now a context window)
-    logger.info(f'SNGView.update({subject.name}, {len(topics)} topics):')
+    logger.debug(f'SNGView.update({subject.name}, {len(topics)} topics)')
     for t in topics:
       topicName:str = t[0]
       topicData:tuple[Any, ...] = t[1]
@@ -2042,7 +2042,6 @@ class SNGView(AbstractGraph["VObject", "VRelation"], Observer, Dirtyable):
           if getattr(modelObj, "inferred", False): # (what "reason" concluded: shown when it's done -- see _showInferred())
             continue
           pasted = self.__dict__.get("_pasting", {}).pop(id(modelObj), None) is not None # (see showPasted())
-          logger.info(f'  Creating V{modelObj.__class__.__name__} for model object {modelObj}:{modelObj.__class__.__name__}')
           if (modelObj.isType() or isinstance(modelObj, Node)) and self.canvas and not pasted:
             # (now: asked later -- after_idle -- the editor came up blank, or unseen, when the
             # object was made from a pop-up menu, and took all the input: the app seemed to hang)
