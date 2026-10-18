@@ -860,32 +860,7 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
       return []
     else:
       seen.add(self.id)
-    ret:list[tuple[Relation,GraphObject]] = []
-    r: Relation
-    typeOk:Callable[[Relation], bool] = (lambda r: True) if rel is None else (cast(Callable[[Relation], bool], lambda r, typ=rel: r.isa(typ)))
-    # pattern relations (inside rules etc.) aren't about the world -- unless we're a pattern element ourselves
-    patternOk:Callable[[Relation], bool] = (lambda r: True) if self.isPatternElement() else (lambda r: not r.isPatternElement())
-    filtr:Callable[[Relation], bool] = lambda r: typeOk(r) and patternOk(r) and (inferred or not r.inferred)
-    for r,other in self._getOutgoing(filtr):
-      if other is not None:
-        ret.append((r, other))
-        if other is not self and (chainTypes := r._transitiveTypes(rel)):
-          # add in what *other* is related to by the same transitive relation (or subtypes of it)
-          ret += other._chain(chainTypes, filtr, {self.id}, outgoing=True)
-        if r.isReflexive() and other is not self: # (*self* is related to itself by it too)
-          ret.append((r, self))
-    if inferred and _seen is None: # the outermost call only
-      self._addNew(ret, self._inferredRelated(rel, outgoing=True), byObjectOnly=rel is not None)
-    if len(ret) == 0:
-      return []
-      
-    if rel is not None: # and not _returnPairs:
-      ret2:list[GraphObject] = list({id(o): o for _, o in ret}.values()) # return only the objects (each once)
-      if rel.isIrreflexive():
-        return [x for x in ret2 if x is not self]
-      return ret2
-    
-    return [(r,o) for r,o in ret if not(r.isIrreflexive() and o is self)] # return the rel/object pairs
+    return self._related(rel, outgoing=True, inferred=inferred, addInferred=_seen is None) # (the outermost call only)
 
   @overload
   def isRelatedTo(self) -> list[tuple[Relation,GraphObject]]: ...
@@ -922,23 +897,50 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     :returns:
     :rtype: list[GraphObject] | list[tuple[Relation, GraphObject]]
     '''
+    return self._related(rel, outgoing=False, inferred=inferred, addInferred=_snapshot)
+
+  def _related(self, rel:Relation|None, *, outgoing:bool, inferred:bool, addInferred:bool) -> list[GraphObject]|list[tuple[Relation,GraphObject]]:
+    '''
+    What *getRelatedTo()* and *getRelatedFrom()* share: they differ only in the
+    direction. A reflexive relation relates *self* to itself too, and an
+    irreflexive one never does.
+
+    :param rel: If given, only relations that isa *rel*, and just the related
+      objects are returned; otherwise (relation, object) pairs.
+    :type rel: Relation | None
+    :param outgoing: The relations from *self* (else those to it).
+    :type outgoing: bool
+    :param inferred: Also include the relations the model's last "reason" inferred.
+    :type inferred: bool
+    :param addInferred: Also add what that "reason" found related (see *_inferredRelated()*).
+    :type addInferred: bool
+    :returns:
+    :rtype: list[GraphObject] | list[tuple[Relation, GraphObject]]
+    '''
     ret:list[tuple[Relation,GraphObject]] = []
     r: Relation
     typeOk:Callable[[Relation], bool] = (lambda r: True) if rel is None else (cast(Callable[[Relation], bool], lambda r, typ=rel: r.isa(typ)))
     # pattern relations (inside rules etc.) aren't about the world -- unless we're a pattern element ourselves
     patternOk:Callable[[Relation], bool] = (lambda r: True) if self.isPatternElement() else (lambda r: not r.isPatternElement())
     filtr:Callable[[Relation], bool] = lambda r: typeOk(r) and patternOk(r) and (inferred or not r.inferred)
-    for r,other in self._getIncoming(filtr):
+    for r,other in (self._getOutgoing(filtr) if outgoing else self._getIncoming(filtr)):
       if other is not None:
         ret.append((r, other))
         if other is not self and (chainTypes := r._transitiveTypes(rel)):
-          # add in what's related to *other* by the same transitive relation (or subtypes of it)
-          ret += other._chain(chainTypes, filtr, {self.id}, outgoing=False)
-    if inferred and _snapshot:
-      self._addNew(ret, self._inferredRelated(rel, outgoing=False), byObjectOnly=rel is not None)
-    if rel is not None: # and not _returnPairs:
-      return list({id(o): o for _, o in ret}.values()) # return only the objects (each once)
-    return ret # return the rel/object pairs
+          # add in what's related to (or from) *other* by the same transitive relation (or subtypes of it)
+          ret += other._chain(chainTypes, filtr, {self.id}, outgoing=outgoing)
+        if r.isReflexive() and other is not self: # (*self* is related to itself by it too)
+          ret.append((r, self))
+    if inferred and addInferred:
+      self._addNew(ret, self._inferredRelated(rel, outgoing=outgoing), byObjectOnly=rel is not None)
+      
+    if rel is not None:
+      ret2:list[GraphObject] = list({id(o): o for _, o in ret}.values()) # return only the objects (each once)
+      if rel.isIrreflexive():
+        return [x for x in ret2 if x is not self]
+      return ret2
+    
+    return [(r,o) for r,o in ret if not(r.isIrreflexive() and o is self)] # return the rel/object pairs
 
 
   @overload

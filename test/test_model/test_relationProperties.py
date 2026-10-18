@@ -159,6 +159,31 @@ class Test(unittest.TestCase):
     self.assertEqual(set(x.getRelatedTo(same)), {x, y})
     self.assertEqual(sorted(o.name for rr, o in x.getRelatedTo() if rr is r), ["x9", "y9"])
 
+  def test0910reflexiveFrom(self):
+    'getRelatedFrom() treats a reflexive relation as getRelatedTo() does, from the other end.'
+    m = self.m
+    same = Relation(m, [m.RELATION], self.person, self.person, name="sameAs2"); same["reflexive"] = True
+    x = Node(m, [self.person], individual=True, name="x91")
+    y = Node(m, [self.person], individual=True, name="y91")
+    r = Relation(m, [same], x, y, individual=True)
+    self.assertEqual(set(y.getRelatedFrom(same)), {x, y})
+    self.assertEqual(sorted(o.name for rr, o in y.getRelatedFrom() if rr is r), ["x91", "y91"])
+    self.assertEqual(set(x.getRelatedFrom(same)), set()) # (nothing relates to x)
+
+  def test0920irreflexive(self):
+    'Neither direction relates an object to itself by an irreflexive relation, even by an explicit loop.'
+    m = self.m
+    other = Relation(m, [m.RELATION], self.person, self.person, name="otherThan"); other["irreflexive"] = True
+    x = Node(m, [self.person], individual=True, name="x92")
+    y = Node(m, [self.person], individual=True, name="y92")
+    r = Relation(m, [other], x, y, individual=True)
+    loop = Relation(m, [other], x, x, individual=True)
+    self.assertEqual(x.getRelatedTo(other), [y])
+    self.assertEqual(y.getRelatedFrom(other), [x])
+    self.assertEqual(x.getRelatedFrom(other), [])
+    self.assertEqual([o for rr, o in x.getRelatedTo() if rr in (r, loop)], [y])
+    self.assertEqual([o for rr, o in x.getRelatedFrom() if rr in (r, loop)], [])
+
 
 if __name__ == "__main__":
   unittest.main()
