@@ -36,7 +36,7 @@ Implements the VRelation class.
 
 import tkinter as tk
 from ast import literal_eval
-from typing import Any, Optional, Union, Tuple, List, Iterable, \
+from typing import Any, Optional, Union, Tuple, Iterable, \
   override, Literal, TYPE_CHECKING
 from types import NoneType
 
@@ -68,11 +68,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
   '''
   Implements the visual representation of model *Relation*. The roles are taken
   for the *Relation* object exclusively.  
-  
-  Adds to self.cache (from VObject):
-  
-    - '._roles': List of role names
-    - '._<rolename>__filler': List of fillers for each role name 
   '''
 
   granularity = 1  # the accuracy to which we should calculate endpoints
@@ -349,18 +344,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
    
   ### DESTRUCTOR ########################################################################
 
-  def _getConnectedVObjects(self) -> List[VObject]:
-    '''
-    :returns:
-    :rtype: List[VObject]
-    '''
-    ret = []
-    roles = self.cache._roles if hasattr(self.cache, "_roles") else []
-    for roleName in roles:
-      for obj in getattr(self.cache, f'_{roleName}__filler'):
-        ret.append(obj)
-    return ret
-    
   def validate(self) -> list[str]:
     """
     :return: The list of errors or inconsistencies in this *VNode*. 

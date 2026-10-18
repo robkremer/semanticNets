@@ -123,9 +123,6 @@ class Cache(dict[str,Any]):
   An empty class to stuff cached attributes in. Keys are restricted to all the 
   visual attributes included in *VATTRIBUTES*. And are automatically filled from
   the owner.modelObject or the defaults in  *VATTRIBUTES*.
-  
-    - *_roles* : (*VRelation* only) A list of *str* names of the roles. 
-    - *_<rolename>__filler*: (VRelation* only) List of fillers for each role name 
   '''
   
   def __init__(self, owner):
