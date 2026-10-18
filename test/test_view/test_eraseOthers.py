@@ -20,7 +20,7 @@
 # SOFTWARE.                                                                     #
 #################################################################################
 '''
-What "erase everything else" keeps (see *sn.view.graphics.sngView.keptWith()*):
+What "erase everything else" keeps (see *sn.view.graphics.viewCommands.keptWith()*):
 the part that needs no screen. Objects are strings; relations are "a-b" (from
 a to b, with "_" for a dangling end; names, as identifiers, are interned); windows hold what *WINDOWS* says.
 
@@ -30,7 +30,7 @@ Created on Oct 13, 2026
 '''
 import sys
 import unittest
-from sn.view.graphics.sngView import keptWith
+from sn.view.graphics.viewCommands import keptWith
 
 def ends(o):
   if "-" not in o:

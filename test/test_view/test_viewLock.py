@@ -32,7 +32,8 @@ Created on Oct 16, 2026
 import unittest
 from util.commandParser import Command, CompositeCommand
 from sn.controller.modelInterface import ModelContext, ModelCommand, changesModel
-from sn.view.graphics.sngView import SNGView, ViewDoList
+from sn.view.graphics.sngView import SNGView
+from sn.view.graphics.viewCommands import ViewDoList
 
 class FakeModel:
   def __init__(self, writeLocked:bool=False):
