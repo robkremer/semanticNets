@@ -872,7 +872,7 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
         if other is not self and (chainTypes := r._transitiveTypes(rel)):
           # add in what *other* is related to by the same transitive relation (or subtypes of it)
           ret += other._chain(chainTypes, filtr, {self.id}, outgoing=True)
-        if r.isReflexive() and other is not self and self not in seen:
+        if r.isReflexive() and other is not self: # (*self* is related to itself by it too)
           ret.append((r, self))
     if inferred and _seen is None: # the outermost call only
       self._addNew(ret, self._inferredRelated(rel, outgoing=True), byObjectOnly=rel is not None)

@@ -149,5 +149,16 @@ class Test(unittest.TestCase):
     self.assertIs(r1.dst, car)
 
 
+  def test0900reflexiveTo(self):
+    'A reflexive relation relates its source to itself too: once, by each relation.'
+    m = self.m
+    same = Relation(m, [m.RELATION], self.person, self.person, name="sameAs"); same["reflexive"] = True
+    x = Node(m, [self.person], individual=True, name="x9")
+    y = Node(m, [self.person], individual=True, name="y9")
+    r = Relation(m, [same], x, y, individual=True)
+    self.assertEqual(set(x.getRelatedTo(same)), {x, y})
+    self.assertEqual(sorted(o.name for rr, o in x.getRelatedTo() if rr is r), ["x9", "y9"])
+
+
 if __name__ == "__main__":
   unittest.main()
