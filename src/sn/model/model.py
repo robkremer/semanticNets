@@ -61,12 +61,13 @@ Created on Apr 21, 2026
 # SOFTWARE.                                                                     #
 #################################################################################
 from __future__ import annotations
+from collections import deque
 from contextlib import contextmanager
 from util.persistence.pRef import PRObject, PRDb, PReference, PRDbContainer
 from util.persistence.serialize import InstantiationInfo, ParamInfo, PropertyInfo,\
   SerializableType, Serializable
 from util.persistence.serialize import DEFAULT_STRATEGY
-from util.utils import removeDuplicates, delOne, extendsDoc
+from util.utils import delOne, extendsDoc
 from typing import override, cast, Generator, Callable, Optional,\
   Iterable, overload, Iterator, Any
 from util.attribute import AttributedObject, Attribute, NOVALUE, coerceValue
@@ -141,6 +142,35 @@ def nameMatcher(pattern:str, wholeWord:bool=False, matchCase:bool=False, regex:b
   return lambda name: compiled.search(name) is not None
 
 GORef = PReference["GraphObject"]
+
+def removeDuplicateObjects(items:list, asTree:bool=False) -> list:
+  '''
+  As *util.utils.removeDuplicates()* -- the first of any duplicates is kept;
+  if *asTree*, nested lists are de-duplicated too (against everything before
+  them), and any left empty are dropped -- but by identity, which for model
+  objects is what "==" is too (see *PRObject.__eq__()*), so in linear time,
+  not quadratic (eg: 2000 subtypes of a type took *getDescendants()* 108 ms).
+
+  :param items:
+  :type items: list
+  :param asTree:
+  :type asTree: bool
+  :returns: A copy of *items* without the duplicates.
+  :rtype: list
+  '''
+  seen:set[int] = set()
+  def do(items:list) -> list:
+    ret = []
+    for x in items:
+      if asTree and isinstance(x, list):
+        sub = do(x)
+        if sub:
+          ret.append(sub)
+      elif id(x) not in seen:
+        seen.add(id(x))
+        ret.append(x)
+    return ret
+  return do(items)
 
 _supersInProgress:set[int] = set()
 "The objects whose supertypes *GraphObject.getSupers()* is finding, just now: to stop at an isa cycle."
@@ -448,9 +478,11 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
       if cached is not None and cached[0] == _isaGeneration: # (good until relations change: see isaStructureChanged())
         return list(cached[1])
     ret:list = []
+    have:set[int] = set() # (ids of ret's objects -- not of its sublists, if asTree)
     for parent in self.getParents(): #gather ancestors in mro order
-      if parent not in ret: #TODO: this test will likely fail in the the "asTree" case...
+      if id(parent) not in have: #TODO: this test will likely fail in the the "asTree" case...
         ret.append(parent)
+        have.add(id(parent))
         if id(parent) in _supersInProgress: # (an isa cycle -- eg: from an old file: see parentProblem() -- don't go round it forever)
           continue
         _supersInProgress.add(id(parent))
@@ -458,11 +490,13 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
           if asTree:
             ret.append(parent.getSupers(asTree=asTree, rmDups=rmDups))
           else:
-            ret += parent.getSupers(asTree=asTree, rmDups=rmDups)
+            supers = parent.getSupers(asTree=asTree, rmDups=rmDups)
+            ret += supers
+            have.update(id(s) for s in supers)
         finally:
           _supersInProgress.discard(id(parent))
     if rmDups:
-      ret = removeDuplicates(ret, asTree=asTree)
+      ret = removeDuplicateObjects(ret, asTree=asTree)
     if cacheable:
       self.__dict__["_supersCache"] = (_isaGeneration, list(ret))
     return ret
@@ -584,7 +618,7 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
       else:
         ret += child.getDescendants(asTree=asTree, rmDups=rmDups)
     if rmDups:
-      ret = removeDuplicates(ret, asTree=asTree)
+      ret = removeDuplicateObjects(ret, asTree=asTree)
     return ret
     
 
@@ -772,9 +806,9 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     :rtype: list[tuple[Relation, GraphObject]]
     '''
     ret:list[tuple[Relation,GraphObject]] = []
-    todo:list[GraphObject] = [self]
+    todo:deque[GraphObject] = deque([self])
     while todo:
-      o = todo.pop(0)
+      o = todo.popleft()
       if o.id in seen:
         continue
       seen.add(o.id)
@@ -1175,12 +1209,14 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     :rtype: list[GraphObject]
     '''
     ret:list[GraphObject] = []
-    pending:list[GraphObject] = [self]
+    have:set[int] = set() # (ids of ret's)
+    pending:deque[GraphObject] = deque([self])
     while pending:
-      o = pending.pop(0)
-      if not getattr(o, "inferred", False) or any(o is r for r in ret):
+      o = pending.popleft()
+      if not getattr(o, "inferred", False) or id(o) in have:
         continue
       ret.append(o)
+      have.add(id(o))
       pending += [r for r, _ in o._getOutgoing(lambda r: isinstance(r, IsaIndividual) and r.inferred)]
       if isinstance(o, Relation):
         pending += [e for e in (o.localSrc, o.localDst) if e is not None]

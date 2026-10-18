@@ -269,6 +269,30 @@ class ReasonerSpec(_SpecBase):
 class TestClingo(ReasonerSpec, unittest.TestCase):
   ENGINE = ClingoReasoner
 
+  def test0890finishFindsTheBaseRulesOnce(self):
+    '_finish() leaves out the base rules\' conclusions, finding the base rules once -- not once per conclusion.'
+    import sn.model.reasoner as reasoner
+    from sn.model.model import GraphObject
+    from sn.model.reasoner import NewObject
+    real = reasoner.baseRuleModels
+    base = next(o for o in real()[0].values() if isinstance(o, GraphObject))
+    mine = self.owns
+    def finish(n):
+      ret = Inferences(fired=[(base, self.owns, self.fred, self.car1)] * n + [(mine, self.owns, self.fred, self.car1)],
+                       ruleIsa=[(base, self.fred, self.person)] * n,
+                       newObjects=[NewObject(base, "?x", ())] * n + [NewObject(mine, "?y", ())])
+      calls = []
+      reasoner.baseRuleModels = lambda: [calls.append(1), real()][-1] # type: ignore[assignment]
+      try:
+        out = ClingoReasoner(self.m, showSysRules=False)._finish(ret)
+      finally:
+        reasoner.baseRuleModels = real
+      self.assertEqual(out.fired, [(mine, self.owns, self.fred, self.car1)])
+      self.assertEqual(out.ruleIsa, [])
+      self.assertEqual([x.rule for x in out.newObjects], [mine])
+      return len(calls)
+    self.assertEqual(finish(100), finish(1))
+
   def test0900getRelatedToUsesReasoning(self):
     from sn.model.reasoner import reason, clearReasoning
     clearReasoning(self.m)
