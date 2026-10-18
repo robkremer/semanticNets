@@ -110,7 +110,8 @@ def depth(obj:GraphObject) -> int:
   '''
   :param obj:
   :type obj: GraphObject
-  :return: the isa-depth of *obj*.
+  :return: the isa-depth of *obj*: the number of isa steps on the longest path
+    from *obj* up to the top (0 for the top itself).
   :rtype: int
   '''
   i:int = -1
@@ -118,7 +119,7 @@ def depth(obj:GraphObject) -> int:
   while len(p) > 0:
     q = []
     for pp in p:
-      q += list(p[0].getParents())
+      q += list(pp.getParents())
     p = removeDuplicates(q)
     i += 1
   return i
