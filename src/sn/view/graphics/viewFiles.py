@@ -152,7 +152,7 @@ class FilesMixin(ViewBase):
     :rtype: int
     '''
     try:
-      bar = tk._default_root.nametowidget(tk._default_root["menu"]) # type: ignore[attr-defined,union-attr]
+      bar = tk._default_root.nametowidget(tk._default_root["menu"]) # type: ignore[attr-defined,union-attr] # @UndefinedVariable
       return int(bar.index("File")) + 1
     except Exception:
       return 1
