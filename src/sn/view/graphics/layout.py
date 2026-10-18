@@ -62,11 +62,13 @@ Created on Feb 15, 2025
 '''
 
 import sn
+import heapq
+import itertools
 import time
 from abc import ABC
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional, override, Iterable, Sequence, Collection
+from typing import Any, Callable, Optional, override, Iterable, Sequence, Collection
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
 from util.utils import Point, expandRect
@@ -1244,20 +1246,90 @@ def freeSpotIn(box:Sequence[float], rect:Sequence[float], obstacles:Iterable[Seq
     return None
   def clear(x:float, y:float) -> bool:
     return all(x + w + gx <= o[0] or o[2] + gx <= x or y + h + gy <= o[1] or o[3] + gy <= y for o in obs)
-  nx, ny = int((hi_x - lo_x) // step), int((hi_y - lo_y) // step)
-  spots = [(lo_x + i * step, lo_y + j * step) for i in range(nx + 1) for j in range(ny + 1)]
-  if rows:
-    spots.sort(key=lambda p: (p[1], p[0]))
-  else:
+  if not rows:
     ex, ey = intoRect(box, rect, margin, topMargin)
     tx, ty = box[0] + ex, box[1] + ey # (where it would go, ignoring the obstacles)
     if clear(tx, ty):
       return ex, ey
-    spots.sort(key=lambda p: (p[0] - tx) ** 2 + (p[1] - ty) ** 2)
-  for x, y in spots:
-    if clear(x, y):
-      return x - box[0], y - box[1]
-  return None
+  # The grid spots (lo_x + i * step, lo_y + j * step), row by row: those an
+  # obstacle blocks (the same test as clear()'s) are marked, an obstacle's
+  # a block of them -- not every spot tried against every obstacle.
+  nx, ny = int((hi_x - lo_x) // step), int((hi_y - lo_y) // step)
+  W = nx + 1
+  blocked = bytearray(W * (ny + 1))
+  for o in obs:
+    xr = _gridSpan(lo_x, step, nx, lambda x: x + w + gx > o[0], lambda x: o[2] + gx > x)
+    yr = _gridSpan(lo_y, step, ny, lambda y: y + h + gy > o[1], lambda y: o[3] + gy > y)
+    if xr and yr:
+      ones = b"\1" * len(xr)
+      for j in yr:
+        blocked[j * W + xr.start:j * W + xr.stop] = ones
+  first = blocked.find(0)
+  if first < 0:
+    return None
+  if rows: # (the first free one, reading row by row)
+    j, i = divmod(first, W)
+    return lo_x + i * step - box[0], lo_y + j * step - box[1]
+  # The nearest free one to (tx, ty) -- ties to the lowest (i, j), as a
+  # stable sort of all of them, column by column, would have it -- searched
+  # in square rings out from the spot nearest it, till no spot further out
+  # can be as near as the best found.
+  ci, cj = min(max(round((tx - lo_x) / step), 0), nx), min(max(round((ty - lo_y) / step), 0), ny)
+  off = max(abs(lo_x + ci * step - tx), abs(lo_y + cj * step - ty))
+  best:tuple[float, int, int]|None = None
+  for r in range(max(ci, nx - ci, cj, ny - cj) + 1):
+    if best is not None:
+      near = r * step - off # (no spot in this ring, or out from it, is nearer)
+      if near > 0 and near * near > best[0] * (1 + 1e-9) + 1e-9:
+        break
+    if r == 0:
+      ring:Iterable[tuple[int, int]] = ((ci, cj),)
+    else:
+      i0, i1, j0, j1 = max(ci - r, 0), min(ci + r, nx), max(cj - r + 1, 0), min(cj + r - 1, ny)
+      ring = itertools.chain(
+        ((i, j) for j in (cj - r, cj + r) if 0 <= j <= ny for i in range(i0, i1 + 1)),
+        ((i, j) for i in (ci - r, ci + r) if 0 <= i <= nx for j in range(j0, j1 + 1)))
+    for i, j in ring:
+      if not blocked[j * W + i]:
+        x, y = lo_x + i * step, lo_y + j * step
+        spot = ((x - tx) ** 2 + (y - ty) ** 2, i, j)
+        if best is None or spot < best:
+          best = spot
+  assert best is not None
+  return lo_x + best[1] * step - box[0], lo_y + best[2] * step - box[1]
+
+def _gridSpan(lo:float, step:float, n:int, after:Callable[[float], bool], before:Callable[[float], bool]) -> range:
+  '''
+  :param lo: The first grid point.
+  :type lo: float
+  :param step: The grid's spacing.
+  :type step: float
+  :param n: The last grid point's index.
+  :type n: int
+  :param after: Of a point: false up to some point, true from there on.
+  :type after: Callable[[float], bool]
+  :param before: Of a point: true up to some point, false from there on.
+  :type before: Callable[[float], bool]
+  :returns: The indices *i* (0 to *n*) of the grid points *lo* + *i* * *step*
+    that are both *after* and *before* (found by bisection, testing the
+    points just as they're written).
+  :rtype: range
+  '''
+  a, b = 0, n + 1
+  while a < b: # (the first that's after)
+    m = (a + b) // 2
+    if after(lo + m * step):
+      b = m
+    else:
+      a = m + 1
+  start, a, b = a, a, n + 1
+  while a < b: # (the first that isn't before)
+    m = (a + b) // 2
+    if before(lo + m * step):
+      a = m + 1
+    else:
+      b = m
+  return range(start, max(start, a))
 
 # ---- Keeping out of context windows ------------------------------------------
 
@@ -1298,13 +1370,34 @@ def clearOf(box:Sequence[float], keepOut:Sequence[Sequence[float]], obstacles:Se
     if within is not None:
       xs |= {within[0], within[2] - w}
       ys |= {within[1], within[3] - h}
-    best:tuple[float, float, float]|None = None
-    for x in xs:
-      for y in ys:
-        d = (x - box[0]) ** 2 + (y - box[1]) ** 2
-        if (best is None or d < best[0]) and inside(x, y) and not hits(x, y, keepOut, gap) and not hits(x, y, rects, gap / 2):
-          best = (d, x, y)
-    return None if best is None else (best[1] - box[0], best[2] - box[1])
+    # The pairs (x, y) nearest first -- ties to the first in (xs, ys)'s
+    # order, as a scan of every pair keeping only nearer ones would have it
+    # -- till the first that's clear: a heap of one run of pairs for each x,
+    # its ys nearest first. Each x's rects that it could hit (across) are
+    # picked out once.
+    xl, yl = list(xs), list(ys)
+    ysNear = sorted(((y - box[1]) ** 2, b, y) for b, y in enumerate(yl))
+    heap = [((x - box[0]) ** 2 + ysNear[0][0], a, ysNear[0][1], 0) for a, x in enumerate(xl)]
+    heapq.heapify(heap)
+    across:dict[int, list[tuple[Sequence[float], float]]] = {}
+    def clear(a:int, b:int) -> bool:
+      x, y = xl[a], yl[b]
+      if not inside(x, y):
+        return False
+      if a not in across:
+        across[a] = [(r, g) for r, g in [*((r, gap) for r in keepOut), *((r, gap / 2) for r in rects)]
+                     if x < r[2] + g and r[0] - g < x + w]
+      return not any(y < r[3] + g and r[1] - g < y + h for r, g in across[a])
+    found:tuple[float, int, int]|None = None
+    while heap:
+      d, a, b, k = heapq.heappop(heap)
+      if found is not None and d != found[0]:
+        break # (past the nearest: the first of those as near that's clear is found)
+      if k + 1 < len(ysNear):
+        heapq.heappush(heap, ((xl[a] - box[0]) ** 2 + ysNear[k + 1][0], a, ysNear[k + 1][1], k + 1))
+      if (found is None or (a, b) < found[1:]) and clear(a, b):
+        found = (d, a, b)
+    return None if found is None else (xl[found[1]] - box[0], yl[found[2]] - box[1])
   if inside(box[0], box[1]) and not hits(box[0], box[1], keepOut, gap):
     return 0.0, 0.0 # (nothing to do: it isn't in the way -- whatever it may overlap otherwise)
   return search(obstacles) or (search([]) if obstacles else None)
