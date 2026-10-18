@@ -89,7 +89,6 @@ class TopModel(Model):
     Subject.__init__(self)
     Dirtyable.__init__(self)
     
-    self._allowParentsCaching:bool = False
     self.TOP:GraphObject = GraphObject(self, []) #1
     # these re-assignments from a ValidationList to a list are necessary in 
     # these top types as they will violate the ValidationList constraints. 
@@ -153,8 +152,6 @@ class TopModel(Model):
     self.CONDITION:Relation = Relation(self, [self.CONTAINS], self.REQUIREMENT, self.TOP, individual=False, name="condition")
     self.REQUIRED:Relation = Relation(self, [self.CONTAINS], self.REQUIREMENT, self.TOP, individual=False, name="required")
 
-    self._allowParentsCaching = True
-    
     self.TOP['vis/shape']          = Attribute("Rectangle", str, VAR_DEFAULTED, \
       """The shape of the node or relation label in the GUI.
       Rectangle

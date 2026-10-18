@@ -1390,8 +1390,6 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     Subject.__init__(self)
     Dirtyable.__init__(self)
     
-    self._allowParentsCaching:bool = False
-
     for db in self.implicitSuperDBs(): # (the system model, then the base rules)
       if db not in self.superDBs:
         self.superDBs.append(db) #type: ignore[arg-type]
@@ -2135,15 +2133,14 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]): #type: ignore[misc]
     return f'{ref} \u2192 {name(self, 1)} \u2192 {other}' if isSource else f'{other} {name(self, 1)} \u2192 {ref}'
 
   @property
-  def dst(self, localOnly:bool=False) -> GraphObject|None: #GraphObject|None:
+  def dst(self) -> GraphObject|None:
     '''
-    :param localOnly:
-    :type localOnly: bool
     :return: The *calculated* destination of this relation; ie: if this relation
-      does not have a specific destination, look it up in the ISA hierarchy.
+      does not have a specific destination, look it up in the ISA hierarchy
+      (*self.localDst* is its own).
     :rtype: GraphObject | None
     '''
-    if localOnly or self.localDst is not None:
+    if self.localDst is not None:
       return self.localDst
     else:
       obj:GraphObject
@@ -2169,15 +2166,14 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]): #type: ignore[misc]
       self._endpointChanged("dst", old, obj)
    
   @property
-  def src(self, localOnly:bool=False) -> GraphObject|None: #GraphObject|None:
+  def src(self) -> GraphObject|None:
     '''
-    :param localOnly:
-    :type localOnly: bool
     :return: The *calculated* source of this relation; ie: if this relation
-      does not have a specific source, look it up in the ISA hierarchy.
+      does not have a specific source, look it up in the ISA hierarchy
+      (*self.localSrc* is its own).
     :rtype: GraphObject | None
     '''
-    if localOnly or self.localSrc is not None:
+    if self.localSrc is not None:
       return self.localSrc
     else:
       obj:GraphObject

@@ -362,16 +362,9 @@ class ModelContext(CommandContext):
       assert isinstance(ret, Model)
       return ret
     def getGO(s:str, d:dict, **kwargs) -> GraphObject:
-      try:
-        # otherParams = kwargs.get("params")
-        # model = otherParams["model"] if otherParams is not None else None
-        ret = _lookup(s, d["model"] if kwargs.get("model") is None else kwargs["model"])
-        # ret = GORef.eval(s, d["model"] if model is None else model)
-        assert isinstance(ret, GraphObject)
-        return ret
-      except Exception as ex:
-        #print(ex)
-        raise ex
+      ret = _lookup(s, d["model"] if kwargs.get("model") is None else kwargs["model"])
+      assert isinstance(ret, GraphObject)
+      return ret
     super()._defineDecoders()
     self.decoders["GraphObject"] = lambda s, d=self.defaults, **kwargs: getGO(s,d,**kwargs)
     self.decoders["Model"] = getModel #lambda s: GORef.eval(s)
