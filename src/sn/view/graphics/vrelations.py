@@ -35,8 +35,7 @@ Implements the VRelation class.
 """
 
 import tkinter as tk
-from ast import literal_eval
-from typing import Any, Optional, Union, Tuple, Iterable, \
+from typing import Any, Optional, Union, \
   override, Literal, TYPE_CHECKING
 from types import NoneType
 
@@ -390,35 +389,6 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     return self._floatingAnchor
 
   ### DRAWING ##########################################################################
-
-  def parseEndShape(self, shape:str) -> Optional[Tuple[str, list]]:
-    '''
-    :param shape: A shape string of the form **{** circle(<diameter>) **|** arrow(<len>,<hypotenuse>,<close>) **}**.
-    :type shape: str
-    :return: *None* or (str, list[int]), where if str is "circle", list is len 1, or if str is "arrow" list is len 3. 
-    :rtype: Optional[Tuple[str, list]]
-    '''
-    if shape is None or shape == "":
-      return None
-    sep = len(shape)
-    for i, c in enumerate(shape):
-      if not (c.isalpha() or c == ' '): 
-        sep = i
-        break
-    shapeName = (shape[:sep]).strip().lower() 
-    if shapeName not in ['arrow', 'circle']:
-      logger.warning(f'VRelation.drawEndShape(): Unknown shape name: "{shape}"; assuming no end shape.')
-      return None
-    try:
-      args = literal_eval(shape[sep:])
-      if not isinstance(args, Iterable):
-        args = [args]
-      for a in args:
-        assert isinstance(a, (int, float))
-    except:
-      logger.warning(f'VRelation.drawEndShape(): Malformed end shape arguments: "{shape}"; using defaults.')
-      args = []
-    return shapeName, args
 
   def draw(self, fast=False, **kwargs):
     '''

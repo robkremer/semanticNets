@@ -81,15 +81,10 @@ PointType = tuple[float|int, float|int]
 class ConnectorTerminators:
   """The four terminator specs for a connector, one per line end.
 
-  Each is either None/"" (no terminator) or a string in the same format
-  VRelation.parseEndShape() already uses elsewhere in this package —
+  Each is either None/"" (no terminator) or a string —
   "arrow(width, length, thickness)" or "circle(diameter)", with the
-  parenthesized args optional and defaulted if omitted — kept consistent
-  deliberately, even though this module doesn't share code with
-  VRelation.parseEndShape()/drawEndShape() (those are instance methods
-  entangled with VRelation's own state; duplicating the small amount of
-  parsing/drawing logic here as free functions was less risky than
-  refactoring already-working code to share it). Provisional: the terminator
+  parenthesized args optional and defaulted if omitted (see
+  parseTerminatorSpec()). Provisional: the terminator
   spec format itself is still being designed — this just needs to accept
   something for source/labelNear/labelFar/destination now. "arrow" and
   "circle" are implemented below; add more kinds in parseTerminatorSpec()/
@@ -435,7 +430,7 @@ def _clipToEdgeStraight(vobj: VObject, farPt: PointType, granularity: int = 1) -
 
 def parseTerminatorSpec(spec: Optional[str]) -> Optional[tuple[str, list[float]]]:
   """Parse a terminator spec string ("arrow(8,10,3)", "circle(5)", "arrow",
-  None, "") into (kind, args). Mirrors VRelation.parseEndShape()'s format.
+  None, "") into (kind, args).
 
   :param spec:
   :type spec: Optional[str]
