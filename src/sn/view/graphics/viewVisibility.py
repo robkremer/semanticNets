@@ -451,7 +451,8 @@ class VisibilityMixin(ViewBase):
     *VObject._hideItems()*, *VObject._showItems()*) is put off, and done at
     the end in one pass over the canvas -- instead of a search of the whole
     canvas for each object's items, which is slow for many objects in a big
-    view (eg: *doEraseOthers()*). Nested, only the outermost does it.
+    view (eg: *doEraseOthers()*, or a model's notification that takes many
+    out, or puts them back: see *SNGView.update()*). Nested, only the outermost does it.
     '''
     if self.__dict__.get("_pendingItemStates") is not None:
       yield

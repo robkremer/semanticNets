@@ -469,6 +469,33 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
       observed[id(model)] = model
       model.addObserver(self)
 
+  BATCHED_UPDATE_BOXES = 50
+  "A notification that takes out, or puts back, at least this many of a view's boxes has their items hidden or shown in one pass over the canvas (see *update()*, *batchedItemStates()*). Measured: the pass takes as long as finding about 50 boxes' items one by one on a canvas of 50,000 items, about 125 on one of 17,000, and more on smaller ones -- where both are quick."
+
+  def _changesManyBoxes(self, subject:Model, topics:tuple[tuple[str, tuple[Any, ...]], ...]) -> bool:
+    '''
+    :param subject: The model notifying (see *update()*).
+    :type subject: Model
+    :param topics: What it says.
+    :type topics: tuple[tuple[str, tuple[Any, ...]], ...]
+    :returns: Whether at least *BATCHED_UPDATE_BOXES* of *topics* take one of
+      this view's boxes out ("del"), or put one back ("new"). Not just how
+      many "del"s and "new"s there are: they may be of objects it doesn't
+      show (eg: reasoning cleared, or a super-model's objects removed in
+      another window), and then the pass over the canvas would be wasted.
+    :rtype: bool
+    '''
+    n = 0
+    for t in topics:
+      if t[0] == "del":
+        n += bool(self._viewObjectsForID(subject, t[1][0]))
+      elif t[0] == "new":
+        vo = self._deletedGraphObjectsCache.get((id(subject), t[1][0]))
+        n += vo is not None and not vo._isConnected()
+      if n >= self.BATCHED_UPDATE_BOXES:
+        return True
+    return False
+
   def update(self, subject:Subject, *topics:tuple[str, tuple[Any, ...]])->None:
     '''
     :param subject:
@@ -487,6 +514,10 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
       topics = tuple(t for t in topics if t[0] in ("new", "del"))
       if not topics:
         return
+    if self.__dict__.get("_pendingItemStates") is None and self._changesManyBoxes(subject, topics):
+      with self.batchedItemStates(): # (and the same again within it, to do the topics)
+        self.update(subject, *topics)
+      return
     self.structureChanged() # (eg: an object retyped: maybe now a context window)
     logger.debug(f'SNGView.update({subject.name}, {len(topics)} topics)')
     for t in topics:
