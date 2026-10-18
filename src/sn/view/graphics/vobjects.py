@@ -317,9 +317,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     m = self._modelObject
     if m is not None:
       # these act as a cache, as it's relatively expensive to look up these values in the model object.
-      self.cache['name'] = m.name
-      for attrName, default in VATTRIBUTES.items():
-        setattr(self.cache, attrName, m.get(attrName, default))      
+      self.cache['name'] = m.name # (the rest are filled in as they're asked for: see Cache.__getitem__())
 
     self.view:SNGView = view
     view.structureChanged()
