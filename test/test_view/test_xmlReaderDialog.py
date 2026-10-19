@@ -24,7 +24,9 @@ The XMLreader plugin's dialog (*view.ReaderDialog*): the model, view and
 ontology files follow the XML file (the view and ontology following the
 model) until they're changed by hand, and again once emptied; what's said
 about the ontology, and whether it can be replaced, follows what it is; and
-Go needs all four. (Nothing's made: *convert()* isn't called.)
+Go needs all four. An ontology given by hand is offered again next time (a
+plugin preference), until one's made beside the model again. (Nothing's
+made: *convert()* is stubbed.)
 
 Created on Oct 19, 2026
 
@@ -34,6 +36,8 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest import mock
 import tkinter as tk
 from sn.plugins import importBundled
 
@@ -126,6 +130,65 @@ class TestReaderDialog(unittest.TestCase):
     self.assertIn("on the web", d.ontologyNote.get())
     self.assertTrue(d.replaceButton.instate(["disabled"]))
     self.assertEqual(d.files().ontology, "https://example.com/books_ontology.snm")
+
+  def test_startWith(self):
+    'An ontology to start with is as if given by hand: it stays, and is reported so after Go.'
+    shared = str(self.folder / "shared.snm")
+    xml = str(self.folder / "a.xml")
+    went = []
+    d = self.view.ReaderDialog(self.root, xml, ontology=shared, onGo=lambda files, byHand: went.append((files.ontology, byHand)))
+    try:
+      self.assertEqual(d.vars["ontology"].get(), shared)
+      self.assertEqual(d.vars["model"].get(), self.view.outputPaths(xml)[0])
+      with mock.patch.object(self.view, "convert", return_value=True) as convert:
+        d.go()
+      self.assertEqual(convert.call_args.args[1].ontology, shared)
+      self.assertEqual(went, [(shared, True)])
+    finally:
+      if d.winfo_exists():
+        d.destroy()
+
+  def test_remembered(self):
+    '''The plugin remembers the ontology given by hand, and offers it next time
+    (if it's still there); one made beside the model is forgotten.'''
+    package = importBundled("XMLreader")
+    prefs:dict = {}
+    items:dict = {}
+    ctx = SimpleNamespace(app=SimpleNamespace(EXAMPLES_FOLDER=str(self.folder / "ex")), folder=str(self.folder / "plugin"),
+                          pref=lambda k, default=None: prefs.get(k, default), setPref=prefs.__setitem__,
+                          addMenuItem=items.__setitem__)
+    Dialog = self.view.ReaderDialog
+    with mock.patch.object(self.view, "ReaderDialog", side_effect=lambda app, **kw: Dialog(self.root, **kw)): # (over the test's window: ctx.app's a stand-in)
+      package.register(ctx)
+      def open():
+        items["XML Reader..."]()
+        d = package._dialog
+        d.withdraw()
+        return d
+      def go(d):
+        with mock.patch.object(self.view, "convert", return_value=True):
+          d.go()
+        self.assertIsNone(package._dialog)
+      xml = str(self.folder / "a.xml")
+      d = open()
+      d.vars["xml"].set(xml)
+      self.assertEqual(d.vars["ontology"].get(), self.view.outputPaths(xml)[2])
+      shared = self.folder / "shared.snm"
+      shared.write_text("")
+      d.vars["ontology"].set(str(shared))
+      go(d)
+      self.assertEqual(prefs["lastOntology"], str(shared))
+      d = open()
+      d.vars["xml"].set(str(self.folder / "b.xml"))
+      self.assertEqual(d.vars["ontology"].get(), str(shared))
+      d.vars["ontology"].set("") # (back to beside the model)
+      go(d)
+      self.assertEqual(prefs["lastOntology"], "")
+      prefs["lastOntology"] = str(self.folder / "gone.snm") # (not there any more: not offered)
+      d = open()
+      d.vars["xml"].set(xml)
+      self.assertEqual(d.vars["ontology"].get(), self.view.outputPaths(xml)[2])
+      d.close()
 
 if __name__ == "__main__":
   unittest.main()

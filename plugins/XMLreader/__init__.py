@@ -46,7 +46,10 @@ def register(ctx:Any) -> None:
   Add "XML Reader..." to the Tools menu (see *sn.plugins.PluginContext*): its
   dialog (see *view.ReaderDialog*) asks for the file -- in the folder last
   read from, or at first the plugin's examples -- and the files to make of it,
-  and makes them (see *view.convert()*). Those of the plugin's own examples
+  and makes them (see *view.convert()*). An ontology given by hand (eg: one
+  shared by XML files of the same kind) is offered again next time, in
+  place of the one beside the model -- if it's still there -- until one's
+  made beside the model again. Those of the plugin's own examples
   are made in the example models' folder (see *Application.EXAMPLES_FOLDER*)
   by default, not in the plugin's folder, which is replaced when a newer
   version's installed.
@@ -60,14 +63,19 @@ def register(ctx:Any) -> None:
       _dialog.lift()
       _dialog.focus_force()
       return
-    from .view import ReaderDialog, defaultPaths # (here: tkinter, the views, ... only once it's used)
+    from .view import Files, ReaderDialog, defaultPaths, localPath, ontologyState # (here: tkinter, the views, ... only once it's used)
     def defaults(xmlPath:str) -> tuple[str, str, str]:
       mine = os.path.commonpath([os.path.realpath(xmlPath), os.path.realpath(ctx.folder)]) == os.path.realpath(ctx.folder)
       return defaultPaths(xmlPath, os.path.expanduser(ctx.app.EXAMPLES_FOLDER) if mine else None)
+    def went(files:Files, byHand:bool) -> None:
+      ctx.setPref("lastOntology", (localPath(files.ontology) or files.ontology) if byHand else "") # (one beside the model: none's offered next time)
+    last = ctx.pref("lastOntology", "") or None
+    if last is not None and ontologyState(last) == "new": # (not there any more: moved, or deleted)
+      last = None
     def closed() -> None:
       global _dialog
       _dialog = None
     _dialog = ReaderDialog(ctx.app, folder=ctx.pref("lastFolder", None) or os.path.join(ctx.folder, "examples"),
-                           defaults=defaults, onChosen=lambda path: ctx.setPref("lastFolder", os.path.dirname(path)),
-                           onClose=closed)
+                           defaults=defaults, ontology=last, onChosen=lambda path: ctx.setPref("lastFolder", os.path.dirname(path)),
+                           onGo=went, onClose=closed)
   ctx.addMenuItem("XML Reader...", openDialog)

@@ -343,25 +343,32 @@ class ReaderDialog(tk.Toplevel):
   The front end: the XML file to read; the model, view and ontology files to
   make of it (each with "Choose..."), which follow the XML file (see
   *defaultPaths()*) -- the view and ontology following the model -- until
-  they're changed by hand; what's done with the ontology (made, or built on,
+  they're changed by hand (the ontology may start as one chosen by hand
+  before: eg: one shared by XML files of the same kind); what's done with the ontology (made, or built on,
   and added to if it can be: see *ontologyState()*), and, if it's there,
   whether to replace it; and "Go" (see *convert()*) -- which, when it's
   done, closes it.
   '''
   def __init__(self, app:Application, xmlPath:str|None=None, folder:str|None=None,
-               defaults:Callable[[str], tuple[str, str, str]]=defaultPaths,
-               onChosen:Callable[[str], None]|None=None, onClose:Callable[[], None]|None=None):
+               defaults:Callable[[str], tuple[str, str, str]]=defaultPaths, ontology:str|None=None,
+               onChosen:Callable[[str], None]|None=None, onGo:Callable[[Files, bool], None]|None=None,
+               onClose:Callable[[], None]|None=None):
     '''
     :param app: The editor.
     :param xmlPath: The XML file to start with, if any.
     :param folder: The folder to choose an XML file in, at first.
     :param defaults: The model, view and ontology files for an XML file (see *defaultPaths()*).
+    :param ontology: The ontology to start with, as if given by hand (eg: the
+      one given last time: see *onGo*), if any; else it follows the model.
     :param onChosen: Told the XML file chosen with "Choose..." (eg: to start there next time).
+    :param onGo: Told the files, once "Go"'s made them, and whether the
+      ontology was given by hand (eg: to offer it next time), rather than
+      following the model.
     :param onClose: Called when it's closed: by "Go" (when the view's opened) or "Cancel".
     '''
     super().__init__(app)
     ownDialog(self, app) # (over the editor's window, if one's on screen -- not full screen: see ownDialog())
-    self.app, self.folder, self.defaults, self.onChosen, self.onClose = app, folder, defaults, onChosen, onClose
+    self.app, self.folder, self.defaults, self.onChosen, self.onGo, self.onClose = app, folder, defaults, onChosen, onGo, onClose
     self.title(TITLE)
     self.vars = {k: tk.StringVar(value="") for k in ("xml", "model", "view", "ontology")}
     self.following = {"model": True, "view": True, "ontology": True}
@@ -402,6 +409,8 @@ class ReaderDialog(tk.Toplevel):
     self.bind("<Escape>", lambda _e: self.cancel())
     self.protocol("WM_DELETE_WINDOW", self.cancel)
 
+    if ontology:
+      self.vars["ontology"].set(ontology) # (by hand: see changed())
     if xmlPath:
       self.vars["xml"].set(xmlPath)
     self.refresh()
@@ -517,13 +526,16 @@ class ReaderDialog(tk.Toplevel):
     self.goButton.state(["disabled"])
     self.configure(cursor="watch")
     self.update_idletasks()
+    files = self.files()
     try:
-      done = convert(self.app, self.files(), parent=self)
+      done = convert(self.app, files, parent=self)
     finally:
       if self.winfo_exists():
         self.configure(cursor="")
         self.refresh()
     if done:
+      if self.onGo is not None:
+        self.onGo(files, not self.following["ontology"])
       self.close()
 
   def cancel(self) -> None:

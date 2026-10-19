@@ -78,8 +78,10 @@ view.
 says what it'll do with the one given. It may be one made before for the same
 file (which you've changed since: moved types about, added types, attributes
 or rules), or one shared by several XML files of the same kind -- choose it
-for each, and their models are all built on it. It can be a URL (eg: on the
-web) rather than a file. What's in it is found by name -- a tag's type by the
+for each, and their models are all built on it. (The dialog remembers the
+ontology you chose: next time, it offers that one, if it's still there,
+rather than one beside the model. Empty its field to go back to one beside
+the model.) It can be a URL (eg: on the web) rather than a file. What's in it is found by name -- a tag's type by the
 tag, wherever you've moved it in the type hierarchy; a subtype by its
 ``type`` or ``kind`` value, under its tag's type; *has-<tag>*,
 *xml-has-part* and *xml-part-of* by theirs -- and only what's missing is
