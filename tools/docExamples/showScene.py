@@ -193,7 +193,8 @@ def main() -> None:
       buildModel, outputPaths = xmlReader.buildModel, xmlReader.outputPaths
       xml = shutil.copy(os.path.join(ROOT, "plugins", "XMLreader", "examples", "books.xml"), folder)
       modelPath = outputPaths(xml)[0]
-      model = buildModel(xml, modelPath)
+      model, ontology = buildModel(xml, modelPath)
+      ontology.save()
       model.save()
       win = app.openWindow(modelPath)
       win.view.context.visibility("system objects", "hide")

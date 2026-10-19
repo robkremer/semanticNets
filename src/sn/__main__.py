@@ -66,8 +66,8 @@ def selftestPlugins(folder:str) -> list[str]:
             importlib.import_module(f"{plugins.NAMESPACE}.{rel}" + ("" if f == "__init__.py" else f".{f[:-3]}"))
     if "XMLreader" in found:
       reader = importlib.import_module(f"{plugins.NAMESPACE}.XMLreader.reader")
-      xml = reader.buildModel(os.path.join(target, "XMLreader", "examples", "books.xml"), os.path.join(folder, "books_xml.snm"))
-      print(f"XMLreader: {len(list(xml.values()))} objects")
+      xml, ontology = reader.buildModel(os.path.join(target, "XMLreader", "examples", "books.xml"), os.path.join(folder, "books_xml.snm"))
+      print(f"XMLreader: {len(list(xml.values()))} objects, {len(list(ontology.values()))} in its ontology")
     if "pythonParser" in found:
       parser = importlib.import_module(f"{plugins.NAMESPACE}.pythonParser.parser")
       code = parser.buildModel(os.path.join(folder, "parser_py.snm"), parser.readModules([parser.__file__]))

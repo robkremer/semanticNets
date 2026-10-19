@@ -1,5 +1,8 @@
 '''
-Turn an XML file into a Semantic Nets model (see *buildModel()*):
+Turn an XML file into a Semantic Nets model (see *buildModel()*), built on an
+ontology of its own: a second model, a super-model of the first, which has the
+types and the definitions -- so there's one place to change the type hierarchy,
+add rules, and so on. The model has the elements.
 
   - Each tag name becomes a type (a node isa *node*), the first time it's seen,
     with a look of its own (see *TypeLooks*), which its individuals inherit.
@@ -17,7 +20,12 @@ Turn an XML file into a Semantic Nets model (see *buildModel()*):
     "text" attribute.
   - A nested element's individual is related to its containing element's by a
     relation of type "has-<tag>" (eg: a book element's *has-chapter* relations
-    to its chapters), made the first time it's needed.
+    to its chapters), made the first time it's needed. Each has-<tag> is a kind
+    of *xml-has-part* (see *HAS_PART*), so the elements' tree is there whatever
+    the tags.
+  - *xml-part-of* (see *PART_OF*) is the other way round: it's defined (a
+    definition in the ontology) as [?a -xml-part-of-> ?b] <-> [?b -xml-has-part-> ?a],
+    so the reasoner concludes it.
   - An individual is named by its element's "id", "name" or "key" attribute (the
     first of those it has); otherwise by its tag and a number (eg: chapter1,
     chapter2, ...).
@@ -36,6 +44,12 @@ import random
 import xml.etree.ElementTree as ET
 from sn.model.model import Model, Node, Relation
 from util.attribute import Attribute, VAR_DEFAULTED
+
+HAS_PART = "xml-has-part"
+"The relation type every has-<tag> is a kind of: from an element to each element in it."
+
+PART_OF = "xml-part-of"
+"The relation type defined as the inverse of *HAS_PART*: from an element to the element it's in."
 
 RESERVED = {"name", "note", "constraints", "text"}
 '''XML attribute names stored as "xml/<name>", as Semantic Nets uses them for
@@ -112,16 +126,25 @@ class TypeLooks:
     sub["vis/fillColor"] = self._hex(hue, 0.12 + 0.6 * step, 1.0 - 0.15 * step)
     sub["vis/borderColor"] = self._hex(hue, 0.85, 0.55 - 0.25 * step)
 
-def outputPaths(xmlPath:str) -> tuple[str, str]:
+def outputPaths(xmlPath:str) -> tuple[str, str, str]:
   '''
   :param xmlPath: The XML file, eg: "/a/b/books.xml".
-  :returns: The model and view files made from it: in the same folder, named
-    "<name>_<ext>": eg: "/a/b/books_xml.snm" and "/a/b/books_xml.snv".
+  :returns: The model, view and ontology files made from it: in the same
+    folder, named "<name>_<ext>": eg: "/a/b/books_xml.snm", "/a/b/books_xml.snv"
+    and "/a/b/books_xml_ontology.snm" (see *ontologyPath()*).
   '''
   folder, file = os.path.split(os.path.abspath(xmlPath))
   name, ext = os.path.splitext(file)
   base = os.path.join(folder, f"{name}_{ext[1:]}" if ext else name)
-  return base + ".snm", base + ".snv"
+  return base + ".snm", base + ".snv", ontologyPath(base + ".snm")
+
+def ontologyPath(modelPath:str) -> str:
+  '''
+  :param modelPath: A model's file, eg: "/a/b/books_xml.snm".
+  :returns: Its ontology's file, beside it: eg: "/a/b/books_xml_ontology.snm".
+  '''
+  base, ext = os.path.splitext(modelPath)
+  return f"{base}_ontology{ext or '.snm'}"
 
 def localName(name:str) -> str:
   '''
@@ -138,18 +161,45 @@ def attributeKey(name:str) -> str:
   '''
   return f"xml/{name}" if name in RESERVED or name.startswith(RESERVED_PREFIXES) else name
 
-def buildModel(xmlPath:str, modelPath:str) -> Model:
+def makeOntology(path:str) -> tuple[Model, Relation]:
+  '''
+  :param path: The ontology's file: it mustn't exist yet.
+  :returns: A new ontology (not saved) with what every XML file's has --
+    *HAS_PART*, *PART_OF*, and the definition of *PART_OF* as its inverse --
+    and its *HAS_PART*.
+  '''
+  o = Model(path)
+  hasPart = Relation(o, [o.RELATION], None, None, name=HAS_PART)
+  hasPart.setAttr("note", Attribute("From an element to each element directly in it. Each has-<tag> is a kind of it.", "text", VAR_DEFAULTED))
+  partOf = Relation(o, [o.RELATION], None, None, name=PART_OF)
+  partOf.setAttr("note", Attribute(f"From an element to the element it's directly in: the inverse of {HAS_PART} (see its definition).", "text", VAR_DEFAULTED))
+  d = Node(o, [o.DEFINITION], individual=True, name=f"{PART_OF} def")
+  d["note"] = f"?a -{PART_OF}-> ?b means ?b -{HAS_PART}-> ?a: each is concluded from the other."
+  def var(name:str) -> Node:
+    return Node(o, [o.NODE], individual=True, name=name)
+  A, B = var("?a"), var("?b")
+  for x in (A, B, Relation(o, [partOf], A, B, individual=True)):
+    Relation(o, [o.DEFINIENDUM], d, x, individual=True)
+  A2, B2 = var("?a"), var("?b")
+  for x in (A2, B2, Relation(o, [hasPart], B2, A2, individual=True)):
+    Relation(o, [o.DEFINIENS], d, x, individual=True)
+  return o, hasPart
+
+def buildModel(xmlPath:str, modelPath:str) -> tuple[Model, Model]:
   '''
   Make a model of the XML file *xmlPath* (as described in the module doc), as
-  a new model file *modelPath* (not saved: call its *save()*).
+  a new model file *modelPath*, and its ontology, beside it (see
+  *ontologyPath()*): its super-model. (Neither's saved: call their *save()*.)
 
   :param xmlPath: The XML file.
-  :param modelPath: The model's file: it mustn't exist yet.
-  :returns: The model.
+  :param modelPath: The model's file: neither it nor the ontology's may exist yet.
+  :returns: The model, and its ontology.
   :raises xml.etree.ElementTree.ParseError: if the file isn't well-formed XML.
   '''
   root = ET.parse(xmlPath).getroot() # (parse first: if it isn't XML, nothing is made)
+  o, hasPart = makeOntology(ontologyPath(modelPath))
   m = Model(modelPath)
+  m.setSuperModels([o.url])
   types:dict[str, Node] = {}                 # tag -> its type
   typeAttributes:dict[str, set[str]] = {}     # tag -> the attribute keys its type has
   relationTypes:dict[str, Relation] = {}      # tag -> has-<tag>
@@ -159,7 +209,7 @@ def buildModel(xmlPath:str, modelPath:str) -> Model:
 
   def typeFor(tag:str) -> Node:
     if tag not in types:
-      t = Node(m, [m.NODE], name=tag)
+      t = Node(o, [o.NODE], name=tag)
       t.setAttr("note", Attribute(f"The type of the <{tag}> elements in {os.path.basename(xmlPath)}.", "text", VAR_DEFAULTED))
       looks.apply(t) # (the tags' types are all directly under node; their subtypes are shaded: see subtypeFor())
       types[tag] = t
@@ -169,7 +219,7 @@ def buildModel(xmlPath:str, modelPath:str) -> Model:
   def subtypeFor(tag:str, value:str) -> Node:
     if (tag, value) not in subtypes: # (per tag: <a type="x"> and <b type="x"> are different kinds of thing)
       parent = types[tag]
-      sub = Node(m, [parent], name=value)
+      sub = Node(o, [parent], name=value)
       sub["note"] = f'The type of the <{tag}> elements in {os.path.basename(xmlPath)} whose type is "{value}".' # (note is defined by parent)
       looks.applyShade(sub, parent)
       subtypes[(tag, value)] = sub
@@ -182,7 +232,7 @@ def buildModel(xmlPath:str, modelPath:str) -> Model:
 
   def relationTypeFor(tag:str) -> Relation:
     if tag not in relationTypes: # (from anything -- the same tag may be nested in several -- to the tag's type)
-      relationTypes[tag] = Relation(m, [m.RELATION], None, types[tag], name=f"has-{tag}")
+      relationTypes[tag] = Relation(o, [hasPart], None, types[tag], name=f"has-{tag}")
     return relationTypes[tag]
 
   def individualFor(elem:ET.Element) -> Node:
@@ -211,4 +261,4 @@ def buildModel(xmlPath:str, modelPath:str) -> Model:
     return ind
 
   individualFor(root)
-  return m
+  return m, o

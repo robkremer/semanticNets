@@ -46,8 +46,11 @@ The XML reader
 
 **Tools | XML Reader...** asks for an XML file -- starting in the folder you
 read one from last, or, the first time, in the plugin's *examples* -- and
-turns it into a model. For *books.xml*, it makes *books_xml.snm* and
-*books_xml.snv*, next to it, asking first if they're there already. (For the
+turns it into a model. For *books.xml*, it makes *books_xml.snm* (the
+model: the elements), *books_xml_ontology.snm* (its super-model: the types
+and definitions -- the place to change the type hierarchy, or add rules) and
+*books_xml.snv* (the view), next to it, asking first if they're there
+already. (For the
 plugin's own examples, they're made in ``~/Documents/Semantic Nets
 Examples/`` instead: the plugin's folder is replaced when a newer version
 comes.)
@@ -62,7 +65,11 @@ comes.)
 - An element's **attributes** become its attributes, and its text its
   ``text`` attribute (see the attribute editor: :doc:`editing`).
 - **Nesting** becomes relations: a book's chapters are related to it by
-  *has-chapter*, its title by *has-title*.
+  *has-chapter*, its title by *has-title*. Each of these is a kind of
+  *xml-has-part*, so the whole tree is there whatever the tags. The ontology
+  defines *xml-part-of* as the other way round
+  ([?a -xml-part-of-> ?b] ⇔ [?b -xml-has-part-> ?a]): **reason** (see
+  :doc:`reasoning`) concludes that each chapter is *xml-part-of* its book.
 
 The view shows the elements, arranged as they nest by the balloon layout
 (see :doc:`layouts`): each element with its children round it, and so on out

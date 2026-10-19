@@ -4,9 +4,10 @@ and open the view in the editor. (The Tools menu's "XML Reader...": see the
 plugin's *register()*.)
 
 It asks for the file (see *askForFile()*). For "<name>.<ext>" it makes
-"<name>_<ext>.snm" (the model: see *reader*) and "<name>_<ext>.snv" (a view of
-it: its elements, arranged as they nest -- see *showTypesAndExpand()* and
-*arrange()*) in the same folder
+"<name>_<ext>.snm" (the model: see *reader*), "<name>_<ext>_ontology.snm" (its
+super-model: the types and definitions) and "<name>_<ext>.snv" (a view of
+the model: its elements, arranged as they nest -- see *showTypesAndExpand()*
+and *arrange()*) in the same folder
 -- asking first if they're already there, and replacing them -- and opens the
 view. (For the plugin's own examples, they're made elsewhere: see *convert()*.)
 
@@ -28,9 +29,9 @@ from sn.model.model import Model, Node
 from sn.view.graphics.guiApp import Application
 from sn.view.graphics.sngView import SNGView
 from sn.view.graphics.vnodes import VNode
-from sn.view.graphics.layout import relationTypes, _BoxIndex
+from sn.view.graphics.layout import relationTypes, nodeTypes, _BoxIndex
 from sn.view.graphics.relationTable import RelationTable, RelationRow, SHAPES, PULLS, TERMINALS
-from .reader import buildModel, outputPaths
+from .reader import buildModel, outputPaths, PART_OF
 
 TITLE = "XML Reader"
 
@@ -63,8 +64,8 @@ def showTypesAndExpand(view:SNGView, model:Model) -> None:
   Fill the view with the model's elements and their relations (for
   *arrange()* to arrange):
 
-  1. show the model's types -- its nodes that are directly a kind of node: one
-     for each tag (see *buildModel()*) -- and expand each by *expandLevels()*
+  1. show the model's types -- its ontology's nodes that are directly a kind
+     of node: one for each tag (see *buildModel()*) -- and expand each by *expandLevels()*
      levels (as the expand menu's "expand all, n levels"), which brings in
      their individuals;
   2. erase the types (and so the isa links to them): each individual has its
@@ -81,7 +82,7 @@ def showTypesAndExpand(view:SNGView, model:Model) -> None:
   :param view: A view of *model*.
   :param model: A model made by *buildModel()*.
   '''
-  types = [o for o in model.values() if isinstance(o, Node) and not o.isIndividual() and model.NODE in o.getParents()]
+  types = sorted((t for t in nodeTypes(model) if model.NODE in t.getParents()), key=lambda t: t._id) # (as they were made)
   levels = expandLevels(model)
   localLayout, view.localLayout = view.localLayout, None # type: ignore[assignment] # (none while it's laid out)
   try:
@@ -116,10 +117,12 @@ def relationTable(model:Model) -> RelationTable:
   '''
   :param model: A model made by *buildModel()*.
   :returns: The relation table (see *relationTable.RelationTable*) that makes
-    trees of how its elements nest: its relation types (has-<tag>) shape the
-    trees, each element its children's parent (the source end).
+    trees of how its elements nest: its relation types (has-<tag>,
+    xml-has-part, xml-part-of) shape the trees, each element its children's
+    parent (the source end -- the destination for xml-part-of).
   '''
-  return RelationTable([RelationRow(str(t.name), SHAPES, "source") for t in relationTypes(model) if t is not model.ISA]
+  return RelationTable([RelationRow(str(t.name), SHAPES, "destination" if t.name == PART_OF else "source")
+                        for t in relationTypes(model) if t is not model.ISA]
                        + [RelationRow(TERMINALS, PULLS)])
 
 def arrange(view:SNGView) -> None:
@@ -208,7 +211,7 @@ def freeCells(boxes:Sequence[Sequence[float]], gap:float=GAP) -> dict[int, tuple
 
 def convert(app:Application, xmlPath:str, folder:str|None=None) -> bool:
   '''
-  Make the model and view of *xmlPath*, save them, and open the view.
+  Make the model, its ontology, and the view of *xmlPath*, save them, and open the view.
 
   :param app: The editor.
   :param xmlPath: The XML file.
@@ -217,24 +220,26 @@ def convert(app:Application, xmlPath:str, folder:str|None=None) -> bool:
     a newer version's installed (see *sn.plugins.installBundled()*).
   :returns: Whether it did.
   '''
-  modelPath, viewPath = outputPaths(xmlPath)
+  modelPath, viewPath, ontologyPath = outputPaths(xmlPath)
   if folder is not None:
     os.makedirs(folder, exist_ok=True)
-    modelPath, viewPath = (os.path.join(folder, os.path.basename(p)) for p in (modelPath, viewPath))
-  existing = [p for p in (modelPath, viewPath) if os.path.exists(p)]
+    modelPath, viewPath, ontologyPath = (os.path.join(folder, os.path.basename(p)) for p in (modelPath, viewPath, ontologyPath))
+  existing = [p for p in (modelPath, viewPath, ontologyPath) if os.path.exists(p)]
   if existing:
     if not messagebox.askokcancel(TITLE, "These files are already there:\n\n  " + "\n  ".join(existing)
                                   + "\n\nReplace them?", icon=messagebox.WARNING): # (no parent: see askForFile())
       return False
-  if not app.replacingModel(modelPath): # (its window, if it's open, and the model in memory: they'd be added to)
-    return False
+  for p in (modelPath, ontologyPath): # (its window, if it's open, and the model in memory: they'd be added to --
+    if not app.replacingModel(p):     # the model first, as it builds on the ontology)
+      return False
   for p in existing:
     os.remove(p)
   try:
-    model = buildModel(xmlPath, modelPath)
+    model, ontology = buildModel(xmlPath, modelPath)
   except ET.ParseError as ex:
     messagebox.showerror(TITLE, f"{os.path.basename(xmlPath)} isn't a well-formed XML file:\n\n{ex}")
     return False
+  ontology.save()
   model.save()
   window = app.openWindow(modelPath) # (a new view of a model is made as <model>.snv: viewPath)
   if window is None:
@@ -245,6 +250,7 @@ def convert(app:Application, xmlPath:str, folder:str|None=None) -> bool:
   arrange(view)
   separateNodes(view)
   view.save()
-  print(f"Made {os.path.basename(modelPath)} and {os.path.basename(viewPath)} from {os.path.basename(xmlPath)}: "
-        f"{len([o for o in model.values()])} objects, arranged as balloons.")
+  print(f"Made {os.path.basename(modelPath)}, {os.path.basename(ontologyPath)} and {os.path.basename(viewPath)} "
+        f"from {os.path.basename(xmlPath)}: {len([o for o in model.values()])} objects (and {len([o for o in ontology.values()])} "
+        f"in the ontology), arranged as balloons.")
   return True
