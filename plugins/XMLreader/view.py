@@ -15,7 +15,8 @@ the web, say). Then the model's built on it, and what it hasn't (eg: types
 for tags it hasn't seen) is added to it -- or, if it can't be changed (eg:
 it's on the web), put in the model. "Go" makes them (see *convert()*), asking
 first if the model and view are there already, and replacing them, and opens
-the view.
+the view. (For a big file -- more than *MAX_SHOWN* elements -- the view
+shows just the types, to be expanded as they're wanted: see *showTypes()*.)
 
 The plugin's *examples* folder has some to try: books.xml (small: a namespace,
 nesting, comments, and elements named by their id or name), and
@@ -35,7 +36,7 @@ import xml.etree.ElementTree as ET
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from util.utils import fixURL, ownDialog
-from sn.model.model import Model, Node
+from sn.model.model import IsaIndividual, Model, Node
 from sn.view.graphics.guiApp import Application
 from sn.view.graphics.sngView import SNGView
 from sn.view.graphics.vnodes import VNode
@@ -44,6 +45,11 @@ from sn.view.graphics.relationTable import RelationTable, RelationRow, SHAPES, P
 from .reader import buildModel, canChange, isRemote, localPath, ontologyPath, outputPaths, PART_OF
 
 TITLE = "XML Reader"
+
+MAX_SHOWN = 2000
+'''The most elements a view's made showing (see *convert()*): a model with
+more shows just its types, to be expanded (see *showTypes()*). (A view of
+1000 elements takes a few seconds to make; of 10,000, minutes.)'''
 
 GAP = 40.0
 "The room *separateNodes()* leaves in each cell of its grid beyond the biggest node: a node it moves is at least half this from any other."
@@ -62,14 +68,49 @@ def defaultPaths(xmlPath:str, folder:str|None=None) -> tuple[str, str, str]:
   model, view, ontology = (os.path.join(folder, os.path.basename(p)) for p in paths)
   return model, view, ontology
 
+def elementCount(model:Model) -> int:
+  '''
+  :param model: A model made by *buildModel()*.
+  :returns: How many elements it has (its individual nodes).
+  '''
+  return sum(1 for o in model.values() if isinstance(o, Node) and o.isIndividual())
+
 def expandLevels(model:Model) -> int:
   '''
   :param model: A model made by *buildModel()*.
   :returns: How many levels to expand its types by (see *showTypesAndExpand()*):
     fewer for a bigger model, as showing it takes longer.
   '''
-  elements = sum(1 for o in model.values() if isinstance(o, Node) and o.isIndividual())
+  elements = elementCount(model)
   return 4 if elements <= 100 else 3 if elements <= 500 else 2
+
+def showTypes(view:SNGView, model:Model) -> None:
+  '''
+  Fill the view with just the model's node types -- its ontology's (the
+  tags' types, their subtypes, and any added to it), and its own (eg: ones
+  its ontology couldn't be given: see *reader.buildModel()*) -- arranged as
+  a tree, by isa, growing down (see *treeLayout.TreeLayout*): for a model too
+  big to show all at once (see *MAX_SHOWN*). Each type can be expanded to
+  bring in its elements, as they're wanted. (The types are still in the
+  ontology: they're only shown here.)
+
+  :param view: A view of *model*.
+  :param model: A model made by *buildModel()*.
+  '''
+  from sn.view.graphics.treeLayout import TreeLayout
+  localLayout, view.localLayout = view.localLayout, None # type: ignore[assignment] # (none: the tree layout places them)
+  try:
+    types = sorted(nodeTypes(model), key=lambda t: (t.model is model, t._id)) # (as they were made)
+    for t in types:
+      view.makeViewObjectForGraphObject(t, atPoint=(50, 50))
+    shown = {id(t) for t in types}
+    for t in types: # (the isa links between them, for the tree)
+      for r, parent in t._getOutgoing(lambda r: isinstance(r, IsaIndividual)):
+        if id(parent) in shown:
+          view.makeViewObjectForGraphObject(r)
+  finally:
+    view.localLayout = localLayout
+  TreeLayout(view, relation="isa", direction="down", others="rows").arrange(animate=False) # (those with no subtypes in rows, after the trees)
 
 def showTypesAndExpand(view:SNGView, model:Model) -> None:
   '''
@@ -327,15 +368,21 @@ def convert(app:Application, files:Files, parent:tk.Misc|None=None) -> bool:
   if window is None:
     return False
   view.context.visibility("system objects", "hide") # (the system model's types: node, relation, ...)
-  showTypesAndExpand(view, model)
-  arrange(view)
-  separateNodes(view)
+  elements = elementCount(model)
+  if elements > MAX_SHOWN:
+    showTypes(view, model)
+    shown = f"too many to show at once (more than {MAX_SHOWN}): the view shows their types, to expand as you need them"
+  else:
+    showTypesAndExpand(view, model)
+    arrange(view)
+    separateNodes(view)
+    shown = "arranged as balloons"
   view.save()
   name = os.path.basename
   how = ("made" if state == "new" or replaceOntology else
          f"{len(ontology) - had} objects added" if extend else "kept as it is: what it hadn't is in the model")
   print(f"Made {name(modelPath)} and {name(viewPath)} from {name(xmlPath)}, on {name(ontology.url)} ({how}): "
-        f"{len(model)} objects (and {len(ontology)} in the ontology), arranged as balloons.")
+        f"{len(model)} objects (and {len(ontology)} in the ontology); {elements} elements, {shown}.")
   return True
 
 class ReaderDialog(tk.Toplevel):

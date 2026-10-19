@@ -110,6 +110,13 @@ The view shows the elements, arranged as they nest by the balloon layout
 (see :doc:`layouts`): each element with its children round it, and so on out
 to the leaves.
 
+A big file -- more than 2000 elements -- would take minutes to show, and
+make a crowded view. For one of those, the view shows just the **types**
+(each tag's, and their subtypes), as a tree, each subtype below its type.
+**Expand** the ones you're interested in (their menu's **expand**, or
+**expand by relation...**) to bring in their elements, and go on from there.
+The types are still in the ontology: they're only shown in the view.
+
 .. figure:: ../images/user/xmlreader-books.png
    :alt: The XMLreader's view of books.xml: library1 in the middle, related by has-book to two books and by has-magazine to Byte; each book has its title, author and chapters round it
    :width: 400px
