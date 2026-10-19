@@ -3,14 +3,19 @@ XMLreader's front end: turn an XML file into a Semantic Nets model and view,
 and open the view in the editor. (The Tools menu's "XML Reader...": see the
 plugin's *register()*.)
 
-It asks for the file (see *askForFile()*). For "<name>.<ext>" it makes
-"<name>_<ext>.snm" (the model: see *reader*), "<name>_<ext>_ontology.snm" (its
-super-model: the types and definitions) and "<name>_<ext>.snv" (a view of
-the model: its elements, arranged as they nest -- see *showTypesAndExpand()*
-and *arrange()*) in the same folder
--- asking first if they're already there, and replacing them (or, for the
-ontology, keeping it, and building the new model on it: see *convert()*) --
-and opens the view. (For the plugin's own examples, they're made elsewhere: see *convert()*.)
+It's a dialog (see *ReaderDialog*): the XML file, and the three files made
+from it -- for "<name>.<ext>", by default, "<name>_<ext>.snm" (the model: see
+*reader*), "<name>_<ext>.snv" (a view of the model: its elements, arranged as
+they nest -- see *showTypesAndExpand()* and *arrange()*) and
+"<name>_<ext>_ontology.snm" (the model's super-model: the types and
+definitions), in the same folder (see *defaultPaths()*). Any of them can be
+put somewhere else; and the ontology can be one that's there already --
+eg: one shared by several XML files of the same kind -- a file, or a URL (on
+the web, say). Then the model's built on it, and what it hasn't (eg: types
+for tags it hasn't seen) is added to it -- or, if it can't be changed (eg:
+it's on the web), put in the model. "Go" makes them (see *convert()*), asking
+first if the model and view are there already, and replacing them, and opens
+the view.
 
 The plugin's *examples* folder has some to try: books.xml (small: a namespace,
 nesting, comments, and elements named by their id or name), and
@@ -24,33 +29,38 @@ Created on Oct 3, 2026 (as a program of its own: a plugin since Oct 17)
 from __future__ import annotations
 import os
 from pathlib import Path
-from typing import Any, Sequence
+from dataclasses import dataclass
+from typing import Any, Callable, Sequence
 import xml.etree.ElementTree as ET
-from tkinter import filedialog, messagebox
+import tkinter as tk
+from tkinter import filedialog, messagebox, ttk
+from util.utils import fixURL, ownDialog
 from sn.model.model import Model, Node
 from sn.view.graphics.guiApp import Application
 from sn.view.graphics.sngView import SNGView
 from sn.view.graphics.vnodes import VNode
 from sn.view.graphics.layout import relationTypes, nodeTypes, _BoxIndex
 from sn.view.graphics.relationTable import RelationTable, RelationRow, SHAPES, PULLS, TERMINALS
-from .reader import buildModel, outputPaths, PART_OF
+from .reader import buildModel, canChange, isRemote, localPath, ontologyPath, outputPaths, PART_OF
 
 TITLE = "XML Reader"
 
 GAP = 40.0
 "The room *separateNodes()* leaves in each cell of its grid beyond the biggest node: a node it moves is at least half this from any other."
 
-def askForFile(folder:str|None=None) -> str|None:
+def defaultPaths(xmlPath:str, folder:str|None=None) -> tuple[str, str, str]:
   '''
-  :param folder: The folder to start in, if any.
-  :returns: The XML file the user chose, or None if they cancelled.
+  :param xmlPath: An XML file.
+  :param folder: Where to make its files, if not beside it: eg: for the
+    plugin's own examples, as the plugin's folder is replaced when a newer
+    version's installed (see *sn.plugins.installBundled()*).
+  :returns: The model, view and ontology files made from it, by default (see *reader.outputPaths()*).
   '''
-  # (no parent: the editor's main window is hidden -- on macOS, a dialog given
-  # it as a parent is shown as a sheet in that small, otherwise hidden window)
-  where:dict[str, Any] = {"initialdir": folder} if folder is not None and os.path.isdir(folder) else {}
-  path = filedialog.askopenfilename(title="Choose an XML file to make a Semantic Nets model of",
-                                    filetypes=[("XML files", "*.xml"), ("All files", "*.*")], **where)
-  return path or None
+  paths = outputPaths(xmlPath)
+  if folder is None:
+    return paths
+  model, view, ontology = (os.path.join(folder, os.path.basename(p)) for p in paths)
+  return model, view, ontology
 
 def expandLevels(model:Model) -> int:
   '''
@@ -211,75 +221,315 @@ def freeCells(boxes:Sequence[Sequence[float]], gap:float=GAP) -> dict[int, tuple
     ret[k] = (int((i + 0.5) * cellW - w / 2), int((j + 0.5) * cellH - h / 2)) # (in the middle of it)
   return ret
 
-def convert(app:Application, xmlPath:str, folder:str|None=None) -> bool:
-  '''
-  Make the model, its ontology, and the view of *xmlPath*, save them, and open the view.
+@dataclass
+class Files:
+  '''What to read, and what to make of it (see *ReaderDialog* and *convert()*).'''
+  xml:str
+  "The XML file."
+  model:str
+  "The model's file (.snm)."
+  view:str
+  "The view's file (.snv)."
+  ontology:str
+  '''The ontology's file or URL: one that's there is built on (and added to,
+  if it can be changed: see *reader.canChange()*), unless *replaceOntology*;
+  otherwise it's made.'''
+  replaceOntology:bool = False
+  "Whether to make the ontology afresh, if it's there (a file here)."
 
-  If they're there already, it asks first: if the ontology is, whether to
-  keep it -- and build the new model on it, adding only what's missing (see
-  *reader.buildModel()*), so the changes made to it stay -- or replace it
-  too; otherwise, whether to replace them.
+def ontologyState(ref:str) -> str:
+  '''
+  :param ref: An ontology's file or URL (see *Files.ontology*).
+  :returns: What'd be done with it: "web" (it's on the web: it's read, if
+    it's there, and can't be changed), "new" (there's no such file: it's
+    made), "there" (it's there, and can be changed), "locked" (it's there,
+    and can't be: eg: it's read-only) or "" (*ref* is empty).
+  '''
+  ref = ref.strip()
+  if not ref:
+    return ""
+  path = localPath(ref)
+  if path is None:
+    return "web"
+  if not os.path.exists(path):
+    return "new"
+  return "there" if canChange(path) else "locked"
+
+def convert(app:Application, files:Files, parent:tk.Misc|None=None) -> bool:
+  '''
+  Make the model and view of *files.xml*, on its ontology (made, or one
+  that's there: see *Files.ontology*), save them, and open the view. If the
+  model or view are there already (or the ontology, if it's to be made
+  afresh), it asks first, and replaces them.
 
   :param app: The editor.
-  :param xmlPath: The XML file.
-  :param folder: Where to make them, if not beside it (see *reader.outputPaths()*):
-    eg: for the plugin's own examples, as the plugin's folder is replaced when
-    a newer version's installed (see *sn.plugins.installBundled()*).
+  :param files: What to read, and what to make of it.
+  :param parent: The window any messages are about (eg: the dialog), if any.
   :returns: Whether it did.
   '''
-  modelPath, viewPath, ontologyPath = outputPaths(xmlPath)
-  if folder is not None:
-    os.makedirs(folder, exist_ok=True)
-    modelPath, viewPath, ontologyPath = (os.path.join(folder, os.path.basename(p)) for p in (modelPath, viewPath, ontologyPath))
-  existing = [p for p in (modelPath, viewPath, ontologyPath) if os.path.exists(p)]
-  keep = False # (whether to build on the ontology that's there)
-  if os.path.exists(ontologyPath):
-    answer = messagebox.askyesnocancel(TITLE, "These files are already there:\n\n  " + "\n  ".join(existing)
-                                       + f"\n\nKeep the ontology, {os.path.basename(ontologyPath)}, and build the new model on it? "
-                                       "Anything you've changed in it (types moved about, rules added, ...) stays: "
-                                       "only what's missing is added.\n\n"
-                                       "Yes: keep it, and replace the model and view.\nNo: replace them all.",
-                                       icon=messagebox.WARNING) # (no parent: see askForFile())
-    if answer is None:
-      return False
-    keep = answer
-  elif existing:
-    if not messagebox.askokcancel(TITLE, "These files are already there:\n\n  " + "\n  ".join(existing)
-                                  + "\n\nReplace them?", icon=messagebox.WARNING):
-      return False
-  for p in (modelPath,) if keep else (modelPath, ontologyPath): # (its window, if it's open, and the model in memory:
-    if not app.replacingModel(p):                                # they'd be added to -- the model first, as it builds on the ontology)
-      return False
-  ontology:Model|None = None
-  if keep: # (as it is in memory, if it is -- eg: its window's open -- changes not saved yet and all)
-    try:
-      ontology = Model.getDB(Path(ontologyPath).as_uri())
-    except Exception as ex:
-      messagebox.showerror(TITLE, f"Couldn't read {os.path.basename(ontologyPath)}:\n\n{ex}")
-      return False
-  for p in existing:
-    if not (keep and p == ontologyPath):
-      os.remove(p)
-  had = len(ontology) if ontology is not None else 0
-  try:
-    model, ontology = buildModel(xmlPath, modelPath, ontology)
-  except ET.ParseError as ex:
-    messagebox.showerror(TITLE, f"{os.path.basename(xmlPath)} isn't a well-formed XML file:\n\n{ex}")
+  # (no parent, if none's given: the editor's main window is hidden -- on macOS,
+  # a dialog given it as a parent is shown as a sheet in that small, otherwise hidden window)
+  where:dict[str, Any] = {"parent": parent} if parent is not None else {}
+  def error(message:str) -> bool:
+    messagebox.showerror(TITLE, message, **where)
     return False
-  ontology.save()
+  xmlPath = os.path.abspath(os.path.expanduser(files.xml.strip()))
+  modelPath = os.path.abspath(os.path.expanduser(files.model.strip()))
+  viewPath = os.path.abspath(os.path.expanduser(files.view.strip()))
+  ontologyRef = files.ontology.strip()
+  state = ontologyState(ontologyRef)
+  ontologyFile = localPath(ontologyRef) if ontologyRef else None
+  if not os.path.isfile(xmlPath):
+    return error(f"There's no such file as {xmlPath}.")
+  if not modelPath.endswith(".snm") or not viewPath.endswith(".snv"):
+    return error("The model's file must end in .snm, and the view's in .snv.")
+  if not state:
+    return error("Which ontology? Give its file (one that's there, or one to make), or its URL.")
+  if ontologyFile is not None and not ontologyFile.endswith(".snm"):
+    return error("The ontology's file must end in .snm.")
+  if ontologyFile is not None and os.path.realpath(ontologyFile) == os.path.realpath(modelPath):
+    return error("The model and its ontology can't be the same file.")
+  replaceOntology = files.replaceOntology and state in ("there", "locked")
+  existing = [p for p in (modelPath, viewPath) if os.path.exists(p)] + ([ontologyFile] if replaceOntology and ontologyFile else [])
+  if existing:
+    warning = ("\n\nThe ontology's made afresh: anything you've changed in it is lost, and other models built on it lose their types."
+               if replaceOntology else "")
+    if not messagebox.askokcancel(TITLE, "These files are already there:\n\n  " + "\n  ".join(existing)
+                                  + warning + "\n\nReplace them?", icon=messagebox.WARNING, **where):
+      return False
+  for folder in {os.path.dirname(p) for p in (modelPath, viewPath, ontologyFile) if p is not None}:
+    os.makedirs(folder, exist_ok=True) # (first: a file in a folder that isn't there has no URL, to look for its model in memory by)
+  for p in [modelPath] + ([ontologyFile] if replaceOntology and ontologyFile else []): # (its window, if it's open, and the model
+    if not app.replacingModel(p):                                                       # in memory: they'd be added to -- the model first, as it builds on the ontology)
+      return False
+  ontology:Model|str
+  if state == "new" or replaceOntology:
+    assert ontologyFile is not None
+    ontology = ontologyFile
+  else: # (as it is in memory, if it is -- eg: its window's open -- changes not saved yet and all)
+    try:
+      ontology = Model.getDB(Path(ontologyFile).as_uri() if ontologyFile is not None else ontologyRef)
+    except Exception as ex:
+      return error(f"Couldn't read the ontology, {ontologyRef}:\n\n{ex}")
+  for p in existing:
+    os.remove(p)
+  had = len(ontology) if isinstance(ontology, Model) else 0
+  extend = state != "web" and canChange(ontologyRef)
+  try:
+    model, ontology = buildModel(xmlPath, modelPath, ontology, extend)
+  except ET.ParseError as ex:
+    return error(f"{os.path.basename(xmlPath)} isn't a well-formed XML file:\n\n{ex}")
+  if not ontology.writeLocked() and extend and ontology.isDirty(): # (not one there already, if nothing's added to it)
+    ontology.save()
   model.save()
-  window = app.openWindow(modelPath) # (a new view of a model is made as <model>.snv: viewPath)
+  view = SNGView(fixURL(viewPath, None, replaceExt=None, mode="w")[0], model=model, mode="w") # (where it was asked for: not necessarily beside the model)
+  window = app.openWindow(view)
   if window is None:
     return False
-  view:SNGView = window.view #type: ignore[attr-defined] # (an AppWindow)
   view.context.visibility("system objects", "hide") # (the system model's types: node, relation, ...)
   showTypesAndExpand(view, model)
   arrange(view)
   separateNodes(view)
   view.save()
-  made = (f"{os.path.basename(modelPath)} and {os.path.basename(viewPath)}, on {os.path.basename(ontologyPath)} (kept: "
-          f"{len(ontology) - had} objects added)," if keep else
-          f"{os.path.basename(modelPath)}, {os.path.basename(ontologyPath)} and {os.path.basename(viewPath)}")
-  print(f"Made {made} from {os.path.basename(xmlPath)}: {len([o for o in model.values()])} objects (and "
-        f"{len([o for o in ontology.values()])} in the ontology), arranged as balloons.")
+  name = os.path.basename
+  how = ("made" if state == "new" or replaceOntology else
+         f"{len(ontology) - had} objects added" if extend else "kept as it is: what it hadn't is in the model")
+  print(f"Made {name(modelPath)} and {name(viewPath)} from {name(xmlPath)}, on {name(ontology.url)} ({how}): "
+        f"{len(model)} objects (and {len(ontology)} in the ontology), arranged as balloons.")
   return True
+
+class ReaderDialog(tk.Toplevel):
+  '''
+  The front end: the XML file to read; the model, view and ontology files to
+  make of it (each with "Choose..."), which follow the XML file (see
+  *defaultPaths()*) -- the view and ontology following the model -- until
+  they're changed by hand; what's done with the ontology (made, or built on,
+  and added to if it can be: see *ontologyState()*), and, if it's there,
+  whether to replace it; and "Go" (see *convert()*) -- which, when it's
+  done, closes it.
+  '''
+  def __init__(self, app:Application, xmlPath:str|None=None, folder:str|None=None,
+               defaults:Callable[[str], tuple[str, str, str]]=defaultPaths,
+               onChosen:Callable[[str], None]|None=None, onClose:Callable[[], None]|None=None):
+    '''
+    :param app: The editor.
+    :param xmlPath: The XML file to start with, if any.
+    :param folder: The folder to choose an XML file in, at first.
+    :param defaults: The model, view and ontology files for an XML file (see *defaultPaths()*).
+    :param onChosen: Told the XML file chosen with "Choose..." (eg: to start there next time).
+    :param onClose: Called when it's closed: by "Go" (when the view's opened) or "Cancel".
+    '''
+    super().__init__(app)
+    ownDialog(self, app) # (over the editor's window, if one's on screen -- not full screen: see ownDialog())
+    self.app, self.folder, self.defaults, self.onChosen, self.onClose = app, folder, defaults, onChosen, onClose
+    self.title(TITLE)
+    self.vars = {k: tk.StringVar(value="") for k in ("xml", "model", "view", "ontology")}
+    self.following = {"model": True, "view": True, "ontology": True}
+    "Which files follow the one they're made from (see *setDefaults()*): until they're changed by hand."
+    self._setting = False
+    self.replaceOntology = tk.BooleanVar(value=False)
+    self.ontologyNote = tk.StringVar(value="")
+    pad:dict[str, Any] = dict(padx=6, pady=3)
+
+    frame = ttk.Frame(self, padding=10)
+    frame.pack(fill=tk.BOTH, expand=True)
+    frame.columnconfigure(1, weight=1)
+    rows = (("xml", "XML file:", self.chooseXML), ("model", "Model:", self.chooseModel),
+            ("view", "View:", self.chooseView), ("ontology", "Ontology:", self.chooseOntology))
+    self.entries:dict[str, ttk.Entry] = {}
+    for row, (key, label, choose) in enumerate(rows):
+      r = row + 1 if key == "ontology" else row # (a line between the files made and the ontology)
+      ttk.Label(frame, text=label).grid(row=r, column=0, sticky=tk.W, **pad)
+      self.entries[key] = e = ttk.Entry(frame, textvariable=self.vars[key], width=64)
+      e.grid(row=r, column=1, sticky=tk.EW, **pad)
+      ttk.Button(frame, text="Choose...", command=choose).grid(row=r, column=2, **pad)
+      self.vars[key].trace_add("write", lambda *_a, key=key: self.changed(key))
+    ttk.Separator(frame).grid(row=3, column=0, columnspan=3, sticky=tk.EW, pady=6)
+    ttk.Label(frame, text="A file (one that's there, eg: shared by XML files of the same kind; or one to make), or a URL.",
+              foreground="gray40", wraplength=520).grid(row=5, column=1, columnspan=2, sticky=tk.W, padx=6)
+    ttk.Label(frame, textvariable=self.ontologyNote, wraplength=520).grid(row=6, column=1, columnspan=2, sticky=tk.W, **pad)
+    self.replaceButton = ttk.Checkbutton(frame, text="Replace it: make it afresh (anything changed in it is lost, "
+                                         "and other models built on it lose their types)", variable=self.replaceOntology,
+                                         command=self.updateOntologyNote)
+    self.replaceButton.grid(row=7, column=1, columnspan=2, sticky=tk.W, **pad)
+
+    bottom = ttk.Frame(frame)
+    bottom.grid(row=8, column=0, columnspan=3, sticky=tk.EW, pady=(10, 0))
+    self.goButton = ttk.Button(bottom, text="Go", command=self.go, default="active")
+    self.goButton.pack(side=tk.RIGHT, padx=6)
+    ttk.Button(bottom, text="Cancel", command=self.cancel).pack(side=tk.RIGHT, padx=6)
+    self.bind("<Return>", lambda _e: self.go())
+    self.bind("<Escape>", lambda _e: self.cancel())
+    self.protocol("WM_DELETE_WINDOW", self.cancel)
+
+    if xmlPath:
+      self.vars["xml"].set(xmlPath)
+    self.refresh()
+    self.lift()
+    self.focus_force()
+
+  def set(self, key:str, value:str) -> None:
+    '''Set a file, as if by the program (so it still follows the one it's made from: see *following*).'''
+    if self.vars[key].get() == value: # (not again: it'd set those that follow it again, and so on)
+      return
+    self._setting = True
+    try:
+      self.vars[key].set(value)
+    finally:
+      self._setting = False
+
+  def changed(self, key:str) -> None:
+    '''
+    A file's changed: by hand (unless *set()* did it), it's no longer
+    following -- or, if it's been emptied, it is again; and those that follow
+    it are set from it (see *setDefaults()*).
+    '''
+    value = self.vars[key].get().strip()
+    if key in self.following and not self._setting:
+      self.following[key] = not value
+      if not value:
+        self.setDefaults()
+    if key == "xml" or key == "model":
+      self.setDefaults()
+    self.refresh()
+
+  def setDefaults(self) -> None:
+    '''Set the files that are following from the ones they follow: the model from the XML file; the view and ontology from the model.'''
+    xml = self.vars["xml"].get().strip()
+    if not xml:
+      return
+    model, view, ontology = self.defaults(os.path.abspath(os.path.expanduser(xml)))
+    if self.following["model"]:
+      self.set("model", model)
+    model = self.vars["model"].get().strip()
+    if model:
+      model = os.path.abspath(os.path.expanduser(model))
+      if self.following["view"]:
+        self.set("view", os.path.splitext(model)[0] + ".snv")
+      if self.following["ontology"]:
+        self.set("ontology", ontologyPath(model))
+
+  def updateOntologyNote(self) -> None:
+    '''Say what'd be done with the ontology; "Replace it" only for one that's there.'''
+    state = ontologyState(self.vars["ontology"].get())
+    replace = self.replaceOntology.get() and state in ("there", "locked")
+    self.ontologyNote.set("It's made afresh, in place of the one that's there." if replace else {
+      "": "",
+      "new": "There's no such file: it's made.",
+      "there": "It's there: the model's built on it, and what it hasn't (eg: types for new tags) is added to it.",
+      "locked": "It's there, but can't be changed: the model's built on it, and what it hasn't (eg: types for new tags) "
+                "goes in the model.",
+      "web": "It's on the web, so it can't be changed: the model's built on it, and what it hasn't (eg: types for new "
+             "tags) goes in the model.",
+    }[state])
+    self.replaceButton.state(["!disabled"] if state in ("there", "locked") else ["disabled"])
+
+  def refresh(self) -> None:
+    '''What's said about the ontology, and Go: only with all the files given.'''
+    self.updateOntologyNote()
+    self.goButton.state(["!disabled"] if all(v.get().strip() for v in self.vars.values()) else ["disabled"])
+
+  def choose(self, key:str, path:str) -> None:
+    if path:
+      self.vars[key].set(path) # (by hand: see changed())
+
+  def startIn(self, key:str) -> dict[str, Any]:
+    '''The folder to choose a file in: where the file is, or else the folder given (see *__init__()*).'''
+    value = self.vars[key].get().strip()
+    path = localPath(value) if value else None
+    folder = os.path.dirname(path) if path else self.folder
+    return {"initialdir": folder} if folder and os.path.isdir(folder) else {}
+
+  def chooseXML(self) -> None:
+    path = filedialog.askopenfilename(parent=self, title="Choose an XML file to make a Semantic Nets model of",
+                                      filetypes=[("XML files", "*.xml"), ("All files", "*.*")], **self.startIn("xml"))
+    if path:
+      self.choose("xml", path)
+      if self.onChosen is not None:
+        self.onChosen(path)
+
+  def chooseSave(self, key:str, what:str, ext:str) -> None:
+    current = self.vars[key].get().strip()
+    self.choose(key, filedialog.asksaveasfilename(parent=self, title=f"The {what}'s file", defaultextension=ext,
+                                                  initialfile=os.path.basename(current) if current else "",
+                                                  filetypes=[(f"{what.capitalize()} files", f"*{ext}")], **self.startIn(key)))
+
+  def chooseModel(self) -> None:
+    self.chooseSave("model", "model", ".snm")
+
+  def chooseView(self) -> None:
+    self.chooseSave("view", "view", ".snv")
+
+  def chooseOntology(self) -> None:
+    self.choose("ontology", filedialog.askopenfilename(parent=self, title="Choose an ontology to build on",
+                                                       filetypes=[("Model files", "*.snm"), ("All files", "*.*")],
+                                                       **self.startIn("ontology")))
+
+  def files(self) -> Files:
+    '''The files given.'''
+    v = {k: var.get().strip() for k, var in self.vars.items()}
+    return Files(v["xml"], v["model"], v["view"], v["ontology"], self.replaceOntology.get())
+
+  def go(self) -> None:
+    '''Make the model and view (see *convert()*); close, if that's done.'''
+    if not all(v.get().strip() for v in self.vars.values()):
+      return
+    self.goButton.state(["disabled"])
+    self.configure(cursor="watch")
+    self.update_idletasks()
+    try:
+      done = convert(self.app, self.files(), parent=self)
+    finally:
+      if self.winfo_exists():
+        self.configure(cursor="")
+        self.refresh()
+    if done:
+      self.close()
+
+  def cancel(self) -> None:
+    self.close()
+
+  def close(self) -> None:
+    self.destroy()
+    if self.onClose is not None:
+      self.onClose()

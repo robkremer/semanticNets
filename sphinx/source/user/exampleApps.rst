@@ -44,16 +44,19 @@ Install only plugins you trust.
 The XML reader
 --------------
 
-**Tools | XML Reader...** asks for an XML file -- starting in the folder you
-read one from last, or, the first time, in the plugin's *examples* -- and
-turns it into a model. For *books.xml*, it makes *books_xml.snm* (the
-model: the elements), *books_xml_ontology.snm* (its super-model: the types
-and definitions -- the place to change the type hierarchy, or add rules) and
-*books_xml.snv* (the view), next to it, asking first if they're there
-already. (For the
-plugin's own examples, they're made in ``~/Documents/Semantic Nets
-Examples/`` instead: the plugin's folder is replaced when a newer version
-comes.)
+**Tools | XML Reader...** opens a dialog: the **XML file** to read (choose
+one -- starting in the folder you read one from last, or, the first time, in
+the plugin's *examples*), and the three files it makes of it. For
+*books.xml*, they're *books_xml.snm* (the **model**: the elements),
+*books_xml.snv* (the **view**) and *books_xml_ontology.snm* (the
+**ontology**: the model's super-model, with the types and definitions -- the
+place to change the type hierarchy, or add rules), next to it. Change any of
+them, by typing or with **Choose...**: until you do, they follow the XML
+file (and the view and ontology follow the model). (For the plugin's own
+examples, they're made in ``~/Documents/Semantic Nets Examples/`` instead:
+the plugin's folder is replaced when a newer version comes.) **Go** makes
+them, asking first if the model or view is there already, and opens the
+view.
 
 - Each **tag** becomes a type (*book*, *chapter*, ...), with a colour and
   shape of its own, which its elements inherit -- so you can see what each
@@ -71,16 +74,28 @@ comes.)
   ([?a -xml-part-of-> ?b] ⇔ [?b -xml-has-part-> ?a]): **reason** (see
   :doc:`reasoning`) concludes that each chapter is *xml-part-of* its book.
 
-**Reading a file again.** If the ontology is there already (eg: you've read
-the file before, and changed the ontology since: moved types about, added
-types, attributes or rules), it asks whether to keep it. **Yes** keeps it, and
-builds the new model on it: only the model and view are made afresh. What's in
-the ontology is found by name -- a tag's type by the tag, wherever you've
-moved it in the type hierarchy; a subtype by its ``type`` or ``kind`` value,
-under its tag's type; *has-<tag>*, *xml-has-part* and *xml-part-of* by theirs
--- and only what's missing is added: a type, attribute or *has-<tag>* for
-something new in the file, with a colour and shape of its own. **No**
-replaces the ontology too, so your changes are lost.
+**An ontology that's there already** is built on, not replaced: the dialog
+says what it'll do with the one given. It may be one made before for the same
+file (which you've changed since: moved types about, added types, attributes
+or rules), or one shared by several XML files of the same kind -- choose it
+for each, and their models are all built on it. It can be a URL (eg: on the
+web) rather than a file. What's in it is found by name -- a tag's type by the
+tag, wherever you've moved it in the type hierarchy; a subtype by its
+``type`` or ``kind`` value, under its tag's type; *has-<tag>*,
+*xml-has-part* and *xml-part-of* by theirs -- and only what's missing is
+added: a type, attribute or *has-<tag>* for something new in the file, with
+a colour and shape of its own.
+
+- If the ontology can be changed (a file here that you can write), what's
+  missing is added to it, and it's saved -- so the next file of that kind
+  finds it there.
+- If it can't (it's on the web, or a file you can't write), it's left as it
+  is: the types and *has-<tag>* relations it hasn't go in the model instead
+  (a new subtype of one of its types, too), and an attribute its types
+  haven't is just in the elements.
+- To start afresh, tick **Replace it**: a new ontology is made in its place.
+  Anything you'd changed in it is lost, and other models built on it lose
+  their types.
 
 If you've renamed or deleted a type, it isn't found, so it's made afresh (as
 for a new ontology), and the log says what was added. (If its *has-<tag>* is

@@ -38,25 +38,36 @@ from __future__ import annotations
 import os
 from typing import Any
 
+_dialog:Any = None
+"The dialog, while it's open: the menu item brings it to the front rather than opening another."
+
 def register(ctx:Any) -> None:
   '''
-  Add "XML Reader..." to the Tools menu (see *sn.plugins.PluginContext*): it
-  asks for the file -- in the folder last read from, or at first the
-  plugin's examples -- and makes its model and view (see *view.convert()*).
-  Those of the plugin's own examples are made in the example models' folder
-  (see *Application.EXAMPLES_FOLDER*), not in the plugin's folder, which is
-  replaced when a newer version's installed.
+  Add "XML Reader..." to the Tools menu (see *sn.plugins.PluginContext*): its
+  dialog (see *view.ReaderDialog*) asks for the file -- in the folder last
+  read from, or at first the plugin's examples -- and the files to make of it,
+  and makes them (see *view.convert()*). Those of the plugin's own examples
+  are made in the example models' folder (see *Application.EXAMPLES_FOLDER*)
+  by default, not in the plugin's folder, which is replaced when a newer
+  version's installed.
 
   :param ctx: The plugin's context.
   :type ctx: sn.plugins.PluginContext
   '''
-  def read() -> None:
-    from .view import askForFile, convert # (here: tkinter, the views, ... only once it's used)
-    examples = os.path.join(ctx.folder, "examples")
-    xmlPath = askForFile(ctx.pref("lastFolder", None) or examples)
-    if xmlPath is None:
+  def openDialog() -> None:
+    global _dialog
+    if _dialog is not None and _dialog.winfo_exists():
+      _dialog.lift()
+      _dialog.focus_force()
       return
-    ctx.setPref("lastFolder", os.path.dirname(xmlPath))
-    mine = os.path.commonpath([os.path.realpath(xmlPath), os.path.realpath(ctx.folder)]) == os.path.realpath(ctx.folder)
-    convert(ctx.app, xmlPath, os.path.expanduser(ctx.app.EXAMPLES_FOLDER) if mine else None)
-  ctx.addMenuItem("XML Reader...", read)
+    from .view import ReaderDialog, defaultPaths # (here: tkinter, the views, ... only once it's used)
+    def defaults(xmlPath:str) -> tuple[str, str, str]:
+      mine = os.path.commonpath([os.path.realpath(xmlPath), os.path.realpath(ctx.folder)]) == os.path.realpath(ctx.folder)
+      return defaultPaths(xmlPath, os.path.expanduser(ctx.app.EXAMPLES_FOLDER) if mine else None)
+    def closed() -> None:
+      global _dialog
+      _dialog = None
+    _dialog = ReaderDialog(ctx.app, folder=ctx.pref("lastFolder", None) or os.path.join(ctx.folder, "examples"),
+                           defaults=defaults, onChosen=lambda path: ctx.setPref("lastFolder", os.path.dirname(path)),
+                           onClose=closed)
+  ctx.addMenuItem("XML Reader...", openDialog)

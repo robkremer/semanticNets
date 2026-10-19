@@ -34,9 +34,12 @@ Namespaces are dropped from tag and attribute names (eg: "{http://...}book"
 becomes "book").
 
 The ontology can be one made before, for the same file (eg: by reading it
-again, after changing the ontology: moving types about, adding rules, ...):
-*buildModel()* builds on it, and adds only what's missing. What's in it is
-found by name:
+again, after changing the ontology: moving types about, adding rules, ...),
+or for files of the same kind (one ontology, shared by their models):
+*buildModel()* builds on it, and adds only what's missing -- to it, or, if
+it can't be changed (eg: it's on the web: see *canChange()*), to the model
+(an attribute its types haven't is then just in the elements). What's in it
+is found by name:
 
   - a tag's type, by the tag (any node type of that name: wherever it is in
     the type hierarchy);
@@ -62,6 +65,7 @@ import colorsys
 import os
 import random
 import xml.etree.ElementTree as ET
+from urllib.parse import unquote, urlparse
 import sn
 from sn.model.model import GraphObject, Model, Node, Relation
 from util.attribute import Attribute, VAR_DEFAULTED
@@ -213,6 +217,34 @@ def ontologyPath(modelPath:str) -> str:
   base, ext = os.path.splitext(modelPath)
   return f"{base}_ontology{ext or '.snm'}"
 
+def isRemote(ref:str) -> bool:
+  '''
+  :param ref: A model's file or URL.
+  :returns: Whether it's on the web (eg: "https://..."): it can be read, but not saved there.
+  '''
+  return urlparse(ref).scheme in ("http", "https")
+
+def localPath(ref:str) -> str|None:
+  '''
+  :param ref: A model's file or URL.
+  :returns: Its file, if it's one here (a path, or a "file:" URL); else None.
+  '''
+  parsed = urlparse(ref)
+  if parsed.scheme == "file":
+    return unquote(parsed.path)
+  return None if parsed.scheme and len(parsed.scheme) > 1 else os.path.abspath(os.path.expanduser(ref)) # (a drive letter isn't a scheme)
+
+def canChange(ref:str) -> bool:
+  '''
+  :param ref: An ontology's file or URL.
+  :returns: Whether it can be changed, and saved: it's a file here that can be
+    written (or, if it isn't there yet, can be made) -- not on the web, say.
+  '''
+  path = localPath(ref)
+  if path is None:
+    return False
+  return os.access(path, os.W_OK) if os.path.exists(path) else os.access(os.path.dirname(path) or ".", os.W_OK)
+
 def localName(name:str) -> str:
   '''
   :param name: A tag or attribute name, perhaps with a namespace (eg: "{http://...}book").
@@ -294,42 +326,51 @@ def kindOf(elem:ET.Element) -> str|None:
   kind = next((attrs[a] for a in TYPE_ATTRIBUTES if attrs.get(a)), None)
   return kind if kind != localName(elem.tag) else None
 
-def buildModel(xmlPath:str, modelPath:str, ontology:Model|None=None) -> tuple[Model, Model]:
+def buildModel(xmlPath:str, modelPath:str, ontology:Model|str|None=None, extendOntology:bool=True) -> tuple[Model, Model]:
   '''
   Make a model of the XML file *xmlPath* (as described in the module doc), as
-  a new model file *modelPath*, and its ontology, beside it (see
-  *ontologyPath()*): its super-model -- or build on *ontology*, adding to it
-  what's missing (see the module doc). (Neither's saved: call their *save()*.)
+  a new model file *modelPath*, and its ontology (beside it, unless *ontology*
+  says where: see *ontologyPath()*): its super-model -- or build on *ontology*, adding to it
+  what's missing (see the module doc), or, if it can't be changed, putting
+  that in the model. (Neither's saved: call their *save()*.)
 
   :param xmlPath: The XML file.
-  :param modelPath: The model's file: it mustn't exist yet (nor, unless
-    *ontology* is given, the ontology's).
-  :param ontology: An ontology made before (eg: for the same file, and read
-    from its file), to build on; or None, to make one.
+  :param modelPath: The model's file: it mustn't exist yet (nor the ontology's, if one's made).
+  :param ontology: An ontology made before (eg: for the same file, or one
+    shared by files of the same kind, read from its file or URL), to build
+    on; or the file to make one in; or None, to make one beside the model.
+  :param extendOntology: Whether what *ontology* is missing goes in it: if
+    not -- or if it's write-locked (eg: it's on the web: see
+    *Model._wasRead()*) -- it goes in the model (types, has-<tag>s, ...), and
+    an attribute its types haven't is just in their elements. (See *canChange()*.)
   :returns: The model, and its ontology.
   :raises xml.etree.ElementTree.ParseError: if the file isn't well-formed XML.
   '''
   root = ET.parse(xmlPath).getroot() # (parse first: if it isn't XML, nothing is made)
-  added:list[str] = [] # (what's made in an ontology made before)
+  added:list[str] = [] # (what's made for an ontology made before)
   made:set[int] = set() # (the ids of the types made here: their attributes aren't in *added*)
-  if ontology is None:
-    o, hasPart = makeOntology(ontologyPath(modelPath))
+  if not isinstance(ontology, Model):
+    o, hasPart = makeOntology(ontology or ontologyPath(modelPath))
+    ontology = None # (so what's made isn't "added")
     nodesByName:dict[str, list[Node]] = {}
     relationsByName:dict[str, list[Relation]] = {}
   else:
     o = ontology
     nodesByName, relationsByName = typesByName(o)
+  m = Model(modelPath)
+  m.setSuperModels([o.url])
+  into = o if ontology is None or (extendOntology and not o.writeLocked()) else m # (where what's made goes)
+  if ontology is not None:
     found = relationsByName.get(HAS_PART)
     if found:
       hasPart = found[0]
     else:
-      hasPart = makeHasPart(o)
+      hasPart = makeHasPart(into)
       added.append(HAS_PART)
     if PART_OF not in relationsByName:
-      makePartOf(o, hasPart)
+      makePartOf(into, hasPart)
       added.append(f"{PART_OF} (and its definition)")
-  m = Model(modelPath)
-  m.setSuperModels([o.url])
+  unchanged:list[str] = [] # (attributes its types haven't, which the ontology can't be given)
   kinds = {(localName(e.tag), k) for e in root.iter() if isinstance(e.tag, str) and (k := kindOf(e)) is not None}
   types:dict[str, Node] = {}                 # tag -> its type
   typeAttributes:dict[str, set[str]] = {}     # tag -> the attribute keys its type has
@@ -352,7 +393,7 @@ def buildModel(xmlPath:str, modelPath:str, ontology:Model|None=None) -> tuple[Mo
       if t is not None:
         looks.reuse(t)
       else:
-        t = Node(o, [o.NODE], name=tag)
+        t = Node(into, [into.NODE], name=tag)
         t.setAttr("note", Attribute(f"The type of the <{tag}> elements in {os.path.basename(xmlPath)}.", "text", VAR_DEFAULTED))
         looks.apply(t) # (the tags' types are all directly under node; their subtypes are shaded: see subtypeFor())
         made.add(id(t))
@@ -369,7 +410,7 @@ def buildModel(xmlPath:str, modelPath:str, ontology:Model|None=None) -> tuple[Mo
       if sub is not None:
         looks.reuseShade(parent)
       else:
-        sub = Node(o, [parent], name=value)
+        sub = Node(into, [parent], name=value)
         sub["note"] = f'The type of the <{tag}> elements in {os.path.basename(xmlPath)} whose type is "{value}".' # (note is defined by parent)
         looks.applyShade(sub, parent)
         if ontology is not None:
@@ -381,9 +422,12 @@ def buildModel(xmlPath:str, modelPath:str, ontology:Model|None=None) -> tuple[Mo
     if key not in typeAttributes[tag]:
       t = types[tag]
       if key not in t: # (not if it has it already, or inherits it: eg: in an ontology made before)
-        t.setAttr(key, Attribute("", str, VAR_DEFAULTED, note))
-        if ontology is not None and id(t) not in made:
-          added.append(f"{tag}'s attribute {key}")
+        if t.model is not into: # (one found in an ontology that can't be changed)
+          unchanged.append(f"{tag}'s {key}") # (its elements have it: just not their type)
+        else:
+          t.setAttr(key, Attribute("", str, VAR_DEFAULTED, note))
+          if ontology is not None and id(t) not in made:
+            added.append(f"{tag}'s attribute {key}")
       typeAttributes[tag].add(key)
 
   def relationTypeFor(tag:str) -> Relation:
@@ -397,7 +441,7 @@ def buildModel(xmlPath:str, modelPath:str, ontology:Model|None=None) -> tuple[Mo
                          f'isn\'t a kind of: the reasoner will say each <{tag}> is out of range. Change has-{tag}\'s range, '
                          f'or make {types[tag].name} a kind of {rng.name}.')
       else: # (from anything -- the same tag may be nested in several -- to the tag's type)
-        relationTypes[tag] = Relation(o, [hasPart], None, types[tag], name=f"has-{tag}")
+        relationTypes[tag] = Relation(into, [hasPart], None, types[tag], name=f"has-{tag}")
         if ontology is not None:
           added.append(f"has-{tag}")
     return relationTypes[tag]
@@ -429,5 +473,9 @@ def buildModel(xmlPath:str, modelPath:str, ontology:Model|None=None) -> tuple[Mo
 
   individualFor(root)
   if added: # (something the XML has that the ontology hadn't -- or one renamed or deleted since)
-    logger.info(f"Added to {os.path.basename(o.url)}, which hadn't them: " + ", ".join(added) + ".")
+    logger.info(f"Added to {os.path.basename(into.url)}" + ("" if into is o else f", as {os.path.basename(o.url)} can't be changed")
+                + f", which hadn't them: " + ", ".join(added) + ".")
+  if unchanged:
+    logger.info(f"{os.path.basename(o.url)} can't be changed, so these attributes are just in the elements, "
+                "not in their types: " + ", ".join(unchanged) + ".")
   return m, o

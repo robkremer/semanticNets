@@ -71,6 +71,7 @@ from sn.view.graphics.directoryWindow import DirectoryPane, ReadProgress, noteFo
 from sn.model.directory import Entry, pathOf, isRemote
 if TYPE_CHECKING:
   from sn.view.textUserInterface import SNTerminalWidget
+  from sn.view.graphics.sngView import SNGView
 
 logger:sn.SNLogger = sn.getLogger(__name__)
 
@@ -292,13 +293,12 @@ class Application(tk.Tk):
     if filename:
       self.openWindow(filename)
   
-  def openWindow(self, viewSpec:Model|str) -> tk.Toplevel|None:
+  def openWindow(self, viewSpec:Model|SNGView|str) -> tk.Toplevel|None:
     """Create and show a new Toplevel window hosted under the invisible root.
 
-    :param name: A key to refer to this window by (e.g. for closing it later).
-    :type name: str
-    :param title: Window title. Defaults to name if not given.
-    :type title: str
+    :param viewSpec: What to show: a model (in its view, beside it: read, or
+      made), a view (eg: one just made, to be saved somewhere else: its own
+      window), or a model's or view's file or URL.
     :returns: The newly created Toplevel window.
     """
     from sn.view.graphics.sngView import SNGView
@@ -335,6 +335,8 @@ class Application(tk.Tk):
       
       if isinstance(viewSpec, Model):
         view = makeViewFromModel(viewSpec)
+      elif isinstance(viewSpec, SNGView):
+        view = viewSpec
       else:
         if not isValidURL(viewSpec):
           viewSpec = fixURL(viewSpec, None, replaceExt=None, mode='w')[0]
