@@ -24,7 +24,9 @@ The XMLreader plugin's *buildModel()*: the model has the elements, and its
 ontology -- its super-model, beside it -- the types, the has-<tag> relation
 types (each a kind of xml-has-part), and the definition of xml-part-of as
 xml-has-part's inverse; saved and read again, the model finds its ontology, and
-the reasoner concludes an xml-part-of for each element in another.
+the reasoner concludes an xml-part-of for each element in another. Read again
+on an ontology made before, and changed since, the changes stay, and only
+what's missing is added.
 
 Created on Oct 18, 2026
 
@@ -34,7 +36,7 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
-from sn.model.model import Model, Node, Relation
+from sn.model.model import Model, Node, Relation, IsaIndividual
 from sn.plugins import importBundled
 
 XML = '''<library id="lib">
@@ -101,6 +103,89 @@ class TestOntology(unittest.TestCase):
               if isinstance(r, Relation) and any(str(t.name) == self.reader.PART_OF for t in r.getParents())}
     self.assertEqual(partOf, {("b1", "lib"), ("b2", "lib"), ("title1", "b1"), ("title2", "b2"),
                               ("chapter1", "b1"), ("chapter2", "b1")})
+
+  def reread(self, edit=None) -> tuple[Model, Model]:
+    '''
+    :param edit: Changes the ontology, given it, before it's saved (eg: as the user might).
+    :returns: The model and ontology read again from the XML file, on the
+      ontology made the first time, saved (and the model removed), as
+      *view.convert()* does when it's kept.
+    '''
+    m, o = self.reader.buildModel(str(self.xml), self.modelPath)
+    if edit is not None:
+      edit(o)
+    o.save()
+    m.save()
+    Model._initCache()
+    os.remove(self.modelPath)
+    o = Model.getDB(Path(self.ontologyPath).as_uri())
+    m, o2 = self.reader.buildModel(str(self.xml), self.modelPath, o)
+    self.assertIs(o2, o)
+    self.assertIn(o, m.superDBs)
+    return m, o
+
+  def test_rereadUnchanged(self):
+    'Read again on its own ontology: nothing is added to it, and the elements are of its types.'
+    def contents(o:Model) -> list[tuple[str, str]]:
+      return sorted((str(t.name), type(t).__name__) for t in o.values())
+    before:list = []
+    with self.assertNoLogs(self.reader.logger, "INFO"):
+      m, o = self.reread(lambda o: before.extend(contents(o)))
+    self.assertEqual(contents(o), before)
+    b2 = next(n for n in m.values() if n.name == "b2")
+    self.assertEqual([str(t.name) for t in b2.getParents()], ["novel"])
+    self.assertIs(b2.getParents()[0].model, o)
+
+  def test_rereadEdited(self):
+    '''Read again on its ontology after it's changed: a type moved under another,
+    and an attribute and a type the user added, stay; a type renamed or deleted
+    is made afresh (and logged), and the rest are found by name.'''
+    ids:dict[str, int] = {}
+    def edit(o:Model):
+      types = self.types(o)
+      publication = Node(o, [o.NODE], name="publication")
+      book = types["book"]
+      link = next(r for r, _ in book._getOutgoing(lambda r: isinstance(r, IsaIndividual)))
+      link.dst = publication # (book isa publication, not node)
+      book["isbn"] = "?"
+      types["title"]["name"] = "heading"
+      types["chapter"]._disconnect()
+      ids.update({n: t._id for n, t in types.items()}, hasBook=self.types(o, Relation)["has-book"]._id)
+    with self.assertLogs(self.reader.logger, "INFO") as logs:
+      m, o = self.reread(edit)
+    self.assertEqual(len(logs.records), 2)
+    added, rangeWarning = sorted(logs.records, key=lambda r: r.levelno)
+    self.assertEqual(added.getMessage().split(": ", 1)[1], "title, chapter, has-chapter.") # (has-chapter went with chapter)
+    self.assertIn("has-title's range is heading", rangeWarning.getMessage()) # (has-title is kept, still to heading)
+    types = self.types(o)
+    self.assertEqual(set(types), {"library", "book", "publication", "novel", "heading", "title", "chapter"})
+    book = types["book"]
+    self.assertEqual(book._id, ids["book"])
+    self.assertEqual([str(t.name) for t in book.getParents()], ["publication"])
+    self.assertEqual(book["isbn"], "?")
+    self.assertEqual(types["novel"]._id, ids["novel"])
+    self.assertIn(book, types["novel"].getParents())
+    self.assertEqual(self.types(o, Relation)["has-book"]._id, ids["hasBook"])
+    for made in ("title", "chapter"): # (made afresh, under node, with a look of their own)
+      self.assertEqual(types[made].getParents(), [o.NODE])
+      self.assertTrue(str(types[made].get("vis/fillColor")).startswith("#"))
+    b1 = next(n for n in m.values() if n.name == "b1")
+    self.assertTrue(b1.isa(types["publication"]))
+    self.assertEqual(b1["id"], "b1")
+    title1 = next(n for n in m.values() if n.name == "title1")
+    self.assertEqual(title1.getParents(), [types["title"]])
+    self.assertEqual(title1["text"], "GEB")
+
+  def test_rereadSameNames(self):
+    '''A subtype named as a tag (<object type="book"> and <book>: two types named
+    book, one a kind of object): read again, each element's type is found, and
+    nothing is added.'''
+    self.xml.write_text('<shelf><object id="o1" type="book"/><book id="b1"/></shelf>')
+    with self.assertNoLogs(self.reader.logger, "INFO"):
+      m, o = self.reread()
+    o1, b1 = (next(n for n in m.values() if n.name == name) for name in ("o1", "b1"))
+    self.assertEqual([str(t.name) for t in o1.getParents()[0].getParents()], ["object"])
+    self.assertEqual(b1.getParents()[0].getParents(), [o.NODE])
 
 if __name__ == "__main__":
   unittest.main()

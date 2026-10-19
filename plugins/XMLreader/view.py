@@ -8,8 +8,9 @@ It asks for the file (see *askForFile()*). For "<name>.<ext>" it makes
 super-model: the types and definitions) and "<name>_<ext>.snv" (a view of
 the model: its elements, arranged as they nest -- see *showTypesAndExpand()*
 and *arrange()*) in the same folder
--- asking first if they're already there, and replacing them -- and opens the
-view. (For the plugin's own examples, they're made elsewhere: see *convert()*.)
+-- asking first if they're already there, and replacing them (or, for the
+ontology, keeping it, and building the new model on it: see *convert()*) --
+and opens the view. (For the plugin's own examples, they're made elsewhere: see *convert()*.)
 
 The plugin's *examples* folder has some to try: books.xml (small: a namespace,
 nesting, comments, and elements named by their id or name), and
@@ -22,6 +23,7 @@ Created on Oct 3, 2026 (as a program of its own: a plugin since Oct 17)
 '''
 from __future__ import annotations
 import os
+from pathlib import Path
 from typing import Any, Sequence
 import xml.etree.ElementTree as ET
 from tkinter import filedialog, messagebox
@@ -213,6 +215,11 @@ def convert(app:Application, xmlPath:str, folder:str|None=None) -> bool:
   '''
   Make the model, its ontology, and the view of *xmlPath*, save them, and open the view.
 
+  If they're there already, it asks first: if the ontology is, whether to
+  keep it -- and build the new model on it, adding only what's missing (see
+  *reader.buildModel()*), so the changes made to it stay -- or replace it
+  too; otherwise, whether to replace them.
+
   :param app: The editor.
   :param xmlPath: The XML file.
   :param folder: Where to make them, if not beside it (see *reader.outputPaths()*):
@@ -225,17 +232,37 @@ def convert(app:Application, xmlPath:str, folder:str|None=None) -> bool:
     os.makedirs(folder, exist_ok=True)
     modelPath, viewPath, ontologyPath = (os.path.join(folder, os.path.basename(p)) for p in (modelPath, viewPath, ontologyPath))
   existing = [p for p in (modelPath, viewPath, ontologyPath) if os.path.exists(p)]
-  if existing:
-    if not messagebox.askokcancel(TITLE, "These files are already there:\n\n  " + "\n  ".join(existing)
-                                  + "\n\nReplace them?", icon=messagebox.WARNING): # (no parent: see askForFile())
+  keep = False # (whether to build on the ontology that's there)
+  if os.path.exists(ontologyPath):
+    answer = messagebox.askyesnocancel(TITLE, "These files are already there:\n\n  " + "\n  ".join(existing)
+                                       + f"\n\nKeep the ontology, {os.path.basename(ontologyPath)}, and build the new model on it? "
+                                       "Anything you've changed in it (types moved about, rules added, ...) stays: "
+                                       "only what's missing is added.\n\n"
+                                       "Yes: keep it, and replace the model and view.\nNo: replace them all.",
+                                       icon=messagebox.WARNING) # (no parent: see askForFile())
+    if answer is None:
       return False
-  for p in (modelPath, ontologyPath): # (its window, if it's open, and the model in memory: they'd be added to --
-    if not app.replacingModel(p):     # the model first, as it builds on the ontology)
+    keep = answer
+  elif existing:
+    if not messagebox.askokcancel(TITLE, "These files are already there:\n\n  " + "\n  ".join(existing)
+                                  + "\n\nReplace them?", icon=messagebox.WARNING):
+      return False
+  for p in (modelPath,) if keep else (modelPath, ontologyPath): # (its window, if it's open, and the model in memory:
+    if not app.replacingModel(p):                                # they'd be added to -- the model first, as it builds on the ontology)
+      return False
+  ontology:Model|None = None
+  if keep: # (as it is in memory, if it is -- eg: its window's open -- changes not saved yet and all)
+    try:
+      ontology = Model.getDB(Path(ontologyPath).as_uri())
+    except Exception as ex:
+      messagebox.showerror(TITLE, f"Couldn't read {os.path.basename(ontologyPath)}:\n\n{ex}")
       return False
   for p in existing:
-    os.remove(p)
+    if not (keep and p == ontologyPath):
+      os.remove(p)
+  had = len(ontology) if ontology is not None else 0
   try:
-    model, ontology = buildModel(xmlPath, modelPath)
+    model, ontology = buildModel(xmlPath, modelPath, ontology)
   except ET.ParseError as ex:
     messagebox.showerror(TITLE, f"{os.path.basename(xmlPath)} isn't a well-formed XML file:\n\n{ex}")
     return False
@@ -250,7 +277,9 @@ def convert(app:Application, xmlPath:str, folder:str|None=None) -> bool:
   arrange(view)
   separateNodes(view)
   view.save()
-  print(f"Made {os.path.basename(modelPath)}, {os.path.basename(ontologyPath)} and {os.path.basename(viewPath)} "
-        f"from {os.path.basename(xmlPath)}: {len([o for o in model.values()])} objects (and {len([o for o in ontology.values()])} "
-        f"in the ontology), arranged as balloons.")
+  made = (f"{os.path.basename(modelPath)} and {os.path.basename(viewPath)}, on {os.path.basename(ontologyPath)} (kept: "
+          f"{len(ontology) - had} objects added)," if keep else
+          f"{os.path.basename(modelPath)}, {os.path.basename(ontologyPath)} and {os.path.basename(viewPath)}")
+  print(f"Made {made} from {os.path.basename(xmlPath)}: {len([o for o in model.values()])} objects (and "
+        f"{len([o for o in ontology.values()])} in the ontology), arranged as balloons.")
   return True

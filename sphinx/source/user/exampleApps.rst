@@ -71,6 +71,24 @@ comes.)
   ([?a -xml-part-of-> ?b] ⇔ [?b -xml-has-part-> ?a]): **reason** (see
   :doc:`reasoning`) concludes that each chapter is *xml-part-of* its book.
 
+**Reading a file again.** If the ontology is there already (eg: you've read
+the file before, and changed the ontology since: moved types about, added
+types, attributes or rules), it asks whether to keep it. **Yes** keeps it, and
+builds the new model on it: only the model and view are made afresh. What's in
+the ontology is found by name -- a tag's type by the tag, wherever you've
+moved it in the type hierarchy; a subtype by its ``type`` or ``kind`` value,
+under its tag's type; *has-<tag>*, *xml-has-part* and *xml-part-of* by theirs
+-- and only what's missing is added: a type, attribute or *has-<tag>* for
+something new in the file, with a colour and shape of its own. **No**
+replaces the ontology too, so your changes are lost.
+
+If you've renamed or deleted a type, it isn't found, so it's made afresh (as
+for a new ontology), and the log says what was added. (If its *has-<tag>* is
+still there, pointing to the renamed type, the log warns you: the reasoner
+would say each of those elements is out of its range.) If *xml-part-of* is
+missing, it's made again with its definition; if you've only deleted its
+definition, that stays deleted.
+
 The view shows the elements, arranged as they nest by the balloon layout
 (see :doc:`layouts`): each element with its children round it, and so on out
 to the leaves.
