@@ -253,6 +253,40 @@ class Test(unittest.TestCase):
     self.pump()
     self.assertIn("uncle rule", self.shown())
 
+  def test0610individuals(self):
+    'The "individuals" category: in both menus; hides, or erases, all but the types (relations, isa links too); undone.'
+    v = self.view
+    for mode in ("hide", "erase"):
+      menu = v._visibilityMenu(mode)
+      self.assertIn("individuals", [menu.entrycget(i, "label") for i in range(menu.index("end") + 1)
+                                    if menu.type(i) == "checkbutton"])
+    def objects(individual:bool) -> list:
+      return [o for o in v.values() if o is not None and o.modelObject is not None
+              and o.modelObject.isIndividual() == individual]
+    individuals, types = objects(True), objects(False)
+    self.assertTrue(any(isinstance(o.modelObject, Relation) for o in individuals))
+    self.assertTrue(any(isinstance(o.modelObject, IsaIndividual) for o in individuals))
+    self.assertTrue(types)
+    hidden = [o for o in individuals if o._hidden] # (eg: by the view's default hides)
+    v.context.visibility("individuals", "hide")
+    self.pump()
+    self.assertTrue(all(o._hidden for o in individuals))
+    self.assertFalse(any(o._hidden for o in types))
+    self.assertIn("person", self.shown())
+    self.assertNotIn("alice", self.shown())
+    v.context.undo()
+    self.pump()
+    self.assertEqual([o for o in individuals if o._hidden], hidden)
+    count = len(list(v.values()))
+    v.context.visibility("individuals", "erase")
+    self.pump()
+    self.assertEqual(objects(True), [])
+    self.assertEqual(len(objects(False)), len(types))
+    v.context.undo()
+    self.pump()
+    self.assertEqual(len(list(v.values())), count)
+    self.assertIn("alice", self.shown())
+
   def test0700containment(self):
     v = self.view
     rule = self.vo("uncle rule")
@@ -294,6 +328,29 @@ class Test(unittest.TestCase):
     self.assertTrue(v.search("carol"))
     v.clearHighlights()
     self.assertTrue(v.pictureObjects())
+
+  def test0850danglingEnds(self):
+    # a relation whose own end is top, while top isn't shown, is left dangling there (see
+    # VRelation._resolveEnd()): showing top attaches it (see _attachDanglingEnds())
+    v, m = self.view, self.model
+    top = m.TOP
+    self.assertIsNone(v.findViewObjectForGraphObject(top)) # (a super-model's: showAllModel() doesn't show it)
+    alice = self.vo("alice")
+    toTop = v.context.new_relation("relation", name="toTop", source=alice.modelObject, destination=top)
+    fromTop = v.context.new_relation("relation", name="fromTop", source=top, destination=alice.modelObject)
+    self.pump()
+    vTo, vFrom = (v.findViewObjectForGraphObject(r) for r in (toTop, fromTop))
+    assert vTo is not None and vFrom is not None
+    self.assertIs(vTo.src, alice)
+    self.assertIsNone(vTo.dst)
+    self.assertIsNone(vFrom.src)
+    self.assertIs(vFrom.dst, alice)
+    vTop = v.makeViewObjectForGraphObject(top, atPoint=(400, 400))
+    self.pump()
+    self.assertIs(vTo.dst, vTop)
+    self.assertIs(vFrom.src, vTop)
+    self.assertIs(vTo.src, alice) # (the other ends are as they were)
+    self.assertIs(vFrom.dst, alice)
 
   def test0900input(self):
     v = self.view

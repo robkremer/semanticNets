@@ -54,6 +54,8 @@ higher-order isa relations  the *isa* links from individual relations to their
                             relation types (eg: from *alice -has-parent-> bob*
                             to *has-parent*)
 types                       all types
+individuals                 all individuals: their relations, and the *isa*
+                            links, too
 non-local                   objects from other models
 rules                       rules
 queries                     queries

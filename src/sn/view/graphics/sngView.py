@@ -199,6 +199,7 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
                                 lambda mo: isinstance(mo, IsaIndividual) and isinstance(mo.src, Relation) and mo.src.isIndividual()
                                            and isinstance(mo.dst, Relation) and mo.dst.isType())
     self.categories.addCategory("types",           lambda mo: mo.isType())
+    self.categories.addCategory("individuals",     lambda mo: mo.isIndividual()) # (all but the types: their relations and isa links too)
     self.categories.addCategory("non-local",       lambda mo: mo.model is not self.model)
     self.categories.addCategory("rules",           lambda mo: mo.isIndividual() and mo.isa(m.RULE))
     self.categories.addCategory("queries",         lambda mo: mo.isIndividual() and mo.isa(m.QUERY))

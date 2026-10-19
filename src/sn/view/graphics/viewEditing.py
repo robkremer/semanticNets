@@ -552,12 +552,17 @@ class EditingMixin(ViewBase):
     *vo* has just been added to the view: relations already here whose own
     endpoint is *vo*'s model object, but which were left dangling because it
     wasn't shown (eg: top -- see *VRelation._resolveEnd()* -- or an erased
-    object), attach to it.
+    object), attach to it. Only the model object's own relations (a relation
+    is on its local ends' *_outgoing*/*_incoming*: see *Relation.validate()*)
+    are looked at, through the view's index: not every object in the view,
+    which made adding many objects take the square of the time.
     '''
     from sn.view.graphics.vrelations import VRelation
-    if not vo._isConnected() or vo.modelObject is None: # (gone again meanwhile)
+    mo = vo.modelObject
+    if not vo._isConnected() or mo is None: # (gone again meanwhile)
       return
-    for r in list(self._db.values()):
+    rels = {id(rel): rel for rel in (*mo._outgoing, *mo._incoming)}.values() # (a self-relation is on both)
+    for r in [r for rel in rels for r in self.viewObjectsFor(rel)]:
       # skip anything not fully constructed (a relation that's still being made
       # resolves its own ends)
       if not isinstance(r, VRelation) or r is vo or r.modelObject is None or not r._isConnected() \
