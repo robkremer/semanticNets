@@ -1780,15 +1780,19 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     
     # use a regular layout  
     layout = self.view.localLayout
-    if layout is not None:
+    if layout is not None and not self.__dict__.get("_placedLater"):
       layout(self, aggressive=aggressive)
       for r in self.relations: # (their labels, which follow their ends: not relation types -- they have places of their own, as nodes do)
-        if r.modelObject is None or not r.modelObject.isType():
+        if (r.modelObject is None or not r.modelObject.isType()) and not r.__dict__.get("_placedLater"):
           layout(r, aggressive=aggressive)
     rect = self.boundingBox(fast=fast)
     
     return rect[0], rect[1]
     
+
+  BATCH_PLACED = 20
+  '''The most new nodes an expansion has the view's dynamic layout place one by
+  one (see *expand()*): more are placed all at once.'''
 
   def expand(self, 
              filter:Callable[[Any, Relation], bool]=lambda _vn, _mr: True, 
@@ -1800,6 +1804,14 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     other ends) -- and, if *expand* > 0, expand each object at the other end of
     each of its relations (shown already or not) in turn, by *expand* - 1. So 0
     shows this object's neighbours, 1 their neighbours too, and so on.
+
+    What it brings in is placed by the view's dynamic layout, if it has one
+    (see *SNGView.localLayout*), once it's all made: up to *BATCH_PLACED*
+    nodes one by one, as anything new is (see *SNGView._placeNew()*); more
+    all at once -- the nodes (see *layout.LayoutHeuristic.placeBatch()*),
+    then, once they're put between their ends, the relations' labels (see
+    *layout.LayoutHeuristic.placeLabels()*). One by one, each is placed
+    clear of everything placed before it, which for thousands takes minutes.
 
     :param filter: Optional[Callable[[Self, Relation], bool]] A function *selfxRelation->bool*
         where that relation will only be expanded if the function returns *True* 
@@ -1818,8 +1830,44 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       it can be hidden again (eg: on an undo).
     """
     from sn.view.graphics.vrelations import VRelation
-    if _done is None:
-      _done = {}
+    from sn.view.graphics.viewCommands import ViewDoList
+    view = self.view
+    layout = view.localLayout
+    if _done is not None or layout is None or not view.canvas or view.reading:
+      self._expand(filter, expand, {} if _done is None else _done, _exempted)
+      return
+    had = {id(vo) for vo in view.values() if vo is not None}
+    view.localLayout = None # type: ignore[assignment] # (nothing's placed as it's made -- see SNGView.makeViewObjectForGraphObject(): it's placed below)
+    try:
+      self._expand(filter, expand, {}, _exempted)
+    finally:
+      view.localLayout = layout
+    made = [vo for vo in view.values() if isinstance(vo, VObject) and id(vo) not in had and vo._isConnected()]
+    nodes = [vo for vo in made if not isinstance(vo, VRelation) and not vo.isHidden()]
+    if len(nodes) <= self.BATCH_PLACED:
+      for vo in nodes: # (as they'd have been placed as they were made)
+        under = view._newObjectLocation(vo.modelObject)[2] # type: ignore[arg-type]
+        view.canvas.after_idle(lambda vo=vo, under=under: view._placeNew(vo, under)) #type: ignore[misc]
+      return
+    labels = [vo for vo in made if isinstance(vo, VRelation) and (vo.modelObject is None or not vo.modelObject.isType())]
+    for r in labels: # (not placed one by one when they're first put between their ends: see adjustPos())
+      r.__dict__["_placedLater"] = True
+    layout.placeBatch(nodes, self)
+    def placeLabels() -> None:
+      for r in labels:
+        r.__dict__.pop("_placedLater", None)
+      if view.localLayout is not layout or not view.canvas:
+        return
+      layout.placeLabels([r for r in labels if r._isConnected() and not r.isHidden()])
+      if isinstance(view.context.doList, ViewDoList): # (the layout keeps them arranged with the rest, now they're here)
+        view.context.doList.adjustAgain()
+    view.canvas.after(0, placeLabels) # (after each is first put between its ends: queued as it was made -- see VRelation)
+
+  def _expand(self, filter:Callable[[Any, Relation], bool], expand:int, _done:dict[int, int], _exempted:list|None) -> None:
+    '''
+    *expand()*, but nothing it makes is placed: what's made is left where it's made.
+    '''
+    from sn.view.graphics.vrelations import VRelation
     mo = self.modelObject
     if mo is None or _done.get(id(self), -1) >= expand:
       return
@@ -1828,14 +1876,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     rels = self.expandableRelations(filter, withHidden=withHidden)
             
     # show the ones that aren't shown (with what's at their other ends: see VRelation._resolveEnd())
-    new = [r for r in rels if self.view.findViewObjectForGraphObject(r) is None]
-    if len(new) > 0:
-      bb = self.boundingBox()
-      x = bb[2] + 50
-      y = len(new) * 25
-      for r in new:
-        self.view.makeViewObjectForGraphObject(r, atPoint=(x,y))
-        y += 50
+    for r in rels:
+      if self.view.findViewObjectForGraphObject(r) is None:
+        self.view.makeViewObjectForGraphObject(r)
 
     if withHidden: # (asked for by name: shown, even in a hidden category -- and what they lead to)
       for r in rels:
@@ -1856,7 +1899,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
           continue
         other = vRel.dst if vRel.src is self else vRel.src
         if other is not None and other is not self and other._isConnected():
-          other.expand(filter=filter, expand=expand - 1, _done=_done, _exempted=_exempted)
+          other._expand(filter, expand - 1, _done, _exempted)
 
   def expandableRelations(self, filter:Callable[[Any, Relation], bool]=lambda _vo, _r: True, withHidden:bool=False) -> list[Relation]:
     '''

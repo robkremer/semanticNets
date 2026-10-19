@@ -64,6 +64,7 @@ Created on Feb 15, 2025
 import sn
 import heapq
 import itertools
+import math
 import time
 from abc import ABC
 from dataclasses import dataclass
@@ -525,6 +526,59 @@ class LayoutHeuristic(ABC):
     bb = node.boundingBox()
     return bb[0], bb[1]
 
+  BATCH_GAP = (20.0, 30.0)
+  "The room *placeBatch()* leaves between the nodes it puts in rows (view units): across, and between the rows."
+  BATCH_ASPECT = 2.0
+  "Roughly how many times as wide as it's tall *placeBatch()* makes its block of rows."
+
+  def placeBatch(self, nodes:Sequence[VObject], near:VObject) -> None:
+    '''
+    As the view's dynamic layout: put *nodes* -- many, just made together
+    (eg: by expanding *near*: see *VObject.expand()*), and not placed yet --
+    all at once. Placed one by one (see *placeNode()*), each would be tried
+    against everything placed before it, which for thousands takes minutes.
+    By default, in rows, in their order: a block about *BATCH_ASPECT* times
+    as wide as it's tall, centred below *near*, as close below it as clears
+    what's there (but not *nodes*, nor their relations' labels: they follow
+    their ends).
+
+    :param nodes: The nodes.
+    :param near: What they're put below.
+    '''
+    if not nodes:
+      return
+    gx, gy = self.BATCH_GAP
+    sizes = [layoutSize(vo) for vo in nodes]
+    width = max(max(w for w, _ in sizes), math.sqrt(sum((w + gx) * (h + gy) for w, h in sizes) * self.BATCH_ASPECT))
+    places:list[tuple[float, float]] = []
+    x = y = rowHeight = 0.0
+    for w, h in sizes:
+      if x > 0 and x + w > width:
+        x, y, rowHeight = 0.0, y + rowHeight + gy, 0.0
+      places.append((x, y))
+      x += w + gx
+      rowHeight = max(rowHeight, h)
+    blockW = max(px + w for (px, _), (w, _) in zip(places, sizes))
+    blockH = y + rowHeight
+    bb = near.boundingBox()
+    x0 = (bb[0] + bb[2]) / 2 - blockW / 2
+    labels = [r for vo in nodes for r in vo.relations]
+    y0 = clearBelow(shownBoxes(self.view, [*nodes, *labels]), x0, x0 + blockW, bb[3] + gy, blockH, max(gx, gy))
+    for vo, (px, py) in zip(nodes, places):
+      vo.moveTo(int(x0 + px), int(y0 + py), adjustPos=False)
+
+  def placeLabels(self, labels:Sequence[VObject]) -> None:
+    '''
+    As the view's dynamic layout: put the labels of relations made together
+    (eg: by an expansion: see *VObject.expand()*) -- midway between their
+    ends, as they're made -- somewhere suitable, all at once. By default,
+    one by one, as each would be (see *placeNode()*).
+
+    :param labels: The relations.
+    '''
+    for r in labels:
+      self(r)
+
   def activate(self) -> None:
     '''
     Called when it's made the view's dynamic layout (see
@@ -584,6 +638,10 @@ class NoLayout(LayoutHeuristic):
   '''
   NAME = "none"
   CATEGORIES = (DYNAMIC,)
+
+  @override
+  def placeBatch(self, nodes:Sequence[VObject], near:VObject) -> None:
+    pass # (they stay where they're made, too)
 
 @registerLayout
 class GatherLayout(LayoutHeuristic):
@@ -833,6 +891,36 @@ class _BoxIndex:
     return any(o[0] < g[2] and g[0] < o[2] and o[1] < g[3] and g[1] < o[3]
                for k in self._cells(g) for o in self.cells.get(k, ()))
 
+def shownBoxes(view, exclude:Iterable[VObject]=(), around:Sequence[float]|None=None) -> list[Sequence[float]]:
+  '''
+  :param view: A view.
+  :type view: SNGView
+  :param exclude: What to leave out: eg: what's being placed.
+  :param around: [x1, y1, x2, y2]: where to look, if not everywhere: those not on it are left out.
+  :returns: What things placed in *view* keep clear of: the bounding boxes
+    (view coordinates) of its objects whose shapes are shown and tagged
+    'vis/shape' (not a context window's frame: see *decorators.ContextFrame*).
+  '''
+  shapes = set(view.canvas.find_withtag('vis/shape'))
+  skip = {id(vo) for vo in exclude}
+  x1, y1, x2, y2 = around if around is not None else (-math.inf, -math.inf, math.inf, math.inf)
+  return [b for vo in view.values()
+          if isinstance(vo, VObject) and (b := vo.boundingBox())[0] < x2 and x1 < b[2] and b[1] < y2 and y1 < b[3]
+          and id(vo) not in skip and not vo.isHidden() and vo._shape is not None and vo._shape.id in shapes]
+
+def clearBelow(boxes:Iterable[Sequence[float]], x1:float, x2:float, y:float, height:float, gap:float) -> float:
+  '''
+  :param boxes: [x1, y1, x2, y2] each: what's in the way.
+  :returns: The top of the highest band from *x1* to *x2*, *height* high,
+    starting at *y* or below, that's at least *gap* from each of *boxes*.
+  '''
+  for b in sorted((b for b in boxes if b[0] - gap < x2 and x1 < b[2] + gap), key=lambda b: b[1]):
+    if b[1] - gap >= y + height: # (this one's below the band -- and so are the rest)
+      break
+    if b[3] + gap > y: # (in the band: below it, then)
+      y = b[3] + gap
+  return y
+
 def freeRingSpot(rect:Sequence[int], index:_BoxIndex, gap:float, *, quanta:int=10,
                  limit:Sequence[int]=(-UNBOUNDED, -UNBOUNDED, UNBOUNDED, UNBOUNDED),
                  maxRings:int=100) -> tuple[int, int]|None:
@@ -969,19 +1057,7 @@ class FindFree(LayoutHeuristic):
     if node.modelObject is not None and (node.modelObject.isType() or isinstance(node, Node)) and aggressive:
       topLimit = max(topLimit, self.isaLevelSpacing*depth(node.modelObject)+self.topMargin)
       
-    # what a context contains (a relation's label too), dropped in its pane, stays in it (see SNGView.containmentHomes())
-    if node.modelObject is not None:
-      win, pane = self.view.containmentHomes([node]).get(node, (None, ""))
-      cx, cy = node.centerPt()
-      px1, py1, px2, py2 = self.view.homeRect(win, pane) if win is not None else (0, 0, -1, -1)
-      if px1 <= cx <= px2 and py1 <= cy <= py2:
-        w, h = rect[2] - rect[0], rect[3] - rect[1]
-        inside = [max(leftLimit, px1 + expandFactor), max(topLimit, py1 + expandFactor),
-                  min(rightLimit, px2 - expandFactor - w), min(bottomLimit, py2 - expandFactor - h)]
-        if inside[0] <= inside[2] and inside[1] <= inside[3]:
-          leftLimit, topLimit, rightLimit, bottomLimit = inside
-
-    finalLimit = [int(i) for i in [leftLimit, topLimit, rightLimit, bottomLimit]]
+    finalLimit = [int(i) for i in self._inHome(node, rect, [leftLimit, topLimit, rightLimit, bottomLimit], expandFactor)]
     reach = maxRings * self.quanta + expandFactor # (as far as the search goes)
     around = [rect[0] - reach, rect[1] - reach, rect[2] + reach, rect[3] + reach]
     # (not on itself, nor on its own relations' labels)
@@ -998,25 +1074,75 @@ class FindFree(LayoutHeuristic):
 
     return pt
 
+  def _inHome(self, node:VObject, rect:Sequence[float], limit:Sequence[float], expandFactor:float,
+              homes:dict|None=None) -> Sequence[float]:
+    '''
+    What a context contains (a relation's label too), dropped in its pane,
+    stays in it (see *SNGView.containmentHomes()*).
+
+    :param rect: Its box, where it's to be placed from.
+    :param limit: [x1, y1, x2, y2]: where its top left may go.
+    :param homes: *SNGView.containmentHomes()* of it, if the caller has it (eg: for many at once).
+    :returns: *limit*, kept to the pane it's in, if it's in its home pane (and fits in it).
+    '''
+    if node.modelObject is None:
+      return limit
+    if homes is None:
+      homes = self.view.containmentHomes([node])
+    win, pane = homes.get(node, (None, ""))
+    cx, cy = node.centerPt()
+    px1, py1, px2, py2 = self.view.homeRect(win, pane) if win is not None else (0, 0, -1, -1)
+    if px1 <= cx <= px2 and py1 <= cy <= py2:
+      w, h = rect[2] - rect[0], rect[3] - rect[1]
+      inside = [max(limit[0], px1 + expandFactor), max(limit[1], py1 + expandFactor),
+                min(limit[2], px2 - expandFactor - w), min(limit[3], py2 - expandFactor - h)]
+      if inside[0] <= inside[2] and inside[1] <= inside[3]:
+        return inside
+    return limit
+
   def obstacles(self, around:Sequence[float], exclude:Iterable[VObject]=()) -> _BoxIndex:
     '''
-    What's placed keeps clear of: the view's objects whose shapes are shown
-    and tagged 'vis/shape' (not a context window's frame: see
-    *decorators.ContextFrame*), by their bounding boxes -- in view
-    coordinates, as what's placed is (the canvas's are zoomed) -- and not by
-    asking Tk (*findOverlapping()*): for each place tried, Tk tests every item
-    on the canvas, lines' exact curves too, so trying the thousands of places
-    a crowded view needs took many seconds for each thing placed.
+    What's placed keeps clear of (see *shownBoxes()*): by their bounding boxes
+    -- in view coordinates, as what's placed is (the canvas's are zoomed) --
+    and not by asking Tk (*findOverlapping()*): for each place tried, Tk tests
+    every item on the canvas, lines' exact curves too, so trying the thousands
+    of places a crowded view needs took many seconds for each thing placed.
 
     :param around: [x1, y1, x2, y2]: where to look: those not on it are left out.
     :param exclude: What not to keep clear of: eg: what's being placed, and its relations' labels.
     '''
-    shapes = set(self.view.canvas.find_withtag('vis/shape'))
-    skip = {id(vo) for vo in exclude}
-    x1, y1, x2, y2 = around
-    return _BoxIndex(b for vo in self.view.values()
-                     if isinstance(vo, VObject) and (b := vo.boundingBox())[0] < x2 and x1 < b[2] and b[1] < y2 and y1 < b[3]
-                     and id(vo) not in skip and not vo.isHidden() and vo._shape is not None and vo._shape.id in shapes)
+    return _BoxIndex(shownBoxes(self.view, exclude, around))
+
+  @override
+  def placeLabels(self, labels:Sequence[VObject]) -> None:
+    '''
+    Each in the nearest free place, as *placeNode()* would put it, but
+    against what's there gathered once for them all (each label added as
+    it's placed), rather than each against everything again: which for
+    thousands takes minutes.
+    '''
+    from sn.view.graphics.vrelations import VRelation
+    level = labelPlacementLevel()
+    if level == 0 or not labels:
+      return
+    maxRings = level * level
+    factor = lambda r: self.expandFactor_relations \
+      if r.modelObject is not None and r.modelObject.isIndividual() and isinstance(r, VRelation) else self.expandFactor_nodes
+    boxes = [r.boundingBox() for r in labels]
+    reach = maxRings * self.quanta + max(self.expandFactor_relations, self.expandFactor_nodes)
+    around = [min(b[0] for b in boxes) - reach, min(b[1] for b in boxes) - reach,
+              max(b[2] for b in boxes) + reach, max(b[3] for b in boxes) + reach]
+    index = self.obstacles(around, labels)
+    homes = self.view.containmentHomes(list(labels))
+    for r, rect in zip(labels, boxes):
+      if rect[2] <= rect[0] or rect[3] <= rect[1]: # (no label to place)
+        continue
+      expandFactor = factor(r)
+      limit = [int(i) for i in self._inHome(r, rect, self.limit, expandFactor, homes)]
+      pt = freeRingSpot([int(i) for i in rect], index, expandFactor, quanta=self.quanta, limit=limit, maxRings=maxRings)
+      if pt is not None:
+        r.moveTo(*pt, adjustPos=False)
+      index.add(r.boundingBox())
 
   @override
   def placeAll(self):
