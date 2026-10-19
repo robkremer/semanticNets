@@ -281,10 +281,10 @@ def main() -> None:
       app.after(2000, lambda: (toTerminal(), v.reason()))
       app.after(3500, v.zoomToFit) # (it's taller than the window)
     settled = [scene != "xmlreader"]
-    if scene == "xmlreader": # (as the XMLreader does: the animation layout, until it settles)
+    if scene == "xmlreader": # (as the XMLreader does: arranged as balloons)
       from sn.plugins import importBundled
       xmlReader = importBundled("XMLreader", "view")
-      app.after(1000, lambda: xmlReader.startLayout(v, lambda: (xmlReader.separateNodes(v), settled.__setitem__(0, True))))
+      app.after(1000, lambda: (xmlReader.arrange(v), xmlReader.separateNodes(v), settled.__setitem__(0, True)))
     if into is not None:
       def shoot() -> None:
         if not settled[0]:

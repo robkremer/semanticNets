@@ -43,7 +43,8 @@ from sn.view.graphics.vnodes import VNode
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
 from sn.view.graphics.layout import (LayoutHeuristic, LayoutParameter, LayoutMoves, FindFree, Direction,
-                                     registerLayout, layoutSize, STATIC, DYNAMIC)
+                                     registerLayout, layoutSize, STATIC, DYNAMIC,
+                                     _BoxIndex) # (_BoxIndex: for those that import it from here)
 from sn.view.graphics.relationTable import (RelationTable, RelationRoles, PARENT_ENDS, SHAPES, PULLS, IGNORED,
                                             TERMINALS) # (PARENT_ENDS, ...: for those that import them from here)
 
@@ -270,33 +271,6 @@ def treeMembers(root:K, children:dict[K, list[list[K]]], positions:dict[K, Any])
           ret.append(k)
     i += 1
   return ret
-
-class _BoxIndex:
-  '''
-  Boxes, bucketed by where they are: for finding those near a place quickly.
-  '''
-  CELL = 100.0
-
-  def __init__(self, boxes:Iterable[Sequence[float]]=[]):
-    self.cells:dict[tuple[int, int], list[Sequence[float]]] = {}
-    for b in boxes:
-      self.add(b)
-
-  def _cells(self, b:Sequence[float]):
-    c = self.CELL
-    for i in range(int(b[0] // c), int(b[2] // c) + 1):
-      for j in range(int(b[1] // c), int(b[3] // c) + 1):
-        yield (i, j)
-
-  def add(self, b:Sequence[float]) -> None:
-    for k in self._cells(b):
-      self.cells.setdefault(k, []).append(b)
-
-  def hits(self, b:Sequence[float], gap:float) -> bool:
-    ''':returns: Whether *b* is on (or within *gap* of) one of the boxes.'''
-    g = [b[0] - gap, b[1] - gap, b[2] + gap, b[3] + gap]
-    return any(o[0] < g[2] and g[0] < o[2] and o[1] < g[3] and g[1] < o[3]
-               for k in self._cells(g) for o in self.cells.get(k, ()))
 
 def nearestFree(size:tuple[float, float], at:tuple[float, float], index:_BoxIndex, *, direction:str|tuple[float, float]="right",
                 gap:float=20.0, bias:float=NEAR_BIAS, step:float=NEAR_STEP, maxRings:int=NEAR_MAX_RINGS) -> tuple[float, float]:

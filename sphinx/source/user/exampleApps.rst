@@ -64,8 +64,9 @@ comes.)
 - **Nesting** becomes relations: a book's chapters are related to it by
   *has-chapter*, its title by *has-title*.
 
-The view shows the elements, and arranges them with the animation layout
-(see :doc:`animation`), which you can watch settle.
+The view shows the elements, arranged as they nest by the balloon layout
+(see :doc:`layouts`): each element with its children round it, and so on out
+to the leaves.
 
 .. figure:: ../images/user/xmlreader-books.png
    :alt: The XMLreader's view of books.xml: library1 in the middle, related by has-book to two books and by has-magazine to Byte; each book has its title, author and chapters round it

@@ -71,7 +71,7 @@ from enum import Enum
 from typing import Any, Callable, Optional, override, Iterable, Sequence, Collection
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
-from util.utils import Point, expandRect
+from util.utils import Point
 from util.command import Command
 from sn.model.model import GraphObject, Model, Node, Relation
 from util.utils import removeDuplicates
@@ -484,9 +484,10 @@ class LayoutHeuristic(ABC):
   def findOverlapping(self, rect:Sequence[float], exclude:Collection[int]=[], shapes:Collection[int]|None=None) -> list[int]:
     '''
     :param shapes: The view's 'vis/shape'-tagged canvas item ids, if the caller
-      has them (eg: a set, from *find_withtag()*): as *FindFree.placeNode()*
-      does, trying many places for one object -- asking Tk for each
-      overlapping item's tags, otherwise, takes most of the time.
+      has them (eg: a set, from *find_withtag()*): as one trying many places
+      for one object would -- asking Tk for each overlapping item's tags,
+      otherwise, takes most of the time. (*FindFree* doesn't ask Tk at all:
+      see *FindFree.obstacles()*.)
     :return: The (possible zero-length) list of 'vis/shape'-tagged tk.Canvas object ids
         that overlap with bounding box of *node*.
     '''
@@ -805,6 +806,65 @@ class LayoutMoves(Command):
 UNBOUNDED = 10**9
 "A limit (view units) that's no limit: objects may be placed anywhere, at negative coordinates too."
 
+class _BoxIndex:
+  '''
+  Boxes, bucketed by where they are: for finding those near a place quickly.
+  '''
+  CELL = 100.0
+
+  def __init__(self, boxes:Iterable[Sequence[float]]=[]):
+    self.cells:dict[tuple[int, int], list[Sequence[float]]] = {}
+    for b in boxes:
+      self.add(b)
+
+  def _cells(self, b:Sequence[float]):
+    c = self.CELL
+    for i in range(int(b[0] // c), int(b[2] // c) + 1):
+      for j in range(int(b[1] // c), int(b[3] // c) + 1):
+        yield (i, j)
+
+  def add(self, b:Sequence[float]) -> None:
+    for k in self._cells(b):
+      self.cells.setdefault(k, []).append(b)
+
+  def hits(self, b:Sequence[float], gap:float) -> bool:
+    ''':returns: Whether *b* is on (or within *gap* of) one of the boxes.'''
+    g = [b[0] - gap, b[1] - gap, b[2] + gap, b[3] + gap]
+    return any(o[0] < g[2] and g[0] < o[2] and o[1] < g[3] and g[1] < o[3]
+               for k in self._cells(g) for o in self.cells.get(k, ()))
+
+def freeRingSpot(rect:Sequence[int], index:_BoxIndex, gap:float, *, quanta:int=10,
+                 limit:Sequence[int]=(-UNBOUNDED, -UNBOUNDED, UNBOUNDED, UNBOUNDED),
+                 maxRings:int=100) -> tuple[int, int]|None:
+  '''
+  Where to put *rect* (its top left) so it isn't on, or within *gap* of, any
+  of *index*'s boxes: the first such place met looking out from where it is,
+  in square rings *quanta* apart -- each ring's rows from the top, a row's
+  places from the left, all of its top and bottom rows' places but just the
+  ends of the others' -- with its top left within *limit*. Each place is
+  tried against just the boxes near it (see *_BoxIndex*), so even a crowded
+  view's thousands of places are tried quickly.
+
+  :param rect: [x1, y1, x2, y2], ints.
+  :param limit: [x1, y1, x2, y2], ints: where its top left may go.
+  :returns: Its new top left -- or None if there's no such place within *maxRings* rings.
+  '''
+  w, h = rect[2] - rect[0], rect[3] - rect[1]
+  assert w > 0
+  assert h > 0
+  for dist in range(0, maxRings): # the width/height of the rectangular scan
+    yStart = max(limit[1], rect[1] - dist * quanta)
+    yEnd   = min(limit[3], rect[1] + dist * quanta)
+    for y in range(yStart, yEnd + 1, quanta):
+      xStart = max(limit[0], rect[0] - dist * quanta)
+      xEnd   = min(limit[2], rect[0] + dist * quanta)
+      # the ring's perimeter: all of its top and bottom rows, just the ends of the others
+      xIncr  = quanta if y == yStart or y == yEnd else max(1, xEnd - xStart)
+      for x in range(xStart, xEnd + 1, xIncr):
+        if not index.hits([x, y, x + w, y + h], gap):
+          return x, y
+  return None # (nowhere free within maxRings)
+
 @registerLayout
 class FindFree(LayoutHeuristic):
   '''
@@ -871,44 +931,10 @@ class FindFree(LayoutHeuristic):
         return bb[0], bb[1]
       maxRings = level * level
 
-    def place(rect:list[int], 
-              expandFactor:int, 
-              quanta:int=self.quanta, 
-              limit:list[int]=self.limit, 
-              exclude=[]) -> tuple[int, int]|None:
-      assert len(rect) == 4
-      rect = [int(i) for i in rect]
-      assert len(limit) == 4
-      limit = [int(i) for i in limit]
-      w = rect[2] - rect[0]
-      h = rect[3] - rect[1]
-      assert w>0
-      assert h>0
-      shapes = set(self.view.canvas.find_withtag('vis/shape')) # (once: see findOverlapping())
-      exclude = set(exclude)
-      
-      for dist in range(0, maxRings): # the width/height of the rectangular scan
-        yStart   = max(limit[1], rect[1]-dist*quanta)
-        yEnd     = min(limit[3], rect[1]+dist*quanta)
-        for y in range(yStart, yEnd+1, quanta):
-          xStart = max(limit[0], rect[0]-dist*quanta)
-          xEnd   = min(limit[2], rect[0]+dist*quanta)
-          # the ring's perimeter: all of its top and bottom rows, just the ends of the others
-          xIncr  = quanta if y==yStart or y==yEnd else max(1, xEnd-xStart)
-          for x in range(xStart, xEnd+1, xIncr):
-            r = [x, y, x+w, y+h]
-            overlapping = self.findOverlapping(expandRect(r, expandFactor), exclude, shapes)
-            if len(overlapping) == 0:
-              return x,y
-      return None # (nowhere free within maxRings)
-      
     rect = node.boundingBox()
     if loc is not None:
       rect = [loc.x, loc.y, loc.x+rect[2]-rect[0], loc.y+rect[3]-rect[1]]
-    # ignore our own shape and our own relations' label shapes (canvas item ids --
-    # not rel._id, the view object's id, a different numbering altogether)
-    exclude = [node._shape.id] + [rel._shape.id for rel in node.relations if rel._shape is not None and rel._shape.id is not None]
-    
+
     leftLimit:float; topLimit:float; rightLimit:float; bottomLimit:float
     leftLimit, topLimit, rightLimit, bottomLimit = self.limit
     if within is not None: # (room for its whole box)
@@ -956,7 +982,11 @@ class FindFree(LayoutHeuristic):
           leftLimit, topLimit, rightLimit, bottomLimit = inside
 
     finalLimit = [int(i) for i in [leftLimit, topLimit, rightLimit, bottomLimit]]
-    pt = place(rect, expandFactor=expandFactor, exclude=exclude, limit=finalLimit)
+    reach = maxRings * self.quanta + expandFactor # (as far as the search goes)
+    around = [rect[0] - reach, rect[1] - reach, rect[2] + reach, rect[3] + reach]
+    # (not on itself, nor on its own relations' labels)
+    pt = freeRingSpot([int(i) for i in rect], self.obstacles(around, [node, *node.relations]), expandFactor,
+                      quanta=self.quanta, limit=finalLimit, maxRings=maxRings)
     if pt is None: # (nowhere free close enough: it stays where it is)
       bb = node.boundingBox()
       return bb[0], bb[1]
@@ -965,12 +995,29 @@ class FindFree(LayoutHeuristic):
     #   logger.debug(f'Node "{node.modelObject.name}:{node.modelObject._id}" moving in direction {direction}, limit={finalLimit} to {pt}, ref={referenceNode}.')
     
     node.moveTo(*pt, adjustPos=False)
-    
+
     return pt
-    
-      
-      
-              
+
+  def obstacles(self, around:Sequence[float], exclude:Iterable[VObject]=()) -> _BoxIndex:
+    '''
+    What's placed keeps clear of: the view's objects whose shapes are shown
+    and tagged 'vis/shape' (not a context window's frame: see
+    *decorators.ContextFrame*), by their bounding boxes -- in view
+    coordinates, as what's placed is (the canvas's are zoomed) -- and not by
+    asking Tk (*findOverlapping()*): for each place tried, Tk tests every item
+    on the canvas, lines' exact curves too, so trying the thousands of places
+    a crowded view needs took many seconds for each thing placed.
+
+    :param around: [x1, y1, x2, y2]: where to look: those not on it are left out.
+    :param exclude: What not to keep clear of: eg: what's being placed, and its relations' labels.
+    '''
+    shapes = set(self.view.canvas.find_withtag('vis/shape'))
+    skip = {id(vo) for vo in exclude}
+    x1, y1, x2, y2 = around
+    return _BoxIndex(b for vo in self.view.values()
+                     if isinstance(vo, VObject) and (b := vo.boundingBox())[0] < x2 and x1 < b[2] and b[1] < y2 and y1 < b[3]
+                     and id(vo) not in skip and not vo.isHidden() and vo._shape is not None and vo._shape.id in shapes)
+
   @override
   def placeAll(self):
     pass # (not a static layout)
