@@ -530,7 +530,7 @@ class Application(tk.Tk):
     if entry.remote: # (it can't be saved there)
       readOnly = True
     modelURL = entry.url if entry.kind == "model" else entry.modelURL
-    already = PRDb.AllDBs.get(modelURL) if modelURL else None
+    already = PRDb.AllDBs.get(modelURL) if modelURL else None # @undefinedVariable
     if readOnly and already is not None and not already.writeLocked():
       messagebox.showinfo(sn.NAME, f'"{entry.name}" isn\'t opened read-only: its model, '
                           f'"{_fileName(already.url)}", is already open, and can be changed.', parent=self)
@@ -798,7 +798,7 @@ class Application(tk.Tk):
     # Another model that builds on an example (eg: one of its types isa an
     # example's) would be left pointing at the old examples: stop, with
     # nothing changed. (Views of the examples are fine: they're closed below.)
-    users = sorted({url for db in list(PRDb.AllDBs.values()) if isinstance(db, Model) and db.url.startswith(prefix)
+    users = sorted({url for db in list(PRDb.AllDBs.values()) if isinstance(db, Model) and db.url.startswith(prefix) # @undefinedVariable
                         for kind, url in db.dependents() if kind == "model" and not url.startswith(prefix)})
     if users:
       messagebox.showerror(sn.NAME, "The example models can't be replaced while other models use them:\n\n  "
@@ -867,7 +867,7 @@ class Application(tk.Tk):
     :returns: False if it can't be forgotten (other models use it: see
       *closeModel()*), and so mustn't be replaced; else True.
     """
-    model = PRDb.AllDBs.get(PRDb.resolveURL(fixURL(path, None, replaceExt=None, mode="w")[0]))
+    model = PRDb.AllDBs.get(PRDb.resolveURL(fixURL(path, None, replaceExt=None, mode="w")[0])) # @undefinedVariable
     if not isinstance(model, Model):
       return True
     return self.closeModel(model, askToSave=False, quitIfNone=False)

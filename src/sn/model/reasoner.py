@@ -954,7 +954,7 @@ def baseRuleModels() -> list[Model]:
     url = _baseURL(src)
     if not isinstance(src, str): # (named -- "sn:/baseRules", ... -- as written in the models that build on it)
       name = BASE_RULES_URL if i == 0 else f"{BASE_RULES_URL}{i + 1}"
-      PRDb.namedURLs.setdefault(name, lambda src=src: _baseURLOfModel(src)) # type: ignore[misc]
+      PRDb.namedURLs.setdefault(name, lambda src=src: _baseURLOfModel(src)) # type: ignore[misc] # @undefinedVariable
       PRDb._namesOf[url] = name
     _readingBase.append(True)
     try:

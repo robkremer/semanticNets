@@ -346,7 +346,7 @@ def applyURLAliases(entries:Any) -> list[str]:
     ret = fixURL(os.path.expanduser(text), replaceExt=None, mode="")[0]
     return ret + "/" if folder and not ret.endswith("/") else ret
   for old in _userAliases:
-    PRDb.aliases.pop(old, None)
+    PRDb.aliases.pop(old, None) # @undefinedVariable
   _userAliases.clear()
   bad:list[str] = []
   for entry in entries if isinstance(entries, list) else []:
@@ -451,7 +451,7 @@ def saveAtExit():
   url:str
   db:PRDb
   print("saving at exit", file=sys.__stdout__)
-  for url, db in Model.AllDBs.items():
+  for url, db in Model.AllDBs.items(): # @undefinedVariable
     if isinstance(db, Model):
       checkSaveModified(db, url, "model")
     else:
@@ -463,7 +463,7 @@ def saveAtExit():
   # reliable way to find the ones currently open is via the live
   # Application's own window registry (tk._default_root is that Application,
   # the same lookup SNGView.__init__() itself uses).
-  root = tk._default_root # type: ignore[attr-defined]
+  root = tk._default_root # type: ignore[attr-defined] # @undefinedVariable
   if isinstance(root, Application):
     for url, window in root.windows.items():
       if window.view is not None:

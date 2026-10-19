@@ -384,7 +384,7 @@ def leap(snap:Snapshot, kMinDist:float, tries:int=20) -> tuple[list[int], float,
   degree:dict[int, int] = {}
   for a, b, _ in snap.links:
     degree[a], degree[b] = degree.get(a, 0) + 1, degree.get(b, 0) + 1
-  leaves = [j for a, b, _ in snap.links if i in (a, b) and degree[j := b if a == i else a] == 1
+  leaves = [j for a, b, _ in snap.links if i in (a, b) and degree[(j := b if a == i else a)] == 1
             and snap.owners[j] is None and j not in snap.pinned and gap(snap, i, j)[0] <= kMinDist + LEAP_LEAF]
   x1 = min(snap.positions[j][0] - snap.halfSizes[j][0] for j in top)
   y1 = min(snap.positions[j][1] - snap.halfSizes[j][1] for j in top)
@@ -517,8 +517,8 @@ def forces(snap:Snapshot, e:float, gMaxDist:float, k:float, kMinDist:float, maxD
     mx, my = sum(capped[i][0] for i in top) / len(top), sum(capped[i][1] for i in top) / len(top)
     for i in top:
       capped[i] = (capped[i][0] - mx, capped[i][1] - my)
-  for i, d in (leaps or {}).items():
-    capped[i] = d
+  for i, d1 in (leaps or {}).items():
+    capped[i] = d1
   for i in range(n): # (what's in a window: in its pane -- in its window's frame, as its window moves it too)
     region = snap.regions[i]
     if region is None:

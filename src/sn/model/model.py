@@ -1105,7 +1105,7 @@ SN_URL = "sn:/sn"
 *PRDb.namedURLs*), not a file. (Its old names are aliases for it: see
 *PRDb.aliases*.)'''
 
-PRDb.aliases.update({old: SN_URL for old in ("sn:/sn.xml", "sn:///sn", "sn:///sn.xml", "sn:sn")})
+PRDb.aliases.update({old: SN_URL for old in ("sn:/sn.xml", "sn:///sn", "sn:///sn.xml", "sn:sn")}) # @undefinedVariable
 
 BASE_RULES_URL = "sn:/baseRules"
 '''The base rules' name (see *sn.model.reasoner.BASE_RULES*): they're read from

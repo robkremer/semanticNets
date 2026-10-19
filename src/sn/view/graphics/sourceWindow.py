@@ -153,7 +153,7 @@ class SourceWindow(tk.Toplevel):
     :param path: The file.
     :param parent: What it's opened from, if anything.
     '''
-    root = parent.winfo_toplevel() if isinstance(parent, tk.Misc) else tk._get_default_root() #type: ignore[attr-defined]
+    root = parent.winfo_toplevel() if isinstance(parent, tk.Misc) else tk._get_default_root() #type: ignore[attr-defined] # @undefinedVariable
     super().__init__(root)
     ownDialog(self, parent) # (over its parent's window, not full screen: see ownDialog())
     self.path = path
