@@ -36,13 +36,13 @@ import xml.etree.ElementTree as ET
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from util.utils import fixURL, ownDialog
-from sn.model.model import IsaIndividual, Model, Node
+from sn.model.model import IsaIndividual, Model, Node, Relation
 from sn.view.graphics.guiApp import Application
 from sn.view.graphics.sngView import SNGView
 from sn.view.graphics.vnodes import VNode
 from sn.view.graphics.layout import relationTypes, nodeTypes, _BoxIndex
 from sn.view.graphics.relationTable import RelationTable, RelationRow, SHAPES, PULLS, TERMINALS
-from .reader import buildModel, canChange, isRemote, localPath, ontologyPath, outputPaths, PART_OF
+from .reader import buildModel, canChange, isRemote, localPath, ontologyPath, outputPaths, PART_OF, REFERS_TO
 
 TITLE = "XML Reader"
 
@@ -172,9 +172,13 @@ def relationTable(model:Model) -> RelationTable:
   :returns: The relation table (see *relationTable.RelationTable*) that makes
     trees of how its elements nest: its relation types (has-<tag>,
     xml-has-part, xml-part-of) shape the trees, each element its children's
-    parent (the source end -- the destination for xml-part-of).
+    parent (the source end -- the destination for xml-part-of); references
+    (xml-refers-to, and its kinds) don't: they pull what they relate together.
   '''
-  return RelationTable([RelationRow(str(t.name), SHAPES, "destination" if t.name == PART_OF else "source")
+  def isReference(t:Relation) -> bool:
+    return any(str(s.name) == REFERS_TO for s in [t, *t.getSupers()])
+  return RelationTable([RelationRow(str(t.name), PULLS) if isReference(t) else
+                        RelationRow(str(t.name), SHAPES, "destination" if t.name == PART_OF else "source")
                         for t in relationTypes(model) if t is not model.ISA]
                        + [RelationRow(TERMINALS, PULLS)])
 
@@ -356,8 +360,9 @@ def convert(app:Application, files:Files, parent:tk.Misc|None=None) -> bool:
     os.remove(p)
   had = len(ontology) if isinstance(ontology, Model) else 0
   extend = state != "web" and canChange(ontologyRef)
+  found:list[str] = []
   try:
-    model, ontology = buildModel(xmlPath, modelPath, ontology, extend)
+    model, ontology = buildModel(xmlPath, modelPath, ontology, extend, found)
   except ET.ParseError as ex:
     return error(f"{os.path.basename(xmlPath)} isn't a well-formed XML file:\n\n{ex}")
   if not ontology.writeLocked() and extend and ontology.isDirty(): # (not one there already, if nothing's added to it)
@@ -382,7 +387,8 @@ def convert(app:Application, files:Files, parent:tk.Misc|None=None) -> bool:
   how = ("made" if state == "new" or replaceOntology else
          f"{len(ontology) - had} objects added" if extend else "kept as it is: what it hadn't is in the model")
   print(f"Made {name(modelPath)} and {name(viewPath)} from {name(xmlPath)}, on {name(ontology.url)} ({how}): "
-        f"{len(model)} objects (and {len(ontology)} in the ontology); {elements} elements, {shown}.")
+        f"{len(model)} objects (and {len(ontology)} in the ontology); {elements} elements, {shown}.\n"
+        f"Its tags: {found[0]}.")
   return True
 
 class ReaderDialog(tk.Toplevel):

@@ -48,7 +48,7 @@ from sn.plugins import importBundled
 XML = '''<library id="lib">
   <book id="b1" kind="novel"><title>Dune</title><author name="Herbert"/></book>
   <book id="b2" kind="poetry"><title>Odes</title><author name="Keats"/></book>
-  <magazine id="byte"/>
+  <magazine id="byte" issue="5"/>
 </library>'''
 
 class TestTypesView(unittest.TestCase):
@@ -118,10 +118,10 @@ class TestTypesView(unittest.TestCase):
   def test_types(self):
     'Just the types, with their isa links, none on another.'
     from sn.view.graphics.vrelations import VRelation
-    self.assertEqual(self.xmlView.elementCount(self.model), 8)
+    self.assertEqual(self.xmlView.elementCount(self.model), 4) # (title and author: properties of the books)
     self.xmlView.showTypes(self.view, self.model)
     shown = self.shown()
-    self.assertEqual(set(shown), {"library", "book", "novel", "poetry", "title", "author", "magazine"})
+    self.assertEqual(set(shown), {"library", "book", "novel", "poetry", "magazine"})
     self.assertTrue(all(vo.modelObject.model is self.ontology for vo in shown.values()))
     isa = [vo for vo in self.view.values() if isinstance(vo, VRelation) and vo._isConnected()]
     self.assertEqual(sorted((str(r.src.modelObject.name), str(r.dst.modelObject.name)) for r in isa),
@@ -135,9 +135,9 @@ class TestTypesView(unittest.TestCase):
   def test_expand(self):
     'Expanding a type brings in its elements.'
     self.xmlView.showTypes(self.view, self.model)
-    self.shown()["author"].expand()
-    self.assertIn("Herbert", self.shown())
-    self.assertIn("Keats", self.shown())
+    self.shown()["novel"].expand()
+    self.assertIn("Dune", self.shown())
+    self.assertNotIn("Odes", self.shown()) # (poetry)
     self.assertNotIn("b1", self.shown())
 
 if __name__ == "__main__":

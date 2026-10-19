@@ -183,12 +183,12 @@ the longest straight out. It suits networks that aren't trees -- eg: what
 the XMLreader makes of an XML file (see :doc:`exampleApps`).
 
 .. figure:: ../images/user/layout-hubs.png
-   :alt: A small library model arranged round hubs: library1 in the middle, its books b1 and b2 and the magazine Byte round it, and each book's title, author and chapters round the book
+   :alt: A small library model arranged round hubs: library1 in the middle, its two books (named by their titles) and the magazine Byte round it, and the first book's chapters round it
    :width: 360px
 
-   **hubs**, on the XMLreader's model of *books.xml*: the library, and each
-   of its books, is a hub; the books hang off the library, so they go out
-   beyond it.
+   **hubs**, on the XMLreader's model of *books.xml*: the library, and the
+   book with chapters, are hubs; the book hangs off the library, so it goes
+   out beyond it.
 
 Keeping a view arranged
 -----------------------

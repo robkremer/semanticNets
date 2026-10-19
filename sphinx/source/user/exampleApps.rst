@@ -58,21 +58,52 @@ the plugin's folder is replaced when a newer version comes.) **Go** makes
 them, asking first if the model or view is there already, and opens the
 view.
 
-- Each **tag** becomes a type (*book*, *chapter*, ...), with a colour and
-  shape of its own, which its elements inherit -- so you can see what each
-  is. An element with a ``type`` or ``kind`` attribute is of a subtype,
-  named by it, in a shade of its tag's colour.
-- Each **element** becomes an individual of its tag's type, named by its
-  ``id``, ``name`` or ``key`` attribute if it has one (otherwise by its tag
-  and a number: *chapter1*, *chapter2*, ...).
-- An element's **attributes** become its attributes, and its text its
-  ``text`` attribute (see the attribute editor: :doc:`editing`).
+What the file's tags and attributes *mean* is worked out from how they're
+used throughout the file, not from their names (they're only hints), so it
+works for XML of any kind:
+
+- **Properties**: a tag with no tags inside it, that's never repeated in an
+  element (a book's ``<title>``, say), is a property of the element it's in,
+  not a thing of its own: the book gets a ``property/title`` attribute (see
+  the attribute editor: :doc:`editing`). Its value is the tag's text -- or,
+  if it has none, its one attribute (``<author name="Hofstadter"/>``). An
+  element's own XML attributes are its properties too (``property/year``).
+  Values that are all whole numbers, all numbers, or all true or false are
+  stored as such.
+- **Groups**: a tag that's never repeated, and holds only properties (a
+  device's ``<States>``, say), adds them to its element:
+  ``property/States/onOffState``.
+- **Things**: every other tag -- one that holds other things, or is repeated
+  (a book's ``<chapter>``\ s) -- becomes a type, with a colour and shape of its
+  own, which its elements inherit, so you can see what each is; and each of
+  its elements an individual of it.
+- **Kinds**: if a tag's elements have a property whose name says it's a kind
+  (it has *type*, *kind*, *category* or *class* in it), whose values are
+  names that recur (``<book kind="novel">``), each is of a subtype named by
+  it, in a shade of its tag's colour.
+- **Names**: each is named by its *name*, *title*, *label*, *id* or *key*
+  (the first it has), or by its text, if that's short; otherwise by its tag
+  and a number (*chapter1*, *chapter2*, ...).
+- **Annotations**: an attribute that says what a *tag* is, rather than what
+  each element is -- one on many tags, always the same for each
+  (``type="integer"`` on every ``<Address>``) -- isn't given to every
+  element: it's noted on the type, or on the property it describes.
 - **Nesting** becomes relations: a book's chapters are related to it by
-  *has-chapter*, its title by *has-title*. Each of these is a kind of
-  *xml-has-part*, so the whole tree is there whatever the tags. The ontology
-  defines *xml-part-of* as the other way round
-  ([?a -xml-part-of-> ?b] ⇔ [?b -xml-has-part-> ?a]): **reason** (see
-  :doc:`reasoning`) concludes that each chapter is *xml-part-of* its book.
+  *has-chapter*. A tag that just holds a list of things (a ``<DeviceList>``
+  of ``<Device>``\ s) isn't made: the element it's in has them, by
+  *has-DeviceList*. Each of these is a kind of *xml-has-part*, so the whole
+  tree is there whatever the tags. The ontology defines *xml-part-of* as the
+  other way round ([?a -xml-part-of-> ?b] ⇔ [?b -xml-has-part-> ?a]):
+  **reason** (see :doc:`reasoning`) concludes that each chapter is
+  *xml-part-of* its book.
+- **References**: a property named like a reference (ending in *id* or
+  *ref*: ``<DeviceID>``), most of whose values are another element's *id*,
+  is a relation to that element too, named for it (*DeviceID*): a kind of
+  *xml-refers-to*.
+
+Each type's **tooltip** lists its elements' properties: hover over one to
+see them. (It's the type's ``vis/tooltip``: change it there.) The terminal
+pane says what the tags were found to be.
 
 **An ontology that's there already** is built on, not replaced: the dialog
 says what it'll do with the one given. It may be one made before for the same
@@ -82,11 +113,16 @@ for each, and their models are all built on it. (The dialog remembers the
 ontology you chose: next time, it offers that one, if it's still there,
 rather than one beside the model. Empty its field to go back to one beside
 the model.) It can be a URL (eg: on the web) rather than a file. What's in it is found by name -- a tag's type by the
-tag, wherever you've moved it in the type hierarchy; a subtype by its
-``type`` or ``kind`` value, under its tag's type; *has-<tag>*,
-*xml-has-part* and *xml-part-of* by theirs -- and only what's missing is
-added: a type, attribute or *has-<tag>* for something new in the file, with
-a colour and shape of its own.
+tag, wherever you've moved it in the type hierarchy; a subtype by its kind's
+value, under its tag's type; *has-<tag>*, the references,
+*xml-has-part*, *xml-part-of* and *xml-refers-to* by theirs -- and only
+what's missing is added: a type, property or relation for something new in
+the file, with a colour and shape of its own.
+
+What it says also overrides what's worked out from the file: a tag that has
+a type there is a thing, even if it would otherwise be a property (make one
+for it, to have its elements as things of their own); and one that a type
+there has a property for (``property/<tag>``) is a property.
 
 - If the ontology can be changed (a file here that you can write), what's
   missing is added to it, and it's saved -- so the next file of that kind
@@ -118,7 +154,7 @@ make a crowded view. For one of those, the view shows just the **types**
 The types are still in the ontology: they're only shown in the view.
 
 .. figure:: ../images/user/xmlreader-books.png
-   :alt: The XMLreader's view of books.xml: library1 in the middle, related by has-book to two books and by has-magazine to Byte; each book has its title, author and chapters round it
+   :alt: The XMLreader's view of books.xml: library1 in the middle, related by has-book to the two books, named by their titles, and by has-magazine to Byte; the first book has its two chapters round it
    :width: 400px
 
    What the XML reader makes of *books.xml* (in the plugin's *examples*:
@@ -128,12 +164,13 @@ The types are still in the ontology: they're only shown in the view.
 The *examples* folder also has *library25.xml* and *library200.xml* (25 and
 200 made-up books), to see how it copes with something bigger. Things to try:
 
+- Hover over a book: its tooltip lists its properties -- its id, year,
+  title and author (and in the library files, its kind and language).
 - **view | layout | arrange now | hubs** (see :doc:`layouts`): each book
-  becomes a hub, with its title, author and chapters round it.
-- Right-click an author, **expand by relation...**, and choose **←
-  has-author**: the books they wrote.
+  becomes a hub, with its chapters round it.
 - **view | hide by category | relation types...**, and tick *has-chapter*:
-  the lines to the chapters are hidden (untick it to show them again).
+  the lines to the chapters are hidden (untick it to show them again). In a
+  file with references, hiding them (eg: *DeviceID*) leaves just the tree.
 
 The Python parser
 -----------------

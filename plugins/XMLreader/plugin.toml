@@ -1,5 +1,5 @@
 name = "XML Reader"
-version = "1.6"
-description = "A model of an XML file: a type for each tag, an individual for each element, and relations for their nesting, on an ontology of its own."
+version = "1.7"
+description = "A model of an XML file, on an ontology of its own: types for the tags that are things, properties for the ones that are values, and relations for their nesting and references -- inferred from how they're used."
 sn-version = "1.0"
 exclude = ["examples/*.snm", "examples/*.snv"] # (models made from the examples here, in the project: not copied)

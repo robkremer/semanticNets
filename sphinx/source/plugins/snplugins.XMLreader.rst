@@ -14,4 +14,5 @@ Submodules
    :maxdepth: 4
 
    snplugins.XMLreader.reader
+   snplugins.XMLreader.schema
    snplugins.XMLreader.view

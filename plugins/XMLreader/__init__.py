@@ -1,11 +1,14 @@
 '''
 XMLreader: a plugin (see *sn.plugins*) that makes a model of an XML file --
-a type for each tag, an individual for each element, and relations for their
-nesting (each a kind of xml-has-part), on an ontology of its own (the types,
-and the definition of xml-part-of) -- and a view of it, arranged, from the
-Tools menu's "XML Reader...".
+a type for each tag that's a thing, and an individual for each of its
+elements, with properties for the tags that are values, and relations for
+their nesting (each a kind of xml-has-part) and references, inferred from how
+they're used (see *schema*) -- on an ontology of its own (the types, and the
+definition of xml-part-of), and a view of it, arranged, from the Tools menu's
+"XML Reader...".
 
   - *reader*: reads the XML file, and makes the model;
+  - *schema*: what the file's tags and attributes are, from how they're used;
   - *view*: the front end, and the view;
   - *examples*: some XML files to try.
 
