@@ -112,6 +112,8 @@ class LayoutPanel(ttk.Frame):
     self._dynamicName = ""
     self._page:tuple[str, str|None] = (ANIMATED, None)
     "The kind of layout and the layout the page is for (see *_build()*)."
+    self._top = 0.0
+    "How far down (pixels) the page has been scrolled: where *_fit()* keeps it."
     tip = lambda widgets, text: [CreateToolTip(w, text, wrapLength=300) for w in widgets]
 
     switch = ttk.Frame(self)
@@ -151,7 +153,7 @@ class LayoutPanel(ttk.Frame):
     body = ttk.Frame(self)
     body.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
     self.canvas = tk.Canvas(body, highlightthickness=0, borderwidth=0, background=str(ttk.Style().lookup("TFrame", "background") or "systemWindowBackgroundColor"))
-    self.scrollbar = ttk.Scrollbar(body, orient=tk.VERTICAL, command=self.canvas.yview)
+    self.scrollbar = ttk.Scrollbar(body, orient=tk.VERTICAL, command=self._scroll)
     self.canvas.configure(yscrollcommand=self.scrollbar.set)
     self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
     self.page = ttk.Frame(self.canvas)
@@ -251,6 +253,7 @@ class LayoutPanel(ttk.Frame):
     else:
       self._buildLayout(category, LAYOUTS[str(name)])
     self.canvas.yview_moveto(0)
+    self._top = 0.0
     self._scrollable(self.page)
     self._fit()
 
@@ -336,7 +339,13 @@ class LayoutPanel(ttk.Frame):
   # ---- scrolling and fitting -------------------------------------------------
 
   def _fit(self) -> None:
-    'Make the page as wide as the panel (its notes wrapped to fit), and scrollable if it\'s taller.'
+    '''
+    Make the page as wide as the panel (its notes wrapped to fit), and
+    scrollable if it's taller -- scrolled where it was (see *_top*): a change
+    to the page (eg: a relation table's rows remade, when a role's chosen) can
+    leave it shorter for a moment, and the canvas would keep the view it moved
+    up to then.
+    '''
     width = self.canvas.winfo_width()
     if width <= 1:
       return
@@ -353,6 +362,8 @@ class LayoutPanel(ttk.Frame):
     if height > self.canvas.winfo_height():
       if not self.scrollbar.winfo_ismapped():
         self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y, before=self.canvas)
+      if self.canvas.canvasy(0) != self._top:
+        self.canvas.yview_moveto(self._top / height) # (no further than the bottom: the canvas sees to that)
     elif self.scrollbar.winfo_ismapped():
       self.scrollbar.pack_forget()
       self.canvas.yview_moveto(0)
@@ -368,12 +379,17 @@ class LayoutPanel(ttk.Frame):
     for child in widget.winfo_children():
       self._scrollable(child)
 
+  def _scroll(self, *args:Any) -> None:
+    'The scrollbar: scroll the page (*args* as for *Canvas.yview()*), and remember where to (see *_top*).'
+    self.canvas.yview(*args)
+    self._top = self.canvas.canvasy(0)
+
   def _wheel(self, event:tk.Event) -> str|None:
     'The mouse wheel, over the page: scroll it (if it\'s taller than the panel).'
     if not self.scrollbar.winfo_ismapped():
       return None
     delta = int(event.delta)
-    self.canvas.yview_scroll(-delta if abs(delta) < 120 else -delta // 120, "units")
+    self._scroll("scroll", -delta if abs(delta) < 120 else -delta // 120, "units")
     return "break" # (not a combobox's or a slider's change too)
 
   # ---- keeping it up to date -------------------------------------------------
