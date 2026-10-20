@@ -215,7 +215,7 @@ class Application(tk.Tk):
     self.filemenu.add_separator()
     # "Save view" is NOT added here: whichever SNGView's AppWindow currently
     # has focus adds/removes it itself (see SNGView.onWindowFocusIn/Out(),
-    # utils.addToMenuBar()/removeFromMenuBar()), so the item is only ever
+    # util.utils.addToMenuBar()/removeFromMenuBar()), so the item is only ever
     # present -- and only ever targets the right view -- while some window
     # is actually focused.
     # TODO (Rob): "Save model", "Save view as...", "Save model as..." go here too.

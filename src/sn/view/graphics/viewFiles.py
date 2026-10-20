@@ -33,8 +33,7 @@ import tkinter as tk
 import sn
 from sn.model.model import Model
 from typing import Any
-from util.utils import fixURL, urlExists
-from sn.view.graphics.utils import addToMenuBar, addCheckToMenuBar, removeFromMenuBar
+from util.utils import fixURL, urlExists, addToMenuBar, addCheckToMenuBar, removeFromMenuBar
 from util.persistence.pRef import PRDb
 from sn.view.graphics.guiApp import Application
 from sn.view.graphics.directoryWindow import noteSaved
@@ -329,10 +328,10 @@ class FilesMixin(ViewBase):
     :returns: The "File | Open super model" cascade: an item for each of this
       view's model's super-models (see *superModelView()*), nearest first.
     '''
-    from sn.view.graphics.utils import _getMenuBar, getSubMenu
+    from util.utils import getMenuBar, getSubMenu
     from sn.model.reasoner import baseRulesSource
     old = self.__dict__.get("_superMenu")
-    parent = getSubMenu(_getMenuBar(), "File") # type: ignore[arg-type]
+    parent = getSubMenu(getMenuBar(), "File") # type: ignore[arg-type]
     menu = self._superMenu = tk.Menu(parent, tearoff=0)
     supers = self.model.allSuperDBs()
     for db in supers:

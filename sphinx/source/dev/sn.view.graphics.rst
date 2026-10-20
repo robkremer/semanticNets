@@ -36,7 +36,6 @@ Submodules
    sn.view.graphics.sngView
    sn.view.graphics.sourceWindow
    sn.view.graphics.treeLayout
-   sn.view.graphics.utils
    sn.view.graphics.viewBase
    sn.view.graphics.viewCommands
    sn.view.graphics.viewContainment

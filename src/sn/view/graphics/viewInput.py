@@ -34,8 +34,7 @@ from sn import snPrefs
 from sn.model.model import Relation
 from functools import partial
 from typing import Optional, Callable, Any
-from util.utils import s_SHIFT, bindRightMouse, s_ALT, flattenPairs, s_CMD, s_CTL, normalizeRect
-from sn.view.graphics.utils import eventEqual
+from util.utils import s_SHIFT, bindRightMouse, s_ALT, flattenPairs, s_CMD, s_CTL, normalizeRect, eventEqual
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
 from sn.view.graphics.viewBase import KEY_ERASE, KEY_FIND, KEY_ZOOM_IN, KEY_ZOOM_FIT, KEY_ZOOM_NORMAL, KEY_REDO, KEY_COPY_IMAGE, KEY_REMOVE, KEY_VALIDATE, KEY_ZOOM_OUT, KEY_CLEAR_HIGHLIGHTS, KEY_COPY, KEY_PASTE, KEY_REPAINT, KEY_SELECT_ALL, KEY_CUT, KEY_UNDO, VKEY_VALIDATE
