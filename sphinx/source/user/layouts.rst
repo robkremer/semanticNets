@@ -86,28 +86,36 @@ subtypes and instances; by *has-parent*, a parent of their children; by
 *includes*, a package of its modules. They ask:
 
 **Relations**
-  A table of the relation types shown in the view, in order, each with what
-  it does:
+  A table of the relation types shown in the view, and their supertypes, as
+  a tree -- each subtype indented under its supertype -- with what each
+  does:
 
-  - **shapes the tree**: its relations relate parents to children. **The
-    parent is the** relation's **destination** for *isa* (*dog* isa
-    *animal*: the parent is *animal*) and for ``has-*`` relations (*carol*
-    has-parent *alice*), and its **source** for relations like *includes* (a
-    package includes its modules).
+  - **parent: destination** or **parent: source**: it shapes the tree: its
+    relations relate parents to children. The parent is the relation's
+    **destination** for *isa* (*dog* isa *animal*: the parent is *animal*)
+    and for ``has-*`` relations (*carol* has-parent *alice*), and its
+    **source** for relations like *includes* (a package includes its
+    modules).
   - **pulls together**: its relations don't make trees, but they're what
     joins trees (see **Trees related to one another**) and puts the nodes in
     no tree near what they're related to.
   - **ignored**: its relations don't count at all.
+  - **as** *a supertype*: it has no row of its own: it does what its
+    nearest supertype with a row does (or, if none has one, pulls together).
 
-  A row covers the relation type's subtypes too, unless a subtype has a row
+  So a row for a supertype stands for all its subtypes, unless one has a
+  row of its own: eg: for the XML reader's models, one for *xml-has-part*
+  does for every *has-...* relation. A supertype's **▸** shows its subtypes
+  (**▾** hides them again): it starts closed, unless one of them has a row
   of its own. A node's children are grouped by the row they're related by,
   then by which of its relation type's subtypes (eg: a package's modules,
   then its sub-packages). The higher rows win: a node with two parents goes
-  under the one related by the higher row -- move a row with its **▲** and
-  **▼** buttons. The last row, **(domain and range of relation types)**, is
-  the relation types' own ends: as if each relation type shown were related
-  to its domain and its range (the parent is the **destination**: the
-  relation type goes under them, if the row shapes the tree).
+  under the one related by the higher row -- move a relation type (with its
+  subtypes) up or down among its siblings with its **↑** and **↓**. The row
+  **(domain and range of relation types)** is the relation types' own ends:
+  as if each relation type shown were related to its domain and its range
+  (the parent is the **destination**: the relation type goes under them, if
+  the row shapes the tree).
 
   To start with, *isa* shapes the trees, and everything else pulls together.
 

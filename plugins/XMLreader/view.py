@@ -36,13 +36,13 @@ import xml.etree.ElementTree as ET
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from util.utils import fixURL, ownDialog
-from sn.model.model import IsaIndividual, Model, Node, Relation
+from sn.model.model import IsaIndividual, Model, Node
 from sn.view.graphics.guiApp import Application
 from sn.view.graphics.sngView import SNGView
 from sn.view.graphics.vnodes import VNode
 from sn.view.graphics.layout import relationTypes, nodeTypes, _BoxIndex
 from sn.view.graphics.relationTable import RelationTable, RelationRow, SHAPES, PULLS, TERMINALS
-from .reader import buildModel, canChange, isRemote, localPath, ontologyPath, outputPaths, PART_OF, REFERS_TO
+from .reader import buildModel, canChange, isRemote, localPath, ontologyPath, outputPaths, HAS_PART, PART_OF, REFERS_TO
 
 TITLE = "XML Reader"
 
@@ -170,17 +170,21 @@ def relationTable(model:Model) -> RelationTable:
   '''
   :param model: A model made by *buildModel()*.
   :returns: The relation table (see *relationTable.RelationTable*) that makes
-    trees of how its elements nest: its relation types (has-<tag>,
-    xml-has-part, xml-part-of) shape the trees, each element its children's
-    parent (the source end -- the destination for xml-part-of); references
-    (xml-refers-to, and its kinds) don't: they pull what they relate together.
+    trees of how its elements nest: a row for each of the general relation
+    types, which stands for its kinds -- *HAS_PART* (has-<tag> and
+    has-<holder>) and *PART_OF* shape the trees, each element its children's
+    parent (the source end of xml-has-part, the destination of xml-part-of);
+    *REFERS_TO* (the references) pulls what they relate together -- and one
+    for any other relation type that none of them stands for (eg: in an
+    ontology made before there were these), shaping the trees.
   '''
-  def isReference(t:Relation) -> bool:
-    return any(str(s.name) == REFERS_TO for s in [t, *t.getSupers()])
-  return RelationTable([RelationRow(str(t.name), PULLS) if isReference(t) else
-                        RelationRow(str(t.name), SHAPES, "destination" if t.name == PART_OF else "source")
-                        for t in relationTypes(model) if t is not model.ISA]
-                       + [RelationRow(TERMINALS, PULLS)])
+  general = {HAS_PART: RelationRow(HAS_PART, SHAPES, "source"), PART_OF: RelationRow(PART_OF, SHAPES, "destination"),
+             REFERS_TO: RelationRow(REFERS_TO, PULLS)}
+  types = [t for t in relationTypes(model) if t is not model.ISA]
+  rows = [general[str(t.name)] for t in types if str(t.name) in general]
+  rows += [RelationRow(str(t.name), SHAPES, "source") for t in types
+           if not any(str(s.name) in general for s in [t, *t.getSupers()])]
+  return RelationTable(rows + [RelationRow(TERMINALS, PULLS)])
 
 def arrange(view:SNGView) -> None:
   '''

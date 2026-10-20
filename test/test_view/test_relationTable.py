@@ -21,7 +21,7 @@
 #################################################################################
 '''
 The layouts' relation table (see *sn.view.graphics.relationTable*): saving
-it, what each relation does, and the rows the dialog shows.
+it, what each relation does, and the tree of relation types the dialog shows.
 
 Created on Oct 17, 2026
 
@@ -33,7 +33,7 @@ from pathlib import Path
 from sn.model.model import Model, Node, Relation
 from sn.view.graphics.layout import LayoutHeuristic
 from sn.view.graphics.relationTable import (RelationTable, RelationRow, SHAPES, PULLS, IGNORED, TERMINALS,
-                                            defaultParentEnd)
+                                            defaultParentEnd, relationTree)
 from sn.view.graphics.treeLayout import TreeLayout, upgradeRelation
 import sn.view.graphics.balloonLayout # (registers the balloon and radial layouts)
 
@@ -91,13 +91,19 @@ class Test(unittest.TestCase):
     self.assertEqual(roles.group(self.aMotherB), 1)                 # (has-parent's first direct subtype)
     self.assertEqual(roles.parentEnd(self.aMotherB), "destination")
 
-  def test0500dialogRows(self):
+  def test0500dialogTree(self):
+    """The relation types shown, their supertypes (not the system's), and those
+    the rows name, as a tree, in the rows' order."""
     t = RelationTable([RelationRow("has-parent", SHAPES, "source"), RelationRow("isa", PULLS)])
-    shown = [self.likes, self.hasMother, self.hasParent]
-    self.assertEqual(rows(t.expanded(self.m, shown)),
-                     [("has-parent", SHAPES, "source"), ("has-mother", SHAPES, "source"),   # (as its row did)
-                      ("isa", PULLS, "destination"), ("likes", PULLS, "source"),            # (no row: pulls together)
-                      (TERMINALS, PULLS, "destination")])
+    roots = relationTree(t, self.m, [self.likes, self.hasMother])
+    self.assertEqual([n.name for n in roots], ["has-ancestor", "isa", "likes", TERMINALS]) # (has-parent's row is first)
+    ancestor = roots[0]
+    self.assertEqual([(n.name, n.parent.name if n.parent else None) for n in ancestor.walk()],
+                     [("has-ancestor", None), ("has-parent", "has-ancestor"), ("has-mother", "has-parent")])
+    self.assertIs(ancestor.type, self.hasAncestor)
+    self.assertIsNone(roots[-1].type)
+    roots = relationTree(RelationTable([RelationRow("likes", IGNORED), RelationRow("gone", PULLS)]), self.m, [self.hasMother])
+    self.assertEqual([n.name for n in roots], ["likes", "gone", "has-ancestor", TERMINALS]) # (a row's type, shown or not)
 
   def test0600hubsFollowTheTableIfAsked(self):
     from sn.view.graphics.balloonLayout import HubLayout, HUB_RELATIONS

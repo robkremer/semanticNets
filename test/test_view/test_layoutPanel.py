@@ -130,8 +130,7 @@ class Test(unittest.TestCase):
   def roleBoxes(self) -> list[ttk.Combobox]:
     'The page\'s relation table\'s role drop-downs, top to bottom.'
     editor = next(iter(self.panel.form.tables.values()))
-    return [w for line in editor.winfo_children() for w in line.winfo_children()
-            if isinstance(w, ttk.Combobox) and set(w.cget("values")) == set(ROLES)]
+    return list(editor.boxes.values())
 
   def test_choosingKeepsScroll(self):
     from sn.view.graphics.layout import STATIC
@@ -147,7 +146,7 @@ class Test(unittest.TestCase):
       p._scroll("moveto", 0.5) # (the scrollbar dragged half way down)
       top = canvas.canvasy(0)
       self.assertGreater(top, 300)
-      for role in (IGNORED, SHAPES): # (each remakes the table's rows: its parent end matters, or doesn't)
+      for role in (IGNORED, "parent: source"): # (each remakes the table's rows)
         box = self.roleBoxes()[-1] # (the last row's: well below where the page is shortened to)
         box.set(role)
         box.event_generate("<<ComboboxSelected>>")
@@ -162,7 +161,51 @@ class Test(unittest.TestCase):
       p._fit()
       self.assertEqual(canvas.canvasy(0), top)
 
-from sn.view.graphics.relationTable import ROLES, SHAPES, IGNORED
+  def test_tableAsTree(self):
+    '''The relation table as a tree: supertypes with their subtypes under them,
+    closed unless one has a row; a subtype "as" its supertype until it's given a
+    row of its own; moved among its siblings; narrow enough for the panel.'''
+    from sn.model.model import Node, Relation
+    from sn.view.graphics.layoutDialog import RelationTableEditor
+    from sn.view.graphics.layoutPanel import LayoutPanel
+    m = Model(str(Path(self.tmp.name).resolve() / "tree.snm"))
+    person = Node(m, [m.NODE], name="person")
+    ancestor = Relation(m, [m.RELATION], person, person, name="has-ancestor")
+    parent = Relation(m, [ancestor], person, person, name="has-parent")
+    mother = Relation(m, [parent], person, person, name="has-mother")
+    likes = Relation(m, [m.RELATION], person, person, name="likes")
+    table = RelationTable([RelationRow("has-ancestor", SHAPES, "destination"), RelationRow(TERMINALS, PULLS)])
+    e = RelationTableEditor(self.top, table, m, [mother, likes], compact=True)
+    e.pack()
+    self.assertEqual(e.table(), table)
+    self.assertEqual(list(e.boxes), ["has-ancestor", TERMINALS, "likes"]) # (has-ancestor closed: no subtype has a row; likes: no row)
+    self.assertEqual(e.boxes["has-ancestor"].get(), "parent: destination")
+    self.assertEqual(e.boxes["likes"].get(), f"as no row: {PULLS}")
+    self.assertFalse(any(v.startswith("as ") for v in e.boxes[TERMINALS].cget("values"))) # (it's always a row)
+    def node(name):
+      return next(n for r in e.roots for n in r.walk() if n.name == name)
+    e._toggle(node("has-ancestor"))
+    e._toggle(node("has-parent"))
+    self.assertEqual(list(e.boxes), ["has-ancestor", "has-parent", "has-mother", TERMINALS, "likes"])
+    self.assertEqual(e.boxes["has-mother"].get(), "as has-ancestor")
+    def choose(name, choice):
+      box = e.boxes[name]
+      box.set(choice)
+      box.event_generate("<<ComboboxSelected>>")
+      self.pump(0.05)
+    choose("has-parent", IGNORED)
+    self.assertEqual([r.relation for r in e.table().rows], ["has-ancestor", "has-parent", TERMINALS])
+    self.assertEqual(e.boxes["has-mother"].get(), "as has-parent")
+    choose("has-parent", "as has-ancestor") # (no row of its own again)
+    self.assertEqual(e.table(), table)
+    choose("likes", PULLS)
+    e._move(node("likes"), e.roots, -1)
+    e._move(node("likes"), e.roots, -1)
+    self.assertEqual([r.relation for r in e.table().rows], ["likes", "has-ancestor", TERMINALS])
+    self.pump(0.05)
+    self.assertLess(e.winfo_reqwidth(), LayoutPanel.MIN_WIDTH) # (fits the panel at its narrowest, two levels in)
+
+from sn.view.graphics.relationTable import IGNORED, PULLS, SHAPES, TERMINALS, RelationRow, RelationTable
 
 if __name__ == "__main__":
   unittest.main()

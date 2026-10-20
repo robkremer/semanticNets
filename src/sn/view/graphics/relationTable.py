@@ -38,8 +38,8 @@ Created on Oct 17, 2026
 # SOFTWARE.                                                                     #
 #################################################################################
 from __future__ import annotations
-from dataclasses import dataclass, replace
-from typing import Any, Iterable
+from dataclasses import dataclass, field
+from typing import Any, Iterable, Iterator
 from urllib.parse import quote, unquote
 from sn.model.model import IsaIndividual, Model, Relation
 
@@ -156,43 +156,6 @@ class RelationTable:
     ":returns: The table, for finding what each relation in *model* does (see *RelationRoles*)."
     return RelationRoles(self, model)
 
-  def expanded(self, model:Model, shown:Iterable[Relation]) -> RelationTable:
-    '''
-    :param model: The view's model.
-    :param shown: The relation types of the relations shown in the view.
-    :returns: The table with a row for each of *shown* that hasn't one (for
-      the layout's dialog), doing the same as the table did: a subtype of a
-      relation type with a row goes after that row (and the subtypes after it
-      before it), with its role and parent end; one no row covers goes before
-      the row for the relation types' ends (see *TERMINALS*), pulling things
-      together. And that row, last, if it isn't there.
-    '''
-    rows = list(self.rows)
-    if not any(r.relation == TERMINALS for r in rows):
-      rows.append(RelationRow(TERMINALS, PULLS))
-    have = {r.relation for r in rows}
-    roles = self.roles(model)
-    after:dict[int, list[RelationRow]] = {}
-    loose:list[RelationRow] = []
-    for t in sorted({id(t): t for t in shown}.values(), key=lambda t: t._id):
-      if str(t.name) in have:
-        continue
-      have.add(str(t.name))
-      hit = roles.rowOfType(t)
-      if hit is None:
-        loose.append(RelationRow(str(t.name), PULLS))
-      else:
-        i, row = hit
-        after.setdefault(rows.index(row), []).append(replace(row, relation=str(t.name)))
-    ret:list[RelationRow] = []
-    for i, row in enumerate(rows):
-      if row.relation == TERMINALS:
-        ret += loose
-        loose = []
-      ret.append(row)
-      ret += after.get(i, [])
-    return RelationTable(ret + loose)
-
 class RelationRoles:
   '''
   A relation table (see *RelationTable*), for a model: what each relation
@@ -209,9 +172,9 @@ class RelationRoles:
     for i, row in enumerate(table.rows):
       if row.relation == TERMINALS:
         continue
-      t = model.ISA if row.relation == "isa" else named.get(row.relation)
-      if t is not None and id(t) not in self.types:
-        self.types[id(t)] = i
+      rt = model.ISA if row.relation == "isa" else named.get(row.relation)
+      if rt is not None and id(rt) not in self.types:
+        self.types[id(rt)] = i
     self._cache:dict[int, tuple[int, RelationRow]|None] = {}
     self.terminals:tuple[int, RelationRow]|None = next(((i, r) for i, r in enumerate(table.rows) if r.relation == TERMINALS), None)
     "The row for the relation types' own ends (see *TERMINALS*), and its index, if there's one."
@@ -314,3 +277,78 @@ def shownRelationTypes(view:Any) -> list[Relation]:
     if t is not None:
       ret.setdefault(id(t), t)
   return sorted(ret.values(), key=lambda t: t._id)
+
+@dataclass(eq=False)
+class TypeNode:
+  '''
+  A relation type in the tree a relation table's edited as (see
+  *relationTree()*): its subtypes are its children.
+  '''
+  name:str
+  "The relation type's name (or *TERMINALS*): what a row for it names."
+  type:Relation|None = None
+  "The relation type (None for *TERMINALS*, or a row's that isn't in the model)."
+  children:list[TypeNode] = field(default_factory=list)
+  "Its subtypes in the tree."
+  parent:TypeNode|None = None
+  "Its supertype in the tree (its first, if it has several), if any."
+
+  def walk(self) -> Iterator[TypeNode]:
+    ''':returns: It, and its descendants, in order (preorder).'''
+    yield self
+    for c in self.children:
+      yield from c.walk()
+
+def relationTree(table:RelationTable, model:Model, shown:Iterable[Relation]) -> list[TypeNode]:
+  '''
+  The relation types a relation table may have rows for, as a tree (for
+  editing it: see *layoutDialog.RelationTableEditor*): those *shown*, their
+  supertypes (not the system's: eg: *relation*), and those the table's rows
+  name -- each under its supertype (its first, if it has several), so a row
+  for a supertype can stand for all of its subtypes (see the module doc);
+  and *TERMINALS*. Each level is in the order of the table's rows -- a type
+  before another if its row, or one of its subtypes', is before theirs --
+  then the order the types were made.
+
+  :param table: The table.
+  :param model: The view's model.
+  :param shown: The relation types of the relations shown in the view (see *shownRelationTypes()*).
+  :returns: The tree's roots.
+  '''
+  from sn.view.graphics.layout import relationTypes
+  byName:dict[str, Relation] = {}
+  for t in relationTypes(model):
+    byName.setdefault(str(t.name), t)
+  types:dict[int, Relation] = {}
+  def add(t:Relation) -> None:
+    if id(t) in types or (t.isSystemObject() and t is not model.ISA):
+      return
+    types[id(t)] = t
+    for p in t.getParents():
+      if isinstance(p, Relation) and p.isType() and p is not t:
+        add(p)
+  for t in shown:
+    add(t)
+  for r in table.rows:
+    if r.relation in byName:
+      add(byName[r.relation])
+  nodes:dict[str, TypeNode] = {}
+  for t in sorted(types.values(), key=lambda t: t._id):
+    nodes.setdefault(str(t.name), TypeNode(str(t.name), t))
+  for r in table.rows: # (a row for one that isn't in the model, kept as it is)
+    nodes.setdefault(r.relation, TypeNode(r.relation))
+  nodes.setdefault(TERMINALS, TypeNode(TERMINALS))
+  roots:list[TypeNode] = []
+  for n in nodes.values():
+    up = next((nodes[str(p.name)] for p in (n.type.getParents() if n.type is not None else [])
+               if isinstance(p, Relation) and id(p) in types and nodes.get(str(p.name)) is not n), None)
+    n.parent = up
+    (up.children if up is not None else roots).append(n)
+  index = {r.relation: i for i, r in reversed(list(enumerate(table.rows)))}
+  def rank(n:TypeNode) -> int:
+    return min((index[d.name] for d in n.walk() if d.name in index), default=len(table.rows))
+  def order(level:list[TypeNode]) -> list[TypeNode]:
+    for n in level:
+      n.children = order(n.children)
+    return sorted(level, key=lambda n: (rank(n), n.type is None, n.type._id if n.type is not None else 0))
+  return order(roots)
