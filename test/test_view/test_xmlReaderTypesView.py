@@ -132,6 +132,22 @@ class TestTypesView(unittest.TestCase):
         self.assertFalse(a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3], (a, b))
     self.assertGreater(shown["novel"].boundingBox()[1], shown["book"].boundingBox()[3]) # (subtypes below)
 
+  def test_typesExpanded(self):
+    'A smaller file\'s view: the types, each with its elements round it (by isa: no relation types), none on another.'
+    from sn.view.graphics.vrelations import VRelation
+    self.xmlView.showTypesExpanded(self.view, self.model)
+    self.xmlView.separateNodes(self.view)
+    shown = self.shown()
+    self.assertEqual(set(shown), {"library", "book", "novel", "poetry", "magazine", "lib", "Dune", "Odes", "byte"})
+    rels = [vo for vo in self.view.values() if isinstance(vo, VRelation) and vo._isConnected() and not vo.isHidden()]
+    self.assertEqual(sorted((str(r.src.modelObject.name), str(r.dst.modelObject.name)) for r in rels),
+                     [("Dune", "novel"), ("Odes", "poetry"), ("byte", "magazine"), ("lib", "library"),
+                      ("novel", "book"), ("poetry", "book")])
+    boxes = [vo.boundingBox() for vo in shown.values()]
+    for i, a in enumerate(boxes):
+      for b in boxes[i + 1:]:
+        self.assertFalse(a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3], (a, b))
+
   def test_expand(self):
     'Expanding a type brings in its elements.'
     self.xmlView.showTypes(self.view, self.model)

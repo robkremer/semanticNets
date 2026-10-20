@@ -5,8 +5,8 @@ plugin's *register()*.)
 
 It's a dialog (see *ReaderDialog*): the XML file, and the three files made
 from it -- for "<name>.<ext>", by default, "<name>_<ext>.snm" (the model: see
-*reader*), "<name>_<ext>.snv" (a view of the model: its elements, arranged as
-they nest -- see *showTypesAndExpand()* and *arrange()*) and
+*reader*), "<name>_<ext>.snv" (a view of the model: its types, each with its
+elements round it -- see *showTypesExpanded()*) and
 "<name>_<ext>_ontology.snm" (the model's super-model: the types and
 definitions), in the same folder (see *defaultPaths()*). Any of them can be
 put somewhere else; and the ontology can be one that's there already --
@@ -41,7 +41,7 @@ from sn.view.graphics.guiApp import Application
 from sn.view.graphics.sngView import SNGView
 from sn.view.graphics.vnodes import VNode
 from sn.view.graphics.layout import relationTypes, nodeTypes, _BoxIndex
-from sn.view.graphics.relationTable import RelationTable, RelationRow, SHAPES, PULLS, TERMINALS
+from sn.view.graphics.relationTable import RelationTable, RelationRow, SHAPES, PULLS, IGNORED, TERMINALS
 from .reader import buildModel, canChange, isRemote, localPath, ontologyPath, outputPaths, HAS_PART, PART_OF, REFERS_TO
 
 TITLE = "XML Reader"
@@ -84,7 +84,7 @@ def expandLevels(model:Model) -> int:
   elements = elementCount(model)
   return 4 if elements <= 100 else 3 if elements <= 500 else 2
 
-def showTypes(view:SNGView, model:Model) -> None:
+def showTypes(view:SNGView, model:Model, arrange:bool=True) -> None:
   '''
   Fill the view with just the model's node types -- its ontology's (the
   tags' types, their subtypes, and any added to it), and its own (eg: ones
@@ -96,6 +96,7 @@ def showTypes(view:SNGView, model:Model) -> None:
 
   :param view: A view of *model*.
   :param model: A model made by *buildModel()*.
+  :param arrange: Whether to arrange them (as a tree): if not, they're all in one place.
   '''
   from sn.view.graphics.treeLayout import TreeLayout
   localLayout, view.localLayout = view.localLayout, None # type: ignore[assignment] # (none: the tree layout places them)
@@ -110,12 +111,42 @@ def showTypes(view:SNGView, model:Model) -> None:
           view.makeViewObjectForGraphObject(r)
   finally:
     view.localLayout = localLayout
-  TreeLayout(view, relation="isa", direction="down", others="rows").arrange(animate=False) # (those with no subtypes in rows, after the trees)
+  if arrange:
+    TreeLayout(view, relation="isa", direction="down", others="rows").arrange(animate=False) # (those with no subtypes in rows, after the trees)
+
+def showTypesExpanded(view:SNGView, model:Model) -> None:
+  '''
+  Fill the view with the model's node types (as *showTypes()*) and their
+  elements -- each type expanded one level, by isa -- arranged as balloons by
+  isa (see *balloonLayout.BalloonLayout*): each type with its subtypes and
+  elements round it. For a model small enough to show all at once (see
+  *MAX_SHOWN*): the types organize it, and its elements can be expanded to
+  bring in how they nest and refer to one another.
+
+  Nothing is placed meanwhile (see *showTypesAndExpand()*).
+
+  :param view: A view of *model*.
+  :param model: A model made by *buildModel()*.
+  '''
+  from sn.view.graphics.balloonLayout import BalloonLayout
+  showTypes(view, model, arrange=False)
+  types = [vo for vo in view.values() if isinstance(vo, VNode) and vo.modelObject is not None and not vo.modelObject.isIndividual()]
+  localLayout, view.localLayout = view.localLayout, None # type: ignore[assignment] # (none while it's laid out)
+  try:
+    done:dict[int, int] = {}
+    for vo in types: # (just by isa: not the relation types whose range they are)
+      vo.expand(filter=lambda _vn, r: isinstance(r, IsaIndividual), _done=done)
+    view.canvas.update() # (the relations' labels put between their ends now, while nothing's placed)
+  finally:
+    view.localLayout = localLayout
+  BalloonLayout(view, relations=RelationTable([RelationRow("isa", SHAPES, "destination"), RelationRow(TERMINALS, IGNORED)])) \
+    .arrange(animate=False)
 
 def showTypesAndExpand(view:SNGView, model:Model) -> None:
   '''
-  Fill the view with the model's elements and their relations (for
-  *arrange()* to arrange):
+  Fill the view with the model's elements and their relations, without their
+  types (for *arrange()* to arrange, as they nest: eg: for the User Guide's
+  pictures of the hubs layout):
 
   1. show the model's types -- its ontology's nodes that are directly a kind
      of node: one for each tag (see *buildModel()*) -- and expand each by *expandLevels()*
@@ -382,10 +413,9 @@ def convert(app:Application, files:Files, parent:tk.Misc|None=None) -> bool:
     showTypes(view, model)
     shown = f"too many to show at once (more than {MAX_SHOWN}): the view shows their types, to expand as you need them"
   else:
-    showTypesAndExpand(view, model)
-    arrange(view)
+    showTypesExpanded(view, model)
     separateNodes(view)
-    shown = "arranged as balloons"
+    shown = "with their types, arranged as balloons round them"
   view.save()
   name = os.path.basename
   how = ("made" if state == "new" or replaceOntology else

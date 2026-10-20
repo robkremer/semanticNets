@@ -142,19 +142,19 @@ would say each of those elements is out of its range.) If *xml-part-of* is
 missing, it's made again with its definition; if you've only deleted its
 definition, that stays deleted.
 
-The view shows the elements, arranged as they nest by the balloon layout
-(see :doc:`layouts`): each element with its children round it, and so on out
-to the leaves.
+The view shows the **types** (each tag's, and their subtypes), each with its
+elements round it, arranged by the balloon layout (see :doc:`layouts`): the
+types organize it. **Expand** an element (its menu's **expand**, or **expand
+by relation...**) to bring in what it holds, what it's in, and what it refers
+to. The types are still in the ontology: they're only shown in the view.
 
 A big file -- more than 2000 elements -- would take minutes to show, and
-make a crowded view. For one of those, the view shows just the **types**
-(each tag's, and their subtypes), as a tree, each subtype below its type.
-**Expand** the ones you're interested in (their menu's **expand**, or
-**expand by relation...**) to bring in their elements, and go on from there.
-The types are still in the ontology: they're only shown in the view.
+make a crowded view. For one of those, the view shows just the types, as a
+tree, each subtype below its type. **Expand** the ones you're interested in
+to bring in their elements, and go on from there.
 
 .. figure:: ../images/user/xmlreader-books.png
-   :alt: The XMLreader's view of books.xml: library1 in the middle, related by has-book to the two books, named by their titles, and by has-magazine to Byte; the first book has its two chapters round it
+   :alt: The XMLreader's view of books.xml: its four types -- book, chapter, library and magazine -- each with its elements round it: the two books, named by their titles; the two chapters; library1; and Byte
    :width: 400px
 
    What the XML reader makes of *books.xml* (in the plugin's *examples*:
@@ -166,8 +166,8 @@ The *examples* folder also has *library25.xml* and *library200.xml* (25 and
 
 - Hover over a book: its tooltip lists its properties -- its id, year,
   title and author (and in the library files, its kind and language).
-- **view | layout | arrange now | hubs** (see :doc:`layouts`): each book
-  becomes a hub, with its chapters round it.
+- Right-click *library1*, and **expand all | 1 level**: it's related to the
+  books by *has-book*, and to the magazine by *has-magazine*.
 - **view | hide by category | relation types...**, and tick *has-chapter*:
   the lines to the chapters are hidden (untick it to show them again). In a
   file with references, hiding them (eg: *DeviceID*) leaves just the tree.

@@ -198,7 +198,8 @@ def main() -> None:
       model.save()
       win = app.openWindow(modelPath)
       win.view.context.visibility("system objects", "hide")
-      xmlReader.showTypesAndExpand(win.view, model)
+      if scene == "hubs": # (its elements, without their types, to arrange round hubs below)
+        xmlReader.showTypesAndExpand(win.view, model)
       return win
     if scene == "pythonparser": # (the XMLreader's code, its imports not followed)
       import shutil
@@ -282,10 +283,10 @@ def main() -> None:
       app.after(2000, lambda: (toTerminal(), v.reason()))
       app.after(3500, v.zoomToFit) # (it's taller than the window)
     settled = [scene != "xmlreader"]
-    if scene == "xmlreader": # (as the XMLreader does: arranged as balloons)
+    if scene == "xmlreader": # (as the XMLreader does: the types, each with its elements round it)
       from sn.plugins import importBundled
       xmlReader = importBundled("XMLreader", "view")
-      app.after(1000, lambda: (xmlReader.arrange(v), xmlReader.separateNodes(v), settled.__setitem__(0, True)))
+      app.after(1000, lambda: (xmlReader.showTypesExpanded(v, v.model), xmlReader.separateNodes(v), settled.__setitem__(0, True)))
     if into is not None:
       def shoot() -> None:
         if not settled[0]:
