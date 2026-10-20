@@ -66,7 +66,7 @@ import tkinter as tk
 
 import sn
 from sn.view.graphics.vobjects import VObject
-from util.utils import midpoint
+from util.utils import midpoint, pointInPoly
 
 logger: sn.SNLogger = sn.getLogger(__name__)
 
@@ -236,7 +236,21 @@ def _bezierBlossom(p0: PointType, p1: PointType, p2: PointType, ta: float, tb: f
           w0 * p0[1] + w1 * p1[1] + w2 * p2[1])
 
 
-def _findBoundaryParam(vobj: VObject, p0: PointType, p1: PointType, p2: PointType,
+def _insideTest(vobj: VObject) -> Callable[[PointType], bool]:
+  """*vobj.containsPt()*, but with its outline worked out once, not for each
+  point: for testing many points while it stays put (eg: bisecting, as
+  *_findBoundaryParam()* does -- for the thousands of relations an
+  expansion brings in, working out the outline for each point took most of
+  the time drawing them).
+  """
+  shape = vobj._shape
+  if shape is None or type(vobj).containsPt is not VObject.containsPt:
+    return vobj.containsPt
+  outline = shape.points()
+  return lambda pt: pointInPoly(pt, outline)
+
+
+def _findBoundaryParam(vobj: VObject|Callable[[PointType], bool], p0: PointType, p1: PointType, p2: PointType,
                         tInside: float, tOutside: float, iterations: int = 24) -> float:
   """Bisect the Bezier's parameter *t* between a point known to be inside
   *vobj* (tInside) and one known to be outside it (tOutside) to find where
@@ -250,13 +264,15 @@ def _findBoundaryParam(vobj: VObject, p0: PointType, p1: PointType, p2: PointTyp
   of the full curve) — comfortably sub-pixel for any on-screen curve length,
   so a fixed count is used rather than a pixel-distance stopping condition.
 
-  :param vobj: The shape being clipped against (needs .containsPt()).
+  :param vobj: The shape being clipped against (needs .containsPt()) -- or
+    what tests whether a point's in it (see *_insideTest()*).
   :param tInside: A parameter value where _bezierPoint(...) is inside vobj.
   :param tOutside: A parameter value where _bezierPoint(...) is outside vobj.
   """
+  inside = vobj.containsPt if isinstance(vobj, VObject) else vobj
   for _ in range(iterations):
     tMid = (tInside + tOutside) / 2
-    if vobj.containsPt(_bezierPoint(p0, p1, p2, tMid)):
+    if inside(_bezierPoint(p0, p1, p2, tMid)):
       tInside = tMid
     else:
       tOutside = tMid
@@ -275,18 +291,19 @@ def _clippedArc(vobj0: VObject, vobj2: VObject, p0: PointType, p1: PointType, p2
   None — logging a warning — if that assumption looks violated, rather than
   producing a nonsensical clip.
   """
-  if not vobj0.containsPt(p0):
+  inside0, inside2 = _insideTest(vobj0), _insideTest(vobj2)
+  if not inside0(p0):
     # logger.debug(f'_clippedArc(): {vobj0} does not contain its own center point; skipping clip.')
     return None
-  if not vobj2.containsPt(p2):
+  if not inside2(p2):
     # logger.debug(f'_clippedArc(): {vobj2} does not contain its own center point; skipping clip.')
     return None
-  if vobj0.containsPt(p2) or vobj2.containsPt(p0):
+  if inside0(p2) or inside2(p0):
     # logger.debug(f'_clippedArc(): {vobj0} and {vobj2} appear to overlap; clip may look wrong.')
     pass
 
-  t0 = _findBoundaryParam(vobj0, p0, p1, p2, tInside=0.0, tOutside=1.0)
-  t2 = _findBoundaryParam(vobj2, p0, p1, p2, tInside=1.0, tOutside=0.0)
+  t0 = _findBoundaryParam(inside0, p0, p1, p2, tInside=0.0, tOutside=1.0)
+  t2 = _findBoundaryParam(inside2, p0, p1, p2, tInside=1.0, tOutside=0.0)
   if t0 >= t2:
     # logger.debug(f'_clippedArc(): boundary crossings out of order (t0={t0}, t2={t2}); skipping clip.')
     return None

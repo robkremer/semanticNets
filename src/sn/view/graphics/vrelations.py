@@ -48,7 +48,7 @@ from util.abstractGraph import AGRelation
 from sn.model.model import GraphObject, Relation, IsaIndividual
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.connectors import drawSmoothConnector, ConnectorIDs,\
-  drawStraightConnector, ConnectorTerminators
+  drawStraightConnector, ConnectorTerminators, _insideTest
 
 if TYPE_CHECKING:
   from sn.view.graphics.sngView import SNGView
@@ -531,10 +531,11 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     """
     p2 is the center of node
     """
+    inside = _insideTest(node) # (its outline worked out once: see _insideTest())
     p2 = node.centerPt()
     while not self.arePtsClose(p1, p2):
       pc = midpoint(p1, p2)
-      if node.containsPt(pc):
+      if inside(pc):
         p2 = pc
       else:
         p1 = pc
