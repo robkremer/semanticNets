@@ -217,6 +217,35 @@ class TestOntology(unittest.TestCase):
       books = {str(n.name) for n in m.values() if isinstance(n, Node) and n.isIndividual() and n.isa(book)}
       self.assertEqual(books, names)
 
+  def test_typesFromTheOntology(self):
+    '''A value is made the type its attribute has in the ontology (made from
+    another file), if it can be without losing anything; if not, it's kept as
+    text beside it, and the log says so.'''
+    shared = str(self.folder / "devices.snm")
+    self.xml.write_text('<house><dev id="d1"><temp>20</temp><level>1.5</level></dev><dev id="d2"><temp>19</temp><level>2.5</level></dev></house>')
+    m1, o = self.reader.buildModel(str(self.xml), self.modelPath, shared)
+    o.save()
+    m1.save()
+    dev = self.types(o)["dev"]
+    self.assertIs(dev.getAttr("property/temp").type, int)
+    self.assertIs(dev.getAttr("property/level").type, float)
+    xml2 = self.folder / "other.xml"
+    xml2.write_text('<house><dev id="e1"><temp>20.5</temp><level>3</level></dev><dev id="e2"><temp>21.0</temp><level>4</level></dev>'
+                    '<dev id="e3"><temp>warm</temp><level>5</level></dev></house>')
+    with self.assertLogs(self.reader.logger, "WARNING") as logs:
+      m2, _ = self.reader.buildModel(str(xml2), self.reader.outputPaths(str(xml2))[0], o)
+    e = {str(n.name): n for n in m2.values() if isinstance(n, Node) and n.isIndividual()}
+    self.assertEqual((e["e1"]["property/level"], e["e2"]["property/temp"]), (3.0, 21)) # (as the ontology's types)
+    self.assertIsInstance(e["e1"]["property/level"], float)
+    self.assertEqual((e["e1"]["property/temp/text"], e["e3"]["property/temp/text"]), ("20.5", "warm"))
+    self.assertIsNone(e["e1"].getLocalAttr("property/temp"))
+    [message] = [r.getMessage() for r in logs.records]
+    self.assertIn("dev's property/temp is an int, but 2 of its values in other.xml aren't (eg: '20.5')", message)
+    o.save()
+    m2.save()
+    Model._initCache()
+    Model.getDB(Path(self.modelPath).as_uri()) # (the first file's model still reads: the ontology's types are as they were)
+
   def test_unchangeable(self):
     '''On an ontology that's not to be changed: it's left as it is, and the types,
     has-<tag>s and subtypes it hasn't go in the model; an attribute its types

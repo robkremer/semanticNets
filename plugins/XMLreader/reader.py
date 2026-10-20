@@ -79,8 +79,8 @@ import xml.etree.ElementTree as ET
 from urllib.parse import unquote, urlparse
 import sn
 from sn.model.model import GraphObject, Model, Node, Relation
-from util.attribute import Attribute, VAR_DEFAULTED
-from .schema import Schema, Hints, Field, PROPERTY, attributes, children, convert, elements, localName, text
+from util.attribute import Attribute, VAR_DEFAULTED, typeAsString
+from .schema import Schema, Hints, Field, NO_FIT, PROPERTY, attributes, children, convert, elements, fit, localName, text
 
 HAS_PART = "xml-has-part"
 "The relation type every has-<tag> is a kind of: from an element to each element in it."
@@ -401,6 +401,7 @@ def buildModel(xmlPath:str, modelPath:str, ontology:Model|str|None=None, extendO
       added.append(f"{PART_OF} (and its definition)")
   refersTo:Relation|None = next(iter(relationsByName.get(REFERS_TO, [])), None)
   unchanged:list[str] = [] # (attributes its types haven't, which the ontology can't be given)
+  misfits:dict[tuple[str, str], list[str]] = {} # (tag, attribute) -> the values that aren't of its type in the ontology
   kinds = {(localName(e.tag), k) for e in elements(root) if schema.isNode(localName(e.tag)) and (k := schema.kindOf(e)) is not None}
   types:dict[str, Node] = {}                 # tag -> its type
   typeAttributes:dict[str, dict[str, None]] = {} # tag -> the attribute keys its type has (in the order they're first seen)
@@ -497,6 +498,17 @@ def buildModel(xmlPath:str, modelPath:str, ontology:Model|str|None=None, extendO
     ranges = {t for (_, f), t in schema.references.items() if f == field}
     return relationTypeFor(field, refersTo, typeFor(target) if target is not None and ranges == {target} else None)
 
+  def put(ind:Node, tag:str, key:str, value:str, typ:type) -> None:
+    # (as the type it has -- eg: in an ontology made from another file -- if there is one; else as *typ*)
+    have = ind.getAttr(key)
+    v = fit(value, have.type) if have is not None and have.type is not None else convert(value, typ)
+    if v is NO_FIT: # (eg: "20.5", where the ontology's is an int: kept, as text, beside it)
+      misfits.setdefault((tag, key), []).append(value)
+      addTypeAttribute(tag, f"{key}/text", str, f"A value of {key} that isn't of its type, as text.")
+      ind[f"{key}/text"] = value
+    elif v is not None:
+      ind[key] = v #type: ignore[assignment]
+
   def individualFor(elem:ET.Element) -> Node:
     tag = localName(elem.tag)
     t = typeFor(tag)
@@ -510,20 +522,18 @@ def buildModel(xmlPath:str, modelPath:str, ontology:Model|str|None=None, extendO
       if value is None:
         continue
       addTypeAttribute(tag, f.key, f.typ, fieldNote(tag, f))
-      v = convert(value, f.typ)
-      if v is not None:
-        ind[f.key] = v #type: ignore[assignment]
+      put(ind, tag, f.key, value, f.typ)
       leaf = schema.fieldElement(elem, f)
       if leaf is not None:
         for k, x in schema.propertyExtras(f, leaf).items():
           addTypeAttribute(tag, k, str, f'An XML attribute of the <{"><".join(f.path)}> subelement of <{tag}> elements.')
-          ind[k] = x
+          put(ind, tag, k, x, str)
       if (tag, f.name) in schema.references and len(schema.identified.get(value, ())) == 1:
         pending.append((ind, tag, f.name, schema.identified[value][0][1]))
     own = text(elem)
     if own:
       addTypeAttribute(tag, "text", str, f"The text of a <{tag}> element.")
-      ind["text"] = own
+      put(ind, tag, "text", own, str)
     for child in children(elem):
       ctag = localName(child.tag)
       if schema.isNode(ctag):
@@ -549,4 +559,12 @@ def buildModel(xmlPath:str, modelPath:str, ontology:Model|str|None=None, extendO
   if unchanged:
     logger.info(f"{os.path.basename(o.url)} can't be changed, so these attributes are just in the elements, "
                 "not in their types: " + ", ".join(unchanged) + ".")
+  for (tag, key), values in misfits.items():
+    a = types[tag].getAttr(key)
+    kind = str(typeAsString(a.type) if a is not None and a.type is not None else "?")
+    some = "1 of its values" if len(values) == 1 else f"{len(values)} of its values"
+    logger.warning(f"In {os.path.basename(o.url)}, {tag}'s {key} is {'an' if kind[:1] in 'aeiou' else 'a'} {kind}, but {some} in "
+                   f"{file} {'isn' if len(values) == 1 else 'aren'}'t (eg: {values[0]!r}): kept as text, as {key}/text. To have them "
+                   f"as they are, change its type in the ontology (models already built on it would have to be made again), or make "
+                   f"the ontology afresh from the file with the widest values first (a whole number fits a float; anything fits text).")
   return m, o

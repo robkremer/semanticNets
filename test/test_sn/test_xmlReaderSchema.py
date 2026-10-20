@@ -117,6 +117,14 @@ class TestSchema(unittest.TestCase):
     self.assertIs(d(["on", "off"]), str)
     self.assertIs(d([]), str)
 
+  def test_fit(self):
+    'A value made the type an ontology has for it, if nothing\'s lost.'
+    fit, NO = self.schema.fit, self.schema.NO_FIT
+    self.assertEqual([fit("20", float), fit("20.0", int), fit("-3", int), fit("x", "text"), fit("True", bool), fit("", int)],
+                     [20.0, 20, -3, "x", True, None])
+    self.assertIsInstance(fit("20", float), float)
+    self.assertEqual([fit("20.5", int), fit("warm", float), fit("1", bool), fit("[1]", list)], [NO, NO, NO, NO])
+
   def test_model(self):
     'The model made of it.'
     m, o = self.reader.buildModel(str(self.xml), self.reader.outputPaths(str(self.xml))[0])

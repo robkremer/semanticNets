@@ -138,6 +138,38 @@ def convert(value:str, typ:type) -> object:
     return value.lower() == "true"
   return typ(value)
 
+NO_FIT = object()
+"What *fit()* returns for a value that isn't one of the type asked for."
+
+def fit(value:str, typ:object) -> object:
+  '''
+  :param value: A field's value, as in the XML.
+  :param typ: The datatype of the attribute it's to be (eg: an ontology's,
+    made from another file): a type, or a name of one (eg: "text": see
+    *util.attribute.TYPE_EQUIVALENTS*).
+  :returns: *value* as one of *typ*, if it can be without losing anything
+    (eg: "20" as a float, or "20.0" as an int; anything as a string; None if
+    it's empty, and *typ* isn't a string type); else *NO_FIT* (eg: "20.5" as
+    an int).
+  '''
+  from util.attribute import TYPE_EQUIVALENTS
+  py = TYPE_EQUIVALENTS.get(typ) if isinstance(typ, str) else typ
+  if py is str:
+    return value
+  if value == "":
+    return None
+  if py is bool:
+    return value.lower() == "true" if value.lower() in ("true", "false") else NO_FIT
+  if py is int or py is float:
+    try:
+      number = int(value) if py is int and re.fullmatch(r"-?\d+", value) else float(value)
+    except ValueError:
+      return NO_FIT
+    if py is float:
+      return float(number)
+    return int(number) if float(number).is_integer() else NO_FIT
+  return NO_FIT
+
 @dataclass
 class Hints:
   '''
