@@ -7,8 +7,10 @@
   <property name="src" location="src"/>
   <property name="build" location="build"/>
   <property name="dist" location="dist"/>
-  <!--property name="html" location="${src}/sn/help"/-->
-  <property name="html" location="/Users/kremer/webserver/dev/sn"/>
+  <!-- html: a folder the built HTML is also copied to, eg: to be served locally. Optional, and
+       machine-specific, so it's not set here: put it in build.properties (not in git), eg:
+       html=/path/to/webserver/sn, or give it as ant -Dhtml=... -->
+  <property file="build.properties"/>
   <property name="sphinx" location="sphinx"/>
   <property name="sphinxBuild" location="${sphinx}/build"/>
 	<property name="sphinxHTML" location="${sphinxBuild}/html"/>
@@ -18,7 +20,6 @@
 	<!--property name="condaPythonVersionPath" location="/opt/homebrew/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/${pythonVersion}"/-->
 	<!--property name="condaPythonLibPath" location="${condaPythonVersionPath}/lib/python${pythonVersion}"/-->
 	
-	<!--sphinx-apidoc - -separate - -private - -implicit-namespaces - -module-first - -remove-old -o '/Users/kremer/Library/Mobile Documents/com~apple~CloudDocs/Apps/pythonUtils/sphinx/source/dev' '/Users/kremer/Library/Mobile Documents/com~apple~CloudDocs/Apps/pythonUtils/src/util'-->
 	<target name="rebuildAutoDoc">
 	<exec executable="${pythonVersionPath}/bin/sphinx-apidoc"> <!-- (the same Python as the code and sphinx/Makefile: see pythonVersion) -->
 		<arg value="--separate"/>
@@ -34,7 +35,9 @@
 	</exec>
 	</target>
 	
-	<target name="doc" depends="rebuildAutoDoc" description="Produces the documentation directory using sphinx (regenerating the API pages from the code first)">
+	<target name="doc" depends="buildDoc, copyHtml" description="Produces the documentation directory using sphinx (regenerating the API pages from the code first); copies it to the html folder too, if one is set (see build.properties)."/>
+
+  <target name="buildDoc" depends="rebuildAutoDoc">
 	<delete includeEmptyDirs="false"> <!-- clean the build directory -->
 	  <fileset dir="${sphinxBuild}"/>
 	</delete>
@@ -46,8 +49,11 @@
 	<copy todir="${sphinxHTML}/images"> <!-- copy the build directory to the help directory -->
 		<fileset dir="${sphinx}/source/images" includes="**"/>
 	</copy>
+  </target>
+
+  <target name="copyHtml" if="html"> <!-- (skipped when html isn't set) -->
 	<delete includeEmptyDirs="false"> <!-- clean the help directory -->
-		<fileset dir="${html}"/>
+		<fileset dir="${html}" erroronmissingdir="false"/>
   	</delete>
 	<copy todir="${html}"> <!-- copy the build directory to the help directory -->
 		<fileset dir="${sphinxHTML}" includes="**"/>

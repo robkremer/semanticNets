@@ -43,3 +43,6 @@ src/sn/help/
 # Claude Code per-user settings
 .claude/settings.local.json
 /.pytest_cache/
+
+# --- Machine-specific build settings (eg: html, for ant doc) ---
+build.properties
