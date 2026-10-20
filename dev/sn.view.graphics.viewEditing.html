@@ -1,0 +1,1008 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="sn.view.graphics.viewFiles module" href="sn.view.graphics.viewFiles.html"><link rel="prev" title="sn.view.graphics.viewContainment module" href="sn.view.graphics.viewContainment.html">
+        <link rel="prefetch" href="../_static/sn-logo.png" as="image">
+
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>sn.view.graphics.viewEditing module - Semantic Nets 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">Semantic Nets 1.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">Semantic Nets 1.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user/index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user/concepts.html">Concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/gettingStarted.html">Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/tutorial.html">Worked Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/editing.html">Editing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/contexts.html">Contexts: Rules, Definitions, Queries, Constraints and Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/reasoning.html">Reasoning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/viewing.html">Viewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/layouts.html">Arranging a View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/animation.html">Animation Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/files.html">Files and Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/terminal.html">The Terminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/exampleApps.html">Plugins</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developer/index.html">Developer Guide</a><input aria-label="Toggle navigation of Developer Guide" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html">Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/model.html">The Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/reasoner.html">The Reasoner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/view.html">The Graphical View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/layout.html">Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/extending.html">Building on Semantic Nets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/conventions.html">Conventions and Testing</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="sn.html">sn package</a><input aria-label="Toggle navigation of sn package" checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="sn.controller.html">sn.controller package</a><input aria-label="Toggle navigation of sn.controller package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.controller.modelInterface.html">sn.controller.modelInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current has-children"><a class="reference internal" href="sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" checked="" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3 current has-children"><a class="reference internal" href="sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" checked="" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html">sn.view.graphics.connectors module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.expandDialog.html">sn.view.graphics.expandDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.guiApp.html">sn.view.graphics.guiApp module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html">sn.view.graphics.imageExport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html">sn.view.graphics.labels module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html">sn.view.graphics.layout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutDialog.html">sn.view.graphics.layoutDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutPanel.html">sn.view.graphics.layoutPanel module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.progress.html">sn.view.graphics.progress module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.reasoningToolbar.html">sn.view.graphics.reasoningToolbar module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.relationTable.html">sn.view.graphics.relationTable module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.replaceModelDialog.html">sn.view.graphics.replaceModelDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.searchDialog.html">sn.view.graphics.searchDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.shapes.html">sn.view.graphics.shapes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sngContext.html">sn.view.graphics.sngContext module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sngView.html">sn.view.graphics.sngView module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sourceWindow.html">sn.view.graphics.sourceWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html">sn.view.graphics.treeLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewBase.html">sn.view.graphics.viewBase module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewCommands.html">sn.view.graphics.viewCommands module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewContainment.html">sn.view.graphics.viewContainment module</a></li>
+<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">sn.view.graphics.viewEditing module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewFiles.html">sn.view.graphics.viewFiles module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewInput.html">sn.view.graphics.viewInput module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewLayouts.html">sn.view.graphics.viewLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewReasoning.html">sn.view.graphics.viewReasoning module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewViewport.html">sn.view.graphics.viewViewport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewVisibility.html">sn.view.graphics.viewVisibility module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.visibilityDialog.html">sn.view.graphics.visibilityDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vnodes.html">sn.view.graphics.vnodes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vobjects.html">sn.view.graphics.vobjects module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vrelations.html">sn.view.graphics.vrelations module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.textUserInterface.html">sn.view.textUserInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.__main__.html">sn.__main__ module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html">sn.hooks module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html">sn.plugins module</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../plugins/index.html">The plugins</a><input aria-label="Toggle navigation of The plugins" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.XMLreader.html">snplugins.XMLreader package</a><input aria-label="Toggle navigation of snplugins.XMLreader package" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.reader.html">snplugins.XMLreader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.schema.html">snplugins.XMLreader.schema module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.view.html">snplugins.XMLreader.view module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.pythonParser.html">snplugins.pythonParser package</a><input aria-label="Toggle navigation of snplugins.pythonParser package" class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.dialog.html">snplugins.pythonParser.dialog module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.hooks.html">snplugins.pythonParser.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.parser.html">snplugins.pythonParser.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/dev/sn.view.graphics.viewEditing.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="module-sn.view.graphics.viewEditing">
+<span id="sn-view-graphics-viewediting-module"></span><h1>sn.view.graphics.viewEditing module<a class="headerlink" href="#module-sn.view.graphics.viewEditing" title="Link to this heading">¶</a></h1>
+<p>Editing in a graphical view (<em>EditingMixin</em>): one of the parts of
+<em>sn.view.graphics.sngView.SNGView</em> (see <em>viewBase</em>).</p>
+<p>Created on Oct 18, 2026 (from sngView.py)</p>
+<p><em>Code author: Rob Kremer &lt;<a class="reference external" href="mailto:robkremer&#37;&#52;&#48;me&#46;com">robkremer<span>&#64;</span>me<span>&#46;</span>com</a>&gt;</em></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewEditing.</span></span><span class="sig-name descname"><span class="pre">EditingMixin</span></span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="sn.view.graphics.viewBase.html#sn.view.graphics.viewBase.ViewBase" title="sn.view.graphics.viewBase.ViewBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">ViewBase</span></code></a></p>
+<p>Editing in a view (<em>sn.view.graphics.sngView.SNGView</em>): making new objects
+and relations (and where they go, and naming them), cut, copy and paste,
+copying a picture, erasing from the view or removing from the model,
+showing all of the model, and searching it.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin.addNewObjectMenus">
+<span class="sig-name descname"><span class="pre">addNewObjectMenus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">menu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">at</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">into</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin.addNewObjectMenus" title="Link to this definition">¶</a></dt>
+<dd><p>Add the “new instance of Node”, “new subtype of Node”, “new instance of
+Relation” and “new subtype of Relation” cascades to <em>menu</em>: each with a
+submenu per model (this view’s, its super-models, then sn) of its types.
+What’s made is put at <em>at</em> (see <em>_newObjectLocation()</em>) – and, with
+<em>into</em>, contained in that context window’s pane (one undo for both): eg:
+the menu on a rule’s window, to edit it in place.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>at</strong> (<em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em>) – Where the menu was asked for (view coords).</p></li>
+<li><p><strong>into</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>str</em><em>] </em><em>| </em><em>None</em>) – (a context window, the name of one of its panes: see <em>VObject.panes()</em>), or None.</p></li>
+<li><p><strong>menu</strong> (<em>Menu</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin._newAt">
+<span class="sig-name descname"><span class="pre">_newAt</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><span class="pre">GraphObject</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin._newAt" title="Link to this definition">¶</a></dt>
+<dd><p>Where the background menu that’s making a node was asked for (view coords),
+and the type it’s making one of, until it’s made (see <em>makeMenu()</em>, <em>_newObjectLocation()</em>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin._placeNew">
+<span class="sig-name descname"><span class="pre">_placeNew</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">under</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin._placeNew" title="Link to this definition">¶</a></dt>
+<dd><p>Move a newly made view object to the nearest free place (see <em>FindFree</em>):
+below <em>under</em> (its supertype), if that’s given – or wherever the view’s
+dynamic layout puts it – and then let that layout adjust the rest (see
+<em>ViewDoList.adjustAgain()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vo</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p></li>
+<li><p><strong>under</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin._selectedModelObjects">
+<span class="sig-name descname"><span class="pre">_selectedModelObjects</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">orAll</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin._selectedModelObjects" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>orAll</strong> (<em>bool</em>) – If nothing’s selected, everything shown instead (as “select
+all” would select: see <em>selectAll()</em>).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The model objects of what’s selected, in the order they’re drawn
+(top to bottom, left to right).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin._shownObjects">
+<span class="sig-name descname"><span class="pre">_shownObjects</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin._shownObjects" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>What’s shown: what <em>selectAll()</em> selects (not what’s hidden).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin._geometryOf">
+<span class="sig-name descname"><span class="pre">_geometryOf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">objects</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin._geometryOf" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>objects</strong> (<em>Iterable</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>]</em>) – Model objects.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>How this view shows each of <em>objects</em> that it shows (by <em>id()</em>
+of the object): what <em>showPasted()</em> needs to show a copy of it the same
+way (see <em>copying.Clip.geometry</em>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[int, dict[str, <em>Any</em>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin.doCopy">
+<span class="sig-name descname"><span class="pre">doCopy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cut</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin.doCopy" title="Link to this definition">¶</a></dt>
+<dd><p>Copy what’s selected – or, if nothing is, everything shown – to the
+clipboard (see <em>ModelContext.copy()</em>), with how this view shows it, so a
+paste shows the copies the same way (see <em>showPasted()</em>). With <em>cut</em>,
+remove it from the model too (undoably) – only what’s selected: not
+everything, just because nothing is.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cut</strong> (<em>bool</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin.doPaste">
+<span class="sig-name descname"><span class="pre">doPaste</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">at</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin.doPaste" title="Link to this definition">¶</a></dt>
+<dd><p>Paste what was last cut or copied (see <em>ModelContext.paste()</em>), and show
+it (see <em>showPasted()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>at</strong> (<em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – Where to put it (view coords: the top left of what’s pasted), or
+None to put it where it was (or beside it, if that’s taken).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin._editAction">
+<span class="sig-name descname"><span class="pre">_editAction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">action</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin._editAction" title="Link to this definition">¶</a></dt>
+<dd><p>“Edit | Cut”, “Copy”, “Paste” or “Select All” in the menu bar: for the
+terminal’s text, if that has the keyboard focus, else for the canvas.
+(“Copy as picture” is always the canvas’s: see <em>doCopyImage()</em>.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>action</strong> (<em>str</em>) – “cut”, “copy”, “paste”, “select all” or “copy image”.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin.selectAll">
+<span class="sig-name descname"><span class="pre">selectAll</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin.selectAll" title="Link to this definition">¶</a></dt>
+<dd><p>Select everything that’s shown: not what’s hidden (eg: a hidden category,
+or what’s in a collapsed window).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin.onEditKey">
+<span class="sig-name descname"><span class="pre">onEditKey</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin.onEditKey" title="Link to this definition">¶</a></dt>
+<dd><p>Cmd-X, Cmd-C, Cmd-V or Cmd-A on the canvas (see <em>_editAction()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>action</strong> (<em>str</em>) – “cut”, “copy”, “paste”, “select all” or “copy image”.</p></li>
+<li><p><strong>event</strong> (<em>Event</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>“break”: it’s been dealt with.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin.pictureObjects">
+<span class="sig-name descname"><span class="pre">pictureObjects</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin.pictureObjects" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>What a picture of the selection shows (see <em>doCopyImage()</em>):
+what’s selected, what’s in any selected context windows (at any depth),
+and the relations between any of those – as far as they’re shown; or,
+if nothing’s selected, everything shown.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin.doCopyImage">
+<span class="sig-name descname"><span class="pre">doCopyImage</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin.doCopyImage" title="Link to this definition">¶</a></dt>
+<dd><p>Put a picture of what’s selected – or, if nothing is, of everything
+shown – (see <em>pictureObjects()</em>), as it’s drawn (but without the
+selection’s handles), on the system clipboard, as a PNG: to paste into
+another program (see <em>imageExport</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin.onDeleteKey">
+<span class="sig-name descname"><span class="pre">onDeleteKey</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fromModel</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin.onDeleteKey" title="Link to this definition">¶</a></dt>
+<dd><p>Delete: erase what’s selected from the view (see <em>doErase()</em>); Shift-Delete:
+remove it from the model (see <em>doRemove()</em>), after asking.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>event</strong> (<em>Event</em>)</p></li>
+<li><p><strong>fromModel</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>“break”</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin.doErase">
+<span class="sig-name descname"><span class="pre">doErase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vos</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin.doErase" title="Link to this definition">¶</a></dt>
+<dd><p>Erase <em>vos</em> from this view (the model keeps their objects): one undo.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>vos</strong> (<em>list</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>]</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin.doEraseOthers">
+<span class="sig-name descname"><span class="pre">doEraseOthers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">keep</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin.doEraseOthers" title="Link to this definition">¶</a></dt>
+<dd><p>Erase everything but <em>keep</em> from this view (the model keeps their
+objects): one undo. Also kept are what <em>keep</em> needs to make sense (see
+<em>keptWith()</em>): the relations among the kept objects, the ends of the kept
+relations, and the context windows the kept objects are in. For working
+on a small part of a big view.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>keep</strong> (<em>list</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>]</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin.doRemove">
+<span class="sig-name descname"><span class="pre">doRemove</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confirm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin.doRemove" title="Link to this definition">¶</a></dt>
+<dd><p>Remove the model objects of <em>vos</em> from the model – and so from every view
+of it: one undo. What can’t be removed here is left, with a message: what
+the reasoner inferred (mark it asserted first), and what’s in another
+model, or a write-locked one, or is a system object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>confirm</strong> (<em>bool</em>) – Ask first (eg: for a key press, which is easily made by mistake).</p></li>
+<li><p><strong>vos</strong> (<em>list</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin.PASTE_GAP">
+<span class="sig-name descname"><span class="pre">PASTE_GAP</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">40</span></span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin.PASTE_GAP" title="Link to this definition">¶</a></dt>
+<dd><p>The space (view units) left between pasted objects and what’s beside them (see <em>_pasteOffset()</em>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin._pasteOffset">
+<span class="sig-name descname"><span class="pre">_pasteOffset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">boxes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">at</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin._pasteOffset" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>boxes</strong> (<em>list</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>) – Where the pasted objects were (their bounding boxes).</p></li>
+<li><p><strong>at</strong> (<em>tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>] </em><em>| </em><em>None</em>) – Where the top left of them all is to go, or None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>How far to move them from where they were: to <em>at</em>; else not at
+all, if nothing’s there now (eg: they were cut, or copied from another
+view); else the least distance to the right or down to where nothing is.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[int, int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin.showPasted">
+<span class="sig-name descname"><span class="pre">showPasted</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clip</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">made</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">at</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin.showPasted" title="Link to this definition">¶</a></dt>
+<dd><p>Show the objects just pasted (by <em>SNGContext.paste()</em>) as the view they were
+copied from showed them (see <em>copying.Clip.geometry</em>): the same sizes and
+layout – a pasted rule’s window with its contents in place – moved
+together (see <em>_pasteOffset()</em>). What wasn’t shown there (eg: an erased isa
+link) is shown, or not, as any new object is (see <em>update()</em>), but without
+asking for its name. Then what was asked to be copied is selected, so it
+can be dragged away at once.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>clip</strong> (<a class="reference internal" href="sn.model.copying.html#sn.model.copying.Clip" title="sn.model.copying.Clip"><em>copying.Clip</em></a>) – What was pasted (a <em>copying.Clip</em>).</p></li>
+<li><p><strong>made</strong> (<em>list</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>]</em>) – The new objects, by entry of <em>clip</em> (see <em>copying.pasteInto()</em>).</p></li>
+<li><p><strong>at</strong> (<em>tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>] </em><em>| </em><em>None</em>) – Where to put the top left of them all (view coords), or None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin.scrollToShow">
+<span class="sig-name descname"><span class="pre">scrollToShow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">box</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">margin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin.scrollToShow" title="Link to this definition">¶</a></dt>
+<dd><p>Scroll the canvas, if need be, so that <em>box</em> is in sight – the least it
+takes (as much of it as fits, from its top left).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>box</strong> (<em>list</em><em>[</em><em>float</em><em>]</em>) – A rectangle, in view coords.</p></li>
+<li><p><strong>margin</strong> (<em>int</em>) – Room to leave around it (canvas pixels).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin.findAGoodLocation">
+<span class="sig-name descname"><span class="pre">findAGoodLocation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mObject</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin.findAGoodLocation" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mObject</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Where to start looking for a place for a new view object for
+<em>mObject</em> (see <em>_newObjectLocation()</em>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[int, int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin._newObjectLocation">
+<span class="sig-name descname"><span class="pre">_newObjectLocation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mObject</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin._newObjectLocation" title="Link to this definition">¶</a></dt>
+<dd><p>Where to start looking for a place for a new view object for <em>mObject</em>
+(the nearest free place to it is used: see <em>makeViewObjectForGraphObject()</em>):
+where the background menu making it was asked for, if it was; else just
+below its (first) supertype, if that’s shown; else at the cursor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mObject</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(x, y, and the supertype’s view object, if it’s below that).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[int, int, <a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a> | None]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin.NEW_BELOW_GAP">
+<span class="sig-name descname"><span class="pre">NEW_BELOW_GAP</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">40</span></span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin.NEW_BELOW_GAP" title="Link to this definition">¶</a></dt>
+<dd><p>How far below its supertype (view units) a new object is put (see <em>_newObjectLocation()</em>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin.cursorViewPoint">
+<span class="sig-name descname"><span class="pre">cursorViewPoint</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin.cursorViewPoint" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The graphics cursor’s position in view coordinates (ie: allowing
+for the canvas’s scroll position and the zoom). If the cursor isn’t over
+the canvas (eg: the command came from the text terminal), the top-left
+of the visible part of the canvas instead, so the result is on screen.
+(0, 0) if there’s no canvas.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[int, int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin._attachDanglingEnds">
+<span class="sig-name descname"><span class="pre">_attachDanglingEnds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vo</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin._attachDanglingEnds" title="Link to this definition">¶</a></dt>
+<dd><p><em>vo</em> has just been added to the view: relations already here whose own
+endpoint is <em>vo</em>’s model object, but which were left dangling because it
+wasn’t shown (eg: top – see <em>VRelation._resolveEnd()</em> – or an erased
+object), attach to it. Only the model object’s own relations (a relation
+is on its local ends’ <em>_outgoing</em>/<em>_incoming</em>: see <em>Relation.validate()</em>)
+are looked at, through the view’s index: not every object in the view,
+which made adding many objects take the square of the time.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>vo</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin.showAllModel">
+<span class="sig-name descname"><span class="pre">showAllModel</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin.showAllModel" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin.search">
+<span class="sig-name descname"><span class="pre">search</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pattern</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wholeWord</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">matchCase</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wholeModel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">superModels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confirm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin.search" title="Link to this definition">¶</a></dt>
+<dd><p>Highlight the nodes and relations in the view whose names match <em>pattern</em>
+(see <em>sn.model.model.nameMatcher()</em>) – not isa links, nor those not drawn
+just now (see <em>VObject.isHidden()</em>) – replacing any earlier highlights,
+and scroll to show them. With <em>wholeModel</em>, those in the model (and, with
+<em>superModels</em>, its super-models) that aren’t in the view are shown first
+(one undoable command: see <em>represent()</em>), even if they’re in a hidden or
+erased category; and so are any of those in the view in such a category.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pattern</strong> (<em>str</em>) – What to look for in names.</p></li>
+<li><p><strong>wholeWord</strong> (<em>bool</em>) – See <em>nameMatcher()</em>.</p></li>
+<li><p><strong>matchCase</strong> (<em>bool</em>) – See <em>nameMatcher()</em>.</p></li>
+<li><p><strong>regex</strong> (<em>bool</em>) – See <em>nameMatcher()</em>.</p></li>
+<li><p><strong>wholeModel</strong> (<em>bool</em>) – Look in the model too, and show what’s found.</p></li>
+<li><p><strong>superModels</strong> (<em>bool</em>) – With <em>wholeModel</em>: in its super-models too.</p></li>
+<li><p><strong>confirm</strong> (<em>Callable</em><em>[</em><em>[</em><em>int</em><em>]</em><em>, </em><em>bool</em><em>] </em><em>| </em><em>None</em>) – With <em>wholeModel</em>: asked, with how many objects would be
+shown, whether to show them (eg: there are a lot); None: they are.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The view objects highlighted, and how many were shown.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[list[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>], int]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>re.error</strong> – If <em>regex</em> and <em>pattern</em> isn’t a good regular expression.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin.openSearchDialog">
+<span class="sig-name descname"><span class="pre">openSearchDialog</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin.openSearchDialog" title="Link to this definition">¶</a></dt>
+<dd><p>“Edit | Find…”: open this view’s search dialog (see
+<em>sn.view.graphics.searchDialog.SearchDialog</em>), or bring it to the front.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin.makeRelationFrom">
+<span class="sig-name descname"><span class="pre">makeRelationFrom</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">typ</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin.makeRelationFrom" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>node</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>) – [VObject]</p></li>
+<li><p><strong>typ</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin.makeRelation">
+<span class="sig-name descname"><span class="pre">makeRelation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fromNode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">toNode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">typ</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin.makeRelation" title="Link to this definition">¶</a></dt>
+<dd><p>Make an individual relation of type <em>typ</em> from <em>fromNode</em> to <em>toNode</em> –
+or, if <em>toNode</em> is None, with no destination of its own (so it inherits
+<em>typ</em>’s range: it’s drawn to that, faded, or dangling if that’s top).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fromNode</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p></li>
+<li><p><strong>toNode</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>typ</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin._askName">
+<span class="sig-name descname"><span class="pre">_askName</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mo</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin._askName" title="Link to this definition">¶</a></dt>
+<dd><p>Ask for a new object’s name (and anything else about it), in the
+attribute editor – unless it’s gone (eg: undone).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mo</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="sn.view.graphics.viewFiles.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">sn.view.graphics.viewFiles module</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="sn.view.graphics.viewContainment.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">sn.view.graphics.viewContainment module</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2023-2026, Rob Kremer
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">sn.view.graphics.viewEditing module</a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin"><code class="docutils literal notranslate"><span class="pre">EditingMixin</span></code></a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.addNewObjectMenus"><code class="docutils literal notranslate"><span class="pre">EditingMixin.addNewObjectMenus()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin._newAt"><code class="docutils literal notranslate"><span class="pre">EditingMixin._newAt</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin._placeNew"><code class="docutils literal notranslate"><span class="pre">EditingMixin._placeNew()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin._selectedModelObjects"><code class="docutils literal notranslate"><span class="pre">EditingMixin._selectedModelObjects()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin._shownObjects"><code class="docutils literal notranslate"><span class="pre">EditingMixin._shownObjects()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin._geometryOf"><code class="docutils literal notranslate"><span class="pre">EditingMixin._geometryOf()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.doCopy"><code class="docutils literal notranslate"><span class="pre">EditingMixin.doCopy()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.doPaste"><code class="docutils literal notranslate"><span class="pre">EditingMixin.doPaste()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin._editAction"><code class="docutils literal notranslate"><span class="pre">EditingMixin._editAction()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.selectAll"><code class="docutils literal notranslate"><span class="pre">EditingMixin.selectAll()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.onEditKey"><code class="docutils literal notranslate"><span class="pre">EditingMixin.onEditKey()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.pictureObjects"><code class="docutils literal notranslate"><span class="pre">EditingMixin.pictureObjects()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.doCopyImage"><code class="docutils literal notranslate"><span class="pre">EditingMixin.doCopyImage()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.onDeleteKey"><code class="docutils literal notranslate"><span class="pre">EditingMixin.onDeleteKey()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.doErase"><code class="docutils literal notranslate"><span class="pre">EditingMixin.doErase()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.doEraseOthers"><code class="docutils literal notranslate"><span class="pre">EditingMixin.doEraseOthers()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.doRemove"><code class="docutils literal notranslate"><span class="pre">EditingMixin.doRemove()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.PASTE_GAP"><code class="docutils literal notranslate"><span class="pre">EditingMixin.PASTE_GAP</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin._pasteOffset"><code class="docutils literal notranslate"><span class="pre">EditingMixin._pasteOffset()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.showPasted"><code class="docutils literal notranslate"><span class="pre">EditingMixin.showPasted()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.scrollToShow"><code class="docutils literal notranslate"><span class="pre">EditingMixin.scrollToShow()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.findAGoodLocation"><code class="docutils literal notranslate"><span class="pre">EditingMixin.findAGoodLocation()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin._newObjectLocation"><code class="docutils literal notranslate"><span class="pre">EditingMixin._newObjectLocation()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.NEW_BELOW_GAP"><code class="docutils literal notranslate"><span class="pre">EditingMixin.NEW_BELOW_GAP</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.cursorViewPoint"><code class="docutils literal notranslate"><span class="pre">EditingMixin.cursorViewPoint()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin._attachDanglingEnds"><code class="docutils literal notranslate"><span class="pre">EditingMixin._attachDanglingEnds()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.showAllModel"><code class="docutils literal notranslate"><span class="pre">EditingMixin.showAllModel()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.search"><code class="docutils literal notranslate"><span class="pre">EditingMixin.search()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.openSearchDialog"><code class="docutils literal notranslate"><span class="pre">EditingMixin.openSearchDialog()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.makeRelationFrom"><code class="docutils literal notranslate"><span class="pre">EditingMixin.makeRelationFrom()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.makeRelation"><code class="docutils literal notranslate"><span class="pre">EditingMixin.makeRelation()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin._askName"><code class="docutils literal notranslate"><span class="pre">EditingMixin._askName()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

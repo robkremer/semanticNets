@@ -1,0 +1,707 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Animation Layout" href="animation.html"><link rel="prev" title="Viewing" href="viewing.html">
+        <link rel="prefetch" href="../_static/sn-logo.png" as="image">
+
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>Arranging a View - Semantic Nets 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">Semantic Nets 1.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">Semantic Nets 1.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="concepts.html">Concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gettingStarted.html">Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html">Worked Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="editing.html">Editing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contexts.html">Contexts: Rules, Definitions, Queries, Constraints and Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reasoning.html">Reasoning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="viewing.html">Viewing</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Arranging a View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="animation.html">Animation Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="files.html">Files and Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="terminal.html">The Terminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exampleApps.html">Plugins</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developer/index.html">Developer Guide</a><input aria-label="Toggle navigation of Developer Guide" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html">Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/model.html">The Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/reasoner.html">The Reasoner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/view.html">The Graphical View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/layout.html">Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/extending.html">Building on Semantic Nets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/conventions.html">Conventions and Testing</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../dev/sn.html">sn package</a><input aria-label="Toggle navigation of sn package" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.controller.html">sn.controller package</a><input aria-label="Toggle navigation of sn.controller package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.controller.modelInterface.html">sn.controller.modelInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.examples.html">sn.examples package</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.constraints.html">sn.model.constraints module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.copying.html">sn.model.copying module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.directory.html">sn.model.directory module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.model.html">sn.model.model module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.reasoner.html">sn.model.reasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../dev/sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.connectors.html">sn.view.graphics.connectors module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.expandDialog.html">sn.view.graphics.expandDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.guiApp.html">sn.view.graphics.guiApp module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.imageExport.html">sn.view.graphics.imageExport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.labels.html">sn.view.graphics.labels module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.layout.html">sn.view.graphics.layout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.layoutDialog.html">sn.view.graphics.layoutDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.layoutPanel.html">sn.view.graphics.layoutPanel module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.progress.html">sn.view.graphics.progress module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.reasoningToolbar.html">sn.view.graphics.reasoningToolbar module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.relationTable.html">sn.view.graphics.relationTable module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.replaceModelDialog.html">sn.view.graphics.replaceModelDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.searchDialog.html">sn.view.graphics.searchDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.shapes.html">sn.view.graphics.shapes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.sngContext.html">sn.view.graphics.sngContext module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.sngView.html">sn.view.graphics.sngView module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.sourceWindow.html">sn.view.graphics.sourceWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.treeLayout.html">sn.view.graphics.treeLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewBase.html">sn.view.graphics.viewBase module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewCommands.html">sn.view.graphics.viewCommands module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewContainment.html">sn.view.graphics.viewContainment module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewEditing.html">sn.view.graphics.viewEditing module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewFiles.html">sn.view.graphics.viewFiles module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewInput.html">sn.view.graphics.viewInput module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewLayouts.html">sn.view.graphics.viewLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewReasoning.html">sn.view.graphics.viewReasoning module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewViewport.html">sn.view.graphics.viewViewport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewVisibility.html">sn.view.graphics.viewVisibility module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.visibilityDialog.html">sn.view.graphics.visibilityDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.vnodes.html">sn.view.graphics.vnodes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.vobjects.html">sn.view.graphics.vobjects module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.vrelations.html">sn.view.graphics.vrelations module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.view.textUserInterface.html">sn.view.textUserInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.__main__.html">sn.__main__ module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.hooks.html">sn.hooks module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.plugins.html">sn.plugins module</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../plugins/index.html">The plugins</a><input aria-label="Toggle navigation of The plugins" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.XMLreader.html">snplugins.XMLreader package</a><input aria-label="Toggle navigation of snplugins.XMLreader package" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.reader.html">snplugins.XMLreader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.schema.html">snplugins.XMLreader.schema module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.view.html">snplugins.XMLreader.view module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.pythonParser.html">snplugins.pythonParser package</a><input aria-label="Toggle navigation of snplugins.pythonParser package" class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.dialog.html">snplugins.pythonParser.dialog module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.hooks.html">snplugins.pythonParser.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.parser.html">snplugins.pythonParser.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/user/layouts.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="arranging-a-view">
+<h1>Arranging a View<a class="headerlink" href="#arranging-a-view" title="Link to this heading">¶</a></h1>
+<p>You can put everything where you want it by dragging (see <a class="reference internal" href="editing.html"><span class="doc">Editing</span></a>),
+but the program can arrange a view for you too. The background menu’s
+<strong>view | layout</strong> has three kinds of layout:</p>
+<dl class="simple">
+<dt><strong>arrange now</strong></dt><dd><p>Arrange the view once, all at once: what moves glides to its new place.
+It’s one command, so <strong>Cmd-Z</strong> puts everything back.</p>
+</dd>
+<dt><strong>keep arranged</strong></dt><dd><p>Choose the layout that keeps the view arranged <em>as it changes</em>: after
+each change (something made, shown, erased, dropped…), it arranges
+things again, as part of the same command – so undoing the change undoes
+the rearranging too. A view has one of these at a time; the menu ticks
+it. The default, <strong>avoid overlaps</strong>, only finds a clear place for what’s
+new, and nudges what you drop off whatever it landed on.</p>
+</dd>
+<dt><strong>animate</strong></dt><dd><p>The animation layout: objects push and pull one another until they
+settle, and you watch it happen. See <a class="reference internal" href="animation.html"><span class="doc">Animation Layout</span></a>.</p>
+</dd>
+</dl>
+<p>A layout with settings (its menu item ends with “…”) opens its page in the
+layout panel (see below), to choose them there; one without is done straight
+away. A view saves which layout keeps it arranged, and the settings you used,
+with the view.</p>
+<p>What’s arranged is the nodes shown – and the relation types shown, which are
+arranged just as nodes are (eg: <em>has-parent</em> under <em>has-ancestor</em>, by
+<strong>isa</strong>). Individual relations follow their ends; context windows (rules,
+queries, …) and what’s in them are left as they are; and what’s hidden
+stays where it is.</p>
+<section id="the-layout-panel">
+<h2>The layout panel<a class="headerlink" href="#the-layout-panel" title="Link to this heading">¶</a></h2>
+<p><strong>View | Layout panel</strong> (in the menu bar), or <strong>view | layout | layout
+panel…</strong> on the background menu, shows a panel at the right of the window,
+beside the canvas, for trying layouts out. Drag its divider to make it wider
+or narrower; drag it most of the way to the right, or click the <strong>×</strong> at its
+top, and it closes. While it’s closed, a narrow strip with a <strong>‹</strong> runs down
+the window’s right edge: click it, or drag it out, to open the panel again.</p>
+<ul class="simple">
+<li><p>At its top, <strong>Arrange now</strong>, <strong>Keep arranged</strong> and <strong>Animate</strong> switch
+between the three kinds of layout. For the first two, a list of the layouts
+of that kind is under them – the one keeping the view arranged is ticked –
+and choosing one shows its page.</p></li>
+<li><p>Under them is a bar of buttons, which stays put however far the page below
+is scrolled. For a layout: <strong>Arrange</strong> (arrange the view with it once: one
+command, so <strong>Cmd-Z</strong> puts everything back) or <strong>Use</strong> (make it the layout
+that keeps the view arranged), and <strong>Revert</strong> (put back the settings it was
+last used with). For <strong>Animate</strong>: the animation layout’s start/stop button
+and what it’s doing (see <a class="reference internal" href="animation.html"><span class="doc">Animation Layout</span></a>).</p></li>
+<li><p>A layout’s page has its settings, starting with the ones you used last time
+in this view. Settings you’ve changed but not yet used are kept while you
+look at other pages.</p></li>
+<li><p>The <strong>Animate</strong> page has the animation layout’s settings: see
+<a class="reference internal" href="animation.html"><span class="doc">Animation Layout</span></a>.</p></li>
+</ul>
+<p>Whether the panel’s shown, what it shows, and how wide it is are saved with
+the view.</p>
+</section>
+<section id="the-layouts">
+<h2>The layouts<a class="headerlink" href="#the-layouts" title="Link to this heading">¶</a></h2>
+<div class="table-wrapper docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>layout</p></th>
+<th class="head"><p>arrange
+now</p></th>
+<th class="head"><p>keep
+arranged</p></th>
+<th class="head"><p>what it does</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>tree</strong></p></td>
+<td><p>yes</p></td>
+<td><p>yes</p></td>
+<td><p>trees by relation types, in levels</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>balloon</strong></p></td>
+<td><p>yes</p></td>
+<td><p>yes</p></td>
+<td><p>trees, each node’s children in a ring round it</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>radial</strong></p></td>
+<td><p>yes</p></td>
+<td><p>yes</p></td>
+<td><p>trees, each level on a circle round the root</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>hubs</strong></p></td>
+<td><p>yes</p></td>
+<td><p>yes</p></td>
+<td><p>the most connected nodes as hubs, the rest round them</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>gather nodes</strong></p></td>
+<td><p>yes</p></td>
+<td></td>
+<td><p>pulls in objects that have strayed far from the rest</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>avoid overlaps</strong></p></td>
+<td></td>
+<td><p>yes</p></td>
+<td><p>(the default) places what’s new, and what’s dropped</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>none</strong></p></td>
+<td></td>
+<td><p>yes</p></td>
+<td><p>leaves things where they are</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<section id="trees">
+<h3>Trees<a class="headerlink" href="#trees" title="Link to this heading">¶</a></h3>
+<p>The <strong>tree</strong>, <strong>balloon</strong> and <strong>radial</strong> layouts all see the nodes as
+<em>trees</em>, by relation types: by <strong>isa</strong>, a type is the parent of its
+subtypes and instances; by <em>has-parent</em>, a parent of their children; by
+<em>includes</em>, a package of its modules. They ask:</p>
+<dl>
+<dt><strong>Relations</strong></dt><dd><p>A table of the relation types shown in the view, and their supertypes, as
+a tree – each subtype indented under its supertype – with what each
+does:</p>
+<ul class="simple">
+<li><p><strong>parent: destination</strong> or <strong>parent: source</strong>: it shapes the tree: its
+relations relate parents to children. The parent is the relation’s
+<strong>destination</strong> for <em>isa</em> (<em>dog</em> isa <em>animal</em>: the parent is <em>animal</em>)
+and for <code class="docutils literal notranslate"><span class="pre">has-*</span></code> relations (<em>carol</em> has-parent <em>alice</em>), and its
+<strong>source</strong> for relations like <em>includes</em> (a package includes its
+modules).</p></li>
+<li><p><strong>pulls together</strong>: its relations don’t make trees, but they’re what
+joins trees (see <strong>Trees related to one another</strong>) and puts the nodes in
+no tree near what they’re related to.</p></li>
+<li><p><strong>ignored</strong>: its relations don’t count at all.</p></li>
+<li><p><strong>as</strong> <em>a supertype</em>: it has no row of its own: it does what its
+nearest supertype with a row does (or, if none has one, pulls together).</p></li>
+</ul>
+<p>So a row for a supertype stands for all its subtypes, unless one has a
+row of its own: eg: for the XML reader’s models, one for <em>xml-has-part</em>
+does for every <em>has-…</em> relation. A supertype’s <strong>▸</strong> shows its subtypes
+(<strong>▾</strong> hides them again): it starts closed, unless one of them has a row
+of its own. A node’s children are grouped by the row they’re related by,
+then by which of its relation type’s subtypes (eg: a package’s modules,
+then its sub-packages). The higher rows win: a node with two parents goes
+under the one related by the higher row – move a relation type (with its
+subtypes) up or down among its siblings with its <strong>↑</strong> and <strong>↓</strong>. The row
+<strong>(domain and range of relation types)</strong> is the relation types’ own ends:
+as if each relation type shown were related to its domain and its range
+(the parent is the <strong>destination</strong>: the relation type goes under them, if
+the row shapes the tree).</p>
+<p>To start with, <em>isa</em> shapes the trees, and everything else pulls together.</p>
+</dd>
+<dt><strong>Grows</strong> (tree only)</dt><dd><p>Which way the trees grow, from the root to the leaves: right, down, left
+or up.</p>
+</dd>
+<dt><strong>Space between neighbours</strong></dt><dd><p>How far apart neighbouring nodes are kept.</p>
+</dd>
+<dt><strong>Compact</strong> (tree only)</dt><dd><p>Tuck subtrees in beside each other where there’s room, rather than giving
+each a band of its own: smaller, for big, uneven trees.</p>
+</dd>
+<dt><strong>Nodes in no tree</strong></dt><dd><p>What to do with the nodes that aren’t in any tree: <strong>leave</strong> them where
+they are; put them in <strong>rows</strong> after the trees; or put each <strong>near</strong> what
+it’s related to (and those related to nothing in rows).</p>
+</dd>
+<dt><strong>Trees related to one another</strong> (balloon and radial only)</dt><dd><p>What to do with a tree whose root is related – by a row that pulls
+together (or shapes the trees) – to a node in another tree: <strong>joined</strong>, it goes out beyond that
+node, as if it were one of its children, so the trees make one drawing;
+<strong>apart</strong>, each tree is laid out on its own. (Eg: the XMLreader’s model of
+a file, by <em>has-property</em>, is many small trees – an object and its
+properties – linked by <em>has-object</em>: joined, they make one tree.)
+Joining starts from the trees whose roots aren’t related to another tree.
+In a view kept arranged, a joined tree’s root dropped somewhere stays
+there, a tree of its own.</p>
+</dd>
+</dl>
+<p>A node with two parents goes under the one related by the higher row (or,
+for the same row, the first); a relation that would make a cycle is left out
+of the trees (it’s still drawn).</p>
+<figure class="align-default" id="id1">
+<a class="reference internal image-reference" href="../_images/layout-tree.png"><img alt="The animals taxonomy as a tree growing down: animal at the top, bird and mammal below it, the species below them, and an individual of each at the bottom" src="../_images/layout-tree.png" style="width: 160px;" />
+</a>
+<figcaption>
+<p><span class="caption-text"><strong>tree</strong>, by <em>isa</em>, growing down: each type above its subtypes, and the
+individuals at the bottom.</span><a class="headerlink" href="#id1" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id2">
+<a class="reference internal image-reference" href="../_images/layout-balloon.png"><img alt="The animals taxonomy as balloons: animal in the middle, bird above and mammal below it, each with its species round it, and each species with its individual beyond it" src="../_images/layout-balloon.png" style="width: 260px;" />
+</a>
+<figcaption>
+<p><span class="caption-text"><strong>balloon</strong>, by <em>isa</em>: each node’s children in a ring round it, spread
+away from its parent.</span><a class="headerlink" href="#id2" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id3">
+<a class="reference internal image-reference" href="../_images/layout-radial.png"><img alt="The animals taxonomy laid out radially: animal in the middle, and each level of the hierarchy further out from it" src="../_images/layout-radial.png" style="width: 360px;" />
+</a>
+<figcaption>
+<p><span class="caption-text"><strong>radial</strong>, by <em>isa</em>: the root in the middle, and each level further out,
+each subtree in its own wedge, out beyond its parent – however big it is,
+it keeps to its parent’s side, rather than spreading round the root.</span><a class="headerlink" href="#id3" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+</section>
+<section id="hubs">
+<h3>Hubs<a class="headerlink" href="#hubs" title="Link to this heading">¶</a></h3>
+<p>The <strong>hubs</strong> layout needs no relation type: it uses every relation shown –
+or, with <strong>Relations</strong> set to <strong>as in the table</strong>, only those whose rows of
+its table (as above) aren’t <strong>ignored</strong> (shaping the tree and pulling
+together count the same), and the relation types’ links to their own ends,
+if that row isn’t ignored. In each group of connected nodes, the ones with at least a given number of
+relations (<strong>A hub has at least this many relations</strong>: 3, to start with)
+are hubs, each with the nodes nearest it round it like spokes. The hubs
+linked to two or more others make the core, which goes on a circle, with
+their spokes facing out; a hub that just hangs off another (eg: at the end
+of a chain) goes out beyond it, with the spokes, rather than on the circle –
+so the circle stays small. (If the hubs make a tree, there’s no circle: the
+one with the most relations is in the middle.) Branches keep going outward,
+the longest straight out. It suits networks that aren’t trees – eg: what
+the XMLreader makes of an XML file (see <a class="reference internal" href="exampleApps.html"><span class="doc">Plugins</span></a>).</p>
+<figure class="align-default" id="id4">
+<a class="reference internal image-reference" href="../_images/layout-hubs.png"><img alt="A small library model arranged round hubs: library1 in the middle, its two books (named by their titles) and the magazine Byte round it, and the first book's chapters round it" src="../_images/layout-hubs.png" style="width: 360px;" />
+</a>
+<figcaption>
+<p><span class="caption-text"><strong>hubs</strong>, on the XMLreader’s model of <em>books.xml</em>: the library, and the
+book with chapters, are hubs; the book hangs off the library, so it goes
+out beyond it.</span><a class="headerlink" href="#id4" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+</section>
+</section>
+<section id="keeping-a-view-arranged">
+<h2>Keeping a view arranged<a class="headerlink" href="#keeping-a-view-arranged" title="Link to this heading">¶</a></h2>
+<p>With <strong>tree</strong>, <strong>balloon</strong>, <strong>radial</strong> or <strong>hubs</strong> chosen in <strong>keep
+arranged</strong>, the view is laid out again after each change:</p>
+<ul class="simple">
+<li><p>What you add (eg: <strong>make new instance</strong>, or <strong>expand</strong>) goes in its place
+in its tree, and the tree opens up to make room; what you erase or hide
+closes the gap. What’s beside it moves along to suit.</p></li>
+<li><p>A node you <strong>drag</strong> takes what’s under it along, and is <em>pinned</em> where you
+drop it: it’s the root of a tree (or group) of its own from then on. A
+node in no tree that you drop stays where you put it.</p></li>
+<li><p><strong>arrange now</strong> with the same layout clears the pins, and puts everything
+back in order.</p></li>
+</ul>
+</section>
+<section id="gathering-and-floating">
+<h2>Gathering and floating<a class="headerlink" href="#gathering-and-floating" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><strong>arrange now | gather nodes</strong> pulls objects that have strayed far from
+the rest (eg: after a big layout, or an <strong>expand</strong>) back in toward them.</p></li>
+<li><p><strong>view | float all relations</strong> puts every relation’s label back midway
+between its ends (see <a class="reference internal" href="editing.html"><span class="doc">Editing</span></a>).</p></li>
+<li><p>A context window’s menu has <strong>gather</strong>: it brings what the window’s
+context contains (eg: a rule’s patterns, scattered by a layout) into its
+panes.</p></li>
+</ul>
+</section>
+<section id="tips">
+<h2>Tips<a class="headerlink" href="#tips" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>For a class diagram, use <strong>tree</strong> by <em>isa</em>, growing <strong>down</strong>; for a
+family tree, <strong>tree</strong> with <em>has-parent</em> moved to the top of the table,
+shaping the tree (the parent is the destination), growing down too. With
+<em>isa</em> shaping the tree too, below it, the people with no parents shown go
+under their types.</p></li>
+<li><p>Before arranging a big view, hide what you don’t need (eg: <strong>view | hide by
+category | isa individuals</strong>, or <strong>relation types…</strong>: see
+<a class="reference internal" href="viewing.html"><span class="doc">Viewing</span></a>), or erase it (<strong>erase everything else</strong>, on a node’s menu,
+keeps just that node, or the selection).</p></li>
+<li><p>Programs built on <em>Semantic Nets</em> use these layouts too: eg: the
+pythonParser’s views are arranged as a tree by <em>includes</em>, growing right
+(see <a class="reference internal" href="exampleApps.html"><span class="doc">Plugins</span></a>).</p></li>
+</ul>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="animation.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Animation Layout</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="viewing.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Viewing</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2023-2026, Rob Kremer
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Arranging a View</a><ul>
+<li><a class="reference internal" href="#the-layout-panel">The layout panel</a></li>
+<li><a class="reference internal" href="#the-layouts">The layouts</a><ul>
+<li><a class="reference internal" href="#trees">Trees</a></li>
+<li><a class="reference internal" href="#hubs">Hubs</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#keeping-a-view-arranged">Keeping a view arranged</a></li>
+<li><a class="reference internal" href="#gathering-and-floating">Gathering and floating</a></li>
+<li><a class="reference internal" href="#tips">Tips</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

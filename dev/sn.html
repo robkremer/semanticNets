@@ -1,0 +1,1172 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="sn.controller package" href="sn.controller.html"><link rel="prev" title="Conventions and Testing" href="../developer/conventions.html">
+        <link rel="prefetch" href="../_static/sn-logo.png" as="image">
+
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>sn package - Semantic Nets 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">Semantic Nets 1.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">Semantic Nets 1.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user/index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user/concepts.html">Concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/gettingStarted.html">Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/tutorial.html">Worked Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/editing.html">Editing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/contexts.html">Contexts: Rules, Definitions, Queries, Constraints and Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/reasoning.html">Reasoning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/viewing.html">Viewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/layouts.html">Arranging a View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/animation.html">Animation Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/files.html">Files and Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/terminal.html">The Terminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/exampleApps.html">Plugins</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developer/index.html">Developer Guide</a><input aria-label="Toggle navigation of Developer Guide" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html">Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/model.html">The Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/reasoner.html">The Reasoner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/view.html">The Graphical View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/layout.html">Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/extending.html">Building on Semantic Nets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/conventions.html">Conventions and Testing</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children current-page"><a class="current reference internal" href="#">sn package</a><input aria-label="Toggle navigation of sn package" checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="sn.controller.html">sn.controller package</a><input aria-label="Toggle navigation of sn.controller package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.controller.modelInterface.html">sn.controller.modelInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html">sn.view.graphics.connectors module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.expandDialog.html">sn.view.graphics.expandDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.guiApp.html">sn.view.graphics.guiApp module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html">sn.view.graphics.imageExport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html">sn.view.graphics.labels module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html">sn.view.graphics.layout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutDialog.html">sn.view.graphics.layoutDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutPanel.html">sn.view.graphics.layoutPanel module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.progress.html">sn.view.graphics.progress module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.reasoningToolbar.html">sn.view.graphics.reasoningToolbar module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.relationTable.html">sn.view.graphics.relationTable module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.replaceModelDialog.html">sn.view.graphics.replaceModelDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.searchDialog.html">sn.view.graphics.searchDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.shapes.html">sn.view.graphics.shapes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sngContext.html">sn.view.graphics.sngContext module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sngView.html">sn.view.graphics.sngView module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sourceWindow.html">sn.view.graphics.sourceWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html">sn.view.graphics.treeLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewBase.html">sn.view.graphics.viewBase module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewCommands.html">sn.view.graphics.viewCommands module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewContainment.html">sn.view.graphics.viewContainment module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewEditing.html">sn.view.graphics.viewEditing module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewFiles.html">sn.view.graphics.viewFiles module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewInput.html">sn.view.graphics.viewInput module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewLayouts.html">sn.view.graphics.viewLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewReasoning.html">sn.view.graphics.viewReasoning module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewViewport.html">sn.view.graphics.viewViewport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewVisibility.html">sn.view.graphics.viewVisibility module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.visibilityDialog.html">sn.view.graphics.visibilityDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vnodes.html">sn.view.graphics.vnodes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vobjects.html">sn.view.graphics.vobjects module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vrelations.html">sn.view.graphics.vrelations module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.textUserInterface.html">sn.view.textUserInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.__main__.html">sn.__main__ module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html">sn.hooks module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html">sn.plugins module</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../plugins/index.html">The plugins</a><input aria-label="Toggle navigation of The plugins" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.XMLreader.html">snplugins.XMLreader package</a><input aria-label="Toggle navigation of snplugins.XMLreader package" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.reader.html">snplugins.XMLreader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.schema.html">snplugins.XMLreader.schema module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.view.html">snplugins.XMLreader.view module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.pythonParser.html">snplugins.pythonParser package</a><input aria-label="Toggle navigation of snplugins.pythonParser package" class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.dialog.html">snplugins.pythonParser.dialog module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.hooks.html">snplugins.pythonParser.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.parser.html">snplugins.pythonParser.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/dev/sn.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="module-sn">
+<span id="sn-package"></span><h1>sn package<a class="headerlink" href="#module-sn" title="Link to this heading">¶</a></h1>
+<p>The Semantic Nets package is a tool for …</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.VERSION">
+<span class="sig-prename descclassname"><span class="pre">sn.</span></span><span class="sig-name descname"><span class="pre">VERSION</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'1.0'</span></span><a class="headerlink" href="#sn.VERSION" title="Link to this definition">¶</a></dt>
+<dd><p>The program’s version: written in the files it saves (see <em>SerializationStrategy.appVersion</em>).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.SCHEMA_VERSION">
+<span class="sig-prename descclassname"><span class="pre">sn.</span></span><span class="sig-name descname"><span class="pre">SCHEMA_VERSION</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'1'</span></span><a class="headerlink" href="#sn.SCHEMA_VERSION" title="Link to this definition">¶</a></dt>
+<dd><p>The version of the structures of models and views, as they’re saved:
+written in their files’ heads (“schema”, “schemaVersion”: see
+<em>Model.serializationHeader()</em>), so that a file saved with older ones can be
+recognised and brought up to date when it’s read. Change it whenever they
+change (eg: a property’s renamed, or its meaning changes).</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sn.SNLogger">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.</span></span><span class="sig-name descname"><span class="pre">SNLogger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.SNLogger" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Logger</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.SNLogger.print">
+<span class="sig-name descname"><span class="pre">print</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.SNLogger.print" title="Link to this definition">¶</a></dt>
+<dd><p>Intended to mimic the print system command but allowing for redirection 
+and multiple destinations if necessary.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.resourcePath">
+<span class="sig-prename descclassname"><span class="pre">sn.</span></span><span class="sig-name descname"><span class="pre">resourcePath</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">parts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.resourcePath" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parts</strong> (<em>str</em>) – A path relative to the project’s top folder (eg: “sphinx”),
+or, in a packaged app, to its bundled resources (where the build puts the
+same things under the same names).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The full path (which may not exist).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.EXAMPLES_PLACEHOLDER">
+<span class="sig-prename descclassname"><span class="pre">sn.</span></span><span class="sig-name descname"><span class="pre">EXAMPLES_PLACEHOLDER</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'file:///SEMANTIC_NETS_EXAMPLES'</span></span><a class="headerlink" href="#sn.EXAMPLES_PLACEHOLDER" title="Link to this definition">¶</a></dt>
+<dd><p>The folder the example models are stored as being in (see <em>copyExamples()</em>).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.exampleNames">
+<span class="sig-prename descclassname"><span class="pre">sn.</span></span><span class="sig-name descname"><span class="pre">exampleNames</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.exampleNames" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The example models’ files that come with the program (package data:
+<em>sn/examples/</em>), eg: [“animals.snm”, “animals.snv”, …].</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.copyExamples">
+<span class="sig-prename descclassname"><span class="pre">sn.</span></span><span class="sig-name descname"><span class="pre">copyExamples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.copyExamples" title="Link to this definition">¶</a></dt>
+<dd><p>Copy the example models that come with the program (see <em>exampleNames()</em>)
+into the folder <em>target</em> (made if need be), and make each copy refer to where
+it now is – they’re stored as being in <em>EXAMPLES_PLACEHOLDER</em> – so that it
+isn’t taken to have been moved when it’s opened.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target</strong> (<em>str</em>) – The folder to copy them to.</p></li>
+<li><p><strong>names</strong> (<em>list</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – The files to copy (eg: [“family.snm”, “family.snv”]); by default, all of them.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The paths of the copies.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.getLogger">
+<span class="sig-prename descclassname"><span class="pre">sn.</span></span><span class="sig-name descname"><span class="pre">getLogger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.getLogger" title="Link to this definition">¶</a></dt>
+<dd><p>Return a properly typed SNLogger for the molule who’s __name__ is given in <em>name</em>.
+This may be either created of just returned, depending on if it exists already.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – Always call this with the __name__ variable for the file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The properly typed SNLogger for created.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#sn.SNLogger" title="sn.SNLogger"><em>SNLogger</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sn.SNPrefs">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.</span></span><span class="sig-name descname"><span class="pre">SNPrefs</span></span><a class="headerlink" href="#sn.SNPrefs" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.prefs.html#util.prefs.Prefs" title="(in pythonUtils)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Prefs</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.SNPrefs.getSupers">
+<span class="sig-name descname"><span class="pre">getSupers</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.SNPrefs.getSupers" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Always an empty list – a <em>Prefs</em> object is a flat attribute
+store with no ISA/inheritance lattice of its own.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[Prefs]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.SNPrefs.isIndividual">
+<span class="sig-name descname"><span class="pre">isIndividual</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.SNPrefs.isIndividual" title="Link to this definition">¶</a></dt>
+<dd><p>False (unlike a plain <em>Prefs</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.PREFS">
+<span class="sig-prename descclassname"><span class="pre">sn.</span></span><span class="sig-name descname"><span class="pre">PREFS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'debug':</span> <span class="pre">(&lt;class</span> <span class="pre">'bool'&gt;,</span> <span class="pre">False,</span> <span class="pre">&quot;For</span> <span class="pre">developers:</span> <span class="pre">show</span> <span class="pre">objects'</span> <span class="pre">ids</span> <span class="pre">in</span> <span class="pre">their</span> <span class="pre">tooltips,</span> <span class="pre">and</span> <span class="pre">extra</span> <span class="pre">debugging</span> <span class="pre">items</span> <span class="pre">on</span> <span class="pre">their</span> <span class="pre">menus.&quot;),</span> <span class="pre">'debug_popupCache':</span> <span class="pre">(&lt;class</span> <span class="pre">'bool'&gt;,</span> <span class="pre">True,</span> <span class="pre">&quot;For</span> <span class="pre">developers,</span> <span class="pre">when</span> <span class="pre">debug</span> <span class="pre">is</span> <span class="pre">on:</span> <span class="pre">show</span> <span class="pre">an</span> <span class="pre">object's</span> <span class="pre">cached</span> <span class="pre">drawing</span> <span class="pre">attributes</span> <span class="pre">in</span> <span class="pre">its</span> <span class="pre">tooltip.&quot;),</span> <span class="pre">'gui/NodeAspectRatio':</span> <span class="pre">(&lt;class</span> <span class="pre">'float'&gt;,</span> <span class="pre">1.5,</span> <span class="pre">&quot;The</span> <span class="pre">height-to-width</span> <span class="pre">ratio</span> <span class="pre">of</span> <span class="pre">a</span> <span class="pre">new</span> <span class="pre">node's</span> <span class="pre">shape,</span> <span class="pre">unless</span> <span class="pre">its</span> <span class="pre">vis/aspectRatio</span> <span class="pre">says</span> <span class="pre">otherwise.&quot;),</span> <span class="pre">'gui/NodeMinSize':</span> <span class="pre">(&lt;class</span> <span class="pre">'int'&gt;,</span> <span class="pre">30,</span> <span class="pre">&quot;The</span> <span class="pre">width</span> <span class="pre">(before</span> <span class="pre">zooming)</span> <span class="pre">of</span> <span class="pre">a</span> <span class="pre">new</span> <span class="pre">node's</span> <span class="pre">shape,</span> <span class="pre">unless</span> <span class="pre">its</span> <span class="pre">vis/minSize</span> <span class="pre">says</span> <span class="pre">otherwise.&quot;),</span> <span class="pre">'gui/allowEditingSystemObjects':</span> <span class="pre">(&lt;class</span> <span class="pre">'bool'&gt;,</span> <span class="pre">False,</span> <span class="pre">&quot;Allow</span> <span class="pre">editing</span> <span class="pre">the</span> <span class="pre">system</span> <span class="pre">model's</span> <span class="pre">objects.</span> <span class="pre">They're</span> <span class="pre">reset</span> <span class="pre">each</span> <span class="pre">time</span> <span class="pre">the</span> <span class="pre">program</span> <span class="pre">starts,</span> <span class="pre">so</span> <span class="pre">changes</span> <span class="pre">don't</span> <span class="pre">last;</span> <span class="pre">best</span> <span class="pre">left</span> <span class="pre">off.&quot;),</span> <span class="pre">'gui/backgroundColor':</span> <span class="pre">('color',</span> <span class="pre">'grey95',</span> <span class="pre">&quot;The</span> <span class="pre">canvas's</span> <span class="pre">background</span> <span class="pre">colour.&quot;),</span> <span class="pre">'gui/debugMenus':</span> <span class="pre">(&lt;class</span> <span class="pre">'bool'&gt;,</span> <span class="pre">False,</span> <span class="pre">&quot;For</span> <span class="pre">developers:</span> <span class="pre">add</span> <span class="pre">debugging</span> <span class="pre">items</span> <span class="pre">(validate,</span> <span class="pre">repaint,</span> <span class="pre">...)</span> <span class="pre">to</span> <span class="pre">the</span> <span class="pre">canvas's</span> <span class="pre">menus.&quot;),</span> <span class="pre">'gui/directoryPath':</span> <span class="pre">(&lt;class</span> <span class="pre">'str'&gt;,</span> <span class="pre">'',</span> <span class="pre">'Where</span> <span class="pre">the</span> <span class="pre">model</span> <span class="pre">directory</span> <span class="pre">(Window</span> <span class="pre">|</span> <span class="pre">Model</span> <span class="pre">Directory)</span> <span class="pre">looks</span> <span class="pre">for</span> <span class="pre">models</span> <span class="pre">and</span> <span class="pre">views,</span> <span class="pre">separated</span> <span class="pre">by</span> <span class="pre">&quot;;&quot;:</span> <span class="pre">folders</span> <span class="pre">(paths</span> <span class="pre">or</span> <span class="pre">&quot;file:&quot;</span> <span class="pre">URLs)</span> <span class="pre">--</span> <span class="pre">one</span> <span class="pre">ending</span> <span class="pre">in</span> <span class="pre">&quot;/**&quot;</span> <span class="pre">includes</span> <span class="pre">the</span> <span class="pre">folders</span> <span class="pre">below</span> <span class="pre">it</span> <span class="pre">--</span> <span class="pre">and</span> <span class="pre">the</span> <span class="pre">URLs</span> <span class="pre">of</span> <span class="pre">models</span> <span class="pre">and</span> <span class="pre">views</span> <span class="pre">elsewhere</span> <span class="pre">(eg:</span> <span class="pre">&quot;https://...&quot;).</span> <span class="pre">The</span> <span class="pre">folders</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">models</span> <span class="pre">and</span> <span class="pre">views</span> <span class="pre">opened,</span> <span class="pre">made</span> <span class="pre">or</span> <span class="pre">saved</span> <span class="pre">are</span> <span class="pre">added.'),</span> <span class="pre">'gui/editorCommand':</span> <span class="pre">(&lt;class</span> <span class="pre">'str'&gt;,</span> <span class="pre">'',</span> <span class="pre">'The</span> <span class="pre">command</span> <span class="pre">that</span> <span class="pre">opens</span> <span class="pre">a</span> <span class="pre">file</span> <span class="pre">at</span> <span class="pre">a</span> <span class="pre">line</span> <span class="pre">in</span> <span class="pre">your</span> <span class="pre">editor</span> <span class="pre">--</span> <span class="pre">eg,</span> <span class="pre">to</span> <span class="pre">show</span> <span class="pre">a</span> <span class="pre">class</span> <span class="pre">or</span> <span class="pre">function\'s</span> <span class="pre">source</span> <span class="pre">(pythonParser)</span> <span class="pre">--</span> <span class="pre">with</span> <span class="pre">{path},</span> <span class="pre">{line}</span> <span class="pre">and</span> <span class="pre">{url}</span> <span class="pre">(the</span> <span class="pre">file\'s</span> <span class="pre">file:</span> <span class="pre">URL)</span> <span class="pre">filled</span> <span class="pre">in.</span> <span class="pre">Empty:</span> <span class="pre">it\'s</span> <span class="pre">shown</span> <span class="pre">in</span> <span class="pre">a</span> <span class="pre">window</span> <span class="pre">here</span> <span class="pre">instead</span> <span class="pre">(as</span> <span class="pre">it</span> <span class="pre">is</span> <span class="pre">if</span> <span class="pre">the</span> <span class="pre">command</span> <span class="pre">can\'t</span> <span class="pre">be</span> <span class="pre">run).</span> <span class="pre">Eg:\n</span>&#160; <span class="pre">BBEdit</span> <span class="pre">(or</span> <span class="pre">TextMate):</span>&#160; <span class="pre">open</span> <span class="pre">&quot;txmt://open?url={url}&amp;line={line}&quot;\n</span>&#160; <span class="pre">BBEdit\'s</span> <span class="pre">command</span> <span class="pre">line</span> <span class="pre">tools:</span>&#160; <span class="pre">bbedit</span> <span class="pre">+{line}</span> <span class="pre">{path}\n</span>&#160; <span class="pre">VS</span> <span class="pre">Code:</span>&#160; <span class="pre">code</span> <span class="pre">-g</span> <span class="pre">{path}:{line}\n</span>&#160; <span class="pre">Sublime</span> <span class="pre">Text:</span>&#160; <span class="pre">subl</span> <span class="pre">{path}:{line}\n</span>&#160; <span class="pre">Eclipse</span> <span class="pre">(on</span> <span class="pre">a</span> <span class="pre">Mac:</span> <span class="pre">the</span> <span class="pre">Eclipse</span> <span class="pre">that\'s</span> <span class="pre">running;</span> <span class="pre">give</span> <span class="pre">its</span> <span class="pre">own</span> <span class="pre">app\'s</span> <span class="pre">path;</span> <span class="pre">the</span> <span class="pre">first</span> <span class="pre">time,</span> <span class="pre">macOS</span> <span class="pre">asks</span> <span class="pre">if</span> <span class="pre">this</span> <span class="pre">may</span> <span class="pre">control</span> <span class="pre">Eclipse):\n</span>&#160;&#160;&#160; <span class="pre">osascript</span> <span class="pre">-e</span> <span class="pre">&quot;on</span> <span class="pre">run</span> <span class="pre">a&quot;</span> <span class="pre">-e</span> <span class="pre">&quot;tell</span> <span class="pre">application</span> <span class="pre">\\&quot;/Applications/Eclipse.app\\&quot;</span> <span class="pre">to</span> <span class="pre">open</span> <span class="pre">(POSIX</span> <span class="pre">file</span> <span class="pre">(item</span> <span class="pre">1</span> <span class="pre">of</span> <span class="pre">a))&quot;</span> <span class="pre">-e</span> <span class="pre">&quot;end</span> <span class="pre">run&quot;</span> <span class="pre">{path}:{line}'),</span> <span class="pre">'gui/highlightColor':</span> <span class="pre">('color',</span> <span class="pre">'#ffd966',</span> <span class="pre">&quot;The</span> <span class="pre">colour</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">glow</span> <span class="pre">marking</span> <span class="pre">highlighted</span> <span class="pre">objects</span> <span class="pre">(eg:</span> <span class="pre">a</span> <span class="pre">query's</span> <span class="pre">answers,</span> <span class="pre">and</span> <span class="pre">the</span> <span class="pre">query).&quot;),</span> <span class="pre">'gui/highlightColorNegative':</span> <span class="pre">('color',</span> <span class="pre">'#f4a3a3',</span> <span class="pre">'The</span> <span class="pre">colour</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">glow</span> <span class="pre">marking</span> <span class="pre">a</span> <span class="pre">query</span> <span class="pre">that</span> <span class="pre">has</span> <span class="pre">no</span> <span class="pre">answers</span> <span class="pre">(&quot;no&quot;).'),</span> <span class="pre">'gui/label':</span> <span class="pre">(&lt;class</span> <span class="pre">'str'&gt;,</span> <span class="pre">'$name${constraints:+</span> <span class="pre">{$constraints}}',</span> <span class="pre">'The</span> <span class="pre">label</span> <span class="pre">template</span> <span class="pre">for</span> <span class="pre">nodes,</span> <span class="pre">unless</span> <span class="pre">one</span> <span class="pre">has</span> <span class="pre">a</span> <span class="pre">vis/label</span> <span class="pre">of</span> <span class="pre">its</span> <span class="pre">own.</span> <span class="pre">What</span> <span class="pre">an</span> <span class="pre">object\'s</span> <span class="pre">label</span> <span class="pre">says:</span> <span class="pre">text</span> <span class="pre">with</span> <span class="pre">substitutions</span> <span class="pre">--\n</span>&#160; <span class="pre">$key</span> <span class="pre">or</span> <span class="pre">${key}</span>&#160;&#160; <span class="pre">the</span> <span class="pre">value</span> <span class="pre">of</span> <span class="pre">key\n</span>&#160; <span class="pre">${key:+text}</span>&#160;&#160;&#160;&#160; <span class="pre">text,</span> <span class="pre">if</span> <span class="pre">key</span> <span class="pre">has</span> <span class="pre">a</span> <span class="pre">value</span> <span class="pre">(else</span> <span class="pre">nothing)\n</span>&#160; <span class="pre">${key:-text}</span>&#160;&#160;&#160;&#160; <span class="pre">key\'s</span> <span class="pre">value,</span> <span class="pre">or</span> <span class="pre">text</span> <span class="pre">if</span> <span class="pre">it</span> <span class="pre">has</span> <span class="pre">none\n</span>&#160; <span class="pre">$$</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">a</span> <span class="pre">&quot;$&quot;\n</span>&#160; <span class="pre">\\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">a</span> <span class="pre">line</span> <span class="pre">break\n</span>&#160; <span class="pre">$(module:function)</span>&#160; <span class="pre">what</span> <span class="pre">a</span> <span class="pre">hook</span> <span class="pre">(a</span> <span class="pre">function</span> <span class="pre">a</span> <span class="pre">program</span> <span class="pre">provides)</span> <span class="pre">returns\nThe</span> <span class="pre">text</span> <span class="pre">in</span> <span class="pre">${...}</span> <span class="pre">may</span> <span class="pre">itself</span> <span class="pre">contain</span> <span class="pre">substitutions.\nKeys:</span> <span class="pre">any</span> <span class="pre">attribute,</span> <span class="pre">and\n</span>&#160; <span class="pre">name</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">its</span> <span class="pre">name\n</span>&#160; <span class="pre">localName</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">its</span> <span class="pre">name,</span> <span class="pre">only</span> <span class="pre">if</span> <span class="pre">it</span> <span class="pre">has</span> <span class="pre">its</span> <span class="pre">own</span> <span class="pre">(not</span> <span class="pre">inherited)\n</span>&#160; <span class="pre">type</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">its</span> <span class="pre">types\n</span>&#160; <span class="pre">constraints</span>&#160;&#160;&#160;&#160;&#160; <span class="pre">a</span> <span class="pre">variable\'s</span> <span class="pre">constraints</span> <span class="pre">(a</span> <span class="pre">relation</span> <span class="pre">of</span> <span class="pre">a</span> <span class="pre">variable</span> <span class="pre">type:</span> <span class="pre">the</span> <span class="pre">type\'s)\n</span>&#160; <span class="pre">id</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">its</span> <span class="pre">id\nEg:\n</span>&#160; <span class="pre">$name${constraints:+</span> <span class="pre">{$constraints}}</span>&#160;&#160; <span class="pre">&quot;fred&quot;,</span> <span class="pre">or</span> <span class="pre">&quot;?p</span> <span class="pre">{alive}&quot;</span> <span class="pre">(the</span> <span class="pre">default)\n</span>&#160; <span class="pre">$type${name:+:</span> <span class="pre">$name}</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">Sowa\'s</span> <span class="pre">&quot;person:</span> <span class="pre">fred&quot;\nAn</span> <span class="pre">object\'s</span> <span class="pre">&quot;vis/label&quot;</span> <span class="pre">attribute</span> <span class="pre">(eg:</span> <span class="pre">on</span> <span class="pre">its</span> <span class="pre">type)</span> <span class="pre">overrides</span> <span class="pre">this.'),</span> <span class="pre">'gui/optimization/aggressiveLabelPlacement':</span> <span class="pre">(&lt;class</span> <span class="pre">'int'&gt;,</span> <span class="pre">3,</span> <span class="pre">&quot;How</span> <span class="pre">hard</span> <span class="pre">to</span> <span class="pre">look</span> <span class="pre">for</span> <span class="pre">a</span> <span class="pre">free</span> <span class="pre">spot</span> <span class="pre">for</span> <span class="pre">a</span> <span class="pre">relation's</span> <span class="pre">label</span> <span class="pre">when</span> <span class="pre">placing</span> <span class="pre">it,</span> <span class="pre">from</span> <span class="pre">0</span> <span class="pre">(not</span> <span class="pre">at</span> <span class="pre">all:</span> <span class="pre">it</span> <span class="pre">stays</span> <span class="pre">midway</span> <span class="pre">between</span> <span class="pre">the</span> <span class="pre">relation's</span> <span class="pre">ends)</span> <span class="pre">to</span> <span class="pre">10</span> <span class="pre">(up</span> <span class="pre">to</span> <span class="pre">100</span> <span class="pre">steps</span> <span class="pre">out;</span> <span class="pre">n:</span> <span class="pre">up</span> <span class="pre">to</span> <span class="pre">n*n</span> <span class="pre">steps).</span> <span class="pre">Higher</span> <span class="pre">values</span> <span class="pre">take</span> <span class="pre">longer</span> <span class="pre">--</span> <span class="pre">a</span> <span class="pre">lot</span> <span class="pre">longer</span> <span class="pre">in</span> <span class="pre">a</span> <span class="pre">crowded</span> <span class="pre">view,</span> <span class="pre">as</span> <span class="pre">when</span> <span class="pre">showing</span> <span class="pre">a</span> <span class="pre">big</span> <span class="pre">model.&quot;),</span> <span class="pre">'gui/recentFiles':</span> <span class="pre">(&lt;class</span> <span class="pre">'int'&gt;,</span> <span class="pre">10,</span> <span class="pre">'How</span> <span class="pre">many</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">views</span> <span class="pre">(or</span> <span class="pre">models)</span> <span class="pre">opened</span> <span class="pre">most</span> <span class="pre">recently</span> <span class="pre">File</span> <span class="pre">|</span> <span class="pre">Open</span> <span class="pre">Recent</span> <span class="pre">lists</span> <span class="pre">(0</span> <span class="pre">for</span> <span class="pre">none).'),</span> <span class="pre">'gui/relationLabel':</span> <span class="pre">(&lt;class</span> <span class="pre">'str'&gt;,</span> <span class="pre">'$name${constraints:+</span> <span class="pre">{$constraints}}',</span> <span class="pre">'The</span> <span class="pre">label</span> <span class="pre">template</span> <span class="pre">for</span> <span class="pre">relations,</span> <span class="pre">unless</span> <span class="pre">one</span> <span class="pre">has</span> <span class="pre">a</span> <span class="pre">vis/label</span> <span class="pre">of</span> <span class="pre">its</span> <span class="pre">own.</span> <span class="pre">What</span> <span class="pre">an</span> <span class="pre">object\'s</span> <span class="pre">label</span> <span class="pre">says:</span> <span class="pre">text</span> <span class="pre">with</span> <span class="pre">substitutions</span> <span class="pre">--\n</span>&#160; <span class="pre">$key</span> <span class="pre">or</span> <span class="pre">${key}</span>&#160;&#160; <span class="pre">the</span> <span class="pre">value</span> <span class="pre">of</span> <span class="pre">key\n</span>&#160; <span class="pre">${key:+text}</span>&#160;&#160;&#160;&#160; <span class="pre">text,</span> <span class="pre">if</span> <span class="pre">key</span> <span class="pre">has</span> <span class="pre">a</span> <span class="pre">value</span> <span class="pre">(else</span> <span class="pre">nothing)\n</span>&#160; <span class="pre">${key:-text}</span>&#160;&#160;&#160;&#160; <span class="pre">key\'s</span> <span class="pre">value,</span> <span class="pre">or</span> <span class="pre">text</span> <span class="pre">if</span> <span class="pre">it</span> <span class="pre">has</span> <span class="pre">none\n</span>&#160; <span class="pre">$$</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">a</span> <span class="pre">&quot;$&quot;\n</span>&#160; <span class="pre">\\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">a</span> <span class="pre">line</span> <span class="pre">break\n</span>&#160; <span class="pre">$(module:function)</span>&#160; <span class="pre">what</span> <span class="pre">a</span> <span class="pre">hook</span> <span class="pre">(a</span> <span class="pre">function</span> <span class="pre">a</span> <span class="pre">program</span> <span class="pre">provides)</span> <span class="pre">returns\nThe</span> <span class="pre">text</span> <span class="pre">in</span> <span class="pre">${...}</span> <span class="pre">may</span> <span class="pre">itself</span> <span class="pre">contain</span> <span class="pre">substitutions.\nKeys:</span> <span class="pre">any</span> <span class="pre">attribute,</span> <span class="pre">and\n</span>&#160; <span class="pre">name</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">its</span> <span class="pre">name\n</span>&#160; <span class="pre">localName</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">its</span> <span class="pre">name,</span> <span class="pre">only</span> <span class="pre">if</span> <span class="pre">it</span> <span class="pre">has</span> <span class="pre">its</span> <span class="pre">own</span> <span class="pre">(not</span> <span class="pre">inherited)\n</span>&#160; <span class="pre">type</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">its</span> <span class="pre">types\n</span>&#160; <span class="pre">constraints</span>&#160;&#160;&#160;&#160;&#160; <span class="pre">a</span> <span class="pre">variable\'s</span> <span class="pre">constraints</span> <span class="pre">(a</span> <span class="pre">relation</span> <span class="pre">of</span> <span class="pre">a</span> <span class="pre">variable</span> <span class="pre">type:</span> <span class="pre">the</span> <span class="pre">type\'s)\n</span>&#160; <span class="pre">id</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">its</span> <span class="pre">id\nEg:\n</span>&#160; <span class="pre">$name${constraints:+</span> <span class="pre">{$constraints}}</span>&#160;&#160; <span class="pre">&quot;fred&quot;,</span> <span class="pre">or</span> <span class="pre">&quot;?p</span> <span class="pre">{alive}&quot;</span> <span class="pre">(the</span> <span class="pre">default)\n</span>&#160; <span class="pre">$type${name:+:</span> <span class="pre">$name}</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">Sowa\'s</span> <span class="pre">&quot;person:</span> <span class="pre">fred&quot;\nAn</span> <span class="pre">object\'s</span> <span class="pre">&quot;vis/label&quot;</span> <span class="pre">attribute</span> <span class="pre">(eg:</span> <span class="pre">on</span> <span class="pre">its</span> <span class="pre">type)</span> <span class="pre">overrides</span> <span class="pre">this.'),</span> <span class="pre">'gui/shadowTypes':</span> <span class="pre">(&lt;class</span> <span class="pre">'bool'&gt;,</span> <span class="pre">True,</span> <span class="pre">'Draw</span> <span class="pre">a</span> <span class="pre">shadow</span> <span class="pre">around</span> <span class="pre">all</span> <span class="pre">Type</span> <span class="pre">objects</span> <span class="pre">(as</span> <span class="pre">opposed</span> <span class="pre">to</span> <span class="pre">Individual</span> <span class="pre">objects).'),</span> <span class="pre">'gui/showConstraintMarker':</span> <span class="pre">(&lt;class</span> <span class="pre">'bool'&gt;,</span> <span class="pre">True,</span> <span class="pre">'Mark</span> <span class="pre">each</span> <span class="pre">variable</span> <span class="pre">that</span> <span class="pre">has</span> <span class="pre">constraints</span> <span class="pre">with</span> <span class="pre">a</span> <span class="pre">&quot;{}&quot;</span> <span class="pre">marker.'),</span> <span class="pre">'gui/showRemoteTags':</span> <span class="pre">(&lt;class</span> <span class="pre">'bool'&gt;,</span> <span class="pre">True,</span> <span class="pre">'Mark</span> <span class="pre">objects</span> <span class="pre">from</span> <span class="pre">other</span> <span class="pre">models</span> <span class="pre">(not</span> <span class="pre">the</span> <span class="pre">view\'s</span> <span class="pre">own</span> <span class="pre">model)</span> <span class="pre">with</span> <span class="pre">an</span> <span class="pre">&quot;R&quot;</span> <span class="pre">(remote)</span> <span class="pre">tag.'),</span> <span class="pre">'gui/showSystemTags':</span> <span class="pre">(&lt;class</span> <span class="pre">'bool'&gt;,</span> <span class="pre">True,</span> <span class="pre">'Mark</span> <span class="pre">the</span> <span class="pre">system</span> <span class="pre">model\'s</span> <span class="pre">objects</span> <span class="pre">(node,</span> <span class="pre">relation,</span> <span class="pre">isa,</span> <span class="pre">...)</span> <span class="pre">with</span> <span class="pre">an</span> <span class="pre">&quot;S&quot;</span> <span class="pre">tag.'),</span> <span class="pre">'gui/showTypeTags':</span> <span class="pre">(&lt;class</span> <span class="pre">'bool'&gt;,</span> <span class="pre">True,</span> <span class="pre">'Mark</span> <span class="pre">types</span> <span class="pre">(as</span> <span class="pre">opposed</span> <span class="pre">to</span> <span class="pre">individuals)</span> <span class="pre">with</span> <span class="pre">a</span> <span class="pre">&quot;T&quot;</span> <span class="pre">tag.'),</span> <span class="pre">'gui/tooltip':</span> <span class="pre">(&lt;class</span> <span class="pre">'str'&gt;,</span> <span class="pre">'$name${note:+\\n▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔\\nNOTE:\\n$note}',</span> <span class="pre">'The</span> <span class="pre">tooltip</span> <span class="pre">template,</span> <span class="pre">unless</span> <span class="pre">an</span> <span class="pre">object</span> <span class="pre">has</span> <span class="pre">a</span> <span class="pre">vis/tooltip</span> <span class="pre">of</span> <span class="pre">its</span> <span class="pre">own.</span> <span class="pre">What</span> <span class="pre">an</span> <span class="pre">object\'s</span> <span class="pre">tooltip</span> <span class="pre">says:</span> <span class="pre">a</span> <span class="pre">template,</span> <span class="pre">as</span> <span class="pre">labels</span> <span class="pre">are</span> <span class="pre">(see</span> <span class="pre">the\ngui/label</span> <span class="pre">setting),</span> <span class="pre">eg:</span> <span class="pre">&quot;$name${note:+\\n---\\n$note}&quot;.</span> <span class="pre">An</span> <span class="pre">object\'s\n&quot;vis/tooltip&quot;</span> <span class="pre">attribute</span> <span class="pre">(eg:</span> <span class="pre">on</span> <span class="pre">its</span> <span class="pre">type)</span> <span class="pre">overrides</span> <span class="pre">this;</span> <span class="pre">&quot;vis/tooltipFont&quot;\n(eg:</span> <span class="pre">TkFixedFont,</span> <span class="pre">for</span> <span class="pre">code)</span> <span class="pre">and</span> <span class="pre">&quot;vis/tooltipWrap&quot;</span> <span class="pre">(the</span> <span class="pre">width</span> <span class="pre">it</span> <span class="pre">wraps</span> <span class="pre">at,</span> <span class="pre">in\npixels;</span> <span class="pre">0:</span> <span class="pre">none)</span> <span class="pre">set</span> <span class="pre">how</span> <span class="pre">it\'s</span> <span class="pre">shown.'),</span> <span class="pre">'gui/tooltipMaxLines':</span> <span class="pre">(&lt;class</span> <span class="pre">'int'&gt;,</span> <span class="pre">40,</span> <span class="pre">&quot;The</span> <span class="pre">most</span> <span class="pre">lines</span> <span class="pre">a</span> <span class="pre">tooltip</span> <span class="pre">shows:</span> <span class="pre">a</span> <span class="pre">longer</span> <span class="pre">one</span> <span class="pre">(eg:</span> <span class="pre">a</span> <span class="pre">long</span> <span class="pre">function's</span> <span class="pre">source)</span> <span class="pre">is</span> <span class="pre">cut</span> <span class="pre">short,</span> <span class="pre">saying</span> <span class="pre">how</span> <span class="pre">many</span> <span class="pre">more</span> <span class="pre">lines</span> <span class="pre">there</span> <span class="pre">are</span> <span class="pre">(0:</span> <span class="pre">no</span> <span class="pre">limit).&quot;),</span> <span class="pre">'hooks/trustedModules':</span> <span class="pre">('list[str]',</span> <span class="pre">[],</span> <span class="pre">'The</span> <span class="pre">Python</span> <span class="pre">modules</span> <span class="pre">and</span> <span class="pre">packages,</span> <span class="pre">besides</span> <span class="pre">sn\'s</span> <span class="pre">own,</span> <span class="pre">whose</span> <span class="pre">hooks</span> <span class="pre">models</span> <span class="pre">may</span> <span class="pre">use:</span> <span class="pre">functions</span> <span class="pre">named</span> <span class="pre">by</span> <span class="pre">objects\'</span> <span class="pre">attributes</span> <span class="pre">(eg:</span> <span class="pre">a</span> <span class="pre">menu</span> <span class="pre">item\'s</span> <span class="pre">.menu/...</span> <span class="pre">attribute),</span> <span class="pre">as</span> <span class="pre">&quot;module:function&quot;</span> <span class="pre">(see</span> <span class="pre">sn.hooks).</span> <span class="pre">A</span> <span class="pre">hook</span> <span class="pre">whose</span> <span class="pre">program</span> <span class="pre">isn\'t</span> <span class="pre">running</span> <span class="pre">is</span> <span class="pre">found</span> <span class="pre">by</span> <span class="pre">importing</span> <span class="pre">its</span> <span class="pre">module</span> <span class="pre">--</span> <span class="pre">running</span> <span class="pre">its</span> <span class="pre">code</span> <span class="pre">--</span> <span class="pre">so</span> <span class="pre">only</span> <span class="pre">list</span> <span class="pre">ones</span> <span class="pre">you</span> <span class="pre">trust:</span> <span class="pre">eg,</span> <span class="pre">&quot;mytools&quot;</span> <span class="pre">trusts</span> <span class="pre">mytools</span> <span class="pre">and</span> <span class="pre">the</span> <span class="pre">modules</span> <span class="pre">in</span> <span class="pre">it</span> <span class="pre">(mytools.hooks,</span> <span class="pre">...).'),</span> <span class="pre">'loggingLevel':</span> <span class="pre">('choices[DEBUG,INFO,WARNING,ERROR,CRITICAL]',</span> <span class="pre">'DEBUG',</span> <span class="pre">&quot;How</span> <span class="pre">much</span> <span class="pre">detail</span> <span class="pre">goes</span> <span class="pre">into</span> <span class="pre">the</span> <span class="pre">program's</span> <span class="pre">log</span> <span class="pre">and</span> <span class="pre">messages:</span> <span class="pre">from</span> <span class="pre">DEBUG</span> <span class="pre">(the</span> <span class="pre">most)</span> <span class="pre">to</span> <span class="pre">CRITICAL</span> <span class="pre">(the</span> <span class="pre">least).&quot;),</span> <span class="pre">'model/defaultModel':</span> <span class="pre">(&lt;class</span> <span class="pre">'str'&gt;,</span> <span class="pre">'temp.xml',</span> <span class="pre">&quot;The</span> <span class="pre">model</span> <span class="pre">the</span> <span class="pre">text</span> <span class="pre">interface</span> <span class="pre">(sn)</span> <span class="pre">uses</span> <span class="pre">when</span> <span class="pre">it's</span> <span class="pre">started</span> <span class="pre">without</span> <span class="pre">one</span> <span class="pre">(eg:</span> <span class="pre">by</span> <span class="pre">--model).&quot;),</span> <span class="pre">'model/urlAliases':</span> <span class="pre">('list[str]',</span> <span class="pre">[],</span> <span class="pre">'Where</span> <span class="pre">models</span> <span class="pre">(and</span> <span class="pre">views)</span> <span class="pre">have</span> <span class="pre">moved</span> <span class="pre">to,</span> <span class="pre">so</span> <span class="pre">that</span> <span class="pre">references</span> <span class="pre">to</span> <span class="pre">them</span> <span class="pre">where</span> <span class="pre">they</span> <span class="pre">were</span> <span class="pre">are</span> <span class="pre">taken</span> <span class="pre">to</span> <span class="pre">be</span> <span class="pre">to</span> <span class="pre">them</span> <span class="pre">where</span> <span class="pre">they</span> <span class="pre">are</span> <span class="pre">now</span> <span class="pre">--</span> <span class="pre">eg:</span> <span class="pre">an</span> <span class="pre">ontology</span> <span class="pre">moved</span> <span class="pre">to</span> <span class="pre">another</span> <span class="pre">web</span> <span class="pre">site.</span> <span class="pre">Each</span> <span class="pre">is</span> <span class="pre">&quot;old</span> <span class="pre">-&gt;</span> <span class="pre">new&quot;:</span> <span class="pre">two</span> <span class="pre">URLs</span> <span class="pre">(or</span> <span class="pre">paths).</span> <span class="pre">One</span> <span class="pre">ending</span> <span class="pre">in</span> <span class="pre">&quot;/&quot;</span> <span class="pre">moves</span> <span class="pre">everything</span> <span class="pre">under</span> <span class="pre">it:</span> <span class="pre">eg,</span> <span class="pre">&quot;http://old.org/onto/</span> <span class="pre">-&gt;</span> <span class="pre">https://new.org/ontologies/&quot;.'),</span> <span class="pre">'plugins/disabled':</span> <span class="pre">('list[str]',</span> <span class="pre">[],</span> <span class="pre">&quot;The</span> <span class="pre">plugins</span> <span class="pre">(their</span> <span class="pre">folders'</span> <span class="pre">names,</span> <span class="pre">in</span> <span class="pre">~/.sn/plugins)</span> <span class="pre">not</span> <span class="pre">to</span> <span class="pre">load</span> <span class="pre">when</span> <span class="pre">the</span> <span class="pre">editor</span> <span class="pre">starts</span> <span class="pre">(see</span> <span class="pre">sn.plugins).&quot;),</span> <span class="pre">'reasoner/showSysRules':</span> <span class="pre">(&lt;class</span> <span class="pre">'bool'&gt;,</span> <span class="pre">False,</span> <span class="pre">&quot;Show</span> <span class="pre">the</span> <span class="pre">base</span> <span class="pre">rules</span> <span class="pre">(the</span> <span class="pre">meaning</span> <span class="pre">of</span> <span class="pre">symmetric,</span> <span class="pre">transitive,</span> <span class="pre">...:</span> <span class="pre">see</span> <span class="pre">sn.model.reasoner.BASE_RULES)</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">reasoner's</span> <span class="pre">results:</span> <span class="pre">their</span> <span class="pre">objects</span> <span class="pre">as</span> <span class="pre">data,</span> <span class="pre">and</span> <span class="pre">what</span> <span class="pre">they</span> <span class="pre">conclude</span> <span class="pre">as</span> <span class="pre">rule</span> <span class="pre">conclusions</span> <span class="pre">rather</span> <span class="pre">than</span> <span class="pre">plain</span> <span class="pre">inferences.</span> <span class="pre">For</span> <span class="pre">debugging</span> <span class="pre">the</span> <span class="pre">base</span> <span class="pre">rules;</span> <span class="pre">best</span> <span class="pre">left</span> <span class="pre">off.&quot;),</span> <span class="pre">'text/backgroundColor':</span> <span class="pre">('color',</span> <span class="pre">'white',</span> <span class="pre">&quot;The</span> <span class="pre">terminal</span> <span class="pre">pane's</span> <span class="pre">background</span> <span class="pre">colour.&quot;),</span> <span class="pre">'text/wrap':</span> <span class="pre">(&lt;class</span> <span class="pre">'bool'&gt;,</span> <span class="pre">False,</span> <span class="pre">'Whether</span> <span class="pre">long</span> <span class="pre">lines</span> <span class="pre">wrap</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">terminal</span> <span class="pre">pane</span> <span class="pre">(else</span> <span class="pre">it</span> <span class="pre">scrolls</span> <span class="pre">sideways).')}</span></span><a class="headerlink" href="#sn.PREFS" title="Link to this definition">¶</a></dt>
+<dd><p>The preferences: key -&gt; (type, default, note). Each is in the preferences
+(<em>snPrefs</em>) from the start, with its default if the file doesn’t have it –
+so a missing preferences file (the first run, or deleted to start afresh) is
+made from these – and with its note (unless the user has written their own:
+see <em>Attribute.userNote</em>). A preference can still be made on the fly (by
+<em>snPrefs.get(key, storeDefault=…)</em>), but it should be added here, so it has
+a note. Keys starting with “.” – kept by the program for itself – aren’t
+here: the settings editor doesn’t show them.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.RENAMED_PREFS">
+<span class="sig-prename descclassname"><span class="pre">sn.</span></span><span class="sig-name descname"><span class="pre">RENAMED_PREFS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'defaultModel':</span> <span class="pre">'model/defaultModel',</span> <span class="pre">'gui/examplesInstalled':</span> <span class="pre">'.examplesInstalled',</span> <span class="pre">'gui/openWindows':</span> <span class="pre">'.openWindows',</span> <span class="pre">'gui/showIndividualShadow':</span> <span class="pre">'gui/shadowTypes'}</span></span><a class="headerlink" href="#sn.RENAMED_PREFS" title="Link to this definition">¶</a></dt>
+<dd><p>Preferences that have been renamed or merged into others: old name -&gt; new name (see <em>renamePrefs()</em>).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.renamePrefs">
+<span class="sig-prename descclassname"><span class="pre">sn.</span></span><span class="sig-name descname"><span class="pre">renamePrefs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prefs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.renamePrefs" title="Link to this definition">¶</a></dt>
+<dd><p>Move preferences saved under old names (see <em>RENAMED_PREFS</em>) to their new
+ones – eg: the internal ones that once showed in the Settings dialog, now
+hidden by a name starting with “.”, or ones merged into another. A value
+already under the new name is kept (and the old one dropped).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>prefs</strong> (<a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.prefs.html#util.prefs.Prefs" title="(in pythonUtils)"><em>Prefs</em></a>) – The preferences.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.initPrefs">
+<span class="sig-prename descclassname"><span class="pre">sn.</span></span><span class="sig-name descname"><span class="pre">initPrefs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prefs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.initPrefs" title="Link to this definition">¶</a></dt>
+<dd><p>Put each of <em>PREFS</em> in <em>prefs</em>: with its default, if it isn’t there; and its
+note, unless the user has written their own. (Notes aren’t saved – only the
+user’s: see <em>Attribute.userNote</em> – so adding them doesn’t change the file.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>prefs</strong> (<a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.prefs.html#util.prefs.Prefs" title="(in pythonUtils)"><em>Prefs</em></a>) – The preferences.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.SN_FOLDER">
+<span class="sig-prename descclassname"><span class="pre">sn.</span></span><span class="sig-name descname"><span class="pre">SN_FOLDER</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'/Users/kremer/.sn'</span></span><a class="headerlink" href="#sn.SN_FOLDER" title="Link to this definition">¶</a></dt>
+<dd><p>Where the program keeps its own files: the preferences (<em>prefs.xml</em>), the
+copies of models and views read from the web (<em>cache/</em>: see
+<em>SerializationStrategy.cacheFolder</em>), …</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.snFolder">
+<span class="sig-prename descclassname"><span class="pre">sn.</span></span><span class="sig-name descname"><span class="pre">snFolder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">parts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.snFolder" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parts</strong> (<em>str</em>) – A path within <em>SN_FOLDER</em> (eg: “cache”).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>It – made, if it isn’t there.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn._userAliases">
+<span class="sig-prename descclassname"><span class="pre">sn.</span></span><span class="sig-name descname"><span class="pre">_userAliases</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></span><a class="headerlink" href="#sn._userAliases" title="Link to this definition">¶</a></dt>
+<dd><p>The aliases added from the “model/urlAliases” preference (see <em>applyURLAliases()</em>).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.applyURLAliases">
+<span class="sig-prename descclassname"><span class="pre">sn.</span></span><span class="sig-name descname"><span class="pre">applyURLAliases</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entries</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.applyURLAliases" title="Link to this definition">¶</a></dt>
+<dd><p>Make the aliases in <em>entries</em> – the “model/urlAliases” preference: each
+“old -&gt; new” – the URL aliases (see <em>PRDb.aliases</em>), in place of those it
+made before.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>entries</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The entries that couldn’t be made sense of.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn._onURLAliases">
+<span class="sig-prename descclassname"><span class="pre">sn.</span></span><span class="sig-name descname"><span class="pre">_onURLAliases</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn._onURLAliases" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_key</strong> (<em>str</em>)</p></li>
+<li><p><strong>value</strong> (<em>Any</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.savePrefsIfChanged">
+<span class="sig-prename descclassname"><span class="pre">sn.</span></span><span class="sig-name descname"><span class="pre">savePrefsIfChanged</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.savePrefsIfChanged" title="Link to this definition">¶</a></dt>
+<dd><p>Save the preferences – but only if they’ve changed, so that merely running
+(or importing) the program – eg: the documentation build, or a self-test –
+doesn’t rewrite the user’s preferences file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.checkSaveModified">
+<span class="sig-prename descclassname"><span class="pre">sn.</span></span><span class="sig-name descname"><span class="pre">checkSaveModified</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.checkSaveModified" title="Link to this definition">¶</a></dt>
+<dd><p>Check whether <em>obj</em> has unsaved changes and, if so, ask the user whether to
+save it before it’s discarded – either because its window is being closed
+(see <em>sn.view.graphics.guiApp.Application._closeWindow()</em>) or because the
+whole app is exiting (see <em>saveAtExit()</em> below).</p>
+<p>Pulled out of <em>saveAtExit()</em> as a shared helper so both call sites – the
+whole-app-exit path and the individual-window-close path – prompt with
+exactly the same writeLocked()/isDirty()/save() logic instead of drifting
+apart.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.persistence.pRef.html#util.persistence.pRef.PRDb" title="(in pythonUtils)"><em>util.persistence.pRef.PRDb</em></a>) – The database-backed object to check – a <em>Model</em> or <em>SNGView</em>
+(anything exposing <em>writeLocked()</em>, <em>isDirty()</em> and <em>save()</em>).</p></li>
+<li><p><strong>url</strong> (<em>str</em>) – <em>obj</em>’s URL, used only in the confirmation dialog’s message.</p></li>
+<li><p><strong>kind</strong> (<em>str</em>) – A lowercase human-readable noun for the confirmation dialog,
+e.g. “model” or “view”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<p>If the environment variable SN_NO_SAVE_PROMPT is set (to anything), nothing
+is asked and nothing is saved – for automated runs, such as tests, which
+would otherwise put a dialog on the screen for every modified model.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn._displayPath">
+<span class="sig-prename descclassname"><span class="pre">sn.</span></span><span class="sig-name descname"><span class="pre">_displayPath</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn._displayPath" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>url</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>url</em> as the user knows it: a local file’s path (eg: “~/models/family.snv”), or else the URL.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn._savedAtExit">
+<span class="sig-prename descclassname"><span class="pre">sn.</span></span><span class="sig-name descname"><span class="pre">_savedAtExit</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#sn._savedAtExit" title="Link to this definition">¶</a></dt>
+<dd><p>Set once saveAtExit() has run, so the atexit call after an explicit one doesn’t ask again.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.saveAtExit">
+<span class="sig-prename descclassname"><span class="pre">sn.</span></span><span class="sig-name descname"><span class="pre">saveAtExit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.saveAtExit" title="Link to this definition">¶</a></dt>
+<dd><p>Offer to save every modified model and any still-open view. Runs at most
+once per process: eg: the Quit handler calls it explicitly and then exits,
+which would otherwise run it again (via atexit) and repeat every question
+the user already answered “no” to.</p>
+</dd></dl>
+
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="sn.controller.html">sn.controller package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sn.controller.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.controller.modelInterface.html">sn.controller.modelInterface module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.controller.modelInterface.html#sn.controller.modelInterface.logger"><code class="docutils literal notranslate"><span class="pre">logger</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.controller.modelInterface.html#sn.controller.modelInterface.ConvertingDict"><code class="docutils literal notranslate"><span class="pre">ConvertingDict</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.controller.modelInterface.html#sn.controller.modelInterface.ModelCommand"><code class="docutils literal notranslate"><span class="pre">ModelCommand</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.controller.modelInterface.html#sn.controller.modelInterface.changesModel"><code class="docutils literal notranslate"><span class="pre">changesModel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.controller.modelInterface.html#sn.controller.modelInterface._refuseInferred"><code class="docutils literal notranslate"><span class="pre">_refuseInferred()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.controller.modelInterface.html#sn.controller.modelInterface.NoSuchObjectError"><code class="docutils literal notranslate"><span class="pre">NoSuchObjectError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.controller.modelInterface.html#sn.controller.modelInterface._lookup"><code class="docutils literal notranslate"><span class="pre">_lookup()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.controller.modelInterface.html#sn.controller.modelInterface._object"><code class="docutils literal notranslate"><span class="pre">_object()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.controller.modelInterface.html#sn.controller.modelInterface._decodeObjects"><code class="docutils literal notranslate"><span class="pre">_decodeObjects()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.controller.modelInterface.html#sn.controller.modelInterface._parentsOf"><code class="docutils literal notranslate"><span class="pre">_parentsOf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.controller.modelInterface.html#sn.controller.modelInterface._describe"><code class="docutils literal notranslate"><span class="pre">_describe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.controller.modelInterface.html#sn.controller.modelInterface.ModelContext"><code class="docutils literal notranslate"><span class="pre">ModelContext</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sn.model.html">sn.model package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.html#sn.model.NAME_NOTE"><code class="docutils literal notranslate"><span class="pre">NAME_NOTE</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.html#sn.model.TopModel"><code class="docutils literal notranslate"><span class="pre">TopModel</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.html#sn.model.TopModel.__init__"><code class="docutils literal notranslate"><span class="pre">TopModel.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.html#sn.model.TopModel.TOP"><code class="docutils literal notranslate"><span class="pre">TopModel.TOP</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.html#sn.model.TopModel.RELATION"><code class="docutils literal notranslate"><span class="pre">TopModel.RELATION</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.html#sn.model.TopModel.ISA"><code class="docutils literal notranslate"><span class="pre">TopModel.ISA</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.html#sn.model.TopModel.NODE"><code class="docutils literal notranslate"><span class="pre">TopModel.NODE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.html#sn.model.TopModel.COLLECTION"><code class="docutils literal notranslate"><span class="pre">TopModel.COLLECTION</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.html#sn.model.TopModel.CONTEXT"><code class="docutils literal notranslate"><span class="pre">TopModel.CONTEXT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.html#sn.model.TopModel.CONTAINS"><code class="docutils literal notranslate"><span class="pre">TopModel.CONTAINS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.html#sn.model.TopModel.RULE"><code class="docutils literal notranslate"><span class="pre">TopModel.RULE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.html#sn.model.TopModel.ANTECEDENT"><code class="docutils literal notranslate"><span class="pre">TopModel.ANTECEDENT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.html#sn.model.TopModel.CONSEQUENT"><code class="docutils literal notranslate"><span class="pre">TopModel.CONSEQUENT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.html#sn.model.TopModel.QUERY"><code class="docutils literal notranslate"><span class="pre">TopModel.QUERY</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.html#sn.model.TopModel.DISTINCT"><code class="docutils literal notranslate"><span class="pre">TopModel.DISTINCT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.html#sn.model.TopModel.DEFINITION"><code class="docutils literal notranslate"><span class="pre">TopModel.DEFINITION</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.html#sn.model.TopModel.DEFINIENDUM"><code class="docutils literal notranslate"><span class="pre">TopModel.DEFINIENDUM</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.html#sn.model.TopModel.DEFINIENS"><code class="docutils literal notranslate"><span class="pre">TopModel.DEFINIENS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.html#sn.model.TopModel.CONSTRAINT"><code class="docutils literal notranslate"><span class="pre">TopModel.CONSTRAINT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.html#sn.model.TopModel.REQUIREMENT"><code class="docutils literal notranslate"><span class="pre">TopModel.REQUIREMENT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.html#sn.model.TopModel.CONDITION"><code class="docutils literal notranslate"><span class="pre">TopModel.CONDITION</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.html#sn.model.TopModel.REQUIRED"><code class="docutils literal notranslate"><span class="pre">TopModel.REQUIRED</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.clingoReasoner.html#sn.model.clingoReasoner.RULES"><code class="docutils literal notranslate"><span class="pre">RULES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.clingoReasoner.html#sn.model.clingoReasoner.ClingoReasoner"><code class="docutils literal notranslate"><span class="pre">ClingoReasoner</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.clingoReasoner.html#sn.model.clingoReasoner._SYMBOL"><code class="docutils literal notranslate"><span class="pre">_SYMBOL</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.clingoReasoner.html#sn.model.clingoReasoner._str"><code class="docutils literal notranslate"><span class="pre">_str()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.clingoReasoner.html#sn.model.clingoReasoner._arity"><code class="docutils literal notranslate"><span class="pre">_arity()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.constraints.html#sn.model.constraints.CONSTRAINTS"><code class="docutils literal notranslate"><span class="pre">CONSTRAINTS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.constraints.html#sn.model.constraints.WHERE"><code class="docutils literal notranslate"><span class="pre">WHERE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.constraints.html#sn.model.constraints.CONSTRAINTS_NOTE"><code class="docutils literal notranslate"><span class="pre">CONSTRAINTS_NOTE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.constraints.html#sn.model.constraints._Present"><code class="docutils literal notranslate"><span class="pre">_Present</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.constraints.html#sn.model.constraints.PRESENT"><code class="docutils literal notranslate"><span class="pre">PRESENT</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.constraints.html#sn.model.constraints.ValueVar"><code class="docutils literal notranslate"><span class="pre">ValueVar</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.constraints.html#sn.model.constraints.Not"><code class="docutils literal notranslate"><span class="pre">Not</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.constraints.html#sn.model.constraints.NOT"><code class="docutils literal notranslate"><span class="pre">NOT</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.constraints.html#sn.model.constraints.isNegated"><code class="docutils literal notranslate"><span class="pre">isNegated()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.constraints.html#sn.model.constraints.constraintItems"><code class="docutils literal notranslate"><span class="pre">constraintItems()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.constraints.html#sn.model.constraints.ConstraintError"><code class="docutils literal notranslate"><span class="pre">ConstraintError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.constraints.html#sn.model.constraints._NEGATED"><code class="docutils literal notranslate"><span class="pre">_NEGATED</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.constraints.html#sn.model.constraints._isValueVar"><code class="docutils literal notranslate"><span class="pre">_isValueVar()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.constraints.html#sn.model.constraints._split"><code class="docutils literal notranslate"><span class="pre">_split()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.constraints.html#sn.model.constraints._value"><code class="docutils literal notranslate"><span class="pre">_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.constraints.html#sn.model.constraints.parseConstraints"><code class="docutils literal notranslate"><span class="pre">parseConstraints()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.constraints.html#sn.model.constraints._formatValue"><code class="docutils literal notranslate"><span class="pre">_formatValue()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.constraints.html#sn.model.constraints.formatConstraints"><code class="docutils literal notranslate"><span class="pre">formatConstraints()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.constraints.html#sn.model.constraints.splitWhere"><code class="docutils literal notranslate"><span class="pre">splitWhere()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.constraints.html#sn.model.constraints.mergeConstraints"><code class="docutils literal notranslate"><span class="pre">mergeConstraints()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.constraints.html#sn.model.constraints.migrateConstraints"><code class="docutils literal notranslate"><span class="pre">migrateConstraints()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.copying.html#sn.model.copying.Ref"><code class="docutils literal notranslate"><span class="pre">Ref</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.copying.html#sn.model.copying.Entry"><code class="docutils literal notranslate"><span class="pre">Entry</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.copying.html#sn.model.copying.Clip"><code class="docutils literal notranslate"><span class="pre">Clip</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.copying.html#sn.model.copying.clipboard"><code class="docutils literal notranslate"><span class="pre">clipboard</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.copying.html#sn.model.copying.contents"><code class="docutils literal notranslate"><span class="pre">contents()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.copying.html#sn.model.copying.closure"><code class="docutils literal notranslate"><span class="pre">closure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.copying.html#sn.model.copying._kind"><code class="docutils literal notranslate"><span class="pre">_kind()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.copying.html#sn.model.copying.copyObjects"><code class="docutils literal notranslate"><span class="pre">copyObjects()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.copying.html#sn.model.copying._copyAttribute"><code class="docutils literal notranslate"><span class="pre">_copyAttribute()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.copying.html#sn.model.copying.visibleModels"><code class="docutils literal notranslate"><span class="pre">visibleModels()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.copying.html#sn.model.copying.pasteProblem"><code class="docutils literal notranslate"><span class="pre">pasteProblem()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.copying.html#sn.model.copying.pasteInto"><code class="docutils literal notranslate"><span class="pre">pasteInto()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.copying.html#sn.model.copying.cutObjects"><code class="docutils literal notranslate"><span class="pre">cutObjects()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.copying.html#sn.model.copying.removeObjects"><code class="docutils literal notranslate"><span class="pre">removeObjects()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.copying.html#sn.model.copying.restoreObjects"><code class="docutils literal notranslate"><span class="pre">restoreObjects()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.EXTENSIONS"><code class="docutils literal notranslate"><span class="pre">EXTENSIONS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.SUBFOLDERS"><code class="docutils literal notranslate"><span class="pre">SUBFOLDERS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.SEPARATORS"><code class="docutils literal notranslate"><span class="pre">SEPARATORS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.isRemote"><code class="docutils literal notranslate"><span class="pre">isRemote()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.Folder"><code class="docutils literal notranslate"><span class="pre">Folder</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory._norm"><code class="docutils literal notranslate"><span class="pre">_norm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory._localPath"><code class="docutils literal notranslate"><span class="pre">_localPath()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.parsePath"><code class="docutils literal notranslate"><span class="pre">parsePath()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.formatPath"><code class="docutils literal notranslate"><span class="pre">formatPath()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.covered"><code class="docutils literal notranslate"><span class="pre">covered()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.withFolder"><code class="docutils literal notranslate"><span class="pre">withFolder()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.filesIn"><code class="docutils literal notranslate"><span class="pre">filesIn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.FIRST_ID"><code class="docutils literal notranslate"><span class="pre">FIRST_ID</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.PEEKED"><code class="docutils literal notranslate"><span class="pre">PEEKED</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.CACHED"><code class="docutils literal notranslate"><span class="pre">CACHED</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.REMOTE_TIMEOUT"><code class="docutils literal notranslate"><span class="pre">REMOTE_TIMEOUT</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.peekFile"><code class="docutils literal notranslate"><span class="pre">peekFile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.peekURL"><code class="docutils literal notranslate"><span class="pre">peekURL()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.HEAD_KEYS"><code class="docutils literal notranslate"><span class="pre">HEAD_KEYS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory._fromHead"><code class="docutils literal notranslate"><span class="pre">_fromHead()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory._peek"><code class="docutils literal notranslate"><span class="pre">_peek()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.urlOf"><code class="docutils literal notranslate"><span class="pre">urlOf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.pathOf"><code class="docutils literal notranslate"><span class="pre">pathOf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.Entry"><code class="docutils literal notranslate"><span class="pre">Entry</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.scanFile"><code class="docutils literal notranslate"><span class="pre">scanFile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.scanURL"><code class="docutils literal notranslate"><span class="pre">scanURL()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory._fromPeek"><code class="docutils literal notranslate"><span class="pre">_fromPeek()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory._kindOf"><code class="docutils literal notranslate"><span class="pre">_kindOf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.modelURLOf"><code class="docutils literal notranslate"><span class="pre">modelURLOf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.Directory"><code class="docutils literal notranslate"><span class="pre">Directory</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.urlProblem"><code class="docutils literal notranslate"><span class="pre">urlProblem()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.moveToTrash"><code class="docutils literal notranslate"><span class="pre">moveToTrash()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.model.html#sn.model.model.makeRelationArrow"><code class="docutils literal notranslate"><span class="pre">makeRelationArrow()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.model.html#sn.model.model.nameMatcher"><code class="docutils literal notranslate"><span class="pre">nameMatcher()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.model.html#sn.model.model.removeDuplicateObjects"><code class="docutils literal notranslate"><span class="pre">removeDuplicateObjects()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.model.html#sn.model.model._supersInProgress"><code class="docutils literal notranslate"><span class="pre">_supersInProgress</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.model.html#sn.model.model._retracting"><code class="docutils literal notranslate"><span class="pre">_retracting</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.model.html#sn.model.model._reportedSelfParents"><code class="docutils literal notranslate"><span class="pre">_reportedSelfParents</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.model.html#sn.model.model._isaGeneration"><code class="docutils literal notranslate"><span class="pre">_isaGeneration</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.model.html#sn.model.model.isaStructureChanged"><code class="docutils literal notranslate"><span class="pre">isaStructureChanged()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject"><code class="docutils literal notranslate"><span class="pre">GraphObject</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.model.html#sn.model.model.unresolvedReason"><code class="docutils literal notranslate"><span class="pre">unresolvedReason()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.model.html#sn.model.model._isRemote"><code class="docutils literal notranslate"><span class="pre">_isRemote()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.model.html#sn.model.model._isPackagedBaseRules"><code class="docutils literal notranslate"><span class="pre">_isPackagedBaseRules()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.model.html#sn.model.model.SN_URL"><code class="docutils literal notranslate"><span class="pre">SN_URL</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.model.html#sn.model.model.BASE_RULES_URL"><code class="docutils literal notranslate"><span class="pre">BASE_RULES_URL</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.model.html#sn.model.model._baseRulesURL"><code class="docutils literal notranslate"><span class="pre">_baseRulesURL()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.model.html#sn.model.model.Model"><code class="docutils literal notranslate"><span class="pre">Model</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.model.html#sn.model.model.Node"><code class="docutils literal notranslate"><span class="pre">Node</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.model.html#sn.model.model.Collection"><code class="docutils literal notranslate"><span class="pre">Collection</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.model.html#sn.model.model.AllModelCollection"><code class="docutils literal notranslate"><span class="pre">AllModelCollection</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.model.html#sn.model.model.Relation"><code class="docutils literal notranslate"><span class="pre">Relation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.model.html#sn.model.model.IsaIndividual"><code class="docutils literal notranslate"><span class="pre">IsaIndividual</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.modelPrefs.html#sn.model.modelPrefs.SUPER_MODELS"><code class="docutils literal notranslate"><span class="pre">SUPER_MODELS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.modelPrefs.html#sn.model.modelPrefs.MODEL_PREFS"><code class="docutils literal notranslate"><span class="pre">MODEL_PREFS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.modelPrefs.html#sn.model.modelPrefs.ModelPrefs"><code class="docutils literal notranslate"><span class="pre">ModelPrefs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.modelPrefs.html#sn.model.modelPrefs.initModelPrefs"><code class="docutils literal notranslate"><span class="pre">initModelPrefs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.names.html#sn.model.names.NameKind"><code class="docutils literal notranslate"><span class="pre">NameKind</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.names.html#sn.model.names.NameGrammar"><code class="docutils literal notranslate"><span class="pre">NameGrammar</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.names.html#sn.model.names.grammar"><code class="docutils literal notranslate"><span class="pre">grammar</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.names.html#sn.model.names.setGrammar"><code class="docutils literal notranslate"><span class="pre">setGrammar()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.names.html#sn.model.names.nameKind"><code class="docutils literal notranslate"><span class="pre">nameKind()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.names.html#sn.model.names.isVariableName"><code class="docutils literal notranslate"><span class="pre">isVariableName()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.names.html#sn.model.names.isHiddenName"><code class="docutils literal notranslate"><span class="pre">isHiddenName()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.names.html#sn.model.names.stem"><code class="docutils literal notranslate"><span class="pre">stem()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.PROPERTIES"><code class="docutils literal notranslate"><span class="pre">PROPERTIES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.CARDINALITY"><code class="docutils literal notranslate"><span class="pre">CARDINALITY</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.parseCardinality"><code class="docutils literal notranslate"><span class="pre">parseCardinality()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner._MESSAGES"><code class="docutils literal notranslate"><span class="pre">_MESSAGES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.Sym"><code class="docutils literal notranslate"><span class="pre">Sym</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.Fact"><code class="docutils literal notranslate"><span class="pre">Fact</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.NewObject"><code class="docutils literal notranslate"><span class="pre">NewObject</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.Violation"><code class="docutils literal notranslate"><span class="pre">Violation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.Inferences"><code class="docutils literal notranslate"><span class="pre">Inferences</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.Pattern"><code class="docutils literal notranslate"><span class="pre">Pattern</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.patternOf"><code class="docutils literal notranslate"><span class="pre">patternOf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.variableGroups"><code class="docutils literal notranslate"><span class="pre">variableGroups()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.patternWarnings"><code class="docutils literal notranslate"><span class="pre">patternWarnings()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.reportedAnswers"><code class="docutils literal notranslate"><span class="pre">reportedAnswers()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.unusedVariables"><code class="docutils literal notranslate"><span class="pre">unusedVariables()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.queryWarnings"><code class="docutils literal notranslate"><span class="pre">queryWarnings()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.RuleSpec"><code class="docutils literal notranslate"><span class="pre">RuleSpec</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.ruleOf"><code class="docutils literal notranslate"><span class="pre">ruleOf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.definitionSpecs"><code class="docutils literal notranslate"><span class="pre">definitionSpecs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner._spec"><code class="docutils literal notranslate"><span class="pre">_spec()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.rules"><code class="docutils literal notranslate"><span class="pre">rules()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner._contexts"><code class="docutils literal notranslate"><span class="pre">_contexts()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.ConstraintSpec"><code class="docutils literal notranslate"><span class="pre">ConstraintSpec</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.CONSTRAINT_ATTRIBUTES"><code class="docutils literal notranslate"><span class="pre">CONSTRAINT_ATTRIBUTES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.constraintOf"><code class="docutils literal notranslate"><span class="pre">constraintOf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.constraintSpecs"><code class="docutils literal notranslate"><span class="pre">constraintSpecs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.ruleSpecs"><code class="docutils literal notranslate"><span class="pre">ruleSpecs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.BASE_RULES_PLACEHOLDER"><code class="docutils literal notranslate"><span class="pre">BASE_RULES_PLACEHOLDER</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.BASE_RULES"><code class="docutils literal notranslate"><span class="pre">BASE_RULES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner._baseFiles"><code class="docutils literal notranslate"><span class="pre">_baseFiles</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner._baseSpecs"><code class="docutils literal notranslate"><span class="pre">_baseSpecs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner._readingBase"><code class="docutils literal notranslate"><span class="pre">_readingBase</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.baseRulesSource"><code class="docutils literal notranslate"><span class="pre">baseRulesSource()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner._baseURL"><code class="docutils literal notranslate"><span class="pre">_baseURL()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner._baseURLOfModel"><code class="docutils literal notranslate"><span class="pre">_baseURLOfModel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.baseRuleModels"><code class="docutils literal notranslate"><span class="pre">baseRuleModels()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.Reasoner"><code class="docutils literal notranslate"><span class="pre">Reasoner</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.reason"><code class="docutils literal notranslate"><span class="pre">reason()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.summary"><code class="docutils literal notranslate"><span class="pre">summary()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.clearReasoning"><code class="docutils literal notranslate"><span class="pre">clearReasoning()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.withoutInferences"><code class="docutils literal notranslate"><span class="pre">withoutInferences()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner._inferredAttributes"><code class="docutils literal notranslate"><span class="pre">_inferredAttributes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner._inferredRelations"><code class="docutils literal notranslate"><span class="pre">_inferredRelations()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.sameClasses"><code class="docutils literal notranslate"><span class="pre">sameClasses()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.mergeSame"><code class="docutils literal notranslate"><span class="pre">mergeSame()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner._newObjectKey"><code class="docutils literal notranslate"><span class="pre">_newObjectKey()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner._newObjectName"><code class="docutils literal notranslate"><span class="pre">_newObjectName()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.inferredNodeFor"><code class="docutils literal notranslate"><span class="pre">inferredNodeFor()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.materialize"><code class="docutils literal notranslate"><span class="pre">materialize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.reasoningFor"><code class="docutils literal notranslate"><span class="pre">reasoningFor()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner._kind"><code class="docutils literal notranslate"><span class="pre">_kind()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner._label"><code class="docutils literal notranslate"><span class="pre">_label()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.relationArrow"><code class="docutils literal notranslate"><span class="pre">relationArrow()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.snAttribute.html#sn.model.snAttribute.SNAttributedObject"><code class="docutils literal notranslate"><span class="pre">SNAttributedObject</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sn.view.html">sn.view package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sn.view.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.html">sn.view.graphics package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.view.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.textUserInterface.html">sn.view.textUserInterface module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.INDIVIDUAL_MARKER"><code class="docutils literal notranslate"><span class="pre">INDIVIDUAL_MARKER</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.TYPE_MARKER"><code class="docutils literal notranslate"><span class="pre">TYPE_MARKER</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.SYSTEM_MARKER"><code class="docutils literal notranslate"><span class="pre">SYSTEM_MARKER</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.getFormatter"><code class="docutils literal notranslate"><span class="pre">getFormatter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.getKindMarkStr"><code class="docutils literal notranslate"><span class="pre">getKindMarkStr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.UIContext"><code class="docutils literal notranslate"><span class="pre">UIContext</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.printLists"><code class="docutils literal notranslate"><span class="pre">printLists()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.SNAbstractTerminal"><code class="docutils literal notranslate"><span class="pre">SNAbstractTerminal</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.SNTerminalWidget"><code class="docutils literal notranslate"><span class="pre">SNTerminalWidget</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.SNPlainTextTerminal"><code class="docutils literal notranslate"><span class="pre">SNPlainTextTerminal</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="sn.__main__.html">sn.__main__ module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sn.__main__.html#sn.__main__.selftest"><code class="docutils literal notranslate"><span class="pre">selftest()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.__main__.html#sn.__main__.selftestPlugins"><code class="docutils literal notranslate"><span class="pre">selftestPlugins()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sn.hooks.html">sn.hooks module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html#sn.hooks.TRUSTED_MODULES"><code class="docutils literal notranslate"><span class="pre">TRUSTED_MODULES</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html#sn.hooks.TRUSTED_PREF"><code class="docutils literal notranslate"><span class="pre">TRUSTED_PREF</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html#sn.hooks.MOVED"><code class="docutils literal notranslate"><span class="pre">MOVED</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html#sn.hooks._trustedPackages"><code class="docutils literal notranslate"><span class="pre">_trustedPackages</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html#sn.hooks.Hook"><code class="docutils literal notranslate"><span class="pre">Hook</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html#sn.hooks.HookContext"><code class="docutils literal notranslate"><span class="pre">HookContext</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.hooks.html#sn.hooks.HookContext.key"><code class="docutils literal notranslate"><span class="pre">HookContext.key</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.hooks.html#sn.hooks.HookContext.vobject"><code class="docutils literal notranslate"><span class="pre">HookContext.vobject</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.hooks.html#sn.hooks.HookContext.view"><code class="docutils literal notranslate"><span class="pre">HookContext.view</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.hooks.html#sn.hooks.HookContext.selection"><code class="docutils literal notranslate"><span class="pre">HookContext.selection</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.hooks.html#sn.hooks.HookContext.extra"><code class="docutils literal notranslate"><span class="pre">HookContext.extra</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.hooks.html#sn.hooks.HookContext.__init__"><code class="docutils literal notranslate"><span class="pre">HookContext.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html#sn.hooks._hooks"><code class="docutils literal notranslate"><span class="pre">_hooks</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html#sn.hooks._appliesTo"><code class="docutils literal notranslate"><span class="pre">_appliesTo</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html#sn.hooks._problems"><code class="docutils literal notranslate"><span class="pre">_problems</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html#sn.hooks._reported"><code class="docutils literal notranslate"><span class="pre">_reported</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html#sn.hooks.reference"><code class="docutils literal notranslate"><span class="pre">reference()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html#sn.hooks.hook"><code class="docutils literal notranslate"><span class="pre">hook()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html#sn.hooks.isReference"><code class="docutils literal notranslate"><span class="pre">isReference()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html#sn.hooks.canonical"><code class="docutils literal notranslate"><span class="pre">canonical()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html#sn.hooks.trustedModules"><code class="docutils literal notranslate"><span class="pre">trustedModules()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html#sn.hooks.trust"><code class="docutils literal notranslate"><span class="pre">trust()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html#sn.hooks.trusted"><code class="docutils literal notranslate"><span class="pre">trusted()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html#sn.hooks.problem"><code class="docutils literal notranslate"><span class="pre">problem()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html#sn.hooks._find"><code class="docutils literal notranslate"><span class="pre">_find()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html#sn.hooks.resolve"><code class="docutils literal notranslate"><span class="pre">resolve()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html#sn.hooks.call"><code class="docutils literal notranslate"><span class="pre">call()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html#sn.hooks.applies"><code class="docutils literal notranslate"><span class="pre">applies()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html#sn.hooks.hookAttributes"><code class="docutils literal notranslate"><span class="pre">hookAttributes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html#sn.hooks._report"><code class="docutils literal notranslate"><span class="pre">_report()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html#sn.hooks._onTrustedModules"><code class="docutils literal notranslate"><span class="pre">_onTrustedModules()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sn.plugins.html">sn.plugins module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins.NAMESPACE"><code class="docutils literal notranslate"><span class="pre">NAMESPACE</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins.PLUGINS_FOLDER"><code class="docutils literal notranslate"><span class="pre">PLUGINS_FOLDER</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins.MANIFEST"><code class="docutils literal notranslate"><span class="pre">MANIFEST</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins.DISABLED_PREF"><code class="docutils literal notranslate"><span class="pre">DISABLED_PREF</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins.TOOLS_MENU"><code class="docutils literal notranslate"><span class="pre">TOOLS_MENU</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins.version"><code class="docutils literal notranslate"><span class="pre">version()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins.PluginError"><code class="docutils literal notranslate"><span class="pre">PluginError</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins.Manifest"><code class="docutils literal notranslate"><span class="pre">Manifest</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.plugins.html#sn.plugins.Manifest.folder"><code class="docutils literal notranslate"><span class="pre">Manifest.folder</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.plugins.html#sn.plugins.Manifest.name"><code class="docutils literal notranslate"><span class="pre">Manifest.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.plugins.html#sn.plugins.Manifest.version"><code class="docutils literal notranslate"><span class="pre">Manifest.version</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.plugins.html#sn.plugins.Manifest.description"><code class="docutils literal notranslate"><span class="pre">Manifest.description</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.plugins.html#sn.plugins.Manifest.snVersion"><code class="docutils literal notranslate"><span class="pre">Manifest.snVersion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.plugins.html#sn.plugins.Manifest.exclude"><code class="docutils literal notranslate"><span class="pre">Manifest.exclude</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.plugins.html#sn.plugins.Manifest.source"><code class="docutils literal notranslate"><span class="pre">Manifest.source</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.plugins.html#sn.plugins.Manifest.id"><code class="docutils literal notranslate"><span class="pre">Manifest.id</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.plugins.html#sn.plugins.Manifest.module"><code class="docutils literal notranslate"><span class="pre">Manifest.module</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.plugins.html#sn.plugins.Manifest.read"><code class="docutils literal notranslate"><span class="pre">Manifest.read()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.plugins.html#sn.plugins.Manifest.__init__"><code class="docutils literal notranslate"><span class="pre">Manifest.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins.bundledFolder"><code class="docutils literal notranslate"><span class="pre">bundledFolder()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins.manifests"><code class="docutils literal notranslate"><span class="pre">manifests()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins.installBundled"><code class="docutils literal notranslate"><span class="pre">installBundled()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins.NOT_INSTALLED"><code class="docutils literal notranslate"><span class="pre">NOT_INSTALLED</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins.installed"><code class="docutils literal notranslate"><span class="pre">installed()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins._copy"><code class="docutils literal notranslate"><span class="pre">_copy()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins._relocate"><code class="docutils literal notranslate"><span class="pre">_relocate()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins.namespace"><code class="docutils literal notranslate"><span class="pre">namespace()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins.importBundled"><code class="docutils literal notranslate"><span class="pre">importBundled()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins.PluginContext"><code class="docutils literal notranslate"><span class="pre">PluginContext</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.plugins.html#sn.plugins.PluginContext.__init__"><code class="docutils literal notranslate"><span class="pre">PluginContext.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.plugins.html#sn.plugins.PluginContext.app"><code class="docutils literal notranslate"><span class="pre">PluginContext.app</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.plugins.html#sn.plugins.PluginContext.manifest"><code class="docutils literal notranslate"><span class="pre">PluginContext.manifest</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.plugins.html#sn.plugins.PluginContext.logger"><code class="docutils literal notranslate"><span class="pre">PluginContext.logger</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.plugins.html#sn.plugins.PluginContext.folder"><code class="docutils literal notranslate"><span class="pre">PluginContext.folder</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.plugins.html#sn.plugins.PluginContext.prefKey"><code class="docutils literal notranslate"><span class="pre">PluginContext.prefKey()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.plugins.html#sn.plugins.PluginContext.pref"><code class="docutils literal notranslate"><span class="pre">PluginContext.pref()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.plugins.html#sn.plugins.PluginContext.setPref"><code class="docutils literal notranslate"><span class="pre">PluginContext.setPref()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.plugins.html#sn.plugins.PluginContext.menu"><code class="docutils literal notranslate"><span class="pre">PluginContext.menu()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.plugins.html#sn.plugins.PluginContext.addMenuItem"><code class="docutils literal notranslate"><span class="pre">PluginContext.addMenuItem()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.plugins.html#sn.plugins.PluginContext.addSeparator"><code class="docutils literal notranslate"><span class="pre">PluginContext.addSeparator()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins._index"><code class="docutils literal notranslate"><span class="pre">_index()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins._cascade"><code class="docutils literal notranslate"><span class="pre">_cascade()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins.Plugin"><code class="docutils literal notranslate"><span class="pre">Plugin</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.plugins.html#sn.plugins.Plugin.__init__"><code class="docutils literal notranslate"><span class="pre">Plugin.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.plugins.html#sn.plugins.Plugin.manifest"><code class="docutils literal notranslate"><span class="pre">Plugin.manifest</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.plugins.html#sn.plugins.Plugin.module"><code class="docutils literal notranslate"><span class="pre">Plugin.module</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.plugins.html#sn.plugins.Plugin.context"><code class="docutils literal notranslate"><span class="pre">Plugin.context</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins.loaded"><code class="docutils literal notranslate"><span class="pre">loaded</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins.problems"><code class="docutils literal notranslate"><span class="pre">problems</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins.load"><code class="docutils literal notranslate"><span class="pre">load()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins.loadAll"><code class="docutils literal notranslate"><span class="pre">loadAll()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="sn.controller.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">sn.controller package</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="../developer/conventions.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Conventions and Testing</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2023-2026, Rob Kremer
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">sn package</a><ul>
+<li><a class="reference internal" href="#sn.VERSION"><code class="docutils literal notranslate"><span class="pre">VERSION</span></code></a></li>
+<li><a class="reference internal" href="#sn.SCHEMA_VERSION"><code class="docutils literal notranslate"><span class="pre">SCHEMA_VERSION</span></code></a></li>
+<li><a class="reference internal" href="#sn.SNLogger"><code class="docutils literal notranslate"><span class="pre">SNLogger</span></code></a><ul>
+<li><a class="reference internal" href="#sn.SNLogger.print"><code class="docutils literal notranslate"><span class="pre">SNLogger.print()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sn.resourcePath"><code class="docutils literal notranslate"><span class="pre">resourcePath()</span></code></a></li>
+<li><a class="reference internal" href="#sn.EXAMPLES_PLACEHOLDER"><code class="docutils literal notranslate"><span class="pre">EXAMPLES_PLACEHOLDER</span></code></a></li>
+<li><a class="reference internal" href="#sn.exampleNames"><code class="docutils literal notranslate"><span class="pre">exampleNames()</span></code></a></li>
+<li><a class="reference internal" href="#sn.copyExamples"><code class="docutils literal notranslate"><span class="pre">copyExamples()</span></code></a></li>
+<li><a class="reference internal" href="#sn.getLogger"><code class="docutils literal notranslate"><span class="pre">getLogger()</span></code></a></li>
+<li><a class="reference internal" href="#sn.SNPrefs"><code class="docutils literal notranslate"><span class="pre">SNPrefs</span></code></a><ul>
+<li><a class="reference internal" href="#sn.SNPrefs.getSupers"><code class="docutils literal notranslate"><span class="pre">SNPrefs.getSupers()</span></code></a></li>
+<li><a class="reference internal" href="#sn.SNPrefs.isIndividual"><code class="docutils literal notranslate"><span class="pre">SNPrefs.isIndividual()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sn.PREFS"><code class="docutils literal notranslate"><span class="pre">PREFS</span></code></a></li>
+<li><a class="reference internal" href="#sn.RENAMED_PREFS"><code class="docutils literal notranslate"><span class="pre">RENAMED_PREFS</span></code></a></li>
+<li><a class="reference internal" href="#sn.renamePrefs"><code class="docutils literal notranslate"><span class="pre">renamePrefs()</span></code></a></li>
+<li><a class="reference internal" href="#sn.initPrefs"><code class="docutils literal notranslate"><span class="pre">initPrefs()</span></code></a></li>
+<li><a class="reference internal" href="#sn.SN_FOLDER"><code class="docutils literal notranslate"><span class="pre">SN_FOLDER</span></code></a></li>
+<li><a class="reference internal" href="#sn.snFolder"><code class="docutils literal notranslate"><span class="pre">snFolder()</span></code></a></li>
+<li><a class="reference internal" href="#sn._userAliases"><code class="docutils literal notranslate"><span class="pre">_userAliases</span></code></a></li>
+<li><a class="reference internal" href="#sn.applyURLAliases"><code class="docutils literal notranslate"><span class="pre">applyURLAliases()</span></code></a></li>
+<li><a class="reference internal" href="#sn._onURLAliases"><code class="docutils literal notranslate"><span class="pre">_onURLAliases()</span></code></a></li>
+<li><a class="reference internal" href="#sn.savePrefsIfChanged"><code class="docutils literal notranslate"><span class="pre">savePrefsIfChanged()</span></code></a></li>
+<li><a class="reference internal" href="#sn.checkSaveModified"><code class="docutils literal notranslate"><span class="pre">checkSaveModified()</span></code></a></li>
+<li><a class="reference internal" href="#sn._displayPath"><code class="docutils literal notranslate"><span class="pre">_displayPath()</span></code></a></li>
+<li><a class="reference internal" href="#sn._savedAtExit"><code class="docutils literal notranslate"><span class="pre">_savedAtExit</span></code></a></li>
+<li><a class="reference internal" href="#sn.saveAtExit"><code class="docutils literal notranslate"><span class="pre">saveAtExit()</span></code></a></li>
+<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

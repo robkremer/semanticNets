@@ -1,0 +1,669 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Developer Guide" href="../developer/index.html"><link rel="prev" title="The Terminal" href="terminal.html">
+        <link rel="prefetch" href="../_static/sn-logo.png" as="image">
+
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>Plugins - Semantic Nets 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">Semantic Nets 1.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">Semantic Nets 1.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="concepts.html">Concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gettingStarted.html">Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html">Worked Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="editing.html">Editing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contexts.html">Contexts: Rules, Definitions, Queries, Constraints and Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reasoning.html">Reasoning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="viewing.html">Viewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="layouts.html">Arranging a View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="animation.html">Animation Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="files.html">Files and Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="terminal.html">The Terminal</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Plugins</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developer/index.html">Developer Guide</a><input aria-label="Toggle navigation of Developer Guide" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html">Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/model.html">The Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/reasoner.html">The Reasoner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/view.html">The Graphical View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/layout.html">Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/extending.html">Building on Semantic Nets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/conventions.html">Conventions and Testing</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../dev/sn.html">sn package</a><input aria-label="Toggle navigation of sn package" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.controller.html">sn.controller package</a><input aria-label="Toggle navigation of sn.controller package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.controller.modelInterface.html">sn.controller.modelInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.examples.html">sn.examples package</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.constraints.html">sn.model.constraints module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.copying.html">sn.model.copying module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.directory.html">sn.model.directory module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.model.html">sn.model.model module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.reasoner.html">sn.model.reasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../dev/sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.connectors.html">sn.view.graphics.connectors module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.expandDialog.html">sn.view.graphics.expandDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.guiApp.html">sn.view.graphics.guiApp module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.imageExport.html">sn.view.graphics.imageExport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.labels.html">sn.view.graphics.labels module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.layout.html">sn.view.graphics.layout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.layoutDialog.html">sn.view.graphics.layoutDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.layoutPanel.html">sn.view.graphics.layoutPanel module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.progress.html">sn.view.graphics.progress module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.reasoningToolbar.html">sn.view.graphics.reasoningToolbar module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.relationTable.html">sn.view.graphics.relationTable module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.replaceModelDialog.html">sn.view.graphics.replaceModelDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.searchDialog.html">sn.view.graphics.searchDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.shapes.html">sn.view.graphics.shapes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.sngContext.html">sn.view.graphics.sngContext module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.sngView.html">sn.view.graphics.sngView module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.sourceWindow.html">sn.view.graphics.sourceWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.treeLayout.html">sn.view.graphics.treeLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewBase.html">sn.view.graphics.viewBase module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewCommands.html">sn.view.graphics.viewCommands module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewContainment.html">sn.view.graphics.viewContainment module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewEditing.html">sn.view.graphics.viewEditing module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewFiles.html">sn.view.graphics.viewFiles module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewInput.html">sn.view.graphics.viewInput module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewLayouts.html">sn.view.graphics.viewLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewReasoning.html">sn.view.graphics.viewReasoning module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewViewport.html">sn.view.graphics.viewViewport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewVisibility.html">sn.view.graphics.viewVisibility module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.visibilityDialog.html">sn.view.graphics.visibilityDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.vnodes.html">sn.view.graphics.vnodes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.vobjects.html">sn.view.graphics.vobjects module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.vrelations.html">sn.view.graphics.vrelations module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.view.textUserInterface.html">sn.view.textUserInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.__main__.html">sn.__main__ module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.hooks.html">sn.hooks module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.plugins.html">sn.plugins module</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../plugins/index.html">The plugins</a><input aria-label="Toggle navigation of The plugins" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.XMLreader.html">snplugins.XMLreader package</a><input aria-label="Toggle navigation of snplugins.XMLreader package" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.reader.html">snplugins.XMLreader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.schema.html">snplugins.XMLreader.schema module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.view.html">snplugins.XMLreader.view module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.pythonParser.html">snplugins.pythonParser package</a><input aria-label="Toggle navigation of snplugins.pythonParser package" class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.dialog.html">snplugins.pythonParser.dialog module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.hooks.html">snplugins.pythonParser.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.parser.html">snplugins.pythonParser.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/user/exampleApps.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="plugins">
+<h1>Plugins<a class="headerlink" href="#plugins" title="Link to this heading">¶</a></h1>
+<p><em>Semantic Nets</em> can be the front end of other programs: a program makes a
+model of something – a file, a program, a database – and opens a view of it
+in the editor, where you can look round it, arrange it, ask about it and
+reason over it as you would any model. Such a program can be a <strong>plugin</strong>:
+it’s loaded when the editor starts, and adds itself to the menu bar – most
+often to the <strong>Tools</strong> menu. Two come with <em>Semantic Nets</em>, as examples:</p>
+<dl class="simple">
+<dt><strong>Tools | XML Reader…</strong></dt><dd><p>makes a model of an XML file (see <a class="reference internal" href="#the-xml-reader">The XML reader</a>).</p>
+</dd>
+<dt><strong>Tools | Python Parser…</strong></dt><dd><p>makes a model of a Python program (see <a class="reference internal" href="#the-python-parser">The Python parser</a>).</p>
+</dd>
+</dl>
+<p>Both save what they make as an ordinary model and view (<code class="docutils literal notranslate"><span class="pre">.snm</span></code> and
+<code class="docutils literal notranslate"><span class="pre">.snv</span></code>), so you can open them again later from <strong>File | Open…</strong> or the
+model directory, like any other.</p>
+<section id="where-plugins-are">
+<h2>Where plugins are<a class="headerlink" href="#where-plugins-are" title="Link to this heading">¶</a></h2>
+<p>Each plugin is a folder in <code class="docutils literal notranslate"><span class="pre">~/.sn/plugins/</span></code> (beside the settings: see
+<a class="reference internal" href="files.html"><span class="doc">Files and Settings</span></a>); <strong>Help | Reveal Plugins Folder</strong> opens it in the Finder.</p>
+<ul class="simple">
+<li><p><strong>The ones that come with it</strong> are put there when the editor starts, if
+they aren’t there yet – or if the editor has a newer version of one (which
+replaces the copy there: so to change one, copy it to a folder of another
+name first).</p></li>
+<li><p><strong>Adding one</strong>: put its folder there, and start the editor again. (A plugin
+is a folder with a <em>plugin.toml</em> in it, saying what it is: how one’s made is
+in the Developer Guide, <a class="reference internal" href="../developer/extending.html"><span class="doc">Building on Semantic Nets</span></a>.)</p></li>
+<li><p><strong>Turning one off</strong>: list its folder’s name in the <code class="docutils literal notranslate"><span class="pre">plugins/disabled</span></code>
+setting (<strong>Settings…</strong>), and start the editor again.</p></li>
+<li><p><strong>One that doesn’t work</strong> – it’s for a later version of <em>Semantic Nets</em>,
+or its code fails – is left out, and the log says why; the rest of the
+editor, and the other plugins, carry on.</p></li>
+</ul>
+<p>A plugin is a program: its code runs when the editor starts, and models may
+call its functions (see <a class="reference internal" href="#menus-tooltips-and-double-clicks-from-programs">Menus, tooltips and double-clicks from programs</a>).
+Install only plugins you trust.</p>
+</section>
+<section id="the-xml-reader">
+<h2>The XML reader<a class="headerlink" href="#the-xml-reader" title="Link to this heading">¶</a></h2>
+<p><strong>Tools | XML Reader…</strong> opens a dialog: the <strong>XML file</strong> to read (choose
+one – starting in the folder you read one from last, or, the first time, in
+the plugin’s <em>examples</em>), and the three files it makes of it. For
+<em>books.xml</em>, they’re <em>books_xml.snm</em> (the <strong>model</strong>: the elements),
+<em>books_xml.snv</em> (the <strong>view</strong>) and <em>books_xml_ontology.snm</em> (the
+<strong>ontology</strong>: the model’s super-model, with the types and definitions – the
+place to change the type hierarchy, or add rules), next to it. Change any of
+them, by typing or with <strong>Choose…</strong>: until you do, they follow the XML
+file (and the view and ontology follow the model). (For the plugin’s own
+examples, they’re made in <code class="docutils literal notranslate"><span class="pre">~/Documents/Semantic</span> <span class="pre">Nets</span> <span class="pre">Examples/</span></code> instead:
+the plugin’s folder is replaced when a newer version comes.) <strong>Go</strong> makes
+them, asking first if the model or view is there already, and opens the
+view.</p>
+<p>What the file’s tags and attributes <em>mean</em> is worked out from how they’re
+used throughout the file, not from their names (they’re only hints), so it
+works for XML of any kind:</p>
+<ul class="simple">
+<li><p><strong>Properties</strong>: a tag with no tags inside it, that’s never repeated in an
+element (a book’s <code class="docutils literal notranslate"><span class="pre">&lt;title&gt;</span></code>, say), is a property of the element it’s in,
+not a thing of its own: the book gets a <code class="docutils literal notranslate"><span class="pre">property/title</span></code> attribute (see
+the attribute editor: <a class="reference internal" href="editing.html"><span class="doc">Editing</span></a>). Its value is the tag’s text – or,
+if it has none, its one attribute (<code class="docutils literal notranslate"><span class="pre">&lt;author</span> <span class="pre">name=&quot;Hofstadter&quot;/&gt;</span></code>). An
+element’s own XML attributes are its properties too (<code class="docutils literal notranslate"><span class="pre">property/year</span></code>).
+Values that are all whole numbers, all numbers, or all true or false are
+stored as such.</p></li>
+<li><p><strong>Groups</strong>: a tag that’s never repeated, and holds only properties (a
+device’s <code class="docutils literal notranslate"><span class="pre">&lt;States&gt;</span></code>, say), adds them to its element:
+<code class="docutils literal notranslate"><span class="pre">property/States/onOffState</span></code>.</p></li>
+<li><p><strong>Things</strong>: every other tag – one that holds other things, or is repeated
+(a book’s <code class="docutils literal notranslate"><span class="pre">&lt;chapter&gt;</span></code>s) – becomes a type, with a colour and shape of its
+own, which its elements inherit, so you can see what each is; and each of
+its elements an individual of it.</p></li>
+<li><p><strong>Kinds</strong>: if a tag’s elements have a property whose name says it’s a kind
+(it has <em>type</em>, <em>kind</em>, <em>category</em> or <em>class</em> in it), whose values are
+names that recur (<code class="docutils literal notranslate"><span class="pre">&lt;book</span> <span class="pre">kind=&quot;novel&quot;&gt;</span></code>), each is of a subtype named by
+it, in a shade of its tag’s colour.</p></li>
+<li><p><strong>Names</strong>: each is named by its <em>name</em>, <em>title</em>, <em>label</em>, <em>id</em> or <em>key</em>
+(the first it has), or by its text, if that’s short; otherwise by its tag
+and a number (<em>chapter1</em>, <em>chapter2</em>, …).</p></li>
+<li><p><strong>Annotations</strong>: an attribute that says what a <em>tag</em> is, rather than what
+each element is – one on many tags, always the same for each
+(<code class="docutils literal notranslate"><span class="pre">type=&quot;integer&quot;</span></code> on every <code class="docutils literal notranslate"><span class="pre">&lt;Address&gt;</span></code>) – isn’t given to every
+element: it’s noted on the type, or on the property it describes.</p></li>
+<li><p><strong>Nesting</strong> becomes relations: a book’s chapters are related to it by
+<em>has-chapter</em>. A tag that just holds a list of things (a <code class="docutils literal notranslate"><span class="pre">&lt;DeviceList&gt;</span></code>
+of <code class="docutils literal notranslate"><span class="pre">&lt;Device&gt;</span></code>s) isn’t made: the element it’s in has them, by
+<em>has-DeviceList</em>. Each of these is a kind of <em>xml-has-part</em>, so the whole
+tree is there whatever the tags. The ontology defines <em>xml-part-of</em> as the
+other way round ([?a -xml-part-of-&gt; ?b] ⇔ [?b -xml-has-part-&gt; ?a]):
+<strong>reason</strong> (see <a class="reference internal" href="reasoning.html"><span class="doc">Reasoning</span></a>) concludes that each chapter is
+<em>xml-part-of</em> its book.</p></li>
+<li><p><strong>References</strong>: a property named like a reference (ending in <em>id</em> or
+<em>ref</em>: <code class="docutils literal notranslate"><span class="pre">&lt;DeviceID&gt;</span></code>), most of whose values are another element’s <em>id</em>,
+is a relation to that element too, named for it (<em>DeviceID</em>): a kind of
+<em>xml-refers-to</em>.</p></li>
+</ul>
+<p>Each type’s <strong>tooltip</strong> lists its elements’ properties: hover over one to
+see them. (It’s the type’s <code class="docutils literal notranslate"><span class="pre">vis/tooltip</span></code>: change it there.) The terminal
+pane says what the tags were found to be.</p>
+<p><strong>An ontology that’s there already</strong> is built on, not replaced: the dialog
+says what it’ll do with the one given. It may be one made before for the same
+file (which you’ve changed since: moved types about, added types, attributes
+or rules), or one shared by several XML files of the same kind – choose it
+for each, and their models are all built on it. (The dialog remembers the
+ontology you chose: next time, it offers that one, if it’s still there,
+rather than one beside the model. Empty its field to go back to one beside
+the model.) It can be a URL (eg: on the web) rather than a file. What’s in it is found by name – a tag’s type by the
+tag, wherever you’ve moved it in the type hierarchy; a subtype by its kind’s
+value, under its tag’s type; <em>has-&lt;tag&gt;</em>, the references,
+<em>xml-has-part</em>, <em>xml-part-of</em> and <em>xml-refers-to</em> by theirs – and only
+what’s missing is added: a type, property or relation for something new in
+the file, with a colour and shape of its own.</p>
+<p>What it says also overrides what’s worked out from the file: a tag that has
+a type there is a thing, even if it would otherwise be a property (make one
+for it, to have its elements as things of their own); and one that a type
+there has a property for (<code class="docutils literal notranslate"><span class="pre">property/&lt;tag&gt;</span></code>) is a property.</p>
+<ul class="simple">
+<li><p>If the ontology can be changed (a file here that you can write), what’s
+missing is added to it, and it’s saved – so the next file of that kind
+finds it there.</p></li>
+<li><p>If it can’t (it’s on the web, or a file you can’t write), it’s left as it
+is: the types and <em>has-&lt;tag&gt;</em> relations it hasn’t go in the model instead
+(a new subtype of one of its types, too), and an attribute its types
+haven’t is just in the elements.</p></li>
+<li><p>To start afresh, tick <strong>Replace it</strong>: a new ontology is made in its place.
+Anything you’d changed in it is lost, and other models built on it lose
+their types.</p></li>
+</ul>
+<p>If you’ve renamed or deleted a type, it isn’t found, so it’s made afresh (as
+for a new ontology), and the log says what was added. (If its <em>has-&lt;tag&gt;</em> is
+still there, pointing to the renamed type, the log warns you: the reasoner
+would say each of those elements is out of its range.) If <em>xml-part-of</em> is
+missing, it’s made again with its definition; if you’ve only deleted its
+definition, that stays deleted.</p>
+<p>The view shows the <strong>types</strong> (each tag’s, and their subtypes), each with its
+elements round it, arranged by the balloon layout (see <a class="reference internal" href="layouts.html"><span class="doc">Arranging a View</span></a>): the
+types organize it. <strong>Expand</strong> an element (its menu’s <strong>expand</strong>, or <strong>expand
+by relation…</strong>) to bring in what it holds, what it’s in, and what it refers
+to. The types are still in the ontology: they’re only shown in the view.</p>
+<p>A big file – more than 2000 elements – would take minutes to show, and
+make a crowded view. For one of those, the view shows just the types, as a
+tree, each subtype below its type. <strong>Expand</strong> the ones you’re interested in
+to bring in their elements, and go on from there.</p>
+<figure class="align-default" id="id1">
+<a class="reference internal image-reference" href="../_images/xmlreader-books.png"><img alt="The XMLreader's view of books.xml: its four types -- book, chapter, library and magazine -- each with its elements round it: the two books, named by their titles; the two chapters; library1; and Byte" src="../_images/xmlreader-books.png" style="width: 400px;" />
+</a>
+<figcaption>
+<p><span class="caption-text">What the XML reader makes of <em>books.xml</em> (in the plugin’s <em>examples</em>:
+<code class="docutils literal notranslate"><span class="pre">~/.sn/plugins/XMLreader/examples/</span></code>): a library with two books and a
+magazine.</span><a class="headerlink" href="#id1" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>The <em>examples</em> folder also has <em>library25.xml</em> and <em>library200.xml</em> (25 and
+200 made-up books), to see how it copes with something bigger. Things to try:</p>
+<ul class="simple">
+<li><p>Hover over a book: its tooltip lists its properties – its id, year,
+title and author (and in the library files, its kind and language).</p></li>
+<li><p>Right-click <em>library1</em>, and <strong>expand all | 1 level</strong>: it’s related to the
+books by <em>has-book</em>, and to the magazine by <em>has-magazine</em>.</p></li>
+<li><p><strong>view | hide by category | relation types…</strong>, and tick <em>has-chapter</em>:
+the lines to the chapters are hidden (untick it to show them again). In a
+file with references, hiding them (eg: <em>DeviceID</em>) leaves just the tree.</p></li>
+</ul>
+</section>
+<section id="the-python-parser">
+<h2>The Python parser<a class="headerlink" href="#the-python-parser" title="Link to this heading">¶</a></h2>
+<p><strong>Tools | Python Parser…</strong> makes a model of a Python program: its packages, modules, classes, functions
+and methods, their doc strings, and what imports what. It opens a dialog,
+listing the files to analyse (a folder stands for all the <code class="docutils literal notranslate"><span class="pre">.py</span></code> files in
+and below it: <strong>Add files…</strong> and <strong>Add folder…</strong> add more), with:</p>
+<dl class="simple">
+<dt><strong>Follow imports: n levels</strong></dt><dd><p>How far to follow imports from them. 0 analyses just these files (what they
+import is shown, but not looked into); 1 also the modules they import; and
+so on.</p>
+</dd>
+<dt><strong>Analyse the standard library and installed packages too</strong></dt><dd><p>Otherwise, imports from those are noted, but not looked into.</p>
+</dd>
+<dt><strong>Show imports in the view</strong></dt><dd><p>Which <em>imports</em> relations to show: none, those of the files given, or all.</p>
+</dd>
+</dl>
+<p>and <strong>Go</strong>.</p>
+<p>It makes a model named after the program’s main module, with <code class="docutils literal notranslate"><span class="pre">_py</span></code> (eg:
+<em>XMLreader_py.snm</em> and <em>.snv</em>), next to it, built on an ontology of Python
+programs that comes with it (<em>pythonOntology.snm</em>, in the plugin’s folder: package, module, class,
+function, method, … and the relations between them). The view shows the
+packages and modules, as trees growing right, by <em>includes</em> (see
+<a class="reference internal" href="layouts.html"><span class="doc">Arranging a View</span></a>), and the imports asked for; the rest of the model is there to
+be brought in. The view is <em>kept arranged</em> by that tree layout: <strong>expand</strong> a
+module (<strong>expand by relation… | defines →</strong>, or <strong>expand all</strong>) and its tree
+opens up for its classes and functions.</p>
+<figure class="align-default" id="id2">
+<a class="reference internal image-reference" href="../_images/pythonparser-xmlreader.png"><img alt="The pythonParser's view of the XMLreader's code: on the left, the packages sn, tkinter, util, xml and XMLreader, each with its sub-packages and modules to its right, and grey imports lines from the XMLreader's two modules to the modules they import" src="../_images/pythonparser-xmlreader.png" style="width: 560px;" />
+</a>
+<figcaption>
+<p><span class="caption-text">What the Python parser makes of the XML reader’s own code (imports not
+followed): its two modules, <em>reader</em> and <em>view</em>, and the modules they
+import, in their packages.</span><a class="headerlink" href="#id2" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>Its objects know where their code is:</p>
+<ul class="simple">
+<li><p>A module’s, class’s or function’s menu has <strong>Show source</strong> (the code, in a
+window here, with its lines highlighted), <strong>Open in editor</strong> and <strong>Reveal
+in Finder</strong>.</p></li>
+<li><p>A class’s or function’s <strong>tooltip</strong> is its code (cut short if it’s long:
+see <code class="docutils literal notranslate"><span class="pre">gui/tooltipMaxLines</span></code> in <a class="reference internal" href="files.html"><span class="doc">Files and Settings</span></a>).</p></li>
+<li><p><strong>Double-clicking</strong> a class or function opens it in your editor.</p></li>
+</ul>
+<p>The code is found in its file as it is <em>now</em>, by its name – so it’s still
+found after the file’s been edited. <strong>Open in editor</strong> uses the
+<code class="docutils literal notranslate"><span class="pre">gui/editorCommand</span></code> setting (<strong>Settings…</strong>): a command with <code class="docutils literal notranslate"><span class="pre">{path}</span></code>
+and <code class="docutils literal notranslate"><span class="pre">{line}</span></code> (and <code class="docutils literal notranslate"><span class="pre">{url}</span></code>) in it, eg: <code class="docutils literal notranslate"><span class="pre">code</span> <span class="pre">-g</span> <span class="pre">{path}:{line}</span></code> for VS
+Code, or <code class="docutils literal notranslate"><span class="pre">bbedit</span> <span class="pre">+{line}</span> <span class="pre">{path}</span></code> for BBEdit. (Hover over the setting for
+more, eg: for Eclipse.) If it’s empty, or can’t be run, the code is shown in
+a window here instead.</p>
+<p>Things to try:</p>
+<ul class="simple">
+<li><p>Expand a module, then a class in it: <em>includes</em> covers <em>defines</em> and
+<em>defines-method</em>, so the tree goes on out to the class’s methods.</p></li>
+<li><p><strong>view | show | nodes…</strong>, and tick <em>class</em>: all the classes, and how
+they’re related (eg: <em>inherits-from</em>).</p></li>
+<li><p><strong>view | layout | arrange now | hubs</strong>, with all the imports shown: the
+modules most imported, in the middle of their groups.</p></li>
+</ul>
+</section>
+<section id="menus-tooltips-and-double-clicks-from-programs">
+<h2>Menus, tooltips and double-clicks from programs<a class="headerlink" href="#menus-tooltips-and-double-clicks-from-programs" title="Link to this heading">¶</a></h2>
+<p>The pythonParser’s menu items, tooltips and double-clicks aren’t built
+into the editor: its model’s types <em>name</em> functions of the pythonParser’s,
+in attributes (eg: <code class="docutils literal notranslate"><span class="pre">.menu/Show</span> <span class="pre">source</span></code>), so they still work when the model
+is saved and opened again later. Opening such a model runs that program’s
+code, so it’s done only for the programs <em>Semantic Nets</em> trusts: its own,
+the plugins it has loaded, and those listed in the <code class="docutils literal notranslate"><span class="pre">hooks/trustedModules</span></code>
+setting. An item naming a function of any other is
+shown, but greyed out, and the log says why. (How a program does this is in
+the Developer Guide: <a class="reference internal" href="../developer/extending.html"><span class="doc">Building on Semantic Nets</span></a>.)</p>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="../developer/index.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Developer Guide</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="terminal.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">The Terminal</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2023-2026, Rob Kremer
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Plugins</a><ul>
+<li><a class="reference internal" href="#where-plugins-are">Where plugins are</a></li>
+<li><a class="reference internal" href="#the-xml-reader">The XML reader</a></li>
+<li><a class="reference internal" href="#the-python-parser">The Python parser</a></li>
+<li><a class="reference internal" href="#menus-tooltips-and-double-clicks-from-programs">Menus, tooltips and double-clicks from programs</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

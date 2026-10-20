@@ -1,0 +1,1535 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="sn.view.graphics.animationControls module" href="sn.view.graphics.animationControls.html"><link rel="prev" title="sn.view.graphics package" href="sn.view.graphics.html">
+        <link rel="prefetch" href="../_static/sn-logo.png" as="image">
+
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>sn.view.graphics.animatedLayouts module - Semantic Nets 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">Semantic Nets 1.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">Semantic Nets 1.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user/index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user/concepts.html">Concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/gettingStarted.html">Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/tutorial.html">Worked Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/editing.html">Editing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/contexts.html">Contexts: Rules, Definitions, Queries, Constraints and Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/reasoning.html">Reasoning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/viewing.html">Viewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/layouts.html">Arranging a View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/animation.html">Animation Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/files.html">Files and Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/terminal.html">The Terminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/exampleApps.html">Plugins</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developer/index.html">Developer Guide</a><input aria-label="Toggle navigation of Developer Guide" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html">Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/model.html">The Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/reasoner.html">The Reasoner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/view.html">The Graphical View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/layout.html">Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/extending.html">Building on Semantic Nets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/conventions.html">Conventions and Testing</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="sn.html">sn package</a><input aria-label="Toggle navigation of sn package" checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="sn.controller.html">sn.controller package</a><input aria-label="Toggle navigation of sn.controller package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.controller.modelInterface.html">sn.controller.modelInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current has-children"><a class="reference internal" href="sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" checked="" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3 current has-children"><a class="reference internal" href="sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" checked="" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">sn.view.graphics.animatedLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html">sn.view.graphics.connectors module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.expandDialog.html">sn.view.graphics.expandDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.guiApp.html">sn.view.graphics.guiApp module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html">sn.view.graphics.imageExport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html">sn.view.graphics.labels module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html">sn.view.graphics.layout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutDialog.html">sn.view.graphics.layoutDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutPanel.html">sn.view.graphics.layoutPanel module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.progress.html">sn.view.graphics.progress module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.reasoningToolbar.html">sn.view.graphics.reasoningToolbar module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.relationTable.html">sn.view.graphics.relationTable module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.replaceModelDialog.html">sn.view.graphics.replaceModelDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.searchDialog.html">sn.view.graphics.searchDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.shapes.html">sn.view.graphics.shapes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sngContext.html">sn.view.graphics.sngContext module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sngView.html">sn.view.graphics.sngView module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sourceWindow.html">sn.view.graphics.sourceWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html">sn.view.graphics.treeLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewBase.html">sn.view.graphics.viewBase module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewCommands.html">sn.view.graphics.viewCommands module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewContainment.html">sn.view.graphics.viewContainment module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewEditing.html">sn.view.graphics.viewEditing module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewFiles.html">sn.view.graphics.viewFiles module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewInput.html">sn.view.graphics.viewInput module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewLayouts.html">sn.view.graphics.viewLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewReasoning.html">sn.view.graphics.viewReasoning module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewViewport.html">sn.view.graphics.viewViewport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewVisibility.html">sn.view.graphics.viewVisibility module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.visibilityDialog.html">sn.view.graphics.visibilityDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vnodes.html">sn.view.graphics.vnodes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vobjects.html">sn.view.graphics.vobjects module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vrelations.html">sn.view.graphics.vrelations module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.textUserInterface.html">sn.view.textUserInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.__main__.html">sn.__main__ module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html">sn.hooks module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html">sn.plugins module</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../plugins/index.html">The plugins</a><input aria-label="Toggle navigation of The plugins" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.XMLreader.html">snplugins.XMLreader package</a><input aria-label="Toggle navigation of snplugins.XMLreader package" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.reader.html">snplugins.XMLreader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.schema.html">snplugins.XMLreader.schema module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.view.html">snplugins.XMLreader.view module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.pythonParser.html">snplugins.pythonParser package</a><input aria-label="Toggle navigation of snplugins.pythonParser package" class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.dialog.html">snplugins.pythonParser.dialog module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.hooks.html">snplugins.pythonParser.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.parser.html">snplugins.pythonParser.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/dev/sn.view.graphics.animatedLayouts.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="module-sn.view.graphics.animatedLayouts">
+<span id="sn-view-graphics-animatedlayouts-module"></span><h1>sn.view.graphics.animatedLayouts module<a class="headerlink" href="#module-sn.view.graphics.animatedLayouts" title="Link to this heading">¶</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.random">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.animatedLayouts.</span></span><span class="sig-name descname"><span class="pre">random</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">x</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">interval</span> <span class="pre">[0,</span> <span class="pre">1).</span></span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.random" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.WeakrefError">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.animatedLayouts.</span></span><span class="sig-name descname"><span class="pre">WeakrefError</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.WeakrefError" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Specific error for FieldsLayout to signal the destruction of the owner SNView object</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.isEligible">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.animatedLayouts.</span></span><span class="sig-name descname"><span class="pre">isEligible</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.isEligible" title="Link to this definition">¶</a></dt>
+<dd><p>Whether <em>obj</em> takes part in the fields layout as a body of its own: shown
+nodes, context windows and relation types – not individual relations (their
+labels float between their ends) or hidden objects. What a context contains
+is a body inside its window (see <em>Snapshot.owners</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>obj</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>) – A view object.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True iff <em>obj</em> is laid out.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.PANE_MARGIN">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.animatedLayouts.</span></span><span class="sig-name descname"><span class="pre">PANE_MARGIN</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">10.0</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.PANE_MARGIN" title="Link to this definition">¶</a></dt>
+<dd><p>The space (view units) a layout keeps between what a context window contains and the edges of its pane.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.PANE_LABEL">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.animatedLayouts.</span></span><span class="sig-name descname"><span class="pre">PANE_LABEL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">12.0</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.PANE_LABEL" title="Link to this definition">¶</a></dt>
+<dd><p>The extra space it keeps at the top of a labelled pane (a rule’s or definition’s), for the label.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FLOW_DIRECTIONS">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.animatedLayouts.</span></span><span class="sig-name descname"><span class="pre">FLOW_DIRECTIONS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'down':</span> <span class="pre">(0.0,</span> <span class="pre">1.0),</span> <span class="pre">'down-left':</span> <span class="pre">(-0.7071,</span> <span class="pre">0.7071),</span> <span class="pre">'down-right':</span> <span class="pre">(0.7071,</span> <span class="pre">0.7071),</span> <span class="pre">'left':</span> <span class="pre">(-1.0,</span> <span class="pre">0.0),</span> <span class="pre">'right':</span> <span class="pre">(1.0,</span> <span class="pre">0.0),</span> <span class="pre">'up':</span> <span class="pre">(0.0,</span> <span class="pre">-1.0),</span> <span class="pre">'up-left':</span> <span class="pre">(-0.7071,</span> <span class="pre">-0.7071),</span> <span class="pre">'up-right':</span> <span class="pre">(0.7071,</span> <span class="pre">-0.7071)}</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FLOW_DIRECTIONS" title="Link to this definition">¶</a></dt>
+<dd><p>The directions a layout’s current can flow in (see <em>FieldsLayout.flowDirection</em>), as unit vectors (y is down).</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.Snapshot">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.animatedLayouts.</span></span><span class="sig-name descname"><span class="pre">Snapshot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relationWeights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flowRelation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.Snapshot" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>The layout’s view of the graph at one moment, as plain numbers – so the
+forces can be calculated away from the GUI (eg: in a thread: Tk isn’t
+thread-safe).</p>
+<p>What a context contains (see <em>SNGView.containmentHomes()</em>) is a body in its
+window: it’s kept in its pane (a rule’s antecedent, …), and it’s pushed and
+pulled only by the other bodies in the same window – a relation to something
+outside pulls the window (or the window it’s in, …) instead. It moves with
+its window, and within it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>view</strong> (<em>SNView</em>)</p></li>
+<li><p><strong>relationWeights</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>flowRelation</strong> (<em>Any</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.Snapshot.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relationWeights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flowRelation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.Snapshot.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Take the snapshot (on the GUI thread).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>flowRelation</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a><em>|</em><em>None</em>) – If given, a relation type: its relations are recorded,
+by direction, in <em>directed</em> (for a layout’s current: see <em>forces()</em>).</p></li>
+<li><p><strong>view</strong> (<em>SNView</em>) – The view to lay out.</p></li>
+<li><p><strong>relationWeights</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>) – The weight (0..1) of each relation type by name; “*” for the rest.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.Snapshot.objects">
+<span class="sig-name descname"><span class="pre">objects</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><span class="pre">VObject</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.Snapshot.objects" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.Snapshot.pinned">
+<span class="sig-name descname"><span class="pre">pinned</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.Snapshot.pinned" title="Link to this definition">¶</a></dt>
+<dd><p>The relations’ labels (by index) that float now, but are placed in their panes: moving them pins them (see <em>_placed()</em>).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.Snapshot.owners">
+<span class="sig-name descname"><span class="pre">owners</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.Snapshot.owners" title="Link to this definition">¶</a></dt>
+<dd><p>The window (by index) each object is in (see <em>SNGView.containmentHomes()</em>), or None for one out on the canvas.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.Snapshot.regions">
+<span class="sig-name descname"><span class="pre">regions</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.Snapshot.regions" title="Link to this definition">¶</a></dt>
+<dd><p>The area (x1, y1, x2, y2) the contained objects’ footprints are kept in: their panes, less a margin; None for the rest.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.Snapshot.chains">
+<span class="sig-name descname"><span class="pre">chains</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.Snapshot.chains" title="Link to this definition">¶</a></dt>
+<dd><p>Each object (by index), then the window it’s in, the window that’s in, …, out to the canvas.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.Snapshot.passengers">
+<span class="sig-name descname"><span class="pre">passengers</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><span class="pre">VObject</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.Snapshot.passengers" title="Link to this definition">¶</a></dt>
+<dd><p>What moves with each window (by index) that isn’t a body itself: what it
+contains that’s hidden (eg: in a collapsed window), and labels placed by
+hand inside it.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.Snapshot.positions">
+<span class="sig-name descname"><span class="pre">positions</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.Snapshot.positions" title="Link to this definition">¶</a></dt>
+<dd><p>The objects’ centres, in the same order.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.Snapshot.halfSizes">
+<span class="sig-name descname"><span class="pre">halfSizes</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.Snapshot.halfSizes" title="Link to this definition">¶</a></dt>
+<dd><p>The objects’ half widths and heights about their centres, in the same order:
+distances are measured between their edges. A node’s size includes its
+label’s text, if that spills outside its box (eg: a long name in a box of
+fixed size) – what you see is what’s kept apart.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.Snapshot.links">
+<span class="sig-name descname"><span class="pre">links</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.Snapshot.links" title="Link to this definition">¶</a></dt>
+<dd><p>(i, j, weight): pairs of objects (by index) attracted to one another: always
+in the same window (or both out on the canvas) – see <em>siblings()</em>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.Snapshot.directed">
+<span class="sig-name descname"><span class="pre">directed</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.Snapshot.directed" title="Link to this definition">¶</a></dt>
+<dd><p>(src, dst): the objects (by index) at the ends of each relation of the flow relation type.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.Snapshot.ranks">
+<span class="sig-name descname"><span class="pre">ranks</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.Snapshot.ranks" title="Link to this definition">¶</a></dt>
+<dd><p>Each object in a directed relation (by index): its layer – 0 for those with no dst (eg: root classes), then one more than its deepest dst’s.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.Snapshot._placed">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">_placed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">homes</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.Snapshot._placed" title="Link to this definition">¶</a></dt>
+<dd><p>Whether <em>vo</em> is a relation’s label that’s laid out as a body in its context
+window (see <em>SNGView.containmentHomes()</em>): one the window contains whose
+place floating between its ends wouldn’t say which pane it’s in – an end
+is elsewhere, eg: on the other side, or astride the divider (as in a rule
+saying a -r-&gt; b gives b -r-&gt; a) – or one placed by hand (it doesn’t float).
+(Not a relation that belongs in the window only because its ends do, eg:
+an isa link: it just follows its ends.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vo</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>) – A view object.</p></li>
+<li><p><strong>homes</strong> (<em>dict</em>) – Where contained objects belong (see <em>SNGView.containmentHomes()</em>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True iff it’s laid out in its pane.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.Snapshot.siblings">
+<span class="sig-name descname"><span class="pre">siblings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.Snapshot.siblings" title="Link to this definition">¶</a></dt>
+<dd><p>What a relation between objects <em>i</em> and <em>j</em> pulls together: they
+themselves if they’re in the same window (or both out on the canvas);
+otherwise the windows they’re in (or they themselves) that are side by
+side, in the innermost window that has them both (or out on the canvas).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>i</strong> (<em>int</em>) – An object’s index.</p></li>
+<li><p><strong>j</strong> (<em>int</em>) – Another object’s index.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The pair (by index), in the same order; None if one is (in) the other.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[int, int] | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.rankOf">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.animatedLayouts.</span></span><span class="sig-name descname"><span class="pre">rankOf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directed</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.rankOf" title="Link to this definition">¶</a></dt>
+<dd><p>Layer the objects of <em>directed</em> (src, dst) relations: an object with no dst
+(eg: a root class, for isa) is rank 0; any other is one more than its
+highest-ranked dst. (Cycles are cut off after as many rounds as there are
+objects.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>directed</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>]</em>) – (src, dst) pairs of object indices.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Each object’s rank.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[int, int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.gap">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.animatedLayouts.</span></span><span class="sig-name descname"><span class="pre">gap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">snap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.gap" title="Link to this definition">¶</a></dt>
+<dd><p>How far apart objects <em>i</em> and <em>j</em> of <em>snap</em> are: the distance between their
+edges (0 if they overlap), and the unit vector from <em>j</em>’s centre to <em>i</em>’s
+(random if their centres coincide).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>snap</strong> (<a class="reference internal" href="#sn.view.graphics.animatedLayouts.Snapshot" title="sn.view.graphics.animatedLayouts.Snapshot"><em>Snapshot</em></a>) – The graph.</p></li>
+<li><p><strong>i</strong> (<em>int</em>) – An object’s index.</p></li>
+<li><p><strong>j</strong> (<em>int</em>) – Another object’s index.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(gap, ux, uy).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[float, float, float]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.misalignment">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.animatedLayouts.</span></span><span class="sig-name descname"><span class="pre">misalignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">snap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flow</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.misalignment" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>snap</strong> (<a class="reference internal" href="#sn.view.graphics.animatedLayouts.Snapshot" title="sn.view.graphics.animatedLayouts.Snapshot"><em>Snapshot</em></a>) – The graph.</p></li>
+<li><p><strong>flow</strong> (<em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em>) – The current’s direction (a unit vector).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>How far, in all, the relations in <em>snap.directed</em> are from pointing
+upstream (from src to dst): the sum of their angles off it, each from 0
+(in line) to 1 (backwards).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.LEAP_REACH">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.animatedLayouts.</span></span><span class="sig-name descname"><span class="pre">LEAP_REACH</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.5</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.LEAP_REACH" title="Link to this definition">¶</a></dt>
+<dd><p>How far out beyond the graph a leap may land, as a fraction of the graph’s width and height (see <em>leap()</em>).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.LEAP_MIN">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.animatedLayouts.</span></span><span class="sig-name descname"><span class="pre">LEAP_MIN</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.25</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.LEAP_MIN" title="Link to this definition">¶</a></dt>
+<dd><p>The shortest leap, as a fraction of the graph’s diagonal: a leap is a big change (see <em>leap()</em>).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.LEAP_ANY">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.animatedLayouts.</span></span><span class="sig-name descname"><span class="pre">LEAP_ANY</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.25</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.LEAP_ANY" title="Link to this definition">¶</a></dt>
+<dd><p>The share of leaps whose object is picked at random from all those out on the canvas, not by its longest link (see <em>leap()</em>).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.LEAP_STOP">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.animatedLayouts.</span></span><span class="sig-name descname"><span class="pre">LEAP_STOP</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.6</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.LEAP_STOP" title="Link to this definition">¶</a></dt>
+<dd><p>The temperature below which there are no more leaps: so the last ones have
+time to come back (see <em>FieldsLayout.leaps</em>). (With the usual settings, a run
+ends at about 0.25, where no step moves anything enough to count – see
+<em>FieldsLayout.displacementSensitivity</em>.)</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.LEAP_LEAF">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.animatedLayouts.</span></span><span class="sig-name descname"><span class="pre">LEAP_LEAF</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">50.0</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.LEAP_LEAF" title="Link to this definition">¶</a></dt>
+<dd><p>How near (between edges, beyond <em>kMinDist</em>) a leaf must be to go with what leaps (see <em>leap()</em>).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.stretch">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.animatedLayouts.</span></span><span class="sig-name descname"><span class="pre">stretch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">snap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kMinDist</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.stretch" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>snap</strong> (<a class="reference internal" href="#sn.view.graphics.animatedLayouts.Snapshot" title="sn.view.graphics.animatedLayouts.Snapshot"><em>Snapshot</em></a>) – The graph.</p></li>
+<li><p><strong>i</strong> (<em>int</em>) – An object’s index.</p></li>
+<li><p><strong>kMinDist</strong> (<em>float</em>) – The gap below which links don’t pull.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>How stretched object <em>i</em>’s longest link is: its gap beyond <em>kMinDist</em>, by weight – however many
+links it has (a hub isn’t more stretched for having more of them).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.leap">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.animatedLayouts.</span></span><span class="sig-name descname"><span class="pre">leap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">snap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kMinDist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.leap" title="Link to this definition">¶</a></dt>
+<dd><p>A leap, like a mutation: an object out on the canvas is thrown somewhere
+else entirely – anywhere across the graph, or well out into the free space
+around it (up to <em>LEAP_REACH</em> of its size beyond its edges) – at least
+<em>LEAP_MIN</em> of the graph’s diagonal away. Its relations then pull it back in
+from wherever it lands, by another way: around walls of other objects that
+kept it from what it’s related to, which its springs, a step at a time,
+couldn’t pull it through. The object is picked at random: for <em>LEAP_ANY</em>
+of the leaps, from all those out on the canvas, evenly; for the rest, the
+objects with the longest links are the likeliest to go (by the square of
+their <em>stretch()</em>) – not those with the most links: moving a hub is more
+likely a fatal mutation. Each takes
+its leaves (what’s related to it alone) along, if they’re near it (see
+<em>LEAP_LEAF</em>): not, say, the one it’s stuck away from. (A window leaps with what it
+contains.) Plain arithmetic: safe in a thread.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>snap</strong> (<a class="reference internal" href="#sn.view.graphics.animatedLayouts.Snapshot" title="sn.view.graphics.animatedLayouts.Snapshot"><em>Snapshot</em></a>) – The graph.</p></li>
+<li><p><strong>kMinDist</strong> (<em>float</em>) – The gap below which links don’t pull.</p></li>
+<li><p><strong>tries</strong> (<em>int</em>) – How many places to try, for one far enough away.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(the object’s index and its leaves’, dx, dy), or None for no leap.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[list[int], float, float] | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.forces">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.animatedLayouts.</span></span><span class="sig-name descname"><span class="pre">forces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">snap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gMaxDist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kMinDist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxDisplacement</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flow</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flowStrength</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flowSpacing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">40.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">heat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arranging</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layerGain</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">straighten</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pull</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">leaps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.forces" title="Link to this definition">¶</a></dt>
+<dd><p>The displacement of each object in <em>snap</em> (in its order), with distances
+measured between the objects’ edges (see <em>gap()</em>), so big objects – context
+windows, long labels – are as solid as they look:</p>
+<ul class="simple">
+<li><p>repulsion between every two objects less than <em>gMaxDist</em> apart, of <em>e</em> /
+gap (like charged particles: as between centres for small objects), along
+the line between their centres – overlapping objects push hardest;</p></li>
+<li><p>attraction along links, stretched beyond <em>kMinDist</em> (like elastic bands),
+which pull until the objects’ edges nearly touch;</p></li>
+<li><p>with a <em>flow</em> direction, a current: the objects of <em>snap.directed</em>’s
+relations are layered along it by rank (see <em>rankOf()</em>) – dsts upstream
+of their srcs, eg: for “isa” flowing down, superclasses above their
+subclasses: a class diagram – each pulled (by up to <em>flowStrength</em>) to
+its layer, <em>flowSpacing</em> apart (between edges). The layers are centred on
+where those objects are, and what’s left of any overall drift is taken
+out, so the current arranges things without carrying them away. (Across
+the current, repulsion and the relations’ pull arrange them as usual.);</p></li>
+</ul>
+<p>each capped at <em>maxDisplacement</em> in x and in y.</p>
+<p>What’s in a context window (see <em>Snapshot.owners</em>) is pushed and pulled only
+by what’s in the same window, and kept in its pane (see <em>Snapshot.regions</em>):
+anything outside it floats in (by up to <em>pull</em>, or a quarter of the way, in a
+step), and nothing inside it is moved out. Its move is on top of its
+window’s: it moves with the window, and within it.</p>
+<p>The canvas’s top and left edges
+are kept by sliding the whole arrangement down or right exactly as needed, so
+no object’s footprint – its box and any text
+spilling out of it – goes off them, without stopping objects there one by one.
+Plain arithmetic: safe in a thread.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>snap</strong> (<a class="reference internal" href="#sn.view.graphics.animatedLayouts.Snapshot" title="sn.view.graphics.animatedLayouts.Snapshot"><em>Snapshot</em></a>) – The graph.</p></li>
+<li><p><strong>e</strong> (<em>float</em>) – The repulsive strength of objects for one another.</p></li>
+<li><p><strong>gMaxDist</strong> (<em>float</em>) – The furthest apart (between edges) objects repel one another.</p></li>
+<li><p><strong>k</strong> (<em>float</em>) – The stiffness of the links.</p></li>
+<li><p><strong>kMinDist</strong> (<em>float</em>) – The gap below which links don’t pull.</p></li>
+<li><p><strong>maxDisplacement</strong> (<em>float</em>) – The most an object moves (in x and in y) in one step.</p></li>
+<li><p><strong>flow</strong> (<em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – The current’s direction, a unit vector (see <em>FLOW_DIRECTIONS</em>); None for none.</p></li>
+<li><p><strong>flowStrength</strong> (<em>float</em>) – The most the current pushes an object in a step.</p></li>
+<li><p><strong>flowSpacing</strong> (<em>float</em>) – The gap (between edges, along the current) it puts between a relation’s dst and src.</p></li>
+<li><p><strong>heat</strong> (<em>float</em>) – The most each object is jiggled at random (in x and in y) in a step: lets the layout out of
+dead ends (eg: a tree pointing straight against the current), as in simulated annealing.</p></li>
+<li><p><strong>arranging</strong> (<em>bool</em>) – While the current is first arranging things: objects it layers repel one another only
+across it, so they can slide past one another to their layers (eg: a tree turning around). (Objects in the
+same layer always repel one another only across it: they’re on one line.)</p></li>
+<li><p><strong>layerGain</strong> (<em>float</em>) – The fraction of the way to its layer the current pulls an object in a step (up to <em>flowStrength</em>).</p></li>
+<li><p><strong>straighten</strong> (<em>bool</em>) – Put the objects the current layers onto their layers’ lines: along the current, they move
+only toward their layers (other forces act on them only across it).</p></li>
+<li><p><strong>pull</strong> (<em>float</em>) – The least a contained object outside its pane is moved toward it in a step (when it’s further).</p></li>
+<li><p><strong>leaps</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>] </em><em>| </em><em>None</em>) – Objects (by index) that leap this step (see <em>leap()</em>), and how far: their moves, uncapped, instead
+of the forces’ (with what’s in them, as usual).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(dx, dy) for each object: how far it moves on the canvas (with its window’s move).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[tuple[float, float]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.animatedLayouts.</span></span><span class="sig-name descname"><span class="pre">FieldsLayout</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gMaxDist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.005</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kMinDist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">displacementSensitivity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxDisplacement</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtime</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>The animation layout – a “physics” layout: objects repel one another like similarly charged
+particles, and relations pull what they connect together like elastic bands
+– run as an animation, step by step, until nothing moves much (or it’s
+stopped). Context windows move as wholes, carrying their contents, which
+are laid out inside them, each in its pane (see <em>Snapshot</em>).</p>
+<p>Each step’s forces are calculated from a <em>Snapshot</em> of the graph (see
+<em>forces()</em>); here, on the GUI thread, a step at a time between Tk events (see
+<em>FieldsLayout_threaded</em> for doing it in a thread). The whole run is one
+undoable command.</p>
+<p>Use:</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">f</span> <span class="o">=</span> <span class="n">FieldsLayout</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+<span class="n">f</span><span class="p">()</span>        <span class="c1"># start (or keep going)</span>
+<span class="n">f</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>   <span class="c1"># stop</span>
+</pre></div>
+</div>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>view</strong> (<em>SNView</em>)</p></li>
+<li><p><strong>e</strong> (<em>float</em>)</p></li>
+<li><p><strong>gMaxDist</strong> (<em>float</em>)</p></li>
+<li><p><strong>k</strong> (<em>float</em>)</p></li>
+<li><p><strong>kMinDist</strong> (<em>float</em>)</p></li>
+<li><p><strong>displacementSensitivity</strong> (<em>float</em>)</p></li>
+<li><p><strong>maxDisplacement</strong> (<em>float</em>)</p></li>
+<li><p><strong>dtime</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gMaxDist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.005</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kMinDist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">displacementSensitivity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxDisplacement</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtime</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>view</strong> (<em>SNView</em>) – The view to lay out.</p></li>
+<li><p><strong>e</strong> (<em>float</em>) – The “gravitational constant”: the repulsive strength of objects for one another.</p></li>
+<li><p><strong>gMaxDist</strong> (<em>float</em>) – The furthest apart (view units) objects repel one another.</p></li>
+<li><p><strong>k</strong> (<em>float</em>) – The “spring constant” (stiffness) of relations.</p></li>
+<li><p><strong>kMinDist</strong> (<em>float</em>) – The distance below which relations don’t pull.</p></li>
+<li><p><strong>displacementSensitivity</strong> (<em>float</em>) – An object moves only if it’d move at least this much (abs(dx) + abs(dy)); when none would, it’s converged.</p></li>
+<li><p><strong>maxDisplacement</strong> (<em>float</em>) – The most an object moves (in x and in y) in one step: prevents wild jumps.</p></li>
+<li><p><strong>dtime</strong> (<em>int</em>) – The time (ms) between steps.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.e">
+<span class="sig-name descname"><span class="pre">e</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.e" title="Link to this definition">¶</a></dt>
+<dd><p>The “gravitational constant”: repulsive strength of objects for one another.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.gMaxDist">
+<span class="sig-name descname"><span class="pre">gMaxDist</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.gMaxDist" title="Link to this definition">¶</a></dt>
+<dd><p>The furthest apart that <em>e</em> takes effect.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.k">
+<span class="sig-name descname"><span class="pre">k</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.k" title="Link to this definition">¶</a></dt>
+<dd><p>The “spring constant” (spring stiffness): the attractive force of a relation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.kMinDist">
+<span class="sig-name descname"><span class="pre">kMinDist</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.kMinDist" title="Link to this definition">¶</a></dt>
+<dd><p>The minimum distance that <em>k</em> takes effect.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.displacementSensitivity">
+<span class="sig-name descname"><span class="pre">displacementSensitivity</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.displacementSensitivity" title="Link to this definition">¶</a></dt>
+<dd><p>An object moves only if it would move at least this much: the higher, the sooner the animation stops.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.maxDisplacement">
+<span class="sig-name descname"><span class="pre">maxDisplacement</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.maxDisplacement" title="Link to this definition">¶</a></dt>
+<dd><p>The maximum x- or y-direction displacement in any one step. Prevents wild displacements.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.dtime">
+<span class="sig-name descname"><span class="pre">dtime</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.dtime" title="Link to this definition">¶</a></dt>
+<dd><p>The time (ms) between steps.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.relationWeights">
+<span class="sig-name descname"><span class="pre">relationWeights</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.relationWeights" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.flowDirection">
+<span class="sig-name descname"><span class="pre">flowDirection</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.flowDirection" title="Link to this definition">¶</a></dt>
+<dd><p>The direction of the current (a key of <em>FLOW_DIRECTIONS</em>, eg: “down”), or None for none (see <em>forces()</em>).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.flowStrength">
+<span class="sig-name descname"><span class="pre">flowStrength</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.flowStrength" title="Link to this definition">¶</a></dt>
+<dd><p>The most the current pushes an object in a step.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.flowSpacing">
+<span class="sig-name descname"><span class="pre">flowSpacing</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.flowSpacing" title="Link to this definition">¶</a></dt>
+<dd><p>The gap (between edges, along the current) it puts between a relation’s dst and src.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.layerGain">
+<span class="sig-name descname"><span class="pre">layerGain</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.layerGain" title="Link to this definition">¶</a></dt>
+<dd><p>While the current arranges things: the fraction of the way to its layer an object is pulled in a step.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.settleLayerGain">
+<span class="sig-name descname"><span class="pre">settleLayerGain</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.settleLayerGain" title="Link to this definition">¶</a></dt>
+<dd><p>Once arranged, while settling: the same, stiffer – to straighten the layers.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.heat">
+<span class="sig-name descname"><span class="pre">heat</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.heat" title="Link to this definition">¶</a></dt>
+<dd><p>While the current flows: the most each object is jiggled at random in a step
+(scaled by <em>temperature</em>, so it fades as the layout cools) – to shake the
+layout out of dead ends, eg: a tree pointing straight against the current.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.leaps">
+<span class="sig-name descname"><span class="pre">leaps</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.leaps" title="Link to this definition">¶</a></dt>
+<dd><p>The chance, in a step, of a leap (see <em>leap()</em>): an object – likeliest one
+with a long relation, eg: held off behind a wall of other objects – is
+thrown somewhere else entirely, across the graph or out beyond it, and
+finds its way back by another route. Scaled by <em>temperature</em>, so leaps fade
+out as the layout settles, and stop once it’s below <em>LEAP_STOP</em>, so the
+last ones have time to come back; none while straightening. 0 for none. A
+leap is meant to be a big change, upsetting what the object is related to
+as it’s pulled back; as it cools, the way back is slow, and it may be left
+out of place (run it again with no leaps, or move it by hand).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.leapCount">
+<span class="sig-name descname"><span class="pre">leapCount</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.leapCount" title="Link to this definition">¶</a></dt>
+<dd><p>How many leaps this run has made.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.flowRelation">
+<span class="sig-name descname"><span class="pre">flowRelation</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.flowRelation" title="Link to this definition">¶</a></dt>
+<dd><p>The relation type the current lines up (its dst upstream of its src); None for “isa”.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.patience">
+<span class="sig-name descname"><span class="pre">patience</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.patience" title="Link to this definition">¶</a></dt>
+<dd><p>Steps without real progress (see <em>progress</em>) before cooling down (see <em>temperature</em>).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.progress">
+<span class="sig-name descname"><span class="pre">progress</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.progress" title="Link to this definition">¶</a></dt>
+<dd><p>Progress means the total movement in a step falling below this fraction of the best so far.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.cooling">
+<span class="sig-name descname"><span class="pre">cooling</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.cooling" title="Link to this definition">¶</a></dt>
+<dd><p>What <em>temperature</em> is multiplied by when there’s no progress: nearer 1, it
+cools more slowly, and a run goes on longer (eg: 0.999 – the animation
+toolbar’s slowest – for an hour or so, with a current). Kept below 1, or it’d never cool.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.temperature">
+<span class="sig-name descname"><span class="pre">temperature</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.temperature" title="Link to this definition">¶</a></dt>
+<dd><p>Scales how far an object may move in a step (<em>maxDisplacement</em>). It starts
+at 1, and cools when the layout stops making progress – eg: jiggling back
+and forth about a balance point – so the jiggles shrink, until they’re too
+small to count (see <em>displacementSensitivity</em>) and the run ends.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout._best">
+<span class="sig-name descname"><span class="pre">_best</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout._best" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout._stalled">
+<span class="sig-name descname"><span class="pre">_stalled</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout._stalled" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout._misalignment">
+<span class="sig-name descname"><span class="pre">_misalignment</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout._misalignment" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout._bestMisalignment">
+<span class="sig-name descname"><span class="pre">_bestMisalignment</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout._bestMisalignment" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout._arranged">
+<span class="sig-name descname"><span class="pre">_arranged</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout._arranged" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout._straightening">
+<span class="sig-name descname"><span class="pre">_straightening</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout._straightening" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout._straightened">
+<span class="sig-name descname"><span class="pre">_straightened</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout._straightened" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.straightenSteps">
+<span class="sig-name descname"><span class="pre">straightenSteps</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.straightenSteps" title="Link to this definition">¶</a></dt>
+<dd><p>With a current: once the layout has settled, at most this many more steps put
+the layered objects onto their layers’ lines (see <em>forces()</em>’s <em>straighten</em>)
+– the physics’s arrangement across the current stays.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.alignPatience">
+<span class="sig-name descname"><span class="pre">alignPatience</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.alignPatience" title="Link to this definition">¶</a></dt>
+<dd><p>While a current flows: steps without the relations coming further into line before it stops arranging and settles (see <em>_cool()</em>).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.alignProgress">
+<span class="sig-name descname"><span class="pre">alignProgress</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.alignProgress" title="Link to this definition">¶</a></dt>
+<dd><p>While a current flows: how much the total misalignment must fall to count as coming further into line.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.placeLabels">
+<span class="sig-name descname"><span class="pre">placeLabels</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.placeLabels" title="Link to this definition">¶</a></dt>
+<dd><p>Whether a run ends by finding free places for the floating relation labels
+(see <em>_settleLabels()</em>). That can take a while in a crowded view; turned
+off, eg: while starting run after run, the labels just stay between their
+ends (see <em>settleLabels()</em> to place them later).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.active">
+<span class="sig-name descname"><span class="pre">active</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.active" title="Link to this definition">¶</a></dt>
+<dd><p>Indicates the animation is running.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout._run">
+<span class="sig-name descname"><span class="pre">_run</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout._run" title="Link to this definition">¶</a></dt>
+<dd><p>Counts the runs, and the stops: each step is queued for the run it belongs
+to (see <em>_later()</em>), and dropped if that run has been stopped since – so a
+stop takes effect at once, whatever’s pending (even a thread’s step).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout._start">
+<span class="sig-name descname"><span class="pre">_start</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><span class="pre">VObject</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout._start" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout._wasFloating">
+<span class="sig-name descname"><span class="pre">_wasFloating</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout._wasFloating" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout._pins">
+<span class="sig-name descname"><span class="pre">_pins</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout._pins" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout._leapt">
+<span class="sig-name descname"><span class="pre">_leapt</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout._leapt" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.view">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">view</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">SNView</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.view" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The view laid out.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#sn.view.graphics.animatedLayouts.WeakrefError" title="sn.view.graphics.animatedLayouts.WeakrefError"><strong>WeakrefError</strong></a> – If the view has gone.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">autoOff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.__call__" title="Link to this definition">¶</a></dt>
+<dd><p>Start the animation (or, if it’s running, carry on).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em> | </em><em>None</em>) – Ignored (kept for compatibility: the whole view is laid out).</p></li>
+<li><p><strong>autoOff</strong> (<em>bool</em>) – If True, stop when nothing moves much any more; else, run until <em>kill()</em>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.kill">
+<span class="sig-name descname"><span class="pre">kill</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.kill" title="Link to this definition">¶</a></dt>
+<dd><p>Stop the animation, now: the steps are made between Tk events, so the last
+one is done; whatever’s queued (or being worked out in a thread) is
+dropped (see <em>_run</em>), and the run ends (see <em>_finish()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>obj</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em> | </em><em>None</em>) – Ignored.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout._later">
+<span class="sig-name descname"><span class="pre">_later</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ms</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout._later" title="Link to this definition">¶</a></dt>
+<dd><p>Queue the next step of this run, in <em>ms</em> (see <em>_step()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ms</strong> (<em>int</em>) – When (ms from now).</p></li>
+<li><p><strong>step</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>None</em><em>]</em>) – What it does.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#sn.view.graphics.animatedLayouts.WeakrefError" title="sn.view.graphics.animatedLayouts.WeakrefError"><strong>WeakrefError</strong></a> – If the view has gone.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout._step">
+<span class="sig-name descname"><span class="pre">_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">run</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout._step" title="Link to this definition">¶</a></dt>
+<dd><p>Do a step of run <em>run</em> – unless it’s been stopped since (see <em>_run</em>). A
+step that fails ends the run (logging why), rather than leaving it
+running with no next step queued: stuck, with nothing to stop.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>run</strong> (<em>int</em>) – The run it’s for (see <em>_run</em>).</p></li>
+<li><p><strong>step</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>None</em><em>]</em>) – What it does.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.setRelationWeight">
+<span class="sig-name descname"><span class="pre">setRelationWeight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relationName</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.setRelationWeight" title="Link to this definition">¶</a></dt>
+<dd><p>Give the named relation a weight between 0.0 and 1.0. You can use “*” to
+assign a default weight. Thus, setRelationWeight(‘*’, 0.0) and
+setRelationWeight(‘isa’, 1.0) will only make use of isa relations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>relationName</strong> (<em>str</em>) – A relation type’s name, or “*” for all the others.</p></li>
+<li><p><strong>weight</strong> (<em>float</em>) – Its weight (clipped to 0..1): how strongly it pulls.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout._snapshot">
+<span class="sig-name descname"><span class="pre">_snapshot</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout._snapshot" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A snapshot of the view now (on the GUI thread).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#sn.view.graphics.animatedLayouts.Snapshot" title="sn.view.graphics.animatedLayouts.Snapshot"><em>Snapshot</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout._forces">
+<span class="sig-name descname"><span class="pre">_forces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">snap</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout._forces" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>snap</strong> (<a class="reference internal" href="#sn.view.graphics.animatedLayouts.Snapshot" title="sn.view.graphics.animatedLayouts.Snapshot"><em>Snapshot</em></a>) – The graph.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(object, (dx, dy)) for the objects that should move this step.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[tuple[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, tuple[float, float]]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout._work">
+<span class="sig-name descname"><span class="pre">_work</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">snap</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout._work" title="Link to this definition">¶</a></dt>
+<dd><p>What <em>_forces()</em> works out, without keeping any of it: safe in a thread
+(see <em>FieldsLayout_threaded</em>) – even one whose run has been stopped, and
+another started (see <em>_run</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>snap</strong> (<a class="reference internal" href="#sn.view.graphics.animatedLayouts.Snapshot" title="sn.view.graphics.animatedLayouts.Snapshot"><em>Snapshot</em></a>) – The graph.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The moves (see <em>_forces()</em>), the misalignment (see <em>_cool()</em>), the pins (see <em>_pins</em>), and
+what leapt (see <em>_leapt</em>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[list[tuple[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, tuple[float, float]]], float | None, set[int], set[int]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout._call">
+<span class="sig-name descname"><span class="pre">_call</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">autoOff</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout._call" title="Link to this definition">¶</a></dt>
+<dd><p>Do one step: snapshot, forces, moves (here, all on the GUI thread).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>autoOff</strong> (<em>bool</em>) – As for <em>__call__()</em>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout._commitChanges">
+<span class="sig-name descname"><span class="pre">_commitChanges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">changes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">autoOff</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout._commitChanges" title="Link to this definition">¶</a></dt>
+<dd><p>Make a step’s moves (on the GUI thread), and queue the next step – or end
+the run, recording it as one undoable command.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>changes</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – (object, (dx, dy)) to move.</p></li>
+<li><p><strong>autoOff</strong> (<em>bool</em>) – As for <em>__call__()</em>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout.settleLabels">
+<span class="sig-name descname"><span class="pre">settleLabels</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout.settleLabels" title="Link to this definition">¶</a></dt>
+<dd><p>Find free places for the floating relation labels now (see
+<em>_settleLabels()</em>), as the end of a run does if <em>placeLabels</em> is on: eg:
+when it’s turned on after runs without it. Not while a run is going: the
+end of the run does it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout._settleLabels">
+<span class="sig-name descname"><span class="pre">_settleLabels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout._settleLabels" title="Link to this definition">¶</a></dt>
+<dd><p>What a move does when it’s dropped, for every floating relation label: put
+it back between its ends, and if it lands on something, find it a free place
+nearby (see <em>VRelation.reposition()</em>: the local layout). During the run the
+labels just follow their ends – relations aren’t bodies in the layout –
+so they can end up on top of objects (eg: a node in a layer between the
+relation’s ends). Labels placed by hand (not floating) stay put, as they
+do after an ordinary move.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>view</strong> (<em>SNView</em>) – The view laid out.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout._cool">
+<span class="sig-name descname"><span class="pre">_cool</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">energy</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout._cool" title="Link to this definition">¶</a></dt>
+<dd><p>Note a step’s total movement, <em>energy</em>: if it hasn’t fallen meaningfully
+(see <em>progress</em>) for <em>patience</em> steps, the layout isn’t converging – it’s
+jiggling about a balance point – so cool down (see <em>temperature</em>).</p>
+<p>While a current flows (see <em>flowDirection</em>), there’s first an arranging
+phase, with no cooling at all, as long as the current’s relations keep
+coming into line (their <em>misalignment()</em> falls by at least
+<em>alignProgress</em> within <em>alignPatience</em> steps): turning a tree around takes
+a while, and starts slowly. Then it settles, as above.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>energy</strong> (<em>float</em>) – The total of how far everything moved in the step.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout._finish">
+<span class="sig-name descname"><span class="pre">_finish</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout._finish" title="Link to this definition">¶</a></dt>
+<dd><p>End the run: let the floating relation labels find free places (see
+<em>_settleLabels()</em>), and record all its moves as one undoable command.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout_threaded">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.animatedLayouts.</span></span><span class="sig-name descname"><span class="pre">FieldsLayout_threaded</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gMaxDist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.005</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kMinDist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">displacementSensitivity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxDisplacement</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtime</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout_threaded" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout" title="sn.view.graphics.animatedLayouts.FieldsLayout"><code class="xref py py-class docutils literal notranslate"><span class="pre">FieldsLayout</span></code></a></p>
+<p>A <em>FieldsLayout</em> whose forces are calculated in a thread, so the GUI stays
+responsive with large graphs: each step’s <em>Snapshot</em> is taken, and its moves
+made, on the GUI thread; only the arithmetic (<em>forces()</em>) is done in the
+thread – which touches no GUI objects (Tk isn’t thread-safe).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>view</strong> (<em>SNView</em>)</p></li>
+<li><p><strong>e</strong> (<em>float</em>)</p></li>
+<li><p><strong>gMaxDist</strong> (<em>float</em>)</p></li>
+<li><p><strong>k</strong> (<em>float</em>)</p></li>
+<li><p><strong>kMinDist</strong> (<em>float</em>)</p></li>
+<li><p><strong>displacementSensitivity</strong> (<em>float</em>)</p></li>
+<li><p><strong>maxDisplacement</strong> (<em>float</em>)</p></li>
+<li><p><strong>dtime</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout_threaded.POLL_MS">
+<span class="sig-name descname"><span class="pre">POLL_MS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">15</span></span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout_threaded.POLL_MS" title="Link to this definition">¶</a></dt>
+<dd><p>How often (ms) the GUI thread checks whether the thread’s step is done.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout_threaded._call">
+<span class="sig-name descname"><span class="pre">_call</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">autoOff</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout_threaded._call" title="Link to this definition">¶</a></dt>
+<dd><p>Take a snapshot, and calculate its forces in a thread. The thread makes no
+Tk calls at all – it just leaves its result – and the GUI thread picks it
+up (see <em>_poll()</em>): the safe way with Tk, whatever thread Tk’s event loop
+runs in.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>autoOff</strong> (<em>bool</em>) – As for <em>FieldsLayout.__call__()</em>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.animatedLayouts.FieldsLayout_threaded._poll">
+<span class="sig-name descname"><span class="pre">_poll</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">result</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">autoOff</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.animatedLayouts.FieldsLayout_threaded._poll" title="Link to this definition">¶</a></dt>
+<dd><p>On the GUI thread: if the thread’s step is done, make its moves (see
+<em>_commitChanges()</em>); otherwise check again shortly.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>result</strong> (<em>SimpleQueue</em>) – Where the thread leaves ((changes, misalignment, pins, leapt), error): see <em>_work()</em>.</p></li>
+<li><p><strong>autoOff</strong> (<em>bool</em>) – As for <em>FieldsLayout.__call__()</em>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="sn.view.graphics.animationControls.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">sn.view.graphics.animationControls module</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="sn.view.graphics.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">sn.view.graphics package</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2023-2026, Rob Kremer
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">sn.view.graphics.animatedLayouts module</a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.random"><code class="docutils literal notranslate"><span class="pre">random()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.WeakrefError"><code class="docutils literal notranslate"><span class="pre">WeakrefError</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.isEligible"><code class="docutils literal notranslate"><span class="pre">isEligible()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.PANE_MARGIN"><code class="docutils literal notranslate"><span class="pre">PANE_MARGIN</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.PANE_LABEL"><code class="docutils literal notranslate"><span class="pre">PANE_LABEL</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FLOW_DIRECTIONS"><code class="docutils literal notranslate"><span class="pre">FLOW_DIRECTIONS</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.Snapshot"><code class="docutils literal notranslate"><span class="pre">Snapshot</span></code></a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.Snapshot.__init__"><code class="docutils literal notranslate"><span class="pre">Snapshot.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.Snapshot.objects"><code class="docutils literal notranslate"><span class="pre">Snapshot.objects</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.Snapshot.pinned"><code class="docutils literal notranslate"><span class="pre">Snapshot.pinned</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.Snapshot.owners"><code class="docutils literal notranslate"><span class="pre">Snapshot.owners</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.Snapshot.regions"><code class="docutils literal notranslate"><span class="pre">Snapshot.regions</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.Snapshot.chains"><code class="docutils literal notranslate"><span class="pre">Snapshot.chains</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.Snapshot.passengers"><code class="docutils literal notranslate"><span class="pre">Snapshot.passengers</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.Snapshot.positions"><code class="docutils literal notranslate"><span class="pre">Snapshot.positions</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.Snapshot.halfSizes"><code class="docutils literal notranslate"><span class="pre">Snapshot.halfSizes</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.Snapshot.links"><code class="docutils literal notranslate"><span class="pre">Snapshot.links</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.Snapshot.directed"><code class="docutils literal notranslate"><span class="pre">Snapshot.directed</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.Snapshot.ranks"><code class="docutils literal notranslate"><span class="pre">Snapshot.ranks</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.Snapshot._placed"><code class="docutils literal notranslate"><span class="pre">Snapshot._placed()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.Snapshot.siblings"><code class="docutils literal notranslate"><span class="pre">Snapshot.siblings()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.rankOf"><code class="docutils literal notranslate"><span class="pre">rankOf()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.gap"><code class="docutils literal notranslate"><span class="pre">gap()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.misalignment"><code class="docutils literal notranslate"><span class="pre">misalignment()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.LEAP_REACH"><code class="docutils literal notranslate"><span class="pre">LEAP_REACH</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.LEAP_MIN"><code class="docutils literal notranslate"><span class="pre">LEAP_MIN</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.LEAP_ANY"><code class="docutils literal notranslate"><span class="pre">LEAP_ANY</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.LEAP_STOP"><code class="docutils literal notranslate"><span class="pre">LEAP_STOP</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.LEAP_LEAF"><code class="docutils literal notranslate"><span class="pre">LEAP_LEAF</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.stretch"><code class="docutils literal notranslate"><span class="pre">stretch()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.leap"><code class="docutils literal notranslate"><span class="pre">leap()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.forces"><code class="docutils literal notranslate"><span class="pre">forces()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout"><code class="docutils literal notranslate"><span class="pre">FieldsLayout</span></code></a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.__init__"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.e"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.e</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.gMaxDist"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.gMaxDist</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.k"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.k</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.kMinDist"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.kMinDist</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.displacementSensitivity"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.displacementSensitivity</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.maxDisplacement"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.maxDisplacement</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.dtime"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.dtime</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.relationWeights"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.relationWeights</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.flowDirection"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.flowDirection</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.flowStrength"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.flowStrength</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.flowSpacing"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.flowSpacing</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.layerGain"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.layerGain</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.settleLayerGain"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.settleLayerGain</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.heat"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.heat</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.leaps"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.leaps</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.leapCount"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.leapCount</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.flowRelation"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.flowRelation</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.patience"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.patience</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.progress"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.progress</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.cooling"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.cooling</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.temperature"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.temperature</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout._best"><code class="docutils literal notranslate"><span class="pre">FieldsLayout._best</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout._stalled"><code class="docutils literal notranslate"><span class="pre">FieldsLayout._stalled</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout._misalignment"><code class="docutils literal notranslate"><span class="pre">FieldsLayout._misalignment</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout._bestMisalignment"><code class="docutils literal notranslate"><span class="pre">FieldsLayout._bestMisalignment</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout._arranged"><code class="docutils literal notranslate"><span class="pre">FieldsLayout._arranged</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout._straightening"><code class="docutils literal notranslate"><span class="pre">FieldsLayout._straightening</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout._straightened"><code class="docutils literal notranslate"><span class="pre">FieldsLayout._straightened</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.straightenSteps"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.straightenSteps</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.alignPatience"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.alignPatience</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.alignProgress"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.alignProgress</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.placeLabels"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.placeLabels</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.active"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.active</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout._run"><code class="docutils literal notranslate"><span class="pre">FieldsLayout._run</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout._start"><code class="docutils literal notranslate"><span class="pre">FieldsLayout._start</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout._wasFloating"><code class="docutils literal notranslate"><span class="pre">FieldsLayout._wasFloating</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout._pins"><code class="docutils literal notranslate"><span class="pre">FieldsLayout._pins</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout._leapt"><code class="docutils literal notranslate"><span class="pre">FieldsLayout._leapt</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.view"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.view</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.__call__"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.__call__()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.kill"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.kill()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout._later"><code class="docutils literal notranslate"><span class="pre">FieldsLayout._later()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout._step"><code class="docutils literal notranslate"><span class="pre">FieldsLayout._step()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.setRelationWeight"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.setRelationWeight()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout._snapshot"><code class="docutils literal notranslate"><span class="pre">FieldsLayout._snapshot()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout._forces"><code class="docutils literal notranslate"><span class="pre">FieldsLayout._forces()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout._work"><code class="docutils literal notranslate"><span class="pre">FieldsLayout._work()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout._call"><code class="docutils literal notranslate"><span class="pre">FieldsLayout._call()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout._commitChanges"><code class="docutils literal notranslate"><span class="pre">FieldsLayout._commitChanges()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout.settleLabels"><code class="docutils literal notranslate"><span class="pre">FieldsLayout.settleLabels()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout._settleLabels"><code class="docutils literal notranslate"><span class="pre">FieldsLayout._settleLabels()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout._cool"><code class="docutils literal notranslate"><span class="pre">FieldsLayout._cool()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout._finish"><code class="docutils literal notranslate"><span class="pre">FieldsLayout._finish()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout_threaded"><code class="docutils literal notranslate"><span class="pre">FieldsLayout_threaded</span></code></a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout_threaded.POLL_MS"><code class="docutils literal notranslate"><span class="pre">FieldsLayout_threaded.POLL_MS</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout_threaded._call"><code class="docutils literal notranslate"><span class="pre">FieldsLayout_threaded._call()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.animatedLayouts.FieldsLayout_threaded._poll"><code class="docutils literal notranslate"><span class="pre">FieldsLayout_threaded._poll()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

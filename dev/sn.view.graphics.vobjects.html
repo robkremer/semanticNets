@@ -1,0 +1,2090 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="sn.view.graphics.vrelations module" href="sn.view.graphics.vrelations.html"><link rel="prev" title="sn.view.graphics.vnodes module" href="sn.view.graphics.vnodes.html">
+        <link rel="prefetch" href="../_static/sn-logo.png" as="image">
+
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>sn.view.graphics.vobjects module - Semantic Nets 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">Semantic Nets 1.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">Semantic Nets 1.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user/index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user/concepts.html">Concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/gettingStarted.html">Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/tutorial.html">Worked Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/editing.html">Editing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/contexts.html">Contexts: Rules, Definitions, Queries, Constraints and Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/reasoning.html">Reasoning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/viewing.html">Viewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/layouts.html">Arranging a View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/animation.html">Animation Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/files.html">Files and Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/terminal.html">The Terminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/exampleApps.html">Plugins</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developer/index.html">Developer Guide</a><input aria-label="Toggle navigation of Developer Guide" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html">Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/model.html">The Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/reasoner.html">The Reasoner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/view.html">The Graphical View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/layout.html">Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/extending.html">Building on Semantic Nets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/conventions.html">Conventions and Testing</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="sn.html">sn package</a><input aria-label="Toggle navigation of sn package" checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="sn.controller.html">sn.controller package</a><input aria-label="Toggle navigation of sn.controller package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.controller.modelInterface.html">sn.controller.modelInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current has-children"><a class="reference internal" href="sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" checked="" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3 current has-children"><a class="reference internal" href="sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" checked="" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html">sn.view.graphics.connectors module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.expandDialog.html">sn.view.graphics.expandDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.guiApp.html">sn.view.graphics.guiApp module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html">sn.view.graphics.imageExport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html">sn.view.graphics.labels module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html">sn.view.graphics.layout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutDialog.html">sn.view.graphics.layoutDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutPanel.html">sn.view.graphics.layoutPanel module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.progress.html">sn.view.graphics.progress module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.reasoningToolbar.html">sn.view.graphics.reasoningToolbar module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.relationTable.html">sn.view.graphics.relationTable module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.replaceModelDialog.html">sn.view.graphics.replaceModelDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.searchDialog.html">sn.view.graphics.searchDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.shapes.html">sn.view.graphics.shapes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sngContext.html">sn.view.graphics.sngContext module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sngView.html">sn.view.graphics.sngView module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sourceWindow.html">sn.view.graphics.sourceWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html">sn.view.graphics.treeLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewBase.html">sn.view.graphics.viewBase module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewCommands.html">sn.view.graphics.viewCommands module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewContainment.html">sn.view.graphics.viewContainment module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewEditing.html">sn.view.graphics.viewEditing module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewFiles.html">sn.view.graphics.viewFiles module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewInput.html">sn.view.graphics.viewInput module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewLayouts.html">sn.view.graphics.viewLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewReasoning.html">sn.view.graphics.viewReasoning module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewViewport.html">sn.view.graphics.viewViewport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewVisibility.html">sn.view.graphics.viewVisibility module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.visibilityDialog.html">sn.view.graphics.visibilityDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vnodes.html">sn.view.graphics.vnodes module</a></li>
+<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">sn.view.graphics.vobjects module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vrelations.html">sn.view.graphics.vrelations module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.textUserInterface.html">sn.view.textUserInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.__main__.html">sn.__main__ module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html">sn.hooks module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html">sn.plugins module</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../plugins/index.html">The plugins</a><input aria-label="Toggle navigation of The plugins" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.XMLreader.html">snplugins.XMLreader package</a><input aria-label="Toggle navigation of snplugins.XMLreader package" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.reader.html">snplugins.XMLreader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.schema.html">snplugins.XMLreader.schema module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.view.html">snplugins.XMLreader.view module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.pythonParser.html">snplugins.pythonParser package</a><input aria-label="Toggle navigation of snplugins.pythonParser package" class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.dialog.html">snplugins.pythonParser.dialog module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.hooks.html">snplugins.pythonParser.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.parser.html">snplugins.pythonParser.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/dev/sn.view.graphics.vobjects.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="module-sn.view.graphics.vobjects">
+<span id="sn-view-graphics-vobjects-module"></span><h1>sn.view.graphics.vobjects module<a class="headerlink" href="#module-sn.view.graphics.vobjects" title="Link to this heading">¶</a></h1>
+<p><em>VObject</em> is the superclass of VNode, VRelation.</p>
+<blockquote>
+<div><div class="graphviz"><object data="../_images/inheritance-ee8e239fa3395356fad547716a6e78c4e804a68a.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of VObject, Cache</p></object></div>
+</div></blockquote>
+<section id="visual-attributes">
+<h2>Visual Attributes<a class="headerlink" href="#visual-attributes" title="Link to this heading">¶</a></h2>
+<blockquote>
+<div><ul class="simple">
+<li><p>name: [<code class="docutils literal notranslate"><span class="pre">str</span></code>]</p></li>
+<li><p>shape: [<code class="docutils literal notranslate"><span class="pre">str</span></code>]</p></li>
+<li><p>minSize: [<code class="docutils literal notranslate"><span class="pre">int</span></code>]</p></li>
+<li><p>maxSize: [<code class="docutils literal notranslate"><span class="pre">int</span></code>]</p></li>
+<li><p>aspectRatio: [<code class="docutils literal notranslate"><span class="pre">float</span></code>]</p></li>
+<li><p>fillColor: [color]</p></li>
+<li><p>borderColor: [color]</p></li>
+<li><p>borderWidth: [<code class="docutils literal notranslate"><span class="pre">int</span></code>]</p></li>
+<li><p>borderSmooth: [<code class="docutils literal notranslate"><span class="pre">bool</span></code>] <strong>not implemented</strong></p></li>
+<li><p>textColor: [color]</p></li>
+<li><p>textModifiesBB: [<code class="docutils literal notranslate"><span class="pre">bool</span></code>]</p></li>
+</ul>
+</div></blockquote>
+</section>
+<hr class="docutils" />
+<dl class="py class">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.Cache">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.vobjects.</span></span><span class="sig-name descname"><span class="pre">Cache</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">owner</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.Cache" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">Any</span></code>]</p>
+<p>An empty class to stuff cached attributes in. Keys are restricted to all the 
+visual attributes included in <em>VATTRIBUTES</em>. And are automatically filled from
+the owner.modelObject or the defaults in  <em>VATTRIBUTES</em>.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.Cache.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">owner</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.Cache.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>;param owner: [VObject]</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.Cache._owner">
+<span class="sig-name descname"><span class="pre">_owner</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ReferenceType</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.Cache._owner" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.Cache.allkeys">
+<span class="sig-name descname"><span class="pre">allkeys</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.Cache.allkeys" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.Cache.refresh">
+<span class="sig-name descname"><span class="pre">refresh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.Cache.refresh" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>attr</strong> (<em>str</em><em> | </em><em>None</em>) – [default=None] The name of the attribute to refresh; if <em>attr</em>
+is not already in the cache, it will be added.
+If None, refresh ALL attributes from <em>VATTRIBUTES</em> that are already in the cache.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – [default=False] If True, write out all the attributes from 
+<em>VATTRIBUTES</em> that are in the cache AFTER the update has occurred.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Update <em>attr</em> from the model object.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.Cache.__getitem__">
+<span class="sig-name descname"><span class="pre">__getitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.Cache.__getitem__" title="Link to this definition">¶</a></dt>
+<dd><p>The cached value for <em>key</em>: looked up if it isn’t cached (or the default); a colour of an inferred
+object’s, faded.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>key</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Any</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.Cache.__setitem__">
+<span class="sig-name descname"><span class="pre">__setitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.Cache.__setitem__" title="Link to this definition">¶</a></dt>
+<dd><p>Cache <em>val</em> for <em>key</em>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<em>str</em>)</p></li>
+<li><p><strong>val</strong> (<em>Any</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.INFERRED_FADE">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.vobjects.</span></span><span class="sig-name descname"><span class="pre">INFERRED_FADE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.4</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.INFERRED_FADE" title="Link to this definition">¶</a></dt>
+<dd><p>How much of its own colours an inferred object keeps (see <em>fadeColor()</em>): the rest is the canvas’s background.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.fadeColor">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.vobjects.</span></span><span class="sig-name descname"><span class="pre">fadeColor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">canvas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amount</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.4</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.fadeColor" title="Link to this definition">¶</a></dt>
+<dd><p><em>color</em> faded toward <em>canvas</em>’s background: <em>amount</em> of the colour (1: the
+colour; 0: the background).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>canvas</strong> – A Tk canvas (or anything with <em>winfo_rgb()</em> and <em>cget(“background”)</em>).</p></li>
+<li><p><strong>color</strong> (<em>str</em>) – A Tk colour.</p></li>
+<li><p><strong>amount</strong> (<em>float</em>) – How much of <em>color</em> to keep.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The faded colour, as “#rrggbb” (<em>color</em> if it can’t be read).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+<p>Remembered on <em>canvas</em> for its background at the time (read each call, so
+a changed background – eg: the <em>gui/backgroundColor</em> preference on a new
+canvas, or <em>configure(background=…)</em> – gets its own): an inferred
+object’s colours are asked for often (see <em>Cache.__getitem__()</em>), and the
+two <em>winfo_rgb()</em> calls are most of the cost.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.vobjects.</span></span><span class="sig-name descname"><span class="pre">VObject</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modelObject</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Rectangle'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.abstractGraph.html#util.abstractGraph.AGObject" title="(in pythonUtils)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AGObject</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">SNGView</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">VRelation</span></code>], <a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.observer.html#util.observer.Observer" title="(in pythonUtils)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Observer</span></code></a>, <a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.dirtyable.html#util.dirtyable.Dirtyable" title="(in pythonUtils)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dirtyable</span></code></a>, <a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.errorReportingObject.html#util.errorReportingObject.ErrorReportingObject" title="(in pythonUtils)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ErrorReportingObject</span></code></a></p>
+<p>An object that visually represents some object in a tygra <em>Model</em> that resides
+in a particular <em>SNCanvas</em> (which may include VObjects representing objects in
+several different tygra <em>Model</em> objects).</p>
+<p>The “size” and location of <em>VObject</em> considered to be that of the <em>self._shape</em>
+object, which in turn is controlled by the <em>self.boundingBox()</em> method. Note
+that decorators may be drawn outside of this bounding box.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>view</strong> (<a class="reference internal" href="sn.view.graphics.sngView.html#sn.view.graphics.sngView.SNGView" title="sn.view.graphics.sngView.SNGView"><em>SNGView</em></a>)</p></li>
+<li><p><strong>modelObject</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em> | </em><em>str</em>)</p></li>
+<li><p><strong>shape</strong> (<em>Union</em><em>[</em><em>Any</em><em>, </em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>x</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>y</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>x1</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>y1</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject._tagCounter">
+<span class="sig-name descname"><span class="pre">_tagCounter</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">count(1)</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject._tagCounter" title="Link to this definition">¶</a></dt>
+<dd><p>Source of unique canvas tags (see <em>self.tag</em>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modelObject</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Rectangle'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>view</strong> (<a class="reference internal" href="sn.view.graphics.sngView.html#sn.view.graphics.sngView.SNGView" title="sn.view.graphics.sngView.SNGView"><em>SNGView</em></a>) – The SNGView object that “owners” this VObject.</p></li>
+<li><p><strong>modelObject</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em> | </em><em>str</em>) – The object in the model that this object represents.</p></li>
+<li><p><strong>shape</strong> (<em>Union</em><em>[</em><em>Any</em><em>, </em><em>str</em><em>]</em>) – [Union[tygra.view.shapes.Shape, str], default=…shapes.Rectangle] The basic shape of this object.</p></li>
+<li><p><strong>x</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The upper left corner x coordinate</p></li>
+<li><p><strong>y</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The upper left corner y coordinate</p></li>
+<li><p><strong>x1</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The lower right corner x coordinate</p></li>
+<li><p><strong>y1</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The lower right corner y coordinate</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – Passed on to <em>super().__init__()</em>. <em>VObject</em> is normally
+combined with <em>AGRelation</em> via multiple inheritance (see <em>VRelation</em>),
+and the two share <em>AGObject</em> as a common ancestor – calling <em>super()</em>
+cooperatively here (not separately naming <em>AGObject</em> and <em>PRObject</em>)
+ensures that shared ancestor’s <em>__init__</em> – which registers this
+object with <em>view</em> – runs exactly once no matter which subclass is
+being constructed, not once per inheritance path. <em>kwargs</em> is how <em>AGRelation</em>’s own <em>src</em>/<em>dst</em>
+constructor arguments – which <em>VObject</em> has no use for itself – get
+carried through to it along that same chain.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.readModelObjectRef">
+<span class="sig-name descname"><span class="pre">readModelObjectRef</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.readModelObjectRef" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject._modelObject">
+<span class="sig-name descname"><span class="pre">_modelObject</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><span class="pre">GraphObject</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject._modelObject" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.cache">
+<span class="sig-name descname"><span class="pre">cache</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#sn.view.graphics.vobjects.Cache" title="sn.view.graphics.vobjects.Cache"><span class="pre">Cache</span></a></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.cache" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.view">
+<span class="sig-name descname"><span class="pre">view</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="sn.view.graphics.sngView.html#sn.view.graphics.sngView.SNGView" title="sn.view.graphics.sngView.SNGView"><span class="pre">SNGView</span></a></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.view" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject._drawVersion">
+<span class="sig-name descname"><span class="pre">_drawVersion</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject._drawVersion" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject._boundingBox">
+<span class="sig-name descname"><span class="pre">_boundingBox</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject._boundingBox" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.canvas">
+<span class="sig-name descname"><span class="pre">canvas</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tk.Canvas</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.canvas" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.tooltip">
+<span class="sig-name descname"><span class="pre">tooltip</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">CreateToolTip</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.tooltip" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.dragInfo">
+<span class="sig-name descname"><span class="pre">dragInfo</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.dragInfo" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.userSized">
+<span class="sig-name descname"><span class="pre">userSized</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.userSized" title="Link to this definition">¶</a></dt>
+<dd><p>True once the user has sized the box by hand: it’s then no longer fitted to its text (see <em>WrappingText.fitOwner()</em>) until “fit to text”.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.resizeInfo">
+<span class="sig-name descname"><span class="pre">resizeInfo</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.resizeInfo" title="Link to this definition">¶</a></dt>
+<dd><p>While a corner handle is being dragged: (fixed opposite corner (view coords), bounding box before, userSized before).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.tag">
+<span class="sig-name descname"><span class="pre">tag</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.tag" title="Link to this definition">¶</a></dt>
+<dd><p>This object’s canvas tag: every canvas item drawn for it carries it. Deliberately NOT derived from <em>self._id</em>, which loading a view from a file may change after construction.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.decorators">
+<span class="sig-name descname"><span class="pre">decorators</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators.Decorator" title="sn.view.graphics.decorators.Decorator"><span class="pre">Decorator</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.decorators" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject._firstDraw">
+<span class="sig-name descname"><span class="pre">_firstDraw</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject._firstDraw" title="Link to this definition">¶</a></dt>
+<dd><p>Draw this new object for the first time, and make its bindings: queued by
+the constructor, as it may be inside another object’s construction. If it
+has been taken out of the view meanwhile (eg: erased by a category before
+the queue got to it), it isn’t drawn now – that would put it back on the
+canvas, though it isn’t in the view – but when it’s put back (see
+<em>_reconnect()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.getInstantiationInfo">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">getInstantiationInfo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.getInstantiationInfo" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A <a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.persistence.serialize.html#util.persistence.serialize.InstantiationInfo" title="(in pythonUtils)"><code class="xref py py-class docutils literal notranslate"><span class="pre">InstantiationInfo</span></code></a> 
+structure describing the constructor parameters and how to fill them
+(conArgs, conKWArgs), and a further description of any additional data to
+be filled after immediately after the constructor (postconSetters) and 
+more after any contained objects have been fully constructed (finalSetters),
+both how to write them and read them.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.persistence.serialize.html#util.persistence.serialize.InstantiationInfo" title="(in pythonUtils)"><code class="xref py py-class docutils literal notranslate"><span class="pre">util.persistence.serialize.InstantiationInfo</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.name">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.name" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>this object’s (usually mutable) name.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This is an abstract method (property) used to resolve persistent references
+of the for &lt;url&gt;#&lt;string-name&gt;.</p>
+</div>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.modelObject">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">modelObject</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><span class="pre">GraphObject</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.modelObject" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The corresponding model object.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ReferenceError</strong> – if there is not corresponding model object (deleted?)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.relations">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">relations</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sn.view.graphics.vrelations.html#sn.view.graphics.vrelations.VRelation" title="sn.view.graphics.vrelations.VRelation"><span class="pre">VRelation</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.relations" title="Link to this definition">¶</a></dt>
+<dd><p>The relations to and from this object.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.boundingBox">
+<span class="sig-name descname"><span class="pre">boundingBox</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rect</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fast</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.boundingBox" title="Link to this definition">¶</a></dt>
+<dd><p>Returns or sets the bounding box for the <em>VObject</em> in [minX, minY, maxX, maxY]
+form.  Checks <em>rect</em> for sanity (coordinates may be negative: the canvas
+extends every way – see <em>SNGView.resetScrollRegion()</em>).</p>
+<p>The bounding box is strictly tracked by the <em>self.shape()</em> object. Thus, if 
+you change the boundingBox, this method assures that shape object tracks it
+(along with any decorators).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>rect</strong> (<em>list</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.isHidden">
+<span class="sig-name descname"><span class="pre">isHidden</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.isHidden" title="Link to this definition">¶</a></dt>
+<dd><p>True iff this isn’t drawn just now: it’s in a hidden category (see
+<em>SNGView.visibility()</em>), or depends on something that is, or goes without
+saying (eg: a containment drawn as being inside a window). See
+<em>SNGView.shouldHide()</em>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject._applyHidden">
+<span class="sig-name descname"><span class="pre">_applyHidden</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject._applyHidden" title="Link to this definition">¶</a></dt>
+<dd><p>Show or hide all of this one’s canvas items according to
+<em>SNGView.shouldHide()</em>; if that changes, the relations to and from it (and
+a window’s contents) follow suit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject._hideItems">
+<span class="sig-name descname"><span class="pre">_hideItems</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject._hideItems" title="Link to this definition">¶</a></dt>
+<dd><p>Hide all this one’s canvas items, noting each one’s state first (some are
+deliberately “disabled”), for <em>_showItems()</em>. The note is kept here, not
+as canvas tags: redraws reset items’ tags (eg: connectors._upsertLine()).
+Put off to the end, within <em>SNGView.batchedItemStates()</em>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject._hideItem">
+<span class="sig-name descname"><span class="pre">_hideItem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject._hideItem" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>i</strong> (<em>int</em>) – One of its canvas items: hidden, noting its state (see <em>_hideItems()</em>).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject._showItems">
+<span class="sig-name descname"><span class="pre">_showItems</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject._showItems" title="Link to this definition">¶</a></dt>
+<dd><p>Undo <em>_hideItems()</em>: every hidden item of this one’s goes back to its noted
+state (items made while hidden were noted when they were hidden). Nothing
+else hides a VObject’s items, so all of them are shown. Put off to the
+end, within <em>SNGView.batchedItemStates()</em>.
+If none of its items was ever hidden (the usual case: eg: every redraw of
+a relation), it’s skipped: looking its items up searches the whole canvas,
+which made showing all of a big model quadratic.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject._showItem">
+<span class="sig-name descname"><span class="pre">_showItem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject._showItem" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>i</strong> (<em>int</em>) – One of its canvas items: shown again, as it was (see <em>_showItems()</em>).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.labelText">
+<span class="sig-name descname"><span class="pre">labelText</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.labelText" title="Link to this definition">¶</a></dt>
+<dd><p>What this one’s label says: its label template (see <em>labels</em>) expanded –
+its “vis/label” attribute if it has one, else the “gui/label” preference
+(“gui/relationLabel” for relations). A template that can’t be expanded
+gives the name, with a warning.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.templateCall">
+<span class="sig-name descname"><span class="pre">templateCall</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.templateCall" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>key</strong> (<em>str</em>) – The attribute (or preference) the template’s from: eg: “vis/tooltip”.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The <em>call</em> for <em>labels.expand()</em>: what a hook returns, called on
+its model object (see <em>sn.hooks</em>), as a string (”” for None, or if it
+can’t be called).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Callable</em>[[str], str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.categoryExempt">
+<span class="sig-name descname"><span class="pre">categoryExempt</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.categoryExempt" title="Link to this definition">¶</a></dt>
+<dd><p>Shown although it’s in a hidden category (see <em>SNGView.visibility()</em>): it was
+made (or shown explicitly) since the category was hidden. Hiding the category
+again hides it too.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.collapsed">
+<span class="sig-name descname"><span class="pre">collapsed</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.collapsed" title="Link to this definition">¶</a></dt>
+<dd><p>A context window shown as just its title bar (see <em>setCollapsed()</em>).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.expandedHeight">
+<span class="sig-name descname"><span class="pre">expandedHeight</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.expandedHeight" title="Link to this definition">¶</a></dt>
+<dd><p>A collapsed context window’s height when it’s expanded again.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.TOGGLE_WIDTH">
+<span class="sig-name descname"><span class="pre">TOGGLE_WIDTH</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">18</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.TOGGLE_WIDTH" title="Link to this definition">¶</a></dt>
+<dd><p>The width of a context window’s collapse/expand triangle, at the left of its title bar.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.fullBoundingBox">
+<span class="sig-name descname"><span class="pre">fullBoundingBox</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.fullBoundingBox" title="Link to this definition">¶</a></dt>
+<dd><p>The bounding box – as it is when expanded, for a collapsed context window (see <em>setCollapsed()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.toggleAt">
+<span class="sig-name descname"><span class="pre">toggleAt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.toggleAt" title="Link to this definition">¶</a></dt>
+<dd><p>Whether (x, y) (view coords) is on a context window’s collapse/expand triangle.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>float</em>)</p></li>
+<li><p><strong>y</strong> (<em>float</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.setCollapsed">
+<span class="sig-name descname"><span class="pre">setCollapsed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collapsed</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.setCollapsed" title="Link to this definition">¶</a></dt>
+<dd><p>Show a context window as just its title bar (<em>collapsed</em>), or in full. What
+it contains that’s drawn inside it is hidden while it’s collapsed (and moves
+with it); what it contains that’s outside it stays, with its arcs to the
+title bar – eg: a query’s subject, out in the world. See
+<em>SNGContext.collapse()</em> for the undoable command.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>collapsed</strong> (<em>bool</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.WINDOW_MIN">
+<span class="sig-name descname"><span class="pre">WINDOW_MIN</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(160,</span> <span class="pre">100)</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.WINDOW_MIN" title="Link to this definition">¶</a></dt>
+<dd><p>The smallest a context window may be (view units).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.WINDOW_DEFAULT">
+<span class="sig-name descname"><span class="pre">WINDOW_DEFAULT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(320,</span> <span class="pre">200)</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.WINDOW_DEFAULT" title="Link to this definition">¶</a></dt>
+<dd><p>A context window’s size when it’s first drawn (as a window).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.BANNER">
+<span class="sig-name descname"><span class="pre">BANNER</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">18</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.BANNER" title="Link to this definition">¶</a></dt>
+<dd><p>The height (view units) of a context window’s title banner.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.isInferred">
+<span class="sig-name descname"><span class="pre">isInferred</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.isInferred" title="Link to this definition">¶</a></dt>
+<dd><p>True iff this shows something the reasoner concluded, not asserted (see
+<em>GraphObject.inferred</em>): it’s drawn in its usual look, faded (see
+<em>fadeColor()</em>), and isn’t saved with the view.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.isContextWindow">
+<span class="sig-name descname"><span class="pre">isContextWindow</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.isContextWindow" title="Link to this definition">¶</a></dt>
+<dd><p>True iff this is drawn as a window: an individual context – a rule,
+query, … (not the context/rule/query types themselves). See
+<em>decorators.ContextFrame</em>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.bannerHeight">
+<span class="sig-name descname"><span class="pre">bannerHeight</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.bannerHeight" title="Link to this definition">¶</a></dt>
+<dd><p>How tall a context window’s banner (its title bar) is.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.panes">
+<span class="sig-name descname"><span class="pre">panes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.panes" title="Link to this definition">¶</a></dt>
+<dd><p>A context window’s content areas (view coords), below its banner, by the
+containment relation they stand for: a rule’s “antecedent” (left) and
+“consequent” (right); a definition’s “definiendum” (left: the term
+defined) and “definiens” (right: its meaning); a requirement’s
+“condition” (left) and “required” (right); any other context’s single
+“contains” area.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, list[float]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.paneAt">
+<span class="sig-name descname"><span class="pre">paneAt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pt</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.paneAt" title="Link to this definition">¶</a></dt>
+<dd><p>The pane (see <em>panes()</em>) that the point <em>pt</em> (view coords) is in, or None.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.containmentOf">
+<span class="sig-name descname"><span class="pre">containmentOf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.containmentOf" title="Link to this definition">¶</a></dt>
+<dd><p>The model relations by which this context contains <em>obj</em> (a model object).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.windowContents">
+<span class="sig-name descname"><span class="pre">windowContents</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.windowContents" title="Link to this definition">¶</a></dt>
+<dd><p>The view objects this context contains that sit inside its window.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.carriedContents">
+<span class="sig-name descname"><span class="pre">carriedContents</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.carriedContents" title="Link to this definition">¶</a></dt>
+<dd><p>What moves with this context window when it’s moved (see <em>moveTo()</em>): what
+belongs in it (see <em>SNGView.containmentHomes()</em>: what it contains, and the
+variables its contents use – eg: a base rule’s !a and !b), and anything
+else of what it contains that’s drawn inside it (eg: a label placed by
+hand) and doesn’t belong in another window.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.isResizable">
+<span class="sig-name descname"><span class="pre">isResizable</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.isResizable" title="Link to this definition">¶</a></dt>
+<dd><p>False iff “vis/minSize” == “vis/maxSize”: the size is fixed, so it can’t be resized by hand. (Windows always can be.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.minHeight">
+<span class="sig-name descname"><span class="pre">minHeight</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.minHeight" title="Link to this definition">¶</a></dt>
+<dd><p>The smallest height (view units) the bounding box may have: “vis/minSize” *
+“vis/aspectRatio” (<em>NOMINAL_ASPECT</em> if that’s 0), but never less than one
+line of text.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.shape">
+<span class="sig-name descname"><span class="pre">shape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">c</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.shape" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>c</strong> (<em>str</em><em> | </em><em>None</em>) – [str, default=None] The name of the new shape.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>[str] The name of this object’s (possibly changed) shape.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>Exception</strong> – if <em>c</em> is not the name of a known shape.</p>
+</dd>
+</dl>
+<p>If <em>c</em> is given, make self’s shape the corresponding <em>Shape</em>.</p>
+<p>Used by draw() when the shape is changed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subject</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">topics</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.update" title="Link to this definition">¶</a></dt>
+<dd><p>Receive update from subject.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>subject</strong> (<a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.observer.html#util.observer.Subject" title="(in pythonUtils)"><em>Subject</em></a>)</p></li>
+<li><p><strong>topics</strong> (<em>tuple</em><em>[</em><em>str</em><em>, </em><em>tuple</em><em>[</em><em>Any</em><em>, </em><em>...</em><em>]</em><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.validate">
+<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.validate" title="Link to this definition">¶</a></dt>
+<dd><p>Populates (or clears) the <em>self.errors</em> list.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject._addReasonerFindings">
+<span class="sig-name descname"><span class="pre">_addReasonerFindings</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject._addReasonerFindings" title="Link to this definition">¶</a></dt>
+<dd><p>Add the violations the view’s last “reason” found for this object’s model
+object (see <em>SNGView.reason()</em>) to the status report, with a one-click fix
+where there’s an obvious one.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject._variableKindFixes">
+<span class="sig-name descname"><span class="pre">_variableKindFixes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">namedIndividual</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject._variableKindFixes" title="Link to this definition">¶</a></dt>
+<dd><p>The fixes for a variable whose name says it matches individuals (if
+<em>namedIndividual</em>; else types) but that’s the other kind: make it the kind
+its name says (see <em>GraphObject.individualChangeProblem()</em>), or rename it
+for the kind it is (eg: ?x, a type, to ^x). Each is undoable, and the
+model’s reasoned over again (silently) afterwards, so the warning goes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>namedIndividual</strong> (<em>bool</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>label -&gt; action.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, <em>Callable</em>[[], None]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.makeBindings">
+<span class="sig-name descname"><span class="pre">makeBindings</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.makeBindings" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.killBindings">
+<span class="sig-name descname"><span class="pre">killBindings</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.killBindings" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.onEnter">
+<span class="sig-name descname"><span class="pre">onEnter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.onEnter" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> – The Tk event.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.onLeave">
+<span class="sig-name descname"><span class="pre">onLeave</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.onLeave" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> – The Tk event.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.onRightMouse">
+<span class="sig-name descname"><span class="pre">onRightMouse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.onRightMouse" title="Link to this definition">¶</a></dt>
+<dd><p>Creates and displays the node specific menu at the clicked location – or,
+in the body of a (expanded) context window, the menu for making things in
+the pane clicked in (see <em>SNGView.addNewObjectMenus()</em>), as the
+background’s makes them there: the window’s own menu is on its title bar.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> – The Tk event.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.onButton_1">
+<span class="sig-name descname"><span class="pre">onButton_1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.onButton_1" title="Link to this definition">¶</a></dt>
+<dd><p>The mouse clicked on this node, so begin a mouse event capture. We will
+decide on if it’s just a node move or a selection toggle in <em>self.onB1_Motion()</em>
+and <em>self.onB1ButtonRelease()</em>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> – The Tk event.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.onB1_Motion">
+<span class="sig-name descname"><span class="pre">onB1_Motion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.onB1_Motion" title="Link to this definition">¶</a></dt>
+<dd><p>The mouse is moving while being captured by this node, so if we had clicked to start
+accepting events, just move the node to track the event, updating <em>self.dragInfo</em>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> – The Tk event.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.onDouble_1">
+<span class="sig-name descname"><span class="pre">onDouble_1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.onDouble_1" title="Link to this definition">¶</a></dt>
+<dd><p>A double-click: the hook its model object’s <em>DOUBLE_CLICK</em> attribute
+names (eg: set on its type), if it has one that can be called, and applies
+to it (see <em>sn.hooks</em>); else its attributes, in the attribute editor – as “edit
+attributes” (or “show attributes”: see <em>attributesReadOnly()</em>) on its
+menu. (Not on a context window’s collapse triangle: that’s two toggles.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> – The Tk event.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.onB1_ButtonRelease">
+<span class="sig-name descname"><span class="pre">onB1_ButtonRelease</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.onB1_ButtonRelease" title="Link to this definition">¶</a></dt>
+<dd><p>Button one was released. If it was a drag, it was a move, and everything is fine except
+we call self.adjustPos() which may resolve overlap conflicts. If it was a click (no
+intervening &lt;B1_Motion&gt; events), toggle the selection state of the node.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> – The Tk event.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject._startResize">
+<span class="sig-name descname"><span class="pre">_startResize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">corner</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject._startResize" title="Link to this definition">¶</a></dt>
+<dd><p>Begin dragging the <em>corner</em> (“nw”, “ne”, “se” or “sw”) handle: the
+opposite corner stays fixed (see <em>_resizeTo()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>corner</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject._resizeTo">
+<span class="sig-name descname"><span class="pre">_resizeTo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject._resizeTo" title="Link to this definition">¶</a></dt>
+<dd><p>Resize so the dragged corner is at (x, y) (view coords), keeping the
+opposite corner fixed. The width is at least “vis/minSize” (but may exceed
+“vis/maxSize”); if “vis/aspectRatio” is non-zero the height follows the
+width, otherwise it follows the pointer, but not below <em>minHeight()</em>.
+Dragging past the fixed corner just flips to the normalized rectangle.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>float</em>)</p></li>
+<li><p><strong>y</strong> (<em>float</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.reshape">
+<span class="sig-name descname"><span class="pre">reshape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adjustPos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.reshape" title="Link to this definition">¶</a></dt>
+<dd><p>Set the bounding box to <em>bb</em> (position and size), letting relations follow
+and redrawing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>bb</strong> (<em>list</em><em>[</em><em>float</em><em>] </em><em>| </em><em>list</em><em>[</em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>adjustPos</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.fitToText">
+<span class="sig-name descname"><span class="pre">fitToText</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.fitToText" title="Link to this definition">¶</a></dt>
+<dd><p>Undo any manual sizing: size the box to its text again (about its centre),
+and keep it fitted from now on. Undoable.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.makeMenu">
+<span class="sig-name descname"><span class="pre">makeMenu</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.makeMenu" title="Link to this definition">¶</a></dt>
+<dd><p>Its context menu: its hooks’ items, the model-editing ones (in a model editor), and the view’s.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Menu</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject._systemLocked">
+<span class="sig-name descname"><span class="pre">_systemLocked</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject._systemLocked" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Whether its model object can’t be edited here: it’s a system
+object (unless “gui/allowEditingSystemObjects”), or the view isn’t a
+model editor.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.attributesReadOnly">
+<span class="sig-name descname"><span class="pre">attributesReadOnly</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.attributesReadOnly" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Whether its attributes can only be looked at, not edited: it’s
+inferred (see <em>isInferred()</em>), a system object (see <em>_systemLocked()</em>), or
+from another model than the view’s.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.addModelEditingMenuItems">
+<span class="sig-name descname"><span class="pre">addModelEditingMenuItems</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">menu</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.addModelEditingMenuItems" title="Link to this definition">¶</a></dt>
+<dd><p>Add the items for editing its model object to <em>menu</em> (just looking, for an inferred object).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>menu</strong> (<em>Menu</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.MENU_PREFIX">
+<span class="sig-name descname"><span class="pre">MENU_PREFIX</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'.menu/'</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.MENU_PREFIX" title="Link to this definition">¶</a></dt>
+<dd><p>The start of the attributes that add items to an object’s menu (see
+<em>addHookMenuItems()</em>): eg: “.menu/Show source”, or “.menu/Source/Open” (in a
+“Source” submenu).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.DOUBLE_CLICK">
+<span class="sig-name descname"><span class="pre">DOUBLE_CLICK</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'.doubleClick'</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.DOUBLE_CLICK" title="Link to this definition">¶</a></dt>
+<dd><p>The attribute naming a hook run on a double-click, instead of showing the attributes (see <em>onDouble_1()</em>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.hookContext">
+<span class="sig-name descname"><span class="pre">hookContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.hookContext" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>key</strong> (<em>str</em>) – The attribute naming the hook: eg: “.menu/Show source”.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>How a hook’s used from this object (see <em>sn.hooks</em>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="sn.hooks.html#sn.hooks.HookContext" title="sn.hooks.HookContext"><em>HookContext</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.addHookMenuItems">
+<span class="sig-name descname"><span class="pre">addHookMenuItems</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">menu</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.addHookMenuItems" title="Link to this definition">¶</a></dt>
+<dd><p>Add an item to <em>menu</em> for each of its model object’s <em>MENU_PREFIX</em>
+attributes – its own, and those it inherits (eg: from a type, for all its
+instances) – calling the hook its value names (see <em>sn.hooks</em>), sorted
+by path: a “/” in the path makes a submenu. One whose hook doesn’t apply to
+it (see <em>sn.hooks.applies()</em>: eg: one meant for a type’s instances, on the
+type) is left out; one whose hook can’t be called (eg: its module isn’t
+trusted) is there, but disabled (why is logged).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>menu</strong> (<em>Menu</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether it added any.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.selectionOrSelf">
+<span class="sig-name descname"><span class="pre">selectionOrSelf</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.selectionOrSelf" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>What a menu item acts on: everything selected, if this is; else just this.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[<a class="reference internal" href="#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.copySelection">
+<span class="sig-name descname"><span class="pre">copySelection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cut</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">picture</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.copySelection" title="Link to this definition">¶</a></dt>
+<dd><p>Copy (or cut) what’s selected, if this is; else just this (see
+<em>SNGView.doCopy()</em>) – or copy a picture of it (see <em>SNGView.doCopyImage()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cut</strong> (<em>bool</em>)</p></li>
+<li><p><strong>picture</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.highlight">
+<span class="sig-name descname"><span class="pre">highlight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">on</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.highlight" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>on</strong> (<em>bool</em><em> | </em><em>None</em>) – True to give this object a glow (see <em>decorators.Highlight</em>),
+False to remove it, None to just ask.</p></li>
+<li><p><strong>negative</strong> (<em>bool</em>) – With <em>on</em>: in the “negative” colour (eg: a query with no answers).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether it’s highlighted.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.answerQuery">
+<span class="sig-name descname"><span class="pre">answerQuery</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.answerQuery" title="Link to this definition">¶</a></dt>
+<dd><p>Answer the query this context (eg: a query, or a rule’s antecedent)
+describes: print the answers to the terminal, and highlight every object
+the variables matched (in this view), replacing any earlier highlights –
+and this context too, to say which query they answer: in the “negative”
+colour if there are none (see <em>highlight()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject._answerRelations">
+<span class="sig-name descname"><span class="pre">_answerRelations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">row</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject._answerRelations" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>row</strong> (<em>dict</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>, </em><em>Any</em><em>]</em>) – An answer to the query this context describes (see <em>answerQuery()</em>).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The relations (asserted or inferred) the answer matched: for each
+relation in the query’s pattern, those of its type (or a subtype) between
+what its ends stand for in <em>row</em>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.showConclusions">
+<span class="sig-name descname"><span class="pre">showConclusions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.showConclusions" title="Link to this definition">¶</a></dt>
+<dd><p>Show what this rule concluded in the last “reason” (reasoning first if
+there are no results): print its conclusions to the terminal, and
+highlight every object (in this view) it concluded something about,
+replacing any earlier highlights.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject._relationTypesMenu">
+<span class="sig-name descname"><span class="pre">_relationTypesMenu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject._relationTypesMenu" title="Link to this definition">¶</a></dt>
+<dd><p>The “make relation to…” submenu: a submenu of relation types for each
+ancestor model (the view model’s super-models, nearest first) at the top,
+then the view model’s own relation types. Each list is sorted by name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parent</strong> (<em>Menu</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Menu</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.makeModelObjectSubtype">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">makeModelObjectSubtype</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">individual</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.makeModelObjectSubtype" title="Link to this definition">¶</a></dt>
+<dd><p>Make a subtype (or, if <em>individual</em>, an instance) of its model object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>individual</strong> (<em>bool</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.addViewMenuItems">
+<span class="sig-name descname"><span class="pre">addViewMenuItems</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">menu</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.addViewMenuItems" title="Link to this definition">¶</a></dt>
+<dd><p>Add the view’s items to <em>menu</em>: expand, erase, and so on.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>menu</strong> (<em>Menu</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.onEditAttributes">
+<span class="sig-name descname"><span class="pre">onEditAttributes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">disabled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.onEditAttributes" title="Link to this definition">¶</a></dt>
+<dd><p>Show its model object’s attributes in an editor (<em>disabled</em>: just to look), and make the changes made
+there.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>disabled</strong> (<em>bool</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject._whereEdits">
+<span class="sig-name descname"><span class="pre">_whereEdits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">edits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nameEdit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">typed</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject._whereEdits" title="Link to this definition">¶</a></dt>
+<dd><p>A variable’s name typed with constraints, eg: “?p :where: alive, age: 30”:
+the edits for its name (“?p”) and its “constraints” attribute (the typed
+constraints added to any it has; see <em>sn.model.constraints</em>). For anything
+but a variable, or constraints that can’t be read, the name isn’t changed
+(and a message says why).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>edits</strong> (<em>dict</em>)</p></li>
+<li><p><strong>nameEdit</strong> (<em>Any</em>)</p></li>
+<li><p><strong>typed</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.makeDecorators">
+<span class="sig-name descname"><span class="pre">makeDecorators</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.makeDecorators" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.draw">
+<span class="sig-name descname"><span class="pre">draw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fast</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.draw" title="Link to this definition">¶</a></dt>
+<dd><p>Draw it (or draw it again), with its decorators – unless it’s been drawn since the view last changed, or
+it’s out of the view.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.moveTo">
+<span class="sig-name descname"><span class="pre">moveTo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">allowOverScrollRegionSE</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adjustPos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fast</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">carry</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.moveTo" title="Link to this definition">¶</a></dt>
+<dd><p>Move so that the NW corner is on (x,y), informing all the decorators and 
+relations. A context window carries what’s inside it along (unless
+<em>carry</em> is False: eg: a layout moving everything to where it computed),
+and isn’t subject to overlap avoidance (it’s meant to have things on it).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>carry</strong> (<em>bool</em>) – Whether a context window carries what’s inside it along.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.moveBy">
+<span class="sig-name descname"><span class="pre">moveBy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dy</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">allowOverScrollRegionSE</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adjustPos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fast</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">carry</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.moveBy" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>carry</strong> (<em>bool</em>) – Whether a context window carries what’s inside it along (see <em>moveTo()</em>).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.moveToCenterOn">
+<span class="sig-name descname"><span class="pre">moveToCenterOn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adjustPos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fast</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.moveToCenterOn" title="Link to this definition">¶</a></dt>
+<dd><p>Move it so its centre is at (<em>x</em>, <em>y</em>) (see <em>moveTo()</em>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.centerPt">
+<span class="sig-name descname"><span class="pre">centerPt</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.centerPt" title="Link to this definition">¶</a></dt>
+<dd><p>Gets the center point of this shape.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.containsPt">
+<span class="sig-name descname"><span class="pre">containsPt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pt</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.containsPt" title="Link to this definition">¶</a></dt>
+<dd><p>Whether <em>pt</em> is inside its shape.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.adjustPos">
+<span class="sig-name descname"><span class="pre">adjustPos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">aggressive</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fast</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.adjustPos" title="Link to this definition">¶</a></dt>
+<dd><p>Put it somewhere suitable by the view’s dynamic layout, and its relations’ labels too: where it is then
+(its top left).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>aggressive</strong> (<em>bool</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[int, int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.BATCH_PLACED">
+<span class="sig-name descname"><span class="pre">BATCH_PLACED</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">20</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.BATCH_PLACED" title="Link to this definition">¶</a></dt>
+<dd><p>The most new nodes an expansion has the view’s dynamic layout place one by
+one (see <em>expand()</em>): more are placed all at once.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.expand">
+<span class="sig-name descname"><span class="pre">expand</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;function</span> <span class="pre">VObject.&lt;lambda&gt;&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expand</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_done</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_exempted</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.expand" title="Link to this definition">¶</a></dt>
+<dd><p>Show this object’s relations that aren’t shown yet (and so what’s at their
+other ends) – and, if <em>expand</em> &gt; 0, expand each object at the other end of
+each of its relations (shown already or not) in turn, by <em>expand</em> - 1. So 0
+shows this object’s neighbours, 1 their neighbours too, and so on.</p>
+<p>What it brings in is placed by the view’s dynamic layout, if it has one
+(see <em>SNGView.localLayout</em>), once it’s all made: up to <em>BATCH_PLACED</em>
+nodes one by one, as anything new is (see <em>SNGView._placeNew()</em>); more
+all at once – the nodes (see <em>layout.LayoutHeuristic.placeBatch()</em>),
+then, once they’re put between their ends, the relations’ labels (see
+<em>layout.LayoutHeuristic.placeLabels()</em>). One by one, each is placed
+clear of everything placed before it, which for thousands takes minutes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filter</strong> (<em>Callable</em><em>[</em><em>[</em><em>Any</em><em>, </em><a class="reference internal" href="sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a><em>]</em><em>, </em><em>bool</em><em>]</em>) – Optional[Callable[[Self, Relation], bool]] A function <em>selfxRelation-&gt;bool</em>
+where that relation will only be expanded if the function returns <em>True</em></p></li>
+<li><p><strong>expand</strong> (<em>int</em>) – [Optional[int], default=0] The number of hops to expand beyond this
+object’s neighbours.</p></li>
+<li><p><strong>_done</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>int</em><em>] </em><em>| </em><em>None</em>) – (Internal) The objects expanded so far in this expansion
+(by <em>id()</em>), and by how many more hops: none is done twice to the same
+depth or less, as an expansion would otherwise grow exponentially with
+the depth (going back and forth along each relation, round each cycle).</p></li>
+<li><p><strong>_exempted</strong> (<em>list</em><em> | </em><em>None</em>) – (Internal) If <em>filter</em> has a true “showsHidden” (see
+<em>expandDialog.choiceFilter()</em>: relation types asked for by name), the
+relations it follows are followed even in a hidden or erased category,
+and they and what they lead to are shown anyway (see
+<em>SNGView._exemptIfFiltered()</em>): each one shown so is added to this, so
+it can be hidden again (eg: on an undo).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject._abc_impl">
+<span class="sig-name descname"><span class="pre">_abc_impl</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;_abc._abc_data</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject._abc_impl" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject._expand">
+<span class="sig-name descname"><span class="pre">_expand</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expand</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_done</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_exempted</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject._expand" title="Link to this definition">¶</a></dt>
+<dd><p><em>expand()</em>, but nothing it makes is placed: what’s made is left where it’s made.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filter</strong> (<em>Callable</em><em>[</em><em>[</em><em>Any</em><em>, </em><a class="reference internal" href="sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a><em>]</em><em>, </em><em>bool</em><em>]</em>)</p></li>
+<li><p><strong>expand</strong> (<em>int</em>)</p></li>
+<li><p><strong>_done</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>_exempted</strong> (<em>list</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.expandableRelations">
+<span class="sig-name descname"><span class="pre">expandableRelations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;function</span> <span class="pre">VObject.&lt;lambda&gt;&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">withHidden</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.expandableRelations" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filter</strong> (<em>Callable</em><em>[</em><em>[</em><em>Any</em><em>, </em><a class="reference internal" href="sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a><em>]</em><em>, </em><em>bool</em><em>]</em>) – As for <em>expand()</em>.</p></li>
+<li><p><strong>withHidden</strong> (<em>bool</em>) – Those in hidden or erased categories too.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The relations <em>expand()</em> follows from this object: its own, in
+and out (and symmetric ones both ways), that <em>filter</em> allows – but not
+(unless <em>withHidden</em>) any in a hidden or erased category (see
+<em>SNGView.visibility()</em>), nor any that lead to something that is.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.expandByRelation">
+<span class="sig-name descname"><span class="pre">expandByRelation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.expandByRelation" title="Link to this definition">¶</a></dt>
+<dd><p>“expand by relation…”: ask which of its relations to follow, and how
+far (see <em>expandDialog</em>), then expand it so (one undo).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.strToShape">
+<span class="sig-name descname"><span class="pre">strToShape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.strToShape" title="Link to this definition">¶</a></dt>
+<dd><p>A shape for this object, of the shape class named <em>name</em> (a TypeError if there’s none).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.selected">
+<span class="sig-name descname"><span class="pre">selected</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">val</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_multi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.selected" title="Link to this definition">¶</a></dt>
+<dd><p>Whether it’s selected; with <em>val</em>, select it (deselecting the rest, unless <em>_multi</em>) or deselect it first.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>val</strong> (<em>bool</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>_multi</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.tooltipFont">
+<span class="sig-name descname"><span class="pre">tooltipFont</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.tooltipFont" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The font its tooltip’s in: its model object’s “vis/tooltipFont”
+(eg: “TkFixedFont”, for code; or “Menlo 11”), if it has one; else None
+(Tk’s default).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Any</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.tooltipWrap">
+<span class="sig-name descname"><span class="pre">tooltipWrap</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.tooltipWrap" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The width its tooltip wraps at, in pixels: its model object’s
+“vis/tooltipWrap” (0: no wrapping: eg, for code), if it has one; else 250.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.tooltipFunc">
+<span class="sig-name descname"><span class="pre">tooltipFunc</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.tooltipFunc" title="Link to this definition">¶</a></dt>
+<dd><p>What its tooltip says: its tooltip template (see <em>labels</em>) expanded – its
+model object’s “vis/tooltip” attribute if it has one (eg: set on its type),
+else the “gui/tooltip” preference – cut short at “gui/tooltipMaxLines”
+lines. (When debugging: its id too, and its cached drawing attributes.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.notifyDecoratorDeletion">
+<span class="sig-name descname"><span class="pre">notifyDecoratorDeletion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">decorator</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.notifyDecoratorDeletion" title="Link to this definition">¶</a></dt>
+<dd><p><em>decorator</em> deleted itself: forget it.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.removeDecorator">
+<span class="sig-name descname"><span class="pre">removeDecorator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.removeDecorator" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> – A key in the decorator list.</p></li>
+<li><p><strong>obj</strong> – An actual decorator object.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Removes a single decorator from the decorator list, either by <em>key</em> or by <em>obj</em>.
+If the item is not found, nothing is done.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject._disconnect">
+<span class="sig-name descname"><span class="pre">_disconnect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject._disconnect" title="Link to this definition">¶</a></dt>
+<dd><p>Remove this object from the view (eg: “erase from view”), keeping enough to
+put it back (see <em>_reconnect()</em>). Individual relations attached to it go
+with it; relation <em>types</em> attached to it stay, with that end left
+dangling – a type is still meaningful without this object in view.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject._reconnect">
+<span class="sig-name descname"><span class="pre">_reconnect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject._reconnect" title="Link to this definition">¶</a></dt>
+<dd><p>Reconnect this disconnected object to it’s <em>Model</em> by:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>reregistering it to the <em>Model</em></p></li>
+<li><p>reregistering (to other objects) the far ends of the relations</p></li>
+<li><p>reregistering all the above relations with the <em>Model</em></p></li>
+</ul>
+</div></blockquote>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This method should only be used to undo a _disconnect() operation.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>A relation <em>r</em> connecting two objects that are <em>both</em> being
+reconnected together (eg: a multi-selection undo of an erase, where
+<em>r</em> itself was one of the erased objects) gets reconnected as a side
+effect of whichever of the two objects is processed first: that
+object’s own <em>r._reconnect(kept=self)</em> call both registers <em>r</em> and
+re-appends it onto the <em>other</em> (not-yet-reconnected) object’s
+<em>_incoming</em>/<em>_outgoing</em> list, so that object sees <em>r</em> again once its
+own turn comes. Guarding with <em>r._isConnected()</em> below – mirroring
+the <em>#TODO</em> on <em>_disconnect()</em> about chains of transitive relations
+– is what keeps that second encounter from trying to reconnect (and
+re-<em>assert</em>) an already-reconnected <em>r</em>.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kwargs</strong></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.__str__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A readable string for this object.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.tostring">
+<span class="sig-name descname"><span class="pre">tostring</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relativeTo</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.tostring" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>relativeTo</strong> (<em>DBT</em><em> | </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="sn.view.graphics.vrelations.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">sn.view.graphics.vrelations module</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="sn.view.graphics.vnodes.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">sn.view.graphics.vnodes module</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2023-2026, Rob Kremer
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">sn.view.graphics.vobjects module</a><ul>
+<li><a class="reference internal" href="#visual-attributes">Visual Attributes</a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.Cache"><code class="docutils literal notranslate"><span class="pre">Cache</span></code></a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.Cache.__init__"><code class="docutils literal notranslate"><span class="pre">Cache.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.Cache._owner"><code class="docutils literal notranslate"><span class="pre">Cache._owner</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.Cache.allkeys"><code class="docutils literal notranslate"><span class="pre">Cache.allkeys</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.Cache.refresh"><code class="docutils literal notranslate"><span class="pre">Cache.refresh()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.Cache.__getitem__"><code class="docutils literal notranslate"><span class="pre">Cache.__getitem__()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.Cache.__setitem__"><code class="docutils literal notranslate"><span class="pre">Cache.__setitem__()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.INFERRED_FADE"><code class="docutils literal notranslate"><span class="pre">INFERRED_FADE</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.fadeColor"><code class="docutils literal notranslate"><span class="pre">fadeColor()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject"><code class="docutils literal notranslate"><span class="pre">VObject</span></code></a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._tagCounter"><code class="docutils literal notranslate"><span class="pre">VObject._tagCounter</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.__init__"><code class="docutils literal notranslate"><span class="pre">VObject.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.readModelObjectRef"><code class="docutils literal notranslate"><span class="pre">VObject.readModelObjectRef</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._modelObject"><code class="docutils literal notranslate"><span class="pre">VObject._modelObject</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.cache"><code class="docutils literal notranslate"><span class="pre">VObject.cache</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.view"><code class="docutils literal notranslate"><span class="pre">VObject.view</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._drawVersion"><code class="docutils literal notranslate"><span class="pre">VObject._drawVersion</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._boundingBox"><code class="docutils literal notranslate"><span class="pre">VObject._boundingBox</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.canvas"><code class="docutils literal notranslate"><span class="pre">VObject.canvas</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.tooltip"><code class="docutils literal notranslate"><span class="pre">VObject.tooltip</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.dragInfo"><code class="docutils literal notranslate"><span class="pre">VObject.dragInfo</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.userSized"><code class="docutils literal notranslate"><span class="pre">VObject.userSized</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.resizeInfo"><code class="docutils literal notranslate"><span class="pre">VObject.resizeInfo</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.tag"><code class="docutils literal notranslate"><span class="pre">VObject.tag</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.decorators"><code class="docutils literal notranslate"><span class="pre">VObject.decorators</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._firstDraw"><code class="docutils literal notranslate"><span class="pre">VObject._firstDraw()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.getInstantiationInfo"><code class="docutils literal notranslate"><span class="pre">VObject.getInstantiationInfo()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.name"><code class="docutils literal notranslate"><span class="pre">VObject.name</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.modelObject"><code class="docutils literal notranslate"><span class="pre">VObject.modelObject</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.relations"><code class="docutils literal notranslate"><span class="pre">VObject.relations</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.boundingBox"><code class="docutils literal notranslate"><span class="pre">VObject.boundingBox()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.isHidden"><code class="docutils literal notranslate"><span class="pre">VObject.isHidden()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._applyHidden"><code class="docutils literal notranslate"><span class="pre">VObject._applyHidden()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._hideItems"><code class="docutils literal notranslate"><span class="pre">VObject._hideItems()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._hideItem"><code class="docutils literal notranslate"><span class="pre">VObject._hideItem()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._showItems"><code class="docutils literal notranslate"><span class="pre">VObject._showItems()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._showItem"><code class="docutils literal notranslate"><span class="pre">VObject._showItem()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.labelText"><code class="docutils literal notranslate"><span class="pre">VObject.labelText()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.templateCall"><code class="docutils literal notranslate"><span class="pre">VObject.templateCall()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.categoryExempt"><code class="docutils literal notranslate"><span class="pre">VObject.categoryExempt</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.collapsed"><code class="docutils literal notranslate"><span class="pre">VObject.collapsed</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.expandedHeight"><code class="docutils literal notranslate"><span class="pre">VObject.expandedHeight</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.TOGGLE_WIDTH"><code class="docutils literal notranslate"><span class="pre">VObject.TOGGLE_WIDTH</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.fullBoundingBox"><code class="docutils literal notranslate"><span class="pre">VObject.fullBoundingBox()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.toggleAt"><code class="docutils literal notranslate"><span class="pre">VObject.toggleAt()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.setCollapsed"><code class="docutils literal notranslate"><span class="pre">VObject.setCollapsed()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.WINDOW_MIN"><code class="docutils literal notranslate"><span class="pre">VObject.WINDOW_MIN</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.WINDOW_DEFAULT"><code class="docutils literal notranslate"><span class="pre">VObject.WINDOW_DEFAULT</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.BANNER"><code class="docutils literal notranslate"><span class="pre">VObject.BANNER</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.isInferred"><code class="docutils literal notranslate"><span class="pre">VObject.isInferred()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.isContextWindow"><code class="docutils literal notranslate"><span class="pre">VObject.isContextWindow()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.bannerHeight"><code class="docutils literal notranslate"><span class="pre">VObject.bannerHeight()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.panes"><code class="docutils literal notranslate"><span class="pre">VObject.panes()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.paneAt"><code class="docutils literal notranslate"><span class="pre">VObject.paneAt()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.containmentOf"><code class="docutils literal notranslate"><span class="pre">VObject.containmentOf()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.windowContents"><code class="docutils literal notranslate"><span class="pre">VObject.windowContents()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.carriedContents"><code class="docutils literal notranslate"><span class="pre">VObject.carriedContents()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.isResizable"><code class="docutils literal notranslate"><span class="pre">VObject.isResizable()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.minHeight"><code class="docutils literal notranslate"><span class="pre">VObject.minHeight()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.shape"><code class="docutils literal notranslate"><span class="pre">VObject.shape()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.update"><code class="docutils literal notranslate"><span class="pre">VObject.update()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.validate"><code class="docutils literal notranslate"><span class="pre">VObject.validate()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._addReasonerFindings"><code class="docutils literal notranslate"><span class="pre">VObject._addReasonerFindings()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._variableKindFixes"><code class="docutils literal notranslate"><span class="pre">VObject._variableKindFixes()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.makeBindings"><code class="docutils literal notranslate"><span class="pre">VObject.makeBindings()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.killBindings"><code class="docutils literal notranslate"><span class="pre">VObject.killBindings()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.onEnter"><code class="docutils literal notranslate"><span class="pre">VObject.onEnter()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.onLeave"><code class="docutils literal notranslate"><span class="pre">VObject.onLeave()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.onRightMouse"><code class="docutils literal notranslate"><span class="pre">VObject.onRightMouse()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.onButton_1"><code class="docutils literal notranslate"><span class="pre">VObject.onButton_1()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.onB1_Motion"><code class="docutils literal notranslate"><span class="pre">VObject.onB1_Motion()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.onDouble_1"><code class="docutils literal notranslate"><span class="pre">VObject.onDouble_1()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.onB1_ButtonRelease"><code class="docutils literal notranslate"><span class="pre">VObject.onB1_ButtonRelease()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._startResize"><code class="docutils literal notranslate"><span class="pre">VObject._startResize()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._resizeTo"><code class="docutils literal notranslate"><span class="pre">VObject._resizeTo()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.reshape"><code class="docutils literal notranslate"><span class="pre">VObject.reshape()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.fitToText"><code class="docutils literal notranslate"><span class="pre">VObject.fitToText()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.makeMenu"><code class="docutils literal notranslate"><span class="pre">VObject.makeMenu()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._systemLocked"><code class="docutils literal notranslate"><span class="pre">VObject._systemLocked()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.attributesReadOnly"><code class="docutils literal notranslate"><span class="pre">VObject.attributesReadOnly()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.addModelEditingMenuItems"><code class="docutils literal notranslate"><span class="pre">VObject.addModelEditingMenuItems()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.MENU_PREFIX"><code class="docutils literal notranslate"><span class="pre">VObject.MENU_PREFIX</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.DOUBLE_CLICK"><code class="docutils literal notranslate"><span class="pre">VObject.DOUBLE_CLICK</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.hookContext"><code class="docutils literal notranslate"><span class="pre">VObject.hookContext()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.addHookMenuItems"><code class="docutils literal notranslate"><span class="pre">VObject.addHookMenuItems()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.selectionOrSelf"><code class="docutils literal notranslate"><span class="pre">VObject.selectionOrSelf()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.copySelection"><code class="docutils literal notranslate"><span class="pre">VObject.copySelection()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.highlight"><code class="docutils literal notranslate"><span class="pre">VObject.highlight()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.answerQuery"><code class="docutils literal notranslate"><span class="pre">VObject.answerQuery()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._answerRelations"><code class="docutils literal notranslate"><span class="pre">VObject._answerRelations()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.showConclusions"><code class="docutils literal notranslate"><span class="pre">VObject.showConclusions()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._relationTypesMenu"><code class="docutils literal notranslate"><span class="pre">VObject._relationTypesMenu()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.makeModelObjectSubtype"><code class="docutils literal notranslate"><span class="pre">VObject.makeModelObjectSubtype()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.addViewMenuItems"><code class="docutils literal notranslate"><span class="pre">VObject.addViewMenuItems()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.onEditAttributes"><code class="docutils literal notranslate"><span class="pre">VObject.onEditAttributes()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._whereEdits"><code class="docutils literal notranslate"><span class="pre">VObject._whereEdits()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.makeDecorators"><code class="docutils literal notranslate"><span class="pre">VObject.makeDecorators()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.draw"><code class="docutils literal notranslate"><span class="pre">VObject.draw()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.moveTo"><code class="docutils literal notranslate"><span class="pre">VObject.moveTo()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.moveBy"><code class="docutils literal notranslate"><span class="pre">VObject.moveBy()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.moveToCenterOn"><code class="docutils literal notranslate"><span class="pre">VObject.moveToCenterOn()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.centerPt"><code class="docutils literal notranslate"><span class="pre">VObject.centerPt()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.containsPt"><code class="docutils literal notranslate"><span class="pre">VObject.containsPt()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.adjustPos"><code class="docutils literal notranslate"><span class="pre">VObject.adjustPos()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.BATCH_PLACED"><code class="docutils literal notranslate"><span class="pre">VObject.BATCH_PLACED</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.expand"><code class="docutils literal notranslate"><span class="pre">VObject.expand()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._abc_impl"><code class="docutils literal notranslate"><span class="pre">VObject._abc_impl</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._expand"><code class="docutils literal notranslate"><span class="pre">VObject._expand()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.expandableRelations"><code class="docutils literal notranslate"><span class="pre">VObject.expandableRelations()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.expandByRelation"><code class="docutils literal notranslate"><span class="pre">VObject.expandByRelation()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.strToShape"><code class="docutils literal notranslate"><span class="pre">VObject.strToShape()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.selected"><code class="docutils literal notranslate"><span class="pre">VObject.selected()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.tooltipFont"><code class="docutils literal notranslate"><span class="pre">VObject.tooltipFont()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.tooltipWrap"><code class="docutils literal notranslate"><span class="pre">VObject.tooltipWrap()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.tooltipFunc"><code class="docutils literal notranslate"><span class="pre">VObject.tooltipFunc()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.notifyDecoratorDeletion"><code class="docutils literal notranslate"><span class="pre">VObject.notifyDecoratorDeletion()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.removeDecorator"><code class="docutils literal notranslate"><span class="pre">VObject.removeDecorator()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._disconnect"><code class="docutils literal notranslate"><span class="pre">VObject._disconnect()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._reconnect"><code class="docutils literal notranslate"><span class="pre">VObject._reconnect()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.__str__"><code class="docutils literal notranslate"><span class="pre">VObject.__str__()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.tostring"><code class="docutils literal notranslate"><span class="pre">VObject.tostring()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

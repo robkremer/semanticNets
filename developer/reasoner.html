@@ -1,0 +1,724 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="The Graphical View" href="view.html"><link rel="prev" title="The Model" href="model.html">
+        <link rel="prefetch" href="../_static/sn-logo.png" as="image">
+
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>The Reasoner - Semantic Nets 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">Semantic Nets 1.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">Semantic Nets 1.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user/index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user/concepts.html">Concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/gettingStarted.html">Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/tutorial.html">Worked Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/editing.html">Editing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/contexts.html">Contexts: Rules, Definitions, Queries, Constraints and Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/reasoning.html">Reasoning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/viewing.html">Viewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/layouts.html">Arranging a View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/animation.html">Animation Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/files.html">Files and Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/terminal.html">The Terminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/exampleApps.html">Plugins</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Developer Guide</a><input aria-label="Toggle navigation of Developer Guide" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="model.html">The Model</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">The Reasoner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="view.html">The Graphical View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="layout.html">Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extending.html">Building on Semantic Nets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="conventions.html">Conventions and Testing</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../dev/sn.html">sn package</a><input aria-label="Toggle navigation of sn package" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.controller.html">sn.controller package</a><input aria-label="Toggle navigation of sn.controller package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.controller.modelInterface.html">sn.controller.modelInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.examples.html">sn.examples package</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.constraints.html">sn.model.constraints module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.copying.html">sn.model.copying module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.directory.html">sn.model.directory module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.model.html">sn.model.model module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.reasoner.html">sn.model.reasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../dev/sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.connectors.html">sn.view.graphics.connectors module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.expandDialog.html">sn.view.graphics.expandDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.guiApp.html">sn.view.graphics.guiApp module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.imageExport.html">sn.view.graphics.imageExport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.labels.html">sn.view.graphics.labels module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.layout.html">sn.view.graphics.layout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.layoutDialog.html">sn.view.graphics.layoutDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.layoutPanel.html">sn.view.graphics.layoutPanel module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.progress.html">sn.view.graphics.progress module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.reasoningToolbar.html">sn.view.graphics.reasoningToolbar module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.relationTable.html">sn.view.graphics.relationTable module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.replaceModelDialog.html">sn.view.graphics.replaceModelDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.searchDialog.html">sn.view.graphics.searchDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.shapes.html">sn.view.graphics.shapes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.sngContext.html">sn.view.graphics.sngContext module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.sngView.html">sn.view.graphics.sngView module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.sourceWindow.html">sn.view.graphics.sourceWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.treeLayout.html">sn.view.graphics.treeLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewBase.html">sn.view.graphics.viewBase module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewCommands.html">sn.view.graphics.viewCommands module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewContainment.html">sn.view.graphics.viewContainment module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewEditing.html">sn.view.graphics.viewEditing module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewFiles.html">sn.view.graphics.viewFiles module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewInput.html">sn.view.graphics.viewInput module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewLayouts.html">sn.view.graphics.viewLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewReasoning.html">sn.view.graphics.viewReasoning module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewViewport.html">sn.view.graphics.viewViewport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewVisibility.html">sn.view.graphics.viewVisibility module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.visibilityDialog.html">sn.view.graphics.visibilityDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.vnodes.html">sn.view.graphics.vnodes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.vobjects.html">sn.view.graphics.vobjects module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.vrelations.html">sn.view.graphics.vrelations module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.view.textUserInterface.html">sn.view.textUserInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.__main__.html">sn.__main__ module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.hooks.html">sn.hooks module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.plugins.html">sn.plugins module</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../plugins/index.html">The plugins</a><input aria-label="Toggle navigation of The plugins" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.XMLreader.html">snplugins.XMLreader package</a><input aria-label="Toggle navigation of snplugins.XMLreader package" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.reader.html">snplugins.XMLreader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.schema.html">snplugins.XMLreader.schema module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.view.html">snplugins.XMLreader.view module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.pythonParser.html">snplugins.pythonParser package</a><input aria-label="Toggle navigation of snplugins.pythonParser package" class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.dialog.html">snplugins.pythonParser.dialog module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.hooks.html">snplugins.pythonParser.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.parser.html">snplugins.pythonParser.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/developer/reasoner.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="the-reasoner">
+<h1>The Reasoner<a class="headerlink" href="#the-reasoner" title="Link to this heading">¶</a></h1>
+<p>The reasoner works out what follows from a model. It’s in two layers:</p>
+<dl class="simple">
+<dt><a class="reference internal" href="../dev/sn.model.reasoner.html#module-sn.model.reasoner" title="sn.model.reasoner"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sn.model.reasoner</span></code></a></dt><dd><p>The engine-independent part: the <a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.Reasoner" title="sn.model.reasoner.Reasoner"><code class="xref py py-class docutils literal notranslate"><span class="pre">Reasoner</span></code></a>
+interface, the export of a model as facts, the reading of rules,
+definitions and queries into patterns, and what an engine returns
+(<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.Inferences" title="sn.model.reasoner.Inferences"><code class="xref py py-class docutils literal notranslate"><span class="pre">Inferences</span></code></a>,
+<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.Violation" title="sn.model.reasoner.Violation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Violation</span></code></a>).</p>
+</dd>
+<dt><a class="reference internal" href="../dev/sn.model.clingoReasoner.html#module-sn.model.clingoReasoner" title="sn.model.clingoReasoner"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sn.model.clingoReasoner</span></code></a></dt><dd><p>The engine: <a class="reference internal" href="../dev/sn.model.clingoReasoner.html#sn.model.clingoReasoner.ClingoReasoner" title="sn.model.clingoReasoner.ClingoReasoner"><code class="xref py py-class docutils literal notranslate"><span class="pre">ClingoReasoner</span></code></a>, built on
+<a class="reference external" href="https://potassco.org/clingo/">clingo</a>, an answer set programming (ASP)
+system, with its rule base in <code class="docutils literal notranslate"><span class="pre">clingoReasoner.lp</span></code>.</p>
+</dd>
+</dl>
+<p>Engines register themselves by name (<code class="docutils literal notranslate"><span class="pre">class</span> <span class="pre">ClingoReasoner(Reasoner,</span>
+<span class="pre">engine=&quot;clingo&quot;)</span></code>) and are made with
+<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.Reasoner.create" title="sn.model.reasoner.Reasoner.create"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Reasoner.create(model,</span> <span class="pre">engine)</span></code></a>.
+Another engine (eg: a description logic reasoner) would implement the same
+interface; <code class="docutils literal notranslate"><span class="pre">test/test_model/test_reasoner.py</span></code> pins down the semantics every
+engine must share.</p>
+<section id="why-asp">
+<h2>Why ASP<a class="headerlink" href="#why-asp" title="Link to this heading">¶</a></h2>
+<p>A semantic network’s meaning – inheritance, relational properties,
+signatures, rules – is naturally a set of logic rules over its structure,
+and clingo evaluates such rules directly, to a fixed point, with negation
+(for “unless a more specific relation says otherwise”). The rules are short,
+declarative, and kept in one file (<code class="docutils literal notranslate"><span class="pre">clingoReasoner.lp</span></code>), separate from the
+Python.</p>
+<p>To keep relation types first-class – in the isa hierarchy, and themselves
+related – while staying first-order, every GraphObject is <em>reified</em> as a
+term <code class="docutils literal notranslate"><span class="pre">o(N)</span></code>: “fred likes mary” is <code class="docutils literal notranslate"><span class="pre">link(o(31),</span> <span class="pre">o(21),</span> <span class="pre">o(23))</span></code> together
+with <code class="docutils literal notranslate"><span class="pre">parent(o(31),</span> <span class="pre">o(12))</span></code> (the relation is a <em>likes</em>), not
+<code class="docutils literal notranslate"><span class="pre">likes(fred,</span> <span class="pre">mary)</span></code>.</p>
+</section>
+<section id="the-pipeline">
+<h2>The pipeline<a class="headerlink" href="#the-pipeline" title="Link to this heading">¶</a></h2>
+<div class="graphviz"><object data="../_images/graphviz-85f21e75591147a3e015c4ecc6e2ac40c83c5441.svg" type="image/svg+xml" class="graphviz">
+<p class="warning">digraph pipeline {
+  rankdir=LR;
+  node [shape=box, style=rounded, fontname=&quot;Helvetica&quot;, fontsize=10];
+  model [label=&quot;Model&quot;];
+  facts [label=&quot;Reasoner.facts()\nobj, parent, link, prop,\nattr, pattern, ...&quot;];
+  rules [label=&quot;_rulesProgram()\nthe user's rules and\ndefinitions, as clingo rules&quot;];
+  lp [label=&quot;clingoReasoner.lp\nthe rule base&quot;];
+  clingo [label=&quot;clingo\n(ground &amp; solve)&quot;];
+  inf [label=&quot;Inferences\nholds, inferred, inherited,\nclassify, violation, fired, ...&quot;];
+  model -&gt; facts -&gt; clingo; model -&gt; rules -&gt; clingo; lp -&gt; clingo; clingo -&gt; inf;
+}</p></object></div>
+<ol class="arabic simple">
+<li><p><a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.Reasoner.facts" title="sn.model.reasoner.Reasoner.facts"><code class="xref py py-meth docutils literal notranslate"><span class="pre">facts()</span></code></a> exports the model as
+engine-neutral facts (their vocabulary is listed in the module’s
+documentation). Pattern elements – the contents of rules and queries –
+are exported too, but marked <code class="docutils literal notranslate"><span class="pre">pattern</span></code>, so the rule base doesn’t take
+them as facts about the world.</p></li>
+<li><p>The user’s rules and definitions are compiled to clingo rules (below).</p></li>
+<li><p>clingo grounds and solves the facts, the compiled rules and the rule
+base together. The program is <em>stratified</em> (no recursion through
+negation), so there’s exactly one answer set, and it’s found without
+search.</p></li>
+<li><p>The atoms shown (<code class="docutils literal notranslate"><span class="pre">#show</span></code>) are mapped back to GraphObjects, as an
+<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.Inferences" title="sn.model.reasoner.Inferences"><code class="xref py py-class docutils literal notranslate"><span class="pre">Inferences</span></code></a>.</p></li>
+</ol>
+<p><a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.reason" title="sn.model.reasoner.reason"><code class="xref py py-func docutils literal notranslate"><span class="pre">sn.model.reasoner.reason()</span></code></a> runs this, keeps the result on the model
+(<code class="docutils literal notranslate"><span class="pre">model.reasoning</span></code>), and notifies the model’s observers with a
+<code class="docutils literal notranslate"><span class="pre">(&quot;reasoned&quot;,</span> <span class="pre">(inferences,))</span></code> topic: every view draws the results. They’re
+a snapshot – not saved, and not updated as the model is edited – until the
+next <code class="docutils literal notranslate"><span class="pre">reason()</span></code> or <a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.clearReasoning" title="sn.model.reasoner.clearReasoning"><code class="xref py py-func docutils literal notranslate"><span class="pre">clearReasoning()</span></code></a>.</p>
+<p>What was inferred is also put in the model, as <strong>inferred objects</strong>
+(<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.GraphObject.inferred" title="sn.model.model.GraphObject.inferred"><code class="xref py py-attr docutils literal notranslate"><span class="pre">GraphObject.inferred</span></code></a>):
+<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.materialize" title="sn.model.reasoner.materialize"><code class="xref py py-func docutils literal notranslate"><span class="pre">materialize()</span></code></a> makes a relation for each inferred
+or inherited relation, an isa link for each one the rules concluded, and a
+node for each object the rules concluded exists
+(<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.NewObject" title="sn.model.reasoner.NewObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">NewObject</span></code></a>) – named for the rule’s variable
+and the match, eg: “(m for alice)” – with the types, attributes and
+relations the rules gave it. Each one’s <code class="docutils literal notranslate"><span class="pre">inferredKind</span></code> says what it is
+(“inferred”, “inherited”, “rule” or “new”); a new object is kept from one
+“reason” to the next by its rule, variable and match. So the model’s own
+queries – <a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.GraphObject.getRelatedTo" title="sn.model.model.GraphObject.getRelatedTo"><code class="xref py py-meth docutils literal notranslate"><span class="pre">getRelatedTo()</span></code></a>, isa,
+inherited attributes – see them like anything else. They’re kept apart from
+what’s asserted:</p>
+<ul class="simple">
+<li><p>they’re <strong>not saved</strong> (the model’s object table leaves them out), and
+adding or removing them doesn’t make the model dirty, or go on the undo
+list – even a write-locked model can be reasoned over (see
+<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Model.inferring" title="sn.model.model.Model.inferring"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Model.inferring()</span></code></a>);</p></li>
+<li><p>the reasoner <strong>doesn’t read them</strong>: while it gathers its facts they’re
+taken out of the model and put back afterwards
+(<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.withoutInferences" title="sn.model.reasoner.withoutInferences"><code class="xref py py-func docutils literal notranslate"><span class="pre">withoutInferences()</span></code></a>) – otherwise an inferred
+isa link, say, would give its object the type’s attributes, and justify
+itself;</p></li>
+<li><p>the next <code class="docutils literal notranslate"><span class="pre">reason()</span></code> <strong>keeps</strong> those still inferred (the same objects),
+adds the new ones, and removes the rest; <code class="docutils literal notranslate"><span class="pre">clearReasoning()</span></code> removes them
+all;</p></li>
+<li><p>they’re <strong>the reasoner’s</strong>: changing one’s attributes raises
+<code class="docutils literal notranslate"><span class="pre">PermissionError</span></code> (<code class="docutils literal notranslate"><span class="pre">GraphObject._refuseIfInferred()</span></code>), and the model
+commands refuse to remove, reconnect or relate them, or make instances of
+them – until the <code class="docutils literal notranslate"><span class="pre">mark</span> <span class="pre">asserted</span></code> command
+(<a class="reference internal" href="../dev/sn.controller.modelInterface.html#sn.controller.modelInterface.ModelContext.mark_asserted" title="sn.controller.modelInterface.ModelContext.mark_asserted"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ModelContext.mark_asserted()</span></code></a>,
+undoable; not in a write-locked model) makes one asserted, with what has to
+come with it (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.GraphObject.assertedWith" title="sn.model.model.GraphObject.assertedWith"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GraphObject.assertedWith()</span></code></a>:
+its inferred isa links, a relation’s inferred ends, and the relations a
+rule gave a new object – without them the next <code class="docutils literal notranslate"><span class="pre">reason()</span></code> would make
+another in its place).</p></li>
+</ul>
+<p>Attribute values the rules conclude for the model’s own objects
+(<code class="docutils literal notranslate"><span class="pre">ruleAttrs</span></code>) become <strong>inferred attributes</strong> (<code class="docutils literal notranslate"><span class="pre">Attribute.inferred</span></code>, in
+pythonUtils): set where the object has no value of its own (nor that value
+inherited), not saved with it, taken out while the reasoner gathers its facts,
+and kept, updated or removed by the next <code class="docutils literal notranslate"><span class="pre">reason()</span></code>. Setting a value where
+one is inferred replaces it with an ordinary one (<code class="docutils literal notranslate"><span class="pre">GraphObject.__setitem__</span></code>),
+so undo brings the inferred one back; the attribute editor’s <strong>assert</strong> button
+does the same.</p>
+<p>Views show the new objects related to objects they show (beside them), and
+the inferred relations between objects they show
+(<code class="docutils literal notranslate"><span class="pre">SNGView._showInferred()</span></code>, on the <code class="docutils literal notranslate"><span class="pre">&quot;reasoned&quot;</span></code> topic) as ordinary view
+objects that are drawn faded (<code class="docutils literal notranslate"><span class="pre">VObject.isInferred()</span></code>; the vis cache fades
+their colours toward the background) with dashed lines – dotted for
+inherited ones (the relation’s <code class="docutils literal notranslate"><span class="pre">inferredKind</span></code>). They take part in layouts
+like anything else, but aren’t saved with the view, and neither they nor the
+model’s inferred objects count when a view or model checks whether it’s dirty.</p>
+</section>
+<section id="the-rule-base">
+<h2>The rule base<a class="headerlink" href="#the-rule-base" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">clingoReasoner.lp</span></code> defines, over the facts:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">isa_star</span></code>: the reflexive-transitive isa closure (including types that
+rules conclude);</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">holds(T,S,D)</span></code>: S is related to D under relation type T – directly, by
+a subtype of T, by inheritance down the isa hierarchy, or by a rule
+(including the base rules: see below);</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">inferred</span></code> and <code class="docutils literal notranslate"><span class="pre">inherited</span></code>: the holds that weren’t asserted (and
+aren’t implied by a more specific relation type);</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">classify(X,C)</span></code>: a type that would make a relation’s end fit its
+signature;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">violation(Code,</span> <span class="pre">Severity,</span> <span class="pre">Subject,</span> <span class="pre">Args)</span></code>: the problems, whose codes
+are turned into messages by <code class="docutils literal notranslate"><span class="pre">reasoner._MESSAGES</span></code>.</p></li>
+</ul>
+</section>
+<section id="rules-and-definitions">
+<h2>Rules and definitions<a class="headerlink" href="#rules-and-definitions" title="Link to this heading">¶</a></h2>
+<p><a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.patternOf" title="sn.model.reasoner.patternOf"><code class="xref py py-func docutils literal notranslate"><span class="pre">patternOf()</span></code></a> reads a context (or some of its
+panes) into a <a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.Pattern" title="sn.model.reasoner.Pattern"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pattern</span></code></a>: its variables,
+constants, relations, isa links and constraints.
+<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.ruleOf" title="sn.model.reasoner.ruleOf"><code class="xref py py-func docutils literal notranslate"><span class="pre">ruleOf()</span></code></a> reads a rule into a
+<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.RuleSpec" title="sn.model.reasoner.RuleSpec"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuleSpec</span></code></a>: the antecedent’s pattern, and the
+consequent’s conclusions – relations (<code class="docutils literal notranslate"><span class="pre">heads</span></code>), attribute values
+(<code class="docutils literal notranslate"><span class="pre">assertions</span></code>), types (<code class="docutils literal notranslate"><span class="pre">isas</span></code>), and the variables that only the
+consequent has (<code class="docutils literal notranslate"><span class="pre">new</span></code>: objects to create). A definition is two RuleSpecs,
+one each way (<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.definitionSpecs" title="sn.model.reasoner.definitionSpecs"><code class="xref py py-func docutils literal notranslate"><span class="pre">definitionSpecs()</span></code></a>). Problems found
+on the way (eg: a consequent relation with no end) are recorded in the
+spec, and reported instead of compiling the rule.</p>
+<p><code class="docutils literal notranslate"><span class="pre">ClingoReasoner._rulesProgram</span></code> then compiles each spec to one clingo rule
+per conclusion, the antecedent as the body (<code class="docutils literal notranslate"><span class="pre">_patternBody</span></code>):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>fired(Rule, T, S, D)        :- &lt;antecedent&gt;.    % a relation
+rule_attr(Rule, X, Key, V)  :- &lt;antecedent&gt;.    % an attribute value
+rule_isa(Rule, X, Type)     :- &lt;antecedent&gt;.    % a type
+</pre></div>
+</div>
+<p>and the rule base feeds these back in, as <code class="docutils literal notranslate"><span class="pre">holds</span></code>, <code class="docutils literal notranslate"><span class="pre">attr</span></code> and isa. So
+rules chain: one rule’s conclusions can satisfy another’s antecedent.</p>
+<section id="new-objects">
+<h3>New objects<a class="headerlink" href="#new-objects" title="Link to this heading">¶</a></h3>
+<p>A consequent-only variable stands for an object that exists for each match.
+It’s represented by a term that’s a function of the match –
+<code class="docutils literal notranslate"><span class="pre">new(Rule,</span> <span class="pre">Name,</span> <span class="pre">((Var,</span> <span class="pre">Value),</span> <span class="pre">...))</span></code> – so there’s exactly one per match,
+and reported as a <a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.NewObject" title="sn.model.reasoner.NewObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">NewObject</span></code></a>. Two things keep
+this finite and stratified:</p>
+<ul class="simple">
+<li><p>the variables of a rule that creates objects range over the model’s data
+only, never over created objects (<code class="docutils literal notranslate"><span class="pre">base</span></code>/<code class="docutils literal notranslate"><span class="pre">individual</span></code> rather than
+<code class="docutils literal notranslate"><span class="pre">data</span></code>/<code class="docutils literal notranslate"><span class="pre">any_individual</span></code>), so it can’t keep creating objects from its
+own creations (a rule that creates nothing can’t run away, so its
+variables range over all the data, created objects included);</p></li>
+<li><p>an object is created only if the data doesn’t already have one doing the
+job (<code class="docutils literal notranslate"><span class="pre">_satisfied</span></code>) – tested against <em>asserted</em> relations and types
+only, so the test doesn’t depend on its own outcome.</p></li>
+</ul>
+</section>
+<section id="cardinality">
+<h3>Cardinality<a class="headerlink" href="#cardinality" title="Link to this heading">¶</a></h3>
+<p>A relation type’s <code class="docutils literal notranslate"><span class="pre">cardinality</span></code> and <code class="docutils literal notranslate"><span class="pre">inverseCardinality</span></code> attributes
+(<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.CARDINALITY" title="sn.model.reasoner.CARDINALITY"><code class="xref py py-data docutils literal notranslate"><span class="pre">CARDINALITY</span></code></a>, read by
+<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.parseCardinality" title="sn.model.reasoner.parseCardinality"><code class="xref py py-func docutils literal notranslate"><span class="pre">parseCardinality()</span></code></a>) are exported as
+<code class="docutils literal notranslate"><span class="pre">card(T,</span> <span class="pre">out|in,</span> <span class="pre">Min,</span> <span class="pre">Max)</span></code> facts (<code class="docutils literal notranslate"><span class="pre">Max</span></code> -1 for any number), and the rule
+base (<code class="docutils literal notranslate"><span class="pre">clingoReasoner.lp</span></code>, “Cardinality”) gives them their meaning:</p>
+<ul class="simple">
+<li><p><strong>Merging</strong> (at most one): <code class="docutils literal notranslate"><span class="pre">same(X,</span> <span class="pre">Y)</span></code> for two objects related to (or
+from) the same object, one of them new – and its symmetric and transitive
+closure. What’s true of one is then true of the other (<code class="docutils literal notranslate"><span class="pre">holds</span></code>, <code class="docutils literal notranslate"><span class="pre">attr</span></code>
+and <code class="docutils literal notranslate"><span class="pre">isa_star</span></code> are copied across): positive rules, so the program stays
+stratified. Two of the model’s objects are never merged (they have
+different names): their being the same is reported, as too many.
+<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.mergeSame" title="sn.model.reasoner.mergeSame"><code class="xref py py-func docutils literal notranslate"><span class="pre">mergeSame()</span></code></a> then replaces each new object by what
+stands for its class (<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.sameClasses" title="sn.model.reasoner.sameClasses"><code class="xref py py-func docutils literal notranslate"><span class="pre">sameClasses()</span></code></a>: the model’s
+object, if there’s one, else one of the new ones) in the results, and the
+engine’s <code class="docutils literal notranslate"><span class="pre">answer()</span></code> does the same for answers.</p></li>
+<li><p><strong>Inventing</strong> (exactly one): a <code class="docutils literal notranslate"><span class="pre">new(T,</span> <span class="pre">Name,</span> <span class="pre">((&quot;of&quot;,</span> <span class="pre">X),))</span></code> object (<code class="docutils literal notranslate"><span class="pre">&quot;to&quot;</span></code>
+for <code class="docutils literal notranslate"><span class="pre">in</span></code>) for each of the domain’s (range’s) individuals with no asserted
+relation by T – like a rule’s new objects, only for the model’s own
+individuals (<code class="docutils literal notranslate"><span class="pre">base</span></code>), and tested against asserted relations only.</p></li>
+<li><p><strong>Checking</strong>: <code class="docutils literal notranslate"><span class="pre">cardinality_max</span></code> (<code class="docutils literal notranslate"><span class="pre">_in</span></code>) counts the model’s objects only
+(a new one might be any of them); <code class="docutils literal notranslate"><span class="pre">cardinality_min</span></code> (<code class="docutils literal notranslate"><span class="pre">_in</span></code>) counts new
+ones too, once per merged class.</p></li>
+</ul>
+<p>The relation triples in the results are sorted into the models’ order (see
+<em>Reasoner._finish()</em>), so they don’t depend on the engine’s.</p>
+</section>
+</section>
+<section id="constraints">
+<h2>Constraints<a class="headerlink" href="#constraints" title="Link to this heading">¶</a></h2>
+<p><a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.constraintOf" title="sn.model.reasoner.constraintOf"><code class="xref py py-func docutils literal notranslate"><span class="pre">constraintOf()</span></code></a> reads a constraint into a
+<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.ConstraintSpec" title="sn.model.reasoner.ConstraintSpec"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstraintSpec</span></code></a>: its pattern, and from its
+attributes the violation’s code, severity, what it reports (subject first)
+and message. Each compiles to one clingo rule:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>violation0(Code, Severity, Subject, (Args,)) :- &lt;pattern&gt;.
+</pre></div>
+</div>
+<p>A requirement (a constraint that isa <em>requirement</em>) has a second pattern, its
+required part (<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.ConstraintSpec.required" title="sn.model.reasoner.ConstraintSpec.required"><code class="xref py py-attr docutils literal notranslate"><span class="pre">required</span></code></a>); its
+pattern is its condition. It compiles to two rules, over the condition’s
+variables (<code class="docutils literal notranslate"><span class="pre">Vars</span></code>):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>requirement_holds(Req, (Vars,)) :- &lt;condition&gt;, &lt;required&gt;.
+violation0(Code, Severity, Subject, (Args,)) :- &lt;condition&gt;, not requirement_holds(Req, (Vars,)).
+</pre></div>
+</div>
+<p>The first has the condition in its body too, so the variables the two parts
+share have values even where the required part only uses them in a <code class="docutils literal notranslate"><span class="pre">not</span></code>
+(eg: <code class="docutils literal notranslate"><span class="pre">not</span> <span class="pre">gender:</span> <span class="pre">?g</span></code>); its own variables are existential.</p>
+<p><a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.Reasoner._finish" title="sn.model.reasoner.Reasoner._finish"><code class="xref py py-meth docutils literal notranslate"><span class="pre">_finish()</span></code></a> – which every engine passes
+its results through – reports a violation once per set of objects it’s
+about (so a constraint matching a-b and b-a reports it once), and gives a
+constraint’s violations its message.</p>
+</section>
+<section id="the-base-rules">
+<h2>The base rules<a class="headerlink" href="#the-base-rules" title="Link to this heading">¶</a></h2>
+<p>The meaning of the relational properties (symmetric, transitive, reflexive,
+irreflexive, asymmetric) isn’t in <code class="docutils literal notranslate"><span class="pre">clingoReasoner.lp</span></code>: it’s ordinary rules
+and constraints, in a model of <strong>base rules</strong> (<code class="docutils literal notranslate"><span class="pre">sn/model/baseRules.snm</span></code>,
+made by <code class="docutils literal notranslate"><span class="pre">tools/makeBaseRules.py</span></code>) that every reasoner applies to every
+model (<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.Reasoner.ruleObjects" title="sn.model.reasoner.Reasoner.ruleObjects"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ruleObjects()</span></code></a>), so a new engine
+gets them by translating rules, with nothing more to write. They use a
+relation-type variable (<code class="docutils literal notranslate"><span class="pre">^r</span></code>) tagged with the property, and individual
+(<code class="docutils literal notranslate"><span class="pre">?a</span></code>) or “any” (<code class="docutils literal notranslate"><span class="pre">!a</span></code>) variables by what a relation with a type at an end
+means – “every” at its source, “some” at its destination: eg: <code class="docutils literal notranslate"><span class="pre">!a</span> <span class="pre">-^r-&gt;</span> <span class="pre">?b</span></code>
+with <code class="docutils literal notranslate"><span class="pre">^r</span> <span class="pre">{symmetric}</span></code> concludes <code class="docutils literal notranslate"><span class="pre">?b</span> <span class="pre">-^r-&gt;</span> <span class="pre">!a</span></code> (but nothing from <code class="docutils literal notranslate"><span class="pre">a</span> <span class="pre">-r-&gt;</span>
+<span class="pre">T</span></code>: which T?); transitivity is all <code class="docutils literal notranslate"><span class="pre">!</span></code>; reflexive, irreflexive and
+asymmetric are all <code class="docutils literal notranslate"><span class="pre">?</span></code>. See <code class="docutils literal notranslate"><span class="pre">tools/makeBaseRules.py</span></code>.</p>
+</section>
+<section id="variable-names">
+<h2>Variable names<a class="headerlink" href="#variable-names" title="Link to this heading">¶</a></h2>
+<p>Which names are variables, and of which kind, is decided in one place:
+<a class="reference internal" href="../dev/sn.model.names.html#sn.model.names.NameGrammar.parse" title="sn.model.names.NameGrammar.parse"><code class="xref py py-meth docutils literal notranslate"><span class="pre">sn.model.names.NameGrammar.parse()</span></code></a> (<code class="docutils literal notranslate"><span class="pre">?x</span></code> individual, <code class="docutils literal notranslate"><span class="pre">^T</span></code> type,
+<code class="docutils literal notranslate"><span class="pre">!a</span></code> any; anything else a constant – and a variable whose stem starts with
+<code class="docutils literal notranslate"><span class="pre">_</span></code>, eg: <code class="docutils literal notranslate"><span class="pre">?_b</span></code>, is hidden: <a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.reportedAnswers" title="sn.model.reasoner.reportedAnswers"><code class="xref py py-func docutils literal notranslate"><span class="pre">reportedAnswers()</span></code></a>
+leaves it out of a query’s answers). Everything else asks it, through
+<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.GraphObject.variableKind" title="sn.model.model.GraphObject.variableKind"><code class="xref py py-meth docutils literal notranslate"><span class="pre">variableKind()</span></code></a> or
+<a class="reference internal" href="../dev/sn.model.names.html#sn.model.names.isVariableName" title="sn.model.names.isVariableName"><code class="xref py py-func docutils literal notranslate"><span class="pre">sn.model.names.isVariableName()</span></code></a> – the engines (a variable’s kind
+is a guard in clingo: <code class="docutils literal notranslate"><span class="pre">individual(V)</span></code>, <code class="docutils literal notranslate"><span class="pre">type(V)</span></code> or none), the
+constraints’ value variables, the views. An application that needs its own
+syntax for names subclasses it and installs it with
+<a class="reference internal" href="../dev/sn.model.names.html#sn.model.names.setGrammar" title="sn.model.names.setGrammar"><code class="xref py py-func docutils literal notranslate"><span class="pre">setGrammar()</span></code></a>; it should leave the names it doesn’t
+claim to the default (<code class="docutils literal notranslate"><span class="pre">super().parse()</span></code>), as the base rules are written in
+it.</p>
+<p><a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.BASE_RULES" title="sn.model.reasoner.BASE_RULES"><code class="xref py py-data docutils literal notranslate"><span class="pre">BASE_RULES</span></code></a> lists the base rules’ models, and
+an application can change it (eg: to base rules of its own), before it makes
+or reads a model. <a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.baseRuleModels" title="sn.model.reasoner.baseRuleModels"><code class="xref py py-func docutils literal notranslate"><span class="pre">baseRuleModels()</span></code></a> reads them
+(write-locked) once. Like the system model, they’re super-models of every
+model (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Model.implicitSuperDBs" title="sn.model.model.Model.implicitSuperDBs"><code class="xref py py-meth docutils literal notranslate"><span class="pre">implicitSuperDBs()</span></code></a>): they can’t be
+removed, and aren’t saved with it (the file read may be a temporary copy of
+package data), but are added again when it’s read.
+<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.Reasoner.objects" title="sn.model.reasoner.Reasoner.objects"><code class="xref py py-meth docutils literal notranslate"><span class="pre">objects()</span></code></a> leaves them out: their
+objects aren’t facts, and their conclusions are reported as plain
+inferences, unless the <code class="docutils literal notranslate"><span class="pre">reasoner/showSysRules</span></code> preference (or the
+reasoner’s <em>showSysRules</em>) is on.</p>
+</section>
+<section id="queries">
+<h2>Queries<a class="headerlink" href="#queries" title="Link to this heading">¶</a></h2>
+<p><a class="reference internal" href="../dev/sn.model.clingoReasoner.html#sn.model.clingoReasoner.ClingoReasoner.answer" title="sn.model.clingoReasoner.ClingoReasoner.answer"><code class="xref py py-meth docutils literal notranslate"><span class="pre">answer()</span></code></a> compiles a
+query’s pattern to an <code class="docutils literal notranslate"><span class="pre">ans(...)</span></code> rule, solves it with the model’s facts
+and the results of reasoning (a query’s variables <em>do</em> range over created
+objects), and returns one dict per match: variable to object.
+<a class="reference internal" href="../dev/sn.model.clingoReasoner.html#sn.model.clingoReasoner.ClingoReasoner.query" title="sn.model.clingoReasoner.ClingoReasoner.query"><code class="xref py py-meth docutils literal notranslate"><span class="pre">query()</span></code></a> takes clingo
+rules defining <code class="docutils literal notranslate"><span class="pre">ans</span></code> directly (the terminal’s <code class="docutils literal notranslate"><span class="pre">ask</span> <span class="pre">reasoner</span></code>).</p>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="view.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">The Graphical View</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="model.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">The Model</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2023-2026, Rob Kremer
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">The Reasoner</a><ul>
+<li><a class="reference internal" href="#why-asp">Why ASP</a></li>
+<li><a class="reference internal" href="#the-pipeline">The pipeline</a></li>
+<li><a class="reference internal" href="#the-rule-base">The rule base</a></li>
+<li><a class="reference internal" href="#rules-and-definitions">Rules and definitions</a><ul>
+<li><a class="reference internal" href="#new-objects">New objects</a></li>
+<li><a class="reference internal" href="#cardinality">Cardinality</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#constraints">Constraints</a></li>
+<li><a class="reference internal" href="#the-base-rules">The base rules</a></li>
+<li><a class="reference internal" href="#variable-names">Variable names</a></li>
+<li><a class="reference internal" href="#queries">Queries</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

@@ -1,0 +1,798 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Building on Semantic Nets" href="extending.html"><link rel="prev" title="The Graphical View" href="view.html">
+        <link rel="prefetch" href="../_static/sn-logo.png" as="image">
+
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>Layout - Semantic Nets 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">Semantic Nets 1.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">Semantic Nets 1.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user/index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user/concepts.html">Concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/gettingStarted.html">Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/tutorial.html">Worked Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/editing.html">Editing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/contexts.html">Contexts: Rules, Definitions, Queries, Constraints and Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/reasoning.html">Reasoning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/viewing.html">Viewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/layouts.html">Arranging a View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/animation.html">Animation Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/files.html">Files and Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/terminal.html">The Terminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/exampleApps.html">Plugins</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Developer Guide</a><input aria-label="Toggle navigation of Developer Guide" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="model.html">The Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reasoner.html">The Reasoner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="view.html">The Graphical View</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extending.html">Building on Semantic Nets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="conventions.html">Conventions and Testing</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../dev/sn.html">sn package</a><input aria-label="Toggle navigation of sn package" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.controller.html">sn.controller package</a><input aria-label="Toggle navigation of sn.controller package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.controller.modelInterface.html">sn.controller.modelInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.examples.html">sn.examples package</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.constraints.html">sn.model.constraints module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.copying.html">sn.model.copying module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.directory.html">sn.model.directory module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.model.html">sn.model.model module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.reasoner.html">sn.model.reasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../dev/sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.connectors.html">sn.view.graphics.connectors module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.expandDialog.html">sn.view.graphics.expandDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.guiApp.html">sn.view.graphics.guiApp module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.imageExport.html">sn.view.graphics.imageExport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.labels.html">sn.view.graphics.labels module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.layout.html">sn.view.graphics.layout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.layoutDialog.html">sn.view.graphics.layoutDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.layoutPanel.html">sn.view.graphics.layoutPanel module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.progress.html">sn.view.graphics.progress module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.reasoningToolbar.html">sn.view.graphics.reasoningToolbar module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.relationTable.html">sn.view.graphics.relationTable module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.replaceModelDialog.html">sn.view.graphics.replaceModelDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.searchDialog.html">sn.view.graphics.searchDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.shapes.html">sn.view.graphics.shapes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.sngContext.html">sn.view.graphics.sngContext module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.sngView.html">sn.view.graphics.sngView module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.sourceWindow.html">sn.view.graphics.sourceWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.treeLayout.html">sn.view.graphics.treeLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewBase.html">sn.view.graphics.viewBase module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewCommands.html">sn.view.graphics.viewCommands module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewContainment.html">sn.view.graphics.viewContainment module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewEditing.html">sn.view.graphics.viewEditing module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewFiles.html">sn.view.graphics.viewFiles module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewInput.html">sn.view.graphics.viewInput module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewLayouts.html">sn.view.graphics.viewLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewReasoning.html">sn.view.graphics.viewReasoning module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewViewport.html">sn.view.graphics.viewViewport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewVisibility.html">sn.view.graphics.viewVisibility module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.visibilityDialog.html">sn.view.graphics.visibilityDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.vnodes.html">sn.view.graphics.vnodes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.vobjects.html">sn.view.graphics.vobjects module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.vrelations.html">sn.view.graphics.vrelations module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.view.textUserInterface.html">sn.view.textUserInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.__main__.html">sn.__main__ module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.hooks.html">sn.hooks module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.plugins.html">sn.plugins module</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../plugins/index.html">The plugins</a><input aria-label="Toggle navigation of The plugins" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.XMLreader.html">snplugins.XMLreader package</a><input aria-label="Toggle navigation of snplugins.XMLreader package" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.reader.html">snplugins.XMLreader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.schema.html">snplugins.XMLreader.schema module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.view.html">snplugins.XMLreader.view module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.pythonParser.html">snplugins.pythonParser package</a><input aria-label="Toggle navigation of snplugins.pythonParser package" class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.dialog.html">snplugins.pythonParser.dialog module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.hooks.html">snplugins.pythonParser.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.parser.html">snplugins.pythonParser.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/developer/layout.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="layout">
+<h1>Layout<a class="headerlink" href="#layout" title="Link to this heading">¶</a></h1>
+<p>A layout arranges a view’s objects. They’re all in
+<a class="reference internal" href="../dev/sn.view.graphics.html#module-sn.view.graphics" title="sn.view.graphics"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sn.view.graphics</span></code></a>, built on one framework,
+<a class="reference internal" href="../dev/sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutHeuristic" title="sn.view.graphics.layout.LayoutHeuristic"><code class="xref py py-class docutils literal notranslate"><span class="pre">LayoutHeuristic</span></code></a>
+(<a class="reference internal" href="../dev/sn.view.graphics.layout.html#module-sn.view.graphics.layout" title="sn.view.graphics.layout"><code class="xref py py-mod docutils literal notranslate"><span class="pre">layout</span></code></a>), and come in three kinds – a layout may
+be more than one:</p>
+<dl class="simple">
+<dt><strong>static</strong> (<code class="docutils literal notranslate"><span class="pre">STATIC</span></code>)</dt><dd><p>Done once, at once, as one undoable command: the <strong>arrange now</strong> menu.
+Eg: <a class="reference internal" href="../dev/sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.TreeLayout" title="sn.view.graphics.treeLayout.TreeLayout"><code class="xref py py-class docutils literal notranslate"><span class="pre">TreeLayout</span></code></a>, “gather nodes”.</p>
+</dd>
+<dt><strong>dynamic</strong> (<code class="docutils literal notranslate"><span class="pre">DYNAMIC</span></code>)</dt><dd><p>The view’s current layout (<code class="docutils literal notranslate"><span class="pre">SNGView.localLayout</span></code>: one at a time), which
+keeps it arranged as it changes: the <strong>keep arranged</strong> menu. It places
+what’s made or dropped, and after each command adjusts the rest – in the
+same undo entry. The default is
+<a class="reference internal" href="../dev/sn.view.graphics.layout.html#sn.view.graphics.layout.FindFree" title="sn.view.graphics.layout.FindFree"><code class="xref py py-class docutils literal notranslate"><span class="pre">FindFree</span></code></a> (“avoid overlaps”).</p>
+</dd>
+<dt><strong>animated</strong> (<code class="docutils literal notranslate"><span class="pre">ANIMATED</span></code>)</dt><dd><p>Runs in the background until things settle:
+<a class="reference internal" href="../dev/sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.FieldsLayout" title="sn.view.graphics.animatedLayouts.FieldsLayout"><code class="xref py py-class docutils literal notranslate"><span class="pre">FieldsLayout</span></code></a>, the animation
+layout (below).</p>
+</dd>
+</dl>
+<div class="graphviz"><object data="../_images/graphviz-8d54b3c114c3911b118475b103f3ffe2f453a9cf.svg" type="image/svg+xml" class="graphviz">
+<p class="warning">digraph layouts {
+  rankdir=BT;
+  node [shape=box, style=rounded, fontname=&quot;Helvetica&quot;, fontsize=10];
+  edge [arrowhead=empty];
+  LayoutHeuristic [label=&quot;LayoutHeuristic\n(layout)&quot;];
+  FindFree [label=&quot;FindFree\n\&quot;avoid overlaps\&quot;: dynamic&quot;];
+  NoLayout [label=&quot;NoLayout\n\&quot;none\&quot;: dynamic&quot;];
+  GatherLayout [label=&quot;GatherLayout\n\&quot;gather nodes\&quot;: static&quot;];
+  TreeLayout [label=&quot;TreeLayout\n\&quot;tree\&quot;: static, dynamic\n(treeLayout)&quot;];
+  Round [label=&quot;_RoundLayout\n(balloonLayout)&quot;];
+  TreeRound [label=&quot;_TreeRoundLayout&quot;];
+  Balloon [label=&quot;BalloonLayout\n\&quot;balloon\&quot;&quot;];
+  Radial [label=&quot;RadialLayout\n\&quot;radial\&quot;&quot;];
+  Hub [label=&quot;HubLayout\n\&quot;hubs\&quot;&quot;];
+  FindFree -&gt; LayoutHeuristic; NoLayout -&gt; LayoutHeuristic; GatherLayout -&gt; LayoutHeuristic;
+  TreeLayout -&gt; LayoutHeuristic; Round -&gt; LayoutHeuristic;
+  TreeRound -&gt; Round; Hub -&gt; Round; Balloon -&gt; TreeRound; Radial -&gt; TreeRound;
+}</p></object></div>
+<section id="the-framework">
+<h2>The framework<a class="headerlink" href="#the-framework" title="Link to this heading">¶</a></h2>
+<p>A subclass says what it is, and implements what its kinds need:</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">NAME</span></code></dt><dd><p>What it’s called: in the menus, in <a class="reference internal" href="../dev/sn.view.graphics.layout.html#sn.view.graphics.layout.LAYOUTS" title="sn.view.graphics.layout.LAYOUTS"><code class="xref py py-data docutils literal notranslate"><span class="pre">LAYOUTS</span></code></a>,
+and in the view’s file.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">CATEGORIES</span></code></dt><dd><p>The kinds it is: of <code class="docutils literal notranslate"><span class="pre">STATIC</span></code>, <code class="docutils literal notranslate"><span class="pre">DYNAMIC</span></code>, <code class="docutils literal notranslate"><span class="pre">ANIMATED</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">PARAMETERS</span></code></dt><dd><p>The keyword arguments its constructor takes, as
+<a class="reference internal" href="../dev/sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutParameter" title="sn.view.graphics.layout.LayoutParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">LayoutParameter</span></code></a>s: each one’s name,
+label, kind (<code class="docutils literal notranslate"><span class="pre">&quot;relation&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;relations&quot;</span></code> – a table of relation
+types: see below – <code class="docutils literal notranslate"><span class="pre">&quot;choice&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;int&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;bool&quot;</span></code>), default,
+choices and note, and which kinds of use it matters for. A program
+constructs a layout with them directly (eg: <code class="docutils literal notranslate"><span class="pre">TreeLayout(view,</span>
+<span class="pre">relations=table)</span></code>; or, for the layouts that take a table, the simple way
+for a single relation type: <code class="docutils literal notranslate"><span class="pre">TreeLayout(view,</span> <span class="pre">relation=&quot;includes&quot;,</span>
+<span class="pre">parentEnd=&quot;source&quot;)</span></code> – a relation can be given by name); the user sets
+them in a form made from the list
+(<a class="reference internal" href="../dev/sn.view.graphics.layoutDialog.html#sn.view.graphics.layoutDialog.LayoutForm" title="sn.view.graphics.layoutDialog.LayoutForm"><code class="xref py py-class docutils literal notranslate"><span class="pre">LayoutForm</span></code></a>: a table is edited by
+its <code class="docutils literal notranslate"><span class="pre">RelationTableEditor</span></code>), on the layout’s page in the layout panel
+(<a class="reference internal" href="../dev/sn.view.graphics.layoutPanel.html#module-sn.view.graphics.layoutPanel" title="sn.view.graphics.layoutPanel"><code class="xref py py-mod docutils literal notranslate"><span class="pre">layoutPanel</span></code></a>: see below) – or, for a program
+that asks, in a modal dialog
+(<a class="reference internal" href="../dev/sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutHeuristic.askParameters" title="sn.view.graphics.layout.LayoutHeuristic.askParameters"><code class="xref py py-meth docutils literal notranslate"><span class="pre">askParameters()</span></code></a>) –
+which
+<a class="reference internal" href="../dev/sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutHeuristic.parameterChanged" title="sn.view.graphics.layout.LayoutHeuristic.parameterChanged"><code class="xref py py-meth docutils literal notranslate"><span class="pre">parameterChanged()</span></code></a> can
+adjust as the user changes it.</p>
+</dd>
+<dt>static: <code class="docutils literal notranslate"><span class="pre">targets()</span></code></dt><dd><p>Where to move things: each object’s new top left corner.
+<a class="reference internal" href="../dev/sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutHeuristic.arrange" title="sn.view.graphics.layout.LayoutHeuristic.arrange"><code class="xref py py-meth docutils literal notranslate"><span class="pre">arrange()</span></code></a> makes them a
+<a class="reference internal" href="../dev/sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutMoves" title="sn.view.graphics.layout.LayoutMoves"><code class="xref py py-class docutils literal notranslate"><span class="pre">LayoutMoves</span></code></a> command and does it. (Or
+override <code class="docutils literal notranslate"><span class="pre">arrange()</span></code> itself, as “gather nodes” does.)</p>
+</dd>
+<dt>dynamic: <code class="docutils literal notranslate"><span class="pre">placeNode()</span></code>, <code class="docutils literal notranslate"><span class="pre">adjust()</span></code>, <code class="docutils literal notranslate"><span class="pre">activate()</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">placeNode()</span></code> says where something new, or dropped, goes. <code class="docutils literal notranslate"><span class="pre">adjust()</span></code>
+is called after each command that changed the view, with the command, and
+returns a <em>LayoutMoves</em> of what else to move (not done yet), or None.
+<code class="docutils literal notranslate"><span class="pre">activate()</span></code> is called when it’s made the view’s layout
+(<code class="docutils literal notranslate"><span class="pre">SNGView.setDynamicLayout()</span></code>): eg: to arrange things as it will keep
+them.</p>
+</dd>
+</dl>
+<p><a class="reference internal" href="../dev/sn.view.graphics.layout.html#sn.view.graphics.layout.registerLayout" title="sn.view.graphics.layout.registerLayout"><code class="xref py py-func docutils literal notranslate"><span class="pre">registerLayout()</span></code></a> (a class decorator) adds
+it to <em>LAYOUTS</em>, from which the <strong>layout</strong> menu is made, so a program’s own
+layout is offered with the rest once its module’s imported. (See the
+Developer Guide’s example, <a class="reference internal" href="extending.html"><span class="doc">Building on Semantic Nets</span></a>, for one.)</p>
+<section id="moving-things">
+<h3>Moving things<a class="headerlink" href="#moving-things" title="Link to this heading">¶</a></h3>
+<p><a class="reference internal" href="../dev/sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutMoves" title="sn.view.graphics.layout.LayoutMoves"><code class="xref py py-class docutils literal notranslate"><span class="pre">LayoutMoves</span></code></a> is one undoable command of
+moves: each object from where it was to where it’s going. The first time
+it’s done, it <em>tweens</em> (<a class="reference internal" href="../dev/sn.view.graphics.layout.html#sn.view.graphics.layout.tween" title="sn.view.graphics.layout.tween"><code class="xref py py-func docutils literal notranslate"><span class="pre">tween()</span></code></a>): the
+objects glide there in a few steps (<code class="docutils literal notranslate"><span class="pre">TWEEN_STEPS</span></code>), unless there are too
+many of them, or of their relations, or a step is slow – then they’re moved
+at once. Redone or undone, they’re moved at once. A tween under way is
+finished (<a class="reference internal" href="../dev/sn.view.graphics.layout.html#sn.view.graphics.layout.finishTween" title="sn.view.graphics.layout.finishTween"><code class="xref py py-func docutils literal notranslate"><span class="pre">finishTween()</span></code></a>) before anything
+else is done, undone or saved. A relation label a layout moves is pinned
+(stops floating), and floats again when it’s undone. <code class="docutils literal notranslate"><span class="pre">LayoutMoves.also</span></code>
+holds anything else it does and undoes – eg: a tree layout’s pins.</p>
+</section>
+<section id="keeping-a-view-arranged">
+<h3>Keeping a view arranged<a class="headerlink" href="#keeping-a-view-arranged" title="Link to this heading">¶</a></h3>
+<p>The view’s undo list, <a class="reference internal" href="../dev/sn.view.graphics.viewCommands.html#sn.view.graphics.viewCommands.ViewDoList" title="sn.view.graphics.viewCommands.ViewDoList"><code class="xref py py-class docutils literal notranslate"><span class="pre">ViewDoList</span></code></a>, is
+where a dynamic layout gets its say: after each command that changes the
+view, it pushes out of context windows whatever doesn’t belong in them, and
+then asks the view’s layout to <code class="docutils literal notranslate"><span class="pre">adjust()</span></code> – and adds the moves to the same
+undo entry, so one undo takes back both. Not during a drag (it isn’t a
+command until it’s dropped), nor after a layout’s own moves
+(<code class="docutils literal notranslate"><span class="pre">LayoutMoves.isLayout</span></code>).</p>
+<p>One thing complicates it: the view objects a command makes are drawn <em>after</em>
+the command is done – when the model announces what it made
+(<code class="docutils literal notranslate"><span class="pre">SNGView._placeNew()</span></code>) – so at <code class="docutils literal notranslate"><span class="pre">adjust()</span></code> time they aren’t there yet.
+<code class="docutils literal notranslate"><span class="pre">ViewDoList.adjustAgain()</span></code>, called for each new one, lets the layout adjust
+once more, when they all are, into the same undo entry.</p>
+</section>
+<section id="saved-with-the-view">
+<h3>Saved with the view<a class="headerlink" href="#saved-with-the-view" title="Link to this heading">¶</a></h3>
+<p>A view saves its dynamic layout (its <code class="docutils literal notranslate"><span class="pre">layout</span></code> property:
+<a class="reference internal" href="../dev/sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutHeuristic.state" title="sn.view.graphics.layout.LayoutHeuristic.state"><code class="xref py py-meth docutils literal notranslate"><span class="pre">state()</span></code></a>, read back by
+<a class="reference internal" href="../dev/sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutHeuristic.fromState" title="sn.view.graphics.layout.LayoutHeuristic.fromState"><code class="xref py py-meth docutils literal notranslate"><span class="pre">fromState()</span></code></a>) – its name,
+its parameters, and anything else it keeps
+(<a class="reference internal" href="../dev/sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutHeuristic.extraState" title="sn.view.graphics.layout.LayoutHeuristic.extraState"><code class="xref py py-meth docutils literal notranslate"><span class="pre">extraState()</span></code></a>: eg: a tree
+layout’s pins) – as text:
+<code class="docutils literal notranslate"><span class="pre">name=tree;relations=includes:shapes:source;direction=right;pins=12,40</span></code>.
+It also saves the parameters each layout was last used with
+(<code class="docutils literal notranslate"><span class="pre">layoutParameters</span></code>), which the dialogs start from
+(<code class="docutils literal notranslate"><span class="pre">SNGView.lastLayoutParameters()</span></code>). What an older version saved is
+converted as it’s read
+(<a class="reference internal" href="../dev/sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutHeuristic.upgradeParameters" title="sn.view.graphics.layout.LayoutHeuristic.upgradeParameters"><code class="xref py py-meth docutils literal notranslate"><span class="pre">upgradeParameters()</span></code></a>: eg:
+a single <code class="docutils literal notranslate"><span class="pre">relation</span></code> and <code class="docutils literal notranslate"><span class="pre">parentEnd</span></code>, to a table).</p>
+</section>
+</section>
+<section id="placing-one-object">
+<h2>Placing one object<a class="headerlink" href="#placing-one-object" title="Link to this heading">¶</a></h2>
+<p><a class="reference internal" href="../dev/sn.view.graphics.layout.html#sn.view.graphics.layout.FindFree" title="sn.view.graphics.layout.FindFree"><code class="xref py py-class docutils literal notranslate"><span class="pre">FindFree</span></code></a>, the default dynamic layout,
+finds a clear spot for a new object, near where it was asked for (or below
+its supertype), and nudges a dropped object off whatever it landed on.
+<a class="reference internal" href="../dev/sn.view.graphics.layout.html#sn.view.graphics.layout.gatherShifts" title="sn.view.graphics.layout.gatherShifts"><code class="xref py py-func docutils literal notranslate"><span class="pre">gatherShifts()</span></code></a> (<strong>gather nodes</strong>) finds
+outliers, axis by axis – gaps between clusters far wider than is typical of
+the drawing – and works out how far to shift them back.</p>
+</section>
+<section id="what-s-arranged">
+<h2>What’s arranged<a class="headerlink" href="#what-s-arranged" title="Link to this heading">¶</a></h2>
+<p>The tree, balloon, radial and hubs layouts arrange the nodes shown and the
+relation types shown alike (<a class="reference internal" href="../dev/sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.isMember" title="sn.view.graphics.treeLayout.isMember"><code class="xref py py-func docutils literal notranslate"><span class="pre">isMember()</span></code></a>):
+a relation type has a place of its own, as a node does (it never floats:
+see <a class="reference internal" href="view.html"><span class="doc">The Graphical View</span></a>), and is related to others by the relations it’s an end of
+– mostly <em>isa</em>, between relation types. The relations that relate what’s
+arranged are the individual relations shown
+(<a class="reference internal" href="../dev/sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.isLink" title="sn.view.graphics.treeLayout.isLink"><code class="xref py py-func docutils literal notranslate"><span class="pre">isLink()</span></code></a>); a relation type’s own ends
+– its domain and range – aren’t, unless the relation table says so, as if
+by a relation from the relation type to each
+(<a class="reference internal" href="../dev/sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.Terminal" title="sn.view.graphics.treeLayout.Terminal"><code class="xref py py-class docutils literal notranslate"><span class="pre">Terminal</span></code></a>: a link with no label).</p>
+<section id="the-relation-table">
+<h3>The relation table<a class="headerlink" href="#the-relation-table" title="Link to this heading">¶</a></h3>
+<p>The tree, balloon and radial layouts (and hubs, if asked) follow an ordered
+table of relation types,
+<a class="reference internal" href="../dev/sn.view.graphics.relationTable.html#sn.view.graphics.relationTable.RelationTable" title="sn.view.graphics.relationTable.RelationTable"><code class="xref py py-class docutils literal notranslate"><span class="pre">RelationTable</span></code></a> (their
+<code class="docutils literal notranslate"><span class="pre">relations</span></code> parameter): each row names a relation type – or <code class="docutils literal notranslate"><span class="pre">TERMINALS</span></code>,
+the relation types’ own ends – and says what its relations do: shape the
+trees (<code class="docutils literal notranslate"><span class="pre">SHAPES</span></code>, with which end is the parent), pull things together
+(<code class="docutils literal notranslate"><span class="pre">PULLS</span></code>: only for joining trees, and putting the nodes in no tree near
+what they’re related to), or nothing (<code class="docutils literal notranslate"><span class="pre">IGNORED</span></code>). A row covers its
+relation type’s subtypes too, unless a subtype has a row of its own: the
+most specific row wins, and a relation no row covers pulls together.
+<a class="reference internal" href="../dev/sn.view.graphics.relationTable.html#sn.view.graphics.relationTable.RelationRoles" title="sn.view.graphics.relationTable.RelationRoles"><code class="xref py py-class docutils literal notranslate"><span class="pre">RelationRoles</span></code></a> is a table for a
+model: each relation’s row, role, rank (the row’s index: lower wins) and
+parent end. <code class="docutils literal notranslate"><span class="pre">RelationTable.single()</span></code> is the table that’s like a single
+relation type – it shapes the trees, everything else pulls together, the
+relation types’ ends last – which is what the layouts start with (for
+<em>isa</em>), and what an old <code class="docutils literal notranslate"><span class="pre">relation</span></code> and <code class="docutils literal notranslate"><span class="pre">parentEnd</span></code> become. The dialog
+shows a row for each relation type shown in the view
+(<code class="docutils literal notranslate"><span class="pre">RelationTable.expanded()</span></code>: a new row does what the row that covered it
+did, so nothing changes until the user changes it).</p>
+</section>
+</section>
+<section id="trees">
+<h2>Trees<a class="headerlink" href="#trees" title="Link to this heading">¶</a></h2>
+<p><a class="reference internal" href="../dev/sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.TreeLayout" title="sn.view.graphics.treeLayout.TreeLayout"><code class="xref py py-class docutils literal notranslate"><span class="pre">TreeLayout</span></code></a> arranges nodes as trees
+by the relations whose rows shape them. <code class="docutils literal notranslate"><span class="pre">structure()</span></code> finds the trees in
+the view: the roots, each node’s children (grouped by the row they’re
+related by, then by which of its relation type’s direct subtypes), the
+relation to each child, and the nodes in no tree. A node with two parents
+goes under the one related by the highest row (then the first made); a
+relation that would make a cycle is left out.
+<a class="reference internal" href="../dev/sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.TreeLayout.related" title="sn.view.graphics.treeLayout.TreeLayout.related"><code class="xref py py-meth docutils literal notranslate"><span class="pre">related()</span></code></a> says what else
+something’s related to by the rows that aren’t ignored. The geometry is a pure function,
+<a class="reference internal" href="../dev/sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.treePositions" title="sn.view.graphics.treeLayout.treePositions"><code class="xref py py-func docutils literal notranslate"><span class="pre">treePositions()</span></code></a>, of the trees and the
+nodes’ sizes: each depth in a line, each parent level with the middle of its
+children – or, <em>compact</em>, each subtree tucked in beside the one before
+wherever its contour leaves room (much as in Reingold-Tilford). The nodes in
+no tree are left, put in rows, or put near what they’re related to
+(<a class="reference internal" href="../dev/sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.placeNear" title="sn.view.graphics.treeLayout.placeNear"><code class="xref py py-func docutils literal notranslate"><span class="pre">placeNear()</span></code></a>: the nearest free spot,
+costing more against the way the trees grow).</p>
+<p>Kept arranged, it lays the trees out again after each command, each from
+where its root is, keeping children in the order they’re in (new ones after,
+by name) – so a tree opens up for what’s added, and closes up over what’s
+removed, and what’s beside it moves along by as much. A node the user drops
+is <em>pinned</em> (<code class="docutils literal notranslate"><span class="pre">pins</span></code>, saved with the view): the root of a tree of its own,
+until the next static tree layout clears them.</p>
+</section>
+<section id="round-layouts-balloon-radial-and-hubs">
+<h2>Round layouts: balloon, radial and hubs<a class="headerlink" href="#round-layouts-balloon-radial-and-hubs" title="Link to this heading">¶</a></h2>
+<p><a class="reference internal" href="../dev/sn.view.graphics.balloonLayout.html#module-sn.view.graphics.balloonLayout" title="sn.view.graphics.balloonLayout"><code class="xref py py-mod docutils literal notranslate"><span class="pre">balloonLayout</span></code></a> has three, sharing
+<code class="docutils literal notranslate"><span class="pre">_RoundLayout</span></code>: their groups (trees, or a hub’s group) in rows, the nodes
+they don’t arrange after them, and the labels of the relations from parents
+to children on the lines between them. Each group’s geometry is again a pure
+function:</p>
+<dl class="simple">
+<dt><a class="reference internal" href="../dev/sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout.balloonPositions" title="sn.view.graphics.balloonLayout.balloonPositions"><code class="xref py py-func docutils literal notranslate"><span class="pre">balloonPositions()</span></code></a></dt><dd><p>Each node’s children on a ring round it, each child’s subtree a balloon of
+its own, in its own wedge, spread away from its parent (keeping
+<code class="docutils literal notranslate"><span class="pre">PARENT_GAP</span></code> clear toward it).</p>
+</dd>
+<dt><a class="reference internal" href="../dev/sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout.radialPositions" title="sn.view.graphics.balloonLayout.radialPositions"><code class="xref py py-func docutils literal notranslate"><span class="pre">radialPositions()</span></code></a></dt><dd><p>Each root in the middle, each depth on a circle round it, each subtree in
+its own wedge: as wide as it needs at its widest depth, centred on its
+parent, and sharing what’s spare of its parent’s wedge, but no wider (with
+its siblings) than <code class="docutils literal notranslate"><span class="pre">RADIAL_SPREAD</span></code> (a half-plane) – the circles beyond
+are moved out until they fit. So a big subtree stays out beyond its
+parent, instead of being spread round all the room its weight would get.</p>
+</dd>
+<dt><a class="reference internal" href="../dev/sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout.hubForest" title="sn.view.graphics.balloonLayout.hubForest"><code class="xref py py-func docutils literal notranslate"><span class="pre">hubForest()</span></code></a> and <a class="reference internal" href="../dev/sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout.hubPositions" title="sn.view.graphics.balloonLayout.hubPositions"><code class="xref py py-func docutils literal notranslate"><span class="pre">hubPositions()</span></code></a></dt><dd><p>For a graph that isn’t a tree: in each connected group, the nodes with at
+least <code class="docutils literal notranslate"><span class="pre">minSpokes</span></code> neighbours are hubs, each other node a spoke of the
+nearest; the hubs on a ring, each one’s spokes in a balloon round it. Only
+the core hubs go on the ring (those linked to two others or more, once
+those linked to fewer are pruned, again and again; if none’s left, the
+most connected one alone): the rest hang off them, out beyond them, as
+spokes do. Below a hub’s own spokes, children spread over no more than
+<code class="docutils literal notranslate"><span class="pre">HUB_SPREAD</span></code> (a half-plane), the biggest branches in the middle, so
+branches keep going out rather than curling round the hub. The neighbours
+are by every relation shown – or, with <code class="docutils literal notranslate"><span class="pre">follow=&quot;as</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">table&quot;</span></code>, only
+by the rows of its table that aren’t ignored (shaping and pulling together
+count the same), and the relation types’ ends if their row isn’t.</p>
+</dd>
+</dl>
+<p>Balloon and radial find their trees with a <em>TreeLayout</em> (<code class="docutils literal notranslate"><span class="pre">structure()</span></code>).
+With <code class="docutils literal notranslate"><span class="pre">trees=&quot;joined&quot;</span></code> (the default), <code class="docutils literal notranslate"><span class="pre">_TreeRoundLayout._join()</span></code> then
+makes a tree whose root is related, by a row that isn’t ignored, to a node
+in another tree one of that node’s children – from the top trees (roots
+related to no other tree), biggest first – so related trees are laid out
+as one.
+Kept arranged, each group is laid out again where it is – its root (or its
+hubs, on average) where it is (<a class="reference internal" href="../dev/sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout.groupOffset" title="sn.view.graphics.balloonLayout.groupOffset"><code class="xref py py-func docutils literal notranslate"><span class="pre">groupOffset()</span></code></a>)
+– and moved off any group before it to the nearest clear place
+(<a class="reference internal" href="../dev/sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout.separateGroups" title="sn.view.graphics.balloonLayout.separateGroups"><code class="xref py py-func docutils literal notranslate"><span class="pre">separateGroups()</span></code></a>); a dropped node
+that isn’t a root is pinned as the root of a group of its own.</p>
+</section>
+<section id="writing-a-layout">
+<h2>Writing a layout<a class="headerlink" href="#writing-a-layout" title="Link to this heading">¶</a></h2>
+<p>Keep the geometry apart from the view: a function from plain data (nodes,
+their sizes, their relations) to positions, which can be tested without a
+window (as <code class="docutils literal notranslate"><span class="pre">test_view/test_treeLayout.py</span></code> and <code class="docutils literal notranslate"><span class="pre">test_balloonLayout.py</span></code>
+do); and a <em>LayoutHeuristic</em> that gathers that data from the view
+(<a class="reference internal" href="../dev/sn.view.graphics.layout.html#sn.view.graphics.layout.layoutSize" title="sn.view.graphics.layout.layoutSize"><code class="xref py py-func docutils literal notranslate"><span class="pre">layoutSize()</span></code></a> gives the size a node will be
+drawn at) and turns the positions into <code class="docutils literal notranslate"><span class="pre">targets()</span></code>. Arrange only the nodes
+shown (not hidden), and not those in context windows, which keep their own
+arrangement. A dynamic layout should be cheap: <code class="docutils literal notranslate"><span class="pre">adjust()</span></code> runs after
+every command.</p>
+</section>
+<section id="the-animation-layout">
+<h2>The animation layout<a class="headerlink" href="#the-animation-layout" title="Link to this heading">¶</a></h2>
+<p>The animated kind has one layout, which is older than the framework above,
+and isn’t (yet) a <em>LayoutHeuristic</em>: the <strong>animate</strong> menu is its own, and
+the view keeps its settings separately (its <code class="docutils literal notranslate"><span class="pre">animation</span></code> property).</p>
+<p><a class="reference internal" href="../dev/sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.FieldsLayout" title="sn.view.graphics.animatedLayouts.FieldsLayout"><code class="xref py py-class docutils literal notranslate"><span class="pre">FieldsLayout</span></code></a> is a
+force-directed layout, animated: each step moves every object a little, and
+the view is redrawn, so the user sees the drawing sort itself out.</p>
+<p>Each step works on a <a class="reference internal" href="../dev/sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.Snapshot" title="sn.view.graphics.animatedLayouts.Snapshot"><code class="xref py py-class docutils literal notranslate"><span class="pre">Snapshot</span></code></a>:
+the view reduced to plain numbers – the eligible objects’ positions and
+half-sizes, the links between them, and (with a current) the directed links
+and their layers. (Eligible: shown nodes, context windows and relation types;
+not individual relations, whose labels float, or what’s inside a window,
+which moves with it – see
+<a class="reference internal" href="../dev/sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.isEligible" title="sn.view.graphics.animatedLayouts.isEligible"><code class="xref py py-func docutils literal notranslate"><span class="pre">isEligible()</span></code></a>.)
+<a class="reference internal" href="../dev/sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.forces" title="sn.view.graphics.animatedLayouts.forces"><code class="xref py py-func docutils literal notranslate"><span class="pre">forces()</span></code></a> then computes each
+object’s displacement from it.</p>
+<section id="the-forces">
+<h3>The forces<a class="headerlink" href="#the-forces" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><strong>Repulsion</strong> between every pair, like charges – but measured between
+their <em>edges</em> (<a class="reference internal" href="../dev/sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.gap" title="sn.view.graphics.animatedLayouts.gap"><code class="xref py py-func docutils literal notranslate"><span class="pre">gap()</span></code></a>), not
+their centres, so that big objects (eg: context windows) get room in
+proportion to their size.</p></li>
+<li><p><strong>Springs</strong> along relations, pulling their ends together, again by the
+gap between their edges.</p></li>
+<li><p>With a <strong>current</strong>: a pull toward each object’s <em>layer</em>. The directed
+relations (eg: isa) are ranked (<a class="reference internal" href="../dev/sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.rankOf" title="sn.view.graphics.animatedLayouts.rankOf"><code class="xref py py-func docutils literal notranslate"><span class="pre">rankOf()</span></code></a>:
+a destination is upstream of its sources), and each rank has a position
+along the current, spaced by the objects’ typical size.</p></li>
+<li><p>With a current, <strong>heat</strong>: random displacement, decaying with the
+temperature.</p></li>
+<li><p><strong>Leaps</strong> (<a class="reference internal" href="../dev/sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.leap" title="sn.view.graphics.animatedLayouts.leap"><code class="xref py py-func docutils literal notranslate"><span class="pre">leap()</span></code></a>), with a
+chance of <code class="docutils literal notranslate"><span class="pre">leaps</span></code> × temperature in a step, until the temperature falls
+below <code class="docutils literal notranslate"><span class="pre">LEAP_STOP</span></code> – a mutation: an object out on the canvas, picked at
+random – for <code class="docutils literal notranslate"><span class="pre">LEAP_ANY</span></code> of the leaps, evenly; for the rest, by the
+square of its longest link’s stretch
+(<a class="reference internal" href="../dev/sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.stretch" title="sn.view.graphics.animatedLayouts.stretch"><code class="xref py py-func docutils literal notranslate"><span class="pre">stretch()</span></code></a>), not its number of
+links, as moving a hub is likelier a fatal mutation – with any leaves
+near it, is thrown – uncapped – to a random place in or around the graph
+(up to <code class="docutils literal notranslate"><span class="pre">LEAP_REACH</span></code> of its size beyond its edges), at least <code class="docutils literal notranslate"><span class="pre">LEAP_MIN</span></code>
+of its diagonal away. Its springs pull it back in by another way,
+disturbing what it’s related to. A leap’s own move isn’t counted in the
+step’s movement for cooling; the settling after it is.</p></li>
+</ul>
+<p>Then the mean drift is removed (so the drawing doesn’t wander off), each
+step is capped by the temperature, and the whole drawing is slid so that
+nothing ends up off the top or left of the canvas.</p>
+</section>
+<section id="phases">
+<h3>Phases<a class="headerlink" href="#phases" title="Link to this heading">¶</a></h3>
+<p>A plain force-directed layout gets stuck: a tree drawn upside down can’t
+turn over, because to get past one another, its nodes would have to pass
+through each other’s repulsion. So, with a current, a run has phases:</p>
+<dl class="simple">
+<dt><strong>arranging</strong></dt><dd><p>Repulsion acts only <em>across</em> the current between objects in different
+layers (and fully within a layer), so the layers can slide past one
+another. The temperature is held while the drawing’s
+<a class="reference internal" href="../dev/sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.misalignment" title="sn.view.graphics.animatedLayouts.misalignment"><code class="xref py py-func docutils literal notranslate"><span class="pre">misalignment()</span></code></a> (how far the
+directed links are from pointing along the current) keeps falling.</p>
+</dd>
+<dt><strong>settling</strong></dt><dd><p>The usual cooling: the temperature falls whenever a step makes too little
+progress, until nothing moves much.</p>
+</dd>
+<dt><strong>straightening</strong></dt><dd><p>A stronger pull into the layers for a few steps, to line them up.</p>
+</dd>
+</dl>
+<p>At the end, floating relation labels are re-placed, and the whole run is
+committed as <em>one</em> composite command of moves – each from the object’s
+position before the run – so a single undo puts everything back.</p>
+</section>
+<section id="threading">
+<h3>Threading<a class="headerlink" href="#threading" title="Link to this heading">¶</a></h3>
+<p>Tk isn’t thread-safe, so the GUI side and the arithmetic are separated. In
+<a class="reference internal" href="../dev/sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.FieldsLayout_threaded" title="sn.view.graphics.animatedLayouts.FieldsLayout_threaded"><code class="xref py py-class docutils literal notranslate"><span class="pre">FieldsLayout_threaded</span></code></a>, the Tk
+thread takes a Snapshot and moves the objects; a worker thread computes the
+forces from the Snapshot only, and hands the result back through a queue,
+which the Tk thread polls (<code class="docutils literal notranslate"><span class="pre">after()</span></code>). Nothing in the worker touches Tk.</p>
+<p>If the user is dragging something when a step is ready, the step is put off
+(<code class="docutils literal notranslate"><span class="pre">suppressLocalLayout</span></code>), so the layout never fights the mouse.</p>
+</section>
+<section id="settings">
+<h3>Settings<a class="headerlink" href="#settings" title="Link to this heading">¶</a></h3>
+<p>The layout’s parameters are attributes of the FieldsLayout (eg:
+<code class="docutils literal notranslate"><span class="pre">flowDirection</span></code>, <code class="docutils literal notranslate"><span class="pre">flowStrength</span></code>, <code class="docutils literal notranslate"><span class="pre">e</span></code> (repulsion), <code class="docutils literal notranslate"><span class="pre">k</span></code> (springs),
+<code class="docutils literal notranslate"><span class="pre">heat</span></code>, <code class="docutils literal notranslate"><span class="pre">leaps</span></code>, <code class="docutils literal notranslate"><span class="pre">cooling</span></code> – what the temperature is multiplied by at each
+cool-down, which the toolbar shows on a log scale, as the share lost). The view changes them through <code class="docutils literal notranslate"><span class="pre">SNGView.setAnimationSetting</span></code>,
+which both the <strong>view | layout | animate</strong> menu and the layout panel’s
+<strong>Animate</strong> page (<a class="reference internal" href="../dev/sn.view.graphics.animationControls.html#sn.view.graphics.animationControls.AnimationControls" title="sn.view.graphics.animationControls.AnimationControls"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnimationControls</span></code></a>)
+use, and saves the current settings with the view (its <code class="docutils literal notranslate"><span class="pre">animation</span></code>
+property). The panel polls the layout to show its phase and temperature.</p>
+</section>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="extending.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Building on Semantic Nets</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="view.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">The Graphical View</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2023-2026, Rob Kremer
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Layout</a><ul>
+<li><a class="reference internal" href="#the-framework">The framework</a><ul>
+<li><a class="reference internal" href="#moving-things">Moving things</a></li>
+<li><a class="reference internal" href="#keeping-a-view-arranged">Keeping a view arranged</a></li>
+<li><a class="reference internal" href="#saved-with-the-view">Saved with the view</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#placing-one-object">Placing one object</a></li>
+<li><a class="reference internal" href="#what-s-arranged">What’s arranged</a><ul>
+<li><a class="reference internal" href="#the-relation-table">The relation table</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#trees">Trees</a></li>
+<li><a class="reference internal" href="#round-layouts-balloon-radial-and-hubs">Round layouts: balloon, radial and hubs</a></li>
+<li><a class="reference internal" href="#writing-a-layout">Writing a layout</a></li>
+<li><a class="reference internal" href="#the-animation-layout">The animation layout</a><ul>
+<li><a class="reference internal" href="#the-forces">The forces</a></li>
+<li><a class="reference internal" href="#phases">Phases</a></li>
+<li><a class="reference internal" href="#threading">Threading</a></li>
+<li><a class="reference internal" href="#settings">Settings</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

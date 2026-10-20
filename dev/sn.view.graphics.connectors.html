@@ -1,0 +1,1212 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="sn.view.graphics.decorators module" href="sn.view.graphics.decorators.html"><link rel="prev" title="sn.view.graphics.balloonLayout module" href="sn.view.graphics.balloonLayout.html">
+        <link rel="prefetch" href="../_static/sn-logo.png" as="image">
+
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>sn.view.graphics.connectors module - Semantic Nets 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">Semantic Nets 1.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">Semantic Nets 1.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user/index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user/concepts.html">Concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/gettingStarted.html">Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/tutorial.html">Worked Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/editing.html">Editing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/contexts.html">Contexts: Rules, Definitions, Queries, Constraints and Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/reasoning.html">Reasoning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/viewing.html">Viewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/layouts.html">Arranging a View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/animation.html">Animation Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/files.html">Files and Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/terminal.html">The Terminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/exampleApps.html">Plugins</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developer/index.html">Developer Guide</a><input aria-label="Toggle navigation of Developer Guide" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html">Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/model.html">The Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/reasoner.html">The Reasoner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/view.html">The Graphical View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/layout.html">Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/extending.html">Building on Semantic Nets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/conventions.html">Conventions and Testing</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="sn.html">sn package</a><input aria-label="Toggle navigation of sn package" checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="sn.controller.html">sn.controller package</a><input aria-label="Toggle navigation of sn.controller package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.controller.modelInterface.html">sn.controller.modelInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current has-children"><a class="reference internal" href="sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" checked="" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3 current has-children"><a class="reference internal" href="sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" checked="" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
+<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">sn.view.graphics.connectors module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.expandDialog.html">sn.view.graphics.expandDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.guiApp.html">sn.view.graphics.guiApp module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html">sn.view.graphics.imageExport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html">sn.view.graphics.labels module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html">sn.view.graphics.layout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutDialog.html">sn.view.graphics.layoutDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutPanel.html">sn.view.graphics.layoutPanel module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.progress.html">sn.view.graphics.progress module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.reasoningToolbar.html">sn.view.graphics.reasoningToolbar module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.relationTable.html">sn.view.graphics.relationTable module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.replaceModelDialog.html">sn.view.graphics.replaceModelDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.searchDialog.html">sn.view.graphics.searchDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.shapes.html">sn.view.graphics.shapes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sngContext.html">sn.view.graphics.sngContext module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sngView.html">sn.view.graphics.sngView module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sourceWindow.html">sn.view.graphics.sourceWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html">sn.view.graphics.treeLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewBase.html">sn.view.graphics.viewBase module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewCommands.html">sn.view.graphics.viewCommands module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewContainment.html">sn.view.graphics.viewContainment module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewEditing.html">sn.view.graphics.viewEditing module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewFiles.html">sn.view.graphics.viewFiles module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewInput.html">sn.view.graphics.viewInput module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewLayouts.html">sn.view.graphics.viewLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewReasoning.html">sn.view.graphics.viewReasoning module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewViewport.html">sn.view.graphics.viewViewport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewVisibility.html">sn.view.graphics.viewVisibility module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.visibilityDialog.html">sn.view.graphics.visibilityDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vnodes.html">sn.view.graphics.vnodes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vobjects.html">sn.view.graphics.vobjects module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vrelations.html">sn.view.graphics.vrelations module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.textUserInterface.html">sn.view.textUserInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.__main__.html">sn.__main__ module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html">sn.hooks module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html">sn.plugins module</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../plugins/index.html">The plugins</a><input aria-label="Toggle navigation of The plugins" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.XMLreader.html">snplugins.XMLreader package</a><input aria-label="Toggle navigation of snplugins.XMLreader package" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.reader.html">snplugins.XMLreader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.schema.html">snplugins.XMLreader.schema module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.view.html">snplugins.XMLreader.view module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.pythonParser.html">snplugins.pythonParser package</a><input aria-label="Toggle navigation of snplugins.pythonParser package" class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.dialog.html">snplugins.pythonParser.dialog module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.hooks.html">snplugins.pythonParser.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.parser.html">snplugins.pythonParser.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/dev/sn.view.graphics.connectors.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="module-sn.view.graphics.connectors">
+<span id="sn-view-graphics-connectors-module"></span><h1>sn.view.graphics.connectors module<a class="headerlink" href="#module-sn.view.graphics.connectors" title="Link to this heading">¶</a></h1>
+<div class="graphviz"><object data="../_images/inheritance-9ff49bb2f20864a2794ba3945fb3ad7f469ca1af.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of ConnectorTerminators, ConnectorIDs</p></object></div>
+<p>Draws a source/label/destination connector: two lines (source-to-label,
+label-to-destination) that terminate at the edges of their respective
+VObjects and, together, trace a single smooth curve from the center of
+source’s bounding box through the center of label’s, to the center of
+destination’s. source and/or destination may be None – see
+drawSmoothConnector()’s docstring for how a missing endpoint degrades the
+shape (a single straight segment to whichever is present, or a no-op if
+neither is).</p>
+<p>Deliberately kept as free functions rather than methods on any class (a
+Strategy/”behaviour” pattern): drawSmoothConnector() and
+drawStraightConnector() below share an identical signature, so calling code
+can hold a function pointer and swap implementations — e.g. the straight
+variant during animation, the smooth one for a settled layout — without
+knowing which one it’s using. Add further variants the same way.</p>
+<p>Redraws update canvas items IN PLACE rather than delete-and-recreate: pass
+the ConnectorIDs a previous call returned back in via <em>ids</em> and each item
+that already exists gets coords()/itemconfigure()’d rather than replaced —
+no leaked duplicates if a caller refreshes every animation frame, no z-order
+reset, and colours/arrowheads/diameters are picked up fresh from <em>every</em>
+call (nothing is assumed to stay fixed after the first draw). Pass ids=None
+(or omit it) to draw fresh items; ConnectorIDs.deleteAll() is there for
+when the connector itself is going away for good.</p>
+<p>Created on Aug 28, 2026</p>
+<p><em>Code author: Rob Kremer &lt;<a class="reference external" href="mailto:robkremer&#37;&#52;&#48;me&#46;com">robkremer<span>&#64;</span>me<span>&#46;</span>com</a>&gt;</em></p>
+<hr class="docutils" />
+<dl class="py class">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorTerminators">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">ConnectorTerminators</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelNear</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelFar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destination</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorTerminators" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>The four terminator specs for a connector, one per line end.</p>
+<p>Each is either None/”” (no terminator) or a string —
+“arrow(width, length, thickness)” or “circle(diameter)”, with the
+parenthesized args optional and defaulted if omitted (see
+parseTerminatorSpec()). Provisional: the terminator
+spec format itself is still being designed — this just needs to accept
+something for source/labelNear/labelFar/destination now. “arrow” and
+“circle” are implemented below; add more kinds in parseTerminatorSpec()/
+_drawEndTerminator() as they’re defined.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>source</strong> (<em>str</em><em> | </em><em>None</em>) – Terminator at the source end of the source→label line.</p></li>
+<li><p><strong>labelNear</strong> (<em>str</em><em> | </em><em>None</em>) – Terminator at the label end of the source→label line
+(the side facing source).</p></li>
+<li><p><strong>labelFar</strong> (<em>str</em><em> | </em><em>None</em>) – Terminator at the label end of the label→destination line
+(the side facing destination).</p></li>
+<li><p><strong>destination</strong> (<em>str</em><em> | </em><em>None</em>) – Terminator at the destination end of the
+label→destination line.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorTerminators.source">
+<span class="sig-name descname"><span class="pre">source</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorTerminators.source" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorTerminators.labelNear">
+<span class="sig-name descname"><span class="pre">labelNear</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorTerminators.labelNear" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorTerminators.labelFar">
+<span class="sig-name descname"><span class="pre">labelFar</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorTerminators.labelFar" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorTerminators.destination">
+<span class="sig-name descname"><span class="pre">destination</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorTerminators.destination" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorTerminators.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelNear</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelFar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destination</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorTerminators.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>source</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>labelNear</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>labelFar</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>destination</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorIDs">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">ConnectorIDs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sourceLineID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destLineID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sourceTerminatorID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelNearTerminatorID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelFarTerminatorID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destTerminatorID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Canvas item ids created by a connector-drawing function. Returned so the
+caller can track/delete them; pass a previous result back in via <em>ids</em> to
+have the next call update these items in place (coords()/itemconfigure())
+rather than delete-and-recreate them.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sourceLineID</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>destLineID</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>sourceTerminatorID</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>labelNearTerminatorID</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>labelFarTerminatorID</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>destTerminatorID</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorIDs.sourceLineID">
+<span class="sig-name descname"><span class="pre">sourceLineID</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs.sourceLineID" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorIDs.destLineID">
+<span class="sig-name descname"><span class="pre">destLineID</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs.destLineID" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorIDs.sourceTerminatorID">
+<span class="sig-name descname"><span class="pre">sourceTerminatorID</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs.sourceTerminatorID" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorIDs.labelNearTerminatorID">
+<span class="sig-name descname"><span class="pre">labelNearTerminatorID</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs.labelNearTerminatorID" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorIDs.labelFarTerminatorID">
+<span class="sig-name descname"><span class="pre">labelFarTerminatorID</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs.labelFarTerminatorID" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorIDs.destTerminatorID">
+<span class="sig-name descname"><span class="pre">destTerminatorID</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs.destTerminatorID" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorIDs.deleteAll">
+<span class="sig-name descname"><span class="pre">deleteAll</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">canvas</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs.deleteAll" title="Link to this definition">¶</a></dt>
+<dd><p>Delete every item this result holds an id for, e.g. before a redraw.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>canvas</strong> – The canvas the items were created on.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorIDs.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sourceLineID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destLineID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sourceTerminatorID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelNearTerminatorID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelFarTerminatorID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destTerminatorID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sourceLineID</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>destLineID</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>sourceTerminatorID</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>labelNearTerminatorID</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>labelFarTerminatorID</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>destTerminatorID</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._sub">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_sub</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._sub" title="Link to this definition">¶</a></dt>
+<dd><p><em>a</em> - <em>b</em>, as vectors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>b</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[float | int, float | int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._add">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._add" title="Link to this definition">¶</a></dt>
+<dd><p><em>a</em> + <em>b</em>, as vectors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>b</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[float | int, float | int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._SELF_LOOP_GAP">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_SELF_LOOP_GAP</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3.0</span></span><a class="headerlink" href="#sn.view.graphics.connectors._SELF_LOOP_GAP" title="Link to this definition">¶</a></dt>
+<dd><p>Target visual gap (in view units) between the two lines of a self-loop
+connector (see _selfLoopOffset()) – deliberately a rough constant (“about 3
+units”, per Rob) rather than anything derived, so it’s the one knob to turn
+if the drawn separation looks too tight or too wide.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._selfLoopOffset">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_selfLoopOffset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cl</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lineWidth</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._selfLoopOffset" title="Link to this definition">¶</a></dt>
+<dd><p>The offset to push <em>source</em>’s and <em>destination</em>’s shared center apart by
+when <em>source is destination</em> (a self-loop) – see the “source is
+destination” handling in drawSmoothConnector()/drawStraightConnector().</p>
+<p>Without this, source’s and destination’s centers (and therefore every
+point derived from them) are identical, so the source→label and
+label→destination lines retrace exactly the same path instead of forming
+a visible loop. Add the returned offset to <em>cs</em> for the source side and
+subtract it for the destination side (or vice versa – only the fact that
+they’re opposite matters) before doing anything else with those points, so
+every downstream boundary-clip/curve calculation sees two distinct
+“centers” a small distance apart instead of one.</p>
+<p>Offsetting along a true perpendicular to the source/dest→label line would
+need a normalize + rotate-90° (a sqrt and a couple of multiplies) for
+every self-loop redraw. Since this only needs to look reasonable, not be
+exact, picking a single axis – y for a line closer to horizontal, x for
+one closer to vertical – gets a visually-parallel-enough offset for a
+couple of comparisons instead, which matters here since redraws can
+happen every frame of a drag/animation (see drawStraightConnector()’s
+docstring).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cs</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>) – source’s (== destination’s) true center point.</p></li>
+<li><p><strong>cl</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>) – label’s center point – only its direction from <em>cs</em> matters,
+to decide which axis to offset along.</p></li>
+<li><p><strong>lineWidth</strong> (<em>float</em>) – The line’s stroke width (create_line()’s “width” option,
+or its default of 1 if not given), so thicker lines still end up
+visibly separated rather than just touching edge-to-edge.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An (x, y) offset with exactly one non-zero component, sized so
+that adding it to one side and subtracting it from the other leaves
+about <a class="reference internal" href="#sn.view.graphics.connectors._SELF_LOOP_GAP" title="sn.view.graphics.connectors._SELF_LOOP_GAP"><code class="xref py py-data docutils literal notranslate"><span class="pre">_SELF_LOOP_GAP</span></code></a> view units of daylight between the two
+lines.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[float | int, float | int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._labelControlPoint">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_labelControlPoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cl</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cd</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._labelControlPoint" title="Link to this definition">¶</a></dt>
+<dd><p>The middle control point P1 of the quadratic Bezier [cs, P1, cd] that
+passes through <em>cl</em> exactly at t=0.5.</p>
+<p>Solved from B(0.5) = 0.25*cs + 0.5*P1 + 0.25*cd = cl.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cs</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>cl</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>cd</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[float | int, float | int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._bezierPoint">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_bezierPoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._bezierPoint" title="Link to this definition">¶</a></dt>
+<dd><p>Evaluate the quadratic Bezier [p0, p1, p2] at parameter <em>t</em> (0..1).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p0</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>p1</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>p2</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>t</strong> (<em>float</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[float | int, float | int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._bezierBlossom">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_bezierBlossom</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tb</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._bezierBlossom" title="Link to this definition">¶</a></dt>
+<dd><p>The middle control point of the EXACT quadratic-Bezier sub-arc spanning
+parameters [ta, tb] of the curve [p0, p1, p2] — i.e. Q1 such that
+[_bezierPoint(p0,p1,p2,ta), Q1, _bezierPoint(p0,p1,p2,tb)] is a quadratic
+Bezier tracing precisely that portion of the original curve (not an
+approximation). This is the symmetric bilinear “blossom”/polar form of a
+quadratic Bezier, b(x,y), evaluated at (ta,tb); b(t,t) == _bezierPoint(t).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p0</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>p1</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>p2</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>ta</strong> (<em>float</em>)</p></li>
+<li><p><strong>tb</strong> (<em>float</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[float | int, float | int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._insideTest">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_insideTest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vobj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._insideTest" title="Link to this definition">¶</a></dt>
+<dd><p><em>vobj.containsPt()</em>, but with its outline worked out once, not for each
+point: for testing many points while it stays put (eg: bisecting, as
+<em>_findBoundaryParam()</em> does – for the thousands of relations an
+expansion brings in, working out the outline for each point took most of
+the time drawing them).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>vobj</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Callable</em>[[tuple[float | int, float | int]], bool]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._findBoundaryParam">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_findBoundaryParam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vobj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tInside</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tOutside</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">24</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._findBoundaryParam" title="Link to this definition">¶</a></dt>
+<dd><p>Bisect the Bezier’s parameter <em>t</em> between a point known to be inside
+<em>vobj</em> (tInside) and one known to be outside it (tOutside) to find where
+the curve [p0,p1,p2] crosses <em>vobj</em>’s boundary — the curved-path analogue
+of VRelation.findIntersection()’s straight-line bisection, but operating
+directly on the curve’s parameter instead of on a straight line between
+two points, so the result is an exact point ON the curve rather than a
+straight-line approximation.</p>
+<p>24 iterations halves the search interval 24 times (~1 part in 16 million
+of the full curve) — comfortably sub-pixel for any on-screen curve length,
+so a fixed count is used rather than a pixel-distance stopping condition.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vobj</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em> | </em><em>Callable</em><em>[</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em><em>]</em><em>, </em><em>bool</em><em>]</em>) – The shape being clipped against (needs .containsPt()) – or
+what tests whether a point’s in it (see <em>_insideTest()</em>).</p></li>
+<li><p><strong>tInside</strong> (<em>float</em>) – A parameter value where _bezierPoint(…) is inside vobj.</p></li>
+<li><p><strong>tOutside</strong> (<em>float</em>) – A parameter value where _bezierPoint(…) is outside vobj.</p></li>
+<li><p><strong>p0</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>p1</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>p2</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>iterations</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._clippedArc">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_clippedArc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vobj0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vobj2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">granularity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._clippedArc" title="Link to this definition">¶</a></dt>
+<dd><p>Clip the quadratic Bezier [p0,p1,p2] (p0 == vobj0.centerPt(), p2 ==
+vobj2.centerPt()) to the portion that lies between vobj0’s and vobj2’s
+boundaries, returning the exact sub-arc’s own [Q0, Q1, Q2] control points
+(via _bezierBlossom) — ready to hand straight to a 3-point smooth Tk line.</p>
+<p>Assumes vobj0/vobj2 don’t overlap and each contains its own center (true
+for any reasonably-shaped, reasonably-separated pair of nodes); returns
+None — logging a warning — if that assumption looks violated, rather than
+producing a nonsensical clip.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vobj0</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p></li>
+<li><p><strong>vobj2</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p></li>
+<li><p><strong>p0</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>p1</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>p2</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>granularity</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[tuple[float | int, float | int], tuple[float | int, float | int], tuple[float | int, float | int]] | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._farPointAlong">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_farPointAlong</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vobj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._farPointAlong" title="Link to this definition">¶</a></dt>
+<dd><p>A point guaranteed to be outside <em>vobj</em>’s shape, out along <em>direction</em>
+from its center — used by the straight-line (“fast”) connector’s edge
+clipping, which (unlike the curved one) bisects between two literal
+points rather than a curve parameter, so it needs an outside point to
+bisect toward.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vobj</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p></li>
+<li><p><strong>direction</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[float | int, float | int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._clipToEdgeStraight">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_clipToEdgeStraight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vobj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">farPt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">granularity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._clipToEdgeStraight" title="Link to this definition">¶</a></dt>
+<dd><p>Find where the straight line from <em>farPt</em> (outside vobj) to vobj’s
+center crosses vobj’s boundary — the same bisection VRelation.
+findIntersection()/arePtsClose() already do, reimplemented here as a free
+function so it doesn’t need a VRelation instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vobj</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p></li>
+<li><p><strong>farPt</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>granularity</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[float | int, float | int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.parseTerminatorSpec">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">parseTerminatorSpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spec</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors.parseTerminatorSpec" title="Link to this definition">¶</a></dt>
+<dd><p>Parse a terminator spec string (“arrow(8,10,3)”, “circle(5)”, “arrow”,
+None, “”) into (kind, args).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>spec</strong> (<em>str</em><em> | </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[str, list[float]] | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._arrowLineOptions">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_arrowLineOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._arrowLineOptions" title="Link to this definition">¶</a></dt>
+<dd><p>If <em>spec</em> is an “arrow” terminator, the create_line() options
+(arrow=/arrowshape=) that draw it at line end <em>end</em> (“first” or “last”).
+Otherwise {}. Native Tk arrowheads are drawn as part of the line item
+itself — no separate canvas item needed, which is why this returns
+options to merge into the line’s own kwargs rather than an id.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spec</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>end</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._mergeArrowOptions">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_mergeArrowOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nearSpec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">farSpec</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._mergeArrowOptions" title="Link to this definition">¶</a></dt>
+<dd><p>Combine a line’s two possible arrow terminators (at its “first”/near and
+“last”/far ends) into the single arrow=/arrowshape= pair create_line()
+takes — tk.BOTH if both ends want one (using the near end’s sizing;
+they’re expected to match), tk.FIRST/tk.LAST if only one does.</p>
+<p>Always returns an explicit ‘arrow’ key — tk.NONE (never a bare {}) when
+neither end wants one — because these options get re-applied via
+itemconfigure() on every redraw: an omitted key would leave a
+previously-set arrowhead in place instead of clearing it when a caller’s
+terminator spec changes to “no arrow” on a later call.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nearSpec</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>farSpec</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._drawCircleTerminator">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_drawCircleTerminator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atPt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">existingID</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lineColor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fillColor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._drawCircleTerminator" title="Link to this definition">¶</a></dt>
+<dd><p>Draw (or update, or remove) a “circle” terminator centered at <em>atPt</em>.
+Non-circle specs (arrow, None) are handled by the line itself, so this
+always deletes <em>existingID</em> and returns None for anything else.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spec</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>atPt</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>existingID</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>lineColor</strong> (<em>str</em>)</p></li>
+<li><p><strong>fillColor</strong> (<em>str</em>)</p></li>
+<li><p><strong>tags</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._upsertLine">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_upsertLine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">canvas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">existingID</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._upsertLine" title="Link to this definition">¶</a></dt>
+<dd><p>Create a line item, or update one in place if <em>existingID</em> is still a
+live “line” item — coords() to move/reshape it, itemconfigure() to apply
+every option in <em>opts</em> fresh (fill, width, arrow, arrowshape, smooth,
+dash, …), so nothing from a prior draw silently survives a redraw where
+the caller changed it. If <em>existingID</em> is set but isn’t a line any more
+(or doesn’t exist), it’s deleted first and a fresh item is created —
+should not normally happen, but is handled rather than raising.</p>
+<p>coords() and itemconfigure(smooth=…) both correctly handle the item’s
+point count changing between calls (verified empirically), so this also
+works when <em>existingID</em> is being handed between drawSmoothConnector’s
+3-point arcs and drawStraightConnector’s 2-point segments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>canvas</strong> (<em>Canvas</em>) – The canvas the item lives (or will be created) on.</p></li>
+<li><p><strong>existingID</strong> (<em>int</em><em> | </em><em>None</em>) – A previous call’s item id for this line, or None to
+always create a new item.</p></li>
+<li><p><strong>coords</strong> (<em>Sequence</em><em>[</em><em>float</em><em>]</em>) – Coordinate sequence for canvas.coords()/create_line().</p></li>
+<li><p><strong>tags</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Canvas tags to (re)apply.</p></li>
+<li><p><strong>opts</strong> (<em>dict</em>) – create_line()/itemconfigure() keyword options — fill, width,
+arrow, arrowshape, smooth, dash, etc. — re-specified in full every call.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._drawSingleSegment">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_drawSingleSegment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">otherIsSource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">terminators</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lineColor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fillColor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tagList</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lineOpts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._drawSingleSegment" title="Link to this definition">¶</a></dt>
+<dd><p>Draw (or update) the one straight segment from <em>label</em> to <em>other</em>, with
+its terminators, for when the connector’s other endpoint (source or
+destination) is missing entirely.</p>
+<p>With only two points there’s nothing left to curve, so this single-
+segment case is the same regardless of whether the caller wanted
+drawSmoothConnector() or drawStraightConnector() — both delegate here for
+it rather than duplicating the clip/line/terminator logic.</p>
+<p>The OTHER side of the connector — whichever of source/destination has no
+VObject at all this call — is left exactly as <em>prior</em> had it, the same
+“leave whatever was there before untouched” convention _clippedArc()’s
+failure path already uses above, rather than being deleted: a caller
+that flips back and forth between one- and two-endpoint calls doesn’t
+lose track of ids it may still want.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>label</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>) – One end of the single line actually drawn (the end both
+lines of a full connector would otherwise pass through).</p></li>
+<li><p><strong>other</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>) – The one present endpoint — whichever of source/destination
+isn’t <em>None</em>.</p></li>
+<li><p><strong>otherIsSource</strong> (<em>bool</em>) – <em>True</em> if <em>other</em> is standing in for <em>source</em> (so
+the terminators.source/labelNear slots, and the sourceLineID/
+sourceTerminatorID/labelNearTerminatorID result fields, apply); <em>False</em>
+if it’s standing in for <em>destination</em> (labelFar/destination slots and
+destLineID/labelFarTerminatorID/destTerminatorID fields).</p></li>
+<li><p><strong>terminators</strong> (<a class="reference internal" href="#sn.view.graphics.connectors.ConnectorTerminators" title="sn.view.graphics.connectors.ConnectorTerminators"><em>ConnectorTerminators</em></a>) – Same terminators the caller was given.</p></li>
+<li><p><strong>prior</strong> (<a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs" title="sn.view.graphics.connectors.ConnectorIDs"><em>ConnectorIDs</em></a>) – The caller’s <em>ids</em> (or an empty ConnectorIDs() if <em>ids</em>
+was <em>None</em>).</p></li>
+<li><p><strong>lineColor</strong> (<em>str</em>) – Same as drawSmoothConnector()’s <em>lineColor</em>.</p></li>
+<li><p><strong>fillColor</strong> (<em>str</em>) – Same as drawSmoothConnector()’s <em>fillColor</em>.</p></li>
+<li><p><strong>tagList</strong> (<em>list</em>) – Canvas tags, already coerced to a list by the caller.</p></li>
+<li><p><strong>lineOpts</strong> (<em>dict</em>) – The base <code class="docutils literal notranslate"><span class="pre">{'fill':</span> <span class="pre">lineColor,</span> <span class="pre">**lineKwargs}</span></code> dict the
+caller already built.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs" title="sn.view.graphics.connectors.ConnectorIDs"><em>ConnectorIDs</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._deleteItems">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_deleteItems</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">canvas</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">ids</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._deleteItems" title="Link to this definition">¶</a></dt>
+<dd><p>Delete canvas items: those that aren’t None.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>canvas</strong> – The canvas.</p></li>
+<li><p><strong>ids</strong> (<em>int</em><em> | </em><em>None</em>) – Canvas item ids, or None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.drawSmoothConnector">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">drawSmoothConnector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destination</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">terminators</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">lineColor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fillColor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">lineKwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors.drawSmoothConnector" title="Link to this definition">¶</a></dt>
+<dd><p>Draw source→label and label→destination as two lines that terminate at
+the edges of their respective VObjects and together trace ONE smooth
+quadratic-Bezier curve running from the center of source’s bounding box,
+through the center of label’s, to the center of destination’s.</p>
+<p>The curve is a single quadratic Bezier [Cs, P1, Cd] chosen so it passes
+exactly through Cl (label’s center) at t=0.5 (see _labelControlPoint), then
+split at that point into two Bezier arcs — mathematically the same curve,
+so there’s no kink at the join even though it’s drawn as two line items.
+Each arc is then clipped to the exact portion between its two shapes’
+boundaries (_clippedArc, via boundary-parameter bisection against
+VObject.containsPt() — the curved-path analogue of VRelation.
+findIntersection()’s straight-line bisection) and rendered as a Tk
+create_line() with exactly 3 points and smooth=True — Tk’s documented
+control-point quadratic-bezier behaviour for a 3-point smoothed line,
+so the rendered curve matches this function’s own math exactly.</p>
+<p>Assumes source, label and destination don’t overlap each other and share
+the same canvas (source.canvas is used).</p>
+<p>If <em>source is destination</em> (a self-loop – the same VObject on both ends),
+their centers are pushed a small distance apart first (see
+_selfLoopOffset()) so the source→label and label→destination arcs come out
+as two distinct, roughly parallel loops instead of retracing the exact
+same curve on top of each other.</p>
+<p><em>source</em> and/or <em>destination</em> may be <em>None</em>. If exactly one is <em>None</em>,
+only a single straight-line segment is drawn – from <em>label</em> to whichever
+of the two is actually present, complete with that segment’s own
+terminators – since a curve needs a third point to bend around; with
+only two points there’s nothing to smooth either way, so
+drawStraightConnector() behaves identically in this case. The OTHER
+side’s previous canvas items (if any) are left untouched, exactly as
+when a boundary clip fails elsewhere in this module – see
+_drawSingleSegment(). If <em>both</em> are <em>None</em> there’s nothing to connect to
+at all, so the call is a silent no-op: nothing is drawn or deleted, and
+<em>ids</em> (or an empty ConnectorIDs() if <em>ids</em> was also <em>None</em>) is returned
+unchanged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>source</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em> | </em><em>None</em>) – The VObject the first line starts from, or <em>None</em> if
+there is no source object.</p></li>
+<li><p><strong>label</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>) – The VObject both lines connect through.</p></li>
+<li><p><strong>destination</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em> | </em><em>None</em>) – The VObject the second line ends at, or <em>None</em> if
+there is no destination object.</p></li>
+<li><p><strong>terminators</strong> (<a class="reference internal" href="#sn.view.graphics.connectors.ConnectorTerminators" title="sn.view.graphics.connectors.ConnectorTerminators"><em>ConnectorTerminators</em></a><em> | </em><em>None</em>) – The four terminator specs (source/labelNear/labelFar/
+destination), or None for no terminators at all.</p></li>
+<li><p><strong>ids</strong> (<a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs" title="sn.view.graphics.connectors.ConnectorIDs"><em>ConnectorIDs</em></a><em> | </em><em>None</em>) – A previous call’s ConnectorIDs, to update those exact items in
+place instead of creating new ones. None (the default) draws fresh
+items. Every colour/terminator/line option is re-applied from this
+call’s arguments regardless — nothing is assumed to carry over from
+whatever <em>ids</em> was drawn with.</p></li>
+<li><p><strong>lineColor</strong> (<em>str</em>) – Passed as create_line()’s “fill” (and terminators’
+outline colour) unless overridden via <em>lineKwargs</em>.</p></li>
+<li><p><strong>fillColor</strong> (<em>str</em>) – Fill colour for “circle” terminators.</p></li>
+<li><p><strong>tags</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Canvas tags applied to every item this call touches.</p></li>
+<li><p><strong>lineKwargs</strong> – Extra options merged into both create_line() calls
+(width, dash, etc.).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The ids of everything drawn, for passing back in on the next
+call (or deleting).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs" title="sn.view.graphics.connectors.ConnectorIDs"><em>ConnectorIDs</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.drawStraightConnector">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">drawStraightConnector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destination</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">terminators</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">lineColor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fillColor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">lineKwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors.drawStraightConnector" title="Link to this definition">¶</a></dt>
+<dd><p>Same signature and result shape as drawSmoothConnector() — a drop-in
+“fast” alternative that draws two straight lines (source-to-label,
+label-to-destination) instead of a smooth curve. Intended for contexts
+where the curve’s cost isn’t worth it, e.g. every frame of a drag/animation,
+with a swap to drawSmoothConnector() once things settle — hence the
+identical signature: calling code can hold either as a plain function
+pointer and not care which one it has.</p>
+<p>Like drawSmoothConnector(), passing a previous call’s ConnectorIDs back in
+via <em>ids</em> updates those items in place (and works even if <em>ids</em> was last
+drawn by drawSmoothConnector() — the same items just get reshaped from a
+3-point smoothed arc to a 2-point straight segment).</p>
+<p>Also like drawSmoothConnector(), <em>source is destination</em> (a self-loop) is
+special-cased – see its docstring and _selfLoopOffset() – so the two
+segments end up offset and roughly parallel instead of drawn one on top of
+the other.</p>
+<p><em>source</em> and/or <em>destination</em> may be <em>None</em>, with exactly the same
+behaviour as drawSmoothConnector(): a single terminator-and-all straight
+segment from <em>label</em> to whichever one is present if only one is <em>None</em>
+(see _drawSingleSegment()), or a silent no-op returning <em>ids</em> (or a fresh,
+empty ConnectorIDs()) unchanged if both are.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>source</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>label</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p></li>
+<li><p><strong>destination</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>terminators</strong> (<a class="reference internal" href="#sn.view.graphics.connectors.ConnectorTerminators" title="sn.view.graphics.connectors.ConnectorTerminators"><em>ConnectorTerminators</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>ids</strong> (<a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs" title="sn.view.graphics.connectors.ConnectorIDs"><em>ConnectorIDs</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>lineColor</strong> (<em>str</em>)</p></li>
+<li><p><strong>fillColor</strong> (<em>str</em>)</p></li>
+<li><p><strong>tags</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs" title="sn.view.graphics.connectors.ConnectorIDs"><em>ConnectorIDs</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="sn.view.graphics.decorators.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">sn.view.graphics.decorators module</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="sn.view.graphics.balloonLayout.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">sn.view.graphics.balloonLayout module</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2023-2026, Rob Kremer
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">sn.view.graphics.connectors module</a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorTerminators"><code class="docutils literal notranslate"><span class="pre">ConnectorTerminators</span></code></a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorTerminators.source"><code class="docutils literal notranslate"><span class="pre">ConnectorTerminators.source</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorTerminators.labelNear"><code class="docutils literal notranslate"><span class="pre">ConnectorTerminators.labelNear</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorTerminators.labelFar"><code class="docutils literal notranslate"><span class="pre">ConnectorTerminators.labelFar</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorTerminators.destination"><code class="docutils literal notranslate"><span class="pre">ConnectorTerminators.destination</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorTerminators.__init__"><code class="docutils literal notranslate"><span class="pre">ConnectorTerminators.__init__()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs</span></code></a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs.sourceLineID"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs.sourceLineID</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs.destLineID"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs.destLineID</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs.sourceTerminatorID"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs.sourceTerminatorID</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs.labelNearTerminatorID"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs.labelNearTerminatorID</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs.labelFarTerminatorID"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs.labelFarTerminatorID</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs.destTerminatorID"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs.destTerminatorID</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs.deleteAll"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs.deleteAll()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs.__init__"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs.__init__()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._sub"><code class="docutils literal notranslate"><span class="pre">_sub()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._add"><code class="docutils literal notranslate"><span class="pre">_add()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._SELF_LOOP_GAP"><code class="docutils literal notranslate"><span class="pre">_SELF_LOOP_GAP</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._selfLoopOffset"><code class="docutils literal notranslate"><span class="pre">_selfLoopOffset()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._labelControlPoint"><code class="docutils literal notranslate"><span class="pre">_labelControlPoint()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._bezierPoint"><code class="docutils literal notranslate"><span class="pre">_bezierPoint()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._bezierBlossom"><code class="docutils literal notranslate"><span class="pre">_bezierBlossom()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._insideTest"><code class="docutils literal notranslate"><span class="pre">_insideTest()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._findBoundaryParam"><code class="docutils literal notranslate"><span class="pre">_findBoundaryParam()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._clippedArc"><code class="docutils literal notranslate"><span class="pre">_clippedArc()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._farPointAlong"><code class="docutils literal notranslate"><span class="pre">_farPointAlong()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._clipToEdgeStraight"><code class="docutils literal notranslate"><span class="pre">_clipToEdgeStraight()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.parseTerminatorSpec"><code class="docutils literal notranslate"><span class="pre">parseTerminatorSpec()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._arrowLineOptions"><code class="docutils literal notranslate"><span class="pre">_arrowLineOptions()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._mergeArrowOptions"><code class="docutils literal notranslate"><span class="pre">_mergeArrowOptions()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._drawCircleTerminator"><code class="docutils literal notranslate"><span class="pre">_drawCircleTerminator()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._upsertLine"><code class="docutils literal notranslate"><span class="pre">_upsertLine()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._drawSingleSegment"><code class="docutils literal notranslate"><span class="pre">_drawSingleSegment()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._deleteItems"><code class="docutils literal notranslate"><span class="pre">_deleteItems()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.drawSmoothConnector"><code class="docutils literal notranslate"><span class="pre">drawSmoothConnector()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.drawStraightConnector"><code class="docutils literal notranslate"><span class="pre">drawStraightConnector()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

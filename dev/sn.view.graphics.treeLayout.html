@@ -1,0 +1,1534 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="sn.view.graphics.viewBase module" href="sn.view.graphics.viewBase.html"><link rel="prev" title="sn.view.graphics.sourceWindow module" href="sn.view.graphics.sourceWindow.html">
+        <link rel="prefetch" href="../_static/sn-logo.png" as="image">
+
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>sn.view.graphics.treeLayout module - Semantic Nets 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">Semantic Nets 1.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">Semantic Nets 1.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user/index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user/concepts.html">Concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/gettingStarted.html">Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/tutorial.html">Worked Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/editing.html">Editing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/contexts.html">Contexts: Rules, Definitions, Queries, Constraints and Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/reasoning.html">Reasoning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/viewing.html">Viewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/layouts.html">Arranging a View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/animation.html">Animation Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/files.html">Files and Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/terminal.html">The Terminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/exampleApps.html">Plugins</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developer/index.html">Developer Guide</a><input aria-label="Toggle navigation of Developer Guide" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html">Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/model.html">The Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/reasoner.html">The Reasoner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/view.html">The Graphical View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/layout.html">Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/extending.html">Building on Semantic Nets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/conventions.html">Conventions and Testing</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="sn.html">sn package</a><input aria-label="Toggle navigation of sn package" checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="sn.controller.html">sn.controller package</a><input aria-label="Toggle navigation of sn.controller package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.controller.modelInterface.html">sn.controller.modelInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current has-children"><a class="reference internal" href="sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" checked="" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3 current has-children"><a class="reference internal" href="sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" checked="" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html">sn.view.graphics.connectors module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.expandDialog.html">sn.view.graphics.expandDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.guiApp.html">sn.view.graphics.guiApp module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html">sn.view.graphics.imageExport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html">sn.view.graphics.labels module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html">sn.view.graphics.layout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutDialog.html">sn.view.graphics.layoutDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutPanel.html">sn.view.graphics.layoutPanel module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.progress.html">sn.view.graphics.progress module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.reasoningToolbar.html">sn.view.graphics.reasoningToolbar module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.relationTable.html">sn.view.graphics.relationTable module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.replaceModelDialog.html">sn.view.graphics.replaceModelDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.searchDialog.html">sn.view.graphics.searchDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.shapes.html">sn.view.graphics.shapes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sngContext.html">sn.view.graphics.sngContext module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sngView.html">sn.view.graphics.sngView module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sourceWindow.html">sn.view.graphics.sourceWindow module</a></li>
+<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">sn.view.graphics.treeLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewBase.html">sn.view.graphics.viewBase module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewCommands.html">sn.view.graphics.viewCommands module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewContainment.html">sn.view.graphics.viewContainment module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewEditing.html">sn.view.graphics.viewEditing module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewFiles.html">sn.view.graphics.viewFiles module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewInput.html">sn.view.graphics.viewInput module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewLayouts.html">sn.view.graphics.viewLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewReasoning.html">sn.view.graphics.viewReasoning module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewViewport.html">sn.view.graphics.viewViewport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewVisibility.html">sn.view.graphics.viewVisibility module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.visibilityDialog.html">sn.view.graphics.visibilityDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vnodes.html">sn.view.graphics.vnodes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vobjects.html">sn.view.graphics.vobjects module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vrelations.html">sn.view.graphics.vrelations module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.textUserInterface.html">sn.view.textUserInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.__main__.html">sn.__main__ module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html">sn.hooks module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html">sn.plugins module</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../plugins/index.html">The plugins</a><input aria-label="Toggle navigation of The plugins" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.XMLreader.html">snplugins.XMLreader package</a><input aria-label="Toggle navigation of snplugins.XMLreader package" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.reader.html">snplugins.XMLreader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.schema.html">snplugins.XMLreader.schema module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.view.html">snplugins.XMLreader.view module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.pythonParser.html">snplugins.pythonParser package</a><input aria-label="Toggle navigation of snplugins.pythonParser package" class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.dialog.html">snplugins.pythonParser.dialog module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.hooks.html">snplugins.pythonParser.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.parser.html">snplugins.pythonParser.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/dev/sn.view.graphics.treeLayout.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="module-sn.view.graphics.treeLayout">
+<span id="sn-view-graphics-treelayout-module"></span><h1>sn.view.graphics.treeLayout module<a class="headerlink" href="#module-sn.view.graphics.treeLayout" title="Link to this heading">¶</a></h1>
+<p>The tree layout (see <em>TreeLayout</em>): a view’s nodes arranged as trees – or a
+forest – by a relation type (and its subtypes): each node’s children in a
+column (or row) beside it, the next level out, each parent level with the
+middle of its children, and the relations’ labels lined up just before the
+children. Static (“arrange now”) and dynamic (“keep arranged”: it opens up
+for what’s added, and closes up over what’s removed or hidden).</p>
+<p><em>treePositions()</em> is the geometry, on its own (no view): where each node of
+some trees goes.</p>
+<p>Created on Oct 10, 2026</p>
+<p><em>Code author: Rob Kremer &lt;<a class="reference external" href="mailto:robkremer&#37;&#52;&#48;me&#46;com">robkremer<span>&#64;</span>me<span>&#46;</span>com</a>&gt;</em></p>
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.DIRECTIONS">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.treeLayout.</span></span><span class="sig-name descname"><span class="pre">DIRECTIONS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('right',</span> <span class="pre">'down',</span> <span class="pre">'left',</span> <span class="pre">'up')</span></span><a class="headerlink" href="#sn.view.graphics.treeLayout.DIRECTIONS" title="Link to this definition">¶</a></dt>
+<dd><p>Which way a tree grows: from its root out to its leaves.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.OTHERS">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.treeLayout.</span></span><span class="sig-name descname"><span class="pre">OTHERS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('leave',</span> <span class="pre">'rows',</span> <span class="pre">'near')</span></span><a class="headerlink" href="#sn.view.graphics.treeLayout.OTHERS" title="Link to this definition">¶</a></dt>
+<dd><p>What a static tree layout does with the nodes in no tree: leaves them where
+they are; puts them in rows (lines) after the trees; or puts each near the
+nodes it’s related to, the way the trees grow (see <em>placeNear()</em>) – and
+those related to none of them in rows after the trees.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.NEAR_BIAS">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.treeLayout.</span></span><span class="sig-name descname"><span class="pre">NEAR_BIAS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4.0</span></span><a class="headerlink" href="#sn.view.graphics.treeLayout.NEAR_BIAS" title="Link to this definition">¶</a></dt>
+<dd><p>How much more it costs a node placed near its relations (see <em>placeNear()</em>)
+to move back against the way the trees grow than to move on, or across.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.NEAR_STEP">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.treeLayout.</span></span><span class="sig-name descname"><span class="pre">NEAR_STEP</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">10.0</span></span><a class="headerlink" href="#sn.view.graphics.treeLayout.NEAR_STEP" title="Link to this definition">¶</a></dt>
+<dd><p>The grid a node placed near its relations is put on (see <em>placeNear()</em>).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.NEAR_MAX_RINGS">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.treeLayout.</span></span><span class="sig-name descname"><span class="pre">NEAR_MAX_RINGS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">400</span></span><a class="headerlink" href="#sn.view.graphics.treeLayout.NEAR_MAX_RINGS" title="Link to this definition">¶</a></dt>
+<dd><p>How far out (in <em>NEAR_STEP*s) *placeNear()</em> looks for a free spot.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.LABEL_GAP">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.treeLayout.</span></span><span class="sig-name descname"><span class="pre">LABEL_GAP</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">12.0</span></span><a class="headerlink" href="#sn.view.graphics.treeLayout.LABEL_GAP" title="Link to this definition">¶</a></dt>
+<dd><p>The space between a tree relation’s label and the child it goes to.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.MIN_LINE">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.treeLayout.</span></span><span class="sig-name descname"><span class="pre">MIN_LINE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">100.0</span></span><a class="headerlink" href="#sn.view.graphics.treeLayout.MIN_LINE" title="Link to this definition">¶</a></dt>
+<dd><p>The least length of line between a parent and a child’s label (see <em>TreeLayout.levelGap()</em>).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.MIN_LEVEL_GAP">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.treeLayout.</span></span><span class="sig-name descname"><span class="pre">MIN_LEVEL_GAP</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">60.0</span></span><a class="headerlink" href="#sn.view.graphics.treeLayout.MIN_LEVEL_GAP" title="Link to this definition">¶</a></dt>
+<dd><p>The least space between one level of a tree and the next.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.MIN_ROW_LENGTH">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.treeLayout.</span></span><span class="sig-name descname"><span class="pre">MIN_ROW_LENGTH</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">600.0</span></span><a class="headerlink" href="#sn.view.graphics.treeLayout.MIN_ROW_LENGTH" title="Link to this definition">¶</a></dt>
+<dd><p>The shortest the rows of nodes in no tree are (see <em>OTHERS</em>): otherwise, as long as the trees are deep.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout._flip">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.treeLayout.</span></span><span class="sig-name descname"><span class="pre">_flip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">direction</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout._flip" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>direction</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether trees grow toward smaller coordinates (left, up).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout._vertical">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.treeLayout.</span></span><span class="sig-name descname"><span class="pre">_vertical</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">direction</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout._vertical" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>direction</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether trees grow along y (down, up).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.treePositions">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.treeLayout.</span></span><span class="sig-name descname"><span class="pre">treePositions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">roots</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">children</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sizes</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'right'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spacing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">levelGaps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">levelGap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">60.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compact</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.treePositions" title="Link to this definition">¶</a></dt>
+<dd><p>Lay out some trees, each on its own: the root at depth 0, each node’s
+children at the next depth – the depths in lines (columns, for “right”),
+each as deep as its deepest node, <em>levelGaps</em> apart – the leaves <em>spacing</em>
+apart across, each parent level with the middle of its children, and the
+groups of a node’s children <em>spacing</em> further apart.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>roots</strong> (<em>list</em><em>[</em><em>K</em><em>]</em>) – The trees’ roots.</p></li>
+<li><p><strong>children</strong> (<em>dict</em><em>[</em><em>K</em><em>, </em><em>list</em><em>[</em><em>list</em><em>[</em><em>K</em><em>]</em><em>]</em><em>]</em>) – Each node’s children, in groups (eg: by the type of
+relation to them), in order. Each node is laid out once: under the first
+parent it’s met under (a node met again is left out there).</p></li>
+<li><p><strong>sizes</strong> (<em>Mapping</em><em>[</em><em>K</em><em>, </em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>) – Each node’s (width, height).</p></li>
+<li><p><strong>direction</strong> (<em>str</em>) – Which way the trees grow: one of <em>DIRECTIONS</em>.</p></li>
+<li><p><strong>spacing</strong> (<em>float</em>) – The space between neighbouring nodes across a level.</p></li>
+<li><p><strong>levelGaps</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – The space between depth <em>n</em> and depth <em>n</em> + 1, by <em>n</em>, if not <em>levelGap</em>.</p></li>
+<li><p><strong>levelGap</strong> (<em>float</em>) – The space between depths not in <em>levelGaps</em>.</p></li>
+<li><p><strong>compact</strong> (<em>bool</em>) – If False, each subtree is wholly after the one before it,
+across (its leaves after the last of the one before’s). If True, each is
+only as far along as the depths they both have need: a subtree tucks in
+beside the one before wherever that one’s deeper levels leave room (each
+depth’s extent across – its contour – is kept, much as in the
+Reingold-Tilford tree drawing). The depths are the same either way; and
+either way, nothing overlaps, and the relations from parents to children
+don’t cross.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Where each node goes (its top left), with each tree’s root at
+(0, 0) – or, growing left or up, with its root’s far side at 0 – and
+each tree’s nodes, and their bounding box (x1, y1, x2, y2), by root.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[dict[<em>K</em>, tuple[float, float]], list[tuple[<em>K</em>, list[float]]]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout._record">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.treeLayout.</span></span><span class="sig-name descname"><span class="pre">_record</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ret</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trees</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cross</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depthOf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depthSize</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertical</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flip</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout._record" title="Link to this definition">¶</a></dt>
+<dd><p>For <em>treePositions()</em>: put a tree’s nodes where they go – at their depth’s
+level, and <em>cross</em> across – in <em>ret</em>, and its root and box in <em>trees</em>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ret</strong> (<em>dict</em>)</p></li>
+<li><p><strong>trees</strong> (<em>list</em>)</p></li>
+<li><p><strong>order</strong> (<em>list</em>)</p></li>
+<li><p><strong>cross</strong> (<em>dict</em>)</p></li>
+<li><p><strong>level</strong> (<em>list</em><em>[</em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>depthOf</strong> (<em>dict</em>)</p></li>
+<li><p><strong>sizes</strong> (<em>Mapping</em>)</p></li>
+<li><p><strong>vertical</strong> (<em>bool</em>)</p></li>
+<li><p><strong>flip</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout._packed">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.treeLayout.</span></span><span class="sig-name descname"><span class="pre">_packed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kidsOf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depthOf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crossSize</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spacing</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout._packed" title="Link to this definition">¶</a></dt>
+<dd><p>For <em>treePositions()</em>, compact: where each of a tree’s nodes goes across
+(its near side): each subtree is laid out on its own, keeping its contour
+– each depth’s extent across – and each child’s subtree is put as near
+the ones before it as their contours allow, at the depths they both have
+(<em>spacing</em> apart; another <em>spacing</em> between groups). Each parent is level
+with the middle of its first and last children.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>root</strong> (<em>K</em>)</p></li>
+<li><p><strong>kidsOf</strong> (<em>dict</em><em>[</em><em>K</em><em>, </em><em>list</em><em>[</em><em>list</em><em>[</em><em>K</em><em>]</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>depthOf</strong> (<em>dict</em><em>[</em><em>K</em><em>, </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>spacing</strong> (<em>float</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Each node’s position across, the least 0.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[<em>K</em>, float]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.treeMembers">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.treeLayout.</span></span><span class="sig-name descname"><span class="pre">treeMembers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">children</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positions</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.treeMembers" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>root</strong> (<em>K</em>) – A tree’s root (see <em>treePositions()</em>).</p></li>
+<li><p><strong>children</strong> (<em>dict</em><em>[</em><em>K</em><em>, </em><em>list</em><em>[</em><em>list</em><em>[</em><em>K</em><em>]</em><em>]</em><em>]</em>) – As given to <em>treePositions()</em>.</p></li>
+<li><p><strong>positions</strong> (<em>dict</em><em>[</em><em>K</em><em>, </em><em>Any</em><em>]</em>) – What <em>treePositions()</em> returned.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The nodes of its tree (as laid out: each under its first parent).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<em>K</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.nearestFree">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.treeLayout.</span></span><span class="sig-name descname"><span class="pre">nearestFree</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">at</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'right'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxRings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">400</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.nearestFree" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>size</strong> (<em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em>) – A box’s (width, height).</p></li>
+<li><p><strong>at</strong> (<em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em>) – Where it’d best go (its top left).</p></li>
+<li><p><strong>index</strong> (<a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout._BoxIndex" title="sn.view.graphics.layout._BoxIndex"><em>_BoxIndex</em></a>) – The boxes it mustn’t be on (or within <em>gap</em> of).</p></li>
+<li><p><strong>direction</strong> (<em>str</em><em> | </em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em>) – Which way the trees grow (see <em>DIRECTIONS</em>), or a unit
+vector (x, y): moving on that way costs what the distance is; back,
+<em>bias</em> times as much; across, the distance.</p></li>
+<li><p><strong>gap</strong> (<em>float</em>)</p></li>
+<li><p><strong>bias</strong> (<em>float</em>)</p></li>
+<li><p><strong>step</strong> (<em>float</em>)</p></li>
+<li><p><strong>maxRings</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The cheapest free place (its top left) on a <em>step</em> grid around <em>at</em>
+(looking out <em>maxRings</em> steps) – or <em>at</em>, if there’s none.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[float, float]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.placeNear">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.treeLayout.</span></span><span class="sig-name descname"><span class="pre">placeNear</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">related</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">placed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obstacles</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'right'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spacing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beyond</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">60.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.placeNear" title="Link to this definition">¶</a></dt>
+<dd><p>Put nodes (eg: those in no tree) near the nodes they’re related to: each
+just beyond the furthest of them the way the trees grow (<em>beyond</em> past it),
+level (across) with the middle of them – or, if that’s taken, at the
+cheapest free place near there (see <em>nearestFree()</em>: moving back, against
+the way the trees grow, costs <em>bias</em> times as much as moving on). Those
+related only to others of <em>items</em> are put once those are; those related to
+nothing placed aren’t put anywhere.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>items</strong> (<em>list</em><em>[</em><em>K</em><em>]</em>) – The nodes to put, in order.</p></li>
+<li><p><strong>sizes</strong> (<em>Mapping</em><em>[</em><em>K</em><em>, </em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>) – Their (width, height).</p></li>
+<li><p><strong>related</strong> (<em>dict</em><em>[</em><em>K</em><em>, </em><em>list</em><em>[</em><em>K</em><em>]</em><em>]</em>) – What each is related to (any of <em>placed</em>, or of <em>items</em>).</p></li>
+<li><p><strong>placed</strong> (<em>Mapping</em><em>[</em><em>K</em><em>, </em><em>Sequence</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Where the nodes already placed are: their boxes.</p></li>
+<li><p><strong>obstacles</strong> (<em>Sequence</em><em>[</em><em>Sequence</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Boxes to keep clear of too (<em>spacing</em>): eg: relations’ labels.</p></li>
+<li><p><strong>direction</strong> (<em>str</em>)</p></li>
+<li><p><strong>spacing</strong> (<em>float</em>)</p></li>
+<li><p><strong>beyond</strong> (<em>float</em>)</p></li>
+<li><p><strong>bias</strong> (<em>float</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Where each of <em>items</em> put goes (its top left); and those not put.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[dict[<em>K</em>, tuple[float, float]], list[<em>K</em>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.isMember">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.treeLayout.</span></span><span class="sig-name descname"><span class="pre">isMember</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vo</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.isMember" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>vo</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>) – A view object.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether <em>vo</em> is something the layouts that arrange nodes (tree,
+balloon, radial, hubs) arrange as a node: a node, or a relation type (it
+has a place of its own, as a node does) – not an individual relation’s
+label, which goes between its ends.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.isLink">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.treeLayout.</span></span><span class="sig-name descname"><span class="pre">isLink</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.isLink" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>r</strong> (<em>Any</em>) – A view object.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether <em>r</em> is a relation shown that relates two things laid out
+(see <em>isMember()</em>): an individual relation, connected and not hidden – not
+a relation type: its ends are its domain and range, not things it relates.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.Terminal">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.treeLayout.</span></span><span class="sig-name descname"><span class="pre">Terminal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">which</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.Terminal" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A relation type’s link to one of its own ends – its domain or its range
+(see <em>relationTable.TERMINALS</em>) – laid out as if it were a relation from
+the relation type to that end: one with no label of its own (the relation
+type is laid out as a node is: see <em>isMember()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>relType</strong> (<a class="reference internal" href="sn.view.graphics.vrelations.html#sn.view.graphics.vrelations.VRelation" title="sn.view.graphics.vrelations.VRelation"><em>VRelation</em></a>)</p></li>
+<li><p><strong>end</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p></li>
+<li><p><strong>which</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.Terminal.modelObject">
+<span class="sig-name descname"><span class="pre">modelObject</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.treeLayout.Terminal.modelObject" title="Link to this definition">¶</a></dt>
+<dd><p>(No relation in the model: see <em>RelationRoles.role()</em>, for the relation types’ own ends.)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.Terminal.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">which</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.Terminal.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>relType</strong> (<a class="reference internal" href="sn.view.graphics.vrelations.html#sn.view.graphics.vrelations.VRelation" title="sn.view.graphics.vrelations.VRelation"><em>VRelation</em></a>) – The relation type.</p></li>
+<li><p><strong>end</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>) – Its source (domain) or destination (range).</p></li>
+<li><p><strong>which</strong> (<em>int</em>) – 0 for its source, 1 for its destination.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.upgradeRelation">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.treeLayout.</span></span><span class="sig-name descname"><span class="pre">upgradeRelation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.upgradeRelation" title="Link to this definition">¶</a></dt>
+<dd><p>For the layouts that took a single relation type (“relation”, and
+“parentEnd”) before they took a table of them (“relations”: see
+<em>relationTable.RelationTable.single()</em>): convert what an older version saved.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>state</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – What was saved (see <em>layout.LayoutHeuristic.upgradeParameters()</em>).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>It, converted.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.relationsParameter">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.treeLayout.</span></span><span class="sig-name descname"><span class="pre">relationsParameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kwargs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parentEnd</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.relationsParameter" title="Link to this definition">¶</a></dt>
+<dd><p>For the layouts that take a table of relation types: <em>kwargs</em>, with a single
+relation type given the old way (<em>relation</em>, <em>parentEnd</em>: eg: by a program)
+as the table that’s like it (see <em>relationTable.RelationTable.single()</em>) –
+its parent end the destination if none’s given, as it was – unless a
+table’s given too.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kwargs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>)</p></li>
+<li><p><strong>relation</strong> (<em>Any</em>)</p></li>
+<li><p><strong>parentEnd</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict[str, <em>Any</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.RELATIONS_NOTE">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.treeLayout.</span></span><span class="sig-name descname"><span class="pre">RELATIONS_NOTE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Each</span> <span class="pre">row</span> <span class="pre">covers</span> <span class="pre">its</span> <span class="pre">subtypes</span> <span class="pre">too</span> <span class="pre">(unless</span> <span class="pre">they</span> <span class="pre">have</span> <span class="pre">rows</span> <span class="pre">of</span> <span class="pre">their</span> <span class="pre">own).</span> <span class="pre">&quot;shapes</span> <span class="pre">the</span> <span class="pre">tree&quot;:</span> <span class="pre">its</span> <span class="pre">relations</span> <span class="pre">relate</span> <span class="pre">parents</span> <span class="pre">to</span> <span class="pre">children</span> <span class="pre">(higher</span> <span class="pre">rows</span> <span class="pre">first:</span> <span class="pre">eg:</span> <span class="pre">a</span> <span class="pre">node</span> <span class="pre">with</span> <span class="pre">two</span> <span class="pre">parents</span> <span class="pre">goes</span> <span class="pre">under</span> <span class="pre">the</span> <span class="pre">higher).</span> <span class="pre">&quot;pulls</span> <span class="pre">together&quot;:</span> <span class="pre">only</span> <span class="pre">for</span> <span class="pre">joining</span> <span class="pre">trees</span> <span class="pre">and</span> <span class="pre">putting</span> <span class="pre">nodes</span> <span class="pre">near</span> <span class="pre">what</span> <span class="pre">they\'re</span> <span class="pre">related</span> <span class="pre">to.'</span></span><a class="headerlink" href="#sn.view.graphics.treeLayout.RELATIONS_NOTE" title="Link to this definition">¶</a></dt>
+<dd><p>What the dialog says under the relation table (see <em>relationTable.RelationTable</em>).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout._overlaps">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.treeLayout.</span></span><span class="sig-name descname"><span class="pre">_overlaps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gap</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout._overlaps" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>list</em><em>[</em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>b</strong> (<em>list</em><em>[</em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>gap</strong> (<em>float</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.treeLayout.</span></span><span class="sig-name descname"><span class="pre">TreeLayout</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parentEnd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutHeuristic" title="sn.view.graphics.layout.LayoutHeuristic"><code class="xref py py-class docutils literal notranslate"><span class="pre">LayoutHeuristic</span></code></a></p>
+<p>Arrange nodes as trees by the relation types in a table (<em>relations</em>: see
+<em>relationTable.RelationTable</em>) whose rows shape the trees: each relation
+of one of those types (shown in the view) from a parent to a child –
+which end’s the parent its row says – puts the child one level out from
+the parent, the way the trees grow (<em>direction</em>). A node’s children (laid
+out one after another across, or – <em>compact</em> – tucked in beside each
+other where there’s room: see <em>treePositions()</em>) are grouped by the row
+they’re related by, and then by which of its relation type’s direct
+subtypes (in the order those were made: eg: for “includes”, a package’s
+modules, then its sub-packages), and each group’s in order. A node with
+more than one parent is put under the one related by the highest row (the
+first related, of those); its other relations are left floating, as are
+those that would make a cycle. Each tree relation’s label is put just
+before its child, on the straight line from the parent (so the labels line
+up, and the lines stay straight). The rows that pull things together (and
+those that shape the trees) are what join trees (see <em>balloonLayout.TREES</em>)
+and put the nodes in no tree near what they’re related to (<em>others</em>).</p>
+<p>Relation types shown are arranged as nodes are (see <em>isMember()</em>): eg: by
+isa, has-parent under has-ancestor – and, by the table’s row for them (see
+<em>relationTable.TERMINALS</em>), by their own ends (their domain and range), as
+if each were related to them. Nodes in a context window (or that are one)
+aren’t arranged.</p>
+<p>As a static layout (see <em>arrange()</em>): the children are in order of name;
+the trees are put one after another (across the way they grow) from the
+top left of what’s arranged; and the nodes in no tree are left where
+they are, put in rows after the trees, or put near what they’re related
+to (<em>others</em>: see <em>OTHERS</em>).</p>
+<p>As a dynamic layout (see <em>adjust()</em>): after each command, the trees are
+laid out again, each from where its root is: children in the order they
+are already, and new ones after them, by name. So a tree opens up for
+what’s added to it, and closes up over what’s removed or hidden – and
+what’s after it, across (the trees and the nodes in no tree alongside it),
+moves along by as much (see <em>_keepPlaces()</em>). A tree node the user drags
+(and drops) takes its subtree with it: it’s pinned there, as the root of a
+tree of its own (room is made for its subtree), until the next static
+tree layout. The nodes in no tree are left where they are, put in rows
+after the trees, or put near what they’re related to (<em>others</em>), again
+each time – except those the user drops somewhere, which are pinned
+there too. Nothing’s left on another node: what would be is pushed
+further across.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>relation</strong> (<em>Any</em>)</p></li>
+<li><p><strong>parentEnd</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout.NAME">
+<span class="sig-name descname"><span class="pre">NAME</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'tree'</span></span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout.NAME" title="Link to this definition">¶</a></dt>
+<dd><p>What it’s called: in <em>LAYOUTS</em>, the menus, and the view’s file.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout.CATEGORIES">
+<span class="sig-name descname"><span class="pre">CATEGORIES</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('static',</span> <span class="pre">'dynamic')</span></span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout.CATEGORIES" title="Link to this definition">¶</a></dt>
+<dd><p>The kinds of layout it is: of <em>CATEGORIES</em>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout.PARAMETERS">
+<span class="sig-name descname"><span class="pre">PARAMETERS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutParameter" title="sn.view.graphics.layout.LayoutParameter"><span class="pre">LayoutParameter</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(LayoutParameter(name='relations',</span> <span class="pre">label='Relations',</span> <span class="pre">kind='relations',</span> <span class="pre">default=None,</span> <span class="pre">choices=(),</span> <span class="pre">note='Each</span> <span class="pre">row</span> <span class="pre">covers</span> <span class="pre">its</span> <span class="pre">subtypes</span> <span class="pre">too</span> <span class="pre">(unless</span> <span class="pre">they</span> <span class="pre">have</span> <span class="pre">rows</span> <span class="pre">of</span> <span class="pre">their</span> <span class="pre">own).</span> <span class="pre">&quot;shapes</span> <span class="pre">the</span> <span class="pre">tree&quot;:</span> <span class="pre">its</span> <span class="pre">relations</span> <span class="pre">relate</span> <span class="pre">parents</span> <span class="pre">to</span> <span class="pre">children</span> <span class="pre">(higher</span> <span class="pre">rows</span> <span class="pre">first:</span> <span class="pre">eg:</span> <span class="pre">a</span> <span class="pre">node</span> <span class="pre">with</span> <span class="pre">two</span> <span class="pre">parents</span> <span class="pre">goes</span> <span class="pre">under</span> <span class="pre">the</span> <span class="pre">higher).</span> <span class="pre">&quot;pulls</span> <span class="pre">together&quot;:</span> <span class="pre">only</span> <span class="pre">for</span> <span class="pre">joining</span> <span class="pre">trees</span> <span class="pre">and</span> <span class="pre">putting</span> <span class="pre">nodes</span> <span class="pre">near</span> <span class="pre">what</span> <span class="pre">they\'re</span> <span class="pre">related</span> <span class="pre">to.',</span> <span class="pre">categories=('static',</span> <span class="pre">'dynamic')),</span> <span class="pre">LayoutParameter(name='direction',</span> <span class="pre">label='Grows',</span> <span class="pre">kind='choice',</span> <span class="pre">default='right',</span> <span class="pre">choices=('right',</span> <span class="pre">'down',</span> <span class="pre">'left',</span> <span class="pre">'up'),</span> <span class="pre">note='',</span> <span class="pre">categories=('static',</span> <span class="pre">'dynamic')),</span> <span class="pre">LayoutParameter(name='spacing',</span> <span class="pre">label='Space</span> <span class="pre">between</span> <span class="pre">neighbours',</span> <span class="pre">kind='int',</span> <span class="pre">default=20,</span> <span class="pre">choices=(),</span> <span class="pre">note='',</span> <span class="pre">categories=('static',</span> <span class="pre">'dynamic')),</span> <span class="pre">LayoutParameter(name='compact',</span> <span class="pre">label='Compact:</span> <span class="pre">subtrees</span> <span class="pre">tuck</span> <span class="pre">in</span> <span class="pre">beside</span> <span class="pre">each</span> <span class="pre">other',</span> <span class="pre">kind='bool',</span> <span class="pre">default=False,</span> <span class="pre">choices=(),</span> <span class="pre">note='Each</span> <span class="pre">subtree</span> <span class="pre">only</span> <span class="pre">as</span> <span class="pre">far</span> <span class="pre">along</span> <span class="pre">as</span> <span class="pre">the</span> <span class="pre">levels</span> <span class="pre">it</span> <span class="pre">shares</span> <span class="pre">with</span> <span class="pre">the</span> <span class="pre">one</span> <span class="pre">before</span> <span class="pre">need.',</span> <span class="pre">categories=('static',</span> <span class="pre">'dynamic')),</span> <span class="pre">LayoutParameter(name='others',</span> <span class="pre">label='Nodes</span> <span class="pre">in</span> <span class="pre">no</span> <span class="pre">tree',</span> <span class="pre">kind='choice',</span> <span class="pre">default='leave',</span> <span class="pre">choices=('leave',</span> <span class="pre">'rows',</span> <span class="pre">'near'),</span> <span class="pre">note='&quot;rows&quot;:</span> <span class="pre">in</span> <span class="pre">rows</span> <span class="pre">after</span> <span class="pre">the</span> <span class="pre">trees.</span> <span class="pre">&quot;near&quot;:</span> <span class="pre">each</span> <span class="pre">near</span> <span class="pre">what</span> <span class="pre">it\'s</span> <span class="pre">related</span> <span class="pre">to,</span> <span class="pre">the</span> <span class="pre">way</span> <span class="pre">the</span> <span class="pre">trees</span> <span class="pre">grow</span> <span class="pre">(those</span> <span class="pre">related</span> <span class="pre">to</span> <span class="pre">nothing</span> <span class="pre">there</span> <span class="pre">in</span> <span class="pre">rows).</span> <span class="pre">Kept</span> <span class="pre">arranged,</span> <span class="pre">one</span> <span class="pre">you</span> <span class="pre">move</span> <span class="pre">stays</span> <span class="pre">where</span> <span class="pre">you</span> <span class="pre">put</span> <span class="pre">it.',</span> <span class="pre">categories=('static',</span> <span class="pre">'dynamic')))</span></span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout.PARAMETERS" title="Link to this definition">¶</a></dt>
+<dd><p>The keyword arguments its constructor takes (besides the view).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parentEnd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>view</strong> (<a class="reference internal" href="sn.view.graphics.sngView.html#sn.view.graphics.sngView.SNGView" title="sn.view.graphics.sngView.SNGView"><em>SNGView</em></a>)</p></li>
+<li><p><strong>relation</strong> (<em>Any</em>) – The simple way to give the table (<em>relations</em>), for a
+single relation type (a <em>Relation</em>, or its name): it shapes the trees;
+every other relation pulls things together (see
+<em>relationTable.RelationTable.single()</em>). Not if <em>relations</em> is given.</p></li>
+<li><p><strong>parentEnd</strong> (<em>str</em><em> | </em><em>None</em>) – With <em>relation</em>: which end of its relations is the
+parent: “source” or “destination” (the default).</p></li>
+<li><p><strong>kwargs</strong> – See <em>PARAMETERS</em>: relations (a <em>relationTable.RelationTable</em>,
+or its text: by default, as <em>relation</em> isa), direction (see <em>DIRECTIONS</em>),
+spacing, compact (see <em>treePositions()</em>), others (see <em>OTHERS</em>: static only).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout._roles">
+<span class="sig-name descname"><span class="pre">_roles</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="sn.view.graphics.relationTable.html#sn.view.graphics.relationTable.RelationRoles" title="sn.view.graphics.relationTable.RelationRoles"><span class="pre">RelationRoles</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout._roles" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout.pins">
+<span class="sig-name descname"><span class="pre">pins</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout.pins" title="Link to this definition">¶</a></dt>
+<dd><p>The ids (<em>VObject._id</em>) of the tree nodes the user has dropped, pinned as roots of their own (see <em>adjust()</em>).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout.known">
+<span class="sig-name descname"><span class="pre">known</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout.known" title="Link to this definition">¶</a></dt>
+<dd><p>The ids of the nodes it laid out last time (None: all those there are): a new one goes after the others.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout._fallback">
+<span class="sig-name descname"><span class="pre">_fallback</span></span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout._fallback" title="Link to this definition">¶</a></dt>
+<dd><p>What places what isn’t in a tree (see <em>placeNode()</em>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout.upgradeParameters">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">upgradeParameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout.upgradeParameters" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>state</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>state</em>, with a single relation type saved by an older version as a table (see <em>upgradeRelation()</em>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout.roles">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">roles</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="sn.view.graphics.relationTable.html#sn.view.graphics.relationTable.RelationRoles" title="sn.view.graphics.relationTable.RelationRoles"><span class="pre">RelationRoles</span></a></span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout.roles" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The relation table, for the view’s model (see <em>RelationRoles</em>): found afresh each time things are arranged.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout._role">
+<span class="sig-name descname"><span class="pre">_role</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout._role" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>r</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>What a relation shown, or a relation type’s link to an end (see <em>Terminal</em>), does (see <em>relationTable.ROLES</em>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout._order">
+<span class="sig-name descname"><span class="pre">_order</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout._order" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>r</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>How highly a tree relation is ranked (lower first): by its row, then in the order made.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[int, int, int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout.terminals">
+<span class="sig-name descname"><span class="pre">terminals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodes</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout.terminals" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ids</strong> (<em>set</em><em>[</em><em>int</em><em>]</em>) – The ids (<em>id()</em>) of what’s arranged.</p></li>
+<li><p><strong>nodes</strong> (<em>Iterable</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>]</em>) – What’s arranged.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The links of the relation types among <em>nodes</em> to their own ends
+that are arranged too (see <em>Terminal</em>): source first.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="#sn.view.graphics.treeLayout.Terminal" title="sn.view.graphics.treeLayout.Terminal"><em>Terminal</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout.related">
+<span class="sig-name descname"><span class="pre">related</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ids</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout.related" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>) – Something arranged (see <em>isMember()</em>).</p></li>
+<li><p><strong>ids</strong> (<em>set</em><em>[</em><em>int</em><em>]</em>) – The ids (<em>id()</em>) of what’s arranged.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>What else arranged <em>n</em> is related to by the rows of the table
+that aren’t ignored (see <em>relationTable.ROLES</em>): each once, with the
+(first) relation – or relation type’s link to its end (see <em>Terminal</em>)
+– between them; by relations in the order made, then the ends.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[tuple[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, <em>Any</em>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout.shaped">
+<span class="sig-name descname"><span class="pre">shaped</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout.shaped" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>node</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>) – Something arranged (see <em>isMember()</em>).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether it’s related to anything by a relation that shapes the
+trees (see <em>relationTable.SHAPES</em>): so it may be in a tree.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout._isEdge">
+<span class="sig-name descname"><span class="pre">_isEdge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mo</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout._isEdge" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mo</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em> | </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether <em>mo</em> is a relation whose row shapes the trees (see <em>relationTable.SHAPES</em>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout._group">
+<span class="sig-name descname"><span class="pre">_group</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout._group" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>r</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Which group a child related by <em>r</em> is in: by its row, then by
+which of its relation type’s direct subtypes (see <em>RelationRoles.group()</em>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[int, int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout.scope">
+<span class="sig-name descname"><span class="pre">scope</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout.scope" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>What’s arranged: the nodes and relation types shown (see
+<em>isMember()</em>: not hidden), not in a context window nor one; and the
+relations shown between them whose rows shape the trees (see
+<em>relations</em>), not to themselves – and the relation types’ links to
+their ends, if their row does (see <em>Terminal</em>).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[list[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>], list[<em>Any</em>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout._ends">
+<span class="sig-name descname"><span class="pre">_ends</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout._ends" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>r</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(parent, child) of a tree relation (or a relation type’s link to an end: see <em>Terminal</em>), as its row says.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, <a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout.structure">
+<span class="sig-name descname"><span class="pre">structure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dynamic</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout.structure" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dynamic</strong> (<em>bool</em>) – Whether it’s for keeping things arranged (see the class
+doc): children in the order they are, new ones after; pinned nodes the
+roots of their own trees. Else children in order of name.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The trees: their roots (in order across); each node’s children,
+in groups (see the class doc); each child’s tree relation (from its
+parent: a relation, or a relation type’s link to an end – see
+<em>Terminal</em>); the nodes in no tree; and the relations whose rows shape
+the trees that aren’t tree relations (eg: to a second parent).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[list[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>], dict[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, list[list[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>]]], dict[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, <em>Any</em>], list[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>], list[<a class="reference internal" href="sn.view.graphics.vrelations.html#sn.view.graphics.vrelations.VRelation" title="sn.view.graphics.vrelations.VRelation"><em>VRelation</em></a>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout.levelGaps">
+<span class="sig-name descname"><span class="pre">levelGaps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">children</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parentRel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roots</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout.levelGaps" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>children</strong> (<em>dict</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>list</em><em>[</em><em>list</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>]</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>parentRel</strong> (<em>dict</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>Any</em><em>]</em>)</p></li>
+<li><p><strong>roots</strong> (<em>list</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The space between each depth of the trees and the next: room
+for the line to the widest label there (<em>MIN_LINE</em>), the label, and
+<em>LABEL_GAP</em> – at least <em>MIN_LEVEL_GAP</em> (all there is between a relation
+type and its end: see <em>Terminal</em>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[int, float]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout._abc_impl">
+<span class="sig-name descname"><span class="pre">_abc_impl</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;_abc._abc_data</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout._abc_impl" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout._labelTargets">
+<span class="sig-name descname"><span class="pre">_labelTargets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parentRel</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout._labelTargets" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>positions</strong> (<em>dict</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>sizes</strong> (<em>dict</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>parentRel</strong> (<em>dict</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>Any</em><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Where each tree relation’s label goes (its top left): on the
+straight line from its parent’s centre to the middle of its child’s near
+side, just before the child (<em>LABEL_GAP</em>), the way the tree grows. (Not
+a relation type’s link to its end: it has no label – see <em>Terminal</em>.)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, tuple[float, float]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout.compute">
+<span class="sig-name descname"><span class="pre">compute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dynamic</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout.compute" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dynamic</strong> (<em>bool</em>) – Whether it’s for keeping things arranged (see the class doc).</p></li>
+<li><p><strong>fresh</strong> (<em>set</em><em>[</em><em>int</em><em>]</em>) – For <em>dynamic</em>: the ids of the nodes just pinned (dropped:
+see <em>adjust()</em>): where each was dropped, room is made for its subtree.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Where everything arranged goes (its top left: nodes and tree
+relations’ labels); and the tree’s type of relations that aren’t tree
+relations (see <em>structure()</em>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[dict[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, tuple[float, float]], list[<a class="reference internal" href="sn.view.graphics.vrelations.html#sn.view.graphics.vrelations.VRelation" title="sn.view.graphics.vrelations.VRelation"><em>VRelation</em></a>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout._rows">
+<span class="sig-name descname"><span class="pre">_rows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cursor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trees</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout._rows" title="Link to this definition">¶</a></dt>
+<dd><p>For <em>others</em> “rows”: put <em>nodes</em> in rows (lines along the way the trees
+grow), starting <em>cursor</em> across, from <em>x0</em> or <em>y0</em> along: each row as long
+as the trees are deep (at least <em>MIN_ROW_LENGTH</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nodes</strong> (<em>list</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>]</em>)</p></li>
+<li><p><strong>sizes</strong> (<em>dict</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>cursor</strong> (<em>float</em>)</p></li>
+<li><p><strong>x0</strong> (<em>float</em>)</p></li>
+<li><p><strong>y0</strong> (<em>float</em>)</p></li>
+<li><p><strong>trees</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Where they go (their top left).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, tuple[float, float]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout._placeNear">
+<span class="sig-name descname"><span class="pre">_placeNear</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">others</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parentRel</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout._placeNear" title="Link to this definition">¶</a></dt>
+<dd><p>For <em>others</em> “near”: where each node in no tree goes, near the nodes it’s
+related to (by the rows that aren’t ignored: see <em>related()</em>), clear of
+the trees’ nodes and their relations’ labels (see <em>placeNear()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>others</strong> (<em>list</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>]</em>) – The nodes in no tree.</p></li>
+<li><p><strong>positions</strong> (<em>dict</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>) – Where the trees’ nodes are going.</p></li>
+<li><p><strong>sizes</strong> (<em>dict</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>) – Everything’s (width, height).</p></li>
+<li><p><strong>parentRel</strong> (<em>dict</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>Any</em><em>]</em>) – The tree relations (see <em>structure()</em>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Where those put go; and those related to nothing placed (for the rows).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[dict[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, tuple[float, float]], list[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout._keepPlaces">
+<span class="sig-name descname"><span class="pre">_keepPlaces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trees</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">children</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">others</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fresh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gap</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout._keepPlaces" title="Link to this definition">¶</a></dt>
+<dd><p>Dynamically: where the trees go – each from where its root is – and the
+nodes in no tree. When a tree grows or shrinks across (eg: something’s
+added to it, or taken out), what’s after it across, and alongside it (the
+trees and the nodes in no tree), moves along by as much: so things open up,
+and close up. (By the most, of the trees before it, if there’s more than
+one.) A tree just dropped (see <em>fresh</em>) is taken to have been just its
+root, there: room is made for the rest. Then anything that would be on
+(or within <em>gap</em> of) a node already placed – trees in order across, then
+the nodes in no tree – is pushed further across, past it; but a tree just
+dropped goes to the nearest clear place, either way. Node by node, not by
+the trees’ boxes, so a tree can be dropped in a gap in another.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>trees</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em>) – The trees, laid out on their own (see <em>treePositions()</em>), by root.</p></li>
+<li><p><strong>children</strong> (<em>dict</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>list</em><em>[</em><em>list</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>]</em><em>]</em><em>]</em>) – As for <em>treePositions()</em>.</p></li>
+<li><p><strong>rel</strong> (<em>dict</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>) – Where <em>treePositions()</em> put each node, in its own tree.</p></li>
+<li><p><strong>others</strong> (<em>list</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>]</em>) – The nodes in no tree.</p></li>
+<li><p><strong>fresh</strong> (<em>set</em><em>[</em><em>int</em><em>]</em>) – The ids of the trees’ roots just dropped.</p></li>
+<li><p><strong>gap</strong> (<em>float</em>) – The space kept between nodes of different trees (and those in no tree).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Where they go (their top left): those that move.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, tuple[float, float]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout.targets">
+<span class="sig-name descname"><span class="pre">targets</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout.targets" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Where to move things to arrange the view (their top left
+corners): only what’s to move. None, by default.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, tuple[float, float]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout.arranged">
+<span class="sig-name descname"><span class="pre">arranged</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cmd</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout.arranged" title="Link to this definition">¶</a></dt>
+<dd><p>If the view’s dynamic layout is a tree layout, the static one starts it
+afresh: its pins are let go (see <em>adjust()</em>), and what it knows is what
+this arranges. (Undone with <em>cmd</em>.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cmd</strong> (<a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutMoves" title="sn.view.graphics.layout.LayoutMoves"><em>LayoutMoves</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout.placeNode">
+<span class="sig-name descname"><span class="pre">placeNode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">referenceNode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Direction.UNSPECIFIED</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout.placeNode" title="Link to this definition">¶</a></dt>
+<dd><p>A tree’s node (or tree relation’s label) is put in place by <em>adjust()</em>,
+after the command that made or moved it: it stays where it is for now.
+Anything else goes in the nearest free place (see <em>FindFree</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>node</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p></li>
+<li><p><strong>referenceNode</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>direction</strong> (<a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.Direction" title="sn.view.graphics.layout.Direction"><em>Direction</em></a>)</p></li>
+<li><p><strong>loc</strong> (<a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.utils.html#util.utils.Point" title="(in pythonUtils)"><em>Point</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.utils.html#util.utils.Point" title="(in pythonUtils)"><em>Point</em></a> | tuple[float, float]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout._drops">
+<span class="sig-name descname"><span class="pre">_drops</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">command</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout._drops" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>command</strong> (<a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.command.html#util.command.Command" title="(in pythonUtils)"><em>Command</em></a>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>What the user dragged and dropped in <em>command</em> (see <em>SNGView._Move</em>’s _drag).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout._adjustment">
+<span class="sig-name descname"><span class="pre">_adjustment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pinned</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout._adjustment" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – What the undo menu calls it.</p></li>
+<li><p><strong>pinned</strong> (<em>set</em><em>[</em><em>int</em><em>]</em>) – Ids of nodes to pin now (see <em>pins</em>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The moves that keep things arranged (see <em>compute()</em>), with
+<em>pinned</em> pinned, the relations that are no longer tree relations made to
+float, and what it knows updated: not done yet.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutMoves" title="sn.view.graphics.layout.LayoutMoves"><em>LayoutMoves</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout.activate">
+<span class="sig-name descname"><span class="pre">activate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout.activate" title="Link to this definition">¶</a></dt>
+<dd><p>Made the view’s dynamic layout: arrange things as it keeps them, as one
+undoable command (if anything moves).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout.adjust">
+<span class="sig-name descname"><span class="pre">adjust</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">command</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout.adjust" title="Link to this definition">¶</a></dt>
+<dd><p>After a command: lay the trees out again (see <em>compute()</em>). A tree node
+the user dropped (see <em>SNGView._Move</em>) that has a parent is pinned where
+it’s dropped, as the root of a tree of its own (with its subtree); a
+node in no tree the user dropped is pinned there too, so it’s left
+there, not put in rows or near what it’s related to (see <em>others</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>command</strong> (<a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.command.html#util.command.Command" title="(in pythonUtils)"><em>Command</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutMoves" title="sn.view.graphics.layout.LayoutMoves"><em>LayoutMoves</em></a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout.extraState">
+<span class="sig-name descname"><span class="pre">extraState</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout.extraState" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Anything else it keeps that’s saved with the view (see <em>state()</em>):
+none, by default. (Values mustn’t contain “;” or “=”.)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict[str, str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout.restoreExtraState">
+<span class="sig-name descname"><span class="pre">restoreExtraState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout.restoreExtraState" title="Link to this definition">¶</a></dt>
+<dd><p>Put back what <em>extraState()</em> saved.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>state</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – What was saved (and the parameters).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="sn.view.graphics.viewBase.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">sn.view.graphics.viewBase module</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="sn.view.graphics.sourceWindow.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">sn.view.graphics.sourceWindow module</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2023-2026, Rob Kremer
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">sn.view.graphics.treeLayout module</a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.DIRECTIONS"><code class="docutils literal notranslate"><span class="pre">DIRECTIONS</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.OTHERS"><code class="docutils literal notranslate"><span class="pre">OTHERS</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.NEAR_BIAS"><code class="docutils literal notranslate"><span class="pre">NEAR_BIAS</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.NEAR_STEP"><code class="docutils literal notranslate"><span class="pre">NEAR_STEP</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.NEAR_MAX_RINGS"><code class="docutils literal notranslate"><span class="pre">NEAR_MAX_RINGS</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.LABEL_GAP"><code class="docutils literal notranslate"><span class="pre">LABEL_GAP</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.MIN_LINE"><code class="docutils literal notranslate"><span class="pre">MIN_LINE</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.MIN_LEVEL_GAP"><code class="docutils literal notranslate"><span class="pre">MIN_LEVEL_GAP</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.MIN_ROW_LENGTH"><code class="docutils literal notranslate"><span class="pre">MIN_ROW_LENGTH</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout._flip"><code class="docutils literal notranslate"><span class="pre">_flip()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout._vertical"><code class="docutils literal notranslate"><span class="pre">_vertical()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.treePositions"><code class="docutils literal notranslate"><span class="pre">treePositions()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout._record"><code class="docutils literal notranslate"><span class="pre">_record()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout._packed"><code class="docutils literal notranslate"><span class="pre">_packed()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.treeMembers"><code class="docutils literal notranslate"><span class="pre">treeMembers()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.nearestFree"><code class="docutils literal notranslate"><span class="pre">nearestFree()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.placeNear"><code class="docutils literal notranslate"><span class="pre">placeNear()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.isMember"><code class="docutils literal notranslate"><span class="pre">isMember()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.isLink"><code class="docutils literal notranslate"><span class="pre">isLink()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.Terminal"><code class="docutils literal notranslate"><span class="pre">Terminal</span></code></a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.Terminal.modelObject"><code class="docutils literal notranslate"><span class="pre">Terminal.modelObject</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.Terminal.__init__"><code class="docutils literal notranslate"><span class="pre">Terminal.__init__()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.upgradeRelation"><code class="docutils literal notranslate"><span class="pre">upgradeRelation()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.relationsParameter"><code class="docutils literal notranslate"><span class="pre">relationsParameter()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.RELATIONS_NOTE"><code class="docutils literal notranslate"><span class="pre">RELATIONS_NOTE</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout._overlaps"><code class="docutils literal notranslate"><span class="pre">_overlaps()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout"><code class="docutils literal notranslate"><span class="pre">TreeLayout</span></code></a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.NAME"><code class="docutils literal notranslate"><span class="pre">TreeLayout.NAME</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.CATEGORIES"><code class="docutils literal notranslate"><span class="pre">TreeLayout.CATEGORIES</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.PARAMETERS"><code class="docutils literal notranslate"><span class="pre">TreeLayout.PARAMETERS</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.__init__"><code class="docutils literal notranslate"><span class="pre">TreeLayout.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout._roles"><code class="docutils literal notranslate"><span class="pre">TreeLayout._roles</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.pins"><code class="docutils literal notranslate"><span class="pre">TreeLayout.pins</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.known"><code class="docutils literal notranslate"><span class="pre">TreeLayout.known</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout._fallback"><code class="docutils literal notranslate"><span class="pre">TreeLayout._fallback</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.upgradeParameters"><code class="docutils literal notranslate"><span class="pre">TreeLayout.upgradeParameters()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.roles"><code class="docutils literal notranslate"><span class="pre">TreeLayout.roles</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout._role"><code class="docutils literal notranslate"><span class="pre">TreeLayout._role()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout._order"><code class="docutils literal notranslate"><span class="pre">TreeLayout._order()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.terminals"><code class="docutils literal notranslate"><span class="pre">TreeLayout.terminals()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.related"><code class="docutils literal notranslate"><span class="pre">TreeLayout.related()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.shaped"><code class="docutils literal notranslate"><span class="pre">TreeLayout.shaped()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout._isEdge"><code class="docutils literal notranslate"><span class="pre">TreeLayout._isEdge()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout._group"><code class="docutils literal notranslate"><span class="pre">TreeLayout._group()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.scope"><code class="docutils literal notranslate"><span class="pre">TreeLayout.scope()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout._ends"><code class="docutils literal notranslate"><span class="pre">TreeLayout._ends()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.structure"><code class="docutils literal notranslate"><span class="pre">TreeLayout.structure()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.levelGaps"><code class="docutils literal notranslate"><span class="pre">TreeLayout.levelGaps()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout._abc_impl"><code class="docutils literal notranslate"><span class="pre">TreeLayout._abc_impl</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout._labelTargets"><code class="docutils literal notranslate"><span class="pre">TreeLayout._labelTargets()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.compute"><code class="docutils literal notranslate"><span class="pre">TreeLayout.compute()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout._rows"><code class="docutils literal notranslate"><span class="pre">TreeLayout._rows()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout._placeNear"><code class="docutils literal notranslate"><span class="pre">TreeLayout._placeNear()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout._keepPlaces"><code class="docutils literal notranslate"><span class="pre">TreeLayout._keepPlaces()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.targets"><code class="docutils literal notranslate"><span class="pre">TreeLayout.targets()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.arranged"><code class="docutils literal notranslate"><span class="pre">TreeLayout.arranged()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.placeNode"><code class="docutils literal notranslate"><span class="pre">TreeLayout.placeNode()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout._drops"><code class="docutils literal notranslate"><span class="pre">TreeLayout._drops()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout._adjustment"><code class="docutils literal notranslate"><span class="pre">TreeLayout._adjustment()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.activate"><code class="docutils literal notranslate"><span class="pre">TreeLayout.activate()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.adjust"><code class="docutils literal notranslate"><span class="pre">TreeLayout.adjust()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.extraState"><code class="docutils literal notranslate"><span class="pre">TreeLayout.extraState()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.restoreExtraState"><code class="docutils literal notranslate"><span class="pre">TreeLayout.restoreExtraState()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

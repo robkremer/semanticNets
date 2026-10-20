@@ -1,0 +1,1528 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="sn.view.graphics.imageExport module" href="sn.view.graphics.imageExport.html"><link rel="prev" title="sn.view.graphics.expandDialog module" href="sn.view.graphics.expandDialog.html">
+        <link rel="prefetch" href="../_static/sn-logo.png" as="image">
+
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>sn.view.graphics.guiApp module - Semantic Nets 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">Semantic Nets 1.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">Semantic Nets 1.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user/index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user/concepts.html">Concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/gettingStarted.html">Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/tutorial.html">Worked Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/editing.html">Editing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/contexts.html">Contexts: Rules, Definitions, Queries, Constraints and Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/reasoning.html">Reasoning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/viewing.html">Viewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/layouts.html">Arranging a View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/animation.html">Animation Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/files.html">Files and Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/terminal.html">The Terminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/exampleApps.html">Plugins</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developer/index.html">Developer Guide</a><input aria-label="Toggle navigation of Developer Guide" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html">Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/model.html">The Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/reasoner.html">The Reasoner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/view.html">The Graphical View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/layout.html">Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/extending.html">Building on Semantic Nets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/conventions.html">Conventions and Testing</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="sn.html">sn package</a><input aria-label="Toggle navigation of sn package" checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="sn.controller.html">sn.controller package</a><input aria-label="Toggle navigation of sn.controller package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.controller.modelInterface.html">sn.controller.modelInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current has-children"><a class="reference internal" href="sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" checked="" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3 current has-children"><a class="reference internal" href="sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" checked="" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html">sn.view.graphics.connectors module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.expandDialog.html">sn.view.graphics.expandDialog module</a></li>
+<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">sn.view.graphics.guiApp module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html">sn.view.graphics.imageExport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html">sn.view.graphics.labels module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html">sn.view.graphics.layout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutDialog.html">sn.view.graphics.layoutDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutPanel.html">sn.view.graphics.layoutPanel module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.progress.html">sn.view.graphics.progress module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.reasoningToolbar.html">sn.view.graphics.reasoningToolbar module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.relationTable.html">sn.view.graphics.relationTable module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.replaceModelDialog.html">sn.view.graphics.replaceModelDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.searchDialog.html">sn.view.graphics.searchDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.shapes.html">sn.view.graphics.shapes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sngContext.html">sn.view.graphics.sngContext module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sngView.html">sn.view.graphics.sngView module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sourceWindow.html">sn.view.graphics.sourceWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html">sn.view.graphics.treeLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewBase.html">sn.view.graphics.viewBase module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewCommands.html">sn.view.graphics.viewCommands module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewContainment.html">sn.view.graphics.viewContainment module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewEditing.html">sn.view.graphics.viewEditing module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewFiles.html">sn.view.graphics.viewFiles module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewInput.html">sn.view.graphics.viewInput module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewLayouts.html">sn.view.graphics.viewLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewReasoning.html">sn.view.graphics.viewReasoning module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewViewport.html">sn.view.graphics.viewViewport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewVisibility.html">sn.view.graphics.viewVisibility module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.visibilityDialog.html">sn.view.graphics.visibilityDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vnodes.html">sn.view.graphics.vnodes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vobjects.html">sn.view.graphics.vobjects module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vrelations.html">sn.view.graphics.vrelations module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.textUserInterface.html">sn.view.textUserInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.__main__.html">sn.__main__ module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html">sn.hooks module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html">sn.plugins module</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../plugins/index.html">The plugins</a><input aria-label="Toggle navigation of The plugins" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.XMLreader.html">snplugins.XMLreader package</a><input aria-label="Toggle navigation of snplugins.XMLreader package" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.reader.html">snplugins.XMLreader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.schema.html">snplugins.XMLreader.schema module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.view.html">snplugins.XMLreader.view module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.pythonParser.html">snplugins.pythonParser package</a><input aria-label="Toggle navigation of snplugins.pythonParser package" class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.dialog.html">snplugins.pythonParser.dialog module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.hooks.html">snplugins.pythonParser.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.parser.html">snplugins.pythonParser.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/dev/sn.view.graphics.guiApp.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="module-sn.view.graphics.guiApp">
+<span id="sn-view-graphics-guiapp-module"></span><h1>sn.view.graphics.guiApp module<a class="headerlink" href="#module-sn.view.graphics.guiApp" title="Link to this heading">¶</a></h1>
+<div class="graphviz"><object data="../_images/inheritance-0f73902e32d0e989c3d74115ca50bc9db2c17500.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of Application, AppWindow, AppPanedWidget, SNGViewFrame, sn.view.graphics.sngView.SNGView, sn.view.graphics.sngContext.SNGContext, sn.model.model.Model</p></object></div>
+<figure class="align-center" id="id1">
+<a class="reference internal image-reference" href="../_images/guiApp.png"><img alt="Relationship diagram for the guiApp classes." src="../_images/guiApp.png" style="width: 800px;" />
+</a>
+<figcaption>
+<p><span class="caption-text">Relationship diagram for the guiApp classes.</span><a class="headerlink" href="#id1" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p>Created on Aug 18, 2026</p>
+<p>&#64;author: robkremer</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.UnexpectedObjectInFile">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.guiApp.</span></span><span class="sig-name descname"><span class="pre">UnexpectedObjectInFile</span></span><a class="headerlink" href="#sn.view.graphics.guiApp.UnexpectedObjectInFile" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.guiApp.</span></span><span class="sig-name descname"><span class="pre">Application</span></span><a class="headerlink" href="#sn.view.graphics.guiApp.Application" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Tk</span></code></p>
+<p>The invisible root Tk window and manages one or more Toplevel windows.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>appName</strong> (<em>str</em>) – Name used for the hidden root window’s title (mostly cosmetic,
+since it’s never shown).</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.current">
+<span class="sig-name descname"><span class="pre">current</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#sn.view.graphics.guiApp.Application" title="sn.view.graphics.guiApp.Application"><span class="pre">Application</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.current" title="Link to this definition">¶</a></dt>
+<dd><p>The application (there’s just the one).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Return a new top level widget on screen SCREENNAME. A new Tcl interpreter will
+be created. BASENAME will be used for the identification of the profile file (see
+readprofile).
+It is constructed from sys.argv[0] without extensions if None is given. CLASSNAME
+is the name of the widget class.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.directoryPane">
+<span class="sig-name descname"><span class="pre">directoryPane</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="sn.view.graphics.directoryWindow.html#sn.view.graphics.directoryWindow.DirectoryPane" title="sn.view.graphics.directoryWindow.DirectoryPane"><span class="pre">DirectoryPane</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.directoryPane" title="Link to this definition">¶</a></dt>
+<dd><p>The model directory, once it’s been shown: it fills this (the main) window (see <em>showDirectory()</em>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application._noOp">
+<span class="sig-name descname"><span class="pre">_noOp</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application._noOp" title="Link to this definition">¶</a></dt>
+<dd><p>Root window has no close button the user can reach, but guard anyway.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application._installSettingsMenu">
+<span class="sig-name descname"><span class="pre">_installSettingsMenu</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application._installSettingsMenu" title="Link to this definition">¶</a></dt>
+<dd><p>Wire up a Settings item under the app item in the menu bar.</p>
+<p>On macOS, Tk always shows an “Application menu” — the one named after
+the app, to the immediate right of the Apple logo — whether or not the
+app defines any menu of its own. That’s “the app item.” Its
+“Preferences…” entry is present but disabled/inert unless something
+registers the special Tcl command ‘tk::mac::ShowPreferences’; this does
+that registration, so choosing it (or its standard ⌘, shortcut) opens
+openSettings() below.</p>
+<p>On Windows/Linux, Tk has no equivalent automatic app menu, so this
+command is simply never invoked there — harmless, but it means Settings
+currently has no menu entry point on those platforms. Revisit with a
+real cross-platform Menu/menu bar if that’s ever needed.</p>
+<p>Called once, from __init__: there’s exactly one root/”app item” no
+matter how many AppWindows get opened, so this belongs here rather
+than being (re-)registered — and guarded against re-registration —
+from every window.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application._installQuitHandler">
+<span class="sig-name descname"><span class="pre">_installQuitHandler</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application._installQuitHandler" title="Link to this definition">¶</a></dt>
+<dd><p>Wire up the “Quit” item under the app item in the menu bar.</p>
+<p>Same macOS mechanism as <em>_installSettingsMenu()</em> above, but where
+“Preferences…” is inert until registered, “Quit &lt;AppName&gt;” already
+does something by default: Tk wires it to the Tcl procedure
+‘tk::mac::Quit’, whose default implementation calls Tcl’s own <em>exit</em>
+command directly. Since Tcl is embedded inside this same Python process
+(not the reverse), that tears the whole process down at the C level
+without ever going back through CPython’s normal shutdown sequence –
+which is the only thing that runs the <em>atexit</em> callbacks registered in
+<em>sn/__init__.py</em> (<em>saveAtExit()</em>, <em>savePrefsIfChanged()</em>). Registering our own
+handler here (see <em>onQuit()</em>) intercepts that default and runs the same
+cleanup explicitly before tearing down, instead of silently skipping it.</p>
+<p>Called once, from __init__, alongside _installSettingsMenu() – see its
+docstring for why this belongs here rather than being (re-)registered
+from every window.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.onOpenDocument">
+<span class="sig-name descname"><span class="pre">onOpenDocument</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">paths</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.onOpenDocument" title="Link to this definition">¶</a></dt>
+<dd><p>Handle files the Finder asks a packaged app to open (double-clicked,
+or dropped on its icon) – the macOS way of passing them, rather than the
+command line. Each opens in a window, as with <em>Open…</em>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>paths</strong> (<em>str</em>) – The files’ paths.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.onQuit">
+<span class="sig-name descname"><span class="pre">onQuit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.onQuit" title="Link to this definition">¶</a></dt>
+<dd><p>Handle the “Quit &lt;AppName&gt;” item in macOS’s automatic app menu.</p>
+<p>See <em>_installQuitHandler()</em> for why this override is necessary at all:
+without it, quitting via that menu item (or its Cmd+Q shortcut) bypasses
+Python’s normal interpreter shutdown entirely, so the <em>atexit</em>-registered
+<em>saveAtExit()</em>/<em>savePrefsIfChanged()</em> never run and unsaved models/views are
+silently lost. Call them explicitly here, then tear down.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application._installMenubar">
+<span class="sig-name descname"><span class="pre">_installMenubar</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application._installMenubar" title="Link to this definition">¶</a></dt>
+<dd><p>Builds the app menu bar.</p>
+<p>Creates the menu bar. Tk <em>will</em>
+keep auto-populating a cascade we create under one of its reserved
+names (“apple”, “window”, “help”), so recreate “window” and “help” here
+to get that native content back.</p>
+<p>Called once, from __init__, alongside _installSettingsMenu().</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The menu bar.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Menu</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.showHelp">
+<span class="sig-name descname"><span class="pre">showHelp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">page</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.showHelp" title="Link to this definition">¶</a></dt>
+<dd><p>Show a page of the documentation in the web browser: the copy bundled
+in a packaged app, or else the project’s built documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>page</strong> (<em>str</em>) – The page, relative to the documentation’s top, eg: “user/index.html”.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.openSettings">
+<span class="sig-name descname"><span class="pre">openSettings</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.openSettings" title="Link to this definition">¶</a></dt>
+<dd><p>Show the app-wide Settings dialog: an attribute editor on <em>sn.snPrefs</em>,
+applying the changes to it (saved when the program ends: see
+<em>sn.savePrefsIfChanged()</em>). Only the settings’ values are shown: their
+types and qualifiers are fixed, and their notes – documentation, from
+<em>sn.PREFS</em> – are their names’ tooltips.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.doOpen">
+<span class="sig-name descname"><span class="pre">doOpen</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.doOpen" title="Link to this definition">¶</a></dt>
+<dd><p>Respond to the “Open…” menu item.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.doOpenURL">
+<span class="sig-name descname"><span class="pre">doOpenURL</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.doOpenURL" title="Link to this definition">¶</a></dt>
+<dd><p>Respond to the “Open URL…” menu item: open a view, or a model in its
+default view, at a URL (eg: on the web: opened read-only – see
+<em>openEntry()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.doNew">
+<span class="sig-name descname"><span class="pre">doNew</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.doNew" title="Link to this definition">¶</a></dt>
+<dd><p>Respond to the “New…” menu item.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.openWindow">
+<span class="sig-name descname"><span class="pre">openWindow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">viewSpec</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.openWindow" title="Link to this definition">¶</a></dt>
+<dd><p>Create and show a new Toplevel window hosted under the invisible root.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>viewSpec</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a><em> | </em><a class="reference internal" href="sn.view.graphics.sngView.html#sn.view.graphics.sngView.SNGView" title="sn.view.graphics.sngView.SNGView"><em>SNGView</em></a><em> | </em><em>str</em>) – What to show: a model (in its view, beside it: read, or
+made), a view (eg: one just made, to be saved somewhere else: its own
+window), or a model’s or view’s file or URL.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The newly created Toplevel window.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tk.Toplevel | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.openViewOn">
+<span class="sig-name descname"><span class="pre">openViewOn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viewURL</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.openViewOn" title="Link to this definition">¶</a></dt>
+<dd><p>Open a window on <em>model</em>: its view saved at <em>viewURL</em> if there is one
+there (see <em>openWindow()</em>), or else a new view of it that’ll be saved
+there – eg: a model with no file of its own (the system model, sn), or one
+read from a copy (the base rules).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>) – The model.</p></li>
+<li><p><strong>viewURL</strong> (<em>str</em>) – Where its view is (or will be) saved.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The window.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Toplevel</em> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.DIRECTORY_PREF">
+<span class="sig-name descname"><span class="pre">DIRECTORY_PREF</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'.directory'</span></span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.DIRECTORY_PREF" title="Link to this definition">¶</a></dt>
+<dd><p>The model directory’s geometry, if it was shown when the app last quit
+(see <em>rememberOpenWindows()</em>); else “”. (Hidden from Settings: see
+<em>OPEN_WINDOWS_PREF</em>.)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.DIRECTORY_GEOMETRY">
+<span class="sig-name descname"><span class="pre">DIRECTORY_GEOMETRY</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'860x520+40+60'</span></span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.DIRECTORY_GEOMETRY" title="Link to this definition">¶</a></dt>
+<dd><p>Where the model directory’s first shown.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.PROGRESS_DELAY">
+<span class="sig-name descname"><span class="pre">PROGRESS_DELAY</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.5</span></span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.PROGRESS_DELAY" title="Link to this definition">¶</a></dt>
+<dd><p>Seconds a job (eg: opening a file) goes on before the directory’s shown, if it’s hidden, for its progress bar.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.directoryShown">
+<span class="sig-name descname"><span class="pre">directoryShown</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.directoryShown" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Whether the model directory is shown (see <em>showDirectory()</em>).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.showDirectory">
+<span class="sig-name descname"><span class="pre">showDirectory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometry</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.showDirectory" title="Link to this definition">¶</a></dt>
+<dd><p>Show (or hide) the model directory (see <em>DirectoryPane</em>): the models and
+views in the search path’s folders. It’s this, the app’s main window –
+hidden while it isn’t shown. (Window | Model Directory.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>geometry</strong> (<em>str</em><em> | </em><em>None</em>) – Its size and position, if not as it was.</p></li>
+<li><p><strong>show</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application._onDirectoryClose">
+<span class="sig-name descname"><span class="pre">_onDirectoryClose</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application._onDirectoryClose" title="Link to this definition">¶</a></dt>
+<dd><p>The model directory’s close button: hide it – and if there are no other
+windows, quit, as closing the last window does.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application._refreshDirectory">
+<span class="sig-name descname"><span class="pre">_refreshDirectory</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application._refreshDirectory" title="Link to this definition">¶</a></dt>
+<dd><p>Show what’s open, and what isn’t, in the model directory (if it’s been shown).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.noteFile">
+<span class="sig-name descname"><span class="pre">noteFile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">urls</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.noteFile" title="Link to this definition">¶</a></dt>
+<dd><p>Models or views at <em>urls</em> have been opened, made or saved: add their
+folders to the search path (if they aren’t in it), and show them in the
+model directory as they are now.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>urls</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.openEntry">
+<span class="sig-name descname"><span class="pre">openEntry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">readOnly</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.openEntry" title="Link to this definition">¶</a></dt>
+<dd><p>Open a model directory entry: a view, or a model in its default view (see
+<em>openWindow()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>entry</strong> (<a class="reference internal" href="sn.model.directory.html#sn.model.directory.Entry" title="sn.model.directory.Entry"><em>sn.model.directory.Entry</em></a>)</p></li>
+<li><p><strong>readOnly</strong> (<em>bool</em>) – Whether to write-lock its model, so it can’t be changed
+(nor saved). Not if the model’s open already, and not locked: it’s
+opened as it is then (and the user’s told).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Its window.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Toplevel</em> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application._onProgress">
+<span class="sig-name descname"><span class="pre">_onProgress</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">done</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">total</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application._onProgress" title="Link to this definition">¶</a></dt>
+<dd><p>Show how a job’s going (see <em>progress</em>) in the model directory – showing
+it, if it’s hidden, once the job’s gone on for <em>PROGRESS_DELAY</em> seconds
+(and hiding it again when it’s done).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>label</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>done</strong> (<em>int</em>)</p></li>
+<li><p><strong>total</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application._hideAfterProgress">
+<span class="sig-name descname"><span class="pre">_hideAfterProgress</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application._hideAfterProgress" title="Link to this definition">¶</a></dt>
+<dd><p>Hide the model directory, if it was shown just for a job’s progress (see <em>_onProgress()</em>), and no job’s under way now.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.RECENT_PREF">
+<span class="sig-name descname"><span class="pre">RECENT_PREF</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'.recentFiles'</span></span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.RECENT_PREF" title="Link to this definition">¶</a></dt>
+<dd><p>The preference listing the views opened most recently, most recent first
+(see <em>noteRecent()</em>). (Hidden from Settings: see <em>OPEN_WINDOWS_PREF</em>.)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.RECENT_KEPT">
+<span class="sig-name descname"><span class="pre">RECENT_KEPT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">50</span></span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.RECENT_KEPT" title="Link to this definition">¶</a></dt>
+<dd><p>How many recent views are remembered, whatever “gui/recentFiles” (how many are listed) is.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.recentFiles">
+<span class="sig-name descname"><span class="pre">recentFiles</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.recentFiles" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The views opened most recently, most recent first: each
+{“view”: its URL, “model”: its model’s URL}.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[dict[str, str]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application._setRecentFiles">
+<span class="sig-name descname"><span class="pre">_setRecentFiles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entries</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application._setRecentFiles" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>entries</strong> (<em>list</em><em>[</em><em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>]</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.noteRecent">
+<span class="sig-name descname"><span class="pre">noteRecent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">viewURL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modelURL</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.noteRecent" title="Link to this definition">¶</a></dt>
+<dd><p>Put a view (and its model) at the top of the recently opened ones (see
+<em>recentFiles()</em>, and File | Open Recent).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>viewURL</strong> (<em>str</em>)</p></li>
+<li><p><strong>modelURL</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.openRecent">
+<span class="sig-name descname"><span class="pre">openRecent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.openRecent" title="Link to this definition">¶</a></dt>
+<dd><p>Open a recently opened view (File | Open Recent): its view, if it’s been
+saved; else its model (with its default view). If neither can be found any
+more, say so, and take it off the list.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>entry</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – One of <em>recentFiles()</em>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application._fillRecentMenu">
+<span class="sig-name descname"><span class="pre">_fillRecentMenu</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application._fillRecentMenu" title="Link to this definition">¶</a></dt>
+<dd><p>(Re)fill the File | Open Recent menu from <em>recentFiles()</em>: as many as the
+“gui/recentFiles” preference says, each named by its file (and, if two have
+the same name, its folder), then “Clear Menu”.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.OPEN_WINDOWS_PREF">
+<span class="sig-name descname"><span class="pre">OPEN_WINDOWS_PREF</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'.openWindows'</span></span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.OPEN_WINDOWS_PREF" title="Link to this definition">¶</a></dt>
+<dd><p>The preference recording the windows open when the app last quit (see
+<em>rememberOpenWindows()</em>). (Its name starts with “.”, so the Settings dialog
+doesn’t show it: it isn’t for the user to edit.)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.rememberOpenWindows">
+<span class="sig-name descname"><span class="pre">rememberOpenWindows</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.rememberOpenWindows" title="Link to this definition">¶</a></dt>
+<dd><p>Record the open windows – each one’s view, its model and its size and
+position – in the preferences, for <em>reopenWindows()</em> the next time the app
+starts. (When packaged as a .app, the app is normally started with no
+files to open, so this is how it comes back the way it was left.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.reopenWindows">
+<span class="sig-name descname"><span class="pre">reopenWindows</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.reopenWindows" title="Link to this definition">¶</a></dt>
+<dd><p>Reopen the windows recorded by <em>rememberOpenWindows()</em>, in the same size
+and position. A view that was never saved opens as its model’s default
+view; one whose files have gone is skipped (with a message). The views
+open as they were last saved – unsaved changes, and the undo history,
+are gone.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The number of windows reopened.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.startUp">
+<span class="sig-name descname"><span class="pre">startUp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">files</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.startUp" title="Link to this definition">¶</a></dt>
+<dd><p>Open a window on each of <em>files</em> (views, .snv, or models, .snm); with none,
+reopen the windows open when the app last quit (see <em>reopenWindows()</em>) –
+and the model directory, if it was shown then – and if there were none,
+show the model directory (see <em>showDirectory()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>files</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – Files named on the command line.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.loadPlugins">
+<span class="sig-name descname"><span class="pre">loadPlugins</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.loadPlugins" title="Link to this definition">¶</a></dt>
+<dd><p>Install the plugins that come with the program (if they’re missing, or
+older), and load the plugins (see <em>sn.plugins</em>): they add to the menu bar.
+Done on start-up (see <em>startUp()</em>), not when an Application’s made, so
+that a script (eg: a test) that makes one gets the editor without them.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.revealPlugins">
+<span class="sig-name descname"><span class="pre">revealPlugins</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.revealPlugins" title="Link to this definition">¶</a></dt>
+<dd><p>The Help menu’s <em>Reveal Plugins Folder</em>: open the folder the plugins are
+installed in (see <em>sn.plugins.PLUGINS_FOLDER</em>) in the Finder – made, if
+it isn’t there yet. (A plugin added or changed there is loaded when the
+editor next starts.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.EXAMPLES_PREF">
+<span class="sig-name descname"><span class="pre">EXAMPLES_PREF</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'.examplesInstalled'</span></span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.EXAMPLES_PREF" title="Link to this definition">¶</a></dt>
+<dd><p>True once the example models have been installed (see <em>installExamples()</em>): it’s only done once. (Hidden from Settings: see <em>OPEN_WINDOWS_PREF</em>.)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.EXAMPLES_FOLDER">
+<span class="sig-name descname"><span class="pre">EXAMPLES_FOLDER</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'~/Documents/Semantic</span> <span class="pre">Nets</span> <span class="pre">Examples'</span></span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.EXAMPLES_FOLDER" title="Link to this definition">¶</a></dt>
+<dd><p>Where <em>installExamples()</em> puts the example models.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.installExamples">
+<span class="sig-name descname"><span class="pre">installExamples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">replace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.installExamples" title="Link to this definition">¶</a></dt>
+<dd><p>Copy the example models that come with the app into <em>EXAMPLES_FOLDER</em>,
+and open their views: on the first launch (see <em>startUp()</em>), or when asked
+to (see <em>onInstallExamples()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>replace</strong> (<em>bool</em>) – Whether to replace copies already there. If not (as on
+the first launch), an existing folder is left as it is.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True iff any were opened.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.onInstallExamples">
+<span class="sig-name descname"><span class="pre">onInstallExamples</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.onInstallExamples" title="Link to this definition">¶</a></dt>
+<dd><p>The Help menu’s <em>Install Example Models</em>: put fresh copies of the
+example models that come with this version of the app in <em>EXAMPLES_FOLDER</em>
+– replacing any copies there (once the user agrees: changes made to them
+are lost) – and open them. Their windows are closed first, and the models
+forgotten, so the new files are read afresh. (Any other files in the folder
+are left alone.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.closeModel">
+<span class="sig-name descname"><span class="pre">closeModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">askToSave</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quitIfNone</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.closeModel" title="Link to this definition">¶</a></dt>
+<dd><p>The File menu’s <em>Close model</em>: close every window on <em>model</em> (offering
+to save each changed view, as closing them by hand does), offer to save the
+model if it’s changed, and forget it – so opening it again reads the file
+afresh. If that was the last window, the app quits, as it does when the
+last window is closed by hand.</p>
+<p>A model that other loaded models build on (eg: one of their types isa one
+of its) can’t be closed: they’d be left pointing at it. Nothing is changed
+then.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>) – The model.</p></li>
+<li><p><strong>askToSave</strong> (<em>bool</em>) – Whether to offer to save the model and its changed
+views. False when they’re being replaced (see <em>replacingModel()</em>).</p></li>
+<li><p><strong>quitIfNone</strong> (<em>bool</em>) – Whether to quit if no window is left open. False when
+another is about to be opened (see <em>replacingModel()</em>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether it was closed.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.replacingModel">
+<span class="sig-name descname"><span class="pre">replacingModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.replacingModel" title="Link to this definition">¶</a></dt>
+<dd><p>Before a model’s file is made afresh, in place of the one that’s there
+(eg: by a plugin, once the user’s agreed to replace it): if the model at
+<em>path</em> is in memory – eg: its window is open – close its windows, without
+offering to save them (they’re being replaced), and forget it. Otherwise
+<em>Model(path)</em> would hand back that model, with all it had, and what’s made
+would be added to it – and its open views told of each new object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) – The model’s file (or URL).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>False if it can’t be forgotten (other models use it: see
+<em>closeModel()</em>), and so mustn’t be replaced; else True.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.closeAllWindows">
+<span class="sig-name descname"><span class="pre">closeAllWindows</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.closeAllWindows" title="Link to this definition">¶</a></dt>
+<dd><p>Close every hosted window via <em>_closeWindow()</em>, so each view gets
+exactly the same save check (and clean-up) on quitting as it would if
+the user closed its window individually.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application._closeWindowOf">
+<span class="sig-name descname"><span class="pre">_closeWindowOf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">window</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application._closeWindowOf" title="Link to this definition">¶</a></dt>
+<dd><p>Close <em>window</em> (its close button: see <em>AppWindow</em>), whatever it’s
+filed under in <em>windows</em> – which needn’t be the URL it was made with
+(eg: a copied file’s view is filed under where it is now, or a view saved
+as another file). One that isn’t filed at all is still closed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>window</strong> (<a class="reference internal" href="#sn.view.graphics.guiApp.AppWindow" title="sn.view.graphics.guiApp.AppWindow"><em>AppWindow</em></a>) – The window.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application._closeWindow">
+<span class="sig-name descname"><span class="pre">_closeWindow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quitIfLast</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">askToSave</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application._closeWindow" title="Link to this definition">¶</a></dt>
+<dd><p>Close a specific hosted window and check whether the app should exit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – The window’s key, as passed to openWindow.</p></li>
+<li><p><strong>quitIfLast</strong> (<em>bool</em>) – Quit the application if this was the last window.
+False when the caller is already quitting (see <em>closeAllWindows()</em>).</p></li>
+<li><p><strong>askToSave</strong> (<em>bool</em>) – Whether to offer to save the window’s view if it’s
+changed. False when the user has already agreed to lose the changes
+(see <em>onInstallExamples()</em>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.quit">
+<span class="sig-name descname"><span class="pre">quit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.quit" title="Link to this definition">¶</a></dt>
+<dd><p>Tear down the entire application, including the hidden root.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.run" title="Link to this definition">¶</a></dt>
+<dd><p>Start the Tk event loop.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp._filePath">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.guiApp.</span></span><span class="sig-name descname"><span class="pre">_filePath</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp._filePath" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>url</strong> (<em>str</em>) – A file’s URL (eg: “<a class="reference external" href="file:///Users/me/family.snv">file:///Users/me/family.snv</a>”).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Its path.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp._fileName">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.guiApp.</span></span><span class="sig-name descname"><span class="pre">_fileName</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp._fileName" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>url</strong> (<em>str</em>) – A file’s URL.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Its name (eg: “family.snv”).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.AppWindow">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.guiApp.</span></span><span class="sig-name descname"><span class="pre">AppWindow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tkdottk</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viewURL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometry</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'300x400+20+20'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.AppWindow" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Toplevel</span></code></p>
+<p>A top-level SN app window that also acts as the holder of the SNContext
+Model controller.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tkdottk</strong> (<em>tk.Tk</em>)</p></li>
+<li><p><strong>viewURL</strong> (<em>str</em>)</p></li>
+<li><p><strong>geometry</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.AppWindow.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tkdottk</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viewURL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometry</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'300x400+20+20'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.AppWindow.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>A window for the view at <em>viewURL</em>: titled with it, at <em>geometry</em>; closing it closes the view’s window
+(see <em>Application._closeWindowOf()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tkdottk</strong> (<em>Tk</em>)</p></li>
+<li><p><strong>viewURL</strong> (<em>str</em>)</p></li>
+<li><p><strong>geometry</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.AppWindow.view">
+<span class="sig-name descname"><span class="pre">view</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="sn.view.graphics.sngView.html#sn.view.graphics.sngView.SNGView" title="sn.view.graphics.sngView.SNGView"><span class="pre">SNGView</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.guiApp.AppWindow.view" title="Link to this definition">¶</a></dt>
+<dd><p>The SNGView that owns this window – set by SNGView.__init__() right after it constructs this AppWindow, so this window’s FocusIn/FocusOut handling (see _onWindowFocusIn()/_onWindowFocusOut()) can dispatch straight to the SNGView that should react to it.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.AppWindow._bindFocusTracking">
+<span class="sig-name descname"><span class="pre">_bindFocusTracking</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">widget</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.AppWindow._bindFocusTracking" title="Link to this definition">¶</a></dt>
+<dd><p>Recursively bind &lt;FocusIn&gt;/&lt;FocusOut&gt; on this widget and all its
+descendants so this <em>AppWindow</em> notices when the user’s focus enters or
+genuinely leaves it, wherever within it that focus lands.</p>
+<p>Binding only on <code class="docutils literal notranslate"><span class="pre">self</span></code> (the <em>AppWindow</em>/<em>Toplevel</em> itself) is not
+enough – Tk’s FocusIn/FocusOut events fire on the specific widget that
+gained/lost focus, not on its ancestors, so focusing e.g. a canvas or
+entry deep inside this window would never reach a binding placed only
+on the top-level widget. Same shape of problem as (and modeled on)
+<em>_bindFocusRouting()</em> above.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>widget</strong> (<em>tk.Widget</em>) – The widget (and its children, recursively) to bind.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.AppWindow._onWindowFocusIn">
+<span class="sig-name descname"><span class="pre">_onWindowFocusIn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.AppWindow._onWindowFocusIn" title="Link to this definition">¶</a></dt>
+<dd><p>Some widget inside this window just gained focus – let this
+window’s <em>SNGView</em> (if any) know it’s now the focused one.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> – The Tk event.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.AppWindow._onWindowFocusOut">
+<span class="sig-name descname"><span class="pre">_onWindowFocusOut</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.AppWindow._onWindowFocusOut" title="Link to this definition">¶</a></dt>
+<dd><p>Some widget inside this window just lost focus.</p>
+<p>This alone doesn’t mean the <em>window</em> was deactivated – moving focus
+between two widgets in the SAME window (e.g. tabbing fields) fires a
+FocusOut on the old one too. Defer the real check to <em>_checkStillActive()</em>
+via <em>after_idle()</em>, by which point the new focus owner (if any) has
+already been set, so <em>self.focus_get()</em> reliably reflects where focus
+actually ended up.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> – The Tk event.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.AppWindow._checkStillActive">
+<span class="sig-name descname"><span class="pre">_checkStillActive</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.AppWindow._checkStillActive" title="Link to this definition">¶</a></dt>
+<dd><p>Let this window’s <em>SNGView</em> (if any) know focus has genuinely moved
+outside this window (as opposed to just moving between two of its own
+descendant widgets – see <em>_onWindowFocusOut()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.AppWindow._bindFocusRouting">
+<span class="sig-name descname"><span class="pre">_bindFocusRouting</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">widget</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">terminal</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.AppWindow._bindFocusRouting" title="Link to this definition">¶</a></dt>
+<dd><p>Recursively bind &lt;FocusIn&gt;/&lt;FocusOut&gt; on this widget and all its
+descendants so that focusing ANY widget in the window (terminal or
+graphics editor) sets this window’s terminal as the default stdio/input()
+routing target.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>widget</strong> (<em>tk.Widget</em>) – The widget (and its children, recursively) to bind.</p></li>
+<li><p><strong>terminal</strong> (<a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.SNTerminalWidget" title="sn.view.textUserInterface.SNTerminalWidget"><em>SNTerminalWidget</em></a>) – This window’s terminal — the routing target.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.AppPanedWidget">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.guiApp.</span></span><span class="sig-name descname"><span class="pre">AppPanedWidget</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.AppPanedWidget" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PanedWindow</span></code></p>
+<p>A (tkinter.PanedWindow) with two panes: above, and application widget according the
+<em>frame</em> parameter of the constructor, and below, a disabled text widget which is used
+by this class’s various service methods to display messages such as logging info:</p>
+<blockquote>
+<div><div class="table-wrapper docutils container">
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p>AppPanedWidget (graphics)</p></td>
+</tr>
+<tr class="row-even"><td><p>SNTerminalWidget (text)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parent</strong> (<a class="reference internal" href="#sn.view.graphics.guiApp.AppWindow" title="sn.view.graphics.guiApp.AppWindow"><em>AppWindow</em></a>)</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.AppPanedWidget.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.AppPanedWidget.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parent</strong> (<a class="reference internal" href="#sn.view.graphics.guiApp.AppWindow" title="sn.view.graphics.guiApp.AppWindow"><em>AppWindow</em></a>) – The parent <em>AppWindow</em>.</p></li>
+<li><p><strong>fixedAppFrame</strong> – [bool, default:False] Specifies whether the application <em>frame</em>
+is fixed-size or stretchable.</p></li>
+<li><p><strong>commandParser</strong> – [CommandParser , default: an new <em>TygraCommandParser()</em> ] User input
+from the <em>commmandEntryWidget</em> is sent to this parser.</p></li>
+<li><p><strong>**kwargs</strong> – <p>An arguments <em>dict</em> to passed to the <em>tk.PanedWindow</em> constructor.
+The following arguments are defaulted if not present:</p>
+<blockquote>
+<div><ul>
+<li><p>”orient” default = tk.VERTICAL</p></li>
+<li><p>”showhandle” default = False</p></li>
+<li><p>”sashwidth” default = 3</p></li>
+<li><p>”bd” default = 4</p></li>
+<li><p>”bg” default = “grey”</p></li>
+<li><p>”borderwidth” default = 0</p></li>
+</ul>
+</div></blockquote>
+</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.AppPanedWidget.canvasFrame">
+<span class="sig-name descname"><span class="pre">canvasFrame</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#sn.view.graphics.guiApp.SNGViewFrame" title="sn.view.graphics.guiApp.SNGViewFrame"><span class="pre">SNGViewFrame</span></a></span><a class="headerlink" href="#sn.view.graphics.guiApp.AppPanedWidget.canvasFrame" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.SNGViewFrame">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.guiApp.</span></span><span class="sig-name descname"><span class="pre">SNGViewFrame</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.SNGViewFrame" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parent</strong> (<a class="reference internal" href="#sn.view.graphics.guiApp.AppPanedWidget" title="sn.view.graphics.guiApp.AppPanedWidget"><em>AppPanedWidget</em></a>)</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.SNGViewFrame.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.SNGViewFrame.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parent</strong> (<a class="reference internal" href="#sn.view.graphics.guiApp.AppPanedWidget" title="sn.view.graphics.guiApp.AppPanedWidget"><em>AppPanedWidget</em></a>) – The master Widget.</p></li>
+<li><p><strong>kwargs</strong> – Passed to <em>Canvas</em>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.SNGViewFrame.terminal">
+<span class="sig-name descname"><span class="pre">terminal</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.terminal.html#util.terminal.TerminalWidget" title="(in pythonUtils)"><span class="pre">TerminalWidget</span></a></span><a class="headerlink" href="#sn.view.graphics.guiApp.SNGViewFrame.terminal" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.SNGViewFrame.registry">
+<span class="sig-name descname"><span class="pre">registry</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.terminal.html#util.terminal.TerminalRegistry" title="(in pythonUtils)"><span class="pre">TerminalRegistry</span></a></span><a class="headerlink" href="#sn.view.graphics.guiApp.SNGViewFrame.registry" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.main">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.guiApp.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.main" title="Link to this definition">¶</a></dt>
+<dd><p>Run the graphical editor: a window on each file named on the command
+line, or else as <em>Application.startUp()</em> says.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="sn.view.graphics.imageExport.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">sn.view.graphics.imageExport module</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="sn.view.graphics.expandDialog.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">sn.view.graphics.expandDialog module</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2023-2026, Rob Kremer
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">sn.view.graphics.guiApp module</a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.UnexpectedObjectInFile"><code class="docutils literal notranslate"><span class="pre">UnexpectedObjectInFile</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application"><code class="docutils literal notranslate"><span class="pre">Application</span></code></a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.current"><code class="docutils literal notranslate"><span class="pre">Application.current</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.__init__"><code class="docutils literal notranslate"><span class="pre">Application.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.directoryPane"><code class="docutils literal notranslate"><span class="pre">Application.directoryPane</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application._noOp"><code class="docutils literal notranslate"><span class="pre">Application._noOp()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application._installSettingsMenu"><code class="docutils literal notranslate"><span class="pre">Application._installSettingsMenu()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application._installQuitHandler"><code class="docutils literal notranslate"><span class="pre">Application._installQuitHandler()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.onOpenDocument"><code class="docutils literal notranslate"><span class="pre">Application.onOpenDocument()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.onQuit"><code class="docutils literal notranslate"><span class="pre">Application.onQuit()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application._installMenubar"><code class="docutils literal notranslate"><span class="pre">Application._installMenubar()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.showHelp"><code class="docutils literal notranslate"><span class="pre">Application.showHelp()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.openSettings"><code class="docutils literal notranslate"><span class="pre">Application.openSettings()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.doOpen"><code class="docutils literal notranslate"><span class="pre">Application.doOpen()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.doOpenURL"><code class="docutils literal notranslate"><span class="pre">Application.doOpenURL()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.doNew"><code class="docutils literal notranslate"><span class="pre">Application.doNew()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.openWindow"><code class="docutils literal notranslate"><span class="pre">Application.openWindow()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.openViewOn"><code class="docutils literal notranslate"><span class="pre">Application.openViewOn()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.DIRECTORY_PREF"><code class="docutils literal notranslate"><span class="pre">Application.DIRECTORY_PREF</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.DIRECTORY_GEOMETRY"><code class="docutils literal notranslate"><span class="pre">Application.DIRECTORY_GEOMETRY</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.PROGRESS_DELAY"><code class="docutils literal notranslate"><span class="pre">Application.PROGRESS_DELAY</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.directoryShown"><code class="docutils literal notranslate"><span class="pre">Application.directoryShown()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.showDirectory"><code class="docutils literal notranslate"><span class="pre">Application.showDirectory()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application._onDirectoryClose"><code class="docutils literal notranslate"><span class="pre">Application._onDirectoryClose()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application._refreshDirectory"><code class="docutils literal notranslate"><span class="pre">Application._refreshDirectory()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.noteFile"><code class="docutils literal notranslate"><span class="pre">Application.noteFile()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.openEntry"><code class="docutils literal notranslate"><span class="pre">Application.openEntry()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application._onProgress"><code class="docutils literal notranslate"><span class="pre">Application._onProgress()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application._hideAfterProgress"><code class="docutils literal notranslate"><span class="pre">Application._hideAfterProgress()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.RECENT_PREF"><code class="docutils literal notranslate"><span class="pre">Application.RECENT_PREF</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.RECENT_KEPT"><code class="docutils literal notranslate"><span class="pre">Application.RECENT_KEPT</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.recentFiles"><code class="docutils literal notranslate"><span class="pre">Application.recentFiles()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application._setRecentFiles"><code class="docutils literal notranslate"><span class="pre">Application._setRecentFiles()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.noteRecent"><code class="docutils literal notranslate"><span class="pre">Application.noteRecent()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.openRecent"><code class="docutils literal notranslate"><span class="pre">Application.openRecent()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application._fillRecentMenu"><code class="docutils literal notranslate"><span class="pre">Application._fillRecentMenu()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.OPEN_WINDOWS_PREF"><code class="docutils literal notranslate"><span class="pre">Application.OPEN_WINDOWS_PREF</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.rememberOpenWindows"><code class="docutils literal notranslate"><span class="pre">Application.rememberOpenWindows()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.reopenWindows"><code class="docutils literal notranslate"><span class="pre">Application.reopenWindows()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.startUp"><code class="docutils literal notranslate"><span class="pre">Application.startUp()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.loadPlugins"><code class="docutils literal notranslate"><span class="pre">Application.loadPlugins()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.revealPlugins"><code class="docutils literal notranslate"><span class="pre">Application.revealPlugins()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.EXAMPLES_PREF"><code class="docutils literal notranslate"><span class="pre">Application.EXAMPLES_PREF</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.EXAMPLES_FOLDER"><code class="docutils literal notranslate"><span class="pre">Application.EXAMPLES_FOLDER</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.installExamples"><code class="docutils literal notranslate"><span class="pre">Application.installExamples()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.onInstallExamples"><code class="docutils literal notranslate"><span class="pre">Application.onInstallExamples()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.closeModel"><code class="docutils literal notranslate"><span class="pre">Application.closeModel()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.replacingModel"><code class="docutils literal notranslate"><span class="pre">Application.replacingModel()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.closeAllWindows"><code class="docutils literal notranslate"><span class="pre">Application.closeAllWindows()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application._closeWindowOf"><code class="docutils literal notranslate"><span class="pre">Application._closeWindowOf()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application._closeWindow"><code class="docutils literal notranslate"><span class="pre">Application._closeWindow()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.quit"><code class="docutils literal notranslate"><span class="pre">Application.quit()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.run"><code class="docutils literal notranslate"><span class="pre">Application.run()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp._filePath"><code class="docutils literal notranslate"><span class="pre">_filePath()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp._fileName"><code class="docutils literal notranslate"><span class="pre">_fileName()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.AppWindow"><code class="docutils literal notranslate"><span class="pre">AppWindow</span></code></a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.AppWindow.__init__"><code class="docutils literal notranslate"><span class="pre">AppWindow.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.AppWindow.view"><code class="docutils literal notranslate"><span class="pre">AppWindow.view</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.AppWindow._bindFocusTracking"><code class="docutils literal notranslate"><span class="pre">AppWindow._bindFocusTracking()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.AppWindow._onWindowFocusIn"><code class="docutils literal notranslate"><span class="pre">AppWindow._onWindowFocusIn()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.AppWindow._onWindowFocusOut"><code class="docutils literal notranslate"><span class="pre">AppWindow._onWindowFocusOut()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.AppWindow._checkStillActive"><code class="docutils literal notranslate"><span class="pre">AppWindow._checkStillActive()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.AppWindow._bindFocusRouting"><code class="docutils literal notranslate"><span class="pre">AppWindow._bindFocusRouting()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.AppPanedWidget"><code class="docutils literal notranslate"><span class="pre">AppPanedWidget</span></code></a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.AppPanedWidget.__init__"><code class="docutils literal notranslate"><span class="pre">AppPanedWidget.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.AppPanedWidget.canvasFrame"><code class="docutils literal notranslate"><span class="pre">AppPanedWidget.canvasFrame</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.SNGViewFrame"><code class="docutils literal notranslate"><span class="pre">SNGViewFrame</span></code></a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.SNGViewFrame.__init__"><code class="docutils literal notranslate"><span class="pre">SNGViewFrame.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.SNGViewFrame.terminal"><code class="docutils literal notranslate"><span class="pre">SNGViewFrame.terminal</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.SNGViewFrame.registry"><code class="docutils literal notranslate"><span class="pre">SNGViewFrame.registry</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

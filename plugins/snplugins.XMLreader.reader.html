@@ -1,0 +1,960 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="snplugins.XMLreader.schema module" href="snplugins.XMLreader.schema.html"><link rel="prev" title="snplugins.XMLreader package" href="snplugins.XMLreader.html">
+        <link rel="prefetch" href="../_static/sn-logo.png" as="image">
+
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>snplugins.XMLreader.reader module - Semantic Nets 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">Semantic Nets 1.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">Semantic Nets 1.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user/index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user/concepts.html">Concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/gettingStarted.html">Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/tutorial.html">Worked Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/editing.html">Editing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/contexts.html">Contexts: Rules, Definitions, Queries, Constraints and Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/reasoning.html">Reasoning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/viewing.html">Viewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/layouts.html">Arranging a View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/animation.html">Animation Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/files.html">Files and Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/terminal.html">The Terminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/exampleApps.html">Plugins</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developer/index.html">Developer Guide</a><input aria-label="Toggle navigation of Developer Guide" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html">Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/model.html">The Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/reasoner.html">The Reasoner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/view.html">The Graphical View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/layout.html">Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/extending.html">Building on Semantic Nets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/conventions.html">Conventions and Testing</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../dev/sn.html">sn package</a><input aria-label="Toggle navigation of sn package" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.controller.html">sn.controller package</a><input aria-label="Toggle navigation of sn.controller package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.controller.modelInterface.html">sn.controller.modelInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.examples.html">sn.examples package</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.constraints.html">sn.model.constraints module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.copying.html">sn.model.copying module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.directory.html">sn.model.directory module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.model.html">sn.model.model module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.reasoner.html">sn.model.reasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../dev/sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.connectors.html">sn.view.graphics.connectors module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.expandDialog.html">sn.view.graphics.expandDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.guiApp.html">sn.view.graphics.guiApp module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.imageExport.html">sn.view.graphics.imageExport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.labels.html">sn.view.graphics.labels module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.layout.html">sn.view.graphics.layout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.layoutDialog.html">sn.view.graphics.layoutDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.layoutPanel.html">sn.view.graphics.layoutPanel module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.progress.html">sn.view.graphics.progress module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.reasoningToolbar.html">sn.view.graphics.reasoningToolbar module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.relationTable.html">sn.view.graphics.relationTable module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.replaceModelDialog.html">sn.view.graphics.replaceModelDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.searchDialog.html">sn.view.graphics.searchDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.shapes.html">sn.view.graphics.shapes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.sngContext.html">sn.view.graphics.sngContext module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.sngView.html">sn.view.graphics.sngView module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.sourceWindow.html">sn.view.graphics.sourceWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.treeLayout.html">sn.view.graphics.treeLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewBase.html">sn.view.graphics.viewBase module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewCommands.html">sn.view.graphics.viewCommands module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewContainment.html">sn.view.graphics.viewContainment module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewEditing.html">sn.view.graphics.viewEditing module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewFiles.html">sn.view.graphics.viewFiles module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewInput.html">sn.view.graphics.viewInput module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewLayouts.html">sn.view.graphics.viewLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewReasoning.html">sn.view.graphics.viewReasoning module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewViewport.html">sn.view.graphics.viewViewport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewVisibility.html">sn.view.graphics.viewVisibility module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.visibilityDialog.html">sn.view.graphics.visibilityDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.vnodes.html">sn.view.graphics.vnodes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.vobjects.html">sn.view.graphics.vobjects module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.vrelations.html">sn.view.graphics.vrelations module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.view.textUserInterface.html">sn.view.textUserInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.__main__.html">sn.__main__ module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.hooks.html">sn.hooks module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.plugins.html">sn.plugins module</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">The plugins</a><input aria-label="Toggle navigation of The plugins" checked="" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 current has-children"><a class="reference internal" href="snplugins.XMLreader.html">snplugins.XMLreader package</a><input aria-label="Toggle navigation of snplugins.XMLreader package" checked="" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3 current current-page"><a class="current reference internal" href="#">snplugins.XMLreader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.XMLreader.schema.html">snplugins.XMLreader.schema module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.XMLreader.view.html">snplugins.XMLreader.view module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="snplugins.pythonParser.html">snplugins.pythonParser package</a><input aria-label="Toggle navigation of snplugins.pythonParser package" class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.pythonParser.dialog.html">snplugins.pythonParser.dialog module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.pythonParser.hooks.html">snplugins.pythonParser.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.pythonParser.parser.html">snplugins.pythonParser.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/plugins/snplugins.XMLreader.reader.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="module-snplugins.XMLreader.reader">
+<span id="snplugins-xmlreader-reader-module"></span><h1>snplugins.XMLreader.reader module<a class="headerlink" href="#module-snplugins.XMLreader.reader" title="Link to this heading">¶</a></h1>
+<p>Turn an XML file into a Semantic Nets model (see <em>buildModel()</em>), built on an
+ontology of its own: a second model, a super-model of the first, which has the
+types and the definitions – so there’s one place to change the type hierarchy,
+add rules, and so on. The model has the elements.</p>
+<p>What each tag and attribute is – a node tag, a property, a group, a list
+holder, an annotation, a kind, a reference – is inferred from how they’re
+used throughout the file (see <em>schema</em>). Then:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Each node tag becomes a type (a node isa <em>node</em>), the first time it’s
+seen, with a look of its own (see <em>TypeLooks</em>), which its individuals
+inherit, and a tooltip listing its properties (see <em>tooltip()</em>).</p></li>
+<li><p>Each of its elements becomes an individual of its tag’s type – or, if its
+tag has a kind field (see <em>schema</em>), of a subtype of the tag’s type named
+by its value (eg: &lt;book kind=”novel”&gt; is an individual of <em>novel</em>, which
+isa <em>book</em>), made the first time it’s seen. Subtypes look like their tag’s
+type, in a different shade.</p></li>
+<li><p>Its fields – its XML attributes, and its property subelements (and those
+in its groups) – become its individual’s attributes, “property/&lt;name&gt;”,
+of the datatype their values are; its type has each (with no value), with
+a note saying where it’s from.</p></li>
+<li><p>Its text (if it isn’t just white space) becomes its individual’s “text”
+attribute.</p></li>
+<li><p>A nested node element’s individual is related to its containing element’s
+by a relation of type “has-&lt;tag&gt;” (eg: a book element’s <em>has-chapter</em>
+relations to its chapters); a list holder’s elements, by “has-&lt;holder&gt;”
+(eg: has-DeviceList, to each device). Each is a kind of <em>xml-has-part</em>
+(see <em>HAS_PART</em>), so the elements’ tree is there whatever the tags.</p></li>
+<li><p><em>xml-part-of</em> (see <em>PART_OF</em>) is the other way round: it’s defined (a
+definition in the ontology) as [?a -xml-part-of-&gt; ?b] &lt;-&gt; [?b -xml-has-part-&gt; ?a],
+so the reasoner concludes it.</p></li>
+<li><p>A reference field (eg: DeviceID) also relates the individual to the one
+it refers to, by a relation named for the field: a kind of <em>xml-refers-to</em>
+(see <em>REFERS_TO</em>).</p></li>
+<li><p>An individual is named by its name, title, label, id or key field, or its
+short text (see <em>schema.Schema.nameOf()</em>); otherwise by its tag and a
+number (eg: chapter1, chapter2, …).</p></li>
+</ul>
+</div></blockquote>
+<p>Namespaces are dropped from tag and attribute names (eg: “{<a class="reference external" href="http://">http://</a>…}book”
+becomes “book”).</p>
+<p>The ontology can be one made before, for the same file (eg: by reading it
+again, after changing the ontology: moving types about, adding rules, …),
+or for files of the same kind (one ontology, shared by their models):
+<em>buildModel()</em> builds on it, and adds only what’s missing – to it, or, if
+it can’t be changed (eg: it’s on the web: see <em>canChange()</em>), to the model
+(an attribute its types haven’t is then just in the elements). What’s in it
+is found by name:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>a tag’s type, by the tag (any node type of that name: wherever it is in
+the type hierarchy);</p></li>
+<li><p>a subtype, by its “type” or “kind” attribute’s value: one of that name
+that’s a kind of its tag’s type (at any depth: eg: under another subtype);</p></li>
+<li><p>has-&lt;tag&gt;, has-&lt;holder&gt;, a reference’s field, <em>HAS_PART</em>, <em>PART_OF</em> and
+<em>REFERS_TO</em>, by name (relation types);</p></li>
+<li><p>what the tags are, as far as it says (see <em>hintsFrom()</em>): a tag with a
+type there is a node tag, and one a type there has a property for is a
+property.</p></li>
+</ul>
+</div></blockquote>
+<p>What isn’t found – something the XML has that the ontology doesn’t, or one
+renamed or deleted since – is made afresh, as for a new ontology, with a
+look of its own, and logged; so is an attribute of an element that its type
+doesn’t have (nor inherit). (A has-&lt;tag&gt; found whose range its tag’s type
+isn’t a kind of – eg: the type was renamed, and so made afresh – is left as
+it is, with a warning: the reasoner would find each element out of range.) If
+<em>PART_OF</em> isn’t there, it’s made with its definition; if it is, its
+definition is left as it is (or isn’t: one deleted stays deleted).</p>
+<p>Created on Oct 3, 2026</p>
+<p><em>Code author: Rob Kremer &lt;<a class="reference external" href="mailto:robkremer&#37;&#52;&#48;me&#46;com">robkremer<span>&#64;</span>me<span>&#46;</span>com</a>&gt;</em></p>
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.HAS_PART">
+<span class="sig-prename descclassname"><span class="pre">snplugins.XMLreader.reader.</span></span><span class="sig-name descname"><span class="pre">HAS_PART</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'xml-has-part'</span></span><a class="headerlink" href="#snplugins.XMLreader.reader.HAS_PART" title="Link to this definition">¶</a></dt>
+<dd><p>The relation type every has-&lt;tag&gt; is a kind of: from an element to each element in it.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.PART_OF">
+<span class="sig-prename descclassname"><span class="pre">snplugins.XMLreader.reader.</span></span><span class="sig-name descname"><span class="pre">PART_OF</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'xml-part-of'</span></span><a class="headerlink" href="#snplugins.XMLreader.reader.PART_OF" title="Link to this definition">¶</a></dt>
+<dd><p>The relation type defined as the inverse of <em>HAS_PART</em>: from an element to the element it’s in.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.REFERS_TO">
+<span class="sig-prename descclassname"><span class="pre">snplugins.XMLreader.reader.</span></span><span class="sig-name descname"><span class="pre">REFERS_TO</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'xml-refers-to'</span></span><a class="headerlink" href="#snplugins.XMLreader.reader.REFERS_TO" title="Link to this definition">¶</a></dt>
+<dd><p>The relation type every reference’s is a kind of: from an element to one a field of it identifies (see <em>schema</em>).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.SHAPES">
+<span class="sig-prename descclassname"><span class="pre">snplugins.XMLreader.reader.</span></span><span class="sig-name descname"><span class="pre">SHAPES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('Rectangle',</span> <span class="pre">'RoundedRectangle',</span> <span class="pre">'Oval',</span> <span class="pre">'Hexagon',</span> <span class="pre">'FileFolder',</span> <span class="pre">'RightParallelogram',</span> <span class="pre">'LeftParallelogram',</span> <span class="pre">'TopPentagon',</span> <span class="pre">'RightPentagon',</span> <span class="pre">'LeftPentagon')</span></span><a class="headerlink" href="#snplugins.XMLreader.reader.SHAPES" title="Link to this definition">¶</a></dt>
+<dd><p>The shapes the types are given (see <em>TypeLooks</em>).</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.TypeLooks">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">snplugins.XMLreader.reader.</span></span><span class="sig-name descname"><span class="pre">TypeLooks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.XMLreader.reader.TypeLooks" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A look – fill and border colours, and shape – for each type, chosen at
+random, but the same each time for the same XML file. The fills’ hues are
+spread out (by the golden ratio), so types made one after another look
+different; their individuals inherit the look, so it shows which type each
+is. A subtype (see <em>applyShade()</em>) keeps its type’s hue and shape, in a
+shade of its own. Types already there (in an ontology made before: see
+<em>reuse()</em>) are counted as they come, so new ones look as they would have,
+had they been made with them.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>seed</strong> (<em>str</em>)</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.TypeLooks.GOLDEN">
+<span class="sig-name descname"><span class="pre">GOLDEN</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.618033988749895</span></span><a class="headerlink" href="#snplugins.XMLreader.reader.TypeLooks.GOLDEN" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.TypeLooks.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.XMLreader.reader.TypeLooks.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>seed</strong> (<em>str</em>) – What the choices depend on: eg: the XML file’s name.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.TypeLooks.hues">
+<span class="sig-name descname"><span class="pre">hues</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#snplugins.XMLreader.reader.TypeLooks.hues" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.TypeLooks.shades">
+<span class="sig-name descname"><span class="pre">shades</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#snplugins.XMLreader.reader.TypeLooks.shades" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.TypeLooks._hex">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">_hex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">h</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.XMLreader.reader.TypeLooks._hex" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>h</strong> (<em>float</em>)</p></li>
+<li><p><strong>s</strong> (<em>float</em>)</p></li>
+<li><p><strong>v</strong> (<em>float</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.TypeLooks._next">
+<span class="sig-name descname"><span class="pre">_next</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.XMLreader.reader.TypeLooks._next" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The next look: fill, border, shape (see <em>apply()</em>).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[str, str, str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.TypeLooks.apply">
+<span class="sig-name descname"><span class="pre">apply</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.XMLreader.reader.TypeLooks.apply" title="Link to this definition">¶</a></dt>
+<dd><p>Give the type <em>t</em> the next look: a light fill, a dark border of the same
+hue, and a shape.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>t</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node" title="sn.model.model.Node"><em>Node</em></a>) – A type.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.TypeLooks.reuse">
+<span class="sig-name descname"><span class="pre">reuse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.XMLreader.reader.TypeLooks.reuse" title="Link to this definition">¶</a></dt>
+<dd><p>Count the type <em>t</em>, which is already there, as if <em>apply()</em> had given it
+the next look, but leave it as it is (its subtypes are shaded from its own
+fill, if it has one: see <em>applyShade()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>t</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>) – A type.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.TypeLooks.reuseShade">
+<span class="sig-name descname"><span class="pre">reuseShade</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.XMLreader.reader.TypeLooks.reuseShade" title="Link to this definition">¶</a></dt>
+<dd><p>Count a subtype of <em>parent</em> that’s already there, as if <em>applyShade()</em> had
+given it the next shade, but leave it as it is.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parent</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>) – Its type.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.TypeLooks._hue">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">_hue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.XMLreader.reader.TypeLooks._hue" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>t</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The hue of <em>t</em>’s fill colour (its own, or inherited), if it’s “#rrggbb”, else None.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.TypeLooks.applyShade">
+<span class="sig-name descname"><span class="pre">applyShade</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sub</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.XMLreader.reader.TypeLooks.applyShade" title="Link to this definition">¶</a></dt>
+<dd><p>Give <em>sub</em>, a new subtype of <em>parent</em> (a type given a look by <em>apply()</em>),
+the next shade of <em>parent</em>’s hue: its subtypes’ fills range from pale to
+strong (spread by the golden ratio, so ones made one after another differ),
+with a border to match. Its shape is <em>parent</em>’s (inherited).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sub</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node" title="sn.model.model.Node"><em>Node</em></a>) – The subtype.</p></li>
+<li><p><strong>parent</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node" title="sn.model.model.Node"><em>Node</em></a>) – Its type.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.outputPaths">
+<span class="sig-prename descclassname"><span class="pre">snplugins.XMLreader.reader.</span></span><span class="sig-name descname"><span class="pre">outputPaths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xmlPath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.XMLreader.reader.outputPaths" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>xmlPath</strong> (<em>str</em>) – The XML file, eg: “/a/b/books.xml”.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The model, view and ontology files made from it: in the same
+folder, named “&lt;name&gt;_&lt;ext&gt;”: eg: “/a/b/books_xml.snm”, “/a/b/books_xml.snv”
+and “/a/b/books_xml_ontology.snm” (see <em>ontologyPath()</em>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[str, str, str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.ontologyPath">
+<span class="sig-prename descclassname"><span class="pre">snplugins.XMLreader.reader.</span></span><span class="sig-name descname"><span class="pre">ontologyPath</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modelPath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.XMLreader.reader.ontologyPath" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>modelPath</strong> (<em>str</em>) – A model’s file, eg: “/a/b/books_xml.snm”.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Its ontology’s file, beside it: eg: “/a/b/books_xml_ontology.snm”.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.isRemote">
+<span class="sig-prename descclassname"><span class="pre">snplugins.XMLreader.reader.</span></span><span class="sig-name descname"><span class="pre">isRemote</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.XMLreader.reader.isRemote" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ref</strong> (<em>str</em>) – A model’s file or URL.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether it’s on the web (eg: “<a class="reference external" href="https://">https://</a>…”): it can be read, but not saved there.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.localPath">
+<span class="sig-prename descclassname"><span class="pre">snplugins.XMLreader.reader.</span></span><span class="sig-name descname"><span class="pre">localPath</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.XMLreader.reader.localPath" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ref</strong> (<em>str</em>) – A model’s file or URL.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Its file, if it’s one here (a path, or a “file:” URL); else None.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.canChange">
+<span class="sig-prename descclassname"><span class="pre">snplugins.XMLreader.reader.</span></span><span class="sig-name descname"><span class="pre">canChange</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.XMLreader.reader.canChange" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ref</strong> (<em>str</em>) – An ontology’s file or URL.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether it can be changed, and saved: it’s a file here that can be
+written (or, if it isn’t there yet, can be made) – not on the web, say.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.makeOntology">
+<span class="sig-prename descclassname"><span class="pre">snplugins.XMLreader.reader.</span></span><span class="sig-name descname"><span class="pre">makeOntology</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.XMLreader.reader.makeOntology" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) – The ontology’s file: it mustn’t exist yet.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new ontology (not saved) with what every XML file’s has –
+<em>HAS_PART</em>, <em>PART_OF</em>, and the definition of <em>PART_OF</em> as its inverse –
+and its <em>HAS_PART</em>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>, <a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.makeHasPart">
+<span class="sig-prename descclassname"><span class="pre">snplugins.XMLreader.reader.</span></span><span class="sig-name descname"><span class="pre">makeHasPart</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">o</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.XMLreader.reader.makeHasPart" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>o</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>) – An ontology.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new <em>HAS_PART</em> in it.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.makeRefersTo">
+<span class="sig-prename descclassname"><span class="pre">snplugins.XMLreader.reader.</span></span><span class="sig-name descname"><span class="pre">makeRefersTo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">o</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.XMLreader.reader.makeRefersTo" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>o</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>) – An ontology.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new <em>REFERS_TO</em> in it.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.makePartOf">
+<span class="sig-prename descclassname"><span class="pre">snplugins.XMLreader.reader.</span></span><span class="sig-name descname"><span class="pre">makePartOf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">o</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hasPart</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.XMLreader.reader.makePartOf" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>o</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>) – An ontology.</p></li>
+<li><p><strong>hasPart</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a>) – Its <em>HAS_PART</em>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new <em>PART_OF</em> in it, with its definition: the inverse of <em>hasPart</em>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.typesByName">
+<span class="sig-prename descclassname"><span class="pre">snplugins.XMLreader.reader.</span></span><span class="sig-name descname"><span class="pre">typesByName</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">o</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.XMLreader.reader.typesByName" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>o</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>) – An ontology.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Its node types, and its relation types, by name (each name’s in
+the order they were made). (Its own: not its super-models’.)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[dict[str, list[<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node" title="sn.model.model.Node"><em>Node</em></a>]], dict[str, list[<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a>]]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.hintsFrom">
+<span class="sig-prename descclassname"><span class="pre">snplugins.XMLreader.reader.</span></span><span class="sig-name descname"><span class="pre">hintsFrom</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">o</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.XMLreader.reader.hintsFrom" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>o</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>) – An ontology made before.</p></li>
+<li><p><strong>tags</strong> (<em>set</em><em>[</em><em>str</em><em>]</em>) – The XML file’s tags.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>What it says about the tags (see <em>schema.Hints</em>): its node types’
+names (not those that are a kind of a type named as a tag: they’re
+probably subtypes – eg: &lt;object type=”book”&gt;), the properties its types
+have (“property/&lt;tag&gt;”), and its references (relation types that are
+kinds of <em>REFERS_TO</em>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="snplugins.XMLreader.schema.html#snplugins.XMLreader.schema.Hints" title="snplugins.XMLreader.schema.Hints"><em>Hints</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.tooltip">
+<span class="sig-prename descclassname"><span class="pre">snplugins.XMLreader.reader.</span></span><span class="sig-name descname"><span class="pre">tooltip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.XMLreader.reader.tooltip" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node" title="sn.model.model.Node"><em>Node</em></a>) – A tag’s type.</p></li>
+<li><p><strong>order</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – Properties in the order to list them (eg: as they are in the
+XML): those it has that aren’t in it are after them, by name.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tooltip template (see <em>sn.view.graphics.labels</em>) for its
+elements: their name and type, and each of the properties it has (see
+<em>schema.PROPERTY</em>) that they have a value for.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.XMLreader.reader.buildModel">
+<span class="sig-prename descclassname"><span class="pre">snplugins.XMLreader.reader.</span></span><span class="sig-name descname"><span class="pre">buildModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xmlPath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modelPath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ontology</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extendOntology</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">found</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.XMLreader.reader.buildModel" title="Link to this definition">¶</a></dt>
+<dd><p>Make a model of the XML file <em>xmlPath</em> (as described in the module doc), as
+a new model file <em>modelPath</em>, and its ontology (beside it, unless <em>ontology</em>
+says where: see <em>ontologyPath()</em>): its super-model – or build on <em>ontology</em>, adding to it
+what’s missing (see the module doc), or, if it can’t be changed, putting
+that in the model. (Neither’s saved: call their <em>save()</em>.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>xmlPath</strong> (<em>str</em>) – The XML file.</p></li>
+<li><p><strong>modelPath</strong> (<em>str</em>) – The model’s file: it mustn’t exist yet (nor the ontology’s, if one’s made).</p></li>
+<li><p><strong>ontology</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a><em> | </em><em>str</em><em> | </em><em>None</em>) – An ontology made before (eg: for the same file, or one
+shared by files of the same kind, read from its file or URL), to build
+on; or the file to make one in; or None, to make one beside the model.</p></li>
+<li><p><strong>extendOntology</strong> (<em>bool</em>) – Whether what <em>ontology</em> is missing goes in it: if
+not – or if it’s write-locked (eg: it’s on the web: see
+<em>Model._wasRead()</em>) – it goes in the model (types, has-&lt;tag&gt;s, …), and
+an attribute its types haven’t is just in their elements. (See <em>canChange()</em>.)</p></li>
+<li><p><strong>found</strong> (<em>list</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – If given, what the tags were found to be (see <em>schema.Schema.report()</em>) is added to it.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The model, and its ontology.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>, <a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>xml.etree.ElementTree.ParseError</strong> – if the file isn’t well-formed XML.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="snplugins.XMLreader.schema.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">snplugins.XMLreader.schema module</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="snplugins.XMLreader.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">snplugins.XMLreader package</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2023-2026, Rob Kremer
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">snplugins.XMLreader.reader module</a><ul>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.HAS_PART"><code class="docutils literal notranslate"><span class="pre">HAS_PART</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.PART_OF"><code class="docutils literal notranslate"><span class="pre">PART_OF</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.REFERS_TO"><code class="docutils literal notranslate"><span class="pre">REFERS_TO</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.SHAPES"><code class="docutils literal notranslate"><span class="pre">SHAPES</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.TypeLooks"><code class="docutils literal notranslate"><span class="pre">TypeLooks</span></code></a><ul>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.TypeLooks.GOLDEN"><code class="docutils literal notranslate"><span class="pre">TypeLooks.GOLDEN</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.TypeLooks.__init__"><code class="docutils literal notranslate"><span class="pre">TypeLooks.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.TypeLooks.hues"><code class="docutils literal notranslate"><span class="pre">TypeLooks.hues</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.TypeLooks.shades"><code class="docutils literal notranslate"><span class="pre">TypeLooks.shades</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.TypeLooks._hex"><code class="docutils literal notranslate"><span class="pre">TypeLooks._hex()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.TypeLooks._next"><code class="docutils literal notranslate"><span class="pre">TypeLooks._next()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.TypeLooks.apply"><code class="docutils literal notranslate"><span class="pre">TypeLooks.apply()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.TypeLooks.reuse"><code class="docutils literal notranslate"><span class="pre">TypeLooks.reuse()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.TypeLooks.reuseShade"><code class="docutils literal notranslate"><span class="pre">TypeLooks.reuseShade()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.TypeLooks._hue"><code class="docutils literal notranslate"><span class="pre">TypeLooks._hue()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.TypeLooks.applyShade"><code class="docutils literal notranslate"><span class="pre">TypeLooks.applyShade()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.outputPaths"><code class="docutils literal notranslate"><span class="pre">outputPaths()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.ontologyPath"><code class="docutils literal notranslate"><span class="pre">ontologyPath()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.isRemote"><code class="docutils literal notranslate"><span class="pre">isRemote()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.localPath"><code class="docutils literal notranslate"><span class="pre">localPath()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.canChange"><code class="docutils literal notranslate"><span class="pre">canChange()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.makeOntology"><code class="docutils literal notranslate"><span class="pre">makeOntology()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.makeHasPart"><code class="docutils literal notranslate"><span class="pre">makeHasPart()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.makeRefersTo"><code class="docutils literal notranslate"><span class="pre">makeRefersTo()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.makePartOf"><code class="docutils literal notranslate"><span class="pre">makePartOf()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.typesByName"><code class="docutils literal notranslate"><span class="pre">typesByName()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.hintsFrom"><code class="docutils literal notranslate"><span class="pre">hintsFrom()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.tooltip"><code class="docutils literal notranslate"><span class="pre">tooltip()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.XMLreader.reader.buildModel"><code class="docutils literal notranslate"><span class="pre">buildModel()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

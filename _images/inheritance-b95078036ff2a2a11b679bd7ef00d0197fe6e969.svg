@@ -1,0 +1,98 @@
+<ns0:svg xmlns:ns0="http://www.w3.org/2000/svg" xmlns:ns1="http://www.w3.org/1999/xlink" width="445pt" height="104pt" viewBox="0.00 0.00 445.00 104.00">
+<ns0:g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 100)">
+<ns0:title>inheritance18010f24da</ns0:title>
+
+<ns0:g id="node1" class="node">
+<ns0:title>abc.ABC</ns0:title>
+<ns0:g id="a_node1"><ns0:a ns1:title="Helper class that provides a standard way to create an ABC using">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="62.12,-58 6.38,-58 6.38,-38 62.12,-38 62.12,-58" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="34.25" y="-44.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">abc.ABC</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node5" class="node">
+<ns0:title>graphics.layout.LayoutHeuristic</ns0:title>
+<ns0:g id="a_node5"><ns0:a ns1:href="../dev/sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutHeuristic" ns1:title="A way of arranging a view's objects: static, dynamic, animated, or more" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="257.75,-58 104.5,-58 104.5,-38 257.75,-38 257.75,-58" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="181.12" y="-44.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">graphics.layout.LayoutHeuristic</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge4" class="edge">
+<ns0:title>abc.ABC-&gt;graphics.layout.LayoutHeuristic</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M62.5,-48C72.78,-48 85.09,-48 97.81,-48" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="98.33,-49.75 103.33,-48 98.33,-46.25 98.33,-49.75" />
+</ns0:g>
+
+<ns0:g id="node2" class="node">
+<ns0:title>enum.Enum</ns0:title>
+<ns0:g id="a_node2"><ns0:a ns1:title="Create a collection of name/value pairs.">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="68.5,-96 0,-96 0,-76 68.5,-76 68.5,-96" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="34.25" y="-82.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">enum.Enum</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node3" class="node">
+<ns0:title>graphics.layout.Direction</ns0:title>
+<ns0:g id="a_node3"><ns0:a ns1:href="../dev/sn.view.graphics.layout.html#sn.view.graphics.layout.Direction" ns1:title="graphics.layout.Direction" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="243.12,-96 119.12,-96 119.12,-76 243.12,-76 243.12,-96" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="181.12" y="-82.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">graphics.layout.Direction</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge1" class="edge">
+<ns0:title>enum.Enum-&gt;graphics.layout.Direction</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M68.85,-86C81.87,-86 97.27,-86 112.39,-86" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="113.09,-87.75 118.09,-86 113.09,-84.25 113.09,-87.75" />
+</ns0:g>
+
+<ns0:g id="node4" class="node">
+<ns0:title>graphics.layout.FindFree</ns0:title>
+<ns0:g id="a_node4"><ns0:a ns1:href="../dev/sn.view.graphics.layout.html#sn.view.graphics.layout.FindFree" ns1:title="&quot;avoid overlaps&quot;: the default dynamic layout. What's made, or dropped, is" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="427.12,-96 303.88,-96 303.88,-76 427.12,-76 427.12,-96" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="365.5" y="-82.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">graphics.layout.FindFree</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge2" class="edge">
+<ns0:title>graphics.layout.LayoutHeuristic-&gt;graphics.layout.FindFree</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M232.44,-58.48C255.86,-63.36 283.82,-69.19 307.97,-74.22" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="308.35,-76.09 313.61,-75.4 309.07,-72.66 308.35,-76.09" />
+</ns0:g>
+
+<ns0:g id="node6" class="node">
+<ns0:title>graphics.layout.GatherLayout</ns0:title>
+<ns0:g id="a_node6"><ns0:a ns1:href="../dev/sn.view.graphics.layout.html#sn.view.graphics.layout.GatherLayout" ns1:title="Herd outlying objects back to the main pack (see *SNGView.gatherNodes()*)." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="437.25,-58 293.75,-58 293.75,-38 437.25,-38 437.25,-58" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="365.5" y="-44.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">graphics.layout.GatherLayout</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge3" class="edge">
+<ns0:title>graphics.layout.LayoutHeuristic-&gt;graphics.layout.GatherLayout</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M258.15,-48C267.69,-48 277.46,-48 287.02,-48" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="287.51,-49.75 292.51,-48 287.51,-46.25 287.51,-49.75" />
+</ns0:g>
+
+<ns0:g id="node7" class="node">
+<ns0:title>graphics.layout.NoLayout</ns0:title>
+<ns0:g id="a_node7"><ns0:a ns1:href="../dev/sn.view.graphics.layout.html#sn.view.graphics.layout.NoLayout" ns1:title="The dynamic layout that does nothing: things stay where they're made or dropped." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="429,-20 302,-20 302,0 429,0 429,-20" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="365.5" y="-6.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">graphics.layout.NoLayout</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge5" class="edge">
+<ns0:title>graphics.layout.LayoutHeuristic-&gt;graphics.layout.NoLayout</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M232.44,-37.52C255.86,-32.64 283.82,-26.81 307.97,-21.78" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="309.07,-23.34 313.61,-20.6 308.35,-19.91 309.07,-23.34" />
+</ns0:g>
+</ns0:g>
+</ns0:svg>

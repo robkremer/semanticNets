@@ -1,0 +1,203 @@
+<ns0:svg xmlns:ns0="http://www.w3.org/2000/svg" xmlns:ns1="http://www.w3.org/1999/xlink" width="510pt" height="180pt" viewBox="0.00 0.00 510.00 180.00">
+<ns0:g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 176)">
+<ns0:title>inheritance455f0bcd46</ns0:title>
+
+<ns0:g id="node1" class="node">
+<ns0:title>ABC</ns0:title>
+<ns0:g id="a_node1"><ns0:a ns1:title="Helper class that provides a standard way to create an ABC using">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="158.62,-96 104.62,-96 104.62,-76 158.62,-76 158.62,-96" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="131.62" y="-82.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">ABC</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node8" class="node">
+<ns0:title>Observer</ns0:title>
+<ns0:g id="a_node8"><ns0:a ns1:href="https://robkremer.github.io/pythonUtils/dev/util.observer.html#util.observer.Observer" ns1:title="The Observer interface declares the update method, used by subjects." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="278.62,-96 222.88,-96 222.88,-76 278.62,-76 278.62,-96" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="250.75" y="-82.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">Observer</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge5" class="edge">
+<ns0:title>ABC-&gt;Observer</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M158.91,-86C175.85,-86 198.03,-86 216.23,-86" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="216.98,-87.75 221.98,-86 216.98,-84.25 216.98,-87.75" />
+</ns0:g>
+
+<ns0:g id="node2" class="node">
+<ns0:title>AGObject</ns0:title>
+<ns0:g id="a_node2"><ns0:a ns1:href="https://robkremer.github.io/pythonUtils/dev/util.abstractGraph.html#util.abstractGraph.AGObject" ns1:title="An object in an *AbstractGraph*: it keeps the relations that come in to it" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="280.12,-134 221.38,-134 221.38,-114 280.12,-114 280.12,-134" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="250.75" y="-120.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">AGObject</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node5" class="node">
+<ns0:title>AGRelation</ns0:title>
+<ns0:g id="a_node5"><ns0:a ns1:href="https://robkremer.github.io/pythonUtils/dev/util.abstractGraph.html#util.abstractGraph.AGRelation" ns1:title="A relation in an *AbstractGraph*: an *AGObject* from a source (*src*) to a" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="406.75,-134 340.5,-134 340.5,-114 406.75,-114 406.75,-134" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="373.62" y="-120.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">AGRelation</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge3" class="edge">
+<ns0:title>AGObject-&gt;AGRelation</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M280.4,-124C296.44,-124 316.66,-124 334.07,-124" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="334.59,-125.75 339.59,-124 334.59,-122.25 334.59,-125.75" />
+</ns0:g>
+
+<ns0:g id="node11" class="node">
+<ns0:title>VObject</ns0:title>
+<ns0:g id="a_node11"><ns0:a ns1:href="../dev/sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" ns1:title="An object that visually represents some object in a tygra *Model* that resides" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="400.62,-96 346.62,-96 346.62,-76 400.62,-76 400.62,-96" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="373.62" y="-82.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">VObject</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge10" class="edge">
+<ns0:title>AGObject-&gt;VObject</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M280.4,-114.99C298.33,-109.36 321.5,-102.07 340.12,-96.22" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="341.28,-97.69 345.53,-94.52 340.23,-94.35 341.28,-97.69" />
+</ns0:g>
+
+<ns0:g id="node3" class="node">
+<ns0:title>PRObject</ns0:title>
+<ns0:g id="a_node3"><ns0:a ns1:href="https://robkremer.github.io/pythonUtils/dev/util.persistence.pRef.html#util.persistence.pRef.PRObject" ns1:title="An object with an immutable integer ID and a mutable name." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="161,-134 102.25,-134 102.25,-114 161,-114 161,-134" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="131.62" y="-120.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">PRObject</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge1" class="edge">
+<ns0:title>PRObject-&gt;AGObject</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M161.28,-124C177.44,-124 197.76,-124 214.85,-124" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="215.23,-125.75 220.23,-124 215.23,-122.25 215.23,-125.75" />
+</ns0:g>
+
+<ns0:g id="node4" class="node">
+<ns0:title>Generic</ns0:title>
+<ns0:g id="a_node4"><ns0:a ns1:title="Abstract base class for generic types.">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="60.12,-172 6.12,-172 6.12,-152 60.12,-152 60.12,-172" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="33.12" y="-158.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">Generic</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge2" class="edge">
+<ns0:title>Generic-&gt;AGObject</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M60.45,-158.55C86.16,-155.06 126.38,-149.29 161,-143 178.79,-139.77 198.47,-135.61 214.76,-132.02" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="215.82,-133.57 220.32,-130.78 215.06,-130.16 215.82,-133.57" />
+</ns0:g>
+
+<ns0:g id="edge8" class="edge">
+<ns0:title>Generic-&gt;PRObject</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M60.49,-151.62C72.2,-147.01 86.08,-141.54 98.39,-136.69" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="99.57,-138.11 103.58,-134.65 98.29,-134.85 99.57,-138.11" />
+</ns0:g>
+
+<ns0:g id="edge4" class="edge">
+<ns0:title>Generic-&gt;AGRelation</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M60.4,-163.01C86.08,-163.75 126.27,-164.29 161,-162 225.2,-157.77 241.47,-155.9 304.5,-143 314.17,-141.02 324.49,-138.41 334.09,-135.76" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="335.21,-137.26 339.55,-134.23 334.26,-133.9 335.21,-137.26" />
+</ns0:g>
+
+<ns0:g id="node12" class="node">
+<ns0:title>VRelation</ns0:title>
+<ns0:g id="a_node12"><ns0:a ns1:href="../dev/sn.view.graphics.vrelations.html#sn.view.graphics.vrelations.VRelation" ns1:title="Implements the visual representation of model *Relation*. The roles are taken" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="501.5,-134 442.75,-134 442.75,-114 501.5,-114 501.5,-134" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="472.12" y="-120.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">VRelation</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge15" class="edge">
+<ns0:title>AGRelation-&gt;VRelation</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M407.03,-124C416.37,-124 426.6,-124 436.1,-124" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="436.78,-125.75 441.78,-124 436.78,-122.25 436.78,-125.75" />
+</ns0:g>
+
+<ns0:g id="node6" class="node">
+<ns0:title>Dirtyable</ns0:title>
+<ns0:g id="a_node6"><ns0:a ns1:href="https://robkremer.github.io/pythonUtils/dev/util.dirtyable.html#util.dirtyable.Dirtyable" ns1:title="A mixin class for object needing a dirty bit, using setDirty() and isDirty()" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="60.62,-77 5.62,-77 5.62,-57 60.62,-57 60.62,-77" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="33.12" y="-63.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">Dirtyable</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge7" class="edge">
+<ns0:title>Dirtyable-&gt;PRObject</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M51.82,-77.45C67.47,-86.69 90.39,-100.23 107.48,-110.33" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="107.19,-112.19 112.39,-113.23 108.97,-109.18 107.19,-112.19" />
+</ns0:g>
+
+<ns0:g id="edge12" class="edge">
+<ns0:title>Dirtyable-&gt;VObject</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M60.77,-64.62C109.45,-60.8 215.9,-54.88 304.5,-67 316.41,-68.63 329.17,-71.79 340.39,-75.07" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="340.43,-76.91 345.72,-76.68 341.44,-73.56 340.43,-76.91" />
+</ns0:g>
+
+<ns0:g id="node7" class="node">
+<ns0:title>ErrorReportingObject</ns0:title>
+<ns0:g id="a_node7"><ns0:a ns1:href="https://robkremer.github.io/pythonUtils/dev/util.errorReportingObject.html#util.errorReportingObject.ErrorReportingObject" ns1:title="A mix-in for objects that check themselves: *validate()* fills the object's" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="304.5,-20 197,-20 197,0 304.5,0 304.5,-20" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="250.75" y="-6.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">ErrorReportingObject</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge13" class="edge">
+<ns0:title>ErrorReportingObject-&gt;VObject</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M277.83,-20.47C286.53,-24.33 296.13,-28.99 304.5,-34 322.98,-45.07 342.35,-60.25 355.69,-71.35" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="355.13,-73.17 360.09,-75.05 357.39,-70.49 355.13,-73.17" />
+</ns0:g>
+
+<ns0:g id="edge11" class="edge">
+<ns0:title>Observer-&gt;VObject</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M278.88,-86C297.01,-86 320.97,-86 340.12,-86" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="340.66,-87.75 345.66,-86 340.66,-84.25 340.66,-87.75" />
+</ns0:g>
+
+<ns0:g id="node9" class="node">
+<ns0:title>Serializable</ns0:title>
+<ns0:g id="a_node9"><ns0:a ns1:href="https://robkremer.github.io/pythonUtils/dev/util.persistence.serialize.html#util.persistence.serialize.Serializable" ns1:title="Defines the required protocol (one class method) for any user-defined objects" target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="66.25,-134 0,-134 0,-114 66.25,-114 66.25,-134" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="33.12" y="-120.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">Serializable</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge6" class="edge">
+<ns0:title>Serializable-&gt;PRObject</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M66.53,-124C75.87,-124 86.1,-124 95.6,-124" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="96.28,-125.75 101.28,-124 96.28,-122.25 96.28,-125.75" />
+</ns0:g>
+
+<ns0:g id="node10" class="node">
+<ns0:title>VNode</ns0:title>
+<ns0:g id="a_node10"><ns0:a ns1:href="../dev/sn.view.graphics.vnodes.html#sn.view.graphics.vnodes.VNode" ns1:title="This class is more or less a dummy class under *VObject* for all nodes (including " target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="499.12,-96 445.12,-96 445.12,-76 499.12,-76 499.12,-96" />
+<ns0:text xml:space="preserve" text-anchor="middle" x="472.12" y="-82.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">VNode</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge9" class="edge">
+<ns0:title>VObject-&gt;VNode</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M400.99,-86C412.59,-86 426.32,-86 438.55,-86" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="439.03,-87.75 444.03,-86 439.03,-84.25 439.03,-87.75" />
+</ns0:g>
+
+<ns0:g id="edge14" class="edge">
+<ns0:title>VObject-&gt;VRelation</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M400.99,-96.38C412.7,-100.99 426.58,-106.46 438.89,-111.31" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="438.79,-113.15 444.08,-113.35 440.07,-109.89 438.79,-113.15" />
+</ns0:g>
+</ns0:g>
+</ns0:svg>

@@ -1,0 +1,1278 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="sn.model.model module" href="sn.model.model.html"><link rel="prev" title="sn.model.copying module" href="sn.model.copying.html">
+        <link rel="prefetch" href="../_static/sn-logo.png" as="image">
+
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>sn.model.directory module - Semantic Nets 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">Semantic Nets 1.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">Semantic Nets 1.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user/index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user/concepts.html">Concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/gettingStarted.html">Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/tutorial.html">Worked Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/editing.html">Editing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/contexts.html">Contexts: Rules, Definitions, Queries, Constraints and Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/reasoning.html">Reasoning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/viewing.html">Viewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/layouts.html">Arranging a View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/animation.html">Animation Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/files.html">Files and Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/terminal.html">The Terminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/exampleApps.html">Plugins</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developer/index.html">Developer Guide</a><input aria-label="Toggle navigation of Developer Guide" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html">Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/model.html">The Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/reasoner.html">The Reasoner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/view.html">The Graphical View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/layout.html">Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/extending.html">Building on Semantic Nets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/conventions.html">Conventions and Testing</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="sn.html">sn package</a><input aria-label="Toggle navigation of sn package" checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="sn.controller.html">sn.controller package</a><input aria-label="Toggle navigation of sn.controller package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.controller.modelInterface.html">sn.controller.modelInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
+<li class="toctree-l2 current has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" checked="" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
+<li class="toctree-l3 current current-page"><a class="current reference internal" href="#">sn.model.directory module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html">sn.view.graphics.connectors module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.expandDialog.html">sn.view.graphics.expandDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.guiApp.html">sn.view.graphics.guiApp module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html">sn.view.graphics.imageExport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html">sn.view.graphics.labels module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html">sn.view.graphics.layout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutDialog.html">sn.view.graphics.layoutDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutPanel.html">sn.view.graphics.layoutPanel module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.progress.html">sn.view.graphics.progress module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.reasoningToolbar.html">sn.view.graphics.reasoningToolbar module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.relationTable.html">sn.view.graphics.relationTable module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.replaceModelDialog.html">sn.view.graphics.replaceModelDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.searchDialog.html">sn.view.graphics.searchDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.shapes.html">sn.view.graphics.shapes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sngContext.html">sn.view.graphics.sngContext module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sngView.html">sn.view.graphics.sngView module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sourceWindow.html">sn.view.graphics.sourceWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html">sn.view.graphics.treeLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewBase.html">sn.view.graphics.viewBase module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewCommands.html">sn.view.graphics.viewCommands module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewContainment.html">sn.view.graphics.viewContainment module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewEditing.html">sn.view.graphics.viewEditing module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewFiles.html">sn.view.graphics.viewFiles module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewInput.html">sn.view.graphics.viewInput module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewLayouts.html">sn.view.graphics.viewLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewReasoning.html">sn.view.graphics.viewReasoning module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewViewport.html">sn.view.graphics.viewViewport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewVisibility.html">sn.view.graphics.viewVisibility module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.visibilityDialog.html">sn.view.graphics.visibilityDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vnodes.html">sn.view.graphics.vnodes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vobjects.html">sn.view.graphics.vobjects module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vrelations.html">sn.view.graphics.vrelations module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.textUserInterface.html">sn.view.textUserInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.__main__.html">sn.__main__ module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html">sn.hooks module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html">sn.plugins module</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../plugins/index.html">The plugins</a><input aria-label="Toggle navigation of The plugins" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.XMLreader.html">snplugins.XMLreader package</a><input aria-label="Toggle navigation of snplugins.XMLreader package" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.reader.html">snplugins.XMLreader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.schema.html">snplugins.XMLreader.schema module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.view.html">snplugins.XMLreader.view module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.pythonParser.html">snplugins.pythonParser package</a><input aria-label="Toggle navigation of snplugins.pythonParser package" class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.dialog.html">snplugins.pythonParser.dialog module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.hooks.html">snplugins.pythonParser.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.parser.html">snplugins.pythonParser.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/dev/sn.model.directory.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="module-sn.model.directory">
+<span id="sn-model-directory-module"></span><h1>sn.model.directory module<a class="headerlink" href="#module-sn.model.directory" title="Link to this heading">¶</a></h1>
+<p>The model/view directory: the models (.snm) and views (.snv) in a list of
+folders – the <em>search path</em>, like the shell’s PATH – found without reading
+them: only each file’s header and the first few properties of the object in it
+(its type, URL, and – for a view – its model) are read (see <em>peekFile()</em>).</p>
+<p>The search path is a string of folders separated by “:” (<em>os.pathsep</em>), or by
+new lines. A folder ending in <code class="docutils literal notranslate"><span class="pre">/**</span></code> includes all the folders below it, too
+(see <em>parsePath()</em>). The window showing the directory is
+<em>sn.view.graphics.directoryWindow.DirectoryWindow</em>.</p>
+<p>Created on Oct 12, 2026</p>
+<p><em>Code author: Rob Kremer &lt;<a class="reference external" href="mailto:robkremer&#37;&#52;&#48;me&#46;com">robkremer<span>&#64;</span>me<span>&#46;</span>com</a>&gt;</em></p>
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.model.directory.EXTENSIONS">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">EXTENSIONS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'.snm':</span> <span class="pre">'model',</span> <span class="pre">'.snv':</span> <span class="pre">'view'}</span></span><a class="headerlink" href="#sn.model.directory.EXTENSIONS" title="Link to this definition">¶</a></dt>
+<dd><p>The files the directory lists, and what’s in them.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.model.directory.SUBFOLDERS">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">SUBFOLDERS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'/**'</span></span><a class="headerlink" href="#sn.model.directory.SUBFOLDERS" title="Link to this definition">¶</a></dt>
+<dd><p>Ending a folder in the search path: and all the folders below it.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.model.directory.SEPARATORS">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">SEPARATORS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">';\n'</span></span><a class="headerlink" href="#sn.model.directory.SEPARATORS" title="Link to this definition">¶</a></dt>
+<dd><p>What separates the parts of a search path. (Not “:”, as in the shell’s
+PATH: URLs have them. A search path with no URLs in it may use “:” too.)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.directory.isRemote">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">isRemote</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory.isRemote" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>url</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether <em>url</em> is somewhere other than this computer’s files (eg:
+“<a class="reference external" href="https://">https://</a>…”): not a path, nor a “file:” URL.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sn.model.directory.Folder">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">Folder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subfolders</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory.Folder" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A part of the search path: a folder on this computer, or a model or view
+somewhere else (eg: on the web: a folder there can’t be looked through).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>)</p></li>
+<li><p><strong>subfolders</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.directory.Folder.path">
+<span class="sig-name descname"><span class="pre">path</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#sn.model.directory.Folder.path" title="Link to this definition">¶</a></dt>
+<dd><p>The folder’s (absolute, user-expanded) path; or a remote model’s or view’s URL.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.directory.Folder.subfolders">
+<span class="sig-name descname"><span class="pre">subfolders</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#sn.model.directory.Folder.subfolders" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the folders below it are included too.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sn.model.directory.Folder.remote">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">remote</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#sn.model.directory.Folder.remote" title="Link to this definition">¶</a></dt>
+<dd><p>Whether it’s a model or view somewhere else (see <em>isRemote()</em>), not a folder.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.directory.Folder.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory.Folder.__str__" title="Link to this definition">¶</a></dt>
+<dd><p>Return str(self).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.directory.Folder.covers">
+<span class="sig-name descname"><span class="pre">covers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">folder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory.Folder.covers" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>folder</strong> (<em>str</em>) – A folder’s path.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether the files in <em>folder</em> are in this part of the search path.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.directory.Folder.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subfolders</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory.Folder.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>)</p></li>
+<li><p><strong>subfolders</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.directory._norm">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">_norm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory._norm" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.directory._localPath">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">_localPath</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">part</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory._localPath" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>part</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The path <em>part</em> – a path, or a “file:” URL – is of.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.directory.parsePath">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">parsePath</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory.parsePath" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>text</strong> (<em>str</em>) – A search path: its parts separated by “;” or new lines (see
+<em>SEPARATORS</em>). Each is a folder – a path or a “file:” URL, ending in <code class="docutils literal notranslate"><span class="pre">/**</span></code>
+if the folders below it are included too; “~” is the home folder – or the
+URL of a model or view somewhere else (eg: “<a class="reference external" href="https://">https://</a>…”). Blank parts are
+ignored, and so are repeats.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Its parts, in order.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="#sn.model.directory.Folder" title="sn.model.directory.Folder"><em>Folder</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.directory.formatPath">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">formatPath</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">folders</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory.formatPath" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>folders</strong> (<em>list</em><em>[</em><a class="reference internal" href="#sn.model.directory.Folder" title="sn.model.directory.Folder"><em>Folder</em></a><em>]</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>folders</em> as a search path (see <em>parsePath()</em>): folders as “file:” URLs.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.directory.covered">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">covered</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">folders</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory.covered" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>folders</strong> (<em>list</em><em>[</em><a class="reference internal" href="#sn.model.directory.Folder" title="sn.model.directory.Folder"><em>Folder</em></a><em>]</em>) – A search path.</p></li>
+<li><p><strong>folder</strong> (<em>str</em>) – A folder’s path.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether <em>folder</em>’s files are in the search path.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.directory.withFolder">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">withFolder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory.withFolder" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>text</strong> (<em>str</em>) – A search path.</p></li>
+<li><p><strong>folder</strong> (<em>str</em>) – A folder’s path.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>text</em> with <em>folder</em> added at the end, if it isn’t covered by it
+already (see <em>covered()</em>); else None.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.directory.filesIn">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">filesIn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">folders</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory.filesIn" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>folders</strong> (<em>list</em><em>[</em><a class="reference internal" href="#sn.model.directory.Folder" title="sn.model.directory.Folder"><em>Folder</em></a><em>]</em>) – A search path.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The paths of the models and views in <em>folders</em> (see
+<em>EXTENSIONS</em>), each once; not in hidden folders, nor hidden files. Folders
+that aren’t there are skipped. Remote parts of the search path are given
+as they are: their URLs.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Iterator</em>[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.model.directory.FIRST_ID">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">FIRST_ID</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'model':</span> <span class="pre">256,</span> <span class="pre">'view':</span> <span class="pre">1}</span></span><a class="headerlink" href="#sn.model.directory.FIRST_ID" title="Link to this definition">¶</a></dt>
+<dd><p>The id given to the first object made in a model, and a view (see <em>Model.__init__()</em>): ids count up from there.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.model.directory.PEEKED">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">PEEKED</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('url',</span> <span class="pre">'model',</span> <span class="pre">'nextID')</span></span><a class="headerlink" href="#sn.model.directory.PEEKED" title="Link to this definition">¶</a></dt>
+<dd><p>The properties of the object in a file that <em>peekFile()</em> reads (if they’re there).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.model.directory.CACHED">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">CACHED</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'X-Cached-Copy'</span></span><a class="headerlink" href="#sn.model.directory.CACHED" title="Link to this definition">¶</a></dt>
+<dd><p>In <em>peekURL()</em>’s headers: the path of the copy read, if the server couldn’t be reached.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.model.directory.REMOTE_TIMEOUT">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">REMOTE_TIMEOUT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">10</span></span><a class="headerlink" href="#sn.model.directory.REMOTE_TIMEOUT" title="Link to this definition">¶</a></dt>
+<dd><p>How long (seconds) to wait for a remote model or view (see <em>peekURL()</em>).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.directory.peekFile">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">peekFile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory.peekFile" title="Link to this definition">¶</a></dt>
+<dd><p>Read just the start of a model or view file – its header and the first
+properties of the object in it – not the rest. (For a big model, that’s a
+few kilobytes of megabytes.) Both XML formats (XML, XML2) are understood.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) – The file’s path.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>“type”: the class of the object in it (its fully qualified name);
+and those of <em>PEEKED</em>, and of the header’s “previousURL”, that are there.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, str]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If it isn’t a file of that kind (or can’t be read).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.directory.peekURL">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">peekURL</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory.peekURL" title="Link to this definition">¶</a></dt>
+<dd><p>Like <em>peekFile()</em>, for a model or view at a URL (eg: on the web): only the
+start of it is fetched.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>url</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>What <em>peekFile()</em> does; and the response’s headers (eg:
+“Content-Length”, “Last-Modified”).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[dict[str, str], dict[str, str]]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>FileNotFoundError</strong> – If there’s nothing there.</p></li>
+<li><p><strong>ValueError</strong> – If it isn’t a model or view (or can’t be fetched).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.model.directory.HEAD_KEYS">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">HEAD_KEYS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'model':</span> <span class="pre">'model',</span> <span class="pre">'objects':</span> <span class="pre">'objects',</span> <span class="pre">'previousURL':</span> <span class="pre">'previousURL',</span> <span class="pre">'type':</span> <span class="pre">'type',</span> <span class="pre">'url':</span> <span class="pre">'url'}</span></span><a class="headerlink" href="#sn.model.directory.HEAD_KEYS" title="Link to this definition">¶</a></dt>
+<dd><p>What’s taken from a document’s head (see <em>_fromHead()</em>): its keys -&gt; <em>peekFile()</em>’s.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.directory._fromHead">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">_fromHead</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">events</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory._fromHead" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>events</strong> (<em>Iterator</em><em>[</em><em>tuple</em><em>[</em><em>str</em><em>, </em><em>Element</em><em>]</em><em>]</em>) – The parse of a document with a head (see
+<em>XML3SerializationStrategy</em>), as far as the start of its top tag.</p></li>
+<li><p><strong>name</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>What <em>peekFile()</em> does, from its head (only that is read). Its
+object count (“objects”) is exact.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.directory._peek">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">_peek</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stream</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory._peek" title="Link to this definition">¶</a></dt>
+<dd><p>The work of <em>peekFile()</em> and <em>peekURL()</em>: <em>stream</em> is read as far as need be.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict[str, str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.directory.urlOf">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">urlOf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory.urlOf" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) – A file’s path.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Its URL, as the program makes it (see <em>fixURL()</em>): eg, so it can
+be found among the open windows’ views.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.directory.pathOf">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">pathOf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory.pathOf" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>url</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The path of the file at <em>url</em>, if it’s a file URL; else None (eg:
+the system model, “sn:/sn”).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sn.model.directory.Entry">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">Entry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modelURL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">className</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objects</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cached</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objectsExact</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">created</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modified</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">onPath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">views</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory.Entry" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A model or view in the directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>)</p></li>
+<li><p><strong>kind</strong> (<em>str</em>)</p></li>
+<li><p><strong>url</strong> (<em>str</em>)</p></li>
+<li><p><strong>modelURL</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>className</strong> (<em>str</em>)</p></li>
+<li><p><strong>objects</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>cached</strong> (<em>bool</em>)</p></li>
+<li><p><strong>objectsExact</strong> (<em>bool</em>)</p></li>
+<li><p><strong>created</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>modified</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>size</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>error</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>onPath</strong> (<em>bool</em>)</p></li>
+<li><p><strong>views</strong> (<em>list</em><em>[</em><a class="reference internal" href="#sn.model.directory.Entry" title="sn.model.directory.Entry"><em>Entry</em></a><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.directory.Entry.path">
+<span class="sig-name descname"><span class="pre">path</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#sn.model.directory.Entry.path" title="Link to this definition">¶</a></dt>
+<dd><p>The file’s path (for a model only a view refers to: where it should be).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.directory.Entry.kind">
+<span class="sig-name descname"><span class="pre">kind</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#sn.model.directory.Entry.kind" title="Link to this definition">¶</a></dt>
+<dd><p>“model” or “view” (see <em>EXTENSIONS</em>).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.directory.Entry.url">
+<span class="sig-name descname"><span class="pre">url</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></span><a class="headerlink" href="#sn.model.directory.Entry.url" title="Link to this definition">¶</a></dt>
+<dd><p>Its URL.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.directory.Entry.modelURL">
+<span class="sig-name descname"><span class="pre">modelURL</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.model.directory.Entry.modelURL" title="Link to this definition">¶</a></dt>
+<dd><p>A view’s model’s URL (made absolute).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.directory.Entry.className">
+<span class="sig-name descname"><span class="pre">className</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></span><a class="headerlink" href="#sn.model.directory.Entry.className" title="Link to this definition">¶</a></dt>
+<dd><p>The class of the object in it (its fully qualified name).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.directory.Entry.objects">
+<span class="sig-name descname"><span class="pre">objects</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.model.directory.Entry.objects" title="Link to this definition">¶</a></dt>
+<dd><p>At most how many objects are in it: as many as have ever been made in it
+(from its nextID: see <em>FIRST_ID</em>). Fewer if some have been deleted – it
+can’t be known without reading the whole file – unless it says how many
+(see <em>objectsExact</em>).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.directory.Entry.cached">
+<span class="sig-name descname"><span class="pre">cached</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#sn.model.directory.Entry.cached" title="Link to this definition">¶</a></dt>
+<dd><p>Whether it’s remote, and was read from the copy kept of it, as its server couldn’t be reached (see <em>fetchURL()</em>).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.directory.Entry.objectsExact">
+<span class="sig-name descname"><span class="pre">objectsExact</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#sn.model.directory.Entry.objectsExact" title="Link to this definition">¶</a></dt>
+<dd><p>Whether <em>objects</em> is exactly how many objects are in it: its head says (see <em>XML3SerializationStrategy</em>).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.directory.Entry.created">
+<span class="sig-name descname"><span class="pre">created</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.model.directory.Entry.created" title="Link to this definition">¶</a></dt>
+<dd><p>When the file was created (seconds since the epoch).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.directory.Entry.modified">
+<span class="sig-name descname"><span class="pre">modified</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.model.directory.Entry.modified" title="Link to this definition">¶</a></dt>
+<dd><p>When it was last changed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.directory.Entry.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modelURL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">className</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objects</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cached</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objectsExact</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">created</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modified</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">onPath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">views</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory.Entry.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>)</p></li>
+<li><p><strong>kind</strong> (<em>str</em>)</p></li>
+<li><p><strong>url</strong> (<em>str</em>)</p></li>
+<li><p><strong>modelURL</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>className</strong> (<em>str</em>)</p></li>
+<li><p><strong>objects</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>cached</strong> (<em>bool</em>)</p></li>
+<li><p><strong>objectsExact</strong> (<em>bool</em>)</p></li>
+<li><p><strong>created</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>modified</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>size</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>error</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>onPath</strong> (<em>bool</em>)</p></li>
+<li><p><strong>views</strong> (<em>list</em><em>[</em><a class="reference internal" href="#sn.model.directory.Entry" title="sn.model.directory.Entry"><em>Entry</em></a><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.directory.Entry.size">
+<span class="sig-name descname"><span class="pre">size</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.model.directory.Entry.size" title="Link to this definition">¶</a></dt>
+<dd><p>Its size in bytes.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.directory.Entry.error">
+<span class="sig-name descname"><span class="pre">error</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.model.directory.Entry.error" title="Link to this definition">¶</a></dt>
+<dd><p>Why it couldn’t be read (eg: it’s missing); otherwise None.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.directory.Entry.onPath">
+<span class="sig-name descname"><span class="pre">onPath</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></span><a class="headerlink" href="#sn.model.directory.Entry.onPath" title="Link to this definition">¶</a></dt>
+<dd><p>Whether it’s in the search path (else it’s a model a view there refers to).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.directory.Entry.views">
+<span class="sig-name descname"><span class="pre">views</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sn.model.directory.Entry" title="sn.model.directory.Entry"><span class="pre">Entry</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.model.directory.Entry.views" title="Link to this definition">¶</a></dt>
+<dd><p>A model’s views (in the directory).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sn.model.directory.Entry.name">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#sn.model.directory.Entry.name" title="Link to this definition">¶</a></dt>
+<dd><p>The file’s name, without its extension (or the last part of its URL).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sn.model.directory.Entry.location">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">location</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#sn.model.directory.Entry.location" title="Link to this definition">¶</a></dt>
+<dd><p>Where it is: the URL of its folder (made readable: “%20” is a space, …).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sn.model.directory.Entry.remote">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">remote</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#sn.model.directory.Entry.remote" title="Link to this definition">¶</a></dt>
+<dd><p>Whether it’s somewhere other than this computer’s files (see <em>isRemote()</em>).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.directory.scanFile">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">scanFile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">onPath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory.scanFile" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – A model’s or view’s file.</p></li>
+<li><p><strong>onPath</strong> (<em>bool</em>) – Whether it’s in the search path (see <em>Entry.onPath</em>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Its entry: read with <em>peekFile()</em>. If it can’t be read, the
+entry’s <em>error</em> says why.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#sn.model.directory.Entry" title="sn.model.directory.Entry"><em>Entry</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.directory.scanURL">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">scanURL</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">onPath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory.scanURL" title="Link to this definition">¶</a></dt>
+<dd><p>Like <em>scanFile()</em>, for a model or view at a URL (eg: on the web): read with
+<em>peekURL()</em>. When it was changed and its size are what the server says (if
+it does); when it was made isn’t known.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>url</strong> (<em>str</em>)</p></li>
+<li><p><strong>onPath</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#sn.model.directory.Entry" title="sn.model.directory.Entry"><em>Entry</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.directory._fromPeek">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">_fromPeek</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">peeked</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory._fromPeek" title="Link to this definition">¶</a></dt>
+<dd><p>Fill in <em>entry</em> from what was peeked at (see <em>peekFile()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>entry</strong> (<a class="reference internal" href="#sn.model.directory.Entry" title="sn.model.directory.Entry"><em>Entry</em></a>)</p></li>
+<li><p><strong>peeked</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.directory._kindOf">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">_kindOf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">typeName</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory._kindOf" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>typeName</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>“view” or “model”: what the class named <em>typeName</em> is – if it’s
+a class that’s loaded (nothing’s imported to find out) – else None.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.directory.modelURLOf">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">modelURLOf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">viewURL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">storedURL</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory.modelURLOf" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>viewURL</strong> (<em>str</em>) – Where a view is.</p></li>
+<li><p><strong>model</strong> (<em>str</em>) – Its model’s URL, as it’s written in it: perhaps relative to it.</p></li>
+<li><p><strong>storedURL</strong> (<em>str</em><em> | </em><em>None</em>) – The URL written in it (where it was when it was saved: if
+it’s been copied, its model may have been left there – see
+<em>PRDb.absoluteURL()</em>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The model’s URL.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sn.model.directory.Directory">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">Directory</span></span><a class="headerlink" href="#sn.model.directory.Directory" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>The models and views in the search path (see <em>scan()</em>), and the models the
+views refer to that aren’t in it.</p>
+<dl class="field-list simple">
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.directory.Directory.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory.Directory.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.directory.Directory.entries">
+<span class="sig-name descname"><span class="pre">entries</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#sn.model.directory.Entry" title="sn.model.directory.Entry"><span class="pre">Entry</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.model.directory.Directory.entries" title="Link to this definition">¶</a></dt>
+<dd><p>The entries, by URL.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.directory.Directory.scan">
+<span class="sig-name descname"><span class="pre">scan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">folders</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory.Directory.scan" title="Link to this definition">¶</a></dt>
+<dd><p>Start afresh, and find the models and views in <em>folders</em>: one at a time,
+so a window can show them as they’re found (and stay responsive).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>folders</strong> (<em>list</em><em>[</em><a class="reference internal" href="#sn.model.directory.Folder" title="sn.model.directory.Folder"><em>Folder</em></a><em>]</em>) – The search path.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Each entry, as it’s found: then the models views refer to that
+aren’t in <em>folders</em>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Iterator</em>[<a class="reference internal" href="#sn.model.directory.Entry" title="sn.model.directory.Entry"><em>Entry</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.directory.Directory.addReferencedModels">
+<span class="sig-name descname"><span class="pre">addReferencedModels</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory.Directory.addReferencedModels" title="Link to this definition">¶</a></dt>
+<dd><p>Add the models the views refer to that aren’t in the directory (eg: in a
+folder that isn’t in the search path, or on the web).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Those added.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Iterator</em>[<a class="reference internal" href="#sn.model.directory.Entry" title="sn.model.directory.Entry"><em>Entry</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.directory.Directory.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory.Directory.update" title="Link to this definition">¶</a></dt>
+<dd><p>Read <em>path</em> again (eg: it’s been saved, or deleted): its entry is replaced,
+or taken out if it’s gone and no view refers to it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Its new entry, if it has one.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#sn.model.directory.Entry" title="sn.model.directory.Entry"><em>Entry</em></a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.directory.Directory.models">
+<span class="sig-name descname"><span class="pre">models</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory.Directory.models" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The models, sorted by name (then folder), each with its views –
+sorted by name – in its <em>views</em>. Views whose models aren’t models in
+the directory (eg: the system model) come under an entry made for it.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[<a class="reference internal" href="#sn.model.directory.Entry" title="sn.model.directory.Entry"><em>Entry</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.directory.urlProblem">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">urlProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kinds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('model',</span> <span class="pre">'view')</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory.urlProblem" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>url</strong> (<em>str</em>) – Where a model or view should be (eg: typed by the user).</p></li>
+<li><p><strong>kinds</strong> (<em>tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>) – What it should be: “model”, “view”, or either.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>What’s wrong with it – there’s nothing there, or it isn’t one of
+<em>kinds</em> – or None if it’s all right. Only its start is read (see
+<em>scanFile()</em>, <em>scanURL()</em>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.directory.moveToTrash">
+<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">moveToTrash</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory.moveToTrash" title="Link to this definition">¶</a></dt>
+<dd><p>Move a file to the Trash (on macOS, where the Finder’s “Put Back” can
+restore it).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>OSError</strong> – If it can’t be moved there (eg: on another platform:
+nothing’s deleted then).</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="sn.model.model.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">sn.model.model module</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="sn.model.copying.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">sn.model.copying module</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2023-2026, Rob Kremer
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">sn.model.directory module</a><ul>
+<li><a class="reference internal" href="#sn.model.directory.EXTENSIONS"><code class="docutils literal notranslate"><span class="pre">EXTENSIONS</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.SUBFOLDERS"><code class="docutils literal notranslate"><span class="pre">SUBFOLDERS</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.SEPARATORS"><code class="docutils literal notranslate"><span class="pre">SEPARATORS</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.isRemote"><code class="docutils literal notranslate"><span class="pre">isRemote()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Folder"><code class="docutils literal notranslate"><span class="pre">Folder</span></code></a><ul>
+<li><a class="reference internal" href="#sn.model.directory.Folder.path"><code class="docutils literal notranslate"><span class="pre">Folder.path</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Folder.subfolders"><code class="docutils literal notranslate"><span class="pre">Folder.subfolders</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Folder.remote"><code class="docutils literal notranslate"><span class="pre">Folder.remote</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Folder.__str__"><code class="docutils literal notranslate"><span class="pre">Folder.__str__()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Folder.covers"><code class="docutils literal notranslate"><span class="pre">Folder.covers()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Folder.__init__"><code class="docutils literal notranslate"><span class="pre">Folder.__init__()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sn.model.directory._norm"><code class="docutils literal notranslate"><span class="pre">_norm()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory._localPath"><code class="docutils literal notranslate"><span class="pre">_localPath()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.parsePath"><code class="docutils literal notranslate"><span class="pre">parsePath()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.formatPath"><code class="docutils literal notranslate"><span class="pre">formatPath()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.covered"><code class="docutils literal notranslate"><span class="pre">covered()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.withFolder"><code class="docutils literal notranslate"><span class="pre">withFolder()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.filesIn"><code class="docutils literal notranslate"><span class="pre">filesIn()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.FIRST_ID"><code class="docutils literal notranslate"><span class="pre">FIRST_ID</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.PEEKED"><code class="docutils literal notranslate"><span class="pre">PEEKED</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.CACHED"><code class="docutils literal notranslate"><span class="pre">CACHED</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.REMOTE_TIMEOUT"><code class="docutils literal notranslate"><span class="pre">REMOTE_TIMEOUT</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.peekFile"><code class="docutils literal notranslate"><span class="pre">peekFile()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.peekURL"><code class="docutils literal notranslate"><span class="pre">peekURL()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.HEAD_KEYS"><code class="docutils literal notranslate"><span class="pre">HEAD_KEYS</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory._fromHead"><code class="docutils literal notranslate"><span class="pre">_fromHead()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory._peek"><code class="docutils literal notranslate"><span class="pre">_peek()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.urlOf"><code class="docutils literal notranslate"><span class="pre">urlOf()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.pathOf"><code class="docutils literal notranslate"><span class="pre">pathOf()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Entry"><code class="docutils literal notranslate"><span class="pre">Entry</span></code></a><ul>
+<li><a class="reference internal" href="#sn.model.directory.Entry.path"><code class="docutils literal notranslate"><span class="pre">Entry.path</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Entry.kind"><code class="docutils literal notranslate"><span class="pre">Entry.kind</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Entry.url"><code class="docutils literal notranslate"><span class="pre">Entry.url</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Entry.modelURL"><code class="docutils literal notranslate"><span class="pre">Entry.modelURL</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Entry.className"><code class="docutils literal notranslate"><span class="pre">Entry.className</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Entry.objects"><code class="docutils literal notranslate"><span class="pre">Entry.objects</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Entry.cached"><code class="docutils literal notranslate"><span class="pre">Entry.cached</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Entry.objectsExact"><code class="docutils literal notranslate"><span class="pre">Entry.objectsExact</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Entry.created"><code class="docutils literal notranslate"><span class="pre">Entry.created</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Entry.modified"><code class="docutils literal notranslate"><span class="pre">Entry.modified</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Entry.__init__"><code class="docutils literal notranslate"><span class="pre">Entry.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Entry.size"><code class="docutils literal notranslate"><span class="pre">Entry.size</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Entry.error"><code class="docutils literal notranslate"><span class="pre">Entry.error</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Entry.onPath"><code class="docutils literal notranslate"><span class="pre">Entry.onPath</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Entry.views"><code class="docutils literal notranslate"><span class="pre">Entry.views</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Entry.name"><code class="docutils literal notranslate"><span class="pre">Entry.name</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Entry.location"><code class="docutils literal notranslate"><span class="pre">Entry.location</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Entry.remote"><code class="docutils literal notranslate"><span class="pre">Entry.remote</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sn.model.directory.scanFile"><code class="docutils literal notranslate"><span class="pre">scanFile()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.scanURL"><code class="docutils literal notranslate"><span class="pre">scanURL()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory._fromPeek"><code class="docutils literal notranslate"><span class="pre">_fromPeek()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory._kindOf"><code class="docutils literal notranslate"><span class="pre">_kindOf()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.modelURLOf"><code class="docutils literal notranslate"><span class="pre">modelURLOf()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Directory"><code class="docutils literal notranslate"><span class="pre">Directory</span></code></a><ul>
+<li><a class="reference internal" href="#sn.model.directory.Directory.__init__"><code class="docutils literal notranslate"><span class="pre">Directory.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Directory.entries"><code class="docutils literal notranslate"><span class="pre">Directory.entries</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Directory.scan"><code class="docutils literal notranslate"><span class="pre">Directory.scan()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Directory.addReferencedModels"><code class="docutils literal notranslate"><span class="pre">Directory.addReferencedModels()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Directory.update"><code class="docutils literal notranslate"><span class="pre">Directory.update()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.Directory.models"><code class="docutils literal notranslate"><span class="pre">Directory.models()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sn.model.directory.urlProblem"><code class="docutils literal notranslate"><span class="pre">urlProblem()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.directory.moveToTrash"><code class="docutils literal notranslate"><span class="pre">moveToTrash()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

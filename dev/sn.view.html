@@ -1,0 +1,924 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="sn.view.graphics package" href="sn.view.graphics.html"><link rel="prev" title="sn.model.snAttribute module" href="sn.model.snAttribute.html">
+        <link rel="prefetch" href="../_static/sn-logo.png" as="image">
+
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>sn.view package - Semantic Nets 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">Semantic Nets 1.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">Semantic Nets 1.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user/index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user/concepts.html">Concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/gettingStarted.html">Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/tutorial.html">Worked Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/editing.html">Editing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/contexts.html">Contexts: Rules, Definitions, Queries, Constraints and Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/reasoning.html">Reasoning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/viewing.html">Viewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/layouts.html">Arranging a View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/animation.html">Animation Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/files.html">Files and Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/terminal.html">The Terminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/exampleApps.html">Plugins</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developer/index.html">Developer Guide</a><input aria-label="Toggle navigation of Developer Guide" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html">Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/model.html">The Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/reasoner.html">The Reasoner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/view.html">The Graphical View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/layout.html">Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/extending.html">Building on Semantic Nets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/conventions.html">Conventions and Testing</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="sn.html">sn package</a><input aria-label="Toggle navigation of sn package" checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="sn.controller.html">sn.controller package</a><input aria-label="Toggle navigation of sn.controller package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.controller.modelInterface.html">sn.controller.modelInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current has-children current-page"><a class="current reference internal" href="#">sn.view package</a><input aria-label="Toggle navigation of sn.view package" checked="" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html">sn.view.graphics.connectors module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.expandDialog.html">sn.view.graphics.expandDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.guiApp.html">sn.view.graphics.guiApp module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html">sn.view.graphics.imageExport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html">sn.view.graphics.labels module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html">sn.view.graphics.layout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutDialog.html">sn.view.graphics.layoutDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutPanel.html">sn.view.graphics.layoutPanel module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.progress.html">sn.view.graphics.progress module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.reasoningToolbar.html">sn.view.graphics.reasoningToolbar module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.relationTable.html">sn.view.graphics.relationTable module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.replaceModelDialog.html">sn.view.graphics.replaceModelDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.searchDialog.html">sn.view.graphics.searchDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.shapes.html">sn.view.graphics.shapes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sngContext.html">sn.view.graphics.sngContext module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sngView.html">sn.view.graphics.sngView module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sourceWindow.html">sn.view.graphics.sourceWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html">sn.view.graphics.treeLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewBase.html">sn.view.graphics.viewBase module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewCommands.html">sn.view.graphics.viewCommands module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewContainment.html">sn.view.graphics.viewContainment module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewEditing.html">sn.view.graphics.viewEditing module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewFiles.html">sn.view.graphics.viewFiles module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewInput.html">sn.view.graphics.viewInput module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewLayouts.html">sn.view.graphics.viewLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewReasoning.html">sn.view.graphics.viewReasoning module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewViewport.html">sn.view.graphics.viewViewport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewVisibility.html">sn.view.graphics.viewVisibility module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.visibilityDialog.html">sn.view.graphics.visibilityDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vnodes.html">sn.view.graphics.vnodes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vobjects.html">sn.view.graphics.vobjects module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vrelations.html">sn.view.graphics.vrelations module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.textUserInterface.html">sn.view.textUserInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.__main__.html">sn.__main__ module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html">sn.hooks module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html">sn.plugins module</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../plugins/index.html">The plugins</a><input aria-label="Toggle navigation of The plugins" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.XMLreader.html">snplugins.XMLreader package</a><input aria-label="Toggle navigation of snplugins.XMLreader package" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.reader.html">snplugins.XMLreader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.schema.html">snplugins.XMLreader.schema module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.view.html">snplugins.XMLreader.view module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.pythonParser.html">snplugins.pythonParser package</a><input aria-label="Toggle navigation of snplugins.pythonParser package" class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.dialog.html">snplugins.pythonParser.dialog module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.hooks.html">snplugins.pythonParser.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.parser.html">snplugins.pythonParser.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/dev/sn.view.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="module-sn.view">
+<span id="sn-view-package"></span><h1>sn.view package<a class="headerlink" href="#module-sn.view" title="Link to this heading">¶</a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="sn.view.graphics.html">sn.view.graphics package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sn.view.graphics.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.random"><code class="docutils literal notranslate"><span class="pre">random()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.WeakrefError"><code class="docutils literal notranslate"><span class="pre">WeakrefError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.isEligible"><code class="docutils literal notranslate"><span class="pre">isEligible()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.PANE_MARGIN"><code class="docutils literal notranslate"><span class="pre">PANE_MARGIN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.PANE_LABEL"><code class="docutils literal notranslate"><span class="pre">PANE_LABEL</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.FLOW_DIRECTIONS"><code class="docutils literal notranslate"><span class="pre">FLOW_DIRECTIONS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.Snapshot"><code class="docutils literal notranslate"><span class="pre">Snapshot</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.rankOf"><code class="docutils literal notranslate"><span class="pre">rankOf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.gap"><code class="docutils literal notranslate"><span class="pre">gap()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.misalignment"><code class="docutils literal notranslate"><span class="pre">misalignment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.LEAP_REACH"><code class="docutils literal notranslate"><span class="pre">LEAP_REACH</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.LEAP_MIN"><code class="docutils literal notranslate"><span class="pre">LEAP_MIN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.LEAP_ANY"><code class="docutils literal notranslate"><span class="pre">LEAP_ANY</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.LEAP_STOP"><code class="docutils literal notranslate"><span class="pre">LEAP_STOP</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.LEAP_LEAF"><code class="docutils literal notranslate"><span class="pre">LEAP_LEAF</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.stretch"><code class="docutils literal notranslate"><span class="pre">stretch()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.leap"><code class="docutils literal notranslate"><span class="pre">leap()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.forces"><code class="docutils literal notranslate"><span class="pre">forces()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.FieldsLayout"><code class="docutils literal notranslate"><span class="pre">FieldsLayout</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html#sn.view.graphics.animatedLayouts.FieldsLayout_threaded"><code class="docutils literal notranslate"><span class="pre">FieldsLayout_threaded</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html#sn.view.graphics.animationControls.DEFAULTS"><code class="docutils literal notranslate"><span class="pre">DEFAULTS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html#sn.view.graphics.animationControls.coolingLoss"><code class="docutils literal notranslate"><span class="pre">coolingLoss()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html#sn.view.graphics.animationControls.SCALED"><code class="docutils literal notranslate"><span class="pre">SCALED</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html#sn.view.graphics.animationControls.SLIDERS"><code class="docutils literal notranslate"><span class="pre">SLIDERS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html#sn.view.graphics.animationControls.TIPS"><code class="docutils literal notranslate"><span class="pre">TIPS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html#sn.view.graphics.animationControls.statusText"><code class="docutils literal notranslate"><span class="pre">statusText()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html#sn.view.graphics.animationControls.AnimationControls"><code class="docutils literal notranslate"><span class="pre">AnimationControls</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout.OTHERS"><code class="docutils literal notranslate"><span class="pre">OTHERS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout.TREES"><code class="docutils literal notranslate"><span class="pre">TREES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout.HUB_OTHERS"><code class="docutils literal notranslate"><span class="pre">HUB_OTHERS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout.HUB_RELATIONS"><code class="docutils literal notranslate"><span class="pre">HUB_RELATIONS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout.PARENT_GAP"><code class="docutils literal notranslate"><span class="pre">PARENT_GAP</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout.RADIAL_SPREAD"><code class="docutils literal notranslate"><span class="pre">RADIAL_SPREAD</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout.HUB_SPREAD"><code class="docutils literal notranslate"><span class="pre">HUB_SPREAD</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout.ROW_LENGTH"><code class="docutils literal notranslate"><span class="pre">ROW_LENGTH</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout.radius"><code class="docutils literal notranslate"><span class="pre">radius()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout._forest"><code class="docutils literal notranslate"><span class="pre">_forest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout.Circle"><code class="docutils literal notranslate"><span class="pre">Circle</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout._extent"><code class="docutils literal notranslate"><span class="pre">_extent()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout._ring"><code class="docutils literal notranslate"><span class="pre">_ring()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout._turned"><code class="docutils literal notranslate"><span class="pre">_turned()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout._Balloons"><code class="docutils literal notranslate"><span class="pre">_Balloons</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout.balloonPositions"><code class="docutils literal notranslate"><span class="pre">balloonPositions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout.radialPositions"><code class="docutils literal notranslate"><span class="pre">radialPositions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout.hubForest"><code class="docutils literal notranslate"><span class="pre">hubForest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout.hubPositions"><code class="docutils literal notranslate"><span class="pre">hubPositions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout.placeNearGroups"><code class="docutils literal notranslate"><span class="pre">placeNearGroups()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout.topLefts"><code class="docutils literal notranslate"><span class="pre">topLefts()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout.groupOffset"><code class="docutils literal notranslate"><span class="pre">groupOffset()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout.separateGroups"><code class="docutils literal notranslate"><span class="pre">separateGroups()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout._nearestClear"><code class="docutils literal notranslate"><span class="pre">_nearestClear()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout._byName"><code class="docutils literal notranslate"><span class="pre">_byName()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout._Laid"><code class="docutils literal notranslate"><span class="pre">_Laid</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout._RoundLayout"><code class="docutils literal notranslate"><span class="pre">_RoundLayout</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout._TreeRoundLayout"><code class="docutils literal notranslate"><span class="pre">_TreeRoundLayout</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout.BalloonLayout"><code class="docutils literal notranslate"><span class="pre">BalloonLayout</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout.RadialLayout"><code class="docutils literal notranslate"><span class="pre">RadialLayout</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html#sn.view.graphics.balloonLayout.HubLayout"><code class="docutils literal notranslate"><span class="pre">HubLayout</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.connectors.html">sn.view.graphics.connectors module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors.ConnectorTerminators"><code class="docutils literal notranslate"><span class="pre">ConnectorTerminators</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors.ConnectorIDs"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._sub"><code class="docutils literal notranslate"><span class="pre">_sub()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._add"><code class="docutils literal notranslate"><span class="pre">_add()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._SELF_LOOP_GAP"><code class="docutils literal notranslate"><span class="pre">_SELF_LOOP_GAP</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._selfLoopOffset"><code class="docutils literal notranslate"><span class="pre">_selfLoopOffset()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._labelControlPoint"><code class="docutils literal notranslate"><span class="pre">_labelControlPoint()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._bezierPoint"><code class="docutils literal notranslate"><span class="pre">_bezierPoint()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._bezierBlossom"><code class="docutils literal notranslate"><span class="pre">_bezierBlossom()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._insideTest"><code class="docutils literal notranslate"><span class="pre">_insideTest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._findBoundaryParam"><code class="docutils literal notranslate"><span class="pre">_findBoundaryParam()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._clippedArc"><code class="docutils literal notranslate"><span class="pre">_clippedArc()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._farPointAlong"><code class="docutils literal notranslate"><span class="pre">_farPointAlong()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._clipToEdgeStraight"><code class="docutils literal notranslate"><span class="pre">_clipToEdgeStraight()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors.parseTerminatorSpec"><code class="docutils literal notranslate"><span class="pre">parseTerminatorSpec()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._arrowLineOptions"><code class="docutils literal notranslate"><span class="pre">_arrowLineOptions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._mergeArrowOptions"><code class="docutils literal notranslate"><span class="pre">_mergeArrowOptions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._drawCircleTerminator"><code class="docutils literal notranslate"><span class="pre">_drawCircleTerminator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._upsertLine"><code class="docutils literal notranslate"><span class="pre">_upsertLine()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._drawSingleSegment"><code class="docutils literal notranslate"><span class="pre">_drawSingleSegment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._deleteItems"><code class="docutils literal notranslate"><span class="pre">_deleteItems()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors.drawSmoothConnector"><code class="docutils literal notranslate"><span class="pre">drawSmoothConnector()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors.drawStraightConnector"><code class="docutils literal notranslate"><span class="pre">drawStraightConnector()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators.Decorator"><code class="docutils literal notranslate"><span class="pre">Decorator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators.Text"><code class="docutils literal notranslate"><span class="pre">Text</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators.NOMINAL_ASPECT"><code class="docutils literal notranslate"><span class="pre">NOMINAL_ASPECT</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators.BREAK_AFTER"><code class="docutils literal notranslate"><span class="pre">BREAK_AFTER</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators._font"><code class="docutils literal notranslate"><span class="pre">_font()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators.textPieces"><code class="docutils literal notranslate"><span class="pre">textPieces()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators.layoutText"><code class="docutils literal notranslate"><span class="pre">layoutText()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators.WrappingText"><code class="docutils literal notranslate"><span class="pre">WrappingText</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators.Marker"><code class="docutils literal notranslate"><span class="pre">Marker</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators.MarkerWithTooltip"><code class="docutils literal notranslate"><span class="pre">MarkerWithTooltip</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators.ConstraintMarker"><code class="docutils literal notranslate"><span class="pre">ConstraintMarker</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators.MarkerContainer"><code class="docutils literal notranslate"><span class="pre">MarkerContainer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators.Selected"><code class="docutils literal notranslate"><span class="pre">Selected</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators.ContextFrame"><code class="docutils literal notranslate"><span class="pre">ContextFrame</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators._blend"><code class="docutils literal notranslate"><span class="pre">_blend()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators.Highlight"><code class="docutils literal notranslate"><span class="pre">Highlight</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators.DisabledSlash"><code class="docutils literal notranslate"><span class="pre">DisabledSlash</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators.ShadowDecorator"><code class="docutils literal notranslate"><span class="pre">ShadowDecorator</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html#sn.view.graphics.directoryWindow.PATH_PREF"><code class="docutils literal notranslate"><span class="pre">PATH_PREF</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html#sn.view.graphics.directoryWindow.searchPath"><code class="docutils literal notranslate"><span class="pre">searchPath()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html#sn.view.graphics.directoryWindow.setSearchPath"><code class="docutils literal notranslate"><span class="pre">setSearchPath()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html#sn.view.graphics.directoryWindow.noteFolderOf"><code class="docutils literal notranslate"><span class="pre">noteFolderOf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html#sn.view.graphics.directoryWindow.isTemporary"><code class="docutils literal notranslate"><span class="pre">isTemporary()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html#sn.view.graphics.directoryWindow.seedSearchPath"><code class="docutils literal notranslate"><span class="pre">seedSearchPath()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html#sn.view.graphics.directoryWindow.sizeText"><code class="docutils literal notranslate"><span class="pre">sizeText()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html#sn.view.graphics.directoryWindow.isDark"><code class="docutils literal notranslate"><span class="pre">isDark()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html#sn.view.graphics.directoryWindow.RECENT_URLS_PREF"><code class="docutils literal notranslate"><span class="pre">RECENT_URLS_PREF</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html#sn.view.graphics.directoryWindow.askModelURL"><code class="docutils literal notranslate"><span class="pre">askModelURL()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html#sn.view.graphics.directoryWindow.noteSaved"><code class="docutils literal notranslate"><span class="pre">noteSaved()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html#sn.view.graphics.directoryWindow.repaint"><code class="docutils literal notranslate"><span class="pre">repaint()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html#sn.view.graphics.directoryWindow.DirectoryPane"><code class="docutils literal notranslate"><span class="pre">DirectoryPane</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html#sn.view.graphics.directoryWindow.FoldersDialog"><code class="docutils literal notranslate"><span class="pre">FoldersDialog</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html#sn.view.graphics.directoryWindow.ReadProgress"><code class="docutils literal notranslate"><span class="pre">ReadProgress</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.expandDialog.html">sn.view.graphics.expandDialog module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.expandDialog.html#sn.view.graphics.expandDialog.OUT"><code class="docutils literal notranslate"><span class="pre">OUT</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.expandDialog.html#sn.view.graphics.expandDialog.IN"><code class="docutils literal notranslate"><span class="pre">IN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.expandDialog.html#sn.view.graphics.expandDialog.BOTH"><code class="docutils literal notranslate"><span class="pre">BOTH</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.expandDialog.html#sn.view.graphics.expandDialog.ARROWS"><code class="docutils literal notranslate"><span class="pre">ARROWS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.expandDialog.html#sn.view.graphics.expandDialog.MAX_LEVELS"><code class="docutils literal notranslate"><span class="pre">MAX_LEVELS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.expandDialog.html#sn.view.graphics.expandDialog.Choice"><code class="docutils literal notranslate"><span class="pre">Choice</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.expandDialog.html#sn.view.graphics.expandDialog._types"><code class="docutils literal notranslate"><span class="pre">_types()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.expandDialog.html#sn.view.graphics.expandDialog._direction"><code class="docutils literal notranslate"><span class="pre">_direction()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.expandDialog.html#sn.view.graphics.expandDialog.follows"><code class="docutils literal notranslate"><span class="pre">follows()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.expandDialog.html#sn.view.graphics.expandDialog.relationChoices"><code class="docutils literal notranslate"><span class="pre">relationChoices()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.expandDialog.html#sn.view.graphics.expandDialog.choiceFilter"><code class="docutils literal notranslate"><span class="pre">choiceFilter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.expandDialog.html#sn.view.graphics.expandDialog.ExpandDialog"><code class="docutils literal notranslate"><span class="pre">ExpandDialog</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.guiApp.html">sn.view.graphics.guiApp module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.guiApp.html#sn.view.graphics.guiApp.UnexpectedObjectInFile"><code class="docutils literal notranslate"><span class="pre">UnexpectedObjectInFile</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.guiApp.html#sn.view.graphics.guiApp.Application"><code class="docutils literal notranslate"><span class="pre">Application</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.guiApp.html#sn.view.graphics.guiApp._filePath"><code class="docutils literal notranslate"><span class="pre">_filePath()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.guiApp.html#sn.view.graphics.guiApp._fileName"><code class="docutils literal notranslate"><span class="pre">_fileName()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.guiApp.html#sn.view.graphics.guiApp.AppWindow"><code class="docutils literal notranslate"><span class="pre">AppWindow</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.guiApp.html#sn.view.graphics.guiApp.AppPanedWidget"><code class="docutils literal notranslate"><span class="pre">AppPanedWidget</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.guiApp.html#sn.view.graphics.guiApp.SNGViewFrame"><code class="docutils literal notranslate"><span class="pre">SNGViewFrame</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.guiApp.html#sn.view.graphics.guiApp.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.imageExport.html">sn.view.graphics.imageExport module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html#sn.view.graphics.imageExport.MARGIN"><code class="docutils literal notranslate"><span class="pre">MARGIN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html#sn.view.graphics.imageExport.PNG_SCALE"><code class="docutils literal notranslate"><span class="pre">PNG_SCALE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html#sn.view.graphics.imageExport.SYMBOLS"><code class="docutils literal notranslate"><span class="pre">SYMBOLS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html#sn.view.graphics.imageExport.TRIANGLES"><code class="docutils literal notranslate"><span class="pre">TRIANGLES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html#sn.view.graphics.imageExport.FONTS"><code class="docutils literal notranslate"><span class="pre">FONTS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html#sn.view.graphics.imageExport.PDF"><code class="docutils literal notranslate"><span class="pre">PDF</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html#sn.view.graphics.imageExport._pairs"><code class="docutils literal notranslate"><span class="pre">_pairs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html#sn.view.graphics.imageExport._mid"><code class="docutils literal notranslate"><span class="pre">_mid()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html#sn.view.graphics.imageExport._quad"><code class="docutils literal notranslate"><span class="pre">_quad()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html#sn.view.graphics.imageExport.splineSegments"><code class="docutils literal notranslate"><span class="pre">splineSegments()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html#sn.view.graphics.imageExport._ellipse"><code class="docutils literal notranslate"><span class="pre">_ellipse()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html#sn.view.graphics.imageExport.arrowHead"><code class="docutils literal notranslate"><span class="pre">arrowHead()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html#sn.view.graphics.imageExport.Renderer"><code class="docutils literal notranslate"><span class="pre">Renderer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html#sn.view.graphics.imageExport.drawItems"><code class="docutils literal notranslate"><span class="pre">drawItems()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html#sn.view.graphics.imageExport.toPNG"><code class="docutils literal notranslate"><span class="pre">toPNG()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html#sn.view.graphics.imageExport.toClipboard"><code class="docutils literal notranslate"><span class="pre">toClipboard()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html#sn.view.graphics.imageExport.copyImage"><code class="docutils literal notranslate"><span class="pre">copyImage()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html#sn.view.graphics.imageExport._size"><code class="docutils literal notranslate"><span class="pre">_size()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.labels.html">sn.view.graphics.labels module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html#sn.view.graphics.labels.DEFAULT_LABEL"><code class="docutils literal notranslate"><span class="pre">DEFAULT_LABEL</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html#sn.view.graphics.labels.DEFAULT_TOOLTIP"><code class="docutils literal notranslate"><span class="pre">DEFAULT_TOOLTIP</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html#sn.view.graphics.labels.TOOLTIP_NOTE"><code class="docutils literal notranslate"><span class="pre">TOOLTIP_NOTE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html#sn.view.graphics.labels.LABEL_NOTE"><code class="docutils literal notranslate"><span class="pre">LABEL_NOTE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html#sn.view.graphics.labels._REF"><code class="docutils literal notranslate"><span class="pre">_REF</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html#sn.view.graphics.labels.TemplateError"><code class="docutils literal notranslate"><span class="pre">TemplateError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html#sn.view.graphics.labels.expand"><code class="docutils literal notranslate"><span class="pre">expand()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html#sn.view.graphics.labels._call"><code class="docutils literal notranslate"><span class="pre">_call()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html#sn.view.graphics.labels._expand"><code class="docutils literal notranslate"><span class="pre">_expand()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html#sn.view.graphics.labels._braced"><code class="docutils literal notranslate"><span class="pre">_braced()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html#sn.view.graphics.labels.labelConstraints"><code class="docutils literal notranslate"><span class="pre">labelConstraints()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html#sn.view.graphics.labels.labelLookup"><code class="docutils literal notranslate"><span class="pre">labelLookup()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.layout.html">sn.view.graphics.layout module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.LABEL_PLACEMENT_PREF"><code class="docutils literal notranslate"><span class="pre">LABEL_PLACEMENT_PREF</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.labelPlacementLevel"><code class="docutils literal notranslate"><span class="pre">labelPlacementLevel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.Direction"><code class="docutils literal notranslate"><span class="pre">Direction</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.depth"><code class="docutils literal notranslate"><span class="pre">depth()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.CATEGORIES"><code class="docutils literal notranslate"><span class="pre">CATEGORIES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutParameter"><code class="docutils literal notranslate"><span class="pre">LayoutParameter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.LAYOUTS"><code class="docutils literal notranslate"><span class="pre">LAYOUTS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.registerLayout"><code class="docutils literal notranslate"><span class="pre">registerLayout()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.layoutsFor"><code class="docutils literal notranslate"><span class="pre">layoutsFor()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.relationTypes"><code class="docutils literal notranslate"><span class="pre">relationTypes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.nodeTypes"><code class="docutils literal notranslate"><span class="pre">nodeTypes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.relationNamed"><code class="docutils literal notranslate"><span class="pre">relationNamed()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.nodeNamed"><code class="docutils literal notranslate"><span class="pre">nodeNamed()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutHeuristic"><code class="docutils literal notranslate"><span class="pre">LayoutHeuristic</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutHieristic"><code class="docutils literal notranslate"><span class="pre">LayoutHieristic</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.fitToText"><code class="docutils literal notranslate"><span class="pre">fitToText()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.layoutSize"><code class="docutils literal notranslate"><span class="pre">layoutSize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.NoLayout"><code class="docutils literal notranslate"><span class="pre">NoLayout</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.GatherLayout"><code class="docutils literal notranslate"><span class="pre">GatherLayout</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.TWEEN_STEPS"><code class="docutils literal notranslate"><span class="pre">TWEEN_STEPS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.TWEEN_INTERVAL"><code class="docutils literal notranslate"><span class="pre">TWEEN_INTERVAL</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.TWEEN_MAX"><code class="docutils literal notranslate"><span class="pre">TWEEN_MAX</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.TWEEN_MAX_RELATIONS"><code class="docutils literal notranslate"><span class="pre">TWEEN_MAX_RELATIONS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.TWEEN_SLOW_STEP"><code class="docutils literal notranslate"><span class="pre">TWEEN_SLOW_STEP</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout._moveAll"><code class="docutils literal notranslate"><span class="pre">_moveAll()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout._settled"><code class="docutils literal notranslate"><span class="pre">_settled()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout._Tween"><code class="docutils literal notranslate"><span class="pre">_Tween</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.finishTween"><code class="docutils literal notranslate"><span class="pre">finishTween()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.tween"><code class="docutils literal notranslate"><span class="pre">tween()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutMoves"><code class="docutils literal notranslate"><span class="pre">LayoutMoves</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.UNBOUNDED"><code class="docutils literal notranslate"><span class="pre">UNBOUNDED</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout._BoxIndex"><code class="docutils literal notranslate"><span class="pre">_BoxIndex</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.shownBoxes"><code class="docutils literal notranslate"><span class="pre">shownBoxes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.clearBelow"><code class="docutils literal notranslate"><span class="pre">clearBelow()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.freeRingSpot"><code class="docutils literal notranslate"><span class="pre">freeRingSpot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.FindFree"><code class="docutils literal notranslate"><span class="pre">FindFree</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.intoRect"><code class="docutils literal notranslate"><span class="pre">intoRect()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout._median"><code class="docutils literal notranslate"><span class="pre">_median()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.gatherAxisShifts"><code class="docutils literal notranslate"><span class="pre">gatherAxisShifts()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.gatherShifts"><code class="docutils literal notranslate"><span class="pre">gatherShifts()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.freeSpotIn"><code class="docutils literal notranslate"><span class="pre">freeSpotIn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout._gridSpan"><code class="docutils literal notranslate"><span class="pre">_gridSpan()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.clearOf"><code class="docutils literal notranslate"><span class="pre">clearOf()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.layoutDialog.html">sn.view.graphics.layoutDialog module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutDialog.html#sn.view.graphics.layoutDialog.MAX_INT"><code class="docutils literal notranslate"><span class="pre">MAX_INT</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutDialog.html#sn.view.graphics.layoutDialog.LayoutForm"><code class="docutils literal notranslate"><span class="pre">LayoutForm</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutDialog.html#sn.view.graphics.layoutDialog.LayoutDialog"><code class="docutils literal notranslate"><span class="pre">LayoutDialog</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutDialog.html#sn.view.graphics.layoutDialog.RelationTableEditor"><code class="docutils literal notranslate"><span class="pre">RelationTableEditor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.layoutPanel.html">sn.view.graphics.layoutPanel module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutPanel.html#sn.view.graphics.layoutPanel.PAGES"><code class="docutils literal notranslate"><span class="pre">PAGES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutPanel.html#sn.view.graphics.layoutPanel.HINTS"><code class="docutils literal notranslate"><span class="pre">HINTS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutPanel.html#sn.view.graphics.layoutPanel.TIPS_LAYOUT"><code class="docutils literal notranslate"><span class="pre">TIPS_LAYOUT</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutPanel.html#sn.view.graphics.layoutPanel.SCROLL_TAG"><code class="docutils literal notranslate"><span class="pre">SCROLL_TAG</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutPanel.html#sn.view.graphics.layoutPanel.LayoutPanel"><code class="docutils literal notranslate"><span class="pre">LayoutPanel</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutPanel.html#sn.view.graphics.layoutPanel.LayoutSplit"><code class="docutils literal notranslate"><span class="pre">LayoutSplit</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.progress.html">sn.view.graphics.progress module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.progress.html#sn.view.graphics.progress.INTERVAL"><code class="docutils literal notranslate"><span class="pre">INTERVAL</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.progress.html#sn.view.graphics.progress.Listener"><code class="docutils literal notranslate"><span class="pre">Listener</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.progress.html#sn.view.graphics.progress.listener"><code class="docutils literal notranslate"><span class="pre">listener</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.progress.html#sn.view.graphics.progress.begin"><code class="docutils literal notranslate"><span class="pre">begin()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.progress.html#sn.view.graphics.progress.step"><code class="docutils literal notranslate"><span class="pre">step()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.progress.html#sn.view.graphics.progress.end"><code class="docutils literal notranslate"><span class="pre">end()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.progress.html#sn.view.graphics.progress.task"><code class="docutils literal notranslate"><span class="pre">task()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.progress.html#sn.view.graphics.progress.busy"><code class="docutils literal notranslate"><span class="pre">busy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.progress.html#sn.view.graphics.progress._report"><code class="docutils literal notranslate"><span class="pre">_report()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.reasoningToolbar.html">sn.view.graphics.reasoningToolbar module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.reasoningToolbar.html#sn.view.graphics.reasoningToolbar.TIPS"><code class="docutils literal notranslate"><span class="pre">TIPS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.reasoningToolbar.html#sn.view.graphics.reasoningToolbar.ReasoningToolbar"><code class="docutils literal notranslate"><span class="pre">ReasoningToolbar</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.relationTable.html">sn.view.graphics.relationTable module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.relationTable.html#sn.view.graphics.relationTable.PARENT_ENDS"><code class="docutils literal notranslate"><span class="pre">PARENT_ENDS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.relationTable.html#sn.view.graphics.relationTable.TERMINALS"><code class="docutils literal notranslate"><span class="pre">TERMINALS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.relationTable.html#sn.view.graphics.relationTable.ROLES"><code class="docutils literal notranslate"><span class="pre">ROLES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.relationTable.html#sn.view.graphics.relationTable._CODES"><code class="docutils literal notranslate"><span class="pre">_CODES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.relationTable.html#sn.view.graphics.relationTable.defaultParentEnd"><code class="docutils literal notranslate"><span class="pre">defaultParentEnd()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.relationTable.html#sn.view.graphics.relationTable.RelationRow"><code class="docutils literal notranslate"><span class="pre">RelationRow</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.relationTable.html#sn.view.graphics.relationTable.RelationTable"><code class="docutils literal notranslate"><span class="pre">RelationTable</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.relationTable.html#sn.view.graphics.relationTable.RelationRoles"><code class="docutils literal notranslate"><span class="pre">RelationRoles</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.relationTable.html#sn.view.graphics.relationTable.shownRelationTypes"><code class="docutils literal notranslate"><span class="pre">shownRelationTypes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.relationTable.html#sn.view.graphics.relationTable.TypeNode"><code class="docutils literal notranslate"><span class="pre">TypeNode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.relationTable.html#sn.view.graphics.relationTable.relationTree"><code class="docutils literal notranslate"><span class="pre">relationTree()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.replaceModelDialog.html">sn.view.graphics.replaceModelDialog module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.replaceModelDialog.html#sn.view.graphics.replaceModelDialog.ReplaceModelDialog"><code class="docutils literal notranslate"><span class="pre">ReplaceModelDialog</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.searchDialog.html">sn.view.graphics.searchDialog module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.searchDialog.html#sn.view.graphics.searchDialog.CONFIRM_OVER"><code class="docutils literal notranslate"><span class="pre">CONFIRM_OVER</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.searchDialog.html#sn.view.graphics.searchDialog.SearchDialog"><code class="docutils literal notranslate"><span class="pre">SearchDialog</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.shapes.html">sn.view.graphics.shapes module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.shapes.html#sn.view.graphics.shapes.Shape"><code class="docutils literal notranslate"><span class="pre">Shape</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.shapes.html#sn.view.graphics.shapes.Rectangle"><code class="docutils literal notranslate"><span class="pre">Rectangle</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.shapes.html#sn.view.graphics.shapes.RightParallelogram"><code class="docutils literal notranslate"><span class="pre">RightParallelogram</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.shapes.html#sn.view.graphics.shapes.LeftParallelogram"><code class="docutils literal notranslate"><span class="pre">LeftParallelogram</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.shapes.html#sn.view.graphics.shapes.FileFolder"><code class="docutils literal notranslate"><span class="pre">FileFolder</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.shapes.html#sn.view.graphics.shapes.TopPentagon"><code class="docutils literal notranslate"><span class="pre">TopPentagon</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.shapes.html#sn.view.graphics.shapes.RightPentagon"><code class="docutils literal notranslate"><span class="pre">RightPentagon</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.shapes.html#sn.view.graphics.shapes.LeftPentagon"><code class="docutils literal notranslate"><span class="pre">LeftPentagon</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.shapes.html#sn.view.graphics.shapes.Hexagon"><code class="docutils literal notranslate"><span class="pre">Hexagon</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.shapes.html#sn.view.graphics.shapes.RoundedShape"><code class="docutils literal notranslate"><span class="pre">RoundedShape</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.shapes.html#sn.view.graphics.shapes.RoundedRectangle"><code class="docutils literal notranslate"><span class="pre">RoundedRectangle</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.shapes.html#sn.view.graphics.shapes.Oval"><code class="docutils literal notranslate"><span class="pre">Oval</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.sngContext.html">sn.view.graphics.sngContext module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sngContext.html#sn.view.graphics.sngContext.SNGContext"><code class="docutils literal notranslate"><span class="pre">SNGContext</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.sngView.html">sn.view.graphics.sngView module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sngView.html#sn.view.graphics.sngView.SNGView"><code class="docutils literal notranslate"><span class="pre">SNGView</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.sourceWindow.html">sn.view.graphics.sourceWindow module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sourceWindow.html#sn.view.graphics.sourceWindow.EDITOR_PREF"><code class="docutils literal notranslate"><span class="pre">EDITOR_PREF</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sourceWindow.html#sn.view.graphics.sourceWindow.EditorCommandError"><code class="docutils literal notranslate"><span class="pre">EditorCommandError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sourceWindow.html#sn.view.graphics.sourceWindow.editorCommand"><code class="docutils literal notranslate"><span class="pre">editorCommand()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sourceWindow.html#sn.view.graphics.sourceWindow.openSource"><code class="docutils literal notranslate"><span class="pre">openSource()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sourceWindow.html#sn.view.graphics.sourceWindow._windows"><code class="docutils literal notranslate"><span class="pre">_windows</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sourceWindow.html#sn.view.graphics.sourceWindow.showSource"><code class="docutils literal notranslate"><span class="pre">showSource()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sourceWindow.html#sn.view.graphics.sourceWindow.SourceWindow"><code class="docutils literal notranslate"><span class="pre">SourceWindow</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.treeLayout.html">sn.view.graphics.treeLayout module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.DIRECTIONS"><code class="docutils literal notranslate"><span class="pre">DIRECTIONS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.OTHERS"><code class="docutils literal notranslate"><span class="pre">OTHERS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.NEAR_BIAS"><code class="docutils literal notranslate"><span class="pre">NEAR_BIAS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.NEAR_STEP"><code class="docutils literal notranslate"><span class="pre">NEAR_STEP</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.NEAR_MAX_RINGS"><code class="docutils literal notranslate"><span class="pre">NEAR_MAX_RINGS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.LABEL_GAP"><code class="docutils literal notranslate"><span class="pre">LABEL_GAP</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.MIN_LINE"><code class="docutils literal notranslate"><span class="pre">MIN_LINE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.MIN_LEVEL_GAP"><code class="docutils literal notranslate"><span class="pre">MIN_LEVEL_GAP</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.MIN_ROW_LENGTH"><code class="docutils literal notranslate"><span class="pre">MIN_ROW_LENGTH</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout._flip"><code class="docutils literal notranslate"><span class="pre">_flip()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout._vertical"><code class="docutils literal notranslate"><span class="pre">_vertical()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.treePositions"><code class="docutils literal notranslate"><span class="pre">treePositions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout._record"><code class="docutils literal notranslate"><span class="pre">_record()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout._packed"><code class="docutils literal notranslate"><span class="pre">_packed()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.treeMembers"><code class="docutils literal notranslate"><span class="pre">treeMembers()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.nearestFree"><code class="docutils literal notranslate"><span class="pre">nearestFree()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.placeNear"><code class="docutils literal notranslate"><span class="pre">placeNear()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.isMember"><code class="docutils literal notranslate"><span class="pre">isMember()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.isLink"><code class="docutils literal notranslate"><span class="pre">isLink()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.Terminal"><code class="docutils literal notranslate"><span class="pre">Terminal</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.upgradeRelation"><code class="docutils literal notranslate"><span class="pre">upgradeRelation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.relationsParameter"><code class="docutils literal notranslate"><span class="pre">relationsParameter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.RELATIONS_NOTE"><code class="docutils literal notranslate"><span class="pre">RELATIONS_NOTE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout._overlaps"><code class="docutils literal notranslate"><span class="pre">_overlaps()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.TreeLayout"><code class="docutils literal notranslate"><span class="pre">TreeLayout</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.viewBase.html">sn.view.graphics.viewBase module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewBase.html#sn.view.graphics.viewBase.KEY_ERASE"><code class="docutils literal notranslate"><span class="pre">KEY_ERASE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewBase.html#sn.view.graphics.viewBase.KEY_REMOVE"><code class="docutils literal notranslate"><span class="pre">KEY_REMOVE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewBase.html#sn.view.graphics.viewBase.ViewBase"><code class="docutils literal notranslate"><span class="pre">ViewBase</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.viewCommands.html">sn.view.graphics.viewCommands module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewCommands.html#sn.view.graphics.viewCommands._BumpIntruders"><code class="docutils literal notranslate"><span class="pre">_BumpIntruders</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewCommands.html#sn.view.graphics.viewCommands._Bumped"><code class="docutils literal notranslate"><span class="pre">_Bumped</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewCommands.html#sn.view.graphics.viewCommands._Adjusted"><code class="docutils literal notranslate"><span class="pre">_Adjusted</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewCommands.html#sn.view.graphics.viewCommands.ViewDoList"><code class="docutils literal notranslate"><span class="pre">ViewDoList</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewCommands.html#sn.view.graphics.viewCommands._ContainCreated"><code class="docutils literal notranslate"><span class="pre">_ContainCreated</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewCommands.html#sn.view.graphics.viewCommands.keptWith"><code class="docutils literal notranslate"><span class="pre">keptWith()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.viewContainment.html">sn.view.graphics.viewContainment module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewContainment.html#sn.view.graphics.viewContainment.BOTH_PANES"><code class="docutils literal notranslate"><span class="pre">BOTH_PANES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewContainment.html#sn.view.graphics.viewContainment.rectArea"><code class="docutils literal notranslate"><span class="pre">rectArea()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewContainment.html#sn.view.graphics.viewContainment.paneAt"><code class="docutils literal notranslate"><span class="pre">paneAt()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewContainment.html#sn.view.graphics.viewContainment.windowAt"><code class="docutils literal notranslate"><span class="pre">windowAt()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewContainment.html#sn.view.graphics.viewContainment.homeWindow"><code class="docutils literal notranslate"><span class="pre">homeWindow()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewContainment.html#sn.view.graphics.viewContainment.homePane"><code class="docutils literal notranslate"><span class="pre">homePane()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewContainment.html#sn.view.graphics.viewContainment.sharedPane"><code class="docutils literal notranslate"><span class="pre">sharedPane()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewContainment.html#sn.view.graphics.viewContainment.homeRect"><code class="docutils literal notranslate"><span class="pre">homeRect()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewContainment.html#sn.view.graphics.viewContainment.containmentMove"><code class="docutils literal notranslate"><span class="pre">containmentMove()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewContainment.html#sn.view.graphics.viewContainment.ContainmentMixin"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.viewEditing.html">sn.view.graphics.viewEditing module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewEditing.html#sn.view.graphics.viewEditing.EditingMixin"><code class="docutils literal notranslate"><span class="pre">EditingMixin</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.viewFiles.html">sn.view.graphics.viewFiles module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewFiles.html#sn.view.graphics.viewFiles.FilesMixin"><code class="docutils literal notranslate"><span class="pre">FilesMixin</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.viewInput.html">sn.view.graphics.viewInput module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewInput.html#sn.view.graphics.viewInput.InputMixin"><code class="docutils literal notranslate"><span class="pre">InputMixin</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.viewLayouts.html">sn.view.graphics.viewLayouts module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewLayouts.html#sn.view.graphics.viewLayouts.LayoutsMixin"><code class="docutils literal notranslate"><span class="pre">LayoutsMixin</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.viewReasoning.html">sn.view.graphics.viewReasoning module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewReasoning.html#sn.view.graphics.viewReasoning.ReasoningMixin"><code class="docutils literal notranslate"><span class="pre">ReasoningMixin</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.viewViewport.html">sn.view.graphics.viewViewport module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewViewport.html#sn.view.graphics.viewViewport.ViewportMixin"><code class="docutils literal notranslate"><span class="pre">ViewportMixin</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.viewVisibility.html">sn.view.graphics.viewVisibility module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewVisibility.html#sn.view.graphics.viewVisibility.RELATION_CATEGORY"><code class="docutils literal notranslate"><span class="pre">RELATION_CATEGORY</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewVisibility.html#sn.view.graphics.viewVisibility.NODE_CATEGORY"><code class="docutils literal notranslate"><span class="pre">NODE_CATEGORY</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewVisibility.html#sn.view.graphics.viewVisibility.VisibilityMixin"><code class="docutils literal notranslate"><span class="pre">VisibilityMixin</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.visibilityDialog.html">sn.view.graphics.visibilityDialog module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.visibilityDialog.html#sn.view.graphics.visibilityDialog.MAX_HEIGHT"><code class="docutils literal notranslate"><span class="pre">MAX_HEIGHT</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.visibilityDialog.html#sn.view.graphics.visibilityDialog.typeTree"><code class="docutils literal notranslate"><span class="pre">typeTree()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.visibilityDialog.html#sn.view.graphics.visibilityDialog.TypesDialog"><code class="docutils literal notranslate"><span class="pre">TypesDialog</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.visibilityDialog.html#sn.view.graphics.visibilityDialog.RelationTypesDialog"><code class="docutils literal notranslate"><span class="pre">RelationTypesDialog</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.vnodes.html">sn.view.graphics.vnodes module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vnodes.html#sn.view.graphics.vnodes.VNode"><code class="docutils literal notranslate"><span class="pre">VNode</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.vobjects.html">sn.view.graphics.vobjects module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vobjects.html#visual-attributes">Visual Attributes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.Cache"><code class="docutils literal notranslate"><span class="pre">Cache</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.INFERRED_FADE"><code class="docutils literal notranslate"><span class="pre">INFERRED_FADE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.fadeColor"><code class="docutils literal notranslate"><span class="pre">fadeColor()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject"><code class="docutils literal notranslate"><span class="pre">VObject</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.vrelations.html">sn.view.graphics.vrelations module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vrelations.html#sn.view.graphics.vrelations.VRelation"><code class="docutils literal notranslate"><span class="pre">VRelation</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="sn.view.textUserInterface.html">sn.view.textUserInterface module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.INDIVIDUAL_MARKER"><code class="docutils literal notranslate"><span class="pre">INDIVIDUAL_MARKER</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.TYPE_MARKER"><code class="docutils literal notranslate"><span class="pre">TYPE_MARKER</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.SYSTEM_MARKER"><code class="docutils literal notranslate"><span class="pre">SYSTEM_MARKER</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.getFormatter"><code class="docutils literal notranslate"><span class="pre">getFormatter()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.getKindMarkStr"><code class="docutils literal notranslate"><span class="pre">getKindMarkStr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.UIContext"><code class="docutils literal notranslate"><span class="pre">UIContext</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.UIContext.commandHelp"><code class="docutils literal notranslate"><span class="pre">UIContext.commandHelp</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.UIContext._format"><code class="docutils literal notranslate"><span class="pre">UIContext._format()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.UIContext.format_object"><code class="docutils literal notranslate"><span class="pre">UIContext.format_object()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.UIContext.print"><code class="docutils literal notranslate"><span class="pre">UIContext.print()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.UIContext.log"><code class="docutils literal notranslate"><span class="pre">UIContext.log()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.UIContext.throw"><code class="docutils literal notranslate"><span class="pre">UIContext.throw()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.UIContext.input"><code class="docutils literal notranslate"><span class="pre">UIContext.input()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.UIContext.format_model"><code class="docutils literal notranslate"><span class="pre">UIContext.format_model()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.printLists"><code class="docutils literal notranslate"><span class="pre">printLists()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.SNAbstractTerminal"><code class="docutils literal notranslate"><span class="pre">SNAbstractTerminal</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.SNAbstractTerminal.__init__"><code class="docutils literal notranslate"><span class="pre">SNAbstractTerminal.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.SNAbstractTerminal.context"><code class="docutils literal notranslate"><span class="pre">SNAbstractTerminal.context</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.SNAbstractTerminal.printBanner"><code class="docutils literal notranslate"><span class="pre">SNAbstractTerminal.printBanner()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.SNAbstractTerminal.getPrompt"><code class="docutils literal notranslate"><span class="pre">SNAbstractTerminal.getPrompt()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.SNTerminalWidget"><code class="docutils literal notranslate"><span class="pre">SNTerminalWidget</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.SNTerminalWidget.__init__"><code class="docutils literal notranslate"><span class="pre">SNTerminalWidget.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.SNPlainTextTerminal"><code class="docutils literal notranslate"><span class="pre">SNPlainTextTerminal</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.SNPlainTextTerminal.__init__"><code class="docutils literal notranslate"><span class="pre">SNPlainTextTerminal.__init__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="sn.view.graphics.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">sn.view.graphics package</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="sn.model.snAttribute.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">sn.model.snAttribute module</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2023-2026, Rob Kremer
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">sn.view package</a><ul>
+<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

@@ -1,0 +1,1120 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="sn.view.graphics.viewLayouts module" href="sn.view.graphics.viewLayouts.html"><link rel="prev" title="sn.view.graphics.viewFiles module" href="sn.view.graphics.viewFiles.html">
+        <link rel="prefetch" href="../_static/sn-logo.png" as="image">
+
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>sn.view.graphics.viewInput module - Semantic Nets 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">Semantic Nets 1.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">Semantic Nets 1.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user/index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user/concepts.html">Concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/gettingStarted.html">Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/tutorial.html">Worked Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/editing.html">Editing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/contexts.html">Contexts: Rules, Definitions, Queries, Constraints and Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/reasoning.html">Reasoning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/viewing.html">Viewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/layouts.html">Arranging a View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/animation.html">Animation Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/files.html">Files and Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/terminal.html">The Terminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/exampleApps.html">Plugins</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developer/index.html">Developer Guide</a><input aria-label="Toggle navigation of Developer Guide" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html">Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/model.html">The Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/reasoner.html">The Reasoner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/view.html">The Graphical View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/layout.html">Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/extending.html">Building on Semantic Nets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/conventions.html">Conventions and Testing</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="sn.html">sn package</a><input aria-label="Toggle navigation of sn package" checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="sn.controller.html">sn.controller package</a><input aria-label="Toggle navigation of sn.controller package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.controller.modelInterface.html">sn.controller.modelInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current has-children"><a class="reference internal" href="sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" checked="" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3 current has-children"><a class="reference internal" href="sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" checked="" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html">sn.view.graphics.connectors module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.expandDialog.html">sn.view.graphics.expandDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.guiApp.html">sn.view.graphics.guiApp module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html">sn.view.graphics.imageExport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html">sn.view.graphics.labels module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html">sn.view.graphics.layout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutDialog.html">sn.view.graphics.layoutDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layoutPanel.html">sn.view.graphics.layoutPanel module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.progress.html">sn.view.graphics.progress module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.reasoningToolbar.html">sn.view.graphics.reasoningToolbar module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.relationTable.html">sn.view.graphics.relationTable module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.replaceModelDialog.html">sn.view.graphics.replaceModelDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.searchDialog.html">sn.view.graphics.searchDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.shapes.html">sn.view.graphics.shapes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sngContext.html">sn.view.graphics.sngContext module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sngView.html">sn.view.graphics.sngView module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.sourceWindow.html">sn.view.graphics.sourceWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html">sn.view.graphics.treeLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewBase.html">sn.view.graphics.viewBase module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewCommands.html">sn.view.graphics.viewCommands module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewContainment.html">sn.view.graphics.viewContainment module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewEditing.html">sn.view.graphics.viewEditing module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewFiles.html">sn.view.graphics.viewFiles module</a></li>
+<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">sn.view.graphics.viewInput module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewLayouts.html">sn.view.graphics.viewLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewReasoning.html">sn.view.graphics.viewReasoning module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewViewport.html">sn.view.graphics.viewViewport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewVisibility.html">sn.view.graphics.viewVisibility module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.visibilityDialog.html">sn.view.graphics.visibilityDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vnodes.html">sn.view.graphics.vnodes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vobjects.html">sn.view.graphics.vobjects module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.vrelations.html">sn.view.graphics.vrelations module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.textUserInterface.html">sn.view.textUserInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.__main__.html">sn.__main__ module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.hooks.html">sn.hooks module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html">sn.plugins module</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../plugins/index.html">The plugins</a><input aria-label="Toggle navigation of The plugins" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.XMLreader.html">snplugins.XMLreader package</a><input aria-label="Toggle navigation of snplugins.XMLreader package" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.reader.html">snplugins.XMLreader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.schema.html">snplugins.XMLreader.schema module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.view.html">snplugins.XMLreader.view module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.pythonParser.html">snplugins.pythonParser package</a><input aria-label="Toggle navigation of snplugins.pythonParser package" class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.dialog.html">snplugins.pythonParser.dialog module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.hooks.html">snplugins.pythonParser.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.parser.html">snplugins.pythonParser.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/dev/sn.view.graphics.viewInput.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="module-sn.view.graphics.viewInput">
+<span id="sn-view-graphics-viewinput-module"></span><h1>sn.view.graphics.viewInput module<a class="headerlink" href="#module-sn.view.graphics.viewInput" title="Link to this heading">¶</a></h1>
+<p>A graphical view’s mouse, keys and menus (<em>InputMixin</em>): one of the parts of
+<em>sn.view.graphics.sngView.SNGView</em> (see <em>viewBase</em>).</p>
+<p>Created on Oct 18, 2026 (from sngView.py)</p>
+<p><em>Code author: Rob Kremer &lt;<a class="reference external" href="mailto:robkremer&#37;&#52;&#48;me&#46;com">robkremer<span>&#64;</span>me<span>&#46;</span>com</a>&gt;</em></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewInput.</span></span><span class="sig-name descname"><span class="pre">InputMixin</span></span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="sn.view.graphics.viewBase.html#sn.view.graphics.viewBase.ViewBase" title="sn.view.graphics.viewBase.ViewBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">ViewBase</span></code></a></p>
+<p>What a view (<em>sn.view.graphics.sngView.SNGView</em>) does with the mouse and keys:
+its bindings; pressing, dragging and releasing (selecting, the drag-select
+box, panning, Option-drag zooming, grabbing a relation’s terminal); the
+elastic line that picks something for a command; the mouse wheel; and the
+view’s pop-up menus.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin._eventHandled">
+<span class="sig-name descname"><span class="pre">_eventHandled</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tk.Event</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin._eventHandled" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin._elasticLineChoiceData">
+<span class="sig-name descname"><span class="pre">_elasticLineChoiceData</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">SNGView.ElasticLineChoiceData</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin._elasticLineChoiceData" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin._selectionBoxInfo">
+<span class="sig-name descname"><span class="pre">_selectionBoxInfo</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin._selectionBoxInfo" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin._cursorBeforeTerminal">
+<span class="sig-name descname"><span class="pre">_cursorBeforeTerminal</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin._cursorBeforeTerminal" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin._scrolling">
+<span class="sig-name descname"><span class="pre">_scrolling</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin._scrolling" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin._panned">
+<span class="sig-name descname"><span class="pre">_panned</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin._panned" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin._panClicked">
+<span class="sig-name descname"><span class="pre">_panClicked</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><span class="pre">VObject</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin._panClicked" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin._cursorBeforePan">
+<span class="sig-name descname"><span class="pre">_cursorBeforePan</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin._cursorBeforePan" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin._dragZoom">
+<span class="sig-name descname"><span class="pre">_dragZoom</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin._dragZoom" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ElasticLineChoiceData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">originNode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lineID</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">onEmpty</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData._asdict">
+<span class="sig-name descname"><span class="pre">_asdict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData._asdict" title="Link to this definition">¶</a></dt>
+<dd><p>Return a new dict which maps field names to their values.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData._field_defaults">
+<span class="sig-name descname"><span class="pre">_field_defaults</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'onEmpty':</span> <span class="pre">None}</span></span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData._field_defaults" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData._fields">
+<span class="sig-name descname"><span class="pre">_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('originNode',</span> <span class="pre">'lineID',</span> <span class="pre">'filter',</span> <span class="pre">'callback',</span> <span class="pre">'onEmpty')</span></span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData._fields" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData._make">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">_make</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">iterable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData._make" title="Link to this definition">¶</a></dt>
+<dd><p>Make a new ElasticLineChoiceData object from a sequence or iterable</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData._replace">
+<span class="sig-name descname"><span class="pre">_replace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData._replace" title="Link to this definition">¶</a></dt>
+<dd><p>Return a new ElasticLineChoiceData object replacing specified fields with new values</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData.callback">
+<span class="sig-name descname"><span class="pre">callback</span></span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData.callback" title="Link to this definition">¶</a></dt>
+<dd><p>Alias for field number 3</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData.filter">
+<span class="sig-name descname"><span class="pre">filter</span></span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData.filter" title="Link to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData.lineID">
+<span class="sig-name descname"><span class="pre">lineID</span></span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData.lineID" title="Link to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData.onEmpty">
+<span class="sig-name descname"><span class="pre">onEmpty</span></span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData.onEmpty" title="Link to this definition">¶</a></dt>
+<dd><p>Alias for field number 4</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData.originNode">
+<span class="sig-name descname"><span class="pre">originNode</span></span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData.originNode" title="Link to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.makeBindings">
+<span class="sig-name descname"><span class="pre">makeBindings</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.makeBindings" title="Link to this definition">¶</a></dt>
+<dd><p>Create the bindings for the <em>Canvas</em> object.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.onOptionKey">
+<span class="sig-name descname"><span class="pre">onOptionKey</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.onOptionKey" title="Link to this definition">¶</a></dt>
+<dd><p>An Option key press that no more particular binding took: Option-V (by its
+virtual key code, which Tk on macOS puts in the top byte of <em>event.keycode</em>)
+validates the view.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<em>Event</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>“break” if it was Option-V.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.onValidateKey">
+<span class="sig-name descname"><span class="pre">onValidateKey</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.onValidateKey" title="Link to this definition">¶</a></dt>
+<dd><p>Validate the view (and repaint it, if something’s wrong), as the “validate”
+menu item does.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>“break”</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.onEnter">
+<span class="sig-name descname"><span class="pre">onEnter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.onEnter" title="Link to this definition">¶</a></dt>
+<dd><p>Give this <em>Canvas</em> Tk keyboard focus whenever the mouse enters it.</p>
+<p>All of this class’s key bindings (KEY_UNDO, KEY_REDO, KEY_REPAINT, …)
+are bound directly on <em>self.canvas</em> – like any Tk widget-level binding,
+those only fire while the canvas itself holds keyboard focus, and
+nothing else in this window (e.g. clicking into the canvas, as opposed
+to some other widget such as the terminal) ever calls <em>focus_set()</em> on
+it. Without this, the canvas can easily end up never holding focus at
+all, so a key like Cmd-Z is delivered nowhere and its binding never
+fires, even though the binding itself is set up correctly. This mirrors
+the equivalent binding in the older, now-superseded <em>sn.view.graphics.
+view.SNView</em> (see its own <em>onEnter()</em>), which was dropped somewhere
+along the way when this class superseded it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>_event</strong> (<em>Event</em>) – The Tk <em>&lt;Enter&gt;</em> event (unused).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.onUndo">
+<span class="sig-name descname"><span class="pre">onUndo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.onUndo" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<em>Event</em>) – The Tk event.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.onRedo">
+<span class="sig-name descname"><span class="pre">onRedo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.onRedo" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<em>Event</em>) – The Tk event.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.onMotion">
+<span class="sig-name descname"><span class="pre">onMotion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.onMotion" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<em>Event</em>) – <em>event.x</em> and <em>event.y</em> contain the x,y coordinate of the click.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<p>If there’s a _elasticLineChoiceData going on (elastic line), then continue the
+animation.</p>
+<p>Called on the <em>&lt;Motion&gt;</em> event (when the mouse moves with no buttons pressed).
+Note that selection boxes and scrolling are handled by <em>self.onB1_Motion()</em>.</p>
+<ul class="simple">
+<li><p>Check if the event has been handled by a contained widget. If it has been,
+call <em>self.removeEventHandled()</em> and return.</p></li>
+<li><p>If <em>self._makingRelaionFrom</em> is not <em>None</em>, redraw the “making relation” line.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.TERMINAL_CURSOR">
+<span class="sig-name descname"><span class="pre">TERMINAL_CURSOR</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'center_ptr'</span></span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.TERMINAL_CURSOR" title="Link to this definition">¶</a></dt>
+<dd><p>The cursor shown while the pointer is over a relation terminal that can be dragged to a new src/dst.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin._relationTerminalNear">
+<span class="sig-name descname"><span class="pre">_relationTerminalNear</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin._relationTerminalNear" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>float</em>) – Canvas (window) coordinates.</p></li>
+<li><p><strong>y</strong> (<em>float</em>) – See <em>x</em>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An editable relation with a terminal within reach of (x, y) –
+ie: one that a press there would grab (see <em>VRelation.grabTerminal()</em>)
+– or None. Only objects drawn near (x, y) are examined.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="sn.view.graphics.vrelations.html#sn.view.graphics.vrelations.VRelation" title="sn.view.graphics.vrelations.VRelation"><em>VRelation</em></a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.grabTerminalNear">
+<span class="sig-name descname"><span class="pre">grabTerminalNear</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.grabTerminalNear" title="Link to this definition">¶</a></dt>
+<dd><p>If a button-1 press is within reach of an editable relation’s terminal –
+whatever’s under it: the object the relation connects, a context window
+it’s drawn in, or the background – grab that terminal (see
+<em>VRelation.grabTerminal()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<em>Event</em>) – The Tk event.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True iff it did (so the caller shouldn’t start its own drag).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.HANDLE_CURSORS">
+<span class="sig-name descname"><span class="pre">HANDLE_CURSORS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'ne':</span> <span class="pre">'top_right_corner',</span> <span class="pre">'nw':</span> <span class="pre">'top_left_corner',</span> <span class="pre">'se':</span> <span class="pre">'bottom_right_corner',</span> <span class="pre">'sw':</span> <span class="pre">'bottom_left_corner'}</span></span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.HANDLE_CURSORS" title="Link to this definition">¶</a></dt>
+<dd><p>The cursors shown over a selected object’s corner (resize) handles.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin._handleNear">
+<span class="sig-name descname"><span class="pre">_handleNear</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin._handleNear" title="Link to this definition">¶</a></dt>
+<dd><p>The corner of the selected object’s resize handle at canvas (x, y), or None.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>float</em>)</p></li>
+<li><p><strong>y</strong> (<em>float</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin._updateTerminalCursor">
+<span class="sig-name descname"><span class="pre">_updateTerminalCursor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin._updateTerminalCursor" title="Link to this definition">¶</a></dt>
+<dd><p>Show a corner cursor (<em>HANDLE_CURSORS</em>) over a resize handle, or
+<em>TERMINAL_CURSOR</em> over a draggable relation terminal, restoring whatever
+cursor was there before (eg: the “hand” a node’s <em>onEnter()</em> set) when the
+pointer moves off.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<em>Event</em>) – The Tk event.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin._trackElasticLine">
+<span class="sig-name descname"><span class="pre">_trackElasticLine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin._trackElasticLine" title="Link to this definition">¶</a></dt>
+<dd><p>Stretch the elastic line (see <em>elasticLineChoice()</em>) to the cursor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<em>Event</em>) – The Tk event.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.onButton_1">
+<span class="sig-name descname"><span class="pre">onButton_1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.onButton_1" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> – <em>event.x</em> and <em>event.y</em> contain the x,y coordinate of the click.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>None</em></p>
+</dd>
+</dl>
+<p>If the SHIFT or COMMAND key is pressed: start a drag-scroll (panning the
+view – with COMMAND, over objects too: they leave the press to the
+canvas, see <em>VObject.onButton_1()</em>). If the OPTION key is: start a
+drag-zoom (over objects too), up to zoom in, down to zoom out, about
+where it was pressed (see <em>ZOOM_DRAG</em>). Otherwise, unselect 
+everything and prepare for a possible selection box animation (if we get a 
+move event).</p>
+<p>Called on the <em>&lt;Button-1&gt;</em> event (when the mouse button 1 is pressed).</p>
+<ul class="simple">
+<li><p>If <em>self._makeRelationFrom</em> is not <em>None</em>, return.</p></li>
+<li><p>Check if the event has been handled by a contained widget. If it has been,
+call <em>self.removeEventHandled()</em> and return.</p></li>
+<li><p>If the shift or command key is pressed start a scroll action and return.</p></li>
+<li><p>If the option key is pressed start a zoom action and return.</p></li>
+<li><p>Otherwise unselect everything and start a selection box action by setting
+up <em>self._selectionBoxInfo</em>.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.onB1_Motion">
+<span class="sig-name descname"><span class="pre">onB1_Motion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.onB1_Motion" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> – <em>event.x</em> and <em>event.y</em> contain the x,y coordinate of the click.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<p>If we are either drag-scrolling or drag-drawing a multi-selection
+box, continue the action.</p>
+<p>Called on the <em>&lt;B1-Motion&gt;</em> event (when the mouse moves with button1 pressed).</p>
+<ul class="simple">
+<li><p>Check if the event has been handled by a contained widget. If it has been,
+call <em>self.removeEventHandled()</em> and return.</p></li>
+<li><p>If <em>self._scrolling</em> is not <em>None</em>, call <em>self.scan_dragto()</em>.</p></li>
+<li><p>If <em>self._selectionBoxInfo</em> is not <em>None</em>, redraw the elastic selection box,
+using <em>self._selectionBoxInfo[3]</em> to note that the selection box is active.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.elasticLineChoice">
+<span class="sig-name descname"><span class="pre">elasticLineChoice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">originNode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;function</span> <span class="pre">InputMixin.&lt;lambda&gt;&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arrowHeads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cyan'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">onEmpty</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.elasticLineChoice" title="Link to this definition">¶</a></dt>
+<dd><p>Animate an elastic line from the <em>originNode</em> to the cursor to select an
+object for which <em>filter</em> returns True, then call <em>callback</em> with the <em>originNode</em>
+and the selected object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>originNode</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>) – The object to root the elastic line one (and used as the first
+parameter to <em>callback</em>.</p></li>
+<li><p><strong>callback</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>]</em><em>, </em><em>Any</em><em>]</em>) – The method to call after a selected selection.</p></li>
+<li><p><strong>filter</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>]</em><em>, </em><em>bool</em><em>]</em>) – Objects are only selected if <em>filter(&lt;obj&gt;)</em> returns True. 
+[Optional, default=always True]</p></li>
+<li><p><strong>arrowHeads</strong> (<em>int</em>) – 0=no arrowheads, 1=arrowhead at the origin, 2=arrowhead
+at the cursor, 3=arrowhead at both ends. For anything larger, just he lowest
+2 bits will be used. [Optional, default=2]</p></li>
+<li><p><strong>onEmpty</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>]</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – If given, called with <em>originNode</em> when the line is dropped
+on empty space (no object at all under the cursor); otherwise that
+abandons the choice, as Escape always does (see <em>cancelElasticLine()</em>).</p></li>
+<li><p><strong>color</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.cancelElasticLine">
+<span class="sig-name descname"><span class="pre">cancelElasticLine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.cancelElasticLine" title="Link to this definition">¶</a></dt>
+<dd><p>Abandon an elastic-line choice in progress (bound to Escape) – or, if there is none, clear the highlights.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<em>Event</em><em> | </em><em>None</em>) – The Tk event.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.clearHighlights">
+<span class="sig-name descname"><span class="pre">clearHighlights</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.clearHighlights" title="Link to this definition">¶</a></dt>
+<dd><p>Remove every object’s highlight glow (see <em>VObject.highlight()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.onB1_ButtonRelease">
+<span class="sig-name descname"><span class="pre">onB1_ButtonRelease</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.onB1_ButtonRelease" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<em>Event</em>) – <em>event.x</em> and <em>event.y</em> contain the x,y coordinate of the click.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<p>Depending on the context, finish creating a Relation or create a selection
+set from the selection box that just finished.</p>
+<ul class="simple">
+<li><p>Check if the event has been handled by a contained widget. If it has been,
+call <em>self.removeEventHandled()</em> and return.</p></li>
+<li><p>Set <em>self._scrolling</em> to <em>None</em>.</p></li>
+<li><p>If <em>self._makingRelaionFrom</em> is not <em>None</em>:</p>
+<ul>
+<li><p>Create a link according to the data in the <em>makeRelationData</em> structure
+and the <em>event</em>’s x,y coordinates</p></li>
+<li><p>set <em>self._elasticLineChoiceData</em> to <em>None</em>.</p></li>
+</ul>
+</li>
+<li><p>If <em>self._selectionBoxInfo</em> is not <em>None</em>: This means we have finished
+drawing a selection box, so</p>
+<ul>
+<li><p>deselect everything,</p></li>
+<li><p>select everthing in the selection box, and</p></li>
+<li><p>set <em>self._selectionBoxInfo</em> to <em>None</em>.</p></li>
+</ul>
+</li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.onMouseWheel">
+<span class="sig-name descname"><span class="pre">onMouseWheel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.onMouseWheel" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> – <em>event.delta</em> contains the scroll offset.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<p>Y-axis scroll.</p>
+<p>Called on the two finger touchpad Y-scroll event.</p>
+<ul class="simple">
+<li><p>Check if the event has been handled by a contained widget. If it has been,
+call <em>self.removeEventHandled()</em> and return.</p></li>
+<li><p>Call <em>self.canvas.yview_scroll)</em>.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.onShift_MouseWheel">
+<span class="sig-name descname"><span class="pre">onShift_MouseWheel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.onShift_MouseWheel" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> – <em>event.delta</em> contains the scroll offset.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<p>X-axis scroll.</p>
+<p>Called on the two finger touchpad X-scroll event.</p>
+<ul class="simple">
+<li><p>Check if the event has been handled by a contained widget. If it has been,
+call <em>self.removeEventHandled()</em> and return.</p></li>
+<li><p>Call <em>self.canvas.xview_scroll)</em>.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.isEventHandled">
+<span class="sig-name descname"><span class="pre">isEventHandled</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.isEventHandled" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<em>Event</em>) – The event to test.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>True</em> iff <em>event</em> is the same physical event most recently
+passed to <em>addEventHandled()</em> (and not yet cleared by
+<em>removeEventHandled()</em>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+<p>A canvas item’s <code class="docutils literal notranslate"><span class="pre">tag_bind</span></code> callback and this canvas widget’s own
+<code class="docutils literal notranslate"><span class="pre">bind</span></code> callback are dispatched independently by Tk, even for the
+exact same physical click – returning <code class="docutils literal notranslate"><span class="pre">&quot;break&quot;</span></code> from the item’s
+callback only suppresses <em>other item bindings</em>, not this canvas’s own
+separate widget-level binding for the same event. This flag is how a
+contained VObject/item-level handler tells this canvas’s own generic
+handler (e.g. <em>onRightMouse()</em>) “I already dealt with this one, skip
+your default behaviour.”</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.addEventHandled">
+<span class="sig-name descname"><span class="pre">addEventHandled</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.addEventHandled" title="Link to this definition">¶</a></dt>
+<dd><p>Mark <em>event</em> as handled by a contained VObject/item-level callback, so
+this canvas’s own separately-dispatched widget-level binding for the
+same event can detect that (via <em>isEventHandled()</em>) and skip its
+generic handling.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<em>Event</em>) – The event that was just handled.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.removeEventHandled">
+<span class="sig-name descname"><span class="pre">removeEventHandled</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.removeEventHandled" title="Link to this definition">¶</a></dt>
+<dd><p>Clear the “handled” flag. Call this once <em>isEventHandled()</em> has been
+consulted (whether or not it returned <em>True</em>) so a later, distinct
+event isn’t mistaken for an already-handled one.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<em>Event</em>) – Unused (kept for symmetry with <em>addEventHandled()</em> and
+the analogous methods elsewhere, e.g. <em>SNView</em>).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.onRightMouse">
+<span class="sig-name descname"><span class="pre">onRightMouse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.onRightMouse" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<em>Event</em>) – <em>event.x</em> and <em>event.y</em> contain the x,y coordinate of the click.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None or the result of <em>self.makeMenu()</em>.</p>
+</dd>
+</dl>
+<p>Called when the right mouse button is pressed (different for Mac and other OS’s).</p>
+<ul class="simple">
+<li><p>Check if the event has been handled by a contained widget. If it has been,
+call <em>self.removeEventHandled()</em> and return <em>None</em>.</p></li>
+<li><p>Put up the popup menu (<em>self.makeMenu()</em>).</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.makeMenu">
+<span class="sig-name descname"><span class="pre">makeMenu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.makeMenu" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<em>Event</em>) – <em>event.x</em> and <em>event.y</em> contain the x,y coordinate of the click.
+(Only used for the location of a newly created node if that happens.)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The newly created menu.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Menu</em></p>
+</dd>
+</dl>
+<p>Create the popup menu for a <em>SNView</em> window. Does not display the menu,
+only creates it and returns it.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.makeZoomMenu">
+<span class="sig-name descname"><span class="pre">makeZoomMenu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">superMenu</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.makeZoomMenu" title="Link to this definition">¶</a></dt>
+<dd><p>The “Zoom” submenu: normal size, zoom in and out (about the middle of the
+window: see <em>zoomAbout()</em>), zoom to fit (see <em>zoomToFit()</em>), and some
+sizes; with their keys.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>superMenu</strong> (<em>Menu</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Menu</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.ZOOM_DRAG">
+<span class="sig-name descname"><span class="pre">ZOOM_DRAG</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2.0</span></span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.ZOOM_DRAG" title="Link to this definition">¶</a></dt>
+<dd><p>How much an Option-drag zooms in for each 100 pixels up (and out, down).</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="sn.view.graphics.viewLayouts.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">sn.view.graphics.viewLayouts module</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="sn.view.graphics.viewFiles.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">sn.view.graphics.viewFiles module</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2023-2026, Rob Kremer
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">sn.view.graphics.viewInput module</a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin"><code class="docutils literal notranslate"><span class="pre">InputMixin</span></code></a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin._eventHandled"><code class="docutils literal notranslate"><span class="pre">InputMixin._eventHandled</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin._elasticLineChoiceData"><code class="docutils literal notranslate"><span class="pre">InputMixin._elasticLineChoiceData</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin._selectionBoxInfo"><code class="docutils literal notranslate"><span class="pre">InputMixin._selectionBoxInfo</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin._cursorBeforeTerminal"><code class="docutils literal notranslate"><span class="pre">InputMixin._cursorBeforeTerminal</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin._scrolling"><code class="docutils literal notranslate"><span class="pre">InputMixin._scrolling</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin._panned"><code class="docutils literal notranslate"><span class="pre">InputMixin._panned</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin._panClicked"><code class="docutils literal notranslate"><span class="pre">InputMixin._panClicked</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin._cursorBeforePan"><code class="docutils literal notranslate"><span class="pre">InputMixin._cursorBeforePan</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin._dragZoom"><code class="docutils literal notranslate"><span class="pre">InputMixin._dragZoom</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData"><code class="docutils literal notranslate"><span class="pre">InputMixin.ElasticLineChoiceData</span></code></a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData._asdict"><code class="docutils literal notranslate"><span class="pre">InputMixin.ElasticLineChoiceData._asdict()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData._field_defaults"><code class="docutils literal notranslate"><span class="pre">InputMixin.ElasticLineChoiceData._field_defaults</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData._fields"><code class="docutils literal notranslate"><span class="pre">InputMixin.ElasticLineChoiceData._fields</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData._make"><code class="docutils literal notranslate"><span class="pre">InputMixin.ElasticLineChoiceData._make()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData._replace"><code class="docutils literal notranslate"><span class="pre">InputMixin.ElasticLineChoiceData._replace()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData.callback"><code class="docutils literal notranslate"><span class="pre">InputMixin.ElasticLineChoiceData.callback</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData.filter"><code class="docutils literal notranslate"><span class="pre">InputMixin.ElasticLineChoiceData.filter</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData.lineID"><code class="docutils literal notranslate"><span class="pre">InputMixin.ElasticLineChoiceData.lineID</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData.onEmpty"><code class="docutils literal notranslate"><span class="pre">InputMixin.ElasticLineChoiceData.onEmpty</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData.originNode"><code class="docutils literal notranslate"><span class="pre">InputMixin.ElasticLineChoiceData.originNode</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.makeBindings"><code class="docutils literal notranslate"><span class="pre">InputMixin.makeBindings()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.onOptionKey"><code class="docutils literal notranslate"><span class="pre">InputMixin.onOptionKey()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.onValidateKey"><code class="docutils literal notranslate"><span class="pre">InputMixin.onValidateKey()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.onEnter"><code class="docutils literal notranslate"><span class="pre">InputMixin.onEnter()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.onUndo"><code class="docutils literal notranslate"><span class="pre">InputMixin.onUndo()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.onRedo"><code class="docutils literal notranslate"><span class="pre">InputMixin.onRedo()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.onMotion"><code class="docutils literal notranslate"><span class="pre">InputMixin.onMotion()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.TERMINAL_CURSOR"><code class="docutils literal notranslate"><span class="pre">InputMixin.TERMINAL_CURSOR</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin._relationTerminalNear"><code class="docutils literal notranslate"><span class="pre">InputMixin._relationTerminalNear()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.grabTerminalNear"><code class="docutils literal notranslate"><span class="pre">InputMixin.grabTerminalNear()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.HANDLE_CURSORS"><code class="docutils literal notranslate"><span class="pre">InputMixin.HANDLE_CURSORS</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin._handleNear"><code class="docutils literal notranslate"><span class="pre">InputMixin._handleNear()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin._updateTerminalCursor"><code class="docutils literal notranslate"><span class="pre">InputMixin._updateTerminalCursor()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin._trackElasticLine"><code class="docutils literal notranslate"><span class="pre">InputMixin._trackElasticLine()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.onButton_1"><code class="docutils literal notranslate"><span class="pre">InputMixin.onButton_1()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.onB1_Motion"><code class="docutils literal notranslate"><span class="pre">InputMixin.onB1_Motion()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.elasticLineChoice"><code class="docutils literal notranslate"><span class="pre">InputMixin.elasticLineChoice()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.cancelElasticLine"><code class="docutils literal notranslate"><span class="pre">InputMixin.cancelElasticLine()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.clearHighlights"><code class="docutils literal notranslate"><span class="pre">InputMixin.clearHighlights()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.onB1_ButtonRelease"><code class="docutils literal notranslate"><span class="pre">InputMixin.onB1_ButtonRelease()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.onMouseWheel"><code class="docutils literal notranslate"><span class="pre">InputMixin.onMouseWheel()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.onShift_MouseWheel"><code class="docutils literal notranslate"><span class="pre">InputMixin.onShift_MouseWheel()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.isEventHandled"><code class="docutils literal notranslate"><span class="pre">InputMixin.isEventHandled()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.addEventHandled"><code class="docutils literal notranslate"><span class="pre">InputMixin.addEventHandled()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.removeEventHandled"><code class="docutils literal notranslate"><span class="pre">InputMixin.removeEventHandled()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.onRightMouse"><code class="docutils literal notranslate"><span class="pre">InputMixin.onRightMouse()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.makeMenu"><code class="docutils literal notranslate"><span class="pre">InputMixin.makeMenu()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.makeZoomMenu"><code class="docutils literal notranslate"><span class="pre">InputMixin.makeZoomMenu()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.ZOOM_DRAG"><code class="docutils literal notranslate"><span class="pre">InputMixin.ZOOM_DRAG</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

@@ -1,0 +1,600 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="The Reasoner" href="reasoner.html"><link rel="prev" title="Architecture" href="architecture.html">
+        <link rel="prefetch" href="../_static/sn-logo.png" as="image">
+
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>The Model - Semantic Nets 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">Semantic Nets 1.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">Semantic Nets 1.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user/index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user/concepts.html">Concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/gettingStarted.html">Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/tutorial.html">Worked Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/editing.html">Editing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/contexts.html">Contexts: Rules, Definitions, Queries, Constraints and Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/reasoning.html">Reasoning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/viewing.html">Viewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/layouts.html">Arranging a View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/animation.html">Animation Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/files.html">Files and Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/terminal.html">The Terminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/exampleApps.html">Plugins</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Developer Guide</a><input aria-label="Toggle navigation of Developer Guide" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">The Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reasoner.html">The Reasoner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="view.html">The Graphical View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="layout.html">Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extending.html">Building on Semantic Nets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="conventions.html">Conventions and Testing</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../dev/sn.html">sn package</a><input aria-label="Toggle navigation of sn package" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.controller.html">sn.controller package</a><input aria-label="Toggle navigation of sn.controller package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.controller.modelInterface.html">sn.controller.modelInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.examples.html">sn.examples package</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.constraints.html">sn.model.constraints module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.copying.html">sn.model.copying module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.directory.html">sn.model.directory module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.model.html">sn.model.model module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.reasoner.html">sn.model.reasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../dev/sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.connectors.html">sn.view.graphics.connectors module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.expandDialog.html">sn.view.graphics.expandDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.guiApp.html">sn.view.graphics.guiApp module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.imageExport.html">sn.view.graphics.imageExport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.labels.html">sn.view.graphics.labels module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.layout.html">sn.view.graphics.layout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.layoutDialog.html">sn.view.graphics.layoutDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.layoutPanel.html">sn.view.graphics.layoutPanel module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.progress.html">sn.view.graphics.progress module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.reasoningToolbar.html">sn.view.graphics.reasoningToolbar module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.relationTable.html">sn.view.graphics.relationTable module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.replaceModelDialog.html">sn.view.graphics.replaceModelDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.searchDialog.html">sn.view.graphics.searchDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.shapes.html">sn.view.graphics.shapes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.sngContext.html">sn.view.graphics.sngContext module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.sngView.html">sn.view.graphics.sngView module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.sourceWindow.html">sn.view.graphics.sourceWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.treeLayout.html">sn.view.graphics.treeLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewBase.html">sn.view.graphics.viewBase module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewCommands.html">sn.view.graphics.viewCommands module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewContainment.html">sn.view.graphics.viewContainment module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewEditing.html">sn.view.graphics.viewEditing module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewFiles.html">sn.view.graphics.viewFiles module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewInput.html">sn.view.graphics.viewInput module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewLayouts.html">sn.view.graphics.viewLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewReasoning.html">sn.view.graphics.viewReasoning module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewViewport.html">sn.view.graphics.viewViewport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewVisibility.html">sn.view.graphics.viewVisibility module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.visibilityDialog.html">sn.view.graphics.visibilityDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.vnodes.html">sn.view.graphics.vnodes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.vobjects.html">sn.view.graphics.vobjects module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.vrelations.html">sn.view.graphics.vrelations module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.view.textUserInterface.html">sn.view.textUserInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.__main__.html">sn.__main__ module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.hooks.html">sn.hooks module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.plugins.html">sn.plugins module</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../plugins/index.html">The plugins</a><input aria-label="Toggle navigation of The plugins" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.XMLreader.html">snplugins.XMLreader package</a><input aria-label="Toggle navigation of snplugins.XMLreader package" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.reader.html">snplugins.XMLreader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.schema.html">snplugins.XMLreader.schema module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.view.html">snplugins.XMLreader.view module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.pythonParser.html">snplugins.pythonParser package</a><input aria-label="Toggle navigation of snplugins.pythonParser package" class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.dialog.html">snplugins.pythonParser.dialog module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.hooks.html">snplugins.pythonParser.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.parser.html">snplugins.pythonParser.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/developer/model.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="the-model">
+<h1>The Model<a class="headerlink" href="#the-model" title="Link to this heading">¶</a></h1>
+<p>The model package, <a class="reference internal" href="../dev/sn.model.html#module-sn.model" title="sn.model"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sn.model</span></code></a>, is the data and its meaning. It has
+no user interface, and can be used (and is tested) on its own.</p>
+<section id="objects">
+<h2>Objects<a class="headerlink" href="#objects" title="Link to this heading">¶</a></h2>
+<div class="graphviz"><object data="../_images/inheritance-8f842e005aab567035678825b8ff5c9903130c65.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of sn.model.model.Node, sn.model.model.Collection, sn.model.model.IsaIndividual, sn.model.TopModel</p></object></div>
+<dl class="simple">
+<dt><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">GraphObject</span></code></a></dt><dd><p>Anything in a model. It’s a type or an individual
+(<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.GraphObject.isIndividual" title="sn.model.model.GraphObject.isIndividual"><code class="xref py py-meth docutils literal notranslate"><span class="pre">isIndividual()</span></code></a>), has a name, and has
+attributes (below). Its types – its <em>parents</em> – are given by its outgoing
+<em>isa</em> relations (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.GraphObject.getParents" title="sn.model.model.GraphObject.getParents"><code class="xref py py-meth docutils literal notranslate"><span class="pre">getParents()</span></code></a>), and
+<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.GraphObject.isa" title="sn.model.model.GraphObject.isa"><code class="xref py py-meth docutils literal notranslate"><span class="pre">isa()</span></code></a> answers whether it’s of a type,
+directly or not.</p>
+</dd>
+<dt><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node" title="sn.model.model.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">Node</span></code></a></dt><dd><p>A node.</p>
+</dd>
+<dt><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Relation</span></code></a></dt><dd><p>A relation: a GraphObject with a source and a destination, so relations
+can relate relations. A relation’s ends may be set locally
+(<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation.localSrc" title="sn.model.model.Relation.localSrc"><code class="xref py py-attr docutils literal notranslate"><span class="pre">localSrc</span></code></a>) or inherited from its type
+(<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation.src" title="sn.model.model.Relation.src"><code class="xref py py-attr docutils literal notranslate"><span class="pre">src</span></code></a>, <code class="docutils literal notranslate"><span class="pre">dst</span></code>); for a relation <em>type</em>,
+the ends are its signature (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation.domain" title="sn.model.model.Relation.domain"><code class="xref py py-attr docutils literal notranslate"><span class="pre">domain</span></code></a>,
+<code class="docutils literal notranslate"><span class="pre">range</span></code>).</p>
+</dd>
+<dt><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.IsaIndividual" title="sn.model.model.IsaIndividual"><code class="xref py py-class docutils literal notranslate"><span class="pre">IsaIndividual</span></code></a></dt><dd><p>An <em>isa</em> link. These are relations like any other – so they can be
+drawn, selected and deleted – and are what makes an object’s types.</p>
+</dd>
+<dt><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Collection" title="sn.model.model.Collection"><code class="xref py py-class docutils literal notranslate"><span class="pre">Collection</span></code></a></dt><dd><p>A node with members (not currently offered in the GUI).</p>
+</dd>
+</dl>
+<p>The graph structure (objects, incoming and outgoing relations) comes from
+pythonUtils’ <a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.abstractGraph.html#module-util.abstractGraph" title="(in pythonUtils)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">util.abstractGraph</span></code></a>.</p>
+</section>
+<section id="models">
+<h2>Models<a class="headerlink" href="#models" title="Link to this heading">¶</a></h2>
+<p>A <a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a> holds GraphObjects, and is saved in a
+file. A model builds on other models – its <em>super-models</em>, at least the
+system model – and can use their objects (as types, or as ends of
+relations); a reference to another model’s object carries that model’s URL.</p>
+<p>The <strong>system model</strong>, <a class="reference internal" href="../dev/sn.model.html#sn.model.TopModel" title="sn.model.TopModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">TopModel</span></code></a> (<code class="docutils literal notranslate"><span class="pre">sn:/sn</span></code>), is made
+in memory at start-up and is write-locked. <code class="docutils literal notranslate"><span class="pre">sn:</span></code> URLs are names of models in
+memory, not files: the base rules, read from a temporary copy of a file that
+comes with the program, are <code class="docutils literal notranslate"><span class="pre">sn:/baseRules</span></code>, and models refer to both by
+these names (see <code class="docutils literal notranslate"><span class="pre">PRDb.namedURLs</span></code>; the old names, eg: <code class="docutils literal notranslate"><span class="pre">sn:/sn.xml</span></code>, are
+read as aliases: see <code class="docutils literal notranslate"><span class="pre">PRDb.aliases</span></code>). It defines the objects everything
+else depends on, and the code refers to them by attribute (<code class="docutils literal notranslate"><span class="pre">model.ISA</span></code>,
+<code class="docutils literal notranslate"><span class="pre">model.RULE</span></code>, …):</p>
+<div class="graphviz"><object data="../_images/graphviz-19ba9271b22b33e64932166e84b027463ff6eefa.svg" type="image/svg+xml" class="graphviz">
+<p class="warning">digraph top {
+  rankdir=BT;
+  node [shape=box, style=rounded, fontname=&quot;Helvetica&quot;, fontsize=10];
+  edge [arrowhead=empty];
+  top; node_ [label=&quot;node&quot;]; relation; isa;
+  context; rule; query; definition;
+  contains; antecedent; consequent; definiendum; definiens; distinct;
+  node_ -&gt; top; relation -&gt; top; isa -&gt; relation;
+  context -&gt; node_; rule -&gt; context; query -&gt; context; definition -&gt; context;
+  contains -&gt; relation; distinct -&gt; relation;
+  antecedent -&gt; contains; consequent -&gt; contains;
+  definiendum -&gt; contains; definiens -&gt; contains;
+}</p></object></div>
+</section>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">¶</a></h2>
+<p>Objects have attributes through
+<a class="reference internal" href="../dev/sn.model.snAttribute.html#sn.model.snAttribute.SNAttributedObject" title="sn.model.snAttribute.SNAttributedObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">SNAttributedObject</span></code></a>, built on pythonUtils’
+<a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.attribute.html#module-util.attribute" title="(in pythonUtils)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">util.attribute</span></code></a>. An attribute has a type and a value, and a
+<a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.attribute.html#util.attribute.Restriction" title="(in pythonUtils)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Restriction</span></code></a> on how it’s inherited (eg:
+<em>NOINHERIT</em>: subtypes and instances must fill it in themselves;
+<em>NOOVERRIDE</em>: they may not change it). An object’s <em>effective</em> value of an
+attribute is its own, or the one it inherits down its isa links.</p>
+<p>Attributes are used for:</p>
+<ul class="simple">
+<li><p>the object’s own data (<code class="docutils literal notranslate"><span class="pre">name</span></code>, <code class="docutils literal notranslate"><span class="pre">note</span></code>, anything the user adds);</p></li>
+<li><p>the relational properties, as boolean tags on relation types (<code class="docutils literal notranslate"><span class="pre">symmetric</span></code>,
+<code class="docutils literal notranslate"><span class="pre">transitive</span></code>, …), which are deliberately <em>not</em> inherited;</p></li>
+<li><p>a variable’s <code class="docutils literal notranslate"><span class="pre">constraints</span></code> (below);</p></li>
+<li><p>how it’s drawn: the <code class="docutils literal notranslate"><span class="pre">vis/</span></code> attributes, read by the view (see
+<a class="reference internal" href="view.html"><span class="doc">The Graphical View</span></a>). These are inherited, so a type sets them for its instances.</p></li>
+</ul>
+</section>
+<section id="patterns-variables-contexts-and-constraints">
+<h2>Patterns: variables, contexts and constraints<a class="headerlink" href="#patterns-variables-contexts-and-constraints" title="Link to this heading">¶</a></h2>
+<p>An object whose name starts with <code class="docutils literal notranslate"><span class="pre">?</span></code> is a <strong>variable</strong>. A relation
+contained by a context (the destination of a relation that isa <em>contains</em>:
+eg: <em>antecedent</em>) is part of a pattern, as is any relation with a variable at
+either end. <a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.GraphObject.isPatternElement" title="sn.model.model.GraphObject.isPatternElement"><code class="xref py py-meth docutils literal notranslate"><span class="pre">isPatternElement()</span></code></a> says
+whether an object is part of a pattern; if so, it describes the pattern, not
+the world, so the reasoner doesn’t take it as a fact, and
+<code class="docutils literal notranslate"><span class="pre">getRelatedTo()</span></code> and the like leave it out.</p>
+<p>A variable’s <strong>constraints</strong> are the text of its <code class="docutils literal notranslate"><span class="pre">constraints</span></code> attribute
+(eg: <code class="docutils literal notranslate"><span class="pre">alive,</span> <span class="pre">age:</span> <span class="pre">30,</span> <span class="pre">owner:</span> <span class="pre">?o</span></code>). <a class="reference internal" href="../dev/sn.model.constraints.html#module-sn.model.constraints" title="sn.model.constraints"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sn.model.constraints</span></code></a> parses
+it (<a class="reference internal" href="../dev/sn.model.constraints.html#sn.model.constraints.parseConstraints" title="sn.model.constraints.parseConstraints"><code class="xref py py-func docutils literal notranslate"><span class="pre">parseConstraints()</span></code></a>), formats it back
+(<a class="reference internal" href="../dev/sn.model.constraints.html#sn.model.constraints.formatConstraints" title="sn.model.constraints.formatConstraints"><code class="xref py py-func docutils literal notranslate"><span class="pre">formatConstraints()</span></code></a>), splits it from a name
+typed with <code class="docutils literal notranslate"><span class="pre">:where:</span></code> (<a class="reference internal" href="../dev/sn.model.constraints.html#sn.model.constraints.splitWhere" title="sn.model.constraints.splitWhere"><code class="xref py py-func docutils literal notranslate"><span class="pre">splitWhere()</span></code></a>) and
+merges edits into it (<a class="reference internal" href="../dev/sn.model.constraints.html#sn.model.constraints.mergeConstraints" title="sn.model.constraints.mergeConstraints"><code class="xref py py-func docutils literal notranslate"><span class="pre">mergeConstraints()</span></code></a>). A
+text attribute – rather than, say, one attribute per constraint – keeps
+the constraints in one place to edit, and away from the variable’s own
+attributes (a variable <code class="docutils literal notranslate"><span class="pre">?p</span></code> with a constraint <code class="docutils literal notranslate"><span class="pre">age:</span> <span class="pre">30</span></code> doesn’t <em>have</em>
+an age; it matches things that do). Older models, which stored constraints
+as attributes of their own, are converted when they’re read
+(<a class="reference internal" href="../dev/sn.model.constraints.html#sn.model.constraints.migrateConstraints" title="sn.model.constraints.migrateConstraints"><code class="xref py py-func docutils literal notranslate"><span class="pre">migrateConstraints()</span></code></a>, via <code class="docutils literal notranslate"><span class="pre">Model._migrate</span></code>).</p>
+</section>
+<section id="copying">
+<h2>Copying<a class="headerlink" href="#copying" title="Link to this heading">¶</a></h2>
+<p>Cut, copy and paste work on the model (<a class="reference internal" href="../dev/sn.model.copying.html#module-sn.model.copying" title="sn.model.copying"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sn.model.copying</span></code></a>): a view
+can’t show an object twice, so a copy has to be new model objects.
+<a class="reference internal" href="../dev/sn.model.copying.html#sn.model.copying.copyObjects" title="sn.model.copying.copyObjects"><code class="xref py py-func docutils literal notranslate"><span class="pre">copyObjects()</span></code></a> takes a snapshot – a
+<a class="reference internal" href="../dev/sn.model.copying.html#sn.model.copying.Clip" title="sn.model.copying.Clip"><code class="xref py py-class docutils literal notranslate"><span class="pre">Clip</span></code></a> – of the objects, the contents of any
+contexts among them, and their isa links; <a class="reference internal" href="../dev/sn.model.copying.html#sn.model.copying.pasteInto" title="sn.model.copying.pasteInto"><code class="xref py py-func docutils literal notranslate"><span class="pre">pasteInto()</span></code></a>
+makes new objects from it, with new ids. What isn’t copied (a type, a
+relation’s end) is referred to, not copied, so a clip can be pasted only into
+a model that can see those objects: the one it came from, or one that builds
+on it (<a class="reference internal" href="../dev/sn.model.copying.html#sn.model.copying.pasteProblem" title="sn.model.copying.pasteProblem"><code class="xref py py-func docutils literal notranslate"><span class="pre">pasteProblem()</span></code></a>). The commands are
+<code class="docutils literal notranslate"><span class="pre">copy</span></code>, <code class="docutils literal notranslate"><span class="pre">cut</span></code> and <code class="docutils literal notranslate"><span class="pre">paste</span></code> on the
+<a class="reference internal" href="../dev/sn.controller.modelInterface.html#sn.controller.modelInterface.ModelContext" title="sn.controller.modelInterface.ModelContext"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelContext</span></code></a>; a view adds to the
+clip how it showed the objects (<code class="docutils literal notranslate"><span class="pre">Clip.geometry</span></code>), so it can show the copies
+the same way (<code class="docutils literal notranslate"><span class="pre">SNGView.showPasted()</span></code>).</p>
+</section>
+<section id="persistence">
+<h2>Persistence<a class="headerlink" href="#persistence" title="Link to this heading">¶</a></h2>
+<p>Models (and views) are <a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.persistence.pRef.html#util.persistence.pRef.PRDb" title="(in pythonUtils)"><code class="xref py py-class docutils literal notranslate"><span class="pre">PRDb</span></code></a>s: databases
+of <a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.persistence.pRef.html#util.persistence.pRef.PRObject" title="(in pythonUtils)"><code class="xref py py-class docutils literal notranslate"><span class="pre">PRObject</span></code></a>s, each with an id, saved to
+and read from a URL. pythonUtils does the work; what a class provides is a
+description of how to rebuild an object – its
+<code class="docutils literal notranslate"><span class="pre">getInstantiationInfo()</span></code> – in terms of:</p>
+<ul class="simple">
+<li><p><strong>constructor arguments</strong> (<code class="docutils literal notranslate"><span class="pre">conArgs</span></code>, <code class="docutils literal notranslate"><span class="pre">conKWArgs</span></code>): what’s passed to
+the class to make the object;</p></li>
+<li><p><strong>post-construction setters</strong> (<code class="docutils literal notranslate"><span class="pre">postconSetters</span></code>): properties set once
+it’s made (eg: a view’s hidden categories, or its animation settings);</p></li>
+<li><p><strong>final setters</strong> (<code class="docutils literal notranslate"><span class="pre">finalSetters</span></code>): run once everything in the file has
+been read – when the objects it refers to exist (eg: <code class="docutils literal notranslate"><span class="pre">Model._migrate</span></code>).</p></li>
+</ul>
+<p>Each is a <a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.persistence.serialize.html#util.persistence.serialize.ParamInfo" title="(in pythonUtils)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParamInfo</span></code></a> or
+<a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.persistence.serialize.html#util.persistence.serialize.PropertyInfo" title="(in pythonUtils)"><code class="xref py py-class docutils literal notranslate"><span class="pre">PropertyInfo</span></code></a>, with a getter and
+setter, so a class can save what it likes in whatever form suits it.
+References between objects are saved as
+<a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.persistence.pRef.html#util.persistence.pRef.PReference" title="(in pythonUtils)"><code class="xref py py-class docutils literal notranslate"><span class="pre">PReference</span></code></a>s and resolved lazily.</p>
+<p>The file format is chosen by a
+<a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.persistence.serialize.html#util.persistence.serialize.SerializationStrategy" title="(in pythonUtils)"><code class="xref py py-class docutils literal notranslate"><span class="pre">SerializationStrategy</span></code></a>. The default is
+<code class="docutils literal notranslate"><span class="pre">XML3</span></code> (<code class="xref py py-mod docutils literal notranslate"><span class="pre">util.persistence.serializeXML3</span></code>), a compact XML: simple
+values and references are written as XML attributes rather than as elements
+of their own. Each file is a head, then the model or view: the head says what
+it is, its URL, its model (a view’s) or super-models (a model’s), how many
+objects are in it, and the versions of the format, of the program, and of
+the structures it’s saved in (<code class="docutils literal notranslate"><span class="pre">sn.SCHEMA_VERSION</span></code>: change it when they
+change). The head can be read without the rest (eg: by the model directory:
+see <a class="reference internal" href="../dev/sn.model.directory.html#module-sn.model.directory" title="sn.model.directory"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sn.model.directory</span></code></a>). Files are read by trying the strategies in
+turn – those that recognise the file’s start, the preferred ones, and those
+for the file’s extension, first – so the older formats are still read.</p>
+<section id="copied-and-moved-files">
+<h3>Copied and moved files<a class="headerlink" href="#copied-and-moved-files" title="Link to this heading">¶</a></h3>
+<p>References to other files are written relative to the file being written,
+when the target is close by (in the same folder, below it, or at most
+<code class="docutils literal notranslate"><span class="pre">PRDb.MAX_UP</span></code> folders up): a folder of models and views can then be moved
+or copied as a block. Each file’s head records the URL it was saved to,
+and the one before that. When a file is read from somewhere else
+(<a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.persistence.pRef.html#util.persistence.pRef.PRDb.readFile" title="(in pythonUtils)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">readFile()</span></code></a>), it’s noticed and
+reported, and a relative reference that isn’t found next to the copy is
+looked for where the original was.</p>
+</section>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="reasoner.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">The Reasoner</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="architecture.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Architecture</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2023-2026, Rob Kremer
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">The Model</a><ul>
+<li><a class="reference internal" href="#objects">Objects</a></li>
+<li><a class="reference internal" href="#models">Models</a></li>
+<li><a class="reference internal" href="#attributes">Attributes</a></li>
+<li><a class="reference internal" href="#patterns-variables-contexts-and-constraints">Patterns: variables, contexts and constraints</a></li>
+<li><a class="reference internal" href="#copying">Copying</a></li>
+<li><a class="reference internal" href="#persistence">Persistence</a><ul>
+<li><a class="reference internal" href="#copied-and-moved-files">Copied and moved files</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>
