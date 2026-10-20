@@ -1,0 +1,141 @@
+<p align="center">
+  <img src="sphinx/source/images/sn-logo.png" alt="" width="96">
+</p>
+
+# Semantic Nets
+
+*Semantic Nets* is an editor for **typed semantic networks** -- graphs of
+nodes and relations, organised by types -- with a **reasoner** that draws
+conclusions from them: what relations follow from the ones you've drawn,
+what's inherited down the type hierarchy, what your own rules and definitions
+conclude, and what's inconsistent. You draw the network on a canvas (or type
+commands in a terminal), and the reasoner's conclusions are shown on the same
+canvas.
+
+<p align="center">
+  <img src="sphinx/source/images/user/family-reasoned.png" alt="A window on a small family model, after reasoning: the people on the left, with the reasoner's conclusions faded and dashed, and markers on the two it warns about; a query below them; a rule, a definition and a requirement in their own windows on the right; and the reasoner's report in the terminal pane" width="600">
+</p>
+
+**Documentation:** [robkremer.github.io/semanticNets](https://robkremer.github.io/semanticNets/)
+-- the [User Guide](https://robkremer.github.io/semanticNets/user/index.html),
+the [Developer Guide](https://robkremer.github.io/semanticNets/developer/index.html)
+and the API reference. (The User Guide is in the app too, under **Help**.)
+
+## What it does
+
+- **Types and individuals.** Nodes and relations are typed, in an
+  *isa* hierarchy with multiple inheritance; what a type says is inherited by
+  everything below it, unless something more specific overrides it. Relations
+  are objects too: a relation can be related to other things.
+- **Relation types with signatures and properties** -- domain and range,
+  cardinality, symmetric, transitive, ... -- which the reasoner checks and
+  uses.
+- **Rules, definitions, queries, constraints and requirements**, drawn as
+  little networks of their own (with variables) in *context* windows.
+- **A reasoner**, built on the [clingo](https://potassco.org/clingo/) answer
+  set solver, that adds what it infers to the drawing (faded, dashed) and
+  marks what's wrong -- and takes it all out again with one click.
+- **Layouts**: tree, balloon, radial and hubs, arranged once or kept
+  arranged as the network changes, and an animated (spring) layout.
+- **Models that build on other models**, including shared ontologies read
+  from the web.
+- **A terminal** in each window, where everything you can do with the mouse
+  can be typed as a command -- with undo for nearly everything, either way.
+- **Plugins**, which make models of other things and open them in the
+  editor. Two come with it: an **XML reader** and a **Python parser** (a
+  model of a Python program's modules, classes and functions).
+
+## Installing
+
+*Semantic Nets* is a Mac app. Download a disk image from the
+[Releases page](https://github.com/robkremer/semanticNets/releases):
+
+| File | For |
+| --- | --- |
+| `SemanticNets-1.0-universal.dmg` | Any Mac: Intel with macOS 10.15 or later, or Apple silicon with macOS 11 or later |
+| `SemanticNets-1.0.dmg` | Apple silicon (M1 or later) only, macOS 11 or later -- the same app, smaller |
+| `SemanticNets-1.0.pyz` | Any system with Python 3.14 (see below) |
+
+Open the disk image and drag **Semantic Nets** onto **Applications**. The app
+isn't signed by an identified Apple developer, so the first time, macOS won't
+open it with a double-click: **Control-click** it in Applications, choose
+**Open**, then **Open** again. (Or **System Settings › Privacy & Security ›
+Open Anyway**.) After that it opens normally.
+
+On its first launch it puts some example models in *Documents/Semantic Nets
+Examples* and opens them. See
+[Getting Started](https://robkremer.github.io/semanticNets/user/gettingStarted.html).
+
+### The .pyz
+
+The whole program in one file, for anyone with Python 3.14 (with Tkinter, as
+from [python.org](https://www.python.org/downloads/)):
+
+```bash
+python3.14 -m pip install clingo requests urllib3 docstring_parser
+```
+
+```bash
+python3.14 SemanticNets-1.0.pyz
+```
+
+## Running from the source
+
+*Semantic Nets* is built on a companion library,
+[pythonUtils](https://github.com/robkremer/pythonUtils) (persistence,
+undoable commands, the terminal widget, ...). Check the two out side by side:
+
+```bash
+git clone https://github.com/robkremer/semanticNets.git
+```
+
+```bash
+git clone https://github.com/robkremer/pythonUtils.git
+```
+
+You need Python 3.14 with Tkinter, and the packages in
+[packaging/requirements.txt](packaging/requirements.txt):
+
+```bash
+python3.14 -m pip install -r semanticNets/packaging/requirements.txt
+```
+
+Then, from the `semanticNets` directory:
+
+- `./sng [file ...]` -- the graphical editor;
+- `./sn [-m file]` -- the text (terminal) interface only.
+
+The tests use `unittest`:
+
+```bash
+SN_NO_SAVE_PROMPT=1 PYTHONPATH=src:../pythonUtils/src python3.14 -m unittest discover -s test
+```
+
+## Building
+
+[build.xml](build.xml) is an [Ant](https://ant.apache.org/) build:
+
+| Target | Makes |
+| --- | --- |
+| `ant doc` | The documentation (Sphinx, with the *furo* theme and graphviz), in `sphinx/build/html` |
+| `ant dist` | The disk images and the `.pyz`, in `dist/` (PyInstaller and dmgbuild, in a build-only virtualenv, `.venv-build`) |
+| `ant publishDocs` | The documentation, published to GitHub Pages (the `gh-pages` branch) |
+
+The [Developer Guide](https://robkremer.github.io/semanticNets/developer/index.html)
+explains how it's put together: the model, the reasoner, the views and
+layouts, and how to write a plugin.
+
+## Repository layout
+
+| Path | What |
+| --- | --- |
+| `src/sn/` | The `sn` package: `model` (the data and the reasoner), `controller` (the commands), `view` (the terminal and graphical interfaces) |
+| `plugins/` | The plugins that come with it: `XMLreader`, `pythonParser` |
+| `test/` | The tests |
+| `sphinx/` | The documentation's source |
+| `packaging/` | The app, disk image and `.pyz` build files |
+| `tools/` | Scripts for the documentation's examples and the base rules |
+
+## Licence
+
+[MIT](LICENSE) © 2023-2026 Rob Kremer
