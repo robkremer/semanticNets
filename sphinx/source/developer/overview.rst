@@ -109,7 +109,7 @@ Building the documentation
 --------------------------
 
 The documentation is built with Sphinx (under Python 3.14, with the *furo*
-theme and graphviz) by two targets of ``build.xml``:
+theme and graphviz) by targets of ``build.xml``:
 
 ``rebuildAutoDoc``
   Regenerates the API reference, ``sphinx/source/dev/``, from the code with
@@ -119,10 +119,17 @@ theme and graphviz) by two targets of ``build.xml``:
 ``doc``
   Builds the HTML, into ``sphinx/build/html``.
 
+``publishDocs``
+  Builds it, and publishes it on GitHub Pages
+  (https://robkremer.github.io/semanticNets/): ``tools/publishDocs.sh``
+  commits the HTML to the ``gh-pages`` branch, which holds nothing else, and
+  pushes that. (``tools/publishDocs.sh --no-push`` just commits it.)
+
 The rest of ``sphinx/source`` -- this guide and the User Guide -- is written
 by hand. Images go in ``sphinx/source/images``. The pythonUtils documentation
 is linked through intersphinx, from its own build's ``objects.inv``: build
-that first.
+that first. The links go to pythonUtils' own GitHub Pages
+(https://robkremer.github.io/pythonUtils/), so publish that too.
 
 Packaging
 ---------

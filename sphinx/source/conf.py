@@ -64,7 +64,7 @@ graphviz_dot = '/opt/homebrew/bin/dot'
 
 intersphinx_mapping = {
     "pythonUtils": (
-        "http://192.168.1.102:8080/dev/pythonUtils",           # link target readers actually click through to
+        "https://robkremer.github.io/pythonUtils/",            # link target readers actually click through to (pythonUtils' GitHub Pages)
         "../../../pythonUtils/sphinx/build/html/objects.inv",  # read locally at build time -- no server dependency
     ),
 }
