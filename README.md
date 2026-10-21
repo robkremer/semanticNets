@@ -47,13 +47,16 @@ and the API reference. (The User Guide is in the app too, under **Help**.)
 
 ## Installing
 
-*Semantic Nets* is a Mac app. Download a disk image from the
+*Semantic Nets* runs on macOS, Windows and Linux. Download it from the
 [Releases page](https://github.com/robkremer/semanticNets/releases):
 
 | File | For |
 | --- | --- |
 | `SemanticNets-1.0-universal.dmg` | Any Mac: Intel with macOS 10.15 or later, or Apple silicon with macOS 11 or later |
 | `SemanticNets-1.0.dmg` | Apple silicon (M1 or later) only, macOS 11 or later -- the same app, smaller |
+| `SemanticNets-1.0-setup.exe` | Windows 10 or later (64-bit): an installer |
+| `SemanticNets-1.0-windows.zip` | Windows 10 or later (64-bit): the same app, to unzip and run (`Semantic Nets.exe`) |
+| `SemanticNets-1.0-x86_64.AppImage` | Linux (64-bit Intel/AMD) with glibc 2.35 or later: Ubuntu 22.04, Debian 12, Fedora 36, ... |
 | `SemanticNets-1.0.pyz` | Any system with Python 3.14 (see below) |
 
 Open the disk image and drag **Semantic Nets** onto **Applications**. The app
@@ -61,6 +64,20 @@ isn't signed by an identified Apple developer, so the first time, macOS won't
 open it with a double-click: **Control-click** it in Applications, choose
 **Open**, then **Open** again. (Or **System Settings › Privacy & Security ›
 Open Anyway**.) After that it opens normally.
+
+**On Windows**, run the installer (it adds *Semantic Nets* to the Start menu,
+and opens `.snm` and `.snv` files in it), or unzip the `.zip` anywhere. It
+isn't signed either, so Windows SmartScreen may say *Windows protected your
+PC*: choose **More info**, then **Run anyway**.
+
+**On Linux**, make the AppImage executable and run it:
+
+```bash
+chmod +x SemanticNets-1.0-x86_64.AppImage && ./SemanticNets-1.0-x86_64.AppImage
+```
+
+(On Ubuntu 24.04 and later, AppImages need `sudo apt install libfuse2t64`.
+*Copy as picture* needs `xclip`, or `wl-clipboard` on Wayland.)
 
 On its first launch it puts some example models in *Documents/Semantic Nets
 Examples* and opens them. See
@@ -105,6 +122,10 @@ Then, from the `semanticNets` directory:
 - `./sng [file ...]` -- the graphical editor;
 - `./sn [-m file]` -- the text (terminal) interface only.
 
+(On Windows, `sng.bat` and `sn.bat`, with Python 3.14 from python.org. On Linux,
+a Python 3.14 with Tkinter is eg [uv](https://docs.astral.sh/uv/)'s, or the
+deadsnakes PPA's `python3.14` and `python3.14-tk` on Ubuntu.)
+
 The tests use `unittest`:
 
 ```bash
@@ -120,6 +141,12 @@ SN_NO_SAVE_PROMPT=1 PYTHONPATH=src:../pythonUtils/src python3.14 -m unittest dis
 | `ant doc` | The documentation (Sphinx, with the *furo* theme and graphviz), in `sphinx/build/html` |
 | `ant dist` | The disk images and the `.pyz`, in `dist/` (PyInstaller and dmgbuild, in a build-only virtualenv, `.venv-build`) |
 | `ant publishDocs` | The documentation, published to GitHub Pages (the `gh-pages` branch) |
+
+The Windows and Linux distributions are made by GitHub Actions
+([.github/workflows/build.yml](.github/workflows/build.yml)), on Windows and
+Ubuntu, when a version tag (eg `v1.0`) is pushed: they're added to that release.
+The tests run there on macOS, Windows and Linux on every push
+([.github/workflows/ci.yml](.github/workflows/ci.yml)).
 
 The [Developer Guide](https://robkremer.github.io/semanticNets/developer/index.html)
 explains how it's put together: the model, the reasoner, the views and
