@@ -91,7 +91,8 @@ a = Analysis(
   binaries=binaries,
   datas=datas,
   hiddenimports=hiddenimports,
-  excludes=["matplotlib", "numpy", "mypyc", "util.rtValuesDialog"], # (not used: keep the app small)
+  excludes=["matplotlib", "numpy", "mypyc", "util.rtValuesDialog"] # (not used: keep the app small)
+    + (["PIL", "pypdfium2"] if MAC else []), # (pictures are made with sips there, not these -- see util.platformSupport.pdfToPNG() -- and Pillow, if it's in .venv-build, isn't universal)
   noarchive=False,
 )
 pyz = PYZ(a.pure)
