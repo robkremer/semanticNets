@@ -84,12 +84,12 @@ import atexit
 import os
 from pathlib import Path
 import shutil
-from urllib.parse import urlparse, unquote
 import tempfile
 from typing import Any, ClassVar, Iterator
 from contextlib import contextmanager, ExitStack
 from util.observer import Subject
 from util.persistence.pRef import PRDb
+from util.utils import urlPath
 import sn
 from sn.model.model import Model, GraphObject, Node, Collection, Relation, IsaIndividual, BASE_RULES_URL
 from util.attribute import Attribute, Restriction, coerceValue
@@ -902,12 +902,12 @@ def baseRulesSource(model:Model) -> str|None:
     the URL of the file it's read from -- for package data, the package's own
     file, not the copy it's actually read from -- else None.
   '''
-  path = urlparse(model.url).path if model.url.startswith("file:") else None
+  path = urlPath(model.url) if model.url.startswith("file:") else None
   for src in BASE_RULES:
     if isinstance(src, str):
       if Model.absoluteURL(src) == model.url:
         return model.url
-    elif path is not None and _baseFiles.get(str(src)) and os.path.realpath(_baseFiles[str(src)]) == os.path.realpath(unquote(path)):
+    elif path is not None and _baseFiles.get(str(src)) and os.path.realpath(_baseFiles[str(src)]) == os.path.realpath(path):
       return Path(str(src)).as_uri()
   return None
 

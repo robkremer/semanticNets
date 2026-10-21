@@ -32,6 +32,17 @@ import tempfile
 import unittest
 from sn.model.directory import Folder, parsePath, formatPath, covered, withFolder, filesIn, peekFile, \
   scanFile, Directory, modelURLOf, urlOf, urlProblem
+from util.utils import pathURL
+
+S = os.pathsep # (":" as in the shell's PATH; but ";" on Windows, where ":" is in "C:\\...")
+
+def N(path:str) -> str:
+  "A folder in the search path, as *parsePath()* makes it (on Windows: eg, \"/a/b\" is \"C:\\a\\b\")."
+  return os.path.normpath(os.path.abspath(os.path.expanduser(path)))
+
+def U(path:str) -> str:
+  "A folder's URL, as *formatPath()* makes it."
+  return pathURL(N(path), quoted=False)
 
 XML2 = '''<?xml version='1.0' encoding='utf-8'?>
 <object type="util.persistence.serialize.strdict">
@@ -81,10 +92,10 @@ def write(path:str, text:str) -> str:
   return path
 
 def model(path:str) -> str:
-  return write(path, XML2.format(url="file://" + path, type="sn.model.model.Model", model=""))
+  return write(path, XML2.format(url=pathURL(path, quoted=False), type="sn.model.model.Model", model=""))
 
 def view(path:str, modelRef:str) -> str:
-  return write(path, XML2.format(url="file://" + path, type="sn.view.graphics.sngView.SNGView",
+  return write(path, XML2.format(url=pathURL(path, quoted=False), type="sn.view.graphics.sngView.SNGView",
                                  model=f'<property key="model" type="str" value="{modelRef}" />'))
 
 
@@ -98,29 +109,29 @@ class Test(unittest.TestCase):
     self.tmp.cleanup()
 
   def test0100parsePath(self):
-    folders = parsePath(f"/a/b:/c/**\n ~/d \n\n/a/b")
-    self.assertEqual(folders, [Folder("/a/b"), Folder("/c", True), Folder(os.path.expanduser("~/d"))])
+    folders = parsePath(f"/a/b{S}/c/**\n ~/d \n\n/a/b")
+    self.assertEqual(folders, [Folder(N("/a/b")), Folder(N("/c"), True), Folder(N("~/d"))])
     self.assertEqual(parsePath(formatPath(folders)), folders)
     self.assertEqual(parsePath(""), [])
 
   def test0150urlsInThePath(self):
     folders = parsePath("file:///a/My%20Models/**; https://example.org/onto/animals.snm\n/b")
-    self.assertEqual(folders, [Folder("/a/My Models", True), Folder("https://example.org/onto/animals.snm"), Folder("/b")])
+    self.assertEqual(folders, [Folder(N("/a/My Models"), True), Folder("https://example.org/onto/animals.snm"), Folder(N("/b"))])
     self.assertTrue(folders[1].remote)
-    self.assertEqual(str(folders[0]), "file:///a/My Models/**")
+    self.assertEqual(str(folders[0]), U("/a/My Models") + "/**")
     self.assertEqual(parsePath(formatPath(folders)), folders)
     self.assertFalse(covered(folders, "/onto"))
     self.assertEqual(list(filesIn([folders[1]])), ["https://example.org/onto/animals.snm"])
 
   def test0200covered(self):
-    folders = parsePath("/a/b:/c/**")
+    folders = parsePath(f"/a/b{S}/c/**")
     self.assertTrue(covered(folders, "/a/b"))
     self.assertFalse(covered(folders, "/a/b/sub"))  # not with its subfolders
     self.assertTrue(covered(folders, "/c"))
     self.assertTrue(covered(folders, "/c/d/e"))
     self.assertFalse(covered(folders, "/cd"))       # not just a prefix of the name
-    self.assertIsNone(withFolder("/a/b:/c/**", "/c/x"))
-    self.assertEqual(withFolder("/a/b", "/e"), "file:///a/b;file:///e")
+    self.assertIsNone(withFolder(f"/a/b{S}/c/**", "/c/x"))
+    self.assertEqual(withFolder("/a/b", "/e"), f"{U('/a/b')};{U('/e')}")
 
   def test0300filesIn(self):
     d = self.dir
@@ -128,9 +139,10 @@ class Test(unittest.TestCase):
     v = view(f"{d}/top/sub/v.snv", "../m.snm")
     write(f"{d}/top/notes.txt", "x")
     model(f"{d}/top/.hidden/h.snm")
+    m, v = N(m), N(v) # (the paths as found: on Windows, "\\"s)
     self.assertEqual(list(filesIn(parsePath(f"{d}/top"))), [m])
     self.assertEqual(list(filesIn(parsePath(f"{d}/top/**"))), [m, v])
-    self.assertEqual(list(filesIn(parsePath(f"{d}/top/**:{d}/top/sub"))), [m, v])  # each once
+    self.assertEqual(list(filesIn(parsePath(f"{d}/top/**{S}{d}/top/sub"))), [m, v])  # each once
     self.assertEqual(list(filesIn(parsePath(f"{d}/nowhere"))), [])
 
   def test0400peekXML2(self):
@@ -140,7 +152,7 @@ class Test(unittest.TestCase):
     self.assertEqual(peeked["model"], "m.snm")  # (not the one further in)
     self.assertEqual(peeked["nextID"], "42")
     self.assertEqual(scanFile(v).objects, 41)  # (a view's first id is 1)
-    self.assertEqual(peeked["url"], "file://" + v)
+    self.assertEqual(peeked["url"], pathURL(v, quoted=False))
 
   def test0500peekXML(self):
     v = write(f"{self.dir}/v.snv", XML)
@@ -191,7 +203,7 @@ class Test(unittest.TestCase):
     self.assertFalse(byName["other"].onPath)
     self.assertIsNone(byName["other"].error)
     self.assertEqual(byName["zoo"].objects, 0)  # (a model's first id is 256: its nextID's 42 here)
-    self.assertEqual(byName["zoo"].location, f"file://{d}/lib/")
+    self.assertEqual(byName["zoo"].location, U(f"{d}/lib") + "/")
     self.assertEqual([v.name for v in byName["sn.xml"].views], ["sys"])
     # a view gone: its entry goes; a model gone that a view refers to stays, missing
     os.remove(f"{d}/lib/zoo2.snv")
@@ -226,7 +238,7 @@ class Test(unittest.TestCase):
     self.assertIsNone(urlProblem(urlOf(m), ("model",)))
     self.assertIn("view, not a model", urlProblem(urlOf(v), ("model",)) or "")
     self.assertIsNone(urlProblem(urlOf(v)))
-    self.assertIn("nothing at", urlProblem(f"file://{d}/gone.snm") or "")
+    self.assertIn("nothing at", urlProblem(U(f"{d}/gone.snm")) or "")
 
   def test1000remote(self):
     import threading, functools

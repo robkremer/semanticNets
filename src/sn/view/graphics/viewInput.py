@@ -34,7 +34,8 @@ from sn import snPrefs
 from sn.model.model import Relation
 from functools import partial
 from typing import Optional, Callable, Any
-from util.utils import s_SHIFT, bindRightMouse, s_ALT, flattenPairs, s_CMD, s_CTL, normalizeRect, eventEqual
+from util.utils import s_SHIFT, bindRightMouse, s_ALT, flattenPairs, s_CMD, s_CTL, normalizeRect, eventEqual, wheelEvents, wheelSteps
+from util.platformSupport import MAC, shortcut
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
 from sn.view.graphics.viewBase import KEY_ERASE, KEY_FIND, KEY_ZOOM_IN, KEY_ZOOM_FIT, KEY_ZOOM_NORMAL, KEY_REDO, KEY_COPY_IMAGE, KEY_REMOVE, KEY_VALIDATE, KEY_ZOOM_OUT, KEY_CLEAR_HIGHLIGHTS, KEY_COPY, KEY_PASTE, KEY_REPAINT, KEY_SELECT_ALL, KEY_CUT, KEY_UNDO, VKEY_VALIDATE
@@ -86,8 +87,10 @@ class InputMixin(ViewBase):
     self.canvas.bind("<Button-1>", self.onButton_1)
     self.canvas.bind("<B1-Motion>", self.onB1_Motion)
     # # scroll using two-finger drag
-    self.canvas.bind('<MouseWheel>', self.onMouseWheel)
-    self.canvas.bind('<Shift-MouseWheel>', self.onShift_MouseWheel)
+    for sequence in wheelEvents():
+      self.canvas.bind(sequence, self.onMouseWheel)
+    for sequence in wheelEvents(shift=True):
+      self.canvas.bind(sequence, self.onShift_MouseWheel)
     #
     # undo/redo
     self.canvas.bind(KEY_UNDO[0], self.onUndo)
@@ -106,7 +109,7 @@ class InputMixin(ViewBase):
 
     # repaint
     self.canvas.bind(KEY_REPAINT[0], self.repaint)
-    for key, action in ((KEY_ZOOM_IN[0], self.zoomIn), ("<Command-KeyPress-plus>", self.zoomIn), (KEY_ZOOM_OUT[0], self.zoomOut),
+    for key, action in ((KEY_ZOOM_IN[0], self.zoomIn), (shortcut("plus")[0], self.zoomIn), (KEY_ZOOM_OUT[0], self.zoomOut),
                         (KEY_ZOOM_NORMAL[0], lambda: self.zoomAbout(1.0)), (KEY_ZOOM_FIT[0], self.zoomToFit)):
       self.canvas.bind(key, lambda _e, a=action: a()) # type: ignore[misc]
 
@@ -118,7 +121,8 @@ class InputMixin(ViewBase):
 
     # validate (debugging)
     self.canvas.bind(KEY_VALIDATE[0], lambda _e: self.onValidateKey())
-    self.canvas.bind("<Option-KeyPress>", self.onOptionKey) # (Option-V by the key, whatever the layout types: see VKEY_VALIDATE)
+    if MAC:
+      self.canvas.bind("<Option-KeyPress>", self.onOptionKey) # (Option-V by the key, whatever the layout types: see VKEY_VALIDATE)
 
   def onOptionKey(self, event:tk.Event) -> str|None:
     '''
@@ -596,7 +600,7 @@ class InputMixin(ViewBase):
     if self.isEventHandled(event):
       self.removeEventHandled(event)
       return None
-    self.canvas.yview_scroll(int(event.delta), 'units')
+    self.canvas.yview_scroll(self._wheelUnits(event), 'units')
 
   def onShift_MouseWheel(self, event):
     """
@@ -615,7 +619,16 @@ class InputMixin(ViewBase):
     if self.isEventHandled(event):
       self.removeEventHandled(event)
       return None
-    self.canvas.xview_scroll(int(event.delta), 'units')
+    self.canvas.xview_scroll(self._wheelUnits(event), 'units')
+
+  @staticmethod
+  def _wheelUnits(event:tk.Event) -> int:
+    '''
+    :returns: How many units a wheel event scrolls the view: on the Mac, its
+      *delta* (as it always has); elsewhere, 3 lines a notch, the wheel moved
+      up scrolling up (see *util.utils.wheelSteps()*).
+    '''
+    return int(event.delta) if MAC else -3 * wheelSteps(event)
 
   def isEventHandled(self, event:tk.Event) -> bool:
     """

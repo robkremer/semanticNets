@@ -151,7 +151,7 @@ class Test(unittest.TestCase):
       f.write('exclude = ["examples/*.snm", "examples/*.snv"]\n')
     self.assertEqual(plugins.Manifest.read(str(self.bundled / "alpha")).exclude, ("examples/*.snm", "examples/*.snv"))
     plugins.installBundled(str(self.bundled), str(self.installed))
-    installed = sorted(str(p.relative_to(self.installed / "alpha")) for p in (self.installed / "alpha").rglob("*"))
+    installed = sorted(p.relative_to(self.installed / "alpha").as_posix() for p in (self.installed / "alpha").rglob("*"))
     self.assertEqual(installed, ["__init__.py", "data.snm", "examples", "examples/a.xml", "keep.txt", plugins.MANIFEST])
 
   def test0330fromZip(self):
@@ -168,7 +168,7 @@ class Test(unittest.TestCase):
     source = zipfile.Path(archive, "plugins/")
     self.assertEqual([m.id for m in plugins.manifests(source)], ["alpha"])
     self.assertEqual(plugins.installBundled(source, str(self.installed)), ["alpha"])
-    installed = sorted(str(p.relative_to(self.installed / "alpha")) for p in (self.installed / "alpha").rglob("*"))
+    installed = sorted(p.relative_to(self.installed / "alpha").as_posix() for p in (self.installed / "alpha").rglob("*"))
     self.assertEqual(installed, ["__init__.py", "examples", "examples/a.xml", plugins.MANIFEST])
     self.assertEqual((self.installed / "alpha" / "examples" / "a.xml").read_text(), "<a/>")
     # how bundledFolder() finds it, in a .pyz

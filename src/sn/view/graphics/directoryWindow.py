@@ -46,7 +46,8 @@ from sn.model.model import Model
 from util.attribute import Attribute, VAR_DEFAULTED
 from util.persistence.pRef import PRDb
 from util.tooltip import CreateToolTip
-from util.utils import ownDialog
+from util.utils import ownDialog, pathURL
+from util.platformSupport import TRASH_NAME
 
 if TYPE_CHECKING:
   from sn.view.graphics.guiApp import Application
@@ -107,7 +108,7 @@ def seedSearchPath(urls:list[str]) -> None:
   for url in urls:
     path = pathOf(url) if "://" in url else url
     if path and os.path.isdir(os.path.dirname(path)):
-      noteFolderOf(url if "://" in url else "file://" + path)
+      noteFolderOf(url if "://" in url else pathURL(path, quoted=False))
 
 def sizeText(size:int|None) -> str:
   '''
@@ -212,8 +213,8 @@ class DirectoryPane(ttk.Frame):
     self.openButton = button("Open", self.openSelected, "Open the selected view, or the selected model in its default view (or double-click it).")
     self.openReadOnlyButton = button("Open Read-only", lambda: self.openSelected(readOnly=True),
       "Open it with its model write-locked: it can't be changed (nor saved).")
-    self.deleteButton = button("Move to Trash", self.deleteSelected,
-      "Move the selected model or view to the Trash (and, for a model, offer to move its views too).")
+    self.deleteButton = button(f"Move to {TRASH_NAME}", self.deleteSelected,
+      f"Move the selected model or view to the {TRASH_NAME} (and, for a model, offer to move its views too).")
     button("Folders...", self.editFolders, "Which folders are searched for models and views (the search path).")
     button("Rescan", self.rescan, "Look through the folders again.")
 
@@ -410,16 +411,16 @@ class DirectoryPane(ttk.Frame):
       views = [v for v in entry.views if not v.error and v.path]
       if views:
         names = "\n  ".join(os.path.basename(v.path) for v in views)
-        answer = messagebox.askyesnocancel(sn.NAME, f'Move "{os.path.basename(entry.path)}" to the Trash?\n\n'
-                                           f'Its views:\n  {names}\n\nMove its views to the Trash too?',
+        answer = messagebox.askyesnocancel(sn.NAME, f'Move "{os.path.basename(entry.path)}" to the {TRASH_NAME}?\n\n'
+                                           f'Its views:\n  {names}\n\nMove its views to the {TRASH_NAME} too?',
                                            icon=messagebox.WARNING, parent=top)
         if answer is None:
           return
         if answer:
           files += views
-      elif not messagebox.askokcancel(sn.NAME, f'Move "{os.path.basename(entry.path)}" to the Trash?', parent=top):
+      elif not messagebox.askokcancel(sn.NAME, f'Move "{os.path.basename(entry.path)}" to the {TRASH_NAME}?', parent=top):
         return
-    elif not messagebox.askokcancel(sn.NAME, f'Move "{os.path.basename(entry.path)}" to the Trash?', parent=top):
+    elif not messagebox.askokcancel(sn.NAME, f'Move "{os.path.basename(entry.path)}" to the {TRASH_NAME}?', parent=top):
       return
     openNow = [f for f in files if self._isOpen(f)]
     if openNow:

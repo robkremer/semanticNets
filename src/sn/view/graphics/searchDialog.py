@@ -35,6 +35,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from typing import Any, TYPE_CHECKING
 from util.utils import ownDialog
+from util.platformSupport import shortcut
 if TYPE_CHECKING:
   from sn.view.graphics.sngView import SNGView
 
@@ -94,7 +95,7 @@ class SearchDialog(tk.Toplevel):
     self.bind("<Return>", lambda _e: self.find())
     self.bind("<KP_Enter>", lambda _e: self.find())
     self.bind("<Escape>", lambda _e: self.destroy())
-    self.bind("<Command-KeyPress-w>", lambda _e: self.destroy())
+    self.bind(shortcut("w")[0], lambda _e: self.destroy())
     self._place()
     self.bringToFront()
 

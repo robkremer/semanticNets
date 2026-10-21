@@ -15,4 +15,4 @@ export PYTHONPATH="${appPackageRoot}:${libPackageRoot}${PYTHONPATH:+:${PYTHONPAT
 
 # Run the textUserInterface module as part of its package (python -m),
 # so relative imports inside sn work correctly. Pass command line args too.
-python3.14 -m sn.view.textUserInterface $@
+python3.14 -m sn.view.textUserInterface "$@"

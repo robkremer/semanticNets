@@ -62,7 +62,7 @@ import sysconfig
 from collections import deque
 from dataclasses import dataclass, field
 from typing import Callable
-from urllib.parse import unquote, urlparse
+from util.utils import urlPath
 from sn.model.model import Model, Node, Relation, GraphObject
 from .source import chunkAttrs
 
@@ -492,7 +492,7 @@ def ontologyTypes(model:Model) -> dict[str, GraphObject]:
   :returns: The ontology's types, by name.
   '''
   onto = next(db for db in model.superDBs if isinstance(db, Model) and db.url.startswith("file:")
-              and os.path.realpath(unquote(urlparse(db.url).path)) == os.path.realpath(ONTOLOGY))
+              and os.path.realpath(urlPath(db.url) or "") == os.path.realpath(ONTOLOGY))
   return {str(o.name): o for o in onto.values() if o.model is onto and o.isType() and not o.isSystemObject()}
 
 def buildModel(modelPath:str, modules:list[SourceModule]) -> Model:

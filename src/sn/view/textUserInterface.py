@@ -42,7 +42,10 @@ from sn.model.model import Model, GraphObject
 from sn.controller.modelInterface import ModelContext
 import logging
 from typing import Any, Callable, cast
-import readline  # noqa: F401 — importing enables input() line editing
+try:
+  import readline  # noqa: F401 — importing enables input() line editing
+except ImportError: # (Windows has no readline: input() edits lines itself there)
+  pass
 import argparse
 import tkinter as tk
 from util.terminal import TerminalWidget, PlainTextTerminal

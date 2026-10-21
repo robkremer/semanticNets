@@ -34,7 +34,7 @@ from tkinter import ttk, filedialog
 from pathlib import Path
 from sn.model.model import Model
 from util.persistence.pRef import PRDb
-from util.utils import ownDialog
+from util.utils import ownDialog, urlPath
 
 class ReplaceModelDialog(tk.Toplevel):
   '''
@@ -86,7 +86,7 @@ class ReplaceModelDialog(tk.Toplevel):
       self.message.configure(text="It has no super-models (but the built-in ones, which can't be replaced).")
 
   def chooseFile(self) -> None:
-    modelFile = self.model.url[len("file://"):] if self.model.url.startswith("file://") else ""
+    modelFile = (urlPath(self.model.url) or "") if self.model.url.startswith("file:") else ""
     path = filedialog.askopenfilename(parent=self, title="The model to put in its place",
                                       filetypes=[("Model files", "*.snm"), ("All files", "*.*")],
                                       initialdir=os.path.dirname(modelFile) or None)

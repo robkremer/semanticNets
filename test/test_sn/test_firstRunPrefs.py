@@ -40,7 +40,7 @@ class Test(unittest.TestCase):
 
   def test0100freshHome(self):
     with tempfile.TemporaryDirectory() as home:
-      env = dict(os.environ, HOME=home, PYTHONPATH=os.pathsep.join(sys.path))
+      env = dict(os.environ, HOME=home, USERPROFILE=home, PYTHONPATH=os.pathsep.join(sys.path)) # (USERPROFILE: "~" on Windows)
       result = subprocess.run([sys.executable, "-c", "import sn"], env=env,
                               capture_output=True, text=True, timeout=120)
       self.assertNotIn("PermissionError", result.stderr)

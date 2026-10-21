@@ -10,9 +10,10 @@ picture, with no need for a screen capture (and its permission), of
 everything asked for, on screen or not. Text is set in PDF's own Helvetica,
 which is very close to the canvas's Arial; a few symbols it hasn't (eg: the
 arrows in names) are taken from PDF's Symbol font, and a window's collapse
-triangle is drawn. The PNG is made from the PDF by macOS's *sips*, at twice
-the size (marked 144 dpi, so it's shown the same size: sharp on a Retina
-screen), and *osascript* puts it on the clipboard.
+triangle is drawn. The PNG is made from the PDF at twice the size (marked 144
+dpi, so it's shown the same size: sharp on a Retina screen) -- by macOS's
+*sips*; elsewhere, by the *pypdfium2* package -- and put on the clipboard (see
+*util.platformSupport.pdfToPNG()*, *copyPNG()*).
 
 Created on Oct 8, 2026
 
@@ -43,13 +44,12 @@ from __future__ import annotations
 import math
 import os
 import shutil
-import subprocess
-import sys
 import tempfile
 import zlib
 import tkinter as tk
 import tkinter.font as tkfont
 from typing import Iterable, Sequence
+from util.platformSupport import pdfToPNG, copyPNG
 
 Point = tuple[float, float]
 
@@ -431,29 +431,14 @@ def drawItems(canvas:tk.Canvas, items:Iterable[int], scale:float=1.0) -> bytes|N
     r.draw(i)
   return pdf.bytes()
 
-def toPNG(pdfPath:str, pngPath:str, dpi:int) -> None:
-  '''
-  Make a PNG of a PDF's page (with *sips*), marked *dpi* dots per inch.
-  '''
-  subprocess.run(["sips", "-s", "format", "png", pdfPath, "--out", pngPath], check=True, capture_output=True)
-  subprocess.run(["sips", "-s", "dpiWidth", str(dpi), "-s", "dpiHeight", str(dpi), pngPath], check=True, capture_output=True)
-
-def toClipboard(pngPath:str) -> None:
-  '''
-  Put a PNG on the system clipboard (with *osascript*).
-  '''
-  script = f'set the clipboard to (read (POSIX file "{pngPath}") as «class PNGf»)'
-  subprocess.run(["osascript", "-e", script], check=True, capture_output=True)
-
 def copyImage(canvas:tk.Canvas, items:list[int]) -> tuple[int, int]:
   '''
   Put a picture of canvas items *items* (bottom first) on the system clipboard, as a PNG.
 
   :returns: The picture's size (canvas pixels).
-  :raises RuntimeError: If there's nothing to draw, or it isn't macOS.
+  :raises RuntimeError: If there's nothing to draw, or the PNG can't be made or
+    put on the clipboard (see *util.platformSupport.pdfToPNG()*, *copyPNG()*).
   '''
-  if sys.platform != "darwin":
-    raise RuntimeError("copying a picture is only done on macOS.")
   data = drawItems(canvas, items, scale=PNG_SCALE)
   if data is None:
     raise RuntimeError("there's nothing drawn to copy.")
@@ -462,8 +447,8 @@ def copyImage(canvas:tk.Canvas, items:list[int]) -> tuple[int, int]:
     pdfPath, pngPath = os.path.join(folder, "picture.pdf"), os.path.join(folder, "picture.png")
     with open(pdfPath, "wb") as f:
       f.write(data)
-    toPNG(pdfPath, pngPath, 72 * PNG_SCALE)
-    toClipboard(pngPath)
+    pdfToPNG(pdfPath, pngPath, 72 * PNG_SCALE)
+    copyPNG(pngPath)
   finally:
     shutil.rmtree(folder, ignore_errors=True)
   return _size(canvas, items)

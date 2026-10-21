@@ -39,6 +39,7 @@ Created on Oct 18, 2026
 from __future__ import annotations
 import tkinter as tk
 from typing import Any, Callable, Iterable, TYPE_CHECKING
+from util.platformSupport import shortcut, altKey
 if TYPE_CHECKING:
   from util.abstractGraph import AbstractGraph
   from util.observer import Observer
@@ -61,27 +62,28 @@ else:
   _ViewGraph = object
 
 # The keys a view binds, and its menus show: (Tk event, as the menu shows it).
-KEY_UNDO =                  ('<Command-KeyPress-z>'       , 'cmd+z')
-KEY_REDO =                  ('<Shift-Command-KeyPress-Z>' , 'shift+cmd+Z')
-KEY_REPAINT =               ('<Command-KeyPress-r>'       , 'cmd+r')
-KEY_CUT =                   ('<Command-KeyPress-x>'       , 'Command-X')
-KEY_COPY =                  ('<Command-KeyPress-c>'       , 'Command-C')
-KEY_PASTE =                 ('<Command-KeyPress-v>'       , 'Command-V')
-KEY_COPY_IMAGE =            ('<Shift-Command-KeyPress-C>' , 'Shift-Command-C')
-KEY_SELECT_ALL =            ('<Command-KeyPress-a>'       , 'Command-A')
+# Made with Command on the Mac and Control elsewhere (see util.platformSupport.shortcut()).
+KEY_UNDO =                  shortcut("z")
+KEY_REDO =                  shortcut("Z", shift=True)
+KEY_REPAINT =               shortcut("r")
+KEY_CUT =                   shortcut("x")
+KEY_COPY =                  shortcut("c")
+KEY_PASTE =                 shortcut("v")
+KEY_COPY_IMAGE =            shortcut("C", shift=True)
+KEY_SELECT_ALL =            shortcut("a")
 KEY_ERASE =                 ('<KeyPress-BackSpace>', '<KeyPress-Delete>')
 "Erase what's selected from the view: the Mac's delete key (BackSpace), or forward delete."
 KEY_REMOVE =                ('<Shift-KeyPress-BackSpace>', '<Shift-KeyPress-Delete>')
 "Remove what's selected from the model (after asking)."
 KEY_CLEAR_HIGHLIGHTS =      ('<Escape>'                   , 'esc')
-KEY_VALIDATE =              ('<Option-KeyPress-v>'        , 'Option-V')
-VKEY_VALIDATE = 0x09 # (the V key's macOS virtual key code: Option-V's keysym is whatever the layout types -- "radical", or a dead key -- so it goes by the key: see InputMixin.onOptionKey())
-KEY_TOGGLE_FIELDS_LAYOUT =  ('<Command-KeyPress-f>'       , 'cmd+f') # (not bound: see KEY_FIND)
-KEY_FIND =                  ('<Command-KeyPress-f>'       , 'Command-F')
-KEY_ZOOM_IN =               ('<Command-KeyPress-equal>'   , 'Command-+') # (also <Command-KeyPress-plus>: shifted, on most keyboards)
-KEY_ZOOM_OUT =              ('<Command-KeyPress-minus>'   , 'Command--')
-KEY_ZOOM_NORMAL =           ('<Command-KeyPress-0>'       , 'Command-0')
-KEY_ZOOM_FIT =              ('<Command-KeyPress-9>'       , 'Command-9')
+KEY_VALIDATE =              altKey("v")
+VKEY_VALIDATE = 0x09 # (the V key's macOS virtual key code: Option-V's keysym is whatever the layout types -- "radical", or a dead key -- so on the Mac it goes by the key: see InputMixin.onOptionKey())
+KEY_TOGGLE_FIELDS_LAYOUT =  shortcut("f") # (not bound: see KEY_FIND)
+KEY_FIND =                  shortcut("f")
+KEY_ZOOM_IN =               shortcut("equal") # (also shortcut("plus"): shifted, on most keyboards)
+KEY_ZOOM_OUT =              shortcut("minus")
+KEY_ZOOM_NORMAL =           shortcut("0")
+KEY_ZOOM_FIT =              shortcut("9")
 
 class ViewBase(_ViewGraph):
   '''

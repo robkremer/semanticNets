@@ -212,7 +212,7 @@ class TestOntology(unittest.TestCase):
     Model._initCache()
     for path, names in ((self.modelPath, {"GEB", "Dune"}), (model2, {"Dune"})):
       m = Model.getDB(Path(path).as_uri())
-      self.assertEqual(m.superModelPaths(), [os.path.relpath(shared, os.path.dirname(path))])
+      self.assertEqual(m.superModelPaths(), [os.path.relpath(shared, os.path.dirname(path)).replace(os.sep, "/")]) # (relative URLs)
       book = self.types(Model.getDB(Path(shared).as_uri()))["book"] # (the one it's read with: in memory)
       books = {str(n.name) for n in m.values() if isinstance(n, Node) and n.isIndividual() and n.isa(book)}
       self.assertEqual(books, names)

@@ -76,10 +76,11 @@ import colorsys
 import os
 import random
 import xml.etree.ElementTree as ET
-from urllib.parse import unquote, urlparse
+from urllib.parse import urlparse
 import sn
 from sn.model.model import GraphObject, Model, Node, Relation
 from util.attribute import Attribute, VAR_DEFAULTED, typeAsString
+from util.utils import urlPath
 from .schema import Schema, Hints, Field, NO_FIT, PROPERTY, attributes, children, convert, elements, fit, localName, text
 
 HAS_PART = "xml-has-part"
@@ -231,7 +232,7 @@ def localPath(ref:str) -> str|None:
   '''
   parsed = urlparse(ref)
   if parsed.scheme == "file":
-    return unquote(parsed.path)
+    return urlPath(ref)
   return None if parsed.scheme and len(parsed.scheme) > 1 else os.path.abspath(os.path.expanduser(ref)) # (a drive letter isn't a scheme)
 
 def canChange(ref:str) -> bool:

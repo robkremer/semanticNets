@@ -1,0 +1,106 @@
+# The Windows and Linux distributions (the Mac's are made on a Mac: see
+# build.xml's "dist" target):
+#
+#   - Windows: SemanticNets-VERSION-windows.zip (unzip, run "Semantic Nets.exe")
+#     and SemanticNets-VERSION-setup.exe (an installer: see packaging/installer.iss);
+#   - Linux: SemanticNets-VERSION-x86_64.AppImage (see packaging/appimage.sh).
+#
+# Each is the PyInstaller build of packaging/semanticNets.spec, self-tested,
+# with the documentation (for the Help menu) from the gh-pages branch. They're
+# kept as the run's artifacts; for a version tag (eg, v1.0), they're added to
+# that release (made, as a draft, if there isn't one yet).
+name: Build
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+          - os: ubuntu-22.04 # (the oldest glibc built on is the oldest the AppImage runs with)
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: semanticNets
+
+      - name: Check out pythonUtils, and the documentation
+        run: |
+          branch="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+          git clone --depth 1 --branch "$branch" https://github.com/robkremer/pythonUtils.git pythonUtils \
+            || git clone --depth 1 https://github.com/robkremer/pythonUtils.git pythonUtils
+          git clone --depth 1 --branch gh-pages https://github.com/robkremer/semanticNets.git semanticNets/sphinx/build/html
+          rm -rf semanticNets/sphinx/build/html/.git
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Python 3.14 (with Tk), the run-time packages and PyInstaller
+        run: |
+          uv venv --python 3.14 --managed-python venv
+          uv pip install --python venv -r semanticNets/packaging/requirements.txt pyinstaller
+          if [ "$RUNNER_OS" = Windows ]; then echo "$PWD/venv/Scripts" >> "$GITHUB_PATH"; else echo "$PWD/venv/bin" >> "$GITHUB_PATH"; fi
+
+      - name: Version
+        working-directory: semanticNets
+        run: echo "VERSION=$(python -c "import re; print(re.search(r'^VERSION\s*=\s*\"([^\"]*)\"', open('src/sn/__init__.py', encoding='utf-8').read(), re.M).group(1))")" >> "$GITHUB_ENV"
+
+      - name: PyInstaller
+        working-directory: semanticNets
+        run: pyinstaller --noconfirm --distpath dist --workpath build/pyinstaller packaging/semanticNets.spec
+
+      - name: Self-test (Windows)
+        if: runner.os == 'Windows'
+        working-directory: semanticNets
+        run: |
+          mkdir -p "$RUNNER_TEMP/home"
+          USERPROFILE="$RUNNER_TEMP/home" HOME="$RUNNER_TEMP/home" "dist/Semantic Nets/Semantic Nets.exe" --selftest
+
+      - name: Zip and installer (Windows)
+        if: runner.os == 'Windows'
+        working-directory: semanticNets
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "dist/Semantic Nets" -DestinationPath "dist/SemanticNets-$env:VERSION-windows.zip"
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DVersion=$env:VERSION" packaging\installer.iss
+
+      - name: AppImage, and its self-test (Linux)
+        if: runner.os == 'Linux'
+        working-directory: semanticNets
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q libfuse2
+          curl -sSL -o "$RUNNER_TEMP/appimagetool" https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x "$RUNNER_TEMP/appimagetool"
+          packaging/appimage.sh "$VERSION" "$RUNNER_TEMP/appimagetool"
+          mkdir -p "$RUNNER_TEMP/home"
+          HOME="$RUNNER_TEMP/home" dist/SemanticNets-$VERSION-x86_64.AppImage --selftest
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SemanticNets-${{ env.VERSION }}-${{ runner.os }}
+          path: |
+            semanticNets/dist/*.zip
+            semanticNets/dist/*-setup.exe
+            semanticNets/dist/*.AppImage
+          if-no-files-found: error
+
+      - name: Add them to the release
+        if: startsWith(github.ref, 'refs/tags/')
+        working-directory: semanticNets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="$GITHUB_REF_NAME"
+          gh release view "$tag" > /dev/null 2>&1 || gh release create "$tag" --draft --title "Semantic Nets $VERSION" --notes ""
+          gh release upload "$tag" --clobber $(ls dist/*.zip dist/*-setup.exe dist/*.AppImage 2> /dev/null) # (this OS's)

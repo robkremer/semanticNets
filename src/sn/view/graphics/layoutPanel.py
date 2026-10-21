@@ -58,6 +58,8 @@ from sn.view.graphics.layout import STATIC, DYNAMIC, ANIMATED, LAYOUTS, LayoutHe
 from sn.view.graphics.layoutDialog import LayoutForm
 from sn.view.graphics.animationControls import AnimationControls, TIPS, statusText
 from util.tooltip import CreateToolTip
+from util.platformSupport import WINDOW_BACKGROUND
+from util.utils import wheelEvents, wheelSteps
 if TYPE_CHECKING:
   from sn.view.graphics.sngView import SNGView
 
@@ -152,7 +154,7 @@ class LayoutPanel(ttk.Frame):
 
     body = ttk.Frame(self)
     body.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-    self.canvas = tk.Canvas(body, highlightthickness=0, borderwidth=0, background=str(ttk.Style().lookup("TFrame", "background") or "systemWindowBackgroundColor"))
+    self.canvas = tk.Canvas(body, highlightthickness=0, borderwidth=0, background=str(ttk.Style().lookup("TFrame", "background") or WINDOW_BACKGROUND))
     self.scrollbar = ttk.Scrollbar(body, orient=tk.VERTICAL, command=self._scroll)
     self.canvas.configure(yscrollcommand=self.scrollbar.set)
     self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -161,7 +163,8 @@ class LayoutPanel(ttk.Frame):
     self._pageItem = self.canvas.create_window(0, 0, window=self.page, anchor=tk.NW)
     self.page.bind("<Configure>", lambda _e: self._fit())
     self.canvas.bind("<Configure>", lambda _e: self._fit())
-    self.bind_class(SCROLL_TAG, "<MouseWheel>", self._wheel)
+    for sequence in wheelEvents():
+      self.bind_class(SCROLL_TAG, sequence, self._wheel)
     self._listFor(ANIMATED)
     self._build()
 
@@ -388,8 +391,7 @@ class LayoutPanel(ttk.Frame):
     'The mouse wheel, over the page: scroll it (if it\'s taller than the panel).'
     if not self.scrollbar.winfo_ismapped():
       return None
-    delta = int(event.delta)
-    self._scroll("scroll", -delta if abs(delta) < 120 else -delta // 120, "units")
+    self._scroll("scroll", -wheelSteps(event), "units")
     return "break" # (not a combobox's or a slider's change too)
 
   # ---- keeping it up to date -------------------------------------------------
