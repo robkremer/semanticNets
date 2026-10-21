@@ -356,8 +356,9 @@
 folders – the <em>search path</em>, like the shell’s PATH – found without reading
 them: only each file’s header and the first few properties of the object in it
 (its type, URL, and – for a view – its model) are read (see <em>peekFile()</em>).</p>
-<p>The search path is a string of folders separated by “:” (<em>os.pathsep</em>), or by
-new lines. A folder ending in <code class="docutils literal notranslate"><span class="pre">/**</span></code> includes all the folders below it, too
+<p>The search path is a string of folders separated by “;”, by new lines, or
+(but for Windows, where it’s in “C:...”) by “:”, as in the shell’s PATH (see
+<em>os.pathsep</em>). A folder ending in <code class="docutils literal notranslate"><span class="pre">/**</span></code> includes all the folders below it, too
 (see <em>parsePath()</em>). The window showing the directory is
 <em>sn.view.graphics.directoryWindow.DirectoryWindow</em>.</p>
 <p>Created on Oct 12, 2026</p>
@@ -1114,25 +1115,6 @@ the directory (eg: the system model) come under an entry made for it.</p>
 </dl>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="sn.model.directory.moveToTrash">
-<span class="sig-prename descclassname"><span class="pre">sn.model.directory.</span></span><span class="sig-name descname"><span class="pre">moveToTrash</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.directory.moveToTrash" title="Link to this definition">¶</a></dt>
-<dd><p>Move a file to the Trash (on macOS, where the Finder’s “Put Back” can
-restore it).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>path</strong> (<em>str</em>)</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
-</dd>
-<dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>OSError</strong> – If it can’t be moved there (eg: on another platform:
-nothing’s deleted then).</p>
-</dd>
-</dl>
-</dd></dl>
-
 </section>
 
         </article>
@@ -1258,7 +1240,6 @@ nothing’s deleted then).</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#sn.model.directory.urlProblem"><code class="docutils literal notranslate"><span class="pre">urlProblem()</span></code></a></li>
-<li><a class="reference internal" href="#sn.model.directory.moveToTrash"><code class="docutils literal notranslate"><span class="pre">moveToTrash()</span></code></a></li>
 </ul>
 </li>
 </ul>

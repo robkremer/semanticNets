@@ -354,7 +354,11 @@
 <h1>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading">¶</a></h1>
 <section id="installing">
 <h2>Installing<a class="headerlink" href="#installing" title="Link to this heading">¶</a></h2>
-<p><em>Semantic Nets</em> comes as a Mac app, on a disk image. There are two:</p>
+<p><em>Semantic Nets</em> runs on macOS, Windows and Linux. Download it from the
+<a class="reference external" href="https://github.com/robkremer/semanticNets/releases">Releases page</a>.</p>
+<section id="on-a-mac">
+<h3>On a Mac<a class="headerlink" href="#on-a-mac" title="Link to this heading">¶</a></h3>
+<p>It comes as a Mac app, on a disk image. There are two:</p>
 <dl class="simple">
 <dt><code class="docutils literal notranslate"><span class="pre">SemanticNets-1.0-universal.dmg</span></code></dt><dd><p>For any Mac: Intel Macs with macOS 10.15 (Catalina) or later, and Macs
 with Apple silicon with macOS 11 (Big Sur) or later.</p>
@@ -370,6 +374,39 @@ because it isn’t signed by an identified Apple developer. Instead,
 <strong>Control-click</strong> (or right-click) it in Applications, choose <strong>Open</strong>, and
 then <strong>Open</strong> again in the dialog. (Or: <strong>System Settings | Privacy &amp;
 Security | Open Anyway</strong>.) After that it opens normally.</p>
+</section>
+<section id="on-windows">
+<h3>On Windows<a class="headerlink" href="#on-windows" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">SemanticNets-1.0-setup.exe</span></code></dt><dd><p>An installer, for Windows 10 or later (64-bit). It puts <em>Semantic Nets</em> in
+the Start menu, and makes <code class="docutils literal notranslate"><span class="pre">.snm</span></code> and <code class="docutils literal notranslate"><span class="pre">.snv</span></code> files open in it. (It’s
+installed for you alone, unless you choose all users.)</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">SemanticNets-1.0-windows.zip</span></code></dt><dd><p>The same program, to unzip anywhere and run (<code class="docutils literal notranslate"><span class="pre">Semantic</span> <span class="pre">Nets.exe</span></code>).</p>
+</dd>
+</dl>
+<p>It isn’t signed either, so the first time, Windows SmartScreen may say
+<em>Windows protected your PC</em>: choose <strong>More info</strong>, then <strong>Run anyway</strong>.</p>
+</section>
+<section id="on-linux">
+<h3>On Linux<a class="headerlink" href="#on-linux" title="Link to this heading">¶</a></h3>
+<dl>
+<dt><code class="docutils literal notranslate"><span class="pre">SemanticNets-1.0-x86_64.AppImage</span></code></dt><dd><p>One file, for 64-bit Intel or AMD Linux with glibc 2.35 or later (Ubuntu
+22.04, Debian 12, Fedora 36, and later). Make it executable and run it:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">chmod</span> <span class="o">+</span><span class="n">x</span> <span class="n">SemanticNets</span><span class="o">-</span><span class="mf">1.0</span><span class="o">-</span><span class="n">x86_64</span><span class="o">.</span><span class="n">AppImage</span>
+<span class="o">./</span><span class="n">SemanticNets</span><span class="o">-</span><span class="mf">1.0</span><span class="o">-</span><span class="n">x86_64</span><span class="o">.</span><span class="n">AppImage</span>
+</pre></div>
+</div>
+<p>(Ubuntu 24.04 and later need <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">apt</span> <span class="pre">install</span> <span class="pre">libfuse2t64</span></code> for
+AppImages.) A tool like <em>Gear Lever</em> or <em>AppImageLauncher</em> adds it to the
+menus, and makes <code class="docutils literal notranslate"><span class="pre">.snm</span></code> and <code class="docutils literal notranslate"><span class="pre">.snv</span></code> files open in it. <em>Copy as picture</em>
+needs <code class="docutils literal notranslate"><span class="pre">xclip</span></code> (or <code class="docutils literal notranslate"><span class="pre">wl-clipboard</span></code>, on Wayland).</p>
+</dd>
+</dl>
+<p>On Windows and Linux, the keys this guide gives with <strong>Command</strong> are with
+<strong>Ctrl</strong> instead, and <strong>Option</strong> is <strong>Alt</strong>; <strong>Settings…</strong> and <strong>Quit</strong> are
+at the bottom of the <strong>File</strong> menu.</p>
+</section>
 </section>
 <section id="starting-the-program">
 <h2>Starting the program<a class="headerlink" href="#starting-the-program" title="Link to this heading">¶</a></h2>
@@ -391,7 +428,9 @@ showing. If there were none, it shows the model directory (see
 </ul>
 <p>The <strong>Help</strong> menu has this guide.</p>
 <p>The program keeps its settings in <em>~/.sn/prefs.xml</em> (see <a class="reference internal" href="files.html"><span class="doc">Files and Settings</span></a>), and its log
-– worth a look if something goes wrong – in <em>~/Library/Logs/Semantic Nets</em>.</p>
+– worth a look if something goes wrong – in <em>~/Library/Logs/Semantic Nets</em>
+(on Windows, <em>%LOCALAPPDATA%\Semantic Nets\Logs</em>; on Linux,
+<em>~/.local/state/semantic-nets</em>).</p>
 <section id="other-ways-to-run-it">
 <h3>Other ways to run it<a class="headerlink" href="#other-ways-to-run-it" title="Link to this heading">¶</a></h3>
 <dl>
@@ -542,7 +581,12 @@ Save model</strong> the model. Models are also offered for saving when you quit
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Getting Started</a><ul>
-<li><a class="reference internal" href="#installing">Installing</a></li>
+<li><a class="reference internal" href="#installing">Installing</a><ul>
+<li><a class="reference internal" href="#on-a-mac">On a Mac</a></li>
+<li><a class="reference internal" href="#on-windows">On Windows</a></li>
+<li><a class="reference internal" href="#on-linux">On Linux</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#starting-the-program">Starting the program</a><ul>
 <li><a class="reference internal" href="#other-ways-to-run-it">Other ways to run it</a></li>
 </ul>

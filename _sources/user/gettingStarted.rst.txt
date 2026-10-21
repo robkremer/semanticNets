@@ -5,7 +5,13 @@ Getting Started
 Installing
 ----------
 
-*Semantic Nets* comes as a Mac app, on a disk image. There are two:
+*Semantic Nets* runs on macOS, Windows and Linux. Download it from the
+`Releases page <https://github.com/robkremer/semanticNets/releases>`_.
+
+On a Mac
+~~~~~~~~
+
+It comes as a Mac app, on a disk image. There are two:
 
 ``SemanticNets-1.0-universal.dmg``
   For any Mac: Intel Macs with macOS 10.15 (Catalina) or later, and Macs
@@ -23,6 +29,39 @@ because it isn't signed by an identified Apple developer. Instead,
 **Control-click** (or right-click) it in Applications, choose **Open**, and
 then **Open** again in the dialog. (Or: **System Settings | Privacy &
 Security | Open Anyway**.) After that it opens normally.
+
+On Windows
+~~~~~~~~~~
+
+``SemanticNets-1.0-setup.exe``
+  An installer, for Windows 10 or later (64-bit). It puts *Semantic Nets* in
+  the Start menu, and makes ``.snm`` and ``.snv`` files open in it. (It's
+  installed for you alone, unless you choose all users.)
+
+``SemanticNets-1.0-windows.zip``
+  The same program, to unzip anywhere and run (``Semantic Nets.exe``).
+
+It isn't signed either, so the first time, Windows SmartScreen may say
+*Windows protected your PC*: choose **More info**, then **Run anyway**.
+
+On Linux
+~~~~~~~~
+
+``SemanticNets-1.0-x86_64.AppImage``
+  One file, for 64-bit Intel or AMD Linux with glibc 2.35 or later (Ubuntu
+  22.04, Debian 12, Fedora 36, and later). Make it executable and run it::
+
+    chmod +x SemanticNets-1.0-x86_64.AppImage
+    ./SemanticNets-1.0-x86_64.AppImage
+
+  (Ubuntu 24.04 and later need ``sudo apt install libfuse2t64`` for
+  AppImages.) A tool like *Gear Lever* or *AppImageLauncher* adds it to the
+  menus, and makes ``.snm`` and ``.snv`` files open in it. *Copy as picture*
+  needs ``xclip`` (or ``wl-clipboard``, on Wayland).
+
+On Windows and Linux, the keys this guide gives with **Command** are with
+**Ctrl** instead, and **Option** is **Alt**; **Settings...** and **Quit** are
+at the bottom of the **File** menu.
 
 Starting the program
 --------------------
@@ -46,7 +85,9 @@ Open **Semantic Nets** as you would any app, or double-click a model
 The **Help** menu has this guide.
 
 The program keeps its settings in *~/.sn/prefs.xml* (see :doc:`files`), and its log
--- worth a look if something goes wrong -- in *~/Library/Logs/Semantic Nets*.
+-- worth a look if something goes wrong -- in *~/Library/Logs/Semantic Nets*
+(on Windows, *%LOCALAPPDATA%\\Semantic Nets\\Logs*; on Linux,
+*~/.local/state/semantic-nets*).
 
 Other ways to run it
 ~~~~~~~~~~~~~~~~~~~~

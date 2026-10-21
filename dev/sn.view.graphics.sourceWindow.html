@@ -358,7 +358,8 @@ window of its own here (<em>SourceWindow</em>).</p>
 <p>The editor is the “gui/editorCommand” preference: a command, with <code class="docutils literal notranslate"><span class="pre">{path}</span></code>,
 <code class="docutils literal notranslate"><span class="pre">{line}</span></code> and <code class="docutils literal notranslate"><span class="pre">{url}</span></code> (the file’s <code class="docutils literal notranslate"><span class="pre">file:</span></code> URL, for URL schemes) in it –
 eg: <code class="docutils literal notranslate"><span class="pre">bbedit</span> <span class="pre">+{line}</span> <span class="pre">{path}</span></code>. It’s split into words as a shell would (quotes
-keep a word together), each word filled in, and run <em>without</em> a shell: so
+keep a word together; on Windows, a backslash is just a backslash), each word
+filled in, and run <em>without</em> a shell: so
 whatever’s in the path, it’s only ever the file to open (and never an
 option: it’s always an absolute path). Empty, or if it can’t be run, the
 built-in window’s used.</p>

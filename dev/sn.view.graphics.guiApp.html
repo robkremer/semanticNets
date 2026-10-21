@@ -425,9 +425,8 @@ registers the special Tcl command ‘tk::mac::ShowPreferences’; this does
 that registration, so choosing it (or its standard ⌘, shortcut) opens
 openSettings() below.</p>
 <p>On Windows/Linux, Tk has no equivalent automatic app menu, so this
-command is simply never invoked there — harmless, but it means Settings
-currently has no menu entry point on those platforms. Revisit with a
-real cross-platform Menu/menu bar if that’s ever needed.</p>
+command is never invoked there: Settings is in the File menu there
+instead (see <em>_installMenubar()</em>).</p>
 <p>Called once, from __init__: there’s exactly one root/”app item” no
 matter how many AppWindows get opened, so this belongs here rather
 than being (re-)registered — and guarded against re-registration —
@@ -473,6 +472,23 @@ command line. Each opens in a window, as with <em>Open…</em>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>paths</strong> (<em>str</em>) – The files’ paths.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.onOpenFromAnotherCopy">
+<span class="sig-name descname"><span class="pre">onOpenFromAnotherCopy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">paths</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.onOpenFromAnotherCopy" title="Link to this definition">¶</a></dt>
+<dd><p>Handle the editor being started again while it’s running (on Windows
+and Linux: see <em>main()</em>): open the files it was started with, each in a
+window, as <em>onOpenDocument()</em> does; or if there are none, bring a window
+to the front.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>paths</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – The files.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
@@ -937,7 +953,7 @@ editor next starts.)</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.EXAMPLES_FOLDER">
-<span class="sig-name descname"><span class="pre">EXAMPLES_FOLDER</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'~/Documents/Semantic</span> <span class="pre">Nets</span> <span class="pre">Examples'</span></span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.EXAMPLES_FOLDER" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">EXAMPLES_FOLDER</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'/Users/kremer/Documents/Semantic</span> <span class="pre">Nets</span> <span class="pre">Examples'</span></span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.EXAMPLES_FOLDER" title="Link to this definition">¶</a></dt>
 <dd><p>Where <em>installExamples()</em> puts the example models.</p>
 </dd></dl>
 
@@ -1364,7 +1380,10 @@ The following arguments are defaulted if not present:</p>
 <dt class="sig sig-object py" id="sn.view.graphics.guiApp.main">
 <span class="sig-prename descclassname"><span class="pre">sn.view.graphics.guiApp.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.main" title="Link to this definition">¶</a></dt>
 <dd><p>Run the graphical editor: a window on each file named on the command
-line, or else as <em>Application.startUp()</em> says.</p>
+line, or else as <em>Application.startUp()</em> says. On Windows and Linux, if the
+editor’s already running, the files are handed to it instead (see
+<em>util.singleInstance</em>): on the Mac, the Finder does that itself (see
+<em>Application.onOpenDocument()</em>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
@@ -1439,6 +1458,7 @@ line, or else as <em>Application.startUp()</em> says.</p>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application._installSettingsMenu"><code class="docutils literal notranslate"><span class="pre">Application._installSettingsMenu()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application._installQuitHandler"><code class="docutils literal notranslate"><span class="pre">Application._installQuitHandler()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.onOpenDocument"><code class="docutils literal notranslate"><span class="pre">Application.onOpenDocument()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.onOpenFromAnotherCopy"><code class="docutils literal notranslate"><span class="pre">Application.onOpenFromAnotherCopy()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.onQuit"><code class="docutils literal notranslate"><span class="pre">Application.onQuit()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application._installMenubar"><code class="docutils literal notranslate"><span class="pre">Application._installMenubar()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.showHelp"><code class="docutils literal notranslate"><span class="pre">Application.showHelp()</span></code></a></li>

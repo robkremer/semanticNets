@@ -362,9 +362,10 @@ picture, with no need for a screen capture (and its permission), of
 everything asked for, on screen or not. Text is set in PDF’s own Helvetica,
 which is very close to the canvas’s Arial; a few symbols it hasn’t (eg: the
 arrows in names) are taken from PDF’s Symbol font, and a window’s collapse
-triangle is drawn. The PNG is made from the PDF by macOS’s <em>sips</em>, at twice
-the size (marked 144 dpi, so it’s shown the same size: sharp on a Retina
-screen), and <em>osascript</em> puts it on the clipboard.</p>
+triangle is drawn. The PNG is made from the PDF at twice the size (marked 144
+dpi, so it’s shown the same size: sharp on a Retina screen) – by macOS’s
+<em>sips</em>; elsewhere, by the <em>pypdfium2</em> package – and put on the clipboard (see
+<em>util.platformSupport.pdfToPNG()</em>, <em>copyPNG()</em>).</p>
 <p>Created on Oct 8, 2026</p>
 <p><em>Code author: Rob Kremer &lt;<a class="reference external" href="mailto:robkremer&#37;&#52;&#48;me&#46;com">robkremer<span>&#64;</span>me<span>&#46;</span>com</a>&gt;</em></p>
 <dl class="py data">
@@ -879,38 +880,6 @@ big enough for them, or None if there’s nothing to draw.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="sn.view.graphics.imageExport.toPNG">
-<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.imageExport.</span></span><span class="sig-name descname"><span class="pre">toPNG</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pdfPath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pngPath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dpi</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.imageExport.toPNG" title="Link to this definition">¶</a></dt>
-<dd><p>Make a PNG of a PDF’s page (with <em>sips</em>), marked <em>dpi</em> dots per inch.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>pdfPath</strong> (<em>str</em>)</p></li>
-<li><p><strong>pngPath</strong> (<em>str</em>)</p></li>
-<li><p><strong>dpi</strong> (<em>int</em>)</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="sn.view.graphics.imageExport.toClipboard">
-<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.imageExport.</span></span><span class="sig-name descname"><span class="pre">toClipboard</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pngPath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.imageExport.toClipboard" title="Link to this definition">¶</a></dt>
-<dd><p>Put a PNG on the system clipboard (with <em>osascript</em>).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>pngPath</strong> (<em>str</em>)</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="sn.view.graphics.imageExport.copyImage">
 <span class="sig-prename descclassname"><span class="pre">sn.view.graphics.imageExport.</span></span><span class="sig-name descname"><span class="pre">copyImage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">canvas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.imageExport.copyImage" title="Link to this definition">¶</a></dt>
 <dd><p>Put a picture of canvas items <em>items</em> (bottom first) on the system clipboard, as a PNG.</p>
@@ -928,7 +897,8 @@ big enough for them, or None if there’s nothing to draw.</p>
 <dd class="field-odd"><p>tuple[int, int]</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>RuntimeError</strong> – If there’s nothing to draw, or it isn’t macOS.</p>
+<dd class="field-even"><p><strong>RuntimeError</strong> – If there’s nothing to draw, or the PNG can’t be made or
+put on the clipboard (see <em>util.platformSupport.pdfToPNG()</em>, <em>copyPNG()</em>).</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1047,8 +1017,6 @@ big enough for them, or None if there’s nothing to draw.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#sn.view.graphics.imageExport.drawItems"><code class="docutils literal notranslate"><span class="pre">drawItems()</span></code></a></li>
-<li><a class="reference internal" href="#sn.view.graphics.imageExport.toPNG"><code class="docutils literal notranslate"><span class="pre">toPNG()</span></code></a></li>
-<li><a class="reference internal" href="#sn.view.graphics.imageExport.toClipboard"><code class="docutils literal notranslate"><span class="pre">toClipboard()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.imageExport.copyImage"><code class="docutils literal notranslate"><span class="pre">copyImage()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.imageExport._size"><code class="docutils literal notranslate"><span class="pre">_size()</span></code></a></li>
 </ul>

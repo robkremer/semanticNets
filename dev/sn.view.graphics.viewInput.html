@@ -868,6 +868,24 @@ call <em>self.removeEventHandled()</em> and return.</p></li>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin._wheelUnits">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">_wheelUnits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin._wheelUnits" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<em>Event</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>How many units a wheel event scrolls the view: on the Mac, its
+<em>delta</em> (as it always has); elsewhere, 3 lines a notch, the wheel moved
+up scrolling up (see <em>util.utils.wheelSteps()</em>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.isEventHandled">
 <span class="sig-name descname"><span class="pre">isEventHandled</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.isEventHandled" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
@@ -1092,6 +1110,7 @@ sizes; with their keys.</p>
 <li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.onB1_ButtonRelease"><code class="docutils literal notranslate"><span class="pre">InputMixin.onB1_ButtonRelease()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.onMouseWheel"><code class="docutils literal notranslate"><span class="pre">InputMixin.onMouseWheel()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.onShift_MouseWheel"><code class="docutils literal notranslate"><span class="pre">InputMixin.onShift_MouseWheel()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin._wheelUnits"><code class="docutils literal notranslate"><span class="pre">InputMixin._wheelUnits()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.isEventHandled"><code class="docutils literal notranslate"><span class="pre">InputMixin.isEventHandled()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.addEventHandled"><code class="docutils literal notranslate"><span class="pre">InputMixin.addEventHandled()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.removeEventHandled"><code class="docutils literal notranslate"><span class="pre">InputMixin.removeEventHandled()</span></code></a></li>
