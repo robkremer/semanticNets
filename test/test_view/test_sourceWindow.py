@@ -33,17 +33,20 @@ import os
 import unittest
 from unittest import mock
 from sn.view.graphics import sourceWindow
+from pathlib import Path
 from sn.view.graphics.sourceWindow import editorCommand, EditorCommandError, openSource, EDITOR_PREF
+
+P = os.path.abspath # (on Windows: eg, "/a/b.py" is "C:\\a\\b.py")
 
 class Test(unittest.TestCase):
 
   def test0100fillIn(self):
-    self.assertEqual(editorCommand("bbedit +{line} {path}", "/a/b c.py", 12), ["bbedit", "+12", "/a/b c.py"])
-    self.assertEqual(editorCommand("code -g {path}:{line}", "/a/b.py", 3), ["code", "-g", "/a/b.py:3"])
+    self.assertEqual(editorCommand("bbedit +{line} {path}", "/a/b c.py", 12), ["bbedit", "+12", P("/a/b c.py")])
+    self.assertEqual(editorCommand("code -g {path}:{line}", "/a/b.py", 3), ["code", "-g", P("/a/b.py") + ":3"])
     self.assertEqual(editorCommand('open "txmt://open?url={url}&line={line}"', "/a/b c&d.py", 7),
-                     ["open", "txmt://open?url=file:///a/b%20c%26d.py&line=7"])
+                     ["open", f"txmt://open?url={Path(P('/a/b c&d.py')).as_uri()}&line=7"])
     self.assertEqual(editorCommand("ed +{line} {path}", "x.py", 0)[1:], ["+1", os.path.abspath("x.py")]) # (absolute: never an option)
-    self.assertEqual(editorCommand("echo {{literal}} {path}", "/x.py", 1), ["echo", "{literal}", "/x.py"])
+    self.assertEqual(editorCommand("echo {{literal}} {path}", "/x.py", 1), ["echo", "{literal}", P("/x.py")])
 
   def test0150eclipseExample(self):
     # the Eclipse example in the preference's note: an AppleScript, given "path:line" as its one argument
@@ -53,7 +56,7 @@ class Test(unittest.TestCase):
     self.assertEqual(editorCommand(template, "/a/b c.py", 12),
                      ["osascript", "-e", "on run a",
                       "-e", 'tell application "/Applications/Eclipse.app" to open (POSIX file (item 1 of a))',
-                      "-e", "end run", "/a/b c.py:12"])
+                      "-e", "end run", P("/a/b c.py") + ":12"])
 
   def test0200malformed(self):
     for t in ["", "   ", 'open "unclosed', "ed {file}", "ed {0}", "ed {path"]:
@@ -63,7 +66,7 @@ class Test(unittest.TestCase):
   def test0300noShell(self):
     # a path with shell syntax in it is just a word
     cmd = editorCommand("ed {path}", "/tmp/x; rm -rf ~ $(whoami).py", 1)
-    self.assertEqual(cmd, ["ed", "/tmp/x; rm -rf ~ $(whoami).py"])
+    self.assertEqual(cmd, ["ed", P("/tmp/x; rm -rf ~ $(whoami).py")])
 
   def openWith(self, template, popen=None):
     with mock.patch.object(sourceWindow.snPrefs, "get", side_effect=lambda k, d=None, **kw: template if k == EDITOR_PREF else d), \
@@ -74,7 +77,7 @@ class Test(unittest.TestCase):
 
   def test0400openSource(self):
     p, show = self.openWith("bbedit +{line} {path}")
-    self.assertEqual(p.call_args.args[0], ["bbedit", "+5", "/a/b.py"])
+    self.assertEqual(p.call_args.args[0], ["bbedit", "+5", P("/a/b.py")])
     self.assertNotIn("shell", p.call_args.kwargs)
     show.assert_not_called()
     p, show = self.openWith("")                              # (no editor: shown here)

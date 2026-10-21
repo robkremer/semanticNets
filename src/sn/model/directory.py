@@ -4,8 +4,9 @@ folders -- the *search path*, like the shell's PATH -- found without reading
 them: only each file's header and the first few properties of the object in it
 (its type, URL, and -- for a view -- its model) are read (see *peekFile()*).
 
-The search path is a string of folders separated by ":" (*os.pathsep*), or by
-new lines. A folder ending in ``/**`` includes all the folders below it, too
+The search path is a string of folders separated by ";", by new lines, or
+(but for Windows, where it's in "C:\\...") by ":", as in the shell's PATH (see
+*os.pathsep*). A folder ending in ``/**`` includes all the folders below it, too
 (see *parsePath()*). The window showing the directory is
 *sn.view.graphics.directoryWindow.DirectoryWindow*.
 
@@ -42,7 +43,7 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from typing import Iterator
 from urllib.parse import urljoin, urlparse, unquote
-from util.utils import fixURL, urlExists, urlPath, pathURL
+from util.utils import fixURL, urlExists, urlPath, pathURL, isWindowsPath
 from util.platformSupport import moveToTrash # (here for the directory window: see DirectoryWindow.deleteSelected()) @UnusedImport
 
 EXTENSIONS = {".snm": "model", ".snv": "view"}
@@ -64,7 +65,7 @@ def isRemote(url:str) -> bool:
   :returns: Whether *url* is somewhere other than this computer's files (eg:
     "https://..."): not a path, nor a "file:" URL.
   '''
-  return bool(_SCHEME.match(url)) and not url.lower().startswith("file:")
+  return bool(_SCHEME.match(url)) and not url.lower().startswith("file:") and not isWindowsPath(url) # (not "C:\\...")
 
 @dataclass(frozen=True)
 class Folder:
@@ -129,9 +130,10 @@ def parsePath(text:str) -> list[Folder]:
     if isRemote(part):
       folder = Folder(part)
     else:
-      subfolders = part.endswith(SUBFOLDERS) or part == "**"
+      ending = SUBFOLDERS if part.endswith(SUBFOLDERS) else os.sep + "**" if part.endswith(os.sep + "**") else None # (or "\\**", on Windows)
+      subfolders = ending is not None or part == "**"
       if subfolders:
-        part = part[:-len(SUBFOLDERS)] if part.endswith(SUBFOLDERS) else ""
+        part = part[:-len(ending)] if ending else ""
       folder = Folder(_norm(_localPath(part) or os.sep), subfolders)
     if folder not in ret:
       ret.append(folder)

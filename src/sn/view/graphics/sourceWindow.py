@@ -47,6 +47,7 @@ Created on Oct 14, 2026
 #################################################################################
 from __future__ import annotations
 import os
+import re
 import shlex
 import subprocess
 import tkinter as tk
@@ -79,7 +80,7 @@ def editorCommand(template:str, path:str, line:int) -> list[str]:
   path = os.path.abspath(path)
   values = {"path": path, "line": str(max(1, int(line))), "url": Path(path).as_uri()}
   try:
-    words = shlex.split(template.replace("\\", "\\\\") if WINDOWS else template) # (a Windows path's "\\"s are kept: not escapes)
+    words = shlex.split(re.sub(r'\\(?![\'"])', r'\\\\', template) if WINDOWS else template) # (a Windows path's backslashes are kept: they escape only quotes)
   except ValueError as ex:
     raise EditorCommandError(f'{template!r}: {ex}') from None
   if not words:
