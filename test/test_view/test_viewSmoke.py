@@ -375,11 +375,15 @@ class Test(unittest.TestCase):
     self.assertEqual(v.validate(), 0) # (how many problems it found)
 
   def test0950validateKey(self):
-    'Option-V validates: by the V key, as the keysym is whatever the layout makes of it (the keycodes are from real presses).'
+    'Option-V validates: by the V key, as the keysym is whatever the layout makes of it (the keycodes are from real presses). (Elsewhere, Alt-V: by its keysym.)'
     from sn.view.graphics.viewBase import KEY_VALIDATE, KEY_PASTE
+    from util.platformSupport import MAC
     v = self.view
     self.assertNotEqual(KEY_VALIDATE[0], KEY_PASTE[0])
     self.assertTrue(v.canvas.bind(KEY_VALIDATE[0]))
+    if not MAC:
+      self.assertEqual(KEY_VALIDATE[0], "<Alt-KeyPress-v>")
+      return
     self.assertTrue(v.canvas.bind("<Option-KeyPress>"))
     calls = []
     v.validate = lambda refresh=False: calls.append(refresh) or 0 # type: ignore[method-assign]

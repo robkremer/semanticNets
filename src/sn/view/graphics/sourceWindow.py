@@ -6,7 +6,8 @@ window of its own here (*SourceWindow*).
 The editor is the "gui/editorCommand" preference: a command, with ``{path}``,
 ``{line}`` and ``{url}`` (the file's ``file:`` URL, for URL schemes) in it --
 eg: ``bbedit +{line} {path}``. It's split into words as a shell would (quotes
-keep a word together), each word filled in, and run *without* a shell: so
+keep a word together; on Windows, a backslash is just a backslash), each word
+filled in, and run *without* a shell: so
 whatever's in the path, it's only ever the file to open (and never an
 option: it's always an absolute path). Empty, or if it can't be run, the
 built-in window's used.
@@ -54,6 +55,7 @@ from typing import Any
 import sn
 from sn import snPrefs
 from util.utils import ownDialog
+from util.platformSupport import WINDOWS, shortcut
 
 logger:sn.SNLogger = sn.getLogger(__name__)
 
@@ -77,7 +79,7 @@ def editorCommand(template:str, path:str, line:int) -> list[str]:
   path = os.path.abspath(path)
   values = {"path": path, "line": str(max(1, int(line))), "url": Path(path).as_uri()}
   try:
-    words = shlex.split(template)
+    words = shlex.split(template.replace("\\", "\\\\") if WINDOWS else template) # (a Windows path's "\\"s are kept: not escapes)
   except ValueError as ex:
     raise EditorCommandError(f'{template!r}: {ex}') from None
   if not words:
@@ -175,8 +177,7 @@ class SourceWindow(tk.Toplevel):
     self.status = tk.Label(self, text=path, anchor=tk.W, foreground="grey40")
     self.status.pack(side=tk.BOTTOM, fill=tk.X)
     self.bind("<Escape>", lambda _e: self.destroy())
-    self.bind("<Command-w>" if self.tk.call("tk", "windowingsystem") == "aqua" else "<Control-w>",
-              lambda _e: self.destroy())
+    self.bind(shortcut("w")[0], lambda _e: self.destroy())
 
   def show(self, text:str, line:int, end:int) -> None:
     '''

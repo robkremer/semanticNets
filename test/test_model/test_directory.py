@@ -32,6 +32,7 @@ import tempfile
 import unittest
 from sn.model.directory import Folder, parsePath, formatPath, covered, withFolder, filesIn, peekFile, \
   scanFile, Directory, modelURLOf, urlOf, urlProblem
+from util.utils import pathURL
 
 XML2 = '''<?xml version='1.0' encoding='utf-8'?>
 <object type="util.persistence.serialize.strdict">
@@ -81,10 +82,10 @@ def write(path:str, text:str) -> str:
   return path
 
 def model(path:str) -> str:
-  return write(path, XML2.format(url="file://" + path, type="sn.model.model.Model", model=""))
+  return write(path, XML2.format(url=pathURL(path, quoted=False), type="sn.model.model.Model", model=""))
 
 def view(path:str, modelRef:str) -> str:
-  return write(path, XML2.format(url="file://" + path, type="sn.view.graphics.sngView.SNGView",
+  return write(path, XML2.format(url=pathURL(path, quoted=False), type="sn.view.graphics.sngView.SNGView",
                                  model=f'<property key="model" type="str" value="{modelRef}" />'))
 
 
@@ -140,7 +141,7 @@ class Test(unittest.TestCase):
     self.assertEqual(peeked["model"], "m.snm")  # (not the one further in)
     self.assertEqual(peeked["nextID"], "42")
     self.assertEqual(scanFile(v).objects, 41)  # (a view's first id is 1)
-    self.assertEqual(peeked["url"], "file://" + v)
+    self.assertEqual(peeked["url"], pathURL(v, quoted=False))
 
   def test0500peekXML(self):
     v = write(f"{self.dir}/v.snv", XML)

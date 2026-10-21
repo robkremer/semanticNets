@@ -209,11 +209,13 @@ PREFS:dict[str, tuple[Any, Any, str]] = {
     "window here instead (as it is if the command can't be run). Eg:\n"
     "  BBEdit (or TextMate):  open \"txmt://open?url={url}&line={line}\"\n"
     "  BBEdit's command line tools:  bbedit +{line} {path}\n"
-    "  VS Code:  code -g {path}:{line}\n"
+    "  VS Code:  code -g {path}:{line}   (on Windows: code.cmd -g {path}:{line})\n"
     "  Sublime Text:  subl {path}:{line}\n"
     "  Eclipse (on a Mac: the Eclipse that's running; give its own app's path; the first time, macOS asks if "
     "this may control Eclipse):\n"
-    "    osascript -e \"on run a\" -e \"tell application \\\"/Applications/Eclipse.app\\\" to open (POSIX file (item 1 of a))\" -e \"end run\" {path}:{line}"),
+    "    osascript -e \"on run a\" -e \"tell application \\\"/Applications/Eclipse.app\\\" to open (POSIX file (item 1 of a))\" -e \"end run\" {path}:{line}\n"
+    "  Notepad++ (Windows):  \"C:\\Program Files\\Notepad++\\notepad++.exe\" -n{line} {path}\n"
+    "  gedit (Linux):  gedit +{line} {path}"),
   "gui/NodeMinSize": (int, 30,
     "The width (before zooming) of a new node's shape, unless its vis/minSize says otherwise."),
   "gui/NodeAspectRatio": (float, 1.5,
@@ -421,11 +423,12 @@ def _displayPath(url:str) -> str:
   '''
   :returns: *url* as the user knows it: a local file's path (eg: "~/models/family.snv"), or else the URL.
   '''
-  from urllib.parse import urlparse, unquote
+  from urllib.parse import urlparse
+  from util.utils import urlPath
   parsed = urlparse(url)
   if parsed.scheme != "file":
     return url
-  path = unquote(parsed.path)
+  path = urlPath(url) or ""
   home = os.path.expanduser("~")
   return "~" + path[len(home):] if path.startswith(home + os.sep) else path
 

@@ -1,7 +1,10 @@
 # -*- mode: python ; coding: utf-8 -*-
 '''
-PyInstaller spec for the stand-alone "Semantic Nets.app" (see build.xml's "app"
-target). Run from the project's top folder:
+PyInstaller spec for the stand-alone app: "Semantic Nets.app" on the Mac (see
+build.xml's "app" target); on Windows, a "Semantic Nets" folder with "Semantic
+Nets.exe" in it, and on Linux one with "semantic-nets" (see
+.github/workflows/build.yml, and installer.iss and appimage.sh, which package
+them). Run from the project's top folder:
 
   .venv-build/bin/pyinstaller --noconfirm --distpath dist --workpath build/pyinstaller packaging/semanticNets.spec
 
@@ -23,6 +26,7 @@ UTILS = os.path.abspath(os.path.join(ROOT, "..", "pythonUtils", "src"))
 
 import platform, re, sys
 sys.path[:0] = [SRC, UTILS]
+MAC, WINDOWS = sys.platform == "darwin", sys.platform == "win32"
 
 def _snConstant(name:str) -> str:
   # (read from sn/__init__.py's text: importing sn would set up its log file and prefs)
@@ -30,7 +34,7 @@ def _snConstant(name:str) -> str:
     return re.search(rf'^{name}\s*=\s*"([^"]*)"', f.read(), re.M).group(1)
 NAME, VERSION = _snConstant("NAME"), _snConstant("VERSION")
 
-TARGET_ARCH = os.environ.get("SN_TARGET_ARCH") or None
+TARGET_ARCH = (os.environ.get("SN_TARGET_ARCH") or None) if MAC else None
 """The app's architecture: unset for the building Mac's (eg: arm64), or "universal2"
 for Intel and Apple silicon both (see build.xml's "appUniversal" target: its
 compiled packages must be universal too -- packaging/makeUniversalWheels.py)."""
@@ -74,9 +78,17 @@ def _modules(top:str, package:str) -> list[str]:
 hiddenimports = _modules(SRC, "sn") + _modules(UTILS, "util") + bundledPlugins.stdlibImports([f for f, _ in pluginFiles if f.endswith(".py")]) \
   + ["_cffi_backend", "clingo._clingo"] # (clingo's compiled core is a cffi extension: PyInstaller doesn't see that it needs cffi)
 
+binaries = []
+if not (MAC or WINDOWS):
+  # (a Python whose Tcl and Tk libraries are in its own lib folder -- eg, uv's --
+  # links _tkinter to them in a way PyInstaller doesn't follow: name them)
+  import glob
+  binaries = [(f, ".") for f in sorted(glob.glob(os.path.join(sys.base_prefix, "lib", "libtcl*.so*")))]
+
 a = Analysis(
   [os.path.join(SRC, "sn", "__main__.py")],
   pathex=[SRC, UTILS],
+  binaries=binaries,
   datas=datas,
   hiddenimports=hiddenimports,
   excludes=["matplotlib", "numpy", "mypyc", "util.rtValuesDialog"], # (not used: keep the app small)
@@ -84,15 +96,18 @@ a = Analysis(
 )
 pyz = PYZ(a.pure)
 
+ICON = os.path.join(SPECPATH, "sn.icns" if MAC else "sn.ico") if MAC or WINDOWS else None
+"(Linux has no icon in the program: the AppImage's .desktop file has it -- see appimage.sh)"
+
 exe = EXE(
   pyz, a.scripts, [],
   exclude_binaries=True,
-  name="Semantic Nets",
+  name="Semantic Nets" if MAC or WINDOWS else "semantic-nets",
   console=False,          # a windowed (GUI) app
   argv_emulation=False,   # (Tk itself receives the Finder's "open document" events: see guiApp.onOpenDocument())
   codesign_identity=None, # ad hoc signing
   target_arch=TARGET_ARCH,
-  icon=os.path.join(SPECPATH, "sn.icns"),
+  icon=ICON,
 )
 coll = COLLECT(exe, a.binaries, a.datas, name="Semantic Nets")
 
@@ -105,22 +120,23 @@ DOCUMENT_TYPES = [
    "CFBundleTypeIconFile": "sn.icns"},
 ]
 
-app = BUNDLE(
-  coll,
-  name="Semantic Nets.app",
-  icon=os.path.join(SPECPATH, "sn.icns"),
-  bundle_identifier="com.robkremer.semanticnets",
-  version=VERSION,
-  info_plist={
-    "CFBundleName": NAME,
-    "CFBundleDisplayName": NAME,
-    "CFBundleShortVersionString": VERSION,
-    "CFBundleVersion": VERSION,
-    "CFBundleDocumentTypes": DOCUMENT_TYPES,
-    "NSHighResolutionCapable": True,
-    # (what the bundled binaries need -- see MIN_MACOS -- for each architecture the app has)
-    "LSMinimumSystemVersion": MIN_MACOS["x86_64"] if TARGET_ARCH == "universal2" else MIN_MACOS[TARGET_ARCH or platform.machine()],
-    **({"LSMinimumSystemVersionByArchitecture": MIN_MACOS} if TARGET_ARCH == "universal2" else {}),
-    "NSHumanReadableCopyright": "(c) 2023-2026 Rob Kremer. MIT licence.",
-  },
-)
+if MAC:
+  app = BUNDLE(
+    coll,
+    name="Semantic Nets.app",
+    icon=os.path.join(SPECPATH, "sn.icns"),
+    bundle_identifier="com.robkremer.semanticnets",
+    version=VERSION,
+    info_plist={
+      "CFBundleName": NAME,
+      "CFBundleDisplayName": NAME,
+      "CFBundleShortVersionString": VERSION,
+      "CFBundleVersion": VERSION,
+      "CFBundleDocumentTypes": DOCUMENT_TYPES,
+      "NSHighResolutionCapable": True,
+      # (what the bundled binaries need -- see MIN_MACOS -- for each architecture the app has)
+      "LSMinimumSystemVersion": MIN_MACOS["x86_64"] if TARGET_ARCH == "universal2" else MIN_MACOS[TARGET_ARCH or platform.machine()],
+      **({"LSMinimumSystemVersionByArchitecture": MIN_MACOS} if TARGET_ARCH == "universal2" else {}),
+      "NSHumanReadableCopyright": "(c) 2023-2026 Rob Kremer. MIT licence.",
+    },
+  )

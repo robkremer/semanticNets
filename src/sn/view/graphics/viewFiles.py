@@ -33,7 +33,7 @@ import tkinter as tk
 import sn
 from sn.model.model import Model
 from typing import Any
-from util.utils import fixURL, urlExists, addToMenuBar, addCheckToMenuBar, removeFromMenuBar
+from util.utils import fixURL, urlExists, addToMenuBar, addCheckToMenuBar, removeFromMenuBar, urlPath
 from util.persistence.pRef import PRDb
 from sn.view.graphics.guiApp import Application
 from sn.view.graphics.directoryWindow import noteSaved
@@ -95,7 +95,7 @@ class FilesMixin(ViewBase):
     '''
     from tkinter import filedialog, messagebox
     current = fixURL(db.url)[0]
-    path = current[len("file://"):] if current.startswith("file://") else ""
+    path = (urlPath(current) or "") if current.startswith("file:") else ""
     filename = filedialog.asksaveasfilename(parent=self.window, title=f"Save a copy of the {what} as",
                                             defaultextension=extension, filetypes=filetypes,
                                             initialdir=os.path.dirname(path) or None,
@@ -198,7 +198,7 @@ class FilesMixin(ViewBase):
     if not self.isModelEditor():
       messagebox.showinfo("Model preferences", self.lockedReason(), parent=self.window)
       return
-    modelFile = model.url[len("file://"):] if model.url.startswith("file://") else ""
+    modelFile = (urlPath(model.url) or "") if model.url.startswith("file:") else ""
     def chooseModel(parent:tk.Misc) -> str|None:
       path = filedialog.askopenfilename(parent=parent, title="Choose a model this one builds on",
                                         filetypes=[("Model files", "*.snm"), ("All files", "*.*")],

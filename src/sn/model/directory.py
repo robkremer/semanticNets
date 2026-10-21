@@ -42,7 +42,8 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from typing import Iterator
 from urllib.parse import urljoin, urlparse, unquote
-from util.utils import fixURL, urlExists
+from util.utils import fixURL, urlExists, urlPath, pathURL
+from util.platformSupport import moveToTrash # (here for the directory window: see DirectoryWindow.deleteSelected()) @UnusedImport
 
 EXTENSIONS = {".snm": "model", ".snv": "view"}
 "The files the directory lists, and what's in them."
@@ -84,7 +85,7 @@ class Folder:
   def __str__(self) -> str:
     if self.remote:
       return self.path
-    return "file://" + self.path + (SUBFOLDERS if self.subfolders else "")
+    return pathURL(self.path, quoted=False) + (SUBFOLDERS if self.subfolders else "")
 
   def covers(self, folder:str) -> bool:
     '''
@@ -104,11 +105,9 @@ def _norm(path:str) -> str:
 def _localPath(part:str) -> str:
   ":returns: The path *part* -- a path, or a \"file:\" URL -- is of."
   if part.lower().startswith("file:"):
-    part = unquote(part[len("file:"):])
-    if part.startswith("//"):
-      part = part[2:]
-      if not part.startswith("/"): # ("file://localhost/...")
-        part = part[part.find("/"):] if "/" in part else "/"
+    if not part.lower().startswith("file://"): # ("file:/Users/me/...", as "file:" + a path makes)
+      part = "file://" + part[len("file:"):]
+    return urlPath(part) or ""
   return part
 
 def parsePath(text:str) -> list[Folder]:
@@ -332,8 +331,7 @@ def pathOf(url:str) -> str|None:
   :returns: The path of the file at *url*, if it's a file URL; else None (eg:
     the system model, "sn:/sn").
   '''
-  u = urlparse(url)
-  return unquote(u.path) if u.scheme == "file" else None
+  return urlPath(url) if urlparse(url).scheme == "file" else None
 
 @dataclass
 class Entry:
@@ -402,7 +400,7 @@ def scanFile(path:str, onPath:bool=True) -> Entry:
   try:
     entry.url = urlOf(path)
   except Exception:
-    entry.url = "file://" + path
+    entry.url = pathURL(path, quoted=False)
   try:
     st = os.stat(path)
   except OSError as e:
@@ -609,42 +607,3 @@ def urlProblem(url:str, kinds:tuple[str, ...]=("model", "view")) -> str|None:
   if entry.kind not in kinds:
     return f'That\'s a {entry.kind}, not a {" or ".join(kinds)}.'
   return None
-
-# ── Deleting ────────────────────────────────────────────────────────────────
-
-def moveToTrash(path:str) -> None:
-  '''
-  Move a file to the Trash (on macOS, where the Finder's "Put Back" can
-  restore it).
-
-  :raises OSError: If it can't be moved there (eg: on another platform:
-    nothing's deleted then).
-  '''
-  if sys.platform != "darwin":
-    raise OSError(f'Can\'t move "{path}" to the Trash on this platform: delete it yourself if you want it gone.')
-  import ctypes, ctypes.util
-  objc = ctypes.cdll.LoadLibrary(ctypes.util.find_library("objc") or "/usr/lib/libobjc.dylib")
-  ctypes.cdll.LoadLibrary("/System/Library/Frameworks/Foundation.framework/Foundation")
-  objc.objc_getClass.restype = ctypes.c_void_p
-  objc.objc_getClass.argtypes = [ctypes.c_char_p]
-  objc.sel_registerName.restype = ctypes.c_void_p
-  objc.sel_registerName.argtypes = [ctypes.c_char_p]
-  send = objc.objc_msgSend
-  def call(receiver, selector:bytes, *args, argtypes:tuple=(), restype=ctypes.c_void_p):
-    send.restype = restype
-    send.argtypes = [ctypes.c_void_p, ctypes.c_void_p, *argtypes]
-    return send(receiver, objc.sel_registerName(selector), *args)
-  manager = call(objc.objc_getClass(b"NSFileManager"), b"defaultManager")
-  string = call(objc.objc_getClass(b"NSString"), b"stringWithUTF8String:", os.fsencode(os.path.abspath(path)),
-                argtypes=(ctypes.c_char_p,))
-  url = call(objc.objc_getClass(b"NSURL"), b"fileURLWithPath:", string, argtypes=(ctypes.c_void_p,))
-  error = ctypes.c_void_p()
-  ok = call(manager, b"trashItemAtURL:resultingItemURL:error:", url, None, ctypes.byref(error),
-            argtypes=(ctypes.c_void_p, ctypes.c_void_p, ctypes.POINTER(ctypes.c_void_p)), restype=ctypes.c_bool)
-  if not ok:
-    reason = "unknown error"
-    if error.value:
-      text = call(error.value, b"localizedDescription")
-      if text:
-        reason = (call(text, b"UTF8String", restype=ctypes.c_char_p) or b"").decode("utf-8", "replace") or reason
-    raise OSError(f'Couldn\'t move "{path}" to the Trash: {reason}')

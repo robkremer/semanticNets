@@ -953,7 +953,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     '''
     :param event: The Tk event.
     '''
-    self.canvas.configure(cursor="hand")
+    self.canvas.configure(cursor="hand2")
     
   def onLeave(self, event):
     '''

@@ -3,3 +3,6 @@ clingo
 requests
 urllib3
 docstring_parser
+# Off the Mac, for Copy as picture (the Mac uses its own sips: see util.platformSupport.pdfToPNG()).
+pypdfium2; sys_platform != "darwin"
+pillow; sys_platform != "darwin"

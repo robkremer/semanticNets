@@ -67,7 +67,7 @@ from util.persistence.pRef import PRObject, PRDb, PReference, PRDbContainer
 from util.persistence.serialize import InstantiationInfo, ParamInfo, PropertyInfo,\
   SerializableType, Serializable
 from util.persistence.serialize import DEFAULT_STRATEGY
-from util.utils import delOne, extendsDoc
+from util.utils import delOne, extendsDoc, urlPath
 from typing import override, cast, Generator, Callable, Optional,\
   Iterable, overload, Iterator, Any
 from util.attribute import AttributedObject, Attribute, NOVALUE, coerceValue
@@ -1088,14 +1088,14 @@ def _isPackagedBaseRules(url:str) -> bool:
     rules (which read a copy of it).
   '''
   import os
-  from urllib.parse import urlparse, unquote
+  from urllib.parse import urlparse
   from importlib.resources.abc import Traversable
   try:
     from sn.model.reasoner import BASE_RULES
     parsed = urlparse(url)
     if parsed.scheme != "file":
       return False
-    path = os.path.realpath(unquote(parsed.path))
+    path = os.path.realpath(urlPath(url) or "")
     return any(isinstance(src, Traversable) and os.path.realpath(str(src)) == path for src in BASE_RULES)
   except Exception:
     return False

@@ -18,8 +18,6 @@ Created on Oct 14, 2026
 '''
 from __future__ import annotations
 import os
-import subprocess
-import sys
 import textwrap
 from typing import Any
 import sn
@@ -104,16 +102,13 @@ def openInEditor(obj:Any, context:HookContext) -> None:
 
 @hook(appliesTo=hasFile)
 def reveal(obj:Any, _context:HookContext) -> None:
-  '''Show *obj*'s file in the Finder (on a Mac; elsewhere, open its folder).'''
+  '''Show *obj*'s file in the Finder (Explorer; on Linux, open its folder).'''
+  from util.platformSupport import reveal as revealFile
   path = fileOf(obj)
   if path is None:
     return
   try:
-    if sys.platform == "darwin":
-      subprocess.Popen(["open", "-R", path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    else:
-      import webbrowser
-      webbrowser.open(os.path.dirname(path))
+    revealFile(path)
   except OSError as ex:
     logger.warning(f"Couldn't show {path}: {ex}")
 

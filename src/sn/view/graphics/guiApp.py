@@ -52,6 +52,7 @@ from util.persistence.pRef import PRDb
 from util.attributeEditor import applyEditAttrsBox
 from util.attribute import Attribute, VAR_DEFAULTED
 import sys
+import atexit
 import os
 from pathlib import Path
 import tkinter as tk
@@ -62,7 +63,9 @@ from types import NoneType
 from tkinter import ttk
 from sn import snPrefs
 from util.utils import showExceptionDialog, fixURL, urlExists,\
-  isValidURL
+  isValidURL, keepLast
+from util.platformSupport import MAC, shortcut, openFile, setUpLook, setDPIAware, documentsFolder
+from util.singleInstance import SingleInstance
 from util.terminal import terminalRegistry, installGlobalIORouting,\
   TerminalWidget, TerminalRegistry
 from sn.model.model import Model
@@ -104,6 +107,8 @@ class Application(tk.Tk):
     self._directoryShownForProgress = False
     progress.listener = self._onProgress
 
+    self.option_add('*tearOff', tk.FALSE) # (before any menu's made: Windows' and X11's menus have tear-off lines otherwise)
+    setUpLook(self)
     installGlobalIORouting(self.terminalRegistry)  # install exactly once, here
     self._installSettingsMenu()
     self._installQuitHandler()
@@ -128,9 +133,8 @@ class Application(tk.Tk):
     openSettings() below.
 
     On Windows/Linux, Tk has no equivalent automatic app menu, so this
-    command is simply never invoked there — harmless, but it means Settings
-    currently has no menu entry point on those platforms. Revisit with a
-    real cross-platform Menu/menu bar if that's ever needed.
+    command is never invoked there: Settings is in the File menu there
+    instead (see *_installMenubar()*).
 
     Called once, from __init__: there's exactly one root/"app item" no
     matter how many AppWindows get opened, so this belongs here rather
@@ -172,6 +176,26 @@ class Application(tk.Tk):
     self._openedDocuments = True # (see startUp(): not then reopening the last session too)
     for p in paths:
       self.openWindow(p)
+
+  def onOpenFromAnotherCopy(self, paths:list[str]) -> None:
+    """Handle the editor being started again while it's running (on Windows
+    and Linux: see *main()*): open the files it was started with, each in a
+    window, as *onOpenDocument()* does; or if there are none, bring a window
+    to the front.
+
+    :param paths: The files.
+    """
+    if paths:
+      for p in paths:
+        self.openWindow(p)
+      return
+    window = next(reversed(list(self.windows.values())), None)
+    if window is not None:
+      window.deiconify()
+      window.lift()
+      window.focus_force()
+    else:
+      self.showDirectory()
 
   def onQuit(self) -> None:
     """Handle the "Quit \\<AppName\\>" item in macOS's automatic app menu.
@@ -234,6 +258,18 @@ class Application(tk.Tk):
     self.helpmenu.add_separator()
     self.helpmenu.add_command(label="Install Example Models", command=self.onInstallExamples)
     self.helpmenu.add_command(label="Reveal Plugins Folder", command=self.revealPlugins)
+
+    if not MAC:
+      # (on the Mac, Settings and Quit are in the app's own menu: see
+      # _installSettingsMenu(), _installQuitHandler(); elsewhere, they end the
+      # File menu, below whatever the windows add to it -- see keepLast())
+      settingsKey, quitKey = shortcut("comma", label=","), shortcut("q")
+      self.filemenu.add_separator()
+      self.filemenu.add_command(label="Settings...", command=self.openSettings, accelerator=settingsKey[1])
+      self.filemenu.add_command(label="Quit", command=self.onQuit, accelerator=quitKey[1])
+      keepLast(self.filemenu, "Settings...", "Quit")
+      self.bind_all(settingsKey[0], lambda _e: self.openSettings())
+      self.bind_all(quitKey[0], lambda _e: self.onQuit())
 
     self.config(menu=menubar)
     return menubar
@@ -738,18 +774,18 @@ class Application(tk.Tk):
     it isn't there yet. (A plugin added or changed there is loaded when the
     editor next starts.)
     '''
-    import subprocess, webbrowser
+    import webbrowser
     from sn import plugins
     os.makedirs(plugins.PLUGINS_FOLDER, exist_ok=True)
-    if sys.platform == "darwin":
-      subprocess.Popen(["open", plugins.PLUGINS_FOLDER], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    else:
+    try:
+      openFile(plugins.PLUGINS_FOLDER)
+    except OSError:
       webbrowser.open(Path(plugins.PLUGINS_FOLDER).as_uri())
 
   EXAMPLES_PREF = ".examplesInstalled"
   "True once the example models have been installed (see *installExamples()*): it's only done once. (Hidden from Settings: see *OPEN_WINDOWS_PREF*.)"
 
-  EXAMPLES_FOLDER = os.path.join("~", "Documents", f"{sn.NAME} Examples")
+  EXAMPLES_FOLDER = os.path.join(documentsFolder(), f"{sn.NAME} Examples")
   "Where *installExamples()* puts the example models."
 
   def installExamples(self, replace:bool=False) -> bool:
@@ -952,9 +988,9 @@ def _filePath(url:str) -> str:
   :param url: A file's URL (eg: "file:///Users/me/family.snv").
   :returns: Its path.
   '''
-  from urllib.parse import urlparse, unquote
-  parsed = urlparse(url)
-  return unquote(parsed.path) if parsed.scheme in ("file", "") else url
+  from util.utils import urlPath
+  path = urlPath(url)
+  return path if path is not None else url
 
 def _fileName(url:str) -> str:
   '''
@@ -989,6 +1025,11 @@ class AppWindow(tk.Toplevel):
     # create content
     self.appPanedWidget = AppPanedWidget(self)
     self.appPanedWidget.pack(fill=tk.BOTH, side=tk.RIGHT, expand=True, padx=0, pady=0)
+    if not MAC:
+      # (the Mac's menu bar is the app's, at the top of the screen; elsewhere
+      # each window has its own: the app's menu bar, which Tk copies for it and
+      # keeps up to date as items are added and taken away)
+      self.config(menu=tkdottk.cget("menu"))
 
     self.option_add('*tearOff', tk.FALSE)
 
@@ -1188,8 +1229,20 @@ class SNGViewFrame(tk.Frame):
 
 def main() -> None:
   """Run the graphical editor: a window on each file named on the command
-  line, or else as *Application.startUp()* says."""
+  line, or else as *Application.startUp()* says. On Windows and Linux, if the
+  editor's already running, the files are handed to it instead (see
+  *util.singleInstance*): on the Mac, the Finder does that itself (see
+  *Application.onOpenDocument()*)."""
+  instance:SingleInstance|None = None
+  if not MAC:
+    instance = SingleInstance(sn.SHORT_NAME, sn.SN_FOLDER)
+    if instance.handOff(sys.argv[1:]):
+      return
+    atexit.register(instance.close)
+  setDPIAware() # (before the first window)
   app = Application()
+  if instance is not None:
+    instance.listen(app, app.onOpenFromAnotherCopy)
   app.after(1000, app.startUp, sys.argv[1:])
   app.run()
 

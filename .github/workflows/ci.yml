@@ -1,0 +1,68 @@
+# The tests, on macOS, Windows and Linux: the self-test (as the packaged app
+# runs it), then semanticNets' and pythonUtils' unit tests. pythonUtils is
+# checked out beside semanticNets: its branch of the same name if it has one,
+# else its main.
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      SN_NO_SAVE_PROMPT: "1"
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: semanticNets
+
+      - name: Check out pythonUtils
+        run: |
+          branch="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+          git clone --depth 1 --branch "$branch" https://github.com/robkremer/pythonUtils.git pythonUtils \
+            || git clone --depth 1 https://github.com/robkremer/pythonUtils.git pythonUtils
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Python 3.14 (with Tk), and the run-time packages
+        run: |
+          uv venv --python 3.14 venv
+          uv pip install --python venv -r semanticNets/packaging/requirements.txt
+          if [ "$RUNNER_OS" = Windows ]; then echo "$PWD/venv/Scripts" >> "$GITHUB_PATH"; else echo "$PWD/venv/bin" >> "$GITHUB_PATH"; fi
+
+      - name: A display (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q xvfb
+          Xvfb :99 -screen 0 1600x1000x24 &
+          echo "DISPLAY=:99" >> "$GITHUB_ENV"
+
+      - name: Self-test
+        env:
+          PYTHONPATH: ${{ github.workspace }}/semanticNets/src${{ runner.os == 'Windows' && ';' || ':' }}${{ github.workspace }}/pythonUtils/src
+        run: |
+          mkdir -p "$RUNNER_TEMP/home"
+          HOME="$RUNNER_TEMP/home" USERPROFILE="$RUNNER_TEMP/home" python -m sn --selftest
+
+      - name: semanticNets' tests
+        working-directory: semanticNets/test
+        env:
+          PYTHONPATH: ${{ github.workspace }}/semanticNets/src${{ runner.os == 'Windows' && ';' || ':' }}${{ github.workspace }}/pythonUtils/src
+        run: HOME="$RUNNER_TEMP/home" USERPROFILE="$RUNNER_TEMP/home" python -m unittest discover -s . -p "test_*.py"
+
+      - name: pythonUtils' tests
+        working-directory: pythonUtils/test
+        env:
+          PYTHONPATH: ${{ github.workspace }}/pythonUtils/src
+        run: HOME="$RUNNER_TEMP/home" USERPROFILE="$RUNNER_TEMP/home" python -m unittest discover -s . -p "test_*.py"
