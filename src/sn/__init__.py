@@ -33,7 +33,7 @@ from util.utils import askYesNo
 
 NAME = "Semantic Nets"
 SHORT_NAME = "sn"
-VERSION = "1.0"
+VERSION = "1.0.1"
 "The program's version: written in the files it saves (see *SerializationStrategy.appVersion*)."
 
 SCHEMA = "sn"
