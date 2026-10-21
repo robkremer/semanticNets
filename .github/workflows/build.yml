@@ -49,7 +49,7 @@ jobs:
 
       - name: Python 3.14 (with Tk), the run-time packages and PyInstaller
         run: |
-          uv venv --python 3.14 venv
+          uv venv --python 3.14 --managed-python venv
           uv pip install --python venv -r semanticNets/packaging/requirements.txt pyinstaller
           if [ "$RUNNER_OS" = Windows ]; then echo "$PWD/venv/Scripts" >> "$GITHUB_PATH"; else echo "$PWD/venv/bin" >> "$GITHUB_PATH"; fi
 
