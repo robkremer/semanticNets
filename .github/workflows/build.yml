@@ -8,13 +8,19 @@
 # Each is the PyInstaller build of packaging/semanticNets.spec, self-tested,
 # with the documentation (for the Help menu) from the gh-pages branch. They're
 # kept as the run's artifacts; for a version tag (eg, v1.0), they're added to
-# that release (made, as a draft, if there isn't one yet).
+# that release (made, as a draft, if there isn't one yet). Run by hand (Actions
+# > Build > Run workflow), it can add them to a release made before: name its tag.
 name: Build
 
 on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      release:
+        description: "A release's tag (eg, v1.0) to add the downloads to; blank for just the run's artifacts"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -96,11 +102,12 @@ jobs:
           if-no-files-found: error
 
       - name: Add them to the release
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') || inputs.release != ''
         working-directory: semanticNets
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE: ${{ inputs.release }}
         run: |
-          tag="$GITHUB_REF_NAME"
+          tag="${RELEASE:-$GITHUB_REF_NAME}"
           gh release view "$tag" > /dev/null 2>&1 || gh release create "$tag" --draft --title "Semantic Nets $VERSION" --notes ""
           gh release upload "$tag" --clobber $(ls dist/*.zip dist/*-setup.exe dist/*.AppImage 2> /dev/null) # (this OS's)
