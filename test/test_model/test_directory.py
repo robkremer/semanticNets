@@ -139,6 +139,7 @@ class Test(unittest.TestCase):
     v = view(f"{d}/top/sub/v.snv", "../m.snm")
     write(f"{d}/top/notes.txt", "x")
     model(f"{d}/top/.hidden/h.snm")
+    m, v = N(m), N(v) # (the paths as found: on Windows, "\\"s)
     self.assertEqual(list(filesIn(parsePath(f"{d}/top"))), [m])
     self.assertEqual(list(filesIn(parsePath(f"{d}/top/**"))), [m, v])
     self.assertEqual(list(filesIn(parsePath(f"{d}/top/**{S}{d}/top/sub"))), [m, v])  # each once

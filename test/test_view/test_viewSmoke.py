@@ -46,6 +46,7 @@ import unittest
 from unittest import mock
 from pathlib import Path
 from types import SimpleNamespace
+from util.utils import urlPath
 import tkinter as tk
 
 import sn
@@ -229,7 +230,7 @@ class Test(unittest.TestCase):
     v.onWindowFocusIn()
     v.onWindowFocusOut()
     v.save()
-    text = Path(v.url.removeprefix("file://")).read_text(encoding="utf-8")
+    text = Path(urlPath(v.url) or "").read_text(encoding="utf-8")
     for prop in ("viewport", "layout", "hides", "editLocked"):
       self.assertIn(f'"{prop}"', text)
     self.assertFalse(v.isDirty())

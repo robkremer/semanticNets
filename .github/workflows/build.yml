@@ -14,7 +14,6 @@ name: Build
 on:
   push:
     tags: ["v*"]
-    branches: ["claude/project-thread-asqnkx"] # TEMPORARY: to try the build before merging
   workflow_dispatch:
 
 permissions:
