@@ -414,7 +414,10 @@ class Application(tk.Tk):
                 filetypes=[("Model files", "*.snm"), ("xml files", "*.xml"), ("All Files", "*.*")])
               if not modelURL: # (cancelled: "" or ())
                 return None 
-              obj = PRDb.readFile(modelURL, mode='r')
+              # (the one in memory, if it's there -- eg: its default view's open: reading its file again would
+              # read it into that model again, and that view would show every object in it, as just added)
+              modelURL = fixURL(modelURL, None, replaceExt=None, mode='r')[0]
+              obj = PRDb.AllDBs.get(modelURL) or PRDb.readFile(modelURL, mode='r')
               if not isinstance(obj, Model):
                 raise TypeError(f'Expected type Model in "{modelURL}", but got type {type(obj)}.')
               model = obj

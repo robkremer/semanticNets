@@ -459,5 +459,60 @@ class Test(unittest.TestCase):
     self.assertEqual(asked, ["eve"])
     self.assertIn("made0", self.shown()) # (shown, without asking)
 
+  def test1200newViewOfOpenModel(self):
+    'New... a view of a model whose view is open: the model in memory is used, not read again -- which would show all of it in that view.'
+    from tkinter import filedialog
+    from util.persistence.pRef import PRDb
+    v, m = self.view, self.model
+    self.app.windows[v.url] = v.window # (as if opened by openWindow())
+    before = len(v)
+    v.context.visibility("individuals", "erase") # (what's erased mustn't come back, either)
+    self.pump()
+    shown = len(v)
+    self.assertLess(shown, before)
+    readFile = PRDb.readFile
+    read:list[str] = []
+    with mock.patch.object(filedialog, "askopenfilename", return_value=str(self.folder / "family.snm")), \
+         mock.patch.object(self.app, "noteRecent"), mock.patch.object(self.app, "noteFile"), \
+         mock.patch.object(PRDb, "readFile", side_effect=lambda url, mode="w": read.append(url) or readFile(url, mode=mode)):
+      window = self.app.openWindow(str(self.folder / "other.snv"))
+    try:
+      self.pump()
+      self.assertIsNotNone(window)
+      self.assertIs(window.view.model, m)
+      self.assertEqual(len(window.view), 0)
+      self.assertEqual(read, [])
+      self.assertEqual(len(v), shown)
+    finally:
+      window.view.detachFromModel()
+      self.app.terminalRegistry.unregisterWindow(window)
+      self.app.windows.pop(window.view.url, None)
+      window.destroy()
+
+  def test1210showAllOfBigModel(self):
+    'Show all, on a model with too many objects to show: just its types are shown.'
+    from sn.view.graphics.sngView import SNGView
+    from sn.view.graphics.layout import nodeTypes
+    m = self.model
+    v = SNGView(fixURL(str(self.folder / "big.snv"), None, replaceExt=None, mode="w")[0], model=m)
+    try:
+      v.window.withdraw()
+      get = sn.snPrefs.get
+      with mock.patch.object(sn.snPrefs, "get", side_effect=lambda key, *a, **kw: 3 if key == "gui/ShowAllMax" else get(key, *a, **kw)):
+        v.showAllModel()
+      self.pump()
+      nodes = {o.modelObject for o in v.values() if o is not None and o.modelObject is not None and not isinstance(o.modelObject, Relation)}
+      self.assertEqual(nodes, set(nodeTypes(m)))
+      self.assertTrue(all(isinstance(o.modelObject, IsaIndividual) for o in v.values()
+                          if o is not None and isinstance(o.modelObject, Relation)))
+      class E: x = y = x_root = y_root = 10
+      with mock.patch("sn.view.graphics.viewInput.SHOW_MENU_MAX", 3):
+        menu = v.makeMenu(E()) # type: ignore[arg-type]
+      self.assertIsNotNone(menu)
+    finally:
+      v.detachFromModel()
+      self.app.terminalRegistry.unregisterWindow(v.window)
+      v.window.destroy()
+
 if __name__ == "__main__":
   unittest.main()

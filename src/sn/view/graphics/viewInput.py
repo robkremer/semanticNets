@@ -47,6 +47,9 @@ if TYPE_CHECKING:
 
 logger:sn.SNLogger = sn.getLogger(__name__)
 
+SHOW_MENU_MAX = 200
+"The most nodes the background menu's view|show|node lists: a model with more lists its types (see *layout.nodeTypes()*)."
+
 class InputMixin(ViewBase):
   '''
   What a view (*sn.view.graphics.sngView.SNGView*) does with the mouse and keys:
@@ -710,10 +713,16 @@ class InputMixin(ViewBase):
         if not(i.isIndividual() and isinstance(i, Relation)):
           nodes[i.name] = i
           nodeNames.append(i.name)
+      if len(nodeNames) > SHOW_MENU_MAX: # (a menu of thousands takes minutes to post -- on a Mac, anyway): just the types
+        from sn.view.graphics.layout import nodeTypes
+        nodes = {t.name: t for t in nodeTypes(self.model)}
+        nodeNames = list(nodes)
       nodeNames = sorted(nodeNames)
       # make a menu item for each
-      for nn in nodeNames:
+      for nn in nodeNames[:SHOW_MENU_MAX]:
         newMenu.add_command(label=nodes[nn].name, command=lambda mo=nodes[nn]: self.makeViewObjectForGraphObject(mo)) #type: ignore[misc]
+      if len(nodeNames) > SHOW_MENU_MAX:
+        newMenu.add_command(label=f"... and {len(nodeNames) - SHOW_MENU_MAX} more (find them with Edit | Find...)", state=tk.DISABLED)
       return newMenu
 
     bgMenu:tk.Menu = tk.Menu(self.canvas)
