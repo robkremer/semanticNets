@@ -33,6 +33,7 @@ import os
 import tempfile
 import textwrap
 import unittest
+from sn.model.model import Relation
 from sn.plugins import importBundled
 source = importBundled("pythonParser", "source")
 parser = importBundled("pythonParser", "parser")
@@ -166,6 +167,27 @@ class Test(unittest.TestCase):
     loc = source.locateNode(nodes["pkg.top"])                      # (in a package's __init__.py)
     assert loc is not None
     self.assertEqual((loc.how, loc.line, os.path.basename(loc.path)), (NAME, 1, "__init__.py"))
+
+  def test1000reexportedBase(self):
+    'A base imported from a module that imports it from another (eg: Command, from util.commandParser, defined in util.command) is still inherited from.'
+    readModules, buildModel = parser.readModules, parser.buildModel
+    pkg = os.path.join(self.folder.name, "pkg")
+    os.mkdir(pkg)
+    for name, text in (("__init__.py", ""),
+                       ("base.py", "class Base:\n  def go(self):\n    pass\n"),
+                       ("middle.py", "from pkg.base import Base\n"),
+                       ("again.py", "from .middle import Base as B\n"),
+                       ("sub.py", "from pkg.middle import Base\nfrom pkg import again\n"
+                                  "class Sub(Base):\n  def go(self):\n    pass\n"
+                                  "class Sub2(again.B):\n  pass\n")):
+      with open(os.path.join(pkg, name), "w") as f:
+        f.write(text)
+    m = buildModel(os.path.join(self.folder.name, "pkg_py.snm"), readModules([pkg]))
+    nodes = {n.get("qualified-name", None): n for n in m.values() if n.isIndividual()}
+    inherits = {(str(r.src.get("qualified-name", None)), str(r.dst.get("qualified-name", None)))
+                for r in m.values() if isinstance(r, Relation) and r.isIndividual() and str(r.getParents()[0].name) == "inherits-from"}
+    self.assertEqual(inherits, {("pkg.sub.Sub", "pkg.base.Base"), ("pkg.sub.Sub2", "pkg.base.Base")})
+    self.assertIn("overriding-method", {str(p.name) for p in nodes["pkg.sub.Sub.go"].getParents()})
 
 if __name__ == "__main__":
   unittest.main()

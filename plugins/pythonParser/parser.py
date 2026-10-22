@@ -631,7 +631,9 @@ class ClassIndex:
     :param prefix: The qualified name of what the class is in (its module, or
       a class it's nested in).
     :param base: One of its bases, as written.
-    :returns: The qualified name of that base, if it's one of the analysed classes.
+    :returns: The qualified name of that base, if it's one of the analysed
+      classes -- eg: "Base" in a module with "from a.b import Base", where a.b
+      in turn imports it from a.c, is a.c.Base (see *reexported()*).
     '''
     try:
       written = ast.unparse(base)
@@ -642,7 +644,30 @@ class ClassIndex:
     alias = self.aliases.get(mod.name, {}).get(first)
     if alias is not None:
       candidates.append(alias + ("." + rest if rest else ""))
-    return next((c for c in candidates if c in self.classes), None)
+    return next((q for q in (self.reexported(c) for c in candidates) if q in self.classes), None)
+
+  def reexported(self, qualified:str) -> str:
+    '''
+    :param qualified: A qualified name: eg: "a.b.C".
+    :returns: What it stands for, if a module imports it from elsewhere (eg:
+      a.b has "from a.c import C": "a.c.C" -- and so on, if a.c imports it
+      too); otherwise *qualified*.
+    '''
+    seen = {qualified}
+    while qualified not in self.classes:
+      parts = qualified.split(".")
+      module = next((i for i in range(len(parts) - 1, 0, -1) if ".".join(parts[:i]) in self.aliases), None)
+      if module is None:
+        break
+      alias = self.aliases[".".join(parts[:module])].get(parts[module])
+      if alias is None:
+        break
+      target = ".".join([alias] + parts[module + 1:])
+      if target in seen:
+        break
+      seen.add(target)
+      qualified = target
+    return qualified
 
   def bases(self, qualified:str) -> list[str]:
     '''
