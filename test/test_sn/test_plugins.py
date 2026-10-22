@@ -134,6 +134,16 @@ class Test(unittest.TestCase):
     (self.installed / "alpha" / "data.txt").write_text("mine")
     self.assertEqual(plugins.installBundled(str(self.bundled), str(self.installed)), [])
     self.assertEqual((self.installed / "alpha" / "data.txt").read_text(), "mine")
+    # the same version, but changed since it was installed (eg: edited in the project): replaces it
+    (self.bundled / "alpha" / "data.txt").write_text("edited")
+    self.assertEqual(plugins.installBundled(str(self.bundled), str(self.installed)), ["alpha"])
+    self.assertEqual((self.installed / "alpha" / "data.txt").read_text(), "edited")
+    self.assertEqual(plugins.installBundled(str(self.bundled), str(self.installed)), [])
+    # installed without a stamp (eg: by an older version): replaced, once
+    (self.installed / "alpha" / plugins.STAMP).unlink()
+    self.assertEqual(plugins.installBundled(str(self.bundled), str(self.installed)), ["alpha"])
+    self.assertEqual(plugins.installBundled(str(self.bundled), str(self.installed)), [])
+    (self.bundled / "alpha" / "data.txt").write_text("new")
     # a newer one bundled: replaces it
     (self.bundled / "alpha" / plugins.MANIFEST).write_text('name = "alpha plugin"\nversion = "1.1"\n')
     self.assertEqual(plugins.installBundled(str(self.bundled), str(self.installed)), ["alpha"])
@@ -152,7 +162,7 @@ class Test(unittest.TestCase):
     self.assertEqual(plugins.Manifest.read(str(self.bundled / "alpha")).exclude, ("examples/*.snm", "examples/*.snv"))
     plugins.installBundled(str(self.bundled), str(self.installed))
     installed = sorted(p.relative_to(self.installed / "alpha").as_posix() for p in (self.installed / "alpha").rglob("*"))
-    self.assertEqual(installed, ["__init__.py", "data.snm", "examples", "examples/a.xml", "keep.txt", plugins.MANIFEST])
+    self.assertEqual(installed, [plugins.STAMP, "__init__.py", "data.snm", "examples", "examples/a.xml", "keep.txt", plugins.MANIFEST])
 
   def test0330fromZip(self):
     # (as in a .pyz: the plugins are a folder in the zip file)
@@ -169,7 +179,7 @@ class Test(unittest.TestCase):
     self.assertEqual([m.id for m in plugins.manifests(source)], ["alpha"])
     self.assertEqual(plugins.installBundled(source, str(self.installed)), ["alpha"])
     installed = sorted(p.relative_to(self.installed / "alpha").as_posix() for p in (self.installed / "alpha").rglob("*"))
-    self.assertEqual(installed, ["__init__.py", "examples", "examples/a.xml", plugins.MANIFEST])
+    self.assertEqual(installed, [plugins.STAMP, "__init__.py", "examples", "examples/a.xml", plugins.MANIFEST])
     self.assertEqual((self.installed / "alpha" / "examples" / "a.xml").read_text(), "<a/>")
     # how bundledFolder() finds it, in a .pyz
     with mock.patch.object(plugins.sn, "resourcePath", return_value=str(Path(self.folder.name) / "plugins")), \
