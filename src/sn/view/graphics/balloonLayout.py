@@ -1170,16 +1170,13 @@ class _TreeRoundLayout(_RoundLayout):
   @override
   def _pinnable(self, drops:list[VObject]) -> set[int]:
     '''
-    As *TreeLayout.adjust()*: a tree's child, or a node in no tree (not a root:
+    As *TreeLayout.pinnable()*: a tree's child, or a node in no tree (not a root:
     it's kept where it is anyway) -- or, with the trees joined (see *TREES*),
     any root: it may be joined to another tree, as a child (pinned, it isn't).
     '''
-    tree = self._tree()
-    _, edges = tree.scope()
-    children = {id(tree._ends(r)[1]) for r in edges}
-    inTree = children | {id(tree._ends(r)[0]) for r in edges}
-    joined = self.params["trees"] == "joined"
-    return {vo._id for vo in drops if joined or id(vo) in children or id(vo) not in inTree}
+    if self.params["trees"] == "joined":
+      return {vo._id for vo in drops}
+    return self._tree().pinnable(drops)
 
   @override
   def _staysPut(self, node:VObject) -> bool:

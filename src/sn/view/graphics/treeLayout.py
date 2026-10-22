@@ -1066,13 +1066,21 @@ class TreeLayout(LayoutHeuristic):
     node in no tree the user dropped is pinned there too, so it's left
     there, not put in rows or near what it's related to (see *others*).
     '''
-    self._roles = None # (afresh: the model's relation types may have changed)
-    nodes, edges = self.scope()
-    children = {id(self._ends(r)[1]) for r in edges}
-    inTree = children | {id(self._ends(r)[0]) for r in edges}
-    pinned = {vo._id for vo in self._drops(command) if isMember(vo)
-              and (id(vo) in children or id(vo) not in inTree)} # (a child, or in no tree: not a root -- it's kept where it is anyway)
-    return self._adjustment(command.name, pinned)
+    drops = [vo for vo in self._drops(command) if isMember(vo)]
+    return self._adjustment(command.name, self.pinnable(drops) if drops else set())
+
+  def pinnable(self, drops:list[VObject]) -> set[int]:
+    '''
+    :param drops: Nodes the user dropped.
+    :returns: The ids of those to pin: all but the roots of trees (a root's
+      kept where it is anyway). By the trees as *structure()* finds them, not
+      just by the relations there are: a node that's only the parent end of
+      relations whose children all went under other parents (eg: a second
+      base class) is in no tree, and is put near what it's related to (see
+      *others*) unless it's pinned -- so, dropped, it'd go straight back.
+    '''
+    roots = set(self.structure(dynamic=True)[0])
+    return {vo._id for vo in drops if vo not in roots}
 
   # ---- saving it with the view -----------------------------------------------------
 
