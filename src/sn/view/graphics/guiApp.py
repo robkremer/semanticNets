@@ -1306,4 +1306,7 @@ def main() -> None:
   app.run()
 
 if __name__ == "__main__":
-  main()
+  # (run as "python -m sn.view.graphics.guiApp", this module is __main__: run the one imported as
+  # sn.view.graphics.guiApp instead, so there's one Application class -- whose current one, eg, the views ask for)
+  from sn.view.graphics.guiApp import main as packageMain
+  packageMain()

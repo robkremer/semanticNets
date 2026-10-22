@@ -32,7 +32,7 @@ import os
 import tkinter as tk
 import sn
 from sn.model.model import Model
-from typing import Any
+from typing import Any, cast
 from util.utils import fixURL, urlExists, addToMenuBar, addCheckToMenuBar, removeFromMenuBar, urlPath
 from util.persistence.pRef import PRDb
 from sn.view.graphics.guiApp import Application
@@ -143,10 +143,8 @@ class FilesMixin(ViewBase):
     from tkinter import messagebox
     from sn.view.graphics.chooseModelDialog import ChooseModelDialog
     from sn.view.graphics.vobjects import VObject
-    app = Application.current
+    app = cast(Application, self.window._root()) # type: ignore[attr-defined]
     old = self.model
-    if app is None:
-      return
     url = ChooseModelDialog(self.window, f"Change the model of {os.path.basename(urlPath(self.url) or self.url)}",
                             f'This view shows "{urlPath(old.url) or old.url}". Which model should it show in its place? '
                             f'Its objects show the objects with the same ids in it.',
