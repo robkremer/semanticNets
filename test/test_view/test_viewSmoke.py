@@ -218,6 +218,37 @@ class Test(unittest.TestCase):
     self.pump()
     self.assertEqual(v.validate(), 0) # (how many problems it found)
 
+  def test0410treeLayoutKeepsDrops(self):
+    # (a class with two bases: under the dynamic tree layout, the second base is in no tree -- its only child
+    # is under the first -- so it's put near what it's related to. Dropped, it must be pinned, not put back.)
+    from sn.model.model import Node
+    from sn.view.graphics.treeLayout import TreeLayout
+    from sn.view.graphics.relationTable import RelationTable
+    v, m = self.view, self.model
+    klass = Node(m, [m.NODE], name="klass")
+    inherits = Relation(m, [m.RELATION], klass, klass, name="inherits-from")
+    a, b, c = (Node(m, [klass], individual=True, name=n) for n in ("base1", "base2", "derived"))
+    Relation(m, [inherits], c, a, individual=True)
+    Relation(m, [inherits], c, b, individual=True)
+    self.pump()
+    v.showAllModel()
+    self.pump()
+    v.setDynamicLayout(TreeLayout(v, relations=RelationTable.decode("inherits-from:shapes:destination"), direction="down",
+                                  others="near"))
+    self.pump()
+    roots, _, _, others, _ = v.localLayout.structure(dynamic=True)
+    self.assertIn(self.vo("base1"), roots)
+    self.assertIn(self.vo("base2"), others)
+    for name in ("base2", "base1"): # (in no tree; a root: both stay where they're dropped)
+      vo = self.vo(name)
+      bb = vo.boundingBox()
+      far = max(o.boundingBox()[2] for o in v.values() if o is not None and o._isConnected()) + 500 # (clear of everything)
+      v.context.move(vo, far, bb[1], _oldPos=list(bb), _drag=True)
+      self.pump()
+      self.assertEqual(vo.boundingBox()[0], far, name)
+    self.assertIn(self.vo("base2")._id, v.localLayout.pins)
+    self.assertNotIn(self.vo("base1")._id, v.localLayout.pins) # (a root's kept where it is anyway)
+
   def test0500filesAndLock(self):
     v = self.view
     self.assertTrue(v.isModelEditor())

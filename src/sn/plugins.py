@@ -20,8 +20,8 @@ and, once it's loaded, they're trusted: it was installed by the user.
 
 The plugins that come with the program (*bundledFolder()*: the project's
 ``plugins/``; a packaged app's bundled copy) are copied into the plugins
-folder (see *installBundled()*) when they aren't there, or are older --
-copied, not loaded where they are, so that what's in them (eg: an ontology
+folder (see *installBundled()*) when they aren't there, are older, or have
+changed since they were installed (eg: edited in the project) -- copied, not loaded where they are, so that what's in them (eg: an ontology
 models are built on) stays at the same place when the app is moved or updated.
 
 A plugin that can't be read, imported or registered is logged, and left out:
@@ -55,6 +55,7 @@ Created on Oct 17, 2026
 #################################################################################
 from __future__ import annotations
 import fnmatch
+import hashlib
 import importlib
 import os
 import re
@@ -183,9 +184,13 @@ def manifests(folder:str|Traversable) -> list[Manifest]:
 def installBundled(source:str|Traversable|None=None, target:str|None=None) -> list[str]:
   '''
   Copy the plugins that come with the program into the plugins folder: those
-  that aren't there, or are older there (by their version) -- replacing them
+  that aren't there, are older there (by their version), or have changed
+  since they were copied there (the same version, but not the same files: eg:
+  edited in the project, between releases -- see *STAMP*) -- replacing them
   -- but for the files they say not to (see *Manifest.exclude*), and making
-  their models and views refer to where they now are (see *_relocate()*).
+  their models and views refer to where they now are (see *_relocate()*). One
+  that hasn't changed since it was copied is left alone (eg: the user's
+  changes to it are kept).
 
   :param source: Where the plugins that come with the program are (by default, *bundledFolder()*).
   :param target: The plugins folder (by default, *PLUGINS_FOLDER*).
@@ -194,16 +199,21 @@ def installBundled(source:str|Traversable|None=None, target:str|None=None) -> li
   ret = []
   for m in manifests(source if source is not None else bundledFolder()):
     dest = os.path.join(target if target is not None else PLUGINS_FOLDER, m.id)
+    src = m.source if m.source is not None else Path(m.folder)
+    stamp = _contentHash(m, src)
     if os.path.isfile(os.path.join(dest, MANIFEST)):
       try:
-        if version(Manifest.read(dest).version) >= version(m.version):
+        there = version(Manifest.read(dest).version)
+        if there > version(m.version) or (there == version(m.version) and _stamp(dest) == stamp):
           continue
       except PluginError:
         pass # (it's replaced)
     try:
       if os.path.exists(dest):
         shutil.rmtree(dest)
-      _copy(m, m.source if m.source is not None else Path(m.folder), dest)
+      _copy(m, src, dest)
+      with open(os.path.join(dest, STAMP), "w", encoding="utf-8") as f:
+        f.write(stamp + "\n")
     except (OSError, zipfile.BadZipFile):
       logger.error(f'Couldn\'t install the plugin {m.name} in "{dest}".', exc_info=True)
       continue
@@ -212,7 +222,40 @@ def installBundled(source:str|Traversable|None=None, target:str|None=None) -> li
     ret.append(m.id)
   return ret
 
-NOT_INSTALLED = ("__pycache__", "*.pyc", "*.log", ".gitignore", ".DS_Store")
+STAMP = ".bundled"
+'''The file, in an installed plugin's folder, that says what it was copied from
+(see *installBundled()*): a hash of the bundled plugin's files (see
+*_contentHash()*). One installed without it (eg: by an older version) is
+taken to have changed.'''
+
+def _stamp(dest:str) -> str|None:
+  ":returns: The *STAMP* of the plugin installed in *dest*, if it has one."
+  try:
+    with open(os.path.join(dest, STAMP), encoding="utf-8") as f:
+      return f.read().strip()
+  except OSError:
+    return None
+
+def _contentHash(manifest:Manifest, source:Traversable, rel:str="", h:Any=None) -> str:
+  '''
+  :returns: A hash of the files of the plugin's folder *source* that are
+    installed (see *installed()*): their paths in it, and what's in them.
+  '''
+  top = h is None
+  h = h if h is not None else hashlib.sha256()
+  for child in sorted(source.iterdir(), key=lambda p: p.name):
+    path = rel + child.name
+    if not installed(manifest, path):
+      continue
+    if child.is_dir():
+      _contentHash(manifest, child, path + "/", h)
+    else:
+      data = child.read_bytes()
+      h.update(f"{path}\0{len(data)}\0".encode("utf-8"))
+      h.update(data)
+  return h.hexdigest() if top else ""
+
+NOT_INSTALLED = ("__pycache__", "*.pyc", "*.log", ".gitignore", ".DS_Store", STAMP)
 "The files in any plugin's folder not to install (see *installBundled()*): patterns of their names."
 
 def installed(manifest:Manifest, path:str) -> bool:

@@ -106,6 +106,8 @@ class Application(tk.Tk):
     self._directoryShown = tk.BooleanVar(self, value=False) # (the Window menu's check mark)
     self._directoryShownForProgress = False
     progress.listener = self._onProgress
+    from sn.view.graphics.sngView import SNGView
+    SNGView.askForMissingModel = self.askForMissingModel # (see readModel() in SNGView.getInstantiationInfo())
 
     self.option_add('*tearOff', tk.FALSE) # (before any menu's made: Windows' and X11's menus have tear-off lines otherwise)
     setUpLook(self)
@@ -410,7 +412,7 @@ class Application(tk.Tk):
               modelURL = filedialog.askopenfilename(
                 title=f"Open a Model file for the new view {viewSpec}",
                 filetypes=[("Model files", "*.snm"), ("xml files", "*.xml"), ("All Files", "*.*")])
-              if modelURL is None:
+              if not modelURL: # (cancelled: "" or ())
                 return None 
               obj = PRDb.readFile(modelURL, mode='r')
               if not isinstance(obj, Model):
@@ -474,6 +476,63 @@ class Application(tk.Tk):
     self.defaultChildLocation = (self.defaultChildLocation[0] + 40, self.defaultChildLocation[1] + 40)
     self.windows[view.url] = view.window
     return view.window
+
+  # ── A view's model ───────────────────────────────────────────────────────
+
+  def modelCopiesOf(self, url:str) -> list[Entry]:
+    '''
+    :param url: Where a model was.
+    :returns: The models that have been moved or copied from there (see
+      *Directory.copiesOf()*): in the model directory, if it's been filled;
+      else in the search path's folders on this computer.
+    '''
+    from sn.model.directory import copiesOf
+    from sn.view.graphics.directoryWindow import searchPath
+    pane = self.directoryPane
+    if pane is not None and pane.directory.entries:
+      return pane.directory.copiesOf(url)
+    try:
+      return copiesOf(url, searchPath())
+    except Exception:
+      logger.warning(f'Couldn\'t look for copies of "{url}".', exc_info=True)
+      return []
+
+  def askForMissingModel(self, viewURL:str, modelURL:str) -> str|None:
+    '''
+    A view being read names a model that can't be found (eg: it's been
+    moved): ask which to show in its place (see *SNGView.askForMissingModel*).
+
+    :returns: Its URL; or None (cancelled).
+    '''
+    from sn.view.graphics.chooseModelDialog import ChooseModelDialog
+    view, model = _fileName(viewURL) or viewURL, _filePath(modelURL) or modelURL
+    return ChooseModelDialog(self.focus_get() or self, f"{view}: its model can't be found",
+                             f'The view "{view}" shows the model\n\n  {model}\n\nwhich isn\'t there. Which model '
+                             f'should it show? (Its objects show the objects with the same ids in it.) '
+                             f'Cancel to open it with an empty model there.',
+                             self.modelCopiesOf(modelURL), near=viewURL, ok="Open").show()
+
+  def changeModel(self, view:SNGView, url:str) -> tk.Toplevel|None:
+    '''
+    Show another model in *view* (File | Change model...): eg, a copy of its
+    model. Its window is closed and the view's read again from its file, with
+    the model at *url* in place of its own (see *SNGView.modelReplacements*):
+    its objects show the objects with the same ids in it. It's changed then:
+    saving it names the new model. (Its unsaved changes are lost: see
+    *FilesMixin.doChangeModel()*.)
+
+    :returns: The view's new window, if it's opened.
+    '''
+    from sn.view.graphics.sngView import SNGView
+    old = view.model.url
+    name = next((k for k, w in self.windows.items() if w is view.window), None)
+    if name is not None:
+      self._closeWindow(name, quitIfLast=False, askToSave=False)
+    SNGView.modelReplacements[old] = url
+    try:
+      return self.openWindow(view.url)
+    finally:
+      del SNGView.modelReplacements[old]
 
   # ── The model directory ──────────────────────────────────────────────────
 
@@ -1247,4 +1306,7 @@ def main() -> None:
   app.run()
 
 if __name__ == "__main__":
-  main()
+  # (run as "python -m sn.view.graphics.guiApp", this module is __main__: run the one imported as
+  # sn.view.graphics.guiApp instead, so there's one Application class -- whose current one, eg, the views ask for)
+  from sn.view.graphics.guiApp import main as packageMain
+  packageMain()

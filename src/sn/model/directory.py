@@ -346,6 +346,10 @@ class Entry:
   "Its URL."
   modelURL:str|None = None
   "A view's model's URL (made absolute)."
+  storedURL:str|None = None
+  "The URL written in it: where it was when it was saved (if it's been moved or copied since, not where it is)."
+  previousURL:str|None = None
+  "Where it was copied or moved from, if its head says (see *PRDb.serializationHeader()*)."
   className:str = ""
   "The class of the object in it (its fully qualified name)."
   objects:int|None = None
@@ -455,6 +459,7 @@ def scanURL(url:str, onPath:bool=True) -> Entry:
 def _fromPeek(entry:Entry, peeked:dict[str, str]) -> None:
   "Fill in *entry* from what was peeked at (see *peekFile()*)."
   entry.className = peeked["type"]
+  entry.storedURL, entry.previousURL = peeked.get("url"), peeked.get("previousURL")
   kind = _kindOf(entry.className)
   if kind is not None:
     entry.kind = kind
@@ -591,6 +596,32 @@ class Directory:
     for m in models.values():
       m.views.sort(key=lambda v: (v.name.lower(), v.url))
     return sorted(models.values(), key=lambda m: (m.name.lower(), m.url))
+
+  def copiesOf(self, url:str) -> list[Entry]:
+    '''
+    :param url: Where a model was (eg: a view's model that's not there now).
+    :returns: The models that were there, and have been moved or copied: the
+      URL written in them, or the one they say they came from, is *url* --
+      then those with the same file name: most recently changed first.
+    '''
+    name = url.rstrip("/").rsplit("/", 1)[-1]
+    models = [e for e in self.entries.values() if e.kind == "model" and not e.error and e.url != url]
+    came = [e for e in models if url in (e.storedURL, e.previousURL)]
+    named = [e for e in models if e not in came and e.url.rsplit("/", 1)[-1] == name]
+    newest = lambda e: -(e.modified or 0)
+    return sorted(came, key=newest) + sorted(named, key=newest)
+
+def copiesOf(url:str, folders:list[Folder]) -> list[Entry]:
+  '''
+  Like *Directory.copiesOf()*, for the models in *folders* (not those on the
+  web: they'd be slow to fetch), when there's no directory to look in.
+  '''
+  directory = Directory()
+  for path in filesIn(folders):
+    if not isRemote(path) and EXTENSIONS.get(os.path.splitext(path)[1]) == "model":
+      entry = scanFile(path)
+      directory.entries[entry.url] = entry
+  return directory.copiesOf(url)
 
 def urlProblem(url:str, kinds:tuple[str, ...]=("model", "view")) -> str|None:
   '''

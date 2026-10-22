@@ -73,5 +73,12 @@ class Test(unittest.TestCase):
     self.assertEqual(m["x"].name, "x")
     self.assertEqual(m.nextID, 258) # (x, and its isa)
 
+  def test0300readFileByPath(self):
+    from util.persistence.pRef import PRDb
+    m = Model(self.path)
+    Node(m, [m.NODE], name="x")
+    m.save()
+    self.assertIs(PRDb.readFile(self.path, mode="r"), m) # (a plain path, eg: from a file dialog, is the open model)
+
 if __name__ == "__main__":
   unittest.main()
