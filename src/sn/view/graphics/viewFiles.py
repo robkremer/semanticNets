@@ -133,6 +133,49 @@ class FilesMixin(ViewBase):
     if self.model is not None:
       self._saveCopy("model", self.model, ".snm", [("Model files", "*.snm"), ("All files", "*.*")])
 
+  def doChangeModel(self) -> None:
+    '''
+    "File | Change model...": show another model in this view -- eg, a copy
+    of its model, or the one it was moved to (see *Application.changeModel()*):
+    its objects show the objects with the same ids in it. Its unsaved changes
+    are saved first, or lost, as the user says: it's read again from its file.
+    '''
+    from tkinter import messagebox
+    from sn.view.graphics.chooseModelDialog import ChooseModelDialog
+    from sn.view.graphics.vobjects import VObject
+    app = Application.current
+    old = self.model
+    if app is None:
+      return
+    url = ChooseModelDialog(self.window, f"Change the model of {os.path.basename(urlPath(self.url) or self.url)}",
+                            f'This view shows "{urlPath(old.url) or old.url}". Which model should it show in its place? '
+                            f'Its objects show the objects with the same ids in it.',
+                            app.modelCopiesOf(old.url), near=old.url, ok="Change").show()
+    if not url or url == old.url:
+      return
+    try:
+      new = Model.getDB(url)
+    except Exception as ex:
+      messagebox.showerror("Change model", f'"{url}" couldn\'t be read:\n\n{ex}', parent=self.window)
+      return
+    if new is old:
+      return
+    shown = [vo.modelObject for vo in self._db.values() if isinstance(vo, VObject) and vo.modelObject is not None
+             and vo.modelObject.db is old]
+    missing = sum(1 for mo in shown if new._db.get(mo._id) is None)
+    if missing and not messagebox.askokcancel("Change model",
+        f'{missing} of the {len(shown)} objects of "{old.name}" shown in this view aren\'t in "{new.name}" (no object '
+        f'there has the same id): they\'ll be shown as missing. Change it anyway?', parent=self.window):
+      return
+    if self.isDirty():
+      answer = messagebox.askyesnocancel("Change model", "The view's read again from its file, to show the other "
+                                         "model. Save its changes first? (If not, they're lost.)", parent=self.window)
+      if answer is None:
+        return
+      if answer:
+        self.doSaveView()
+    app.changeModel(self, new.url) # type: ignore[arg-type]
+
   @staticmethod
   def _afterFileMenu() -> int:
     '''
@@ -261,6 +304,7 @@ class FilesMixin(ViewBase):
     addToMenuBar("File|Save model", self.doSaveModel)
     addToMenuBar("File|Save model as...", self.doSaveModelAs)
     addToMenuBar("File|Close model", self.doCloseModel, separatorBefore=True) # (after the saves)
+    addToMenuBar("File|Change model...", self.doChangeModel)
     addToMenuBar("File|Open super model", menu=self._superModelsMenu())
     addToMenuBar("Edit|Cut", lambda: self._editAction("cut"), accelerator=KEY_CUT[1], cascadePositions={"Edit": self._afterFileMenu()})
     addToMenuBar("Edit|Copy", lambda: self._editAction("copy"), accelerator=KEY_COPY[1])
@@ -300,6 +344,7 @@ class FilesMixin(ViewBase):
     removeFromMenuBar("File|Save view as...")
     removeFromMenuBar("File|Save model")
     removeFromMenuBar("File|Save model as...")
+    removeFromMenuBar("File|Change model...")
     removeFromMenuBar("Edit|Cut")
     removeFromMenuBar("Edit|Copy")
     removeFromMenuBar("Edit|Paste")

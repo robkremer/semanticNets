@@ -49,7 +49,7 @@ import sn
 from sn.model.model import Model, Node, Relation, Collection, IsaIndividual, GraphObject
 
 from typing import cast, override, Any, Iterable, Callable, Optional
-from util.utils import fixURL
+from util.utils import fixURL, urlExists
 from util.persistence.pRef import PRDb
 from util.observer import Subject, Observer
 from sn.view.textUserInterface import SNTerminalWidget
@@ -89,6 +89,19 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
   The persistent container of VObjects.
   '''
 
+  modelReplacements:dict[str, str] = {}
+  '''Models views are to show in place of others, when they're read: the URL of
+  the one a view's file names (made absolute) -> that of the one to show (see
+  *Application.changeModel()*). A view read that way is changed: saving it
+  names the new one.'''
+  askForMissingModel:Callable[[str, str], str|None]|None = None
+  '''Asked, when a view's read, for the model to show in place of its own, if
+  that can't be found (eg: it's been moved): given the view's URL and the
+  model's, it gives the other's URL -- or None, and an empty model is made
+  there, as it would be without it. Set by the app (see
+  *Application.askForMissingModel()*).'''
+  _modelsReplaced:list[tuple[str, str]] = []
+  "The models put in place of others (see *modelReplacements*) while views were being read: noted in each, when it's read."
 
   def __new__(cls, url:str, model:Model, *, mode="w", geometry:str="300x400+20+20", _reading:bool=False):
     '''
@@ -274,12 +287,23 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
       # a pixel or so, if the file was saved with other font metrics -- so that isn't a change.
       # It's the objects' first drawing too: theirs, queued as they were made, are put off till then.)
       slf.__dict__["_firstDrawsDeferred"] = True
-      slf.canvas.after_idle(lambda slf=slf: [slf.applyVisibility(), slf._restoreAnimationState(), slf._restoreLayoutState(), slf._restoreLayoutPanel(), slf._drawAllAfterRead(), slf.canvas.after_idle(slf._pinRelationTypes), slf.resetScrollRegion(), slf._restoreViewport(), slf.setDirty(False)]) # type: ignore[misc]
+      replaced = bool(SNGView._modelsReplaced) # (it's to be saved naming its new model: see readModel())
+      for was, now in SNGView._modelsReplaced:
+        logger.warning(f'"{slf.url}" shows "{now}" in place of "{was}". Save the view to keep it that way.')
+      SNGView._modelsReplaced.clear()
+      slf.canvas.after_idle(lambda slf=slf: [slf.applyVisibility(), slf._restoreAnimationState(), slf._restoreLayoutState(), slf._restoreLayoutPanel(), slf._drawAllAfterRead(), slf.canvas.after_idle(slf._pinRelationTypes), slf.resetScrollRegion(), slf._restoreViewport(), slf.setDirty(replaced)]) # type: ignore[misc]
     ret:InstantiationInfo = super().getInstantiationInfo()
     # (its model's URL relative to the view's file if they're side by side -- see PRDb.relativeURL() -- so
     # a view and model copied together stay together; a relative URL is resolved against the view's file on reading)
     def readModel(m:Any) -> Model: # (one already in memory -- eg: the system model, sn, which has no file -- as is)
-      db = PRDb.AllDBs.get(PRDb.resolveURL(str(m))) # (by what it stands for: eg, old views name sn "sn:/sn.xml" -- see PRDb.aliases) # @undefinedVariable
+      url = PRDb.resolveURL(str(m)) # (by what it stands for: eg, old views name sn "sn:/sn.xml" -- see PRDb.aliases)
+      other = SNGView.modelReplacements.get(url)
+      if other is None and url not in PRDb.AllDBs and not urlExists(url) and SNGView.askForMissingModel is not None: # @undefinedVariable
+        other = SNGView.askForMissingModel(PRDb._bases[-1] if PRDb._bases else "", url)
+      if other and other != url:
+        SNGView._modelsReplaced.append((url, other))
+        return Model.getDB(other)
+      db = PRDb.AllDBs.get(url) # @undefinedVariable
       return db if isinstance(db, Model) else Model(cast(str, m))
     ret.conArgs.append(ParamInfo("model", str, getter=lambda slf: PRDb.relativeURL(cast(SNGView,slf).model.url),
                                  setter=readModel, inHead=True))
