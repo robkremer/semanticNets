@@ -632,9 +632,12 @@ class ClassIndex:
       a class it's nested in).
     :param base: One of its bases, as written.
     :returns: The qualified name of that base, if it's one of the analysed
-      classes -- eg: "Base" in a module with "from a.b import Base", where a.b
-      in turn imports it from a.c, is a.c.Base (see *reexported()*).
+      classes (a generic one's, eg: "Base[T]", is Base's) -- eg: "Base" in
+      a module with "from a.b import Base", where a.b in turn imports it from
+      a.c, is a.c.Base (see *reexported()*).
     '''
+    while isinstance(base, ast.Subscript): # (a generic class's: eg: "Base[T]" is Base)
+      base = base.value
     try:
       written = ast.unparse(base)
     except Exception:
