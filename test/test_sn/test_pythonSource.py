@@ -192,5 +192,47 @@ class Test(unittest.TestCase):
                                 ("pkg.sub.Gen", "pkg.base.Base"), ("pkg.sub.Sub3", "pkg.sub.Gen"), ("pkg.sub.Sub3", "pkg.base.Base")})
     self.assertIn("overriding-method", {str(p.name) for p in nodes["pkg.sub.Sub.go"].getParents()})
 
+  def test1100dependsOnType(self):
+    'A class depends-on-type the analysed classes its attributes are of: annotated, made, or given (as an annotated parameter).'
+    readModules, buildModel = parser.readModules, parser.buildModel
+    pkg = os.path.join(self.folder.name, "pkg")
+    os.mkdir(pkg)
+    for name, text in (("__init__.py", ""),
+                       ("things.py", "class Node:\n  pass\nclass Edge:\n  pass\nclass Graph:\n  pass\n"
+                                     "class Label:\n  pass\nclass Unused:\n  pass\n"),
+                       ("user.py", textwrap.dedent('''\
+                         from dataclasses import dataclass
+                         from typing import Optional
+                         from pkg import things
+                         from pkg.things import Node, Edge, Graph, Label, Unused
+
+                         @dataclass
+                         class Holder:
+                           node: Node
+                           count: int = 0
+
+                         class User:
+                           def __init__(this, g:"Graph", label:Label|None=None):
+                             this.nodes:list[Node] = []
+                             this.edges = {}
+                             this.edges2:"dict[str, Optional[Edge]]" = {}
+                             this.graph = g
+                             this.label = label
+                             this.holder = Holder(Node())
+                             this.me:User|None = None
+                             things.Unused()       # (not an attribute)
+                           @staticmethod
+                           def make(x:Unused):
+                             x.y = Unused()        # (not self's)
+                         '''))):
+      with open(os.path.join(pkg, name), "w") as f:
+        f.write(text)
+    m = buildModel(os.path.join(self.folder.name, "pkg_py.snm"), readModules([pkg]))
+    deps = {(str(r.src.get("qualified-name", None)), str(r.dst.get("qualified-name", None)))
+            for r in m.values() if isinstance(r, Relation) and r.isIndividual() and str(r.getParents()[0].name) == "depends-on-type"}
+    self.assertEqual(deps, {("pkg.user.Holder", "pkg.things.Node")}
+                     | {("pkg.user.User", f"pkg.things.{c}") for c in ("Node", "Edge", "Graph", "Label")}
+                     | {("pkg.user.User", "pkg.user.Holder")})
+
 if __name__ == "__main__":
   unittest.main()

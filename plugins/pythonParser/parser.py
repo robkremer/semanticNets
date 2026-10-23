@@ -23,7 +23,9 @@ The modules analysed are parsed (with *ast*) only for their top-level structure:
     it's a @property (or its setter or deleter), an *abstract-method* if it's
     an @abstractmethod, and an *overriding-method* if a class it's derived
     from (one of the analysed classes: it can only tell for those) has a
-    method of the same name: as many of those as apply.
+    method of the same name: as many of those as apply. A class also
+    *depends-on-type* each other analysed class that's the type of one of its
+    attributes (see *ClassIndex.attributeTypes()*).
   - A module, class or function with a doc string *has-doc* a *doc-string*,
     which has it as its "text": named by its first line (or, if that's a field,
     eg: ":param x: ...", by what it's the doc string of: eg: "go doc").
@@ -579,6 +581,9 @@ def buildModel(modelPath:str, modules:list[SourceModule]) -> Model:
     for b in classes.bases(q):
       if b in classNodes and b != q:
         relate("inherits-from", n, classNodes[b])
+    for t in classes.attributeTypes(q):
+      if t in classNodes and t != q:
+        relate("depends-on-type", n, classNodes[t])
 
   # the imports
   for mod in analysed:
@@ -671,6 +676,79 @@ class ClassIndex:
       seen.add(target)
       qualified = target
     return qualified
+
+  def typesIn(self, mod:SourceModule, prefix:str, annotation:ast.expr|None) -> list[str]:
+    '''
+    :param mod: The module a type annotation is in.
+    :param prefix: The qualified name of what it's in (eg: a class).
+    :param annotation: The annotation: eg: "Node", "list[Node]", "Node|None",
+      "Optional['Node']", "dict[str, a.Node]".
+    :returns: The qualified names of the analysed classes it names, each once,
+      in order (eg: for the first four, Node's).
+    '''
+    ret:list[str] = []
+    def visit(e:ast.expr|None) -> None:
+      if e is None:
+        return
+      if isinstance(e, ast.Constant) and isinstance(e.value, str): # (a forward reference: eg: "Node")
+        try:
+          visit(ast.parse(e.value.strip(), mode="eval").body)
+        except SyntaxError:
+          pass
+      elif isinstance(e, (ast.Name, ast.Attribute)):
+        q = self.resolve(mod, prefix, e)
+        if q is not None and q not in ret:
+          ret.append(q)
+      elif isinstance(e, ast.Subscript):
+        visit(e.value)
+        visit(e.slice)
+      elif isinstance(e, ast.BinOp): # (eg: Node|None)
+        visit(e.left)
+        visit(e.right)
+      elif isinstance(e, (ast.Tuple, ast.List)):
+        for x in e.elts:
+          visit(x)
+    visit(annotation)
+    return ret
+
+  def attributeTypes(self, qualified:str) -> list[str]:
+    '''
+    :param qualified: One of the analysed classes' qualified name.
+    :returns: The qualified names of the analysed classes that are the types
+      of its attributes, each once, in order: those of its annotated class
+      attributes (eg: a dataclass's fields: "x:Node"); and, in its methods,
+      of the attributes of self (their first parameter) that are annotated
+      ("self.x:Node = ..."), assigned a new object ("self.x = Node(...)"), or
+      assigned an annotated parameter ("def __init__(self, n:Node): self.x = n").
+    '''
+    c, mod = self.classes[qualified], self.module[qualified]
+    ret:list[str] = []
+    def add(types:list[str]) -> None:
+      ret.extend(t for t in types if t not in ret)
+    def isSelfAttr(target:ast.expr, me:str) -> bool:
+      return isinstance(target, ast.Attribute) and isinstance(target.value, ast.Name) and target.value.id == me
+    for s in c.body:
+      if isinstance(s, ast.AnnAssign) and isinstance(s.target, ast.Name):
+        add(self.typesIn(mod, qualified, s.annotation))
+      elif isinstance(s, (ast.FunctionDef, ast.AsyncFunctionDef)) and "staticmethod" not in decoratorNames(s):
+        args = s.args.posonlyargs + s.args.args
+        if not args:
+          continue
+        me = args[0].arg
+        params = {a.arg: a.annotation for a in args[1:] + s.args.kwonlyargs if a.annotation is not None}
+        for n in ast.walk(s):
+          if isinstance(n, ast.AnnAssign) and isSelfAttr(n.target, me):
+            add(self.typesIn(mod, qualified, n.annotation))
+          if isinstance(n, (ast.Assign, ast.AnnAssign)) and n.value is not None \
+             and any(isSelfAttr(t, me) for t in (n.targets if isinstance(n, ast.Assign) else [n.target])):
+            v = n.value
+            if isinstance(v, ast.Call):
+              q = self.resolve(mod, qualified, v.func)
+              if q is not None:
+                add([q])
+            elif isinstance(v, ast.Name) and v.id in params:
+              add(self.typesIn(mod, qualified, params[v.id]))
+    return ret
 
   def bases(self, qualified:str) -> list[str]:
     '''
