@@ -46,7 +46,7 @@ Visual Attributes
 '''
 from __future__ import annotations
 from typing import Any, Optional, Union, Callable, override, cast,\
-  Iterator, TYPE_CHECKING
+  Iterable, Iterator, TYPE_CHECKING
 from types import NoneType
 import tkinter as tk
 import weakref
@@ -1535,15 +1535,19 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     '''
     Add the view's items to *menu*: expand, erase, and so on.
     '''
+    targets = self.selectionOrSelf()
+    n = len(targets)
+    also = [vo for vo in targets if vo is not self] # (expanded with it: see expand())
+    selected = f", {n} selected" if n > 1 else ""
     expMenu = tk.Menu()
-    expMenu.add_command(label="1 level" , command=lambda: self.view.context.expand(self))
+    expMenu.add_command(label="1 level" , command=lambda: self.view.context.expand(self, also=also))
     expMenu.add_separator()
-    expMenu.add_command(label="2 levels", command=lambda: self.view.context.expand(self, levels=1))
-    expMenu.add_command(label="3 levels", command=lambda: self.view.context.expand(self, levels=2))
-    expMenu.add_command(label="4 levels", command=lambda: self.view.context.expand(self, levels=3))
-    menu.add_cascade(menu=expMenu, label=f"expand all ({len(self.expandableRelations())})")
-    menu.add_command(label="expand by relation...", command=self.expandByRelation)
-    n = len(self.selectionOrSelf())
+    expMenu.add_command(label="2 levels", command=lambda: self.view.context.expand(self, levels=1, also=also))
+    expMenu.add_command(label="3 levels", command=lambda: self.view.context.expand(self, levels=2, also=also))
+    expMenu.add_command(label="4 levels", command=lambda: self.view.context.expand(self, levels=3, also=also))
+    rels = removeDuplicateObjects([r for vo in targets for r in vo.expandableRelations()])
+    menu.add_cascade(menu=expMenu, label=f"expand all ({len(rels)}{selected})")
+    menu.add_command(label="expand by relation..." + (f" ({n} selected)" if n > 1 else ""), command=self.expandByRelation)
     menu.add_command(label="erase from view" + (f" ({n} selected)" if n > 1 else ""), accelerator="Delete",
                      command=lambda: self.view.doErase(self.selectionOrSelf()))
     menu.add_command(label="erase everything else" + (" (keep the selection)" if n > 1 else ""),
@@ -1798,12 +1802,15 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
              filter:Callable[[Any, Relation], bool]=lambda _vn, _mr: True, 
              expand=0,
              _done:dict[int, int]|None=None,
-             _exempted:list|None=None):
+             _exempted:list|None=None,
+             also:Iterable[VObject]=()):
     """
     Show this object's relations that aren't shown yet (and so what's at their
     other ends) -- and, if *expand* > 0, expand each object at the other end of
     each of its relations (shown already or not) in turn, by *expand* - 1. So 0
-    shows this object's neighbours, 1 their neighbours too, and so on.
+    shows this object's neighbours, 1 their neighbours too, and so on. Each of
+    *also* (eg: the rest of the selection) is expanded the same way, in the
+    same pass: what they bring in is placed with what this one does.
 
     What it brings in is placed by the view's dynamic layout, if it has one
     (see *SNGView.localLayout*), once it's all made: up to *BATCH_PLACED*
@@ -1828,18 +1835,23 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       and they and what they lead to are shown anyway (see
       *SNGView._exemptIfFiltered()*): each one shown so is added to this, so
       it can be hidden again (eg: on an undo).
+    :param also: Other objects to expand with this one (see above).
     """
     from sn.view.graphics.vrelations import VRelation
     from sn.view.graphics.viewCommands import ViewDoList
     view = self.view
     layout = view.localLayout
+    def expandAll(done:dict[int, int]) -> None:
+      for vo in [self, *also]:
+        if vo._isConnected():
+          vo._expand(filter, expand, done, _exempted)
     if _done is not None or layout is None or not view.canvas or view.reading:
-      self._expand(filter, expand, {} if _done is None else _done, _exempted)
+      expandAll({} if _done is None else _done)
       return
     had = {id(vo) for vo in view.values() if vo is not None}
     view.localLayout = None # type: ignore[assignment] # (nothing's placed as it's made -- see SNGView.makeViewObjectForGraphObject(): it's placed below)
     try:
-      self._expand(filter, expand, {}, _exempted)
+      expandAll({})
     finally:
       view.localLayout = layout
     made = [vo for vo in view.values() if isinstance(vo, VObject) and id(vo) not in had and vo._isConnected()]
@@ -1925,17 +1937,43 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
   def expandByRelation(self) -> None:
     '''
     "expand by relation...": ask which of its relations to follow, and how
-    far (see *expandDialog*), then expand it so (one undo).
+    far (see *expandDialog*), then expand it so (one undo) -- and, if it's
+    selected, everything else selected too (the choices are all of theirs).
     '''
-    from sn.view.graphics.expandDialog import ExpandDialog, relationChoices
-    mo = self.modelObject
-    if mo is None:
+    from sn.view.graphics.expandDialog import ExpandDialog
+    if self.modelObject is None:
       return
-    hidden = lambda r: self.view.isFiltered(r) or any(e is not None and e is not mo and self.view.isFiltered(e) for e in (r.localSrc, r.localDst))
-    answer = ExpandDialog(self.canvas, f'Expand "{self.name}"', relationChoices(mo, self.expandableRelations(withHidden=True), hidden=hidden)).show()
+    targets = [vo for vo in self.selectionOrSelf() if vo.modelObject is not None]
+    if self not in targets:
+      targets.insert(0, self)
+    title = f'Expand "{self.name}"' if len(targets) == 1 else f'Expand {len(targets)} selected objects'
+    answer = ExpandDialog(self.canvas, title, self.expandChoices(targets)).show()
     if answer is not None:
       filt, levels = answer
-      self.view.context.expand(self, levels=levels - 1, _filter=filt)
+      self.view.context.expand(self, levels=levels - 1, _filter=filt, also=[vo for vo in targets if vo is not self])
+
+  def expandChoices(self, targets:list[VObject]) -> list:
+    '''
+    :returns: The "expand by relation..." choices for expanding *targets* (see
+      *expandDialog.relationChoices()*): each one's, with those of the same
+      type and way round merged (their counts added up).
+    '''
+    from sn.view.graphics.expandDialog import relationChoices, OUT, IN, BOTH
+    view = self.view
+    merged:dict = {}
+    for vo in targets:
+      mo = vo.modelObject
+      if mo is None:
+        continue
+      hidden = lambda r, mo=mo: view.isFiltered(r) or any(e is not None and e is not mo and view.isFiltered(e) for e in (r.localSrc, r.localDst))
+      for c in relationChoices(mo, vo.expandableRelations(withHidden=True), hidden=hidden): # type: ignore[misc]
+        key = (id(c.type), c.direction)
+        if key in merged:
+          merged[key].count += c.count
+          merged[key].hidden += c.hidden
+        else:
+          merged[key] = c
+    return sorted(merged.values(), key=lambda c: (c.type.name or "", [OUT, BOTH, IN].index(c.direction))) # (as relationChoices() sorts them)
 
   def strToShape(self, name):
     '''

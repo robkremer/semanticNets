@@ -206,5 +206,47 @@ class TestExpandBatch(unittest.TestCase):
     self.assertEqual((batches, ones), (0, 0))
     self.assertEqual(len(self.shown("m")), 60)
 
+  def menuLabels(self, vo) -> tuple[tk.Menu, list[str]]:
+    ':returns: *vo*\'s view menu items, and their labels.'
+    menu = tk.Menu(self.view.canvas)
+    vo.addViewMenuItems(menu)
+    return menu, [menu.entrycget(i, "label") for i in range(menu.index("end") + 1) if menu.type(i) != "separator"]
+
+  def test_selection(self):
+    'Its owner selected, "expand all" expands everything selected, in one pass, placed together; one undo.'
+    v = self.view
+    self.fewVO.selected(True)
+    self.manyVO.selected(True, _multi=True)
+    menu, labels = self.menuLabels(self.fewVO)
+    self.assertIn("expand all (65, 2 selected)", labels)
+    self.assertIn("expand by relation... (2 selected)", labels)
+    expMenu = menu.nametowidget(menu.entrycget(labels.index("expand all (65, 2 selected)"), "menu"))
+    expMenu.invoke(0) # (1 level)
+    v.canvas.update()
+    self.assertEqual(len(self.shown("m")), 60)
+    self.assertEqual(len(self.shown("f")), 5)
+    v.context.undo()
+    v.canvas.update()
+    self.assertEqual(self.shown("m") + self.shown("f"), [])
+
+  def test_notSelected(self):
+    'Its owner not selected, "expand all" expands just it.'
+    v = self.view
+    self.manyVO.selected(True)
+    menu, labels = self.menuLabels(self.fewVO)
+    self.assertIn("expand all (5)", labels)
+    self.assertIn("expand by relation...", labels)
+    menu.nametowidget(menu.entrycget(labels.index("expand all (5)"), "menu")).invoke(0)
+    v.canvas.update()
+    self.assertEqual(len(self.shown("f")), 5)
+    self.assertEqual(self.shown("m"), [])
+
+  def test_expandChoices(self):
+    '"expand by relation..." for the selection: its choices are everything selected\'s, merged.'
+    choices = self.fewVO.expandChoices([self.fewVO, self.manyVO])
+    isa = [c for c in choices if c.type is self.model.ISA and c.direction == "in"] # (their instances)
+    self.assertEqual(len(isa), 1, choices)
+    self.assertEqual(isa[0].count, 65)
+
 if __name__ == "__main__":
   unittest.main()
