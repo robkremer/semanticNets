@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.view.graphics.treeLayout module - Semantic Nets 1.0 documentation</title>
+        <title>sn.view.graphics.treeLayout module - Semantic Nets 1.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -252,6 +252,7 @@
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.chooseModelDialog.html">sn.view.graphics.chooseModelDialog module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html">sn.view.graphics.connectors module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a></li>
@@ -1108,11 +1109,6 @@ type and its end: see <em>Terminal</em>).</p>
 </dl>
 </dd></dl>
 
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout._abc_impl">
-<span class="sig-name descname"><span class="pre">_abc_impl</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;_abc._abc_data</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout._abc_impl" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout._labelTargets">
 <span class="sig-name descname"><span class="pre">_labelTargets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parentRel</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout._labelTargets" title="Link to this definition">¶</a></dt>
@@ -1135,6 +1131,11 @@ a relation type’s link to its end: it has no label – see <em>Terminal</em>.)
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout._abc_impl">
+<span class="sig-name descname"><span class="pre">_abc_impl</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;_abc._abc_data</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout._abc_impl" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout.compute">
@@ -1361,6 +1362,27 @@ there, not put in rows or near what it’s related to (see <em>others</em>).</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout.pinnable">
+<span class="sig-name descname"><span class="pre">pinnable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">drops</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout.pinnable" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>drops</strong> (<em>list</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>]</em>) – Nodes the user dropped.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The ids of those to pin: all but the roots of trees (a root’s
+kept where it is anyway). By the trees as <em>structure()</em> finds them, not
+just by the relations there are: a node that’s only the parent end of
+relations whose children all went under other parents (eg: a second
+base class) is in no tree, and is put near what it’s related to (see
+<em>others</em>) unless it’s pinned – so, dropped, it’d go straight back.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>set[int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.treeLayout.TreeLayout.extraState">
 <span class="sig-name descname"><span class="pre">extraState</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.treeLayout.TreeLayout.extraState" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
@@ -1498,8 +1520,8 @@ none, by default. (Values mustn’t contain “;” or “=”.)</p>
 <li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout._ends"><code class="docutils literal notranslate"><span class="pre">TreeLayout._ends()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.structure"><code class="docutils literal notranslate"><span class="pre">TreeLayout.structure()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.levelGaps"><code class="docutils literal notranslate"><span class="pre">TreeLayout.levelGaps()</span></code></a></li>
-<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout._abc_impl"><code class="docutils literal notranslate"><span class="pre">TreeLayout._abc_impl</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout._labelTargets"><code class="docutils literal notranslate"><span class="pre">TreeLayout._labelTargets()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout._abc_impl"><code class="docutils literal notranslate"><span class="pre">TreeLayout._abc_impl</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.compute"><code class="docutils literal notranslate"><span class="pre">TreeLayout.compute()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout._rows"><code class="docutils literal notranslate"><span class="pre">TreeLayout._rows()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout._placeNear"><code class="docutils literal notranslate"><span class="pre">TreeLayout._placeNear()</span></code></a></li>
@@ -1511,6 +1533,7 @@ none, by default. (Values mustn’t contain “;” or “=”.)</p>
 <li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout._adjustment"><code class="docutils literal notranslate"><span class="pre">TreeLayout._adjustment()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.activate"><code class="docutils literal notranslate"><span class="pre">TreeLayout.activate()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.adjust"><code class="docutils literal notranslate"><span class="pre">TreeLayout.adjust()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.pinnable"><code class="docutils literal notranslate"><span class="pre">TreeLayout.pinnable()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.extraState"><code class="docutils literal notranslate"><span class="pre">TreeLayout.extraState()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.treeLayout.TreeLayout.restoreExtraState"><code class="docutils literal notranslate"><span class="pre">TreeLayout.restoreExtraState()</span></code></a></li>
 </ul>
@@ -1526,7 +1549,7 @@ none, by default. (Values mustn’t contain “;” or “=”.)</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+</div><script src="../_static/documentation_options.js?v=292eb321"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.view.graphics.sngView module - Semantic Nets 1.0 documentation</title>
+        <title>sn.view.graphics.sngView module - Semantic Nets 1.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -252,6 +252,7 @@
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.chooseModelDialog.html">sn.view.graphics.chooseModelDialog module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html">sn.view.graphics.connectors module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a></li>
@@ -389,6 +390,31 @@ mixins it inherits (see <em>viewBase</em>):</p>
 </ul>
 </dd>
 </dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.sngView.SNGView.modelReplacements">
+<span class="sig-name descname"><span class="pre">modelReplacements</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#sn.view.graphics.sngView.SNGView.modelReplacements" title="Link to this definition">¶</a></dt>
+<dd><p>Models views are to show in place of others, when they’re read: the URL of
+the one a view’s file names (made absolute) -&gt; that of the one to show (see
+<em>Application.changeModel()</em>). A view read that way is changed: saving it
+names the new one.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.sngView.SNGView.askForMissingModel">
+<span class="sig-name descname"><span class="pre">askForMissingModel</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.sngView.SNGView.askForMissingModel" title="Link to this definition">¶</a></dt>
+<dd><p>Asked, when a view’s read, for the model to show in place of its own, if
+that can’t be found (eg: it’s been moved): given the view’s URL and the
+model’s, it gives the other’s URL – or None, and an empty model is made
+there, as it would be without it. Set by the app (see
+<em>Application.askForMissingModel()</em>).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.sngView.SNGView._modelsReplaced">
+<span class="sig-name descname"><span class="pre">_modelsReplaced</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></span><a class="headerlink" href="#sn.view.graphics.sngView.SNGView._modelsReplaced" title="Link to this definition">¶</a></dt>
+<dd><p>The models put in place of others (see <em>modelReplacements</em>) while views were being read: noted in each, when it’s read.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.sngView.SNGView.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'w'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometry</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'300x400+20+20'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_reading</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.sngView.SNGView.__init__" title="Link to this definition">¶</a></dt>
@@ -629,6 +655,11 @@ gone; and stop observing the other models whose objects it shows (see
 </dl>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.sngView.SNGView._abc_impl">
+<span class="sig-name descname"><span class="pre">_abc_impl</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;_abc._abc_data</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#sn.view.graphics.sngView.SNGView._abc_impl" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.sngView.SNGView._observeModel">
 <span class="sig-name descname"><span class="pre">_observeModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.sngView.SNGView._observeModel" title="Link to this definition">¶</a></dt>
@@ -652,11 +683,6 @@ an object may be put back after its box here has gone.</p>
 <span class="sig-name descname"><span class="pre">BATCHED_UPDATE_BOXES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">50</span></span><a class="headerlink" href="#sn.view.graphics.sngView.SNGView.BATCHED_UPDATE_BOXES" title="Link to this definition">¶</a></dt>
 <dd><p>A notification that takes out, or puts back, at least this many of a view’s boxes has their items hidden or shown in one pass over the canvas (see <em>update()</em>, <em>batchedItemStates()</em>). Measured: the pass takes as long as finding about 50 boxes’ items one by one on a canvas of 50,000 items, about 125 on one of 17,000, and more on smaller ones – where both are quick.</p>
 </dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sn.view.graphics.sngView.SNGView._abc_impl">
-<span class="sig-name descname"><span class="pre">_abc_impl</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;_abc._abc_data</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#sn.view.graphics.sngView.SNGView._abc_impl" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.sngView.SNGView._changesManyBoxes">
@@ -969,6 +995,9 @@ time the work actually produces output.</p>
             <ul>
 <li><a class="reference internal" href="#">sn.view.graphics.sngView module</a><ul>
 <li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView"><code class="docutils literal notranslate"><span class="pre">SNGView</span></code></a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView.modelReplacements"><code class="docutils literal notranslate"><span class="pre">SNGView.modelReplacements</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView.askForMissingModel"><code class="docutils literal notranslate"><span class="pre">SNGView.askForMissingModel</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView._modelsReplaced"><code class="docutils literal notranslate"><span class="pre">SNGView._modelsReplaced</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView.__init__"><code class="docutils literal notranslate"><span class="pre">SNGView.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView._closed"><code class="docutils literal notranslate"><span class="pre">SNGView._closed</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView.selected"><code class="docutils literal notranslate"><span class="pre">SNGView.selected</span></code></a></li>
@@ -991,9 +1020,9 @@ time the work actually produces output.</p>
 <li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView._register"><code class="docutils literal notranslate"><span class="pre">SNGView._register()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView._unregister"><code class="docutils literal notranslate"><span class="pre">SNGView._unregister()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView.detachFromModel"><code class="docutils literal notranslate"><span class="pre">SNGView.detachFromModel()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView._abc_impl"><code class="docutils literal notranslate"><span class="pre">SNGView._abc_impl</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView._observeModel"><code class="docutils literal notranslate"><span class="pre">SNGView._observeModel()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView.BATCHED_UPDATE_BOXES"><code class="docutils literal notranslate"><span class="pre">SNGView.BATCHED_UPDATE_BOXES</span></code></a></li>
-<li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView._abc_impl"><code class="docutils literal notranslate"><span class="pre">SNGView._abc_impl</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView._changesManyBoxes"><code class="docutils literal notranslate"><span class="pre">SNGView._changesManyBoxes()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView.update"><code class="docutils literal notranslate"><span class="pre">SNGView.update()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView.suppressLocalLayout"><code class="docutils literal notranslate"><span class="pre">SNGView.suppressLocalLayout()</span></code></a></li>
@@ -1021,7 +1050,7 @@ time the work actually produces output.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+</div><script src="../_static/documentation_options.js?v=292eb321"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

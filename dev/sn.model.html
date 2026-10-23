@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.model package - Semantic Nets 1.0 documentation</title>
+        <title>sn.model package - Semantic Nets 1.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -252,6 +252,7 @@
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.chooseModelDialog.html">sn.view.graphics.chooseModelDialog module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html">sn.view.graphics.connectors module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a></li>
@@ -665,6 +666,8 @@ forget to escape it on a command line as “$sn”</p>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.Entry.kind"><code class="docutils literal notranslate"><span class="pre">Entry.kind</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.Entry.url"><code class="docutils literal notranslate"><span class="pre">Entry.url</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.Entry.modelURL"><code class="docutils literal notranslate"><span class="pre">Entry.modelURL</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.Entry.storedURL"><code class="docutils literal notranslate"><span class="pre">Entry.storedURL</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.Entry.previousURL"><code class="docutils literal notranslate"><span class="pre">Entry.previousURL</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.Entry.className"><code class="docutils literal notranslate"><span class="pre">Entry.className</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.Entry.objects"><code class="docutils literal notranslate"><span class="pre">Entry.objects</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.Entry.cached"><code class="docutils literal notranslate"><span class="pre">Entry.cached</span></code></a></li>
@@ -693,8 +696,10 @@ forget to escape it on a command line as “$sn”</p>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.Directory.addReferencedModels"><code class="docutils literal notranslate"><span class="pre">Directory.addReferencedModels()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.Directory.update"><code class="docutils literal notranslate"><span class="pre">Directory.update()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.Directory.models"><code class="docutils literal notranslate"><span class="pre">Directory.models()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.Directory.copiesOf"><code class="docutils literal notranslate"><span class="pre">Directory.copiesOf()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.copiesOf"><code class="docutils literal notranslate"><span class="pre">copiesOf()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.urlProblem"><code class="docutils literal notranslate"><span class="pre">urlProblem()</span></code></a></li>
 </ul>
 </li>
@@ -1187,7 +1192,7 @@ forget to escape it on a command line as “$sn”</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+</div><script src="../_static/documentation_options.js?v=292eb321"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.view.graphics.viewFiles module - Semantic Nets 1.0 documentation</title>
+        <title>sn.view.graphics.viewFiles module - Semantic Nets 1.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -252,6 +252,7 @@
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.chooseModelDialog.html">sn.view.graphics.chooseModelDialog module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html">sn.view.graphics.connectors module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a></li>
@@ -434,6 +435,20 @@ as…” (see <em>_saveCopy()</em>). This window stays on this view.</p>
 <span class="sig-name descname"><span class="pre">doSaveModelAs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewFiles.FilesMixin.doSaveModelAs" title="Link to this definition">¶</a></dt>
 <dd><p>Save a copy of this view’s model in another file: the target of “File |
 Save model as…” (see <em>_saveCopy()</em>). This window stays on the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewFiles.FilesMixin.doChangeModel">
+<span class="sig-name descname"><span class="pre">doChangeModel</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewFiles.FilesMixin.doChangeModel" title="Link to this definition">¶</a></dt>
+<dd><p>“File | Change model…”: show another model in this view – eg, a copy
+of its model, or the one it was moved to (see <em>Application.changeModel()</em>):
+its objects show the objects with the same ids in it. Its unsaved changes
+are saved first, or lost, as the user says: it’s read again from its file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
@@ -751,6 +766,7 @@ saved with the view. A write-locked model’s view can’t be unlocked.</p>
 <li><a class="reference internal" href="#sn.view.graphics.viewFiles.FilesMixin._saveCopy"><code class="docutils literal notranslate"><span class="pre">FilesMixin._saveCopy()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewFiles.FilesMixin.doSaveViewAs"><code class="docutils literal notranslate"><span class="pre">FilesMixin.doSaveViewAs()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewFiles.FilesMixin.doSaveModelAs"><code class="docutils literal notranslate"><span class="pre">FilesMixin.doSaveModelAs()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewFiles.FilesMixin.doChangeModel"><code class="docutils literal notranslate"><span class="pre">FilesMixin.doChangeModel()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewFiles.FilesMixin._afterFileMenu"><code class="docutils literal notranslate"><span class="pre">FilesMixin._afterFileMenu()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewFiles.FilesMixin.doReplaceSuperModel"><code class="docutils literal notranslate"><span class="pre">FilesMixin.doReplaceSuperModel()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewFiles.FilesMixin.doModelPreferences"><code class="docutils literal notranslate"><span class="pre">FilesMixin.doModelPreferences()</span></code></a></li>
@@ -780,7 +796,7 @@ saved with the view. A write-locked model’s view can’t be unlocked.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+</div><script src="../_static/documentation_options.js?v=292eb321"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

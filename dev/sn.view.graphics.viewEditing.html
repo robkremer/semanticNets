@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.view.graphics.viewEditing module - Semantic Nets 1.0 documentation</title>
+        <title>sn.view.graphics.viewEditing module - Semantic Nets 1.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -252,6 +252,7 @@
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.chooseModelDialog.html">sn.view.graphics.chooseModelDialog module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html">sn.view.graphics.connectors module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a></li>
@@ -797,10 +798,44 @@ which made adding many objects take the square of the time.</p>
 </dl>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin.SHOW_ALL_MAX">
+<span class="sig-name descname"><span class="pre">SHOW_ALL_MAX</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2000</span></span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin.SHOW_ALL_MAX" title="Link to this definition">¶</a></dt>
+<dd><p>The most objects <em>showAllModel()</em> shows (by default: see the “gui/ShowAllMax”
+preference): a model with more to show is shown by its types instead (see
+<em>showTypes()</em>). (A view of 1000 objects takes a few seconds to make; of
+10,000, minutes.)</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin.showAllModel">
 <span class="sig-name descname"><span class="pre">showAllModel</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin.showAllModel" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Show all the model’s objects that aren’t in the view yet, on a grid – or,
+if there are more than <em>SHOW_ALL_MAX</em>, just its node types (see
+<em>showTypes()</em>), to be expanded as they’re wanted.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin.showTypes">
+<span class="sig-name descname"><span class="pre">showTypes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arrange</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin.showTypes" title="Link to this definition">¶</a></dt>
+<dd><p>Show just the model’s node types – its own and its super-models’ (eg: an
+ontology it’s built on: see <em>layout.nodeTypes()</em>), but not the system’s –
+with the isa links between them, arranged as a tree, by isa, growing down
+(see <em>treeLayout.TreeLayout</em>): for a model too big to show all at once (see
+<em>showAllModel()</em>). Each type can be expanded to bring in its instances, as
+they’re wanted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>arrange</strong> (<em>bool</em>) – Whether to arrange them (as a tree): if not, they’re all in one place.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The types.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="sn.model.model.html#sn.model.model.Node" title="sn.model.model.Node"><em>Node</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin.search">
@@ -981,7 +1016,9 @@ attribute editor – unless it’s gone (eg: undone).</p>
 <li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.NEW_BELOW_GAP"><code class="docutils literal notranslate"><span class="pre">EditingMixin.NEW_BELOW_GAP</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.cursorViewPoint"><code class="docutils literal notranslate"><span class="pre">EditingMixin.cursorViewPoint()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin._attachDanglingEnds"><code class="docutils literal notranslate"><span class="pre">EditingMixin._attachDanglingEnds()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.SHOW_ALL_MAX"><code class="docutils literal notranslate"><span class="pre">EditingMixin.SHOW_ALL_MAX</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.showAllModel"><code class="docutils literal notranslate"><span class="pre">EditingMixin.showAllModel()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.showTypes"><code class="docutils literal notranslate"><span class="pre">EditingMixin.showTypes()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.search"><code class="docutils literal notranslate"><span class="pre">EditingMixin.search()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.openSearchDialog"><code class="docutils literal notranslate"><span class="pre">EditingMixin.openSearchDialog()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.makeRelationFrom"><code class="docutils literal notranslate"><span class="pre">EditingMixin.makeRelationFrom()</span></code></a></li>
@@ -1000,7 +1037,7 @@ attribute editor – unless it’s gone (eg: undone).</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+</div><script src="../_static/documentation_options.js?v=292eb321"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

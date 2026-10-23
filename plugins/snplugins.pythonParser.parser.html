@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>snplugins.pythonParser.parser module - Semantic Nets 1.0 documentation</title>
+        <title>snplugins.pythonParser.parser module - Semantic Nets 1.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -252,6 +252,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.chooseModelDialog.html">sn.view.graphics.chooseModelDialog module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.connectors.html">sn.view.graphics.connectors module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a></li>
@@ -376,7 +377,9 @@ analysed classes. A method is also a <em>class-method</em> if it’s a
 it’s a &#64;property (or its setter or deleter), an <em>abstract-method</em> if it’s
 an &#64;abstractmethod, and an <em>overriding-method</em> if a class it’s derived
 from (one of the analysed classes: it can only tell for those) has a
-method of the same name: as many of those as apply.</p></li>
+method of the same name: as many of those as apply. A class also
+<em>depends-on-type</em> each other analysed class that’s the type of one of its
+attributes (see <em>ClassIndex.attributeTypes()</em>).</p></li>
 <li><p>A module, class or function with a doc string <em>has-doc</em> a <em>doc-string</em>,
 which has it as its “text”: named by its first line (or, if that’s a field,
 eg: “:param x: …”, by what it’s the doc string of: eg: “go doc”).</p></li>
@@ -1041,10 +1044,74 @@ a class it’s nested in).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The qualified name of that base, if it’s one of the analysed classes.</p>
+<dd class="field-even"><p>The qualified name of that base, if it’s one of the analysed
+classes (a generic one’s, eg: “Base[T]”, is Base’s) – eg: “Base” in
+a module with “from a.b import Base”, where a.b in turn imports it from
+a.c, is a.c.Base (see <em>reexported()</em>).</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>str | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="snplugins.pythonParser.parser.ClassIndex.reexported">
+<span class="sig-name descname"><span class="pre">reexported</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qualified</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.pythonParser.parser.ClassIndex.reexported" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>qualified</strong> (<em>str</em>) – A qualified name: eg: “a.b.C”.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>What it stands for, if a module imports it from elsewhere (eg:
+a.b has “from a.c import C”: “a.c.C” – and so on, if a.c imports it
+too); otherwise <em>qualified</em>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="snplugins.pythonParser.parser.ClassIndex.typesIn">
+<span class="sig-name descname"><span class="pre">typesIn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mod</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annotation</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.pythonParser.parser.ClassIndex.typesIn" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mod</strong> (<a class="reference internal" href="#snplugins.pythonParser.parser.SourceModule" title="snplugins.pythonParser.parser.SourceModule"><em>SourceModule</em></a>) – The module a type annotation is in.</p></li>
+<li><p><strong>prefix</strong> (<em>str</em>) – The qualified name of what it’s in (eg: a class).</p></li>
+<li><p><strong>annotation</strong> (<em>expr</em><em> | </em><em>None</em>) – The annotation: eg: “Node”, “list[Node]”, “Node|None”,
+“Optional[‘Node’]”, “dict[str, a.Node]”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The qualified names of the analysed classes it names, each once,
+in order (eg: for the first four, Node’s).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="snplugins.pythonParser.parser.ClassIndex.attributeTypes">
+<span class="sig-name descname"><span class="pre">attributeTypes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qualified</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.pythonParser.parser.ClassIndex.attributeTypes" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>qualified</strong> (<em>str</em>) – One of the analysed classes’ qualified name.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The qualified names of the analysed classes that are the types
+of its attributes, each once, in order: those of its annotated class
+attributes (eg: a dataclass’s fields: “x:Node”); and, in its methods,
+of the attributes of self (their first parameter) that are annotated
+(“self.x:Node = …”), assigned a new object (“self.x = Node(…)”), or
+assigned an annotated parameter (“def __init__(self, n:Node): self.x = n”).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[str]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1269,6 +1336,9 @@ for &#64;abc.abstractmethod, “setter” for &#64;x.setter.</p>
 <li><a class="reference internal" href="#snplugins.pythonParser.parser.ClassIndex.module"><code class="docutils literal notranslate"><span class="pre">ClassIndex.module</span></code></a></li>
 <li><a class="reference internal" href="#snplugins.pythonParser.parser.ClassIndex.aliases"><code class="docutils literal notranslate"><span class="pre">ClassIndex.aliases</span></code></a></li>
 <li><a class="reference internal" href="#snplugins.pythonParser.parser.ClassIndex.resolve"><code class="docutils literal notranslate"><span class="pre">ClassIndex.resolve()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.pythonParser.parser.ClassIndex.reexported"><code class="docutils literal notranslate"><span class="pre">ClassIndex.reexported()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.pythonParser.parser.ClassIndex.typesIn"><code class="docutils literal notranslate"><span class="pre">ClassIndex.typesIn()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.pythonParser.parser.ClassIndex.attributeTypes"><code class="docutils literal notranslate"><span class="pre">ClassIndex.attributeTypes()</span></code></a></li>
 <li><a class="reference internal" href="#snplugins.pythonParser.parser.ClassIndex.bases"><code class="docutils literal notranslate"><span class="pre">ClassIndex.bases()</span></code></a></li>
 <li><a class="reference internal" href="#snplugins.pythonParser.parser.ClassIndex.inheritedMethods"><code class="docutils literal notranslate"><span class="pre">ClassIndex.inheritedMethods()</span></code></a></li>
 </ul>
@@ -1288,7 +1358,7 @@ for &#64;abc.abstractmethod, “setter” for &#64;x.setter.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+</div><script src="../_static/documentation_options.js?v=292eb321"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

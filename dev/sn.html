@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn package - Semantic Nets 1.0 documentation</title>
+        <title>sn package - Semantic Nets 1.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -252,6 +252,7 @@
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.chooseModelDialog.html">sn.view.graphics.chooseModelDialog module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html">sn.view.graphics.connectors module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a></li>
@@ -355,7 +356,7 @@
 <p>The Semantic Nets package is a tool for …</p>
 <dl class="py data">
 <dt class="sig sig-object py" id="sn.VERSION">
-<span class="sig-prename descclassname"><span class="pre">sn.</span></span><span class="sig-name descname"><span class="pre">VERSION</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'1.0'</span></span><a class="headerlink" href="#sn.VERSION" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sn.</span></span><span class="sig-name descname"><span class="pre">VERSION</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'1.0.1'</span></span><a class="headerlink" href="#sn.VERSION" title="Link to this definition">¶</a></dt>
 <dd><p>The program’s version: written in the files it saves (see <em>SerializationStrategy.appVersion</em>).</p>
 </dd></dl>
 
@@ -816,6 +817,7 @@ the user already answered “no” to.</p>
 <li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory._kindOf"><code class="docutils literal notranslate"><span class="pre">_kindOf()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.modelURLOf"><code class="docutils literal notranslate"><span class="pre">modelURLOf()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.Directory"><code class="docutils literal notranslate"><span class="pre">Directory</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.copiesOf"><code class="docutils literal notranslate"><span class="pre">copiesOf()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.model.directory.html#sn.model.directory.urlProblem"><code class="docutils literal notranslate"><span class="pre">urlProblem()</span></code></a></li>
 </ul>
 </li>
@@ -1024,6 +1026,9 @@ the user already answered “no” to.</p>
 <li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins.bundledFolder"><code class="docutils literal notranslate"><span class="pre">bundledFolder()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins.manifests"><code class="docutils literal notranslate"><span class="pre">manifests()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins.installBundled"><code class="docutils literal notranslate"><span class="pre">installBundled()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins.STAMP"><code class="docutils literal notranslate"><span class="pre">STAMP</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins._stamp"><code class="docutils literal notranslate"><span class="pre">_stamp()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins._contentHash"><code class="docutils literal notranslate"><span class="pre">_contentHash()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins.NOT_INSTALLED"><code class="docutils literal notranslate"><span class="pre">NOT_INSTALLED</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins.installed"><code class="docutils literal notranslate"><span class="pre">installed()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="sn.plugins.html#sn.plugins._copy"><code class="docutils literal notranslate"><span class="pre">_copy()</span></code></a></li>
@@ -1163,7 +1168,7 @@ the user already answered “no” to.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+</div><script src="../_static/documentation_options.js?v=292eb321"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

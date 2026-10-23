@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.view.graphics.guiApp module - Semantic Nets 1.0 documentation</title>
+        <title>sn.view.graphics.guiApp module - Semantic Nets 1.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -252,6 +252,7 @@
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.chooseModelDialog.html">sn.view.graphics.chooseModelDialog module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html">sn.view.graphics.connectors module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a></li>
@@ -624,6 +625,70 @@ read from a copy (the base rules).</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Toplevel</em> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.modelCopiesOf">
+<span class="sig-name descname"><span class="pre">modelCopiesOf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.modelCopiesOf" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>url</strong> (<em>str</em>) – Where a model was.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The models that have been moved or copied from there (see
+<em>Directory.copiesOf()</em>): in the model directory, if it’s been filled;
+else in the search path’s folders on this computer.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="sn.model.directory.html#sn.model.directory.Entry" title="sn.model.directory.Entry"><em>Entry</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.askForMissingModel">
+<span class="sig-name descname"><span class="pre">askForMissingModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">viewURL</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modelURL</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.askForMissingModel" title="Link to this definition">¶</a></dt>
+<dd><p>A view being read names a model that can’t be found (eg: it’s been
+moved): ask which to show in its place (see <em>SNGView.askForMissingModel</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>viewURL</strong> (<em>str</em>)</p></li>
+<li><p><strong>modelURL</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Its URL; or None (cancelled).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.changeModel">
+<span class="sig-name descname"><span class="pre">changeModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.changeModel" title="Link to this definition">¶</a></dt>
+<dd><p>Show another model in <em>view</em> (File | Change model…): eg, a copy of its
+model. Its window is closed and the view’s read again from its file, with
+the model at <em>url</em> in place of its own (see <em>SNGView.modelReplacements</em>):
+its objects show the objects with the same ids in it. It’s changed then:
+saving it names the new model. (Its unsaved changes are lost: see
+<em>FilesMixin.doChangeModel()</em>.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>view</strong> (<a class="reference internal" href="sn.view.graphics.sngView.html#sn.view.graphics.sngView.SNGView" title="sn.view.graphics.sngView.SNGView"><em>SNGView</em></a>)</p></li>
+<li><p><strong>url</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The view’s new window, if it’s opened.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tk.Toplevel | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1468,6 +1533,9 @@ editor’s already running, the files are handed to it instead (see
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.doNew"><code class="docutils literal notranslate"><span class="pre">Application.doNew()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.openWindow"><code class="docutils literal notranslate"><span class="pre">Application.openWindow()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.openViewOn"><code class="docutils literal notranslate"><span class="pre">Application.openViewOn()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.modelCopiesOf"><code class="docutils literal notranslate"><span class="pre">Application.modelCopiesOf()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.askForMissingModel"><code class="docutils literal notranslate"><span class="pre">Application.askForMissingModel()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.changeModel"><code class="docutils literal notranslate"><span class="pre">Application.changeModel()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.DIRECTORY_PREF"><code class="docutils literal notranslate"><span class="pre">Application.DIRECTORY_PREF</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.DIRECTORY_GEOMETRY"><code class="docutils literal notranslate"><span class="pre">Application.DIRECTORY_GEOMETRY</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.PROGRESS_DELAY"><code class="docutils literal notranslate"><span class="pre">Application.PROGRESS_DELAY</span></code></a></li>
@@ -1540,7 +1608,7 @@ editor’s already running, the files are handed to it instead (see
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+</div><script src="../_static/documentation_options.js?v=292eb321"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

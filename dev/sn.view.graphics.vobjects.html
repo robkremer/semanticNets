@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.view.graphics.vobjects module - Semantic Nets 1.0 documentation</title>
+        <title>sn.view.graphics.vobjects module - Semantic Nets 1.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -252,6 +252,7 @@
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.chooseModelDialog.html">sn.view.graphics.chooseModelDialog module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html">sn.view.graphics.connectors module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a></li>
@@ -1627,11 +1628,13 @@ one (see <em>expand()</em>): more are placed all at once.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.expand">
-<span class="sig-name descname"><span class="pre">expand</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;function</span> <span class="pre">VObject.&lt;lambda&gt;&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expand</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_done</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_exempted</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.expand" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">expand</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;function</span> <span class="pre">VObject.&lt;lambda&gt;&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expand</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_done</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_exempted</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">also</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.expand" title="Link to this definition">¶</a></dt>
 <dd><p>Show this object’s relations that aren’t shown yet (and so what’s at their
 other ends) – and, if <em>expand</em> &gt; 0, expand each object at the other end of
 each of its relations (shown already or not) in turn, by <em>expand</em> - 1. So 0
-shows this object’s neighbours, 1 their neighbours too, and so on.</p>
+shows this object’s neighbours, 1 their neighbours too, and so on. Each of
+<em>also</em> (eg: the rest of the selection) is expanded the same way, in the
+same pass: what they bring in is placed with what this one does.</p>
 <p>What it brings in is placed by the view’s dynamic layout, if it has one
 (see <em>SNGView.localLayout</em>), once it’s all made: up to <em>BATCH_PLACED</em>
 nodes one by one, as anything new is (see <em>SNGView._placeNew()</em>); more
@@ -1656,15 +1659,11 @@ relations it follows are followed even in a hidden or erased category,
 and they and what they lead to are shown anyway (see
 <em>SNGView._exemptIfFiltered()</em>): each one shown so is added to this, so
 it can be hidden again (eg: on an undo).</p></li>
+<li><p><strong>also</strong> (<em>Iterable</em><em>[</em><a class="reference internal" href="#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>]</em>) – Other objects to expand with this one (see above).</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject._abc_impl">
-<span class="sig-name descname"><span class="pre">_abc_impl</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;_abc._abc_data</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject._abc_impl" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject._expand">
@@ -1684,6 +1683,11 @@ it can be hidden again (eg: on an undo).</p></li>
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject._abc_impl">
+<span class="sig-name descname"><span class="pre">_abc_impl</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;_abc._abc_data</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject._abc_impl" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.expandableRelations">
@@ -1711,10 +1715,29 @@ and out (and symmetric ones both ways), that <em>filter</em> allows – but not
 <dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.expandByRelation">
 <span class="sig-name descname"><span class="pre">expandByRelation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.expandByRelation" title="Link to this definition">¶</a></dt>
 <dd><p>“expand by relation…”: ask which of its relations to follow, and how
-far (see <em>expandDialog</em>), then expand it so (one undo).</p>
+far (see <em>expandDialog</em>), then expand it so (one undo) – and, if it’s
+selected, everything else selected too (the choices are all of theirs).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.expandChoices">
+<span class="sig-name descname"><span class="pre">expandChoices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">targets</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.expandChoices" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>targets</strong> (<em>list</em><em>[</em><a class="reference internal" href="#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>]</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The “expand by relation…” choices for expanding <em>targets</em> (see
+<em>expandDialog.relationChoices()</em>): each one’s, with those of the same
+type and way round merged (their counts added up).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2054,10 +2077,11 @@ re-<em>assert</em>) an already-reconnected <em>r</em>.</p>
 <li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.adjustPos"><code class="docutils literal notranslate"><span class="pre">VObject.adjustPos()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.BATCH_PLACED"><code class="docutils literal notranslate"><span class="pre">VObject.BATCH_PLACED</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.expand"><code class="docutils literal notranslate"><span class="pre">VObject.expand()</span></code></a></li>
-<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._abc_impl"><code class="docutils literal notranslate"><span class="pre">VObject._abc_impl</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._expand"><code class="docutils literal notranslate"><span class="pre">VObject._expand()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._abc_impl"><code class="docutils literal notranslate"><span class="pre">VObject._abc_impl</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.expandableRelations"><code class="docutils literal notranslate"><span class="pre">VObject.expandableRelations()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.expandByRelation"><code class="docutils literal notranslate"><span class="pre">VObject.expandByRelation()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.expandChoices"><code class="docutils literal notranslate"><span class="pre">VObject.expandChoices()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.strToShape"><code class="docutils literal notranslate"><span class="pre">VObject.strToShape()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.selected"><code class="docutils literal notranslate"><span class="pre">VObject.selected()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.tooltipFont"><code class="docutils literal notranslate"><span class="pre">VObject.tooltipFont()</span></code></a></li>
@@ -2082,7 +2106,7 @@ re-<em>assert</em>) an already-reconnected <em>r</em>.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=f2a433a1"></script>
+</div><script src="../_static/documentation_options.js?v=292eb321"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
