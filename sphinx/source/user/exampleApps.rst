@@ -211,6 +211,28 @@ opens up for its classes and functions.
    followed): its two modules, *reader* and *view*, and the modules they
    import, in their packages.
 
+If the model and view are already there (eg: from an earlier run, before the
+code changed), it asks what to do:
+
+**Update**
+  Bring the model up to date with the code: what's still there keeps its node
+  -- and its id, so the views of the model (yours, and its own) still work --
+  corrected (eg: its doc string, its lines); what's new is added; and what's
+  gone from the code is removed from the model. Things are matched by their
+  full dotted names (eg: *sn.model.model.Node.isa*): something renamed, or
+  moved, is taken to be gone, and something else new. A view that showed
+  something that's gone shows it as missing (its error report offers to
+  **erase view object**). Its own view also shows the new packages and
+  modules. Anything of your own in the model -- objects, and attributes you've
+  added -- is left as it is (but a relation to something removed goes with
+  it).
+
+**Replace**
+  Make them afresh.
+
+**Cancel**
+  Leave them as they are.
+
 Its objects know where their code is:
 
 - A module's, class's or function's menu has **Show source** (the code, in a

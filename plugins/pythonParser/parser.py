@@ -47,6 +47,10 @@ again in its file after the file's changed (see *source*); a class its
 A file that isn't valid Python is still a module (with a note saying so), but
 with nothing in it.
 
+A model made before can be brought up to date with the code, rather than made
+afresh, so that its views still work (see *updateModel()*): what's still there
+keeps its node, and its id.
+
 Created on Oct 10, 2026
 
 .. codeauthor:: Rob Kremer <robkremer@me.com>
@@ -63,7 +67,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import Callable
 from util.utils import urlPath
-from sn.model.model import Model, Node, Relation, GraphObject
+from sn.model.model import Model, Node, Relation, GraphObject, IsaIndividual
 from .source import chunkAttrs
 
 ONTOLOGY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pythonOntology.snm")
@@ -506,23 +510,224 @@ def buildModel(modelPath:str, modules:list[SourceModule]) -> Model:
   '''
   m = Model(modelPath)
   m.setSuperModels([ONTOLOGY])
-  T = ontologyTypes(m)
-  byName = {mod.name: mod for mod in modules}
+  fillModel(m, modules, ModelUpdate(m))
+  return m
 
-  def node(types:list[str], name:str, **attrs:object) -> Node:
-    n = Node(m, [T[t] for t in types], individual=True, name=name)
+def updateModel(model:Model, modules:list[SourceModule]) -> ModelUpdate:
+  '''
+  Bring a model made by *buildModel()* (or by this) up to date with
+  *modules*, in place (not saved: call its *save()*), so that the views of it
+  still work: what's still in the code keeps its node, and that node's id
+  (corrected: eg: its line, its doc string, a function become a method, ...);
+  what's new gets a new node; and what's gone from the code is removed from
+  the model -- and shows as missing in the views that showed it. (What's
+  matched with what: see *ModelUpdate*.) Anything else in the model (eg:
+  nodes and relations of types of your own, or a note added to a class) is
+  left as it is -- except a relation to, or from, something that's removed.
+
+  :param model: The model.
+  :param modules: The modules (see *readModules()*).
+  :returns: What was done: what was kept, added and removed.
+  :raises ValueError: If *model* isn't built on *ONTOLOGY* (it wasn't made by *buildModel()*).
+  '''
+  try:
+    ontologyTypes(model)
+  except StopIteration:
+    raise ValueError(f'"{os.path.basename(urlPath(model.url) or model.url)}" isn\'t a model the Python parser made: '
+                     f'it isn\'t built on {os.path.basename(ONTOLOGY)}.') from None
+  update = ModelUpdate(model, reuse=True)
+  fillModel(model, modules, update)
+  update.removeRest()
+  return update
+
+PARSER_ATTRIBUTES = {"path", "qualified-name", "origin", "import-depth", "line", "end-line", ".signature-line",
+                     ".source-hash", "bases", "parameters", "text", "note"}
+'''The attributes *buildModel()* sets (besides "name"): one of these a node
+no longer has (eg: the "note" saying its file couldn't be read) is removed
+from it when the model's updated (see *ModelUpdate*); any others are its own.'''
+
+class ModelUpdate:
+  '''
+  Makes the objects of a model of some Python code (see *fillModel()*): new
+  ones -- or, updating a model (*reuse*), those it already has, where they're
+  the same things.
+
+  What's the same thing is told by a key (see *node()* and *relate()*):
+
+    - a package or module: its dotted name (its "qualified-name"), whatever
+      it is now (eg: an external module that's now analysed);
+    - a class, function, method or ``__main__`` block: its qualified name
+      (eg: "sn.model.model.Node.isa"), whatever it is now (eg: a function
+      that's become a class) -- of several of the same name (eg: a property's
+      getter and setter), the first, the second, ... in its file;
+    - a doc string: what it's the doc string of;
+    - a relation: its type, and what it's from and to (each by its key).
+
+  So something that's renamed (or moved to another module or class) is taken
+  to be gone, and something else to be new.
+  '''
+  def __init__(self, model:Model, reuse:bool=False):
+    '''
+    :param model: The model: built on *ONTOLOGY*.
+    :param reuse: Whether to use the objects the model has (one made by
+      *fillModel()*) for the same things, rather than making new ones.
+    '''
+    self.model = model
+    self.T = ontologyTypes(model)
+    self.keys:dict[int, tuple] = {}
+    "The objects made (or reused) so far: id() -> its key."
+    self.counts:dict[tuple, int] = {}
+    "How many of each key (without its count) there've been so far."
+    self.old:dict[tuple, GraphObject] = {}
+    "The model's objects that were made by *fillModel()*, by their keys: those not reused yet."
+    self.kept:list[GraphObject] = []
+    "The objects reused."
+    self.added:list[GraphObject] = []
+    "The objects made."
+    self.removed:list[GraphObject] = []
+    "The objects removed (see *removeRest()*)."
+    if reuse:
+      self._index()
+
+  def _claim(self, key:tuple) -> tuple:
+    ''':returns: *key*, with how many of it there've been before: (eg: the setter of a property is (..., 1)).'''
+    n = self.counts.get(key, 0)
+    self.counts[key] = n + 1
+    return key + (n,)
+
+  def _index(self) -> None:
+    '''Find the objects in the model *fillModel()* made, and their keys (see *old*).'''
+    T, model = self.T, self.model
+    mine = sorted((o for o in model.values() if o.model is model and o.isIndividual() and not isinstance(o, IsaIndividual)),
+                  key=lambda o: int(o.id)) # (in the order they were made: as in their files)
+    keys:dict[int, tuple] = {}
+    counts:dict[tuple, int] = {}
+    def claim(o:GraphObject, key:tuple) -> None:
+      n = counts.get(key, 0)
+      counts[key] = n + 1
+      keys[id(o)] = key + (n,)
+      self.old[key + (n,)] = o
+    nodes = [o for o in mine if isinstance(o, Node)]
+    for o in nodes:
+      q = o.getLocal("qualified-name")
+      if isinstance(q, str):
+        claim(o, ("module" if o.isa(T["module"]) else "code", q))
+    for o in nodes:
+      if id(o) not in keys and o.isa(T["doc-string"]):
+        owner = next((s for s in o.isRelatedFrom(T["has-doc"]) if id(s) in keys), None) #type: ignore[call-overload, union-attr]
+        if owner is not None:
+          claim(o, ("doc", keys[id(owner)]))
+    ours = {id(t) for t in T.values() if isinstance(t, Relation)}
+    for r in mine:
+      if isinstance(r, Relation) and id(r.src) in keys and id(r.dst) in keys:
+        types = r.getParents()
+        if len(types) == 1 and id(types[0]) in ours:
+          claim(r, (str(types[0].name), keys[id(r.src)], keys[id(r.dst)]))
+
+  def keyOf(self, o:GraphObject) -> tuple:
+    ''':returns: The key of *o*, one of the objects made (or reused) so far.'''
+    return self.keys[id(o)]
+
+  def node(self, key:tuple, types:list[str], name:str, attrs:dict[str, object]) -> Node:
+    '''
+    :param key: What it is (see the class doc): eg: ("code", "a.b.C").
+    :param types: Its types' names (in the ontology).
+    :param name: Its name.
+    :param attrs: Its attributes (see *PARSER_ATTRIBUTES*): None for none.
+    :returns: The node for it: the model's, if it has one (updated), or a new one.
+    '''
+    key = self._claim(key)
+    n = self.old.pop(key, None)
+    if not isinstance(n, Node):
+      if n is not None: # (eg: a relation, where there'd been one of ours: can't be)
+        self.old[key] = n
+      n = Node(self.model, [self.T[t] for t in types], individual=True, name=name)
+      self.added.append(n)
+    else:
+      self.kept.append(n)
+      self._retype(n, [self.T[t] for t in types])
+      if n.getLocal("name") != name:
+        n["name"] = name
+      for k in PARSER_ATTRIBUTES:
+        if attrs.get(k) is None and n.getLocalAttr(k) is not None:
+          del n[k]
     for k, v in attrs.items():
-      if v is not None:
-        n[k.replace("_", "-")] = v #type: ignore[assignment]
+      if v is not None and n.getLocal(k) != v:
+        n[k] = v #type: ignore[assignment]
+    self.keys[id(n)] = key
     return n
 
+  def _retype(self, o:GraphObject, types:list[GraphObject]) -> None:
+    ''':param types: What *o*'s types are to be: its isa links are made, or removed, to make them so.'''
+    links = [r for r in o._outgoing if isinstance(r, IsaIndividual) and r.localSrc is o and not r.inferred]
+    if {id(r.localDst) for r in links} == {id(t) for t in types}:
+      return
+    for t in types:
+      if not any(r.localDst is t for r in links):
+        IsaIndividual(self.model, o, t)
+    for r in links:
+      if not any(r.localDst is t for t in types):
+        r._disconnect()
+    self.model.setDirty()
+
+  def relate(self, typ:str, src:GraphObject, dst:GraphObject) -> Relation:
+    '''
+    :param typ: Its type's name (in the ontology).
+    :param src: What it's from: made (or reused) by *node()*.
+    :param dst: What it's to: made (or reused) by *node()*.
+    :returns: The relation: the model's, if it has one, or a new one.
+    '''
+    key = self._claim((typ, self.keyOf(src), self.keyOf(dst)))
+    r = self.old.pop(key, None)
+    if isinstance(r, Relation) and r.src is src and r.dst is dst:
+      self.kept.append(r)
+    else:
+      r = Relation(self.model, [self.T[typ]], src, dst, individual=True)
+      self.added.append(r)
+    self.keys[id(r)] = key
+    return r
+
+  def removeRest(self) -> None:
+    '''Remove the objects *fillModel()* made that weren't reused: the things they were are gone from the code.'''
+    for o in sorted(self.old.values(), key=lambda o: isinstance(o, Relation)): # (nodes first: their relations go with them)
+      if o._isConnected():
+        o._disconnect()
+        self.removed.append(o)
+      elif isinstance(o, Relation): # (gone with one of its ends)
+        self.removed.append(o)
+    self.old.clear()
+    if self.removed:
+      self.model.setDirty()
+
+  def summary(self) -> str:
+    ''':returns: How many nodes were kept, added and removed: eg: "12 kept, 3 added, 1 removed".'''
+    count = lambda objects: sum(1 for o in objects if isinstance(o, Node))
+    return f"{count(self.kept)} kept, {count(self.added)} added, {count(self.removed)} removed"
+
+def fillModel(m:Model, modules:list[SourceModule], make:ModelUpdate) -> None:
+  '''
+  Put the objects for *modules* (as described in the module doc) in *m* (see
+  *buildModel()*, *updateModel()*).
+
+  :param m: The model: built on *ONTOLOGY*.
+  :param modules: The modules (see *readModules()*).
+  :param make: Makes (or reuses) the objects.
+  '''
+  byName = {mod.name: mod for mod in modules}
+
+  def node(types:list[str], name:str, key:tuple, **attrs:object) -> Node:
+    return make.node(key, types, name, {k.replace("_", "-"): v for k, v in attrs.items()})
+
+  def code(types:list[str], name:str, **attrs:object) -> Node: # (a class, function, method, or __main__ block)
+    return node(types, name, ("code", attrs["qualified_name"]), **attrs)
+
   def relate(typ:str, src:GraphObject, dst:GraphObject) -> Relation:
-    return Relation(m, [T[typ]], src, dst, individual=True)
+    return make.relate(typ, src, dst)
 
   def doc(owner:GraphObject, tree:ast.AST) -> None:
     text = ast.get_docstring(tree) if isinstance(tree, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)) else None
     if text:
-      relate("has-doc", owner, node(["doc-string"], docName(text, str(owner.name)), text=text))
+      relate("has-doc", owner, node(["doc-string"], docName(text, str(owner.name)), ("doc", make.keyOf(owner)), text=text))
 
   def moduleAttrs(mod:SourceModule|None) -> dict[str, object]:
     if mod is None:
@@ -534,23 +739,24 @@ def buildModel(modelPath:str, modules:list[SourceModule]) -> Model:
   def packageFor(folders:list[str]) -> Node:
     name = ".".join(os.path.basename(f) for f in folders)
     if name not in packages:
-      packages[name] = node(["package"], os.path.basename(folders[-1]), path=folders[-1], qualified_name=name,
-                            **moduleAttrs(byName.get(name)))
+      packages[name] = node(["package"], os.path.basename(folders[-1]), ("module", name), path=folders[-1],
+                            qualified_name=name, **moduleAttrs(byName.get(name)))
       if len(folders) > 1:
         relate("has-subpackage", packageFor(folders[:-1]), packages[name])
     return packages[name]
   objects:dict[str, Node] = {} # a module's dotted name -> its node (a package's, for its __init__.py)
   for mod in modules:
+    note = f"{os.path.basename(mod.path or '')} couldn't be read: {mod.error}" if mod.error is not None else None
     if mod.isPackage and mod.packages:
       objects[mod.name] = packageFor(mod.packages)
+      if note is not None:
+        objects[mod.name]["note"] = note
     elif mod.name not in objects:
       objects[mod.name] = node(["module" if mod.analysed else "external-module"],
-                               mod.name if mod.origin == NOT_FOUND else mod.shortName,
-                               path=mod.path, qualified_name=mod.name, **moduleAttrs(mod))
+                               mod.name if mod.origin == NOT_FOUND else mod.shortName, ("module", mod.name),
+                               path=mod.path, qualified_name=mod.name, note=note, **moduleAttrs(mod))
       if mod.packages:
         relate("contains-module", packageFor(mod.packages), objects[mod.name])
-    if mod.error is not None:
-      objects[mod.name]["note"] = f"{os.path.basename(mod.path or '')} couldn't be read: {mod.error}"
 
   # the classes (first: a method needs to know if a class it's derived from has one of the same name)
   analysed = [mod for mod in modules if mod.tree is not None]
@@ -564,14 +770,14 @@ def buildModel(modelPath:str, modules:list[SourceModule]) -> Model:
     doc(owner, mod.tree)
     for stmt in mod.tree.body:
       if isinstance(stmt, ast.ClassDef):
-        relate("defines", owner, classNode(mod, stmt, mod.name, node, relate, doc, classes, classNodes))
+        relate("defines", owner, classNode(mod, stmt, mod.name, code, relate, doc, classes, classNodes))
       elif isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
-        f = node(["function"], stmt.name, qualified_name=f"{mod.name}.{stmt.name}", line=stmt.lineno,
+        f = code(["function"], stmt.name, qualified_name=f"{mod.name}.{stmt.name}", line=stmt.lineno,
                  parameters=ast.unparse(stmt.args), **chunkAttrs(stmt, mod.lines))
         doc(f, stmt)
         relate("defines", owner, f)
       elif isMainBlock(stmt):
-        relate("defines", owner, node(["code"], "__main__", qualified_name=f"{mod.name}.__main__", line=stmt.lineno,
+        relate("defines", owner, code(["code"], "__main__", qualified_name=f"{mod.name}.__main__", line=stmt.lineno,
                                       **chunkAttrs(stmt, mod.lines)))
 
   # the classes' bases (now: they may be defined later, or in a module read later)
@@ -587,7 +793,6 @@ def buildModel(modelPath:str, modules:list[SourceModule]) -> Model:
       target = objects.get(t) or packages.get(t)
       if target is not None and target is not owner:
         relate("imports", owner, target)
-  return m
 
 class ClassIndex:
   '''
@@ -704,14 +909,14 @@ def methodKinds(s:ast.FunctionDef|ast.AsyncFunctionDef, inherited:set[str]) -> l
 def classNode(mod:SourceModule, c:ast.ClassDef, prefix:str, node, relate, doc, classes:ClassIndex,
               classNodes:dict[str, Node]) -> Node:
   '''
-  Make the node for a class, its methods and nested classes (see *buildModel()*).
+  Make the node for a class, its methods and nested classes (see *fillModel()*).
 
   :param mod: The module it's in.
   :param c: The class.
   :param prefix: The qualified name of what it's in (its module, or a class).
-  :param node: *buildModel()*'s node maker.
-  :param relate: *buildModel()*'s relation maker.
-  :param doc: *buildModel()*'s doc string maker.
+  :param node: *fillModel()*'s node maker (for a class, function, ...).
+  :param relate: *fillModel()*'s relation maker.
+  :param doc: *fillModel()*'s doc string maker.
   :param classes: The analysed classes.
   :param classNodes: The classes' nodes so far, by qualified name: this one's
     (and its nested classes') are added.

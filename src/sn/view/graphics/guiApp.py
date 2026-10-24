@@ -952,7 +952,7 @@ class Application(tk.Tk):
       self.quit()
     return True
 
-  def replacingModel(self, path:str) -> bool:
+  def replacingModel(self, path:str, askToSave:bool=False) -> bool:
     """Before a model's file is made afresh, in place of the one that's there
     (eg: by a plugin, once the user's agreed to replace it): if the model at
     *path* is in memory -- eg: its window is open -- close its windows, without
@@ -960,14 +960,19 @@ class Application(tk.Tk):
     *Model(path)* would hand back that model, with all it had, and what's made
     would be added to it -- and its open views told of each new object.
 
+    Or, with *askToSave*, before a model's file is changed by a program (eg: a
+    plugin updating it): offering to save it, and its changed views, first --
+    so that the program reads (and changes) the file as it's been left.
+
     :param path: The model's file (or URL).
+    :param askToSave: Whether to offer to save the model and its changed views.
     :returns: False if it can't be forgotten (other models use it: see
       *closeModel()*), and so mustn't be replaced; else True.
     """
     model = PRDb.AllDBs.get(PRDb.resolveURL(fixURL(path, None, replaceExt=None, mode="w")[0])) # @undefinedVariable
     if not isinstance(model, Model):
       return True
-    return self.closeModel(model, askToSave=False, quitIfNone=False)
+    return self.closeModel(model, askToSave=askToSave, quitIfNone=False)
 
   def closeAllWindows(self) -> None:
     """Close every hosted window via *_closeWindow()*, so each view gets

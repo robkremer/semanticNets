@@ -385,7 +385,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     return InstantiationInfo(
             cls, 
             conArgs=[ParamInfo("view", SNGView, lambda slf: cast(VObject, slf).view),
-                     ParamInfo("modelObject", str, lambda slf: slf.modelObject.getPRef().tostring(slf.view.model))], #type: ignore[attr-defined]
+                     ParamInfo("modelObject", str, lambda slf: slf.modelObject.getPRef().tostring(slf.view.model) #type: ignore[attr-defined]
+                               if slf.modelObject is not None #type: ignore[attr-defined] # (missing from its model -- eg: deleted from it while the view was closed: still missing, as read)
+                               else getattr(slf, "readModelObjectRef", ""))],
             conKWArgs=[ParamInfo("x", int, lambda slf: int(slf.boundingBox()[0])), #type: ignore[attr-defined]
                        ParamInfo("y", int, lambda slf: int(slf.boundingBox()[1])), #type: ignore[attr-defined]
                        ParamInfo("x1", int, lambda slf: int(slf.boundingBox()[2])), #type: ignore[attr-defined]
