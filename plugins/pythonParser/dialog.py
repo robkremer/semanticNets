@@ -275,7 +275,7 @@ class ParserDialog(tk.Toplevel):
     :param onClose: Called when it's closed: by "Go" (when the view's opened) or "Cancel".
     '''
     super().__init__(app)
-    ownDialog(self, app) # (over the editor's window, if one's on screen -- not full screen: see ownDialog())
+    ownDialog(self, app, keep=False) # (over the editor's window, if one's on screen -- not full screen -- then a window of its own: it stays open, so mustn't be that one's child -- see ownDialog())
     self.app, self.onClose = app, onClose
     self.title(TITLE)
     self.paths:list[str] = []
