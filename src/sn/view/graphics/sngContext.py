@@ -31,7 +31,7 @@ Created on Oct 18, 2026 (from sngView.py)
 # SOFTWARE.                                                                     #
 #################################################################################
 from __future__ import annotations
-from typing import Any, Callable, override, TYPE_CHECKING
+from typing import Any, Callable, Iterable, override, TYPE_CHECKING
 from util.command import Command
 from util.persistence.pRef import PReference
 from sn.model.model import Model, Relation, GraphObject
@@ -533,21 +533,25 @@ class SNGContext(UIContext):
       '''
       return f'{super().__str__()} {self.category} {self.mode}'
 
-  def expand(self, object:VObject, *, levels:int=0, _filter:Callable[[Any, Relation], bool]=lambda _vn, _mr: True):
+  def expand(self, object:VObject, *, levels:int=0, _filter:Callable[[Any, Relation], bool]=lambda _vn, _mr: True,
+             also:Iterable[VObject]=()):
     '''
     This is a dummy graphic command (the command is *_Expand*).
     '''
     print ("dummy graphic command")
     
   class _Expand(Command):
-    def __init__(self, object:VObject, *, levels:int=0, _filter:Callable[[Any, Relation], bool]=lambda _vn, _mr: True):
+    def __init__(self, object:VObject, *, levels:int=0, _filter:Callable[[Any, Relation], bool]=lambda _vn, _mr: True,
+                 also:Iterable[VObject]=()):
       '''
-      A command to expand *object* by *levels* more levels, by the relations *_filter* allows.
+      A command to expand *object* (and each of *also*: eg: the rest of the
+      selection) by *levels* more levels, by the relations *_filter* allows.
       '''
       super().__init__("expand")
       self.obj:VObject = object
       self.levels:int = levels
       self.filter:Callable[[Any, Relation], bool] = _filter
+      self.also:list[VObject] = list(also)
       self.createdObjects:list[VObject] = []
       self.exempted:list[VObject] = []
       "What was shown though in a hidden category (see *VObject.expand()*): hidden again by an undo."
@@ -561,7 +565,7 @@ class SNGContext(UIContext):
         self.createdObjects = []
         view:SNGView =self.obj.view
         detachCode = view.attachCallback(lambda com, tup: self.createdObjects.append(tup[1]) if com=='new' else 0) # (tup is (id, VObject))
-        self.obj.expand(filter=self.filter, expand=self.levels, _exempted=self.exempted)
+        self.obj.expand(filter=self.filter, expand=self.levels, _exempted=self.exempted, also=self.also)
         view.detachCallback(detachCode)
       else: # redo: nodes first (see _Represent.do())
         for obj in sorted(self.createdObjects, key=lambda vo: isinstance(vo, VRelation)):

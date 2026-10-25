@@ -27,9 +27,14 @@ name (see *source*).
 
 The model is named after the files' main module -- the best guess at it: see
 *parser.guessMain()* -- with "_py" (eg: "XMLreader_py.snm" and
-"XMLreader_py.snv"), next to it (see *parser.outputPaths()*), asking first if
-they're already there, and replacing them. (Use "save as" to keep it
-somewhere else.)
+"XMLreader_py.snv"), next to it (see *parser.outputPaths()*). (Use "save as"
+to keep it somewhere else.) If they're already there, it asks whether to
+
+  - update them (see *update()*): the model's brought up to date with the
+    code, keeping its nodes -- and their ids -- for what's still there, so
+    the views of it (the one made here, and any others) still work;
+  - replace them: a new model, and view, made afresh; or
+  - cancel.
 
 Created on Oct 10, 2026 (as a program of its own: a plugin since Oct 17)
 
@@ -41,12 +46,13 @@ from dataclasses import dataclass
 from typing import Any, Callable
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
+from util.choiceDialog import askChoice
 from util.utils import ownDialog
 from sn.model.model import Model, Node, Relation
 from sn.view.graphics.guiApp import Application
 from sn.view.graphics.sngView import SNGView
 from sn.view.graphics.treeLayout import TreeLayout
-from .parser import buildModel, guessMain, ontologyTypes, outputPaths, readModules
+from .parser import SourceModule, buildModel, guessMain, ontologyTypes, outputPaths, readModules, updateModel
 
 TITLE = "Python Parser"
 
@@ -119,11 +125,85 @@ def showPackages(view:SNGView, model:Model, showImports:str="given") -> None:
   TreeLayout(view, **tree).arrange(animate=False)
   view.setDynamicLayout(TreeLayout(view, **tree)) # (kept arranged: expanding a module opens the tree up for what it defines, and what it imports goes near it)
 
+def showNew(view:SNGView, model:Model, new:list[Any], showImports:str="given") -> None:
+  '''
+  After the model's been updated (see *update()*): show, in a view of it
+  made before, its new packages and modules, and the contains-module,
+  has-subpackage and imports relations (as *showImports* says: see
+  *showPackages()*) new between those it shows now -- where the view's
+  dynamic layout (if it has one: eg: the tree layout *showPackages()* gave
+  it) puts them.
+
+  :param view: A view of *model*.
+  :param model: A model made by *parser.buildModel()*, and updated.
+  :param new: The objects added to it by the update (see *parser.ModelUpdate.added*).
+  :param showImports: Which imports to show: "none", "given" or "all".
+  '''
+  added = {id(o) for o in new}
+  nodes, includes, imports = packagesAndModules(model)
+  for o in nodes:
+    if id(o) in added:
+      view.makeViewObjectForGraphObject(o, atPoint=(MARGIN, MARGIN))
+  shown = lambda r: bool(view.viewObjectsFor(r.src)) and bool(view.viewObjectsFor(r.dst)) #type: ignore[arg-type]
+  for r in includes:
+    if id(r) in added and shown(r):
+      view.makeViewObjectForGraphObject(r)
+  for r in imports:
+    if id(r) in added and shown(r) and (showImports == "all" or (showImports == "given" and r.src.get("import-depth", -1) == 0)): #type: ignore[union-attr]
+      view.makeViewObjectForGraphObject(r)
+
+def update(app:Application, modelPath:str, viewPath:str, modules:list[SourceModule], options:Options,
+           where:dict[str, Any]) -> bool:
+  '''
+  Bring the model *modelPath* -- made from these files before -- up to date
+  with them (see *parser.updateModel()*), save it, and open its view (made
+  afresh, if it isn't there), showing the new packages and modules (see
+  *showNew()*). Its own (and its views') unsaved changes are offered to be
+  saved first.
+
+  :param app: The editor.
+  :param modelPath: The model's file.
+  :param viewPath: Its view's file (see *parser.outputPaths()*).
+  :param modules: The modules (see *parser.readModules()*).
+  :param options: What to show.
+  :param where: The parent of any messages (see *convert()*).
+  :returns: Whether it did.
+  '''
+  if not app.replacingModel(modelPath, askToSave=True): # (read afresh, as saved: not added to while its views show it)
+    return False
+  viewExisted = os.path.exists(viewPath)
+  model = Model(modelPath)
+  try:
+    done = updateModel(model, modules)
+  except ValueError as ex:
+    messagebox.showerror(TITLE, f"{ex}\n\nUse \"Replace\" to make a new model in its place.", **where)
+    app.replacingModel(modelPath) # (forgotten: as read)
+    return False
+  model.save()
+  window = app.openWindow(modelPath) # (its view, <model>.snv: read, or made)
+  if window is None:
+    return False
+  view:SNGView = window.view #type: ignore[attr-defined] # (an AppWindow)
+  if viewExisted:
+    showNew(view, model, done.added, options.showImports)
+  else:
+    showPackages(view, model, options.showImports)
+  if view.isDirty():
+    view.save()
+  print(f"Updated {os.path.basename(modelPath)} from {sum(1 for m in modules if m.depth == 0)} Python file(s): "
+        f"{done.summary()} (nodes).")
+  if done.removed:
+    print("Views that showed what's been removed from it say so (\"Model object is missing from Model\"): "
+          "\"erase view object\" takes it out.")
+  return True
+
 def convert(app:Application, paths:list[str], options:Options, parent:tk.Misc|None=None,
             progress:Callable[[str], None]|None=None) -> bool:
   '''
   Make the model and view of the Python files *paths* (and what they import,
-  as far as *options* says), save them, and open the view.
+  as far as *options* says), save them, and open the view. If they're there
+  already, ask whether to update them (see *update()*), replace them, or
+  cancel.
 
   :param app: The editor.
   :param paths: The files (and folders: see *parser.pythonFiles()*).
@@ -143,8 +223,17 @@ def convert(app:Application, paths:list[str], options:Options, parent:tk.Misc|No
   modelPath, viewPath = outputPaths(main)
   existing = [p for p in (modelPath, viewPath) if os.path.exists(p)]
   if existing:
-    if not messagebox.askokcancel(TITLE, "These files are already there:\n\n  " + "\n  ".join(existing)
-                                  + "\n\nReplace them?", icon=messagebox.WARNING, **where):
+    message = "These files are already there:\n\n  " + "\n  ".join(existing)
+    if modelPath in existing:
+      choice = askChoice(parent, TITLE, message + "\n\nUpdate the model, or replace them?", ["Update", "Replace", "Cancel"],
+                         default="Update", cancel="Cancel", icon="warning",
+                         detail="Update keeps what's still in the code (and its ids), so views of the model still work; "
+                                "Replace makes them afresh.")
+      if choice == "Update":
+        return update(app, modelPath, viewPath, modules, options, where)
+      if choice != "Replace":
+        return False
+    elif not messagebox.askokcancel(TITLE, message + "\n\nReplace it?", icon=messagebox.WARNING, **where):
       return False
   if not app.replacingModel(modelPath): # (its window, if it's open, and the model in memory: they'd be added to)
     return False
@@ -186,7 +275,7 @@ class ParserDialog(tk.Toplevel):
     :param onClose: Called when it's closed: by "Go" (when the view's opened) or "Cancel".
     '''
     super().__init__(app)
-    ownDialog(self, app) # (over the editor's window, if one's on screen -- not full screen: see ownDialog())
+    ownDialog(self, app, keep=False) # (over the editor's window, if one's on screen -- not full screen -- then a window of its own: it stays open, so mustn't be that one's child -- see ownDialog())
     self.app, self.onClose = app, onClose
     self.title(TITLE)
     self.paths:list[str] = []

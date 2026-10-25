@@ -100,10 +100,14 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     pass when the owner container calls the *self._post__init__()* method.
     """
     if isinstance(modelObject, str):
+      self.readModelObjectRef:str = modelObject # (kept, if it's missing: it's saved so -- see VObject.getInstantiationInfo())
       try:
         obj = PReference[GraphObject](modelObject)(relativeTo=view.model)
-      except KeyError:
+      except KeyError as ex: # (eg: it's been deleted from its model: see VObject.validate())
+        from sn.model.model import unresolvedReason
         obj = None
+        self.__dict__["_missingReason"] = reason = unresolvedReason(modelObject, ex)
+        view.__dict__.setdefault("_unresolved", []).append((modelObject, reason))
       modelObject = obj # type: ignore[assignment]
     assert isinstance(modelObject, (Relation,NoneType)), \
           f"Bad modelObject param in VRelation.__init__(): type {modelObject.__class__.__name__}"

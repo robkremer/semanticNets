@@ -98,21 +98,7 @@ def showTypes(view:SNGView, model:Model, arrange:bool=True) -> None:
   :param model: A model made by *buildModel()*.
   :param arrange: Whether to arrange them (as a tree): if not, they're all in one place.
   '''
-  from sn.view.graphics.treeLayout import TreeLayout
-  localLayout, view.localLayout = view.localLayout, None # type: ignore[assignment] # (none: the tree layout places them)
-  try:
-    types = sorted(nodeTypes(model), key=lambda t: (t.model is model, t._id)) # (as they were made)
-    for t in types:
-      view.makeViewObjectForGraphObject(t, atPoint=(50, 50))
-    shown = {id(t) for t in types}
-    for t in types: # (the isa links between them, for the tree)
-      for r, parent in t._getOutgoing(lambda r: isinstance(r, IsaIndividual)):
-        if id(parent) in shown:
-          view.makeViewObjectForGraphObject(r)
-  finally:
-    view.localLayout = localLayout
-  if arrange:
-    TreeLayout(view, relation="isa", direction="down", others="rows").arrange(animate=False) # (those with no subtypes in rows, after the trees)
+  view.showTypes(arrange=arrange) # (see SNGView.showTypes())
 
 def showTypesExpanded(view:SNGView, model:Model) -> None:
   '''
@@ -454,7 +440,7 @@ class ReaderDialog(tk.Toplevel):
     :param onClose: Called when it's closed: by "Go" (when the view's opened) or "Cancel".
     '''
     super().__init__(app)
-    ownDialog(self, app) # (over the editor's window, if one's on screen -- not full screen: see ownDialog())
+    ownDialog(self, app, keep=False) # (over the editor's window, if one's on screen -- not full screen -- then a window of its own: it stays open, so mustn't be that one's child -- see ownDialog())
     self.app, self.folder, self.defaults, self.onChosen, self.onGo, self.onClose = app, folder, defaults, onChosen, onGo, onClose
     self.title(TITLE)
     self.vars = {k: tk.StringVar(value="") for k in ("xml", "model", "view", "ontology")}
