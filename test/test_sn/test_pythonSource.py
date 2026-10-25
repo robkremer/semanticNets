@@ -33,6 +33,7 @@ import os
 import tempfile
 import textwrap
 import unittest
+from sn.model.model import Relation
 from sn.plugins import importBundled
 source = importBundled("pythonParser", "source")
 parser = importBundled("pythonParser", "parser")
@@ -166,6 +167,173 @@ class Test(unittest.TestCase):
     loc = source.locateNode(nodes["pkg.top"])                      # (in a package's __init__.py)
     assert loc is not None
     self.assertEqual((loc.how, loc.line, os.path.basename(loc.path)), (NAME, 1, "__init__.py"))
+
+  def test1000reexportedBase(self):
+    'A base imported from a module that imports it from another (eg: Command, from util.commandParser, defined in util.command) is still inherited from; and so is a generic one (eg: Base[T]).'
+    readModules, buildModel = parser.readModules, parser.buildModel
+    pkg = os.path.join(self.folder.name, "pkg")
+    os.mkdir(pkg)
+    for name, text in (("__init__.py", ""),
+                       ("base.py", "class Base:\n  def go(self):\n    pass\n"),
+                       ("middle.py", "from pkg.base import Base\n"),
+                       ("again.py", "from .middle import Base as B\n"),
+                       ("sub.py", "from pkg.middle import Base\nfrom pkg import again\n"
+                                  "class Sub(Base):\n  def go(self):\n    pass\n"
+                                  "class Sub2(again.B):\n  pass\n"
+                                  "class Gen[T](Base):\n  pass\n"
+                                  "class Sub3[T](Gen[T], again.B[int]):\n  pass\n")):
+      with open(os.path.join(pkg, name), "w") as f:
+        f.write(text)
+    m = buildModel(os.path.join(self.folder.name, "pkg_py.snm"), readModules([pkg]))
+    nodes = {n.get("qualified-name", None): n for n in m.values() if n.isIndividual()}
+    inherits = {(str(r.src.get("qualified-name", None)), str(r.dst.get("qualified-name", None)))
+                for r in m.values() if isinstance(r, Relation) and r.isIndividual() and str(r.getParents()[0].name) == "inherits-from"}
+    self.assertEqual(inherits, {("pkg.sub.Sub", "pkg.base.Base"), ("pkg.sub.Sub2", "pkg.base.Base"),
+                                ("pkg.sub.Gen", "pkg.base.Base"), ("pkg.sub.Sub3", "pkg.sub.Gen"), ("pkg.sub.Sub3", "pkg.base.Base")})
+    self.assertIn("overriding-method", {str(p.name) for p in nodes["pkg.sub.Sub.go"].getParents()})
+
+  def test1100dependsOnType(self):
+    'A class depends-on-type the analysed classes its attributes are of: annotated, made, or given (as an annotated parameter).'
+    readModules, buildModel = parser.readModules, parser.buildModel
+    pkg = os.path.join(self.folder.name, "pkg")
+    os.mkdir(pkg)
+    for name, text in (("__init__.py", ""),
+                       ("things.py", "class Node:\n  pass\nclass Edge:\n  pass\nclass Graph:\n  pass\n"
+                                     "class Label:\n  pass\nclass Unused:\n  pass\n"),
+                       ("user.py", textwrap.dedent('''\
+                         from dataclasses import dataclass
+                         from typing import Optional
+                         from pkg import things
+                         from pkg.things import Node, Edge, Graph, Label, Unused
+
+                         @dataclass
+                         class Holder:
+                           node: Node
+                           count: int = 0
+
+                         class User:
+                           def __init__(this, g:"Graph", label:Label|None=None):
+                             this.nodes:list[Node] = []
+                             this.edges = {}
+                             this.edges2:"dict[str, Optional[Edge]]" = {}
+                             this.graph = g
+                             this.label = label
+                             this.holder = Holder(Node())
+                             this.me:User|None = None
+                             things.Unused()       # (not an attribute)
+                           @staticmethod
+                           def make(x:Unused):
+                             x.y = Unused()        # (not self's)
+                         '''))):
+      with open(os.path.join(pkg, name), "w") as f:
+        f.write(text)
+    m = buildModel(os.path.join(self.folder.name, "pkg_py.snm"), readModules([pkg]))
+    deps = {(str(r.src.get("qualified-name", None)), str(r.dst.get("qualified-name", None)))
+            for r in m.values() if isinstance(r, Relation) and r.isIndividual() and str(r.getParents()[0].name) == "depends-on-type"}
+    self.assertEqual(deps, {("pkg.user.Holder", "pkg.things.Node")}
+                     | {("pkg.user.User", f"pkg.things.{c}") for c in ("Node", "Edge", "Graph", "Label")}
+                     | {("pkg.user.User", "pkg.user.Holder")})
+
+  def build(self, files:dict[str, str]):
+    'A model of the package pkg, made of *files* (name -> text).'
+    pkg = os.path.join(self.folder.name, "pkg")
+    os.mkdir(pkg)
+    for name, text in {"__init__.py": "", **files}.items():
+      with open(os.path.join(pkg, name), "w") as f:
+        f.write(textwrap.dedent(text))
+    return parser.buildModel(os.path.join(self.folder.name, "pkg_py.snm"), parser.readModules([pkg]))
+
+  def relations(self, m, name):
+    return {(str(r.src.get("qualified-name", None)), str(r.dst.get("qualified-name", None)))
+            for r in m.values() if isinstance(r, Relation) and r.isIndividual() and str(r.getParents()[0].name) == name}
+
+  def test1200variables(self):
+    'A class defines-attr its class and instance variables, each with its type (if it can be told) as its attr/type -- and has-type the analysed classes that names.'
+    m = self.build({"things.py": "class Node:\n  pass\nclass Edge:\n  pass\n",
+                    "user.py": '''\
+                      from dataclasses import dataclass
+                      from typing import ClassVar
+                      import tkinter as tk
+                      from pkg.things import Node, Edge
+
+                      @dataclass
+                      class Holder:
+                        node: Node
+                        count: int = 0
+                        registry: ClassVar[dict[str, "Holder"]] = {}
+
+                      class Base:
+                        kind = "base"
+                        def __init__(self):
+                          self.name = ""
+
+                      class User(Base):
+                        __slots__ = ()
+                        limit = 10
+                        def __init__(self, g:"Edge", n:Node|None=None):
+                          self.nodes:list[Node] = []
+                          self.edges = {}
+                          self.g = g
+                          self.n = n
+                          self.canvas = tk.Canvas()
+                          self.name = "x"                  # (Base's)
+                          self.a, self.b = 1.5, f"{g}"
+                          self.h = Holder(Node())
+                          self.later = None
+                          self.made = make()               # (not a class: no type)
+                        def go(self):
+                          self.later = Edge()
+                        @classmethod
+                        def reset(cls):
+                          cls.count = 0
+                        @staticmethod
+                        def helper(x):
+                          x.y = 1                          # (not self's)
+                      def make():
+                        pass
+                      '''})
+    T = parser.ontologyTypes(m)
+    found = {str(n.get("qualified-name", None)): ([str(p.name) for p in n.getParents()], n.get("attr/type", None))
+             for n in m.values() if n.isIndividual() and not isinstance(n, Relation) and n.isa(T["variable"])}
+    I, C = ["instance-var"], ["class-var"]
+    self.assertEqual(found, {"pkg.user.Holder.node": (I, "Node"), "pkg.user.Holder.count": (I, "int"),
+                             "pkg.user.Holder.registry": (C, 'dict[str, "Holder"]'),
+                             "pkg.user.Base.kind": (C, "str"), "pkg.user.Base.name": (I, "str"),
+                             "pkg.user.User.limit": (C, "int"), "pkg.user.User.nodes": (I, "list[Node]"),
+                             "pkg.user.User.edges": (I, "dict"), "pkg.user.User.g": (I, "Edge"),
+                             "pkg.user.User.n": (I, "Node|None"), "pkg.user.User.canvas": (I, "tk.Canvas"),
+                             "pkg.user.User.a": (I, "float"), "pkg.user.User.b": (I, "str"),
+                             "pkg.user.User.h": (I, "Holder"), "pkg.user.User.later": (I, "Edge"),
+                             "pkg.user.User.made": (I, None), "pkg.user.User.count": (C, "int")})
+    self.assertEqual(self.relations(m, "defines-attr"), {(q.rsplit(".", 1)[0], q) for q in found})
+    self.assertEqual(self.relations(m, "has-type"),
+                     {("pkg.user.Holder.node", "pkg.things.Node"), ("pkg.user.Holder.registry", "pkg.user.Holder"),
+                      ("pkg.user.User.nodes", "pkg.things.Node"), ("pkg.user.User.g", "pkg.things.Edge"),
+                      ("pkg.user.User.n", "pkg.things.Node"), ("pkg.user.User.h", "pkg.user.Holder"),
+                      ("pkg.user.User.later", "pkg.things.Edge")})
+    nodes = {n.get("qualified-name", None): n for n in m.values() if n.isIndividual()}
+    self.assertEqual((nodes["pkg.user.User.nodes"]["line"], nodes["pkg.user.User.nodes"]["name"]), (21, "nodes"))
+    loc = source.locateNode(nodes["pkg.user.User.nodes"])
+    assert loc is not None
+    self.assertEqual((loc.line, loc.text.strip()), (21, "self.nodes:list[Node] = []"))
+
+  def test1210hasAttr(self):
+    'The reasoner concludes that a class has-attr the variables it defines, and those its bases (and theirs) do.'
+    from sn.model.reasoner import reason
+    m = self.build({"shapes.py": '''\
+                      class Shape:
+                        def __init__(self):
+                          self.x = 0
+                      class Box(Shape):
+                        size = 1
+                      class Cube(Box):
+                        def grow(self):
+                          self.depth = 2
+                      '''})
+    reason(m, silent=True)
+    has = {(str(r.src.name), str(r.dst.name)) for r in m.values()
+           if isinstance(r, Relation) and r.isIndividual() and r.getParents() and str(r.getParents()[0].name) == "has-attr"}
+    self.assertEqual(has, {("Shape", "x"), ("Box", "x"), ("Box", "size"), ("Cube", "x"), ("Cube", "size"), ("Cube", "depth")})
 
 if __name__ == "__main__":
   unittest.main()

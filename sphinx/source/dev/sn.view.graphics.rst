@@ -16,6 +16,7 @@ Submodules
    sn.view.graphics.animatedLayouts
    sn.view.graphics.animationControls
    sn.view.graphics.balloonLayout
+   sn.view.graphics.chooseModelDialog
    sn.view.graphics.connectors
    sn.view.graphics.decorators
    sn.view.graphics.directoryWindow

@@ -582,7 +582,26 @@ class EditingMixin(ViewBase):
       except Exception:
         logger.exception(f"_attachDanglingEnds(): attaching {r} to {vo}:")
 
+  SHOW_ALL_MAX = 2000
+  '''The most objects *showAllModel()* shows (by default: see the "gui/ShowAllMax"
+  preference): a model with more to show is shown by its types instead (see
+  *showTypes()*). (A view of 1000 objects takes a few seconds to make; of
+  10,000, minutes.)'''
+
   def showAllModel(self):
+    '''
+    Show all the model's objects that aren't in the view yet, on a grid -- or,
+    if there are more than *SHOW_ALL_MAX*, just its node types (see
+    *showTypes()*), to be expanded as they're wanted.
+    '''
+    most = snPrefs.get('gui/ShowAllMax', storeDefault=self.SHOW_ALL_MAX, storeType=int)
+    assert isinstance(most, int)
+    toShow = sum(1 for mo in self.model.values() if not self.isFiltered(mo)) - len(self)
+    if toShow > most:
+      types = self.showTypes()
+      print(f'The model has too many objects to show at once ({toShow}, more than {most}: see the '
+            f'"gui/ShowAllMax" preference): {len(types)} of its types are shown, to expand as you need them.')
+      return
     x:int = 10
     y:int = 10
     minSize = snPrefs.get('gui/NodeMinSize', storeDefault=30, storeType=int)
@@ -617,6 +636,38 @@ class EditingMixin(ViewBase):
           self.localLayout(n)
     finally:
       del self.__dict__["_nextGridPoint"]
+
+  def showTypes(self, arrange:bool=True) -> list[Node]:
+    '''
+    Show just the model's node types -- its own and its super-models' (eg: an
+    ontology it's built on: see *layout.nodeTypes()*), but not the system's --
+    with the isa links between them, arranged as a tree, by isa, growing down
+    (see *treeLayout.TreeLayout*): for a model too big to show all at once (see
+    *showAllModel()*). Each type can be expanded to bring in its instances, as
+    they're wanted.
+
+    :param arrange: Whether to arrange them (as a tree): if not, they're all in one place.
+    :returns: The types.
+    '''
+    from sn.view.graphics.layout import nodeTypes
+    from sn.view.graphics.treeLayout import TreeLayout
+    model = self.model
+    types = sorted(nodeTypes(model), key=lambda t: (t.model is model, t._id)) # (as they were made)
+    localLayout, self.localLayout = self.localLayout, None # type: ignore[assignment] # (none: the tree layout places them)
+    try:
+      for t in types:
+        if self.findViewObjectForGraphObject(t) is None:
+          self.makeViewObjectForGraphObject(t, atPoint=(50, 50))
+      shown = {id(t) for t in types}
+      for t in types: # (the isa links between them, for the tree)
+        for r, parent in t._getOutgoing(lambda r: isinstance(r, IsaIndividual)):
+          if id(parent) in shown and self.findViewObjectForGraphObject(r) is None:
+            self.makeViewObjectForGraphObject(r)
+    finally:
+      self.localLayout = localLayout
+    if arrange:
+      TreeLayout(self, relation="isa", direction="down", others="rows").arrange(animate=False) # type: ignore[arg-type] # (those with no subtypes in rows, after the trees)
+    return types
 
   def search(self, pattern:str, wholeWord:bool=False, matchCase:bool=False, regex:bool=False,
              wholeModel:bool=False, superModels:bool=False,
