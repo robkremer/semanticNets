@@ -2,7 +2,9 @@
 # Publishes the built documentation (sphinx/build/html: "ant doc" builds it)
 # to the gh-pages branch, which GitHub Pages serves at
 #   https://robkremer.github.io/semanticNets/
-# The branch holds only the HTML, one commit per publish; main never does.
+# The branch holds only the HTML, one commit per publish; main never does --
+# and the models tools/publishModels.sh puts in its models folder, which this
+# leaves alone.
 #   tools/publishDocs.sh            commit to gh-pages, and push it to origin
 #   tools/publishDocs.sh --no-push  just commit (eg: to look first)
 set -euo pipefail
@@ -29,7 +31,7 @@ else # (the first time: a branch with no history of its own)
   git worktree add --quiet --orphan -b gh-pages "${pages}"
 fi
 
-rsync -a --delete --exclude .git --exclude .DS_Store "${html}/" "${pages}/"
+rsync -a --delete --exclude .git --exclude .DS_Store --exclude /models "${html}/" "${pages}/"
 touch "${pages}/.nojekyll" # (serve the files as they are: Jekyll would hide _static, _images, ...)
 
 git -C "${pages}" add --all
