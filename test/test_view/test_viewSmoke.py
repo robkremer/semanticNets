@@ -137,7 +137,7 @@ class Test(unittest.TestCase):
 
   def event(self, x:float, y:float, **kw):
     'A stand-in for a Tk event at window coordinates (*x*, *y*).'
-    return SimpleNamespace(x=x, y=y, x_root=x, y_root=y, state=0, delta=0, num=1, widget=self.view.canvas, **kw)
+    return SimpleNamespace(**{"x": x, "y": y, "x_root": x, "y_root": y, "state": 0, "delta": 0, "num": 1, "widget": self.view.canvas, **kw})
 
   # ---- the parts ------------------------------------------------------------
 
@@ -405,6 +405,41 @@ class Test(unittest.TestCase):
     self.assertIn(self.vo("alice"), v.selected)
     v.onMotion(self.event(x1, y1))
     self.assertEqual(v.validate(), 0) # (how many problems it found)
+
+  def test0910optionClick(self):
+    'Option-click: the object and its relations; with Cmd or Shift too, toggled in or out of the selection.'
+    from util.utils import _ALT_MASK, _CMD_MASK
+    from sn.view.graphics.vrelations import VRelation
+    v = self.view
+    def click(vo, state):
+      x, y = v.viewToWindow(*vo.centerPt())
+      ev = self.event(x - v.canvas.canvasx(0), y - v.canvas.canvasy(0), state=state)
+      vo.onButton_1(ev)
+      v.onButton_1(ev)
+      vo.onB1_ButtonRelease(ev)
+      v.onB1_ButtonRelease(ev)
+    withRels = lambda vo: {vo, *(r for r in vo.relations if not r.isHidden())}
+    nodes = [o for o in v._shownObjects() if not isinstance(o, VRelation) and len(withRels(o)) > 1]
+    a, b = nodes[0], next(n for n in nodes[1:] if not withRels(n) & withRels(nodes[0]) - {n})
+    other = next(o for o in v._shownObjects() if o not in withRels(a) | withRels(b))
+    other.selected(True)
+    click(a, _ALT_MASK)
+    self.assertEqual(set(v.selected), withRels(a))
+    click(b, _ALT_MASK | _CMD_MASK) # added
+    self.assertEqual(set(v.selected), withRels(a) | withRels(b))
+    click(a, _ALT_MASK | 0x1) # (Shift) taken out
+    self.assertEqual(set(v.selected), withRels(b))
+    click(b, _ALT_MASK) # just b's again
+    self.assertEqual(set(v.selected), withRels(b))
+    # an Option-drag zooms, and selects nothing
+    for o in v.selected.copy(): o.selected(False)
+    x, y = v.viewToWindow(*b.centerPt())
+    x, y = x - v.canvas.canvasx(0), y - v.canvas.canvasy(0)
+    b.onButton_1(self.event(x, y, state=_ALT_MASK))
+    v.onButton_1(self.event(x, y, state=_ALT_MASK))
+    v.onB1_Motion(self.event(x, y - 50, state=_ALT_MASK))
+    v.onB1_ButtonRelease(self.event(x, y - 50, state=_ALT_MASK))
+    self.assertFalse(v.selected)
 
   def test0950validateKey(self):
     'Option-V validates: by the V key, as the keysym is whatever the layout makes of it (the keycodes are from real presses). (Elsewhere, Alt-V: by its keysym.)'
