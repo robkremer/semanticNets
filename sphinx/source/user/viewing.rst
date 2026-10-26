@@ -143,7 +143,8 @@ scroll wheel or trackpad (**Shift** for sideways). To pan, drag with
 (a **Cmd**-click that doesn't move still adds to or takes from the
 selection); **Shift**-drag on the background pans too. Dragging with
 **Option** held down zooms, about where it was pressed: up to zoom in (twice
-as big for each 100 pixels), down to zoom out. **view | reset scroll
+as big for each 100 pixels), down to zoom out (an **Option**-click on an
+object that doesn't move selects it and its relations instead). **view | reset scroll
 region** fits the scrollable area to the drawing. A view saves its zoom and
 where it was scrolled to.
 

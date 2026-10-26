@@ -995,7 +995,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     finishTween(self.view) # (a layout's smooth move under way: done, before this is picked up)
     # Cmd-press: the view pans, Option-press: it zooms (see SNGView.onButton_1()),
     # so leave the press to the canvas; a Cmd-click that doesn't drag still
-    # toggles this one's selection
+    # toggles this one's selection, and an Option-click selects it with its
+    # relations (see selectWithRelations())
     if s_CMD(event.state) or s_ALT(event.state):
       self.dragInfo = None
       self.view._panClicked = self
@@ -2007,6 +2008,26 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
           self.draw()
           self.view.selected.discard(self)
     return "selected" in self.decorators if self.decorators is not None else None
+
+  def selectWithRelations(self, multi:bool=False) -> None:
+    '''
+    An Option-click: select this object and the relations to and from it (the
+    ones shown), instead of whatever was selected. With *multi* (Option-Cmd- or
+    Option-Shift-click) the rest of the selection stays, and it's a toggle: if
+    this object's selected, it and its relations are deselected; otherwise
+    they're added.
+    '''
+    group:list[VObject] = [self, *(r for r in self.relations if r is not self and r._isConnected() and not r.isHidden())]
+    if multi and self.selected():
+      for vo in group:
+        vo.selected(False)
+      return
+    if not multi:
+      for s in self.view.selected.copy():
+        if s not in group: s.selected(False)
+    for vo in group:
+      if not vo.selected():
+        vo.selected(True, _multi=True)
 
   def tooltipFont(self) -> Any:
     '''
