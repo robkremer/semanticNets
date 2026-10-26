@@ -6,7 +6,8 @@
 #   - Linux: SemanticNets-VERSION-x86_64.AppImage (see packaging/appimage.sh).
 #
 # Each is the PyInstaller build of packaging/semanticNets.spec, self-tested,
-# with the documentation (for the Help menu) from the gh-pages branch. They're
+# with the documentation (for the Help menu) from the gh-pages branch (not the
+# models there). They're
 # kept as the run's artifacts; for a version tag (eg, v1.0), they're added to
 # that release (made, as a draft, if there isn't one yet). Run by hand (Actions
 # > Build > Run workflow), it can add them to a release made before: name its tag.
@@ -48,7 +49,7 @@ jobs:
           git clone --depth 1 --branch "$branch" https://github.com/robkremer/pythonUtils.git pythonUtils \
             || git clone --depth 1 https://github.com/robkremer/pythonUtils.git pythonUtils
           git clone --depth 1 --branch gh-pages https://github.com/robkremer/semanticNets.git semanticNets/sphinx/build/html
-          rm -rf semanticNets/sphinx/build/html/.git
+          rm -rf semanticNets/sphinx/build/html/.git semanticNets/sphinx/build/html/models # (the models published there: see tools/publishModels.sh)
 
       - uses: astral-sh/setup-uv@v6
 
