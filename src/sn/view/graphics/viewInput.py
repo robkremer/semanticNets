@@ -336,7 +336,9 @@ class InputMixin(ViewBase):
 
     * If the shift or command key is pressed start a scroll action and return.
 
-    * If the option key is pressed start a zoom action and return.
+    * If the option key is pressed start a zoom action and return (an
+      Option-click on an object that doesn't drag selects it and its relations
+      instead: see *VObject.selectWithRelations()*).
 
     * Otherwise unselect everything and start a selection box action by setting
       up *self._selectionBoxInfo*.
@@ -356,8 +358,10 @@ class InputMixin(ViewBase):
       return None
 
     # option-Button1 down: zoom
+    # (an Option-click on an object that doesn't move selects it with its
+    # relations -- see VObject.selectWithRelations(): that's _panClicked)
     if s_ALT(event.state):
-      self._panClicked = None
+      self._panned = False
       self._cursorBeforePan = str(self.canvas.cget("cursor")) or "arrow"
       self.canvas.configure(cursor="sb_v_double_arrow")
       at = self.windowToView(self.canvas.canvasx(event.x), self.canvas.canvasy(event.y))
@@ -426,6 +430,7 @@ class InputMixin(ViewBase):
           self.zoom(scale)
           self.resetScrollRegion()
           self._scrollToPut(at, wx, wy)
+        self._panned = True
         return
 
       # continue scrolling
@@ -524,9 +529,12 @@ class InputMixin(ViewBase):
 
       * set *self._selectionBoxInfo* to *None*.
     """
-    if self._dragZoom is not None: # a drag-zoom's done
+    if self._dragZoom is not None: # a drag-zoom's done; an Option-click that never moved selects what it was on, with its relations
       self._dragZoom = None
       self.canvas.configure(cursor=self._cursorBeforePan)
+      clicked, self._panClicked = self._panClicked, None
+      if not self._panned and clicked is not None:
+        clicked.selectWithRelations(multi=s_CMD(event.state) or s_SHIFT(event.state))
       self.removeEventHandled(event)
       return None
     if self._scrolling: # a drag-scroll's done; a Cmd-click that never moved toggles what it was on

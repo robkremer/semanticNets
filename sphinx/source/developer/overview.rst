@@ -123,7 +123,16 @@ theme and graphviz) by targets of ``build.xml``:
   Builds it, and publishes it on GitHub Pages
   (https://robkremer.github.io/semanticNets/): ``tools/publishDocs.sh``
   commits the HTML to the ``gh-pages`` branch, which holds nothing else, and
-  pushes that. (``tools/publishDocs.sh --no-push`` just commits it.)
+  pushes that. (``tools/publishDocs.sh --no-push`` just commits it.) It
+  leaves the branch's ``models`` folder alone.
+
+Example models and views (larger ones than the program comes with) are on the
+web too, at https://robkremer.github.io/semanticNets/models/, for sn to open
+from there: ``tools/publishModels.sh FOLDER`` makes the ``models`` folder of
+``gh-pages`` a copy of *FOLDER*, and pushes it (``--no-push``: just commits
+it). It lists any reference to a file outside *FOLDER*, as that won't be on
+the web: models and views in the folder refer to one another by relative
+names. The builds leave the models out of the Help they bundle.
 
 The rest of ``sphinx/source`` -- this guide and the User Guide -- is written
 by hand. Images go in ``sphinx/source/images``. The pythonUtils documentation

@@ -1121,8 +1121,21 @@ class AppWindow(tk.Toplevel):
     widget.bind("<FocusOut>", self._onWindowFocusOut, add="+")
     if widget is self: # (the window made active again -- eg: after a dialog, or another application -- needn't give any widget a FocusIn)
       widget.bind("<Activate>", self._onWindowFocusIn, add="+")
+      if MAC:
+        widget.bind("<Activate>", lambda e: self._refreshSizeLimits() if e.widget is self else None, add="+")
     for child in widget.winfo_children():
       self._bindFocusTracking(child)
+
+  def _refreshSizeLimits(self) -> None:
+    """Have Tk recompute this window's largest size from the screens there are now.
+
+    On the Mac, Tk gives a window a maximum size (the area all the screens
+    cover) only when it sets the window's geometry, and doesn't update it
+    when a screen is added or rearranged: a window opened before a bigger
+    monitor was connected couldn't be made any larger than the old screens.
+    Setting the minimum size (to what it is) has Tk set both limits again.
+    """
+    self.wm_minsize(*self.wm_minsize())
 
   def _onWindowFocusIn(self, event=None) -> None:
     """Some widget inside this window just gained focus -- let this
