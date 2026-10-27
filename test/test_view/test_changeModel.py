@@ -295,5 +295,31 @@ class Test(unittest.TestCase):
     self.assertIn('"copy.snm"', text)
     self.assertNotIn(str(self.folder / "copy.snm"), text)
 
+  def test0820showsAsStored(self):
+    'The dialog names the model as the view\'s file does -- relatively, beside it -- and says so if it\'s the same one.'
+    from tkinter import messagebox
+    from sn.view.graphics.chooseModelDialog import ChooseModelDialog
+    window = self.app.openWindow(self.viewURL)
+    self.pump()
+    asked = []
+    def show(d):
+      asked.append(d)
+      d.new.set("family.snm") # (the model it shows)
+      d.ok()
+      return d.result
+    real = ChooseModelDialog.__init__
+    messages = []
+    def init(d, parent, title, message, *a, **k):
+      messages.append(message)
+      real(d, parent, title, message, *a, **k)
+    with mock.patch.object(ChooseModelDialog, "__init__", init), mock.patch.object(ChooseModelDialog, "show", show), \
+         mock.patch.object(messagebox, "showinfo") as told:
+      window.view.doChangeModel()
+    self.pump()
+    self.assertIn('"family.snm" (that is, ', messages[0])
+    self.assertIn("already shows that model", told.call_args[0][1])
+    self.assertIn('"family.snm"', told.call_args[0][1])
+    self.assertIs(self.app.windows[self.viewURL], window) # (not reopened)
+
 if __name__ == "__main__":
   unittest.main()
