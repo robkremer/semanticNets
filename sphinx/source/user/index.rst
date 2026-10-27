@@ -21,4 +21,5 @@ models of XML files and of Python programs.
    animation
    files
    terminal
+   shortcuts
    exampleApps

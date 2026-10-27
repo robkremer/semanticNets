@@ -119,7 +119,7 @@ draw the ones you want to keep.)
 Validation
 ----------
 
-**model | validate** (**Cmd-V**) is a quicker check, done without the
+**model | validate** (**Option-V**) is a quicker check, done without the
 reasoner: it checks each object's own consistency (its attributes, its types,
 its relations' ends). Its problems are shown the same way, with **E**
 markers.

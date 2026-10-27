@@ -61,7 +61,8 @@ On Linux
 
 On Windows and Linux, the keys this guide gives with **Command** are with
 **Ctrl** instead, and **Option** is **Alt**; **Settings...** and **Quit** are
-at the bottom of the **File** menu.
+at the bottom of the **File** menu. :doc:`shortcuts` lists every key and
+mouse gesture (**Help | Keys and Mouse**).
 
 Starting the program
 --------------------
