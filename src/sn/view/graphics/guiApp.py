@@ -1092,11 +1092,12 @@ class AppWindow(tk.Toplevel):
     # create content
     self.appPanedWidget = AppPanedWidget(self)
     self.appPanedWidget.pack(fill=tk.BOTH, side=tk.RIGHT, expand=True, padx=0, pady=0)
-    if not MAC:
-      # (the Mac's menu bar is the app's, at the top of the screen; elsewhere
-      # each window has its own: the app's menu bar, which Tk copies for it and
-      # keeps up to date as items are added and taken away)
-      self.config(menu=tkdottk.cget("menu"))
+    # Each window has the app's menu bar, which Tk copies for it and keeps up
+    # to date as items are added and taken away. Elsewhere it's drawn in the
+    # window; on the Mac it's put at the top of the screen while the window is
+    # in front. (Tk 8.6 on the Mac left the last menu bar showing for a window
+    # without one, but Tk 9 shows its bare default menu bar instead.)
+    self.config(menu=tkdottk.cget("menu"))
 
     self.option_add('*tearOff', tk.FALSE)
 
