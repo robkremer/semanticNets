@@ -33,7 +33,7 @@ import tkinter as tk
 import sn
 from sn.model.model import Model
 from typing import Any, cast
-from util.utils import fixURL, urlExists, addToMenuBar, addCheckToMenuBar, removeFromMenuBar, urlPath
+from util.utils import fixURL, urlExists, addToMenuBar, afterMenu, addCheckToMenuBar, removeFromMenuBar, urlPath
 from util.persistence.pRef import PRDb
 from sn.view.graphics.guiApp import Application
 from sn.view.graphics.directoryWindow import noteSaved
@@ -393,7 +393,7 @@ class FilesMixin(ViewBase):
         label = f"{os.path.splitext(db.name)[0]} (base rules)"
       else:
         label = PRDb.relativeURL(db.url, base=self.model.url)
-      menu.add_command(label=label, command=lambda db=db: self.openSuperModel(db)) # type: ignore[misc]
+      menu.add_command(label=label, command=afterMenu(lambda db=db: self.openSuperModel(db))) # type: ignore[misc]
     if not supers:
       menu.add_command(label="(none)", state=tk.DISABLED)
     if old is not None:

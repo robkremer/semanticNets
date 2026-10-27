@@ -411,7 +411,8 @@ class PluginContext:
         self.logger.error(f'The plugin {self.manifest.name}\'s "{label}" failed.', exc_info=True)
         from util.utils import showExceptionDialog
         showExceptionDialog(title=f"{self.manifest.name}: {label.strip()}") # (no parent: the editor's main window is hidden)
-    self.menu(menuPath or TOOLS_MENU).add_command(label=label.strip(), command=run, **options)
+    from util.utils import afterMenu
+    self.menu(menuPath or TOOLS_MENU).add_command(label=label.strip(), command=afterMenu(run), **options) # (on the Mac, once the menu's done with: a dialog it opens can wait)
 
   def addSeparator(self, path:str=TOOLS_MENU) -> None:
     '''Add a separator to the end of a menu (see *menu()*).'''
