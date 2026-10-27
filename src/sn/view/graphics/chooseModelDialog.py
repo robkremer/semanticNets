@@ -33,8 +33,10 @@ import os
 import tkinter as tk
 from tkinter import ttk, filedialog
 from pathlib import Path
+from urllib.parse import urljoin, quote
 from sn.model.directory import Entry
 from util.utils import ownDialog, urlPath
+from util.persistence.pRef import PRDb
 
 class ChooseModelDialog(tk.Toplevel):
   '''
@@ -43,18 +45,23 @@ class ChooseModelDialog(tk.Toplevel):
   file, or a URL. Modal: *show()* returns the model's URL, if OK'd.
   '''
 
-  def __init__(self, parent:tk.Misc, title:str, message:str, candidates:list[Entry], near:str="", ok:str="OK"):
+  def __init__(self, parent:tk.Misc, title:str, message:str, candidates:list[Entry], near:str="", ok:str="OK",
+               base:str=""):
     '''
     :param title: The dialog's title.
     :param message: What it's for, above the choices.
     :param candidates: The models offered (the first is chosen).
     :param near: A URL: the file dialog starts in its folder.
     :param ok: The OK button's text.
+    :param base: The view's URL: a relative path or URL typed (eg: "pets.snm")
+      is relative to it, as it is in the view's file -- so a view and model put
+      on the web together stay together. (Default: *near*.)
     '''
     super().__init__(parent)
     ownDialog(self, parent) # (over its parent's window, not full screen: see ownDialog())
     self.title(title)
     self.near = near
+    self.base = base or near
     self.result:str|None = None
     self.candidates = candidates
     frame = ttk.Frame(self, padding=10)
@@ -108,13 +115,30 @@ class ChooseModelDialog(tk.Toplevel):
     typed = self.new.get().strip()
     chosen = self.list.curselection() if self.list is not None else ()
     if typed:
-      self.result = typed if "://" in typed else Path(os.path.abspath(os.path.expanduser(typed))).as_uri()
+      self.result = self.resolve(typed)
     elif chosen:
       self.result = self.candidates[chosen[0]].url
     else:
       self.message.configure(text="Choose a model.")
       return
     self.destroy()
+
+  def resolve(self, typed:str) -> str:
+    '''
+    :returns: The URL of the model *typed*: a URL as is; a relative path (eg:
+      "pets.snm", "../shared/animals.snm") against *base* -- a file's folder,
+      or a web URL's (see *PRDb.absoluteURL()*); else a path's URL.
+    '''
+    if "://" in typed:
+      return typed
+    if self.base and PRDb.isRelativeURL(typed):
+      if self.base.startswith("file:"):
+        folder = os.path.dirname(urlPath(self.base) or "")
+        if folder:
+          return Path(os.path.normpath(os.path.join(folder, typed))).as_uri()
+      elif "://" in self.base:
+        return urljoin(self.base, quote(typed.replace(os.sep, "/")))
+    return Path(os.path.abspath(os.path.expanduser(typed))).as_uri()
 
   def show(self) -> str|None:
     ''':returns: The URL of the model chosen, if OK'd.'''
