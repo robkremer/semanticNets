@@ -241,10 +241,11 @@ def peekURL(url:str) -> tuple[dict[str, str], dict[str, str]]:
   :raises FileNotFoundError: If there's nothing there.
   :raises ValueError: If it isn't a model or view (or can't be fetched).
   '''
-  from urllib.request import urlopen, Request
+  from urllib.request import Request
   from urllib.error import HTTPError, URLError
+  from util.utils import openWebURL
   try:
-    with urlopen(Request(url, headers={"Accept": "application/xml, text/xml, */*"}), timeout=REMOTE_TIMEOUT) as response:
+    with openWebURL(Request(url, headers={"Accept": "application/xml, text/xml, */*"}), timeout=REMOTE_TIMEOUT) as response:
       headers = {k: v for k, v in response.headers.items()}
       return _peek(response, url), headers
   except HTTPError as e:
