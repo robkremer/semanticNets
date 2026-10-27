@@ -260,5 +260,40 @@ class Test(unittest.TestCase):
     self.assertIsNone(d.result)
     d.destroy()
 
+  def test0800relativeTyped(self):
+    'A relative path typed is relative to the view -- a file\'s, or a web URL\'s -- not the current directory.'
+    from sn.view.graphics.chooseModelDialog import ChooseModelDialog
+    d = ChooseModelDialog(self.app, "t", "m", [], near=(self.folder / "elsewhere" / "x.snm").as_uri(), base=self.viewURL)
+    for typed, url in [("copy.snm", (self.folder / "copy.snm").as_uri()),
+                       ("shared/a b.snm", (self.folder / "shared" / "a b.snm").as_uri()),
+                       ("../up.snm", (self.folder.parent / "up.snm").as_uri()),
+                       (str(self.folder / "abs.snm"), (self.folder / "abs.snm").as_uri()),
+                       ("https://example.com/m/x.snm", "https://example.com/m/x.snm")]:
+      self.assertEqual(d.resolve(typed), url, typed)
+    d.base = "https://example.com/models/family.snv"
+    self.assertEqual(d.resolve("copy.snm"), "https://example.com/models/copy.snm")
+    self.assertEqual(d.resolve("../other/a b.snm"), "https://example.com/other/a%20b.snm")
+    d.destroy()
+
+  def test0810changeModelTypedRelative(self):
+    'File | Change model..., typing just the name of a model beside the view: the view names it relatively.'
+    from sn.view.graphics.chooseModelDialog import ChooseModelDialog
+    shutil.copy(self.folder / "family.snm", self.folder / "copy.snm")
+    window = self.app.openWindow(self.viewURL)
+    self.pump()
+    def show(d):
+      d.new.set("copy.snm")
+      d.ok()
+      return d.result
+    with mock.patch.object(ChooseModelDialog, "show", show):
+      window.view.doChangeModel()
+    self.pump()
+    view = self.app.windows[self.viewURL].view
+    self.assertEqual(view.model.url, (self.folder / "copy.snm").as_uri())
+    view.save(overwrite=True)
+    text = (self.folder / "family.snv").read_text()
+    self.assertIn('"copy.snm"', text)
+    self.assertNotIn(str(self.folder / "copy.snm"), text)
+
 if __name__ == "__main__":
   unittest.main()

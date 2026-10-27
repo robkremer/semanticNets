@@ -148,7 +148,7 @@ class FilesMixin(ViewBase):
     url = ChooseModelDialog(self.window, f"Change the model of {os.path.basename(urlPath(self.url) or self.url)}",
                             f'This view shows "{urlPath(old.url) or old.url}". Which model should it show in its place? '
                             f'Its objects show the objects with the same ids in it.',
-                            app.modelCopiesOf(old.url), near=old.url, ok="Change").show()
+                            app.modelCopiesOf(old.url), near=old.url, ok="Change", base=self.url).show()
     if not url or url == old.url:
       return
     try:
