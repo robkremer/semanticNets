@@ -257,6 +257,7 @@ class Application(tk.Tk):
     menubar.add_cascade(menu=self.helpmenu, label="Help")
     self.helpmenu.add_command(label=f"{sn.NAME} User Guide", command=afterMenu(lambda: self.showHelp("user/index.html")))
     self.helpmenu.add_command(label=f"{sn.NAME} Developer Guide", command=afterMenu(lambda: self.showHelp("developer/index.html")))
+    self.helpmenu.add_command(label="Keys and Mouse", command=afterMenu(lambda: self.showHelp("user/shortcuts.html")))
     self.helpmenu.add_separator()
     self.helpmenu.add_command(label="Install Example Models", command=afterMenu(self.onInstallExamples))
     self.helpmenu.add_command(label="Reveal Plugins Folder", command=afterMenu(self.revealPlugins))

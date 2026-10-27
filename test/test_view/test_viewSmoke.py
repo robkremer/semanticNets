@@ -549,5 +549,21 @@ class Test(unittest.TestCase):
       self.app.terminalRegistry.unregisterWindow(v.window)
       v.window.destroy()
 
+  def test1300helpPages(self):
+    'Each Help menu item that shows a page of the documentation shows one there is (eg: "Keys and Mouse").'
+    shown:list[str] = []
+    menu = self.app.helpmenu
+    labels = [menu.entrycget(i, "label") for i in range(menu.index("end") + 1) if menu.type(i) == "command"]
+    self.assertIn("Keys and Mouse", labels)
+    with mock.patch.object(self.app, "showHelp", side_effect=shown.append):
+      for label in labels:
+        if "Guide" in label or label == "Keys and Mouse":
+          menu.invoke(label)
+      self.pump() # (on the Mac, afterMenu() runs them from the event loop)
+    self.assertIn("user/shortcuts.html", shown)
+    source = Path(sn.resourcePath("sphinx", "source"))
+    for page in shown:
+      self.assertTrue((source / page).with_suffix(".rst").exists(), page)
+
 if __name__ == "__main__":
   unittest.main()
