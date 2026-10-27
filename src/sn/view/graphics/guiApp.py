@@ -232,9 +232,9 @@ class Application(tk.Tk):
     menubar:tk.Menu = tk.Menu(self)
     
     self.filemenu = tk.Menu(menubar, name="file")
-    self.filemenu.add_command(label="New...", command=self.doNew)
-    self.filemenu.add_command(label="Open...", command=self.doOpen)
-    self.filemenu.add_command(label="Open URL...", command=self.doOpenURL)
+    self.filemenu.add_command(label="New...", command=afterMenu(self.doNew)) # (afterMenu(): its dialog waits)
+    self.filemenu.add_command(label="Open...", command=afterMenu(self.doOpen))
+    self.filemenu.add_command(label="Open URL...", command=afterMenu(self.doOpenURL))
     self.recentMenu = tk.Menu(self.filemenu, name="recent")
     self.filemenu.add_cascade(label="Open Recent", menu=self.recentMenu)
     self._fillRecentMenu()
@@ -255,11 +255,11 @@ class Application(tk.Tk):
 
     self.helpmenu = tk.Menu(menubar, name="help")  # macOS auto-fills this (search field, "Python Help", ...)
     menubar.add_cascade(menu=self.helpmenu, label="Help")
-    self.helpmenu.add_command(label=f"{sn.NAME} User Guide", command=lambda: self.showHelp("user/index.html"))
-    self.helpmenu.add_command(label=f"{sn.NAME} Developer Guide", command=lambda: self.showHelp("developer/index.html"))
+    self.helpmenu.add_command(label=f"{sn.NAME} User Guide", command=afterMenu(lambda: self.showHelp("user/index.html")))
+    self.helpmenu.add_command(label=f"{sn.NAME} Developer Guide", command=afterMenu(lambda: self.showHelp("developer/index.html")))
     self.helpmenu.add_separator()
-    self.helpmenu.add_command(label="Install Example Models", command=self.onInstallExamples)
-    self.helpmenu.add_command(label="Reveal Plugins Folder", command=self.revealPlugins)
+    self.helpmenu.add_command(label="Install Example Models", command=afterMenu(self.onInstallExamples))
+    self.helpmenu.add_command(label="Reveal Plugins Folder", command=afterMenu(self.revealPlugins))
 
     if not MAC:
       # (on the Mac, Settings and Quit are in the app's own menu: see
@@ -732,7 +732,7 @@ class Application(tk.Tk):
       label = name
       if names.count(name) > 1: # (eg: two family.snv's: say which)
         label = f"{name} \u2014 {os.path.basename(os.path.dirname(_filePath(e['view'])))}"
-      menu.add_command(label=label, command=lambda e=e: self.openRecent(e))
+      menu.add_command(label=label, command=afterMenu(lambda e=e: self.openRecent(e)))
     if entries:
       menu.add_separator()
     menu.add_command(label="Clear Menu", command=lambda: self._setRecentFiles([]),

@@ -223,11 +223,13 @@ class Test(unittest.TestCase):
     self.assertEqual(self.labels(ctx.menu("Alpha")), ["Sub"])
     tools.invoke(0)
     sub.invoke(0)
+    self.root.update() # (on the Mac, they run once the menu's done with: see util.utils.afterMenu())
     self.assertEqual(calls, ["tools", "deep"])
     # a failing command: logged and shown, not raised
     ctx.addMenuItem("Fail", lambda: 1/0)
     with mock.patch("util.utils.showExceptionDialog") as shown, self.assertLogs(ctx.logger.name, "ERROR"):
       tools.invoke(3)
+      self.root.update()
     shown.assert_called_once()
     # no Window menu: added at the end
     bare = SimpleNamespace(menubar=tk.Menu(self.root))
