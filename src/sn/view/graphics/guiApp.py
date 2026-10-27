@@ -62,7 +62,7 @@ from typing import cast, TYPE_CHECKING
 from types import NoneType
 from tkinter import ttk
 from sn import snPrefs
-from util.utils import showExceptionDialog, fixURL, urlExists,\
+from util.utils import afterMenu, showExceptionDialog, fixURL, urlExists,\
   isValidURL, keepLast
 from util.platformSupport import MAC, shortcut, openFile, setUpLook, setDPIAware, documentsFolder
 from util.singleInstance import SingleInstance
@@ -143,7 +143,7 @@ class Application(tk.Tk):
     than being (re-)registered — and guarded against re-registration —
     from every window.
     """
-    self.createcommand("tk::mac::ShowPreferences", self.openSettings)
+    self.createcommand("tk::mac::ShowPreferences", afterMenu(self.openSettings)) # (its dialog waits: not from inside the menu's action)
 
   def _installQuitHandler(self) -> None:
     """Wire up the "Quit" item under the app item in the menu bar.
