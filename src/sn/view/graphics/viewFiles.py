@@ -145,11 +145,18 @@ class FilesMixin(ViewBase):
     from sn.view.graphics.vobjects import VObject
     app = cast(Application, self.window._root()) # type: ignore[attr-defined]
     old = self.model
+    full = urlPath(old.url) or old.url
+    stored = PRDb.relativeURL(old.url, self.url) # (as it's named in the view's file: eg, "pets.snm" beside it)
+    shows = f'"{stored}" (that is, "{full}")' if stored not in (old.url, full) else f'"{full}"'
     url = ChooseModelDialog(self.window, f"Change the model of {os.path.basename(urlPath(self.url) or self.url)}",
-                            f'This view shows "{urlPath(old.url) or old.url}". Which model should it show in its place? '
+                            f'This view shows {shows}. Which model should it show in its place? '
                             f'Its objects show the objects with the same ids in it.',
                             app.modelCopiesOf(old.url), near=old.url, ok="Change", base=self.url).show()
-    if not url or url == old.url:
+    if not url:
+      return
+    if url == old.url:
+      messagebox.showinfo("Change model", f'This view already shows that model: its file names it {shows}.',
+                          parent=self.window)
       return
     try:
       new = Model.getDB(url)
