@@ -36,7 +36,9 @@ there again.
   A model or view on the web is read-only: it can't be saved there, but
   **Save view as...** and **Save model as...** save a copy.
 - **File | Open Recent** lists the views you've opened most recently, newest
-  first (how many: the ``gui/recentFiles`` setting, 10 to start with). One
+  first (how many: the ``gui/recentFiles`` setting, 10 to start with), each by
+  its whole path (``~`` for your home folder) or, for one on the web, its whole
+  URL. One
   that was never saved opens as its model's default view; one that's gone is
   taken off the list. **Clear Menu** empties it.
 - **File | Open super model** opens a window on one of the window's model's

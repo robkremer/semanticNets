@@ -62,7 +62,7 @@ from typing import cast, TYPE_CHECKING
 from types import NoneType
 from tkinter import ttk
 from sn import snPrefs
-from util.utils import afterMenu, showExceptionDialog, fixURL, urlExists,\
+from util.utils import afterMenu, showExceptionDialog, fixURL, urlExists, displayURL,\
   isValidURL, keepLast
 from util.platformSupport import MAC, shortcut, openFile, setUpLook, setDPIAware, documentsFolder
 from util.singleInstance import SingleInstance
@@ -678,6 +678,9 @@ class Application(tk.Tk):
   RECENT_KEPT = 50
   "How many recent views are remembered, whatever \"gui/recentFiles\" (how many are listed) is."
 
+  RECENT_LABEL_LENGTH = 100
+  "The most characters File | Open Recent shows of a view's path or URL."
+
   def recentFiles(self) -> list[dict[str, str]]:
     '''
     :returns: The views opened most recently, most recent first: each
@@ -718,8 +721,9 @@ class Application(tk.Tk):
   def _fillRecentMenu(self) -> None:
     '''
     (Re)fill the File | Open Recent menu from *recentFiles()*: as many as the
-    "gui/recentFiles" preference says, each named by its file (and, if two have
-    the same name, its folder), then "Clear Menu".
+    "gui/recentFiles" preference says, each shown as its whole path (with "~"
+    for the home folder) or, if it's on the web, its whole URL (a very long one
+    loses some of its middle), then "Clear Menu".
     '''
     menu = self.__dict__.get("recentMenu")
     if menu is None:
@@ -728,12 +732,9 @@ class Application(tk.Tk):
     pref = snPrefs.get("gui/recentFiles", 10)
     count = max(0, pref) if isinstance(pref, int) else 10
     entries = self.recentFiles()[:count]
-    names = [_fileName(e["view"]) for e in entries]
-    for e, name in zip(entries, names):
-      label = name
-      if names.count(name) > 1: # (eg: two family.snv's: say which)
-        label = f"{name} \u2014 {os.path.basename(os.path.dirname(_filePath(e['view'])))}"
-      menu.add_command(label=label, command=afterMenu(lambda e=e: self.openRecent(e)))
+    for e in entries:
+      menu.add_command(label=displayURL(e["view"], self.RECENT_LABEL_LENGTH),
+                       command=afterMenu(lambda e=e: self.openRecent(e)))
     if entries:
       menu.add_separator()
     menu.add_command(label="Clear Menu", command=lambda: self._setRecentFiles([]),
