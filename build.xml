@@ -64,6 +64,12 @@
 	<exec executable="${basedir}/tools/publishDocs.sh" failonerror="true"/>
   </target>
 
+  <target name="publishWebModels" description="Publishes the webModels directory to GitHub Pages: commits it to the gh-pages branch.">
+	<exec executable="${basedir}/tools/publishModels.sh" failonerror="true">
+		<arg value="${basedir}/webModels"/>
+	</exec>
+  </target>
+
   <!-- ==================================================================== -->
   <!-- Packaging: the stand-alone app, its installer, and the .pyz.          -->
   <!-- The build tools live in a build-only virtualenv (.venv-build, made by -->
