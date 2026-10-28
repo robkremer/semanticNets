@@ -565,5 +565,26 @@ class Test(unittest.TestCase):
     for page in shown:
       self.assertTrue((source / page).with_suffix(".rst").exists(), page)
 
+  def test1400recentShowsWholePaths(self):
+    'File | Open Recent shows each view\'s whole path ("~" for the home folder), or a web one\'s whole URL.'
+    home = Path.home()
+    entries = [{"view": (home / "a" / "family.snv").as_uri(), "model": ""},
+               {"view": (home / "b" / "family.snv").as_uri(), "model": ""},
+               {"view": "https://example.org/models/web.snv", "model": ""},
+               {"view": (home / ("x" * 150) / "long.snv").as_uri(), "model": ""}]
+    with mock.patch.object(self.app, "recentFiles", return_value=entries):
+      self.app._fillRecentMenu()
+    try:
+      menu = self.app.recentMenu
+      labels = [menu.entrycget(i, "label") for i in range(menu.index("end") + 1) if menu.type(i) == "command"]
+      shown = (lambda p: "~" + str(p)[len(str(home)):]) if sys.platform != "win32" else str # (no "~" on Windows)
+      self.assertEqual(labels[:3], [shown(home / "a" / "family.snv"), shown(home / "b" / "family.snv"),
+                                    "https://example.org/models/web.snv"])
+      self.assertEqual(len(labels[3]), self.app.RECENT_LABEL_LENGTH)
+      self.assertTrue(labels[3].endswith("long.snv"))
+      self.assertEqual(labels[4], "Clear Menu")
+    finally:
+      self.app._fillRecentMenu()
+
 if __name__ == "__main__":
   unittest.main()
