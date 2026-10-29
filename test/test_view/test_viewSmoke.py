@@ -565,6 +565,26 @@ class Test(unittest.TestCase):
     for page in shown:
       self.assertTrue((source / page).with_suffix(".rst").exists(), page)
 
+  def test1310helpServedNotFile(self):
+    'showHelp() opens the page from the documentation\'s local web server, not as a file: URL (Safari leaves those unstyled).'
+    import tempfile
+    from util import folderServer
+    with tempfile.TemporaryDirectory() as top:
+      os.makedirs(os.path.join(top, "user"))
+      Path(top, "user", "shortcuts.html").write_text("<p>keys</p>")
+      with mock.patch.object(sn, "resourcePath", side_effect=lambda *parts: top if parts == ("help",) else "/nonexistent"), \
+           mock.patch.object(folderServer.webbrowser, "open") as op:
+        self.app.showHelp("user/shortcuts.html")
+      try:
+        op.assert_called_once()
+        url = op.call_args[0][0]
+        self.assertTrue(url.startswith("http://127.0.0.1:") and url.endswith("/user/shortcuts.html"), url)
+        import urllib.request
+        with urllib.request.urlopen(url, timeout=5) as r:
+          self.assertEqual(r.read(), b"<p>keys</p>")
+      finally:
+        folderServer.stopServing(top)
+
   def test1400recentShowsWholePaths(self):
     'File | Open Recent shows each view\'s whole path ("~" for the home folder), or a web one\'s whole URL.'
     home = Path.home()

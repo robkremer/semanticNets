@@ -279,15 +279,17 @@ class Application(tk.Tk):
 
   def showHelp(self, page:str) -> None:
     """Show a page of the documentation in the web browser: the copy bundled
-    in a packaged app, or else the project's built documentation.
+    in a packaged app, or else the project's built documentation. It's served
+    from 127.0.0.1 (see *util.folderServer*), not opened as a file: URL,
+    since Safari won't load a file: page's stylesheets from its parent
+    folder ("../_static/"), so it would show unstyled.
 
     :param page: The page, relative to the documentation's top, eg: "user/index.html".
     """
-    import webbrowser
+    from util.folderServer import openInBrowser
     for top in (sn.resourcePath("help"), sn.resourcePath("sphinx", "build", "html")):
-      path = os.path.join(top, page)
-      if os.path.exists(path):
-        webbrowser.open(Path(path).as_uri())
+      if os.path.exists(os.path.join(top, page)):
+        openInBrowser(top, page)
         return
     logger.error(f'The documentation ("{page}") isn\'t available: build it with the "doc" ant target.')
 
