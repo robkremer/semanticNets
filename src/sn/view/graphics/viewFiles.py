@@ -212,7 +212,7 @@ class FilesMixin(ViewBase):
     old, where = answer
     try:
       new = Model.getDB(PRDb.absoluteURL(where, base=model.url))
-      count = model.replaceSuperModel(old, new)
+      count = model.replaceSuperModel(old, new, relative=PRDb.isRelativeURL(where))
     except Exception as ex:
       messagebox.showerror("Replace super-model", f'Nothing was changed:\n\n{ex}', parent=self.window)
       return
@@ -392,7 +392,7 @@ class FilesMixin(ViewBase):
       elif baseRulesSource(db) is not None:
         label = f"{os.path.splitext(db.name)[0]} (base rules)"
       else:
-        label = PRDb.relativeURL(db.url, base=self.model.url)
+        label = self.model.superDBRef(db)
       menu.add_command(label=label, command=afterMenu(lambda db=db: self.openSuperModel(db))) # type: ignore[misc]
     if not supers:
       menu.add_command(label="(none)", state=tk.DISABLED)
