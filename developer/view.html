@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Layout" href="layout.html"><link rel="prev" title="The Reasoner" href="reasoner.html">
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
-    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.2.0 and Furo 2025.12.19 -->
         <title>The Graphical View - Semantic Nets 1.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
@@ -317,7 +317,11 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../models.html">On Line Models</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../models/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../models/snSourceCode.html">Semantic Nets Source Code Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../models/families.html">Families Models</a></li>
+</ul>
+</li>
 </ul>
 
 </div>
@@ -553,7 +557,7 @@ launcher would start a second Eclipse, which finds the workspace in use; this
 sends the running one the file as “path:line”, which it takes apart – give
 your Eclipse app’s own path; the first time, macOS asks whether this may
 control Eclipse):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">osascript</span> <span class="o">-</span><span class="n">e</span> <span class="s2">&quot;on run a&quot;</span> <span class="o">-</span><span class="n">e</span> <span class="s2">&quot;tell application </span><span class="se">\&quot;</span><span class="s2">/Applications/Eclipse.app</span><span class="se">\&quot;</span><span class="s2"> to open (POSIX file (item 1 of a))&quot;</span> <span class="o">-</span><span class="n">e</span> <span class="s2">&quot;end run&quot;</span> <span class="p">{</span><span class="n">path</span><span class="p">}:{</span><span class="n">line</span><span class="p">}</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">osascript</span> <span class="o">-</span><span class="n">e</span> <span class="s2">"on run a"</span> <span class="o">-</span><span class="n">e</span> <span class="s2">"tell application </span><span class="se">\"</span><span class="s2">/Applications/Eclipse.app</span><span class="se">\"</span><span class="s2"> to open (POSIX file (item 1 of a))"</span> <span class="o">-</span><span class="n">e</span> <span class="s2">"end run"</span> <span class="p">{</span><span class="n">path</span><span class="p">}:{</span><span class="n">line</span><span class="p">}</span>
 </pre></div>
 </div>
 </section>

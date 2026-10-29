@@ -1,4 +1,3 @@
-
 Semantic Nets
 =============
 
@@ -39,7 +38,7 @@ The documentation is in two parts:
    :caption: Example Materials
 
    plugins/index
-   models
+   models/index
    
 ----------------------------------
 

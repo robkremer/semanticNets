@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="sn package" href="../dev/sn.html"><link rel="prev" title="Building on Semantic Nets" href="extending.html">
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
-    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.2.0 and Furo 2025.12.19 -->
         <title>Conventions and Testing - Semantic Nets 1.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
@@ -317,7 +317,11 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../models.html">On Line Models</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../models/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../models/snSourceCode.html">Semantic Nets Source Code Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../models/families.html">Families Models</a></li>
+</ul>
+</li>
 </ul>
 
 </div>
@@ -388,13 +392,13 @@ least a line saying what it does or gives. They say what something is <em>for</e
 and <em>why</em> it is the way it is; the parameters are given in Sphinx’s field
 lists:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">gap</span><span class="p">(</span><span class="n">snap</span><span class="p">:</span><span class="n">Snapshot</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span><span class="nb">int</span><span class="p">,</span> <span class="n">j</span><span class="p">:</span><span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">fast</span><span class="p">:</span><span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">  </span><span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">  The gap between two objects&#39; edges ...</span>
+<span class="w">  </span><span class="sd">'''</span>
+<span class="sd">  The gap between two objects' edges ...</span>
 
-<span class="sd">  :param snap: The layout&#39;s snapshot.</span>
-<span class="sd">  :param i: An object&#39;s index in *snap*.</span>
+<span class="sd">  :param snap: The layout's snapshot.</span>
+<span class="sd">  :param i: An object's index in *snap*.</span>
 <span class="sd">  :returns: ...</span>
-<span class="sd">  &#39;&#39;&#39;</span>
+<span class="sd">  '''</span>
 </pre></div>
 </div>
 <p>The types are the annotations’ – the API reference shows them with each

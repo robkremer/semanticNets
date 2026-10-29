@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="sn.model.modelPrefs module" href="sn.model.modelPrefs.html"><link rel="prev" title="sn.model.directory module" href="sn.model.directory.html">
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
-    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.2.0 and Furo 2025.12.19 -->
         <title>sn.model.model module - Semantic Nets 1.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
@@ -317,7 +317,11 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../models.html">On Line Models</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../models/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../models/snSourceCode.html">Semantic Nets Source Code Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../models/families.html">Families Models</a></li>
+</ul>
+</li>
 </ul>
 
 </div>
@@ -1863,9 +1867,10 @@ saved with a model by name (“sn:/sn”, “sn:/baseRules”: see
 <dd><dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>This model’s super-models (see <em>PRDb.superDBs</em>) in order, as
-shown to the user: their files relative to this one’s where they’re
-near it; then any that couldn’t be read when it was. Not the implicit
-ones (see <em>implicitSuperDBs()</em>): they’re always the first.</p>
+shown to the user, as they’re saved (see <em>PRDb.superDBRef()</em>): their
+files relative to this one’s where they’re near it, or where they were
+given relatively; then any that couldn’t be read when it was. Not the
+implicit ones (see <em>implicitSuperDBs()</em>): they’re always the first.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>list[str]</p>
@@ -1895,7 +1900,7 @@ model that replaced it.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.model.model.Model.replaceSuperModel">
-<span class="sig-name descname"><span class="pre">replaceSuperModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">old</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.model.Model.replaceSuperModel" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">replaceSuperModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">old</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.model.Model.replaceSuperModel" title="Link to this definition">¶</a></dt>
 <dd><p>Put <em>new</em> in <em>old</em>’s place: as a super-model (in the same position; or
 added, if <em>old</em> wasn’t one – see <em>unlistedModels()</em>), and as what this
 model’s objects refer to – each reference to one of <em>old</em>’s objects
@@ -1908,6 +1913,9 @@ Nothing is changed unless every object referred to is in <em>new</em>.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>old</strong> (<a class="reference internal" href="#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>) – A model this one’s objects refer to.</p></li>
 <li><p><strong>new</strong> (<a class="reference internal" href="#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>) – The model to refer to instead.</p></li>
+<li><p><strong>relative</strong> (<em>bool</em>) – Whether <em>new</em> was given relative to this model’s file
+(eg: “../../ontologies/animals.snm”): it’s saved relative to it however
+far from it it is (see <em>PRDb.relativeSuperDBs</em>).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1929,7 +1937,11 @@ this model, or builds on it.</p>
 <span class="sig-name descname"><span class="pre">setSuperModels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">paths</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.model.Model.setSuperModels" title="Link to this definition">¶</a></dt>
 <dd><p>Make this model’s super-models those at <em>paths</em>, in that order, after the
 implicit ones (always the first: see <em>implicitSuperDBs()</em>): eg: as edited
-in its preferences (see <em>superModelPaths()</em>). Relative paths are relative to this model’s file.
+in its preferences (see <em>superModelPaths()</em>). Relative paths (eg:
+“animals.snm”, “../../ontologies/animals.snm”) are relative to this model’s
+file – or URL, for a model on the web – and are saved relative to it
+however far from it they are (see <em>PRDb.relativeSuperDBs</em>); others are
+saved as they are, unless they’re near it (see <em>PRDb.relativeURL()</em>).
 Nothing is changed unless all of them are fine.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
