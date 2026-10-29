@@ -38,7 +38,7 @@ The documentation is in two parts:
    :caption: Example Materials
 
    plugins/index
-   models/index
+   modelsDoc/index
    
 ----------------------------------
 
