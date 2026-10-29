@@ -209,6 +209,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../user/animation.html">Animation Layout</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user/files.html">Files and Settings</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user/terminal.html">The Terminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/shortcuts.html">Keys and mouse</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user/exampleApps.html">Plugins</a></li>
 </ul>
 </li>
@@ -297,6 +298,9 @@
 <li class="toctree-l2"><a class="reference internal" href="sn.plugins.html">sn.plugins module</a></li>
 </ul>
 </li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Example Materials</span></p>
+<ul>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../plugins/index.html">The plugins</a><input aria-label="Toggle navigation of The plugins" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.XMLreader.html">snplugins.XMLreader package</a><input aria-label="Toggle navigation of snplugins.XMLreader package" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.reader.html">snplugins.XMLreader.reader module</a></li>
@@ -313,6 +317,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../models.html">On Line Models</a></li>
 </ul>
 
 </div>
@@ -517,7 +522,7 @@ stem is its name.</p>
 <span class="sig-prename descclassname"><span class="pre">sn.model.names.</span></span><span class="sig-name descname"><span class="pre">nameKind</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.names.nameKind" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>name</strong> (<a class="reference internal" href="sn.controller.modelInterface.html#sn.controller.modelInterface.ModelContext._Remove.object" title="sn.controller.modelInterface.ModelContext._Remove.object"><em>object</em></a>) – A name – anything else (eg: None, during construction) is a constant.</p>
+<dd class="field-odd"><p><strong>name</strong> (<em>object</em>) – A name – anything else (eg: None, during construction) is a constant.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Its kind, per the grammar in use.</p>
@@ -533,7 +538,7 @@ stem is its name.</p>
 <span class="sig-prename descclassname"><span class="pre">sn.model.names.</span></span><span class="sig-name descname"><span class="pre">isVariableName</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.names.isVariableName" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>name</strong> (<a class="reference internal" href="sn.controller.modelInterface.html#sn.controller.modelInterface.ModelContext._Remove.object" title="sn.controller.modelInterface.ModelContext._Remove.object"><em>object</em></a>)</p>
+<dd class="field-odd"><p><strong>name</strong> (<em>object</em>)</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>True iff <em>name</em> is a variable’s, per the grammar in use.</p>
@@ -549,7 +554,7 @@ stem is its name.</p>
 <span class="sig-prename descclassname"><span class="pre">sn.model.names.</span></span><span class="sig-name descname"><span class="pre">isHiddenName</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.names.isHiddenName" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>name</strong> (<a class="reference internal" href="sn.controller.modelInterface.html#sn.controller.modelInterface.ModelContext._Remove.object" title="sn.controller.modelInterface.ModelContext._Remove.object"><em>object</em></a>)</p>
+<dd class="field-odd"><p><strong>name</strong> (<em>object</em>)</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>True iff <em>name</em> is a hidden variable’s, per the grammar in use (see <em>NameGrammar.isHidden()</em>).</p>

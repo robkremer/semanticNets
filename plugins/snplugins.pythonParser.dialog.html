@@ -209,6 +209,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../user/animation.html">Animation Layout</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user/files.html">Files and Settings</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user/terminal.html">The Terminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/shortcuts.html">Keys and mouse</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user/exampleApps.html">Plugins</a></li>
 </ul>
 </li>
@@ -228,7 +229,7 @@
 </li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
-<ul class="current">
+<ul>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../dev/sn.html">sn package</a><input aria-label="Toggle navigation of sn package" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.controller.html">sn.controller package</a><input aria-label="Toggle navigation of sn.controller package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.controller.modelInterface.html">sn.controller.modelInterface module</a></li>
@@ -297,6 +298,9 @@
 <li class="toctree-l2"><a class="reference internal" href="../dev/sn.plugins.html">sn.plugins module</a></li>
 </ul>
 </li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Example Materials</span></p>
+<ul class="current">
 <li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">The plugins</a><input aria-label="Toggle navigation of The plugins" checked="" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l2 has-children"><a class="reference internal" href="snplugins.XMLreader.html">snplugins.XMLreader package</a><input aria-label="Toggle navigation of snplugins.XMLreader package" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="snplugins.XMLreader.reader.html">snplugins.XMLreader.reader module</a></li>
@@ -313,6 +317,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../models.html">On Line Models</a></li>
 </ul>
 
 </div>
@@ -377,9 +382,17 @@ It’s found in its file as it is now – after the file’s been edited – by 
 name (see <em>source</em>).</p>
 <p>The model is named after the files’ main module – the best guess at it: see
 <em>parser.guessMain()</em> – with “_py” (eg: “XMLreader_py.snm” and
-“XMLreader_py.snv”), next to it (see <em>parser.outputPaths()</em>), asking first if
-they’re already there, and replacing them. (Use “save as” to keep it
-somewhere else.)</p>
+“XMLreader_py.snv”), next to it (see <em>parser.outputPaths()</em>). (Use “save as”
+to keep it somewhere else.) If they’re already there, it asks whether to</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>update them (see <em>update()</em>): the model’s brought up to date with the
+code, keeping its nodes – and their ids – for what’s still there, so
+the views of it (the one made here, and any others) still work;</p></li>
+<li><p>replace them: a new model, and view, made afresh; or</p></li>
+<li><p>cancel.</p></li>
+</ul>
+</div></blockquote>
 <p>Created on Oct 10, 2026 (as a program of its own: a plugin since Oct 17)</p>
 <p><em>Code author: Rob Kremer &lt;<a class="reference external" href="mailto:robkremer&#37;&#52;&#48;me&#46;com">robkremer<span>&#64;</span>me<span>&#46;</span>com</a>&gt;</em></p>
 <dl class="py data">
@@ -496,10 +509,64 @@ the tree layout places everything.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="snplugins.pythonParser.dialog.showNew">
+<span class="sig-prename descclassname"><span class="pre">snplugins.pythonParser.dialog.</span></span><span class="sig-name descname"><span class="pre">showNew</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">showImports</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'given'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.pythonParser.dialog.showNew" title="Link to this definition">¶</a></dt>
+<dd><p>After the model’s been updated (see <em>update()</em>): show, in a view of it
+made before, its new packages and modules, and the contains-module,
+has-subpackage and imports relations (as <em>showImports</em> says: see
+<em>showPackages()</em>) new between those it shows now – where the view’s
+dynamic layout (if it has one: eg: the tree layout <em>showPackages()</em> gave
+it) puts them.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>view</strong> (<a class="reference internal" href="../dev/sn.view.graphics.sngView.html#sn.view.graphics.sngView.SNGView" title="sn.view.graphics.sngView.SNGView"><em>SNGView</em></a>) – A view of <em>model</em>.</p></li>
+<li><p><strong>model</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>) – A model made by <em>parser.buildModel()</em>, and updated.</p></li>
+<li><p><strong>new</strong> (<em>list</em><em>[</em><em>Any</em><em>]</em>) – The objects added to it by the update (see <em>parser.ModelUpdate.added</em>).</p></li>
+<li><p><strong>showImports</strong> (<em>str</em>) – Which imports to show: “none”, “given” or “all”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.pythonParser.dialog.update">
+<span class="sig-prename descclassname"><span class="pre">snplugins.pythonParser.dialog.</span></span><span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modelPath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viewPath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">where</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.pythonParser.dialog.update" title="Link to this definition">¶</a></dt>
+<dd><p>Bring the model <em>modelPath</em> – made from these files before – up to date
+with them (see <em>parser.updateModel()</em>), save it, and open its view (made
+afresh, if it isn’t there), showing the new packages and modules (see
+<em>showNew()</em>). Its own (and its views’) unsaved changes are offered to be
+saved first.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>app</strong> (<a class="reference internal" href="../dev/sn.view.graphics.guiApp.html#sn.view.graphics.guiApp.Application" title="sn.view.graphics.guiApp.Application"><em>Application</em></a>) – The editor.</p></li>
+<li><p><strong>modelPath</strong> (<em>str</em>) – The model’s file.</p></li>
+<li><p><strong>viewPath</strong> (<em>str</em>) – Its view’s file (see <em>parser.outputPaths()</em>).</p></li>
+<li><p><strong>modules</strong> (<em>list</em><em>[</em><a class="reference internal" href="snplugins.pythonParser.parser.html#snplugins.pythonParser.parser.SourceModule" title="snplugins.pythonParser.parser.SourceModule"><em>SourceModule</em></a><em>]</em>) – The modules (see <em>parser.readModules()</em>).</p></li>
+<li><p><strong>options</strong> (<a class="reference internal" href="#snplugins.pythonParser.dialog.Options" title="snplugins.pythonParser.dialog.Options"><em>Options</em></a>) – What to show.</p></li>
+<li><p><strong>where</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – The parent of any messages (see <em>convert()</em>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether it did.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="snplugins.pythonParser.dialog.convert">
 <span class="sig-prename descclassname"><span class="pre">snplugins.pythonParser.dialog.</span></span><span class="sig-name descname"><span class="pre">convert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">paths</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.pythonParser.dialog.convert" title="Link to this definition">¶</a></dt>
 <dd><p>Make the model and view of the Python files <em>paths</em> (and what they import,
-as far as <em>options</em> says), save them, and open the view.</p>
+as far as <em>options</em> says), save them, and open the view. If they’re there
+already, ask whether to update them (see <em>update()</em>), replace them, or
+cancel.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -738,6 +805,8 @@ view (none, those of the files given, or all); and “Go” (see <em>convert()</
 </li>
 <li><a class="reference internal" href="#snplugins.pythonParser.dialog.packagesAndModules"><code class="docutils literal notranslate"><span class="pre">packagesAndModules()</span></code></a></li>
 <li><a class="reference internal" href="#snplugins.pythonParser.dialog.showPackages"><code class="docutils literal notranslate"><span class="pre">showPackages()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.pythonParser.dialog.showNew"><code class="docutils literal notranslate"><span class="pre">showNew()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.pythonParser.dialog.update"><code class="docutils literal notranslate"><span class="pre">update()</span></code></a></li>
 <li><a class="reference internal" href="#snplugins.pythonParser.dialog.convert"><code class="docutils literal notranslate"><span class="pre">convert()</span></code></a></li>
 <li><a class="reference internal" href="#snplugins.pythonParser.dialog.ParserDialog"><code class="docutils literal notranslate"><span class="pre">ParserDialog</span></code></a><ul>
 <li><a class="reference internal" href="#snplugins.pythonParser.dialog.ParserDialog.__init__"><code class="docutils literal notranslate"><span class="pre">ParserDialog.__init__()</span></code></a></li>

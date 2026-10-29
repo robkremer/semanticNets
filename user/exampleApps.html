@@ -3,7 +3,7 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Developer Guide" href="../developer/index.html"><link rel="prev" title="The Terminal" href="terminal.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Developer Guide" href="../developer/index.html"><link rel="prev" title="Keys and mouse" href="shortcuts.html">
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
@@ -209,6 +209,7 @@
 <li class="toctree-l2"><a class="reference internal" href="animation.html">Animation Layout</a></li>
 <li class="toctree-l2"><a class="reference internal" href="files.html">Files and Settings</a></li>
 <li class="toctree-l2"><a class="reference internal" href="terminal.html">The Terminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="shortcuts.html">Keys and mouse</a></li>
 <li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Plugins</a></li>
 </ul>
 </li>
@@ -297,6 +298,9 @@
 <li class="toctree-l2"><a class="reference internal" href="../dev/sn.plugins.html">sn.plugins module</a></li>
 </ul>
 </li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Example Materials</span></p>
+<ul>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../plugins/index.html">The plugins</a><input aria-label="Toggle navigation of The plugins" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.XMLreader.html">snplugins.XMLreader package</a><input aria-label="Toggle navigation of snplugins.XMLreader package" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.reader.html">snplugins.XMLreader.reader module</a></li>
@@ -313,6 +317,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../models.html">On Line Models</a></li>
 </ul>
 
 </div>
@@ -519,7 +524,7 @@ file with references, hiding them (eg: <em>DeviceID</em>) leaves just the tree.<
 <section id="the-python-parser">
 <h2>The Python parser<a class="headerlink" href="#the-python-parser" title="Link to this heading">¶</a></h2>
 <p><strong>Tools | Python Parser…</strong> makes a model of a Python program: its packages, modules, classes, functions
-and methods, their doc strings, and what imports what. It opens a dialog,
+and methods, the classes’ variables (and their types), their doc strings, and what imports what. It opens a dialog,
 listing the files to analyse (a folder stands for all the <code class="docutils literal notranslate"><span class="pre">.py</span></code> files in
 and below it: <strong>Add files…</strong> and <strong>Add folder…</strong> add more), with:</p>
 <dl class="simple">
@@ -551,6 +556,26 @@ followed): its two modules, <em>reader</em> and <em>view</em>, and the modules t
 import, in their packages.</span><a class="headerlink" href="#id2" title="Link to this image">¶</a></p>
 </figcaption>
 </figure>
+<p>If the model and view are already there (eg: from an earlier run, before the
+code changed), it asks what to do:</p>
+<dl class="simple">
+<dt><strong>Update</strong></dt><dd><p>Bring the model up to date with the code: what’s still there keeps its node
+– and its id, so the views of the model (yours, and its own) still work –
+corrected (eg: its doc string, its lines); what’s new is added; and what’s
+gone from the code is removed from the model. Things are matched by their
+full dotted names (eg: <em>sn.model.model.Node.isa</em>): something renamed, or
+moved, is taken to be gone, and something else new. A view that showed
+something that’s gone shows it as missing (its error report offers to
+<strong>erase view object</strong>). Its own view also shows the new packages and
+modules. Anything of your own in the model – objects, and attributes you’ve
+added – is left as it is (but a relation to something removed goes with
+it).</p>
+</dd>
+<dt><strong>Replace</strong></dt><dd><p>Make them afresh.</p>
+</dd>
+<dt><strong>Cancel</strong></dt><dd><p>Leave them as they are.</p>
+</dd>
+</dl>
 <p>Its objects know where their code is:</p>
 <ul class="simple">
 <li><p>A module’s, class’s or function’s menu has <strong>Show source</strong> (the code, in a
@@ -569,8 +594,13 @@ more, eg: for Eclipse.) If it’s empty, or can’t be run, the code is shown in
 a window here instead.</p>
 <p>Things to try:</p>
 <ul class="simple">
-<li><p>Expand a module, then a class in it: <em>includes</em> covers <em>defines</em> and
-<em>defines-method</em>, so the tree goes on out to the class’s methods.</p></li>
+<li><p>Expand a module, then a class in it: <em>includes</em> covers <em>defines</em>,
+<em>defines-method</em> and <em>defines-attr</em>, so the tree goes on out to the class’s
+methods and variables. A variable shows its type (eg: <em>nodes:list[Node]</em>),
+and <em>has-type</em> the classes in the model that names: a type that isn’t one
+of them (eg: <em>int</em>, <em>list</em>) is just shown, not linked to.</p></li>
+<li><p><strong>Reason</strong>: the ontology’s rules conclude what each class <em>has-attr</em>: the
+variables it defines, and those it inherits (by <em>inherits-from</em>).</p></li>
 <li><p><strong>view | show | nodes…</strong>, and tick <em>class</em>: all the classes, and how
 they’re related (eg: <em>inherits-from</em>).</p></li>
 <li><p><strong>view | layout | arrange now | hubs</strong>, with all the imports shown: the
@@ -605,14 +635,14 @@ the Developer Guide: <a class="reference internal" href="../developer/extending.
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="terminal.html">
+          <a class="prev-page" href="shortcuts.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">The Terminal</div>
+                <div class="title">Keys and mouse</div>
                 
               </div>
             </a>

@@ -28,7 +28,7 @@
 
 <ns0:g id="node15" class="node">
 <ns0:title>GraphObject</ns0:title>
-<ns0:g id="a_node15"><ns0:a ns1:href="../dev/sn.model.model.html#sn.model.model.GraphObject" ns1:title=".. Note::" target="_top">
+<ns0:g id="a_node15"><ns0:a ns1:href="../dev/sn.model.model.html#sn.model.model.GraphObject" ns1:title="The base class for all objects in a Model (including Relation)." target="_top">
 <ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="533.75,-234 463,-234 463,-214 533.75,-214 533.75,-234" />
 <ns0:text xml:space="preserve" text-anchor="middle" x="498.38" y="-220.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">GraphObject</ns0:text>
 </ns0:a>

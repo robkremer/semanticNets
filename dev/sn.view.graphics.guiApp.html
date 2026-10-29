@@ -209,6 +209,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../user/animation.html">Animation Layout</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user/files.html">Files and Settings</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user/terminal.html">The Terminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/shortcuts.html">Keys and mouse</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user/exampleApps.html">Plugins</a></li>
 </ul>
 </li>
@@ -297,6 +298,9 @@
 <li class="toctree-l2"><a class="reference internal" href="sn.plugins.html">sn.plugins module</a></li>
 </ul>
 </li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Example Materials</span></p>
+<ul>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../plugins/index.html">The plugins</a><input aria-label="Toggle navigation of The plugins" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.XMLreader.html">snplugins.XMLreader package</a><input aria-label="Toggle navigation of snplugins.XMLreader package" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.reader.html">snplugins.XMLreader.reader module</a></li>
@@ -313,6 +317,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../models.html">On Line Models</a></li>
 </ul>
 
 </div>
@@ -536,7 +541,10 @@ to get that native content back.</p>
 <dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.showHelp">
 <span class="sig-name descname"><span class="pre">showHelp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">page</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.showHelp" title="Link to this definition">¶</a></dt>
 <dd><p>Show a page of the documentation in the web browser: the copy bundled
-in a packaged app, or else the project’s built documentation.</p>
+in a packaged app, or else the project’s built documentation. It’s served
+from 127.0.0.1 (see <em>util.folderServer</em>), not opened as a file: URL,
+since Safari won’t load a file: page’s stylesheets from its parent
+folder (“../_static/”), so it would show unstyled.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>page</strong> (<em>str</em>) – The page, relative to the documentation’s top, eg: “user/index.html”.</p>
@@ -851,6 +859,12 @@ it, if it’s hidden, once the job’s gone on for <em>PROGRESS_DELAY</em> secon
 <dd><p>How many recent views are remembered, whatever “gui/recentFiles” (how many are listed) is.</p>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.RECENT_LABEL_LENGTH">
+<span class="sig-name descname"><span class="pre">RECENT_LABEL_LENGTH</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">100</span></span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.RECENT_LABEL_LENGTH" title="Link to this definition">¶</a></dt>
+<dd><p>The most characters File | Open Recent shows of a view’s path or URL.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.recentFiles">
 <span class="sig-name descname"><span class="pre">recentFiles</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.recentFiles" title="Link to this definition">¶</a></dt>
@@ -916,8 +930,9 @@ more, say so, and take it off the list.</p>
 <dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application._fillRecentMenu">
 <span class="sig-name descname"><span class="pre">_fillRecentMenu</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application._fillRecentMenu" title="Link to this definition">¶</a></dt>
 <dd><p>(Re)fill the File | Open Recent menu from <em>recentFiles()</em>: as many as the
-“gui/recentFiles” preference says, each named by its file (and, if two have
-the same name, its folder), then “Clear Menu”.</p>
+“gui/recentFiles” preference says, each shown as its whole path (with “~”
+for the home folder) or, if it’s on the web, its whole URL (a very long one
+loses some of its middle), then “Clear Menu”.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
@@ -1090,16 +1105,22 @@ another is about to be opened (see <em>replacingModel()</em>).</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.replacingModel">
-<span class="sig-name descname"><span class="pre">replacingModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.replacingModel" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">replacingModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">askToSave</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.replacingModel" title="Link to this definition">¶</a></dt>
 <dd><p>Before a model’s file is made afresh, in place of the one that’s there
 (eg: by a plugin, once the user’s agreed to replace it): if the model at
 <em>path</em> is in memory – eg: its window is open – close its windows, without
 offering to save them (they’re being replaced), and forget it. Otherwise
 <em>Model(path)</em> would hand back that model, with all it had, and what’s made
 would be added to it – and its open views told of each new object.</p>
+<p>Or, with <em>askToSave</em>, before a model’s file is changed by a program (eg: a
+plugin updating it): offering to save it, and its changed views, first –
+so that the program reads (and changes) the file as it’s been left.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) – The model’s file (or URL).</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>str</em>) – The model’s file (or URL).</p></li>
+<li><p><strong>askToSave</strong> (<em>bool</em>) – Whether to offer to save the model and its changed views.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>False if it can’t be forgotten (other models use it: see
@@ -1273,6 +1294,22 @@ on the top-level widget. Same shape of problem as (and modeled on)
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.AppWindow._refreshSizeLimits">
+<span class="sig-name descname"><span class="pre">_refreshSizeLimits</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.AppWindow._refreshSizeLimits" title="Link to this definition">¶</a></dt>
+<dd><p>Have Tk recompute this window’s largest size from the screens there are now.</p>
+<p>On the Mac, Tk gives a window a maximum size (the area all the screens
+cover) only when it sets the window’s geometry, and doesn’t update it
+when a screen is added or rearranged: a window opened before a bigger
+monitor was connected couldn’t be made any larger than the old screens.
+Setting the minimum size (to what it is) has Tk set both limits again.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1549,6 +1586,7 @@ editor’s already running, the files are handed to it instead (see
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application._hideAfterProgress"><code class="docutils literal notranslate"><span class="pre">Application._hideAfterProgress()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.RECENT_PREF"><code class="docutils literal notranslate"><span class="pre">Application.RECENT_PREF</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.RECENT_KEPT"><code class="docutils literal notranslate"><span class="pre">Application.RECENT_KEPT</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.RECENT_LABEL_LENGTH"><code class="docutils literal notranslate"><span class="pre">Application.RECENT_LABEL_LENGTH</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.recentFiles"><code class="docutils literal notranslate"><span class="pre">Application.recentFiles()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application._setRecentFiles"><code class="docutils literal notranslate"><span class="pre">Application._setRecentFiles()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.noteRecent"><code class="docutils literal notranslate"><span class="pre">Application.noteRecent()</span></code></a></li>
@@ -1579,6 +1617,7 @@ editor’s already running, the files are handed to it instead (see
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.AppWindow.__init__"><code class="docutils literal notranslate"><span class="pre">AppWindow.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.AppWindow.view"><code class="docutils literal notranslate"><span class="pre">AppWindow.view</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.AppWindow._bindFocusTracking"><code class="docutils literal notranslate"><span class="pre">AppWindow._bindFocusTracking()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.AppWindow._refreshSizeLimits"><code class="docutils literal notranslate"><span class="pre">AppWindow._refreshSizeLimits()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.AppWindow._onWindowFocusIn"><code class="docutils literal notranslate"><span class="pre">AppWindow._onWindowFocusIn()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.AppWindow._onWindowFocusOut"><code class="docutils literal notranslate"><span class="pre">AppWindow._onWindowFocusOut()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.AppWindow._checkStillActive"><code class="docutils literal notranslate"><span class="pre">AppWindow._checkStillActive()</span></code></a></li>

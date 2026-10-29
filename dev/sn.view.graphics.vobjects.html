@@ -209,6 +209,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../user/animation.html">Animation Layout</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user/files.html">Files and Settings</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user/terminal.html">The Terminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/shortcuts.html">Keys and mouse</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user/exampleApps.html">Plugins</a></li>
 </ul>
 </li>
@@ -297,6 +298,9 @@
 <li class="toctree-l2"><a class="reference internal" href="sn.plugins.html">sn.plugins module</a></li>
 </ul>
 </li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Example Materials</span></p>
+<ul>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../plugins/index.html">The plugins</a><input aria-label="Toggle navigation of The plugins" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.XMLreader.html">snplugins.XMLreader package</a><input aria-label="Toggle navigation of snplugins.XMLreader package" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.reader.html">snplugins.XMLreader.reader module</a></li>
@@ -313,6 +317,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../models.html">On Line Models</a></li>
 </ul>
 
 </div>
@@ -577,7 +582,7 @@ carried through to it along that same chain.</p></li>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.tooltip">
-<span class="sig-name descname"><span class="pre">tooltip</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">CreateToolTip</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.tooltip" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">tooltip</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.tooltip.html#util.tooltip.CreateToolTip" title="(in pythonUtils)"><span class="pre">CreateToolTip</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.tooltip" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -1684,11 +1689,6 @@ it can be hidden again (eg: on an undo).</p></li>
 </dl>
 </dd></dl>
 
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject._abc_impl">
-<span class="sig-name descname"><span class="pre">_abc_impl</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;_abc._abc_data</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject._abc_impl" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.expandableRelations">
 <span class="sig-name descname"><span class="pre">expandableRelations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;function</span> <span class="pre">VObject.&lt;lambda&gt;&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">withHidden</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.expandableRelations" title="Link to this definition">¶</a></dt>
@@ -1710,6 +1710,11 @@ and out (and symmetric ones both ways), that <em>filter</em> allows – but not
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject._abc_impl">
+<span class="sig-name descname"><span class="pre">_abc_impl</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;_abc._abc_data</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject._abc_impl" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.expandByRelation">
@@ -1761,6 +1766,24 @@ type and way round merged (their counts added up).</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>bool | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vobjects.VObject.selectWithRelations">
+<span class="sig-name descname"><span class="pre">selectWithRelations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">multi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vobjects.VObject.selectWithRelations" title="Link to this definition">¶</a></dt>
+<dd><p>An Option-click: select this object and the relations to and from it (the
+ones shown), instead of whatever was selected. With <em>multi</em> (Option-Cmd- or
+Option-Shift-click) the rest of the selection stays, and it’s a toggle: if
+this object’s selected, it and its relations are deselected; otherwise
+they’re added.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>multi</strong> (<em>bool</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2078,12 +2101,13 @@ re-<em>assert</em>) an already-reconnected <em>r</em>.</p>
 <li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.BATCH_PLACED"><code class="docutils literal notranslate"><span class="pre">VObject.BATCH_PLACED</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.expand"><code class="docutils literal notranslate"><span class="pre">VObject.expand()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._expand"><code class="docutils literal notranslate"><span class="pre">VObject._expand()</span></code></a></li>
-<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._abc_impl"><code class="docutils literal notranslate"><span class="pre">VObject._abc_impl</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.expandableRelations"><code class="docutils literal notranslate"><span class="pre">VObject.expandableRelations()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject._abc_impl"><code class="docutils literal notranslate"><span class="pre">VObject._abc_impl</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.expandByRelation"><code class="docutils literal notranslate"><span class="pre">VObject.expandByRelation()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.expandChoices"><code class="docutils literal notranslate"><span class="pre">VObject.expandChoices()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.strToShape"><code class="docutils literal notranslate"><span class="pre">VObject.strToShape()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.selected"><code class="docutils literal notranslate"><span class="pre">VObject.selected()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.selectWithRelations"><code class="docutils literal notranslate"><span class="pre">VObject.selectWithRelations()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.tooltipFont"><code class="docutils literal notranslate"><span class="pre">VObject.tooltipFont()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.tooltipWrap"><code class="docutils literal notranslate"><span class="pre">VObject.tooltipWrap()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vobjects.VObject.tooltipFunc"><code class="docutils literal notranslate"><span class="pre">VObject.tooltipFunc()</span></code></a></li>

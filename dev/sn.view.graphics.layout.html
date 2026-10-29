@@ -209,6 +209,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../user/animation.html">Animation Layout</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user/files.html">Files and Settings</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user/terminal.html">The Terminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/shortcuts.html">Keys and mouse</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user/exampleApps.html">Plugins</a></li>
 </ul>
 </li>
@@ -297,6 +298,9 @@
 <li class="toctree-l2"><a class="reference internal" href="sn.plugins.html">sn.plugins module</a></li>
 </ul>
 </li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Example Materials</span></p>
+<ul>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../plugins/index.html">The plugins</a><input aria-label="Toggle navigation of The plugins" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.XMLreader.html">snplugins.XMLreader package</a><input aria-label="Toggle navigation of snplugins.XMLreader package" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.reader.html">snplugins.XMLreader.reader module</a></li>
@@ -313,6 +317,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../models.html">On Line Models</a></li>
 </ul>
 
 </div>
@@ -552,7 +557,7 @@ its text), “choice” (one of <em>choices</em>), “int” or “bool”.</p>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="sn.view.graphics.layout.LAYOUTS">
-<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.layout.</span></span><span class="sig-name descname"><span class="pre">LAYOUTS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="sn.view.graphics.expandDialog.html#sn.view.graphics.expandDialog.Choice.type" title="sn.view.graphics.expandDialog.Choice.type"><span class="pre">type</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sn.view.graphics.layout.LayoutHeuristic" title="sn.view.graphics.layout.LayoutHeuristic"><span class="pre">LayoutHeuristic</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'avoid</span> <span class="pre">overlaps':</span> <span class="pre">&lt;class</span> <span class="pre">'sn.view.graphics.layout.FindFree'&gt;,</span> <span class="pre">'balloon':</span> <span class="pre">&lt;class</span> <span class="pre">'sn.view.graphics.balloonLayout.BalloonLayout'&gt;,</span> <span class="pre">'gather</span> <span class="pre">nodes':</span> <span class="pre">&lt;class</span> <span class="pre">'sn.view.graphics.layout.GatherLayout'&gt;,</span> <span class="pre">'hubs':</span> <span class="pre">&lt;class</span> <span class="pre">'sn.view.graphics.balloonLayout.HubLayout'&gt;,</span> <span class="pre">'none':</span> <span class="pre">&lt;class</span> <span class="pre">'sn.view.graphics.layout.NoLayout'&gt;,</span> <span class="pre">'radial':</span> <span class="pre">&lt;class</span> <span class="pre">'sn.view.graphics.balloonLayout.RadialLayout'&gt;,</span> <span class="pre">'tree':</span> <span class="pre">&lt;class</span> <span class="pre">'sn.view.graphics.treeLayout.TreeLayout'&gt;}</span></span><a class="headerlink" href="#sn.view.graphics.layout.LAYOUTS" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.layout.</span></span><span class="sig-name descname"><span class="pre">LAYOUTS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sn.view.graphics.layout.LayoutHeuristic" title="sn.view.graphics.layout.LayoutHeuristic"><span class="pre">LayoutHeuristic</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'avoid</span> <span class="pre">overlaps':</span> <span class="pre">&lt;class</span> <span class="pre">'sn.view.graphics.layout.FindFree'&gt;,</span> <span class="pre">'balloon':</span> <span class="pre">&lt;class</span> <span class="pre">'sn.view.graphics.balloonLayout.BalloonLayout'&gt;,</span> <span class="pre">'gather</span> <span class="pre">nodes':</span> <span class="pre">&lt;class</span> <span class="pre">'sn.view.graphics.layout.GatherLayout'&gt;,</span> <span class="pre">'hubs':</span> <span class="pre">&lt;class</span> <span class="pre">'sn.view.graphics.balloonLayout.HubLayout'&gt;,</span> <span class="pre">'none':</span> <span class="pre">&lt;class</span> <span class="pre">'sn.view.graphics.layout.NoLayout'&gt;,</span> <span class="pre">'radial':</span> <span class="pre">&lt;class</span> <span class="pre">'sn.view.graphics.balloonLayout.RadialLayout'&gt;,</span> <span class="pre">'tree':</span> <span class="pre">&lt;class</span> <span class="pre">'sn.view.graphics.treeLayout.TreeLayout'&gt;}</span></span><a class="headerlink" href="#sn.view.graphics.layout.LAYOUTS" title="Link to this definition">¶</a></dt>
 <dd><p>The layout heuristics, by name (see <em>registerLayout()</em>): the view’s “layout” menu lists them.</p>
 </dd></dl>
 
@@ -562,13 +567,13 @@ its text), “choice” (one of <em>choices</em>), “int” or “bool”.</p>
 <dd><p>A class decorator: list the layout heuristic <em>cls</em> in <em>LAYOUTS</em>, by its <em>NAME</em>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>cls</strong> (<a class="reference internal" href="sn.view.graphics.expandDialog.html#sn.view.graphics.expandDialog.Choice.type" title="sn.view.graphics.expandDialog.Choice.type"><em>type</em></a><em>[</em><a class="reference internal" href="#sn.view.graphics.layout.LayoutHeuristic" title="sn.view.graphics.layout.LayoutHeuristic"><em>LayoutHeuristic</em></a><em>]</em>)</p>
+<dd class="field-odd"><p><strong>cls</strong> (<em>type</em><em>[</em><a class="reference internal" href="#sn.view.graphics.layout.LayoutHeuristic" title="sn.view.graphics.layout.LayoutHeuristic"><em>LayoutHeuristic</em></a><em>]</em>)</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>cls</em>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="sn.view.graphics.expandDialog.html#sn.view.graphics.expandDialog.Choice.type" title="sn.view.graphics.expandDialog.Choice.type">type</a>[<a class="reference internal" href="#sn.view.graphics.layout.LayoutHeuristic" title="sn.view.graphics.layout.LayoutHeuristic">LayoutHeuristic</a>]</p>
+<dd class="field-odd"><p>type[<a class="reference internal" href="#sn.view.graphics.layout.LayoutHeuristic" title="sn.view.graphics.layout.LayoutHeuristic">LayoutHeuristic</a>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -584,7 +589,7 @@ its text), “choice” (one of <em>choices</em>), “int” or “bool”.</p>
 <dd class="field-even"><p>The layout heuristics (in <em>LAYOUTS</em>) of that kind, in the order they were registered.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>list[<a class="reference internal" href="sn.view.graphics.expandDialog.html#sn.view.graphics.expandDialog.Choice.type" title="sn.view.graphics.expandDialog.Choice.type">type</a>[<a class="reference internal" href="#sn.view.graphics.layout.LayoutHeuristic" title="sn.view.graphics.layout.LayoutHeuristic"><em>LayoutHeuristic</em></a>]]</p>
+<dd class="field-odd"><p>list[type[<a class="reference internal" href="#sn.view.graphics.layout.LayoutHeuristic" title="sn.view.graphics.layout.LayoutHeuristic"><em>LayoutHeuristic</em></a>]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -852,7 +857,7 @@ arguments for its constructor: a relation by its name), and everything
 said (eg: for <em>restoreExtraState()</em>) – or None if there’s no such layout.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple[<a class="reference internal" href="sn.view.graphics.expandDialog.html#sn.view.graphics.expandDialog.Choice.type" title="sn.view.graphics.expandDialog.Choice.type">type</a>[<a class="reference internal" href="#sn.view.graphics.layout.LayoutHeuristic" title="sn.view.graphics.layout.LayoutHeuristic"><em>LayoutHeuristic</em></a>], dict[str, <em>Any</em>], dict[str, str]] | None</p>
+<dd class="field-odd"><p>tuple[type[<a class="reference internal" href="#sn.view.graphics.layout.LayoutHeuristic" title="sn.view.graphics.layout.LayoutHeuristic"><em>LayoutHeuristic</em></a>], dict[str, <em>Any</em>], dict[str, str]] | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2005,7 +2010,7 @@ that are both <em>after</em> and <em>before</em> (found by bisection, testing th
 points just as they’re written).</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="sn.model.model.html#sn.model.model.Relation.range" title="sn.model.model.Relation.range">range</a></p>
+<dd class="field-odd"><p>range</p>
 </dd>
 </dl>
 </dd></dl>

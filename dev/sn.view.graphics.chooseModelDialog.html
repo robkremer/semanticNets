@@ -209,6 +209,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../user/animation.html">Animation Layout</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user/files.html">Files and Settings</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user/terminal.html">The Terminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/shortcuts.html">Keys and mouse</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user/exampleApps.html">Plugins</a></li>
 </ul>
 </li>
@@ -297,6 +298,9 @@
 <li class="toctree-l2"><a class="reference internal" href="sn.plugins.html">sn.plugins module</a></li>
 </ul>
 </li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Example Materials</span></p>
+<ul>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../plugins/index.html">The plugins</a><input aria-label="Toggle navigation of The plugins" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.XMLreader.html">snplugins.XMLreader package</a><input aria-label="Toggle navigation of snplugins.XMLreader package" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.reader.html">snplugins.XMLreader.reader module</a></li>
@@ -313,6 +317,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../models.html">On Line Models</a></li>
 </ul>
 
 </div>
@@ -360,7 +365,7 @@ a copy of it). See <em>SNGView.askForMissingModel</em>, <em>Application.changeMo
 <p><em>Code author: Rob Kremer &lt;<a class="reference external" href="mailto:robkremer&#37;&#52;&#48;me&#46;com">robkremer<span>&#64;</span>me<span>&#46;</span>com</a>&gt;</em></p>
 <dl class="py class">
 <dt class="sig sig-object py" id="sn.view.graphics.chooseModelDialog.ChooseModelDialog">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.chooseModelDialog.</span></span><span class="sig-name descname"><span class="pre">ChooseModelDialog</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">candidates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">near</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ok</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'OK'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.chooseModelDialog.ChooseModelDialog" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.chooseModelDialog.</span></span><span class="sig-name descname"><span class="pre">ChooseModelDialog</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">candidates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">near</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ok</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'OK'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.chooseModelDialog.ChooseModelDialog" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Toplevel</span></code></p>
 <p>Which model a view is to show: one of <em>candidates</em> (eg: copies of the one
 it shows, or of the one it can’t find: see <em>Directory.copiesOf()</em>), or a
@@ -371,15 +376,16 @@ file, or a URL. Modal: <em>show()</em> returns the model’s URL, if OK’d.</p>
 <li><p><strong>parent</strong> (<em>tk.Misc</em>)</p></li>
 <li><p><strong>title</strong> (<em>str</em>)</p></li>
 <li><p><strong>message</strong> (<em>str</em>)</p></li>
-<li><p><strong>candidates</strong> (<em>list</em><em>[</em><a class="reference internal" href="sn.model.copying.html#sn.model.copying.Entry" title="sn.model.copying.Entry"><em>Entry</em></a><em>]</em>)</p></li>
+<li><p><strong>candidates</strong> (<em>list</em><em>[</em><a class="reference internal" href="sn.model.directory.html#sn.model.directory.Entry" title="sn.model.directory.Entry"><em>Entry</em></a><em>]</em>)</p></li>
 <li><p><strong>near</strong> (<em>str</em>)</p></li>
 <li><p><strong>ok</strong> (<em>str</em>)</p></li>
+<li><p><strong>base</strong> (<em>str</em>)</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.chooseModelDialog.ChooseModelDialog.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">candidates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">near</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ok</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'OK'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.chooseModelDialog.ChooseModelDialog.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">candidates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">near</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ok</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'OK'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.chooseModelDialog.ChooseModelDialog.__init__" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -388,6 +394,9 @@ file, or a URL. Modal: <em>show()</em> returns the model’s URL, if OK’d.</p>
 <li><p><strong>candidates</strong> (<em>list</em><em>[</em><a class="reference internal" href="sn.model.directory.html#sn.model.directory.Entry" title="sn.model.directory.Entry"><em>Entry</em></a><em>]</em>) – The models offered (the first is chosen).</p></li>
 <li><p><strong>near</strong> (<em>str</em>) – A URL: the file dialog starts in its folder.</p></li>
 <li><p><strong>ok</strong> (<em>str</em>) – The OK button’s text.</p></li>
+<li><p><strong>base</strong> (<em>str</em>) – The view’s URL: a relative path or URL typed (eg: “pets.snm”)
+is relative to it, as it is in the view’s file – so a view and model put
+on the web together stay together. (Default: <em>near</em>.)</p></li>
 <li><p><strong>parent</strong> (<em>Misc</em>)</p></li>
 </ul>
 </dd>
@@ -420,6 +429,24 @@ file, or a URL. Modal: <em>show()</em> returns the model’s URL, if OK’d.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.chooseModelDialog.ChooseModelDialog.resolve">
+<span class="sig-name descname"><span class="pre">resolve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">typed</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.chooseModelDialog.ChooseModelDialog.resolve" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>typed</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The URL of the model <em>typed</em>: a URL as is; a relative path (eg:
+“pets.snm”, “../shared/animals.snm”) against <em>base</em> – a file’s folder,
+or a web URL’s (see <em>PRDb.absoluteURL()</em>); else a path’s URL.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -502,6 +529,7 @@ file, or a URL. Modal: <em>show()</em> returns the model’s URL, if OK’d.</p>
 <li><a class="reference internal" href="#sn.view.graphics.chooseModelDialog.ChooseModelDialog.chooseFile"><code class="docutils literal notranslate"><span class="pre">ChooseModelDialog.chooseFile()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.chooseModelDialog.ChooseModelDialog.chooseURL"><code class="docutils literal notranslate"><span class="pre">ChooseModelDialog.chooseURL()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.chooseModelDialog.ChooseModelDialog.ok"><code class="docutils literal notranslate"><span class="pre">ChooseModelDialog.ok()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.chooseModelDialog.ChooseModelDialog.resolve"><code class="docutils literal notranslate"><span class="pre">ChooseModelDialog.resolve()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.chooseModelDialog.ChooseModelDialog.show"><code class="docutils literal notranslate"><span class="pre">ChooseModelDialog.show()</span></code></a></li>
 </ul>
 </li>

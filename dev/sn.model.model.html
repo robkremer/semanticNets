@@ -209,6 +209,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../user/animation.html">Animation Layout</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user/files.html">Files and Settings</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user/terminal.html">The Terminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/shortcuts.html">Keys and mouse</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user/exampleApps.html">Plugins</a></li>
 </ul>
 </li>
@@ -297,6 +298,9 @@
 <li class="toctree-l2"><a class="reference internal" href="sn.plugins.html">sn.plugins module</a></li>
 </ul>
 </li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Example Materials</span></p>
+<ul>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../plugins/index.html">The plugins</a><input aria-label="Toggle navigation of The plugins" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.XMLreader.html">snplugins.XMLreader package</a><input aria-label="Toggle navigation of snplugins.XMLreader package" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.XMLreader.reader.html">snplugins.XMLreader.reader module</a></li>
@@ -313,6 +317,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../models.html">On Line Models</a></li>
 </ul>
 
 </div>
@@ -386,7 +391,7 @@ endless recursion as <em>isa</em> is defined in terms of itself.</p>
 <p><a class="reference internal" href="#sn.model.model.Node" title="sn.model.model.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">Node</span></code></a> is a simple subclass of <a class="reference internal" href="#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">GraphObject</span></code></a>, but acts as
 the superclass to <a class="reference internal" href="#sn.model.model.Collection" title="sn.model.model.Collection"><code class="xref py py-class docutils literal notranslate"><span class="pre">Collection</span></code></a> which forms the embodiment of subgraphs
 such as queries, rules, and definitions in the logic.</p>
-<div class="graphviz"><object data="../_images/inheritance-e8928e207e554f19322dd529a49a7e22d38a45ba.svg" type="image/svg+xml" class="inheritance graphviz">
+<div class="graphviz"><object data="../_images/inheritance-06ded891e93b6785e17dfae87395bb185458b50d.svg" type="image/svg+xml" class="inheritance graphviz">
 <p class="warning">Inheritance diagram of Model, GraphObject, Node, Relation, IsaIndividual, Collection, AllModelCollection</p></object></div>
 <p>Created on Apr 21, 2026</p>
 <p><em>Code author: Rob Kremer &lt;<a class="reference external" href="mailto:robkremer&#37;&#52;&#48;me&#46;com">robkremer<span>&#64;</span>me<span>&#46;</span>com</a>&gt;</em></p>
@@ -500,12 +505,7 @@ view’s objects are made and drawn, which asks for them millions of times).</p>
 <dt class="sig sig-object py" id="sn.model.model.GraphObject">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.model.model.</span></span><span class="sig-name descname"><span class="pre">GraphObject</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parents</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">individual</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inferred</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.model.GraphObject" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.abstractGraph.html#util.abstractGraph.AGObject" title="(in pythonUtils)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AGObject</span></code></a>[<a class="reference internal" href="#sn.model.model.Model" title="sn.model.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>, <a class="reference internal" href="#sn.model.model.Relation" title="sn.model.model.Relation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Relation</span></code></a>], <a class="reference internal" href="sn.model.snAttribute.html#sn.model.snAttribute.SNAttributedObject" title="sn.model.snAttribute.SNAttributedObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">SNAttributedObject</span></code></a>, <a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.errorReportingObject.html#util.errorReportingObject.ErrorReportingObject" title="(in pythonUtils)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ErrorReportingObject</span></code></a></p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p><em>GraphObject</em> is a <strong>subclass</strong> but not strictly a <strong>subtype</strong> of <em>PRObject</em> as 
-its container object pointer (<em>Model</em>) is subtype of the its parent’s pointer
-(<em>PRDb</em>).</p>
-</div>
+<p>The base class for all objects in a Model (including Relation).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -520,13 +520,13 @@ its container object pointer (<em>Model</em>) is subtype of the its parent’s p
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sn.model.model.GraphObject.inferredKey">
 <span class="sig-name descname"><span class="pre">inferredKey</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span></span><a class="headerlink" href="#sn.model.model.GraphObject.inferredKey" title="Link to this definition">¶</a></dt>
-<dd><p>An object the reasoner made: what identifies it (set only on those: see <em>sn.model.reasoner.materialize()</em>).</p>
+<dd><p>An object the reasoner made: what identifies it (set only on those: see <code class="xref py py-meth docutils literal notranslate"><span class="pre">sn.model.reasoner.materialize()</span></code>).</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sn.model.model.GraphObject.inferredKind">
 <span class="sig-name descname"><span class="pre">inferredKind</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#sn.model.model.GraphObject.inferredKind" title="Link to this definition">¶</a></dt>
-<dd><p>An inferred object: how it came to be, eg: “new”, “rule” (set only on those: see <em>sn.model.reasoner.materialize()</em>).</p>
+<dd><p>An inferred object: how it came to be, eg: “new”, “rule” (set only on those: see <code class="xref py py-meth docutils literal notranslate"><span class="pre">sn.model.reasoner.materialize()</span></code>).</p>
 </dd></dl>
 
 <dl class="py method">
@@ -1370,14 +1370,14 @@ not pass validation checks.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>key</strong> (<em>str</em>) – The attribute name.</p></li>
-<li><p><strong>attr</strong> (<em>Attribute</em>) – The candate attribute to associate with <em>key</em>.</p></li>
+<li><p><strong>attr</strong> (<a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.attribute.html#util.attribute.Attribute" title="(in pythonUtils)"><em>Attribute</em></a>) – The candate attribute to associate with <em>key</em>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The parameter <em>attr</em></p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Attribute</p>
+<dd class="field-odd"><p><a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.attribute.html#util.attribute.Attribute" title="(in pythonUtils)">Attribute</a></p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p></p></dd>

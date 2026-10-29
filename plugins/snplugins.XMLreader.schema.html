@@ -209,6 +209,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../user/animation.html">Animation Layout</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user/files.html">Files and Settings</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user/terminal.html">The Terminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/shortcuts.html">Keys and mouse</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user/exampleApps.html">Plugins</a></li>
 </ul>
 </li>
@@ -228,7 +229,7 @@
 </li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
-<ul class="current">
+<ul>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../dev/sn.html">sn package</a><input aria-label="Toggle navigation of sn package" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.controller.html">sn.controller package</a><input aria-label="Toggle navigation of sn.controller package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.controller.modelInterface.html">sn.controller.modelInterface module</a></li>
@@ -297,6 +298,9 @@
 <li class="toctree-l2"><a class="reference internal" href="../dev/sn.plugins.html">sn.plugins module</a></li>
 </ul>
 </li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Example Materials</span></p>
+<ul class="current">
 <li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">The plugins</a><input aria-label="Toggle navigation of The plugins" checked="" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l2 current has-children"><a class="reference internal" href="snplugins.XMLreader.html">snplugins.XMLreader package</a><input aria-label="Toggle navigation of snplugins.XMLreader package" checked="" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="snplugins.XMLreader.reader.html">snplugins.XMLreader.reader module</a></li>
@@ -313,6 +317,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../models.html">On Line Models</a></li>
 </ul>
 
 </div>
@@ -549,7 +554,7 @@ property.</p>
 they’re all numbers (likewise); bool, if they’re all true or false; else str.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="../dev/sn.view.graphics.expandDialog.html#sn.view.graphics.expandDialog.Choice.type" title="sn.view.graphics.expandDialog.Choice.type">type</a></p>
+<dd class="field-odd"><p>type</p>
 </dd>
 </dl>
 </dd></dl>
@@ -561,14 +566,14 @@ they’re all numbers (likewise); bool, if they’re all true or false; else str
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>value</strong> (<em>str</em>) – A field’s value, as in the XML.</p></li>
-<li><p><strong>typ</strong> (<a class="reference internal" href="../dev/sn.view.graphics.expandDialog.html#sn.view.graphics.expandDialog.Choice.type" title="sn.view.graphics.expandDialog.Choice.type"><em>type</em></a>) – Its field’s datatype (see <em>datatype()</em>).</p></li>
+<li><p><strong>typ</strong> (<em>type</em>) – Its field’s datatype (see <em>datatype()</em>).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>value</em> as one of <em>typ</em> (None if it’s empty and <em>typ</em> isn’t str).</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="../dev/sn.controller.modelInterface.html#sn.controller.modelInterface.ModelContext._Remove.object" title="sn.controller.modelInterface.ModelContext._Remove.object">object</a></p>
+<dd class="field-odd"><p>object</p>
 </dd>
 </dl>
 </dd></dl>
@@ -586,7 +591,7 @@ they’re all numbers (likewise); bool, if they’re all true or false; else str
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>value</strong> (<em>str</em>) – A field’s value, as in the XML.</p></li>
-<li><p><strong>typ</strong> (<a class="reference internal" href="../dev/sn.controller.modelInterface.html#sn.controller.modelInterface.ModelContext._Remove.object" title="sn.controller.modelInterface.ModelContext._Remove.object"><em>object</em></a>) – The datatype of the attribute it’s to be (eg: an ontology’s,
+<li><p><strong>typ</strong> (<em>object</em>) – The datatype of the attribute it’s to be (eg: an ontology’s,
 made from another file): a type, or a name of one (eg: “text”: see
 <em>util.attribute.TYPE_EQUIVALENTS</em>).</p></li>
 </ul>
@@ -598,7 +603,7 @@ it’s empty, and <em>typ</em> isn’t a string type); else <em>NO_FIT</em> (eg:
 an int).</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="../dev/sn.controller.modelInterface.html#sn.controller.modelInterface.ModelContext._Remove.object" title="sn.controller.modelInterface.ModelContext._Remove.object">object</a></p>
+<dd class="field-odd"><p>object</p>
 </dd>
 </dl>
 </dd></dl>
@@ -668,7 +673,7 @@ attributes, or one of its property subelements.</p>
 <li><p><strong>key</strong> (<em>str</em>)</p></li>
 <li><p><strong>fromAttribute</strong> (<em>bool</em>)</p></li>
 <li><p><strong>path</strong> (<em>tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>)</p></li>
-<li><p><strong>typ</strong> (<a class="reference internal" href="../dev/sn.view.graphics.expandDialog.html#sn.view.graphics.expandDialog.Choice.type" title="sn.view.graphics.expandDialog.Choice.type"><em>type</em></a>)</p></li>
+<li><p><strong>typ</strong> (<em>type</em>)</p></li>
 <li><p><strong>annotations</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>)</p></li>
 </ul>
 </dd>
@@ -720,7 +725,7 @@ attributes, or one of its property subelements.</p>
 <li><p><strong>key</strong> (<em>str</em>)</p></li>
 <li><p><strong>fromAttribute</strong> (<em>bool</em>)</p></li>
 <li><p><strong>path</strong> (<em>tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>)</p></li>
-<li><p><strong>typ</strong> (<a class="reference internal" href="../dev/sn.view.graphics.expandDialog.html#sn.view.graphics.expandDialog.Choice.type" title="sn.view.graphics.expandDialog.Choice.type"><em>type</em></a>)</p></li>
+<li><p><strong>typ</strong> (<em>type</em>)</p></li>
 <li><p><strong>annotations</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>)</p></li>
 </ul>
 </dd>

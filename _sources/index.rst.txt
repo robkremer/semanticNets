@@ -33,8 +33,15 @@ The documentation is in two parts:
    :caption: API Reference
 
    dev/sn
-   plugins/index
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Example Materials
+
+   plugins/index
+   models
+   
+----------------------------------
 
 Indices and tables
 ==================
