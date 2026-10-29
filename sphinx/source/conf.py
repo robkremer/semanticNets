@@ -162,5 +162,31 @@ def _orderFields(app, domain, objtype, contentnode):
   for fieldList in [c for c in contentnode.children if isinstance(c, nodes.field_list)]:
     fieldList.children = sorted(fieldList.children, key=rank) # (stable: each kind keeps its order)
 
+def _qualifyRefs(app, doctree):
+  '''
+  Point an unqualified Python reference (eg: the "Entry" of a type hint
+  ``list[Entry]``) at what that name means in the module it's written in.
+  Otherwise Sphinx searches every documented object for one ending in that
+  name, and warns "more than one target found" when there are several (eg:
+  for the built-in *type*, the *type* attributes of several classes).
+  A built-in (as Python's own objects aren't documented here) gets no link,
+  like *int* and *str*.
+  '''
+  import builtins
+  from sphinx import addnodes
+  for ref in doctree.findall(addnodes.pending_xref):
+    if ref.get("refdomain") != "py" or not ref.get("py:module"):
+      continue
+    target = ref["reftarget"]
+    module = sys.modules.get(ref["py:module"])
+    obj = module
+    for name in target.split("."):
+      obj = getattr(obj, name, None)
+    if obj is None and "." not in target and hasattr(builtins, target):
+      ref["reftarget"], ref["refspecific"] = "builtins." + target, False
+    elif isinstance(getattr(obj, "__module__", None), str) and isinstance(getattr(obj, "__qualname__", None), str):
+      ref["reftarget"], ref["refspecific"] = f"{obj.__module__}.{obj.__qualname__}", False
+
 def setup(app):
   app.connect("object-description-transform", _orderFields, priority=600) # (after autodoc's typehints: 500)
+  app.connect("doctree-read", _qualifyRefs)
