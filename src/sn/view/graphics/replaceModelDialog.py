@@ -53,7 +53,7 @@ class ReplaceModelDialog(tk.Toplevel):
     implicit = model.implicitSuperDBs()
     unlisted = model.unlistedModels()
     self.candidates:list[tuple[str, Model]] = \
-      [(PRDb.relativeURL(db.url, base=model.url), db) for db in model.superDBs
+      [(model.superDBRef(db), db) for db in model.superDBs
        if isinstance(db, Model) and not any(db is i for i in implicit)] + \
       [(f"{PRDb.relativeURL(db.url, base=model.url)}  (not a super-model: {n} reference{'s' if n > 1 else ''})", db)
        for db, n in unlisted.items()]
