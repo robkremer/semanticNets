@@ -184,17 +184,13 @@ def isaStructureChanged() -> None:
 
 class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReportingObject):
   '''
-  .. Note::
-  
-    *GraphObject* is a **subclass** but not strictly a **subtype** of *PRObject* as 
-    its container object pointer (*Model*) is subtype of the its parent's pointer
-    (*PRDb*).
+  The base class for all objects in a Model (including Relation).
   '''
 
   inferredKey:tuple
-  "An object the reasoner made: what identifies it (set only on those: see *sn.model.reasoner.materialize()*)."
+  "An object the reasoner made: what identifies it (set only on those: see :py:meth:`sn.model.reasoner.materialize`)."
   inferredKind:str
-  "An inferred object: how it came to be, eg: \"new\", \"rule\" (set only on those: see *sn.model.reasoner.materialize()*)."
+  "An inferred object: how it came to be, eg: \"new\", \"rule\" (set only on those: see :py:meth:`sn.model.reasoner.materialize`)."
   
   def __init__(self, db:Model, parents:Iterable[GraphObject]=[], individual:bool=False, name:Optional[str]=None,
                inferred:bool=False, **kwargs):
