@@ -1206,7 +1206,7 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
                      + "\n  ".join(f"{what}: {why}" for what, why in shown) + more)
     unlisted = self.unlistedModels()
     if unlisted:
-      supers = ", ".join(f'"{PRDb.relativeURL(db.url, base=self.url)}"' for db in self.superDBs) or "none"
+      supers = ", ".join(f'"{self.superDBRef(db)}"' for db in self.superDBs) or "none"
       logger.warning(f'"{url}": its objects refer to objects in models that aren\'t among its super-models '
                      f'(they are: {supers}):\n  '
                      + "\n  ".join(f'"{db.url}": {n} reference{"s" if n > 1 else ""}' for db, n in unlisted.items())
@@ -1391,12 +1391,13 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
   def superModelPaths(self) -> list[str]:
     '''
     :returns: This model's super-models (see *PRDb.superDBs*) in order, as
-      shown to the user: their files relative to this one's where they're
-      near it; then any that couldn't be read when it was. Not the implicit
-      ones (see *implicitSuperDBs()*): they're always the first.
+      shown to the user, as they're saved (see *PRDb.superDBRef()*): their
+      files relative to this one's where they're near it, or where they were
+      given relatively; then any that couldn't be read when it was. Not the
+      implicit ones (see *implicitSuperDBs()*): they're always the first.
     '''
     implicit = self.implicitSuperDBs()
-    return [PRDb.relativeURL(db.url, base=self.url) for db in self.superDBs if not any(db is i for i in implicit)] \
+    return [self.superDBRef(db) for db in self.superDBs if not any(db is i for i in implicit)] \
          + list(self._missingSuperDBs)
 
   def replacedRef(self, ref:str) -> str:
@@ -1418,7 +1419,7 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     new = self.replacedModels.get(url)
     return f"{new}#{which}" if new else ref
 
-  def replaceSuperModel(self, old:Model, new:Model) -> int:
+  def replaceSuperModel(self, old:Model, new:Model, relative:bool=False) -> int:
     '''
     Put *new* in *old*'s place: as a super-model (in the same position; or
     added, if *old* wasn't one -- see *unlistedModels()*), and as what this
@@ -1430,6 +1431,9 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
 
     :param old: A model this one's objects refer to.
     :param new: The model to refer to instead.
+    :param relative: Whether *new* was given relative to this model's file
+      (eg: "../../ontologies/animals.snm"): it's saved relative to it however
+      far from it it is (see *PRDb.relativeSuperDBs*).
     :returns: How many references were changed.
     :raises ValueError: If it can't be done -- eg: an object referred to isn't
       in *new*, or it has a different name there -- listing why; or *new* is
@@ -1467,6 +1471,9 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
       if not any(db is k for k in kept):
         kept.append(db)
     self.superDBs[:] = kept #type: ignore[assignment]
+    self.relativeSuperDBs.discard(old.url)
+    if relative:
+      self.relativeSuperDBs.add(new.url)
     for k, v in list(self.replacedModels.items()): # (anything replaced by old is now replaced by new)
       if v == old.url:
         self.replacedModels[k] = new.url
@@ -1478,7 +1485,11 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     '''
     Make this model's super-models those at *paths*, in that order, after the
     implicit ones (always the first: see *implicitSuperDBs()*): eg: as edited
-    in its preferences (see *superModelPaths()*). Relative paths are relative to this model's file.
+    in its preferences (see *superModelPaths()*). Relative paths (eg:
+    "animals.snm", "../../ontologies/animals.snm") are relative to this model's
+    file -- or URL, for a model on the web -- and are saved relative to it
+    however far from it they are (see *PRDb.relativeSuperDBs*); others are
+    saved as they are, unless they're near it (see *PRDb.relativeURL()*).
     Nothing is changed unless all of them are fine.
 
     :param paths: The super-models' files (or URLs).
@@ -1487,6 +1498,7 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     '''
     implicit = self.implicitSuperDBs()
     dbs:list[PRDb] = []
+    relative:set[str] = set()
     missing:list[str] = []
     problems:list[str] = []
     for p in paths:
@@ -1496,6 +1508,9 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
       if p in self._missingSuperDBs: # (still missing: kept, as it was)
         missing.append(p)
         continue
+      isRelative = PRDb.isRelativeURL(p)
+      if isRelative:
+        p = p.replace("\\", "/") # (eg: "..\\ontologies\\animals.snm", typed on Windows)
       try:
         db:PRDb[Any] = PRDb.getDB(PRDb.absoluteURL(p, base=self.url))
       except Exception as ex:
@@ -1505,14 +1520,18 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
         problems.append(f'"{p}" isn\'t a model.')
       elif db is self or self in db.allSuperDBs():
         problems.append(f'"{p}" is, or builds on, this model.')
-      elif not any(db is i for i in implicit) and db not in dbs:
-        dbs.append(db)
+      elif not any(db is i for i in implicit):
+        if db not in dbs:
+          dbs.append(db)
+        if isRelative:
+          relative.add(db.url)
     if problems:
       raise ValueError("\n".join(problems))
     new = implicit + dbs
-    if new != self.superDBs or missing != self._missingSuperDBs:
+    if new != self.superDBs or missing != self._missingSuperDBs or relative != self.relativeSuperDBs:
       self.superDBs[:] = new #type: ignore[assignment]
       self._missingSuperDBs[:] = missing
+      self.relativeSuperDBs = relative
       self.setDirty()
 
   @override

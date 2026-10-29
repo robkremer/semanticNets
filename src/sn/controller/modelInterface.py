@@ -21,6 +21,7 @@
 #################################################################################
 from __future__ import annotations
 import copy
+import os
 import builtins
 import sn
 from sn.model.model import GraphObject, Model, Node, Relation, GORef,\
@@ -397,9 +398,12 @@ class ModelContext(CommandContext):
     uses as though they were its own (eg: the reasoner reasons over them too,
     and their rules apply), though they aren't changed through it -- or add or
     remove one. The system model (sn) is always one. They're saved with the
-    model (relative to its file, where they're near it).
+    model (relative to its file, where they're near it, or where they're given
+    relatively).
 
-    :param add: A model file to add as a super-model: it must exist.
+    :param add: A model file to add as a super-model: it must exist. A
+      relative path (eg: "animals.snm", "../ontologies/animals.snm") is
+      relative to the model's file, and is saved relative to it.
     :param remove: A super-model (its file) to remove.
     :param model: The model. By default, the default model.
     '''
@@ -412,11 +416,19 @@ class ModelContext(CommandContext):
       if not url:
         continue
       try:
-        db:PRDb[Any] = PRDb.getDB(url) # (an existing one only: from memory, or read from its file)
+        relative = PRDb.isRelativeURL(url)
+        try:
+          db:PRDb[Any] = PRDb.getDB(PRDb.absoluteURL(url, base=model.url)) # (an existing one only: from memory, or read from its file)
+        except FileNotFoundError:
+          if not (relative and os.path.exists(url)):
+            raise
+          db, relative = PRDb.getDB(url), False # (as it used to be: relative to the current folder)
         if not isinstance(db, Model):
           raise ValueError(f'"{url}" isn\'t a model.')
         if adding:
           model.addSuperDB(db)
+          if relative:
+            model.relativeSuperDBs.add(db.url)
           messages.append(f'Added "{db.url}" as a super-model of {model.name}.')
         else:
           if db not in model.superDBs:
