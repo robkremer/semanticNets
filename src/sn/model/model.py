@@ -1273,8 +1273,34 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     def setPrefs(slf:Serializable, prefs:SerializableType) -> None:
       from sn.model.modelPrefs import ModelPrefs, initModelPrefs
       if isinstance(prefs, ModelPrefs):
+        # (a file written while the serializer could take a dropped object's id for another's -- see
+        # util.persistence.serialize.tostring() -- may have its prefs written as a reference to its objects, and
+        # saved again, copies of objects since removed: they're not prefs -- see dropStrays())
+        strays = [k for k, v in dict.items(prefs) if not isinstance(v, Attribute)]
+        if strays:
+          slf.__dict__["_strayPrefs"] = [dict.pop(prefs, k) for k in strays]
         cast(Model, slf).prefs = prefs
         initModelPrefs(prefs) # (any added since it was saved; and their notes)
+    def dropStrays(slf:Serializable, _:SerializableType) -> None:
+      '''
+      Once its objects are connected, disconnect the relations read with its prefs that aren't its own (see
+      *setPrefs()*): copies of ones since removed, which would otherwise be among their ends' relations -- eg:
+      an isa link to a type a node no longer has.
+      '''
+      model = cast(Model, slf)
+      strays = model.__dict__.pop("_strayPrefs", [])
+      own = {id(o) for o in model._db.values()}
+      for o in strays:
+        if isinstance(o, Relation) and id(o) not in own:
+          if o.localSrc is not None:
+            delOne(o.localSrc._outgoing, o, throw=False)
+          if o.localDst is not None:
+            delOne(o.localDst._incoming, o, throw=False)
+          isaStructureChanged()
+      if strays:
+        logger.warning(f'"{model.url}": {len(strays)} objects that had got into its preferences were taken out '
+                       '(it\'s marked changed: save it to keep it so).')
+        model.setDirty()
     from sn.model.modelPrefs import ModelPrefs
     for p in ret.postconSetters:
       if p.name == "_db": # (inferred objects aren't saved: see GraphObject.inferred)
@@ -1292,6 +1318,7 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     ret.postconSetters.append(PropertyInfo("prefs", ModelPrefs, lambda slf: cast(Model, slf).prefs, setPrefs,
                                            optional=True)) # optional: older files don't have it
     ret.finalSetters.append(PropertyInfo("_", bool, setter=lambda slf,_t:cast(Model,slf).setDirty(False))) #type: ignore[arg-type]
+    ret.finalSetters.append(PropertyInfo("_", bool, setter=dropStrays)) #type: ignore[arg-type]
     ret.finalSetters.append(PropertyInfo("_", bool, setter=lambda slf,_t:cast(Model,slf)._migrate())) #type: ignore[arg-type]
     return ret
 
@@ -1851,7 +1878,8 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]): #type: ignore[misc]
           described = slf.describeEnd(isSource, source)
           slf.assertToStatusReport(False, f'Its {sideText} couldn\'t be found: {described}: {problem}.', "E",
                                    actions={"remove relation from model": lambda: [slf.model.setDirty(), slf._disconnect(), slf.model.setDirty(), None][-1]}) #type: ignore[func-returns-value]
-          slf.db.__dict__.setdefault("_unresolved", []).append((described, problem))
+          if not any(o is slf for o in slf.db.__dict__.get("_strayPrefs", ())): # (one that's dropped anyway: see Model.getInstantiationInfo())
+            slf.db.__dict__.setdefault("_unresolved", []).append((described, problem))
         
     ret = GraphObject.getInstantiationInfo()
     return InstantiationInfo(
