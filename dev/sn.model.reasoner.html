@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="sn.model.snAttribute module" href="sn.model.snAttribute.html"><link rel="prev" title="sn.model.names module" href="sn.model.names.html">
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
-    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.2.0 and Furo 2025.12.19 -->
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>sn.model.reasoner module - Semantic Nets 1.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
@@ -1666,11 +1666,11 @@ made to refer to where it then is. (None while they’re being read: see
 <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">violations</span><span class="p">:</span>
   <span class="nb">print</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
 <span class="n">r</span><span class="o">.</span><span class="n">related</span><span class="p">(</span><span class="n">fred</span><span class="p">,</span> <span class="n">owns</span><span class="p">)</span>                   <span class="c1"># portable</span>
-<span class="n">r</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">'ans(X) :- ...'</span><span class="p">)</span>                <span class="c1"># native to the engine</span>
+<span class="n">r</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;ans(X) :- ...&#39;</span><span class="p">)</span>                <span class="c1"># native to the engine</span>
 </pre></div>
 </div>
 <p>Engines register themselves by name when subclassing:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MyReasoner</span><span class="p">(</span><span class="n">Reasoner</span><span class="p">,</span> <span class="n">engine</span><span class="o">=</span><span class="s2">"mine"</span><span class="p">):</span> <span class="o">...</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MyReasoner</span><span class="p">(</span><span class="n">Reasoner</span><span class="p">,</span> <span class="n">engine</span><span class="o">=</span><span class="s2">&quot;mine&quot;</span><span class="p">):</span> <span class="o">...</span>
 </pre></div>
 </div>
 <p><a class="reference internal" href="#sn.model.reasoner.Reasoner.create" title="sn.model.reasoner.Reasoner.create"><code class="xref py py-meth docutils literal notranslate"><span class="pre">create()</span></code></a> imports <em>sn.model.&lt;engine&gt;Reasoner</em> on demand, so an engine

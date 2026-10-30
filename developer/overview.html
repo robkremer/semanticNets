@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Architecture" href="architecture.html"><link rel="prev" title="Developer Guide" href="index.html">
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
-    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.2.0 and Furo 2025.12.19 -->
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>Overview - Semantic Nets 1.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
@@ -476,6 +476,11 @@ from there: <code class="docutils literal notranslate"><span class="pre">tools/p
 it). It lists any reference to a file outside <em>FOLDER</em>, as that won’t be on
 the web: models and views in the folder refer to one another by relative
 names. The builds leave the models out of the Help they bundle.</p>
+<p>Both scripts first catch the local <code class="docutils literal notranslate"><span class="pre">gh-pages</span></code> up with origin’s (in
+<code class="docutils literal notranslate"><span class="pre">tools/ghPages.sh</span></code>), so publishing works from any machine, whatever the
+others published since. If the local one has commits origin hasn’t (an
+unpushed <code class="docutils literal notranslate"><span class="pre">--no-push</span></code>) while origin has newer ones too, it starts from
+origin’s and keeps the local one as a <code class="docutils literal notranslate"><span class="pre">gh-pages-unpushed-</span></code><em>DATE</em> branch.</p>
 <p>The rest of <code class="docutils literal notranslate"><span class="pre">sphinx/source</span></code> – this guide and the User Guide – is written
 by hand. Images go in <code class="docutils literal notranslate"><span class="pre">sphinx/source/images</span></code>. The pythonUtils documentation
 is linked through intersphinx, from its own build’s <code class="docutils literal notranslate"><span class="pre">objects.inv</span></code>: build

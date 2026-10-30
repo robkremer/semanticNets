@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="prev" title="Semantic Nets Source Code Model" href="snSourceCode.html">
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
-    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.2.0 and Furo 2025.12.19 -->
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>Families Models - Semantic Nets 1.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
@@ -174,7 +174,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
       </label>
     </div>
@@ -355,36 +355,48 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
           </label>
         </div>
         <article role="main" id="furo-main-content">
           <section id="families-models">
 <h1>Families Models<a class="headerlink" href="#families-models" title="Link to this heading">¶</a></h1>
-<p>The families models show an ontology of family relations with contraints, rules,
-definitions, and queries, together with demonstrating the use or supermodels.</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>An ontology model for families, constraining genders of mothers and fathers, and
+<p>The families models show both an ontology and a concrete model that uses that
+ontology. The ontology demonstrates types, contraints, rules, and
+definitions.  The Flintstones family tree demonstrates concrete relations among
+individuals, queries, and the use or supermodels (the onotolgy).</p>
+<section id="family-ontology">
+<h2>Family Ontology<a class="headerlink" href="#family-ontology" title="Link to this heading">¶</a></h2>
+<img alt="../_images/familyOntology.png" src="../_images/familyOntology.png" />
+<p>An ontology model for families, constraining genders of mothers and fathers, and
 defining ancestors, descendents, full- and half- siblings, brothers, and sisters,
-grandparents, and children.
-<a class="reference external" href="https://robkremer.github.io/semanticNets/models/families/familyOntology.snm">https://robkremer.github.io/semanticNets/models/families/familyOntology.snm</a></p>
-<ul>
-<li><p>A view of the above:
-<a class="reference external" href="https://robkremer.github.io/semanticNets/models/families/familyOntology.snv">https://robkremer.github.io/semanticNets/models/families/familyOntology.snv</a></p></li>
-</ul>
-</li>
-<li><p>A model of the Flintstone family (and friends) from the cartoon, together with a number
-of example queries:
-<a class="reference external" href="https://robkremer.github.io/semanticNets/models/families/Flintstones.snm">https://robkremer.github.io/semanticNets/models/families/Flintstones.snm</a></p>
-<ul>
-<li><p>A view of the above:
-<a class="reference external" href="https://robkremer.github.io/semanticNets/models/families/Flintstones.snv">https://robkremer.github.io/semanticNets/models/families/Flintstones.snv</a></p></li>
-</ul>
-</li>
-</ul>
-</div></blockquote>
+grandparents, and children. This model demonstrates constraints, rules, and
+definitions.</p>
+<p>Model: <a class="reference external" href="https://robkremer.github.io/semanticNets/models/families/familyOntology.snm">https://robkremer.github.io/semanticNets/models/families/familyOntology.snm</a></p>
+<p>View: <a class="reference external" href="https://robkremer.github.io/semanticNets/models/families/familyOntology.snv">https://robkremer.github.io/semanticNets/models/families/familyOntology.snv</a></p>
+</section>
+<section id="the-flintstones-family-tree">
+<h2>The Flintstones Family Tree<a class="headerlink" href="#the-flintstones-family-tree" title="Link to this heading">¶</a></h2>
+<img alt="../_images/flintstones.png" src="../_images/flintstones.png" />
+<p>A model of the Flintstone family (and friends) from the cartoon from
+Hanna-Barbera Productions, together with a number of example queries. This model
+inherits from it’s supermodel, <em>familyOnotology.snm</em>, above, so all the node types,
+relations types, constraints, rules, and definitions apply here as well.</p>
+<p>Model: <a class="reference external" href="https://robkremer.github.io/semanticNets/models/families/Flintstones.snm">https://robkremer.github.io/semanticNets/models/families/Flintstones.snm</a></p>
+<p>View: <a class="reference external" href="https://robkremer.github.io/semanticNets/models/families/Flintstones.snv">https://robkremer.github.io/semanticNets/models/families/Flintstones.snv</a></p>
+<img alt="../_images/flintstonesFullReasoned.png" src="../_images/flintstonesFullReasoned.png" />
+<p>The figure above shows the same family tree with the reasoner invoked (using
+the solid botton in lower left corner) to display all it can conclude on the
+data in the view.  A bit much.</p>
+<img alt="../_images/flintstonesQuery.png" src="../_images/flintstonesQuery.png" />
+<p>The figure above demonstrates a much more reasonable way to use the reasoner:
+a query.  This query answers the question “Who has a full brother?”, and the
+reasoner highlights all the individuals who have a full bother and draws in
+(faded) the inferred “has-brother” relations if they were not already explicitly
+there. The reasoner as concluded the has-brother relations by virtue of having
+two common parents.</p>
+</section>
 </section>
 
         </article>
@@ -422,8 +434,28 @@ of example queries:
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Families Models</a><ul>
+<li><a class="reference internal" href="#family-ontology">Family Ontology</a></li>
+<li><a class="reference internal" href="#the-flintstones-family-tree">The Flintstones Family Tree</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>
