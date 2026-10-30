@@ -1174,13 +1174,20 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
       still referring to the local copy (see *replaceSuperModel()*).
     '''
     allowed = {id(self), *(id(db) for db in self.allSuperDBs())}
+    return {db: n for db, n in self.referredModels().items() if id(db) not in allowed}
+
+  def referredModels(self) -> dict[Model, int]:
+    '''
+    :returns: The other models this one's objects refer to (by relations'
+      ends), each with how many references there are to it.
+    '''
     ret:dict[Model, int] = {}
     for obj in list(self._db.values()):
       if not isinstance(obj, Relation):
         continue
       for end in (obj.localSrc, obj.localDst):
         db = getattr(end, "db", None)
-        if isinstance(db, Model) and id(db) not in allowed:
+        if isinstance(db, Model) and db is not self:
           ret[db] = ret.get(db, 0) + 1
     return ret
 
@@ -1204,6 +1211,15 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
       logger.warning(f'"{url}": {len(unresolved)} reference{"s" if len(unresolved) > 1 else ""} to objects couldn\'t be '
                      f'followed (the relations are left unconnected at that end):\n  '
                      + "\n  ".join(f"{what}: {why}" for what, why in shown) + more)
+    for old, n in self.unlistedModels().items(): # (a copy of it among the super-models, by the same name: refer to that)
+      for copy in (db for db in self.allSuperDBs() if isinstance(db, Model) and db.name == old.name):
+        changes, problems = self._copyChanges(old, copy)
+        if not problems:
+          self._redirect(old, copy, changes)
+          logger.warning(f'"{url}": {n} reference{"s" if n > 1 else ""} to objects in "{old.url}", which isn\'t one of '
+                         f'its super-models, now refer to the same objects in its super-model "{copy.url}". '
+                         f'Save it to keep that.')
+          break
     unlisted = self.unlistedModels()
     if unlisted:
       supers = ", ".join(f'"{self.superDBRef(db)}"' for db in self.superDBs) or "none"
@@ -1470,6 +1486,33 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
       raise ValueError(f'"{new.url}" can\'t be a super-model of "{self.url}": it is, or builds on, it.')
     if any(old is m for m in self.implicitSuperDBs()):
       raise ValueError(f'"{old.url}" is built in: it can\'t be replaced.')
+    changes, problems = self._copyChanges(old, new)
+    if problems:
+      raise ValueError(f'"{new.url}" isn\'t a copy of "{old.url}" (as far as this model is concerned):\n  '
+                       + "\n  ".join(sorted(set(problems))))
+    self._redirect(old, new, changes)
+    supers = [new if db is old else db for db in self.superDBs]
+    if not any(db is new for db in supers):
+      supers.append(new)
+    kept:list[PRDb] = []
+    for db in supers: # (new may have been one already: once, where it first is)
+      if not any(db is k for k in kept):
+        kept.append(db)
+    self.superDBs[:] = kept #type: ignore[assignment]
+    self.relativeSuperDBs.discard(old.url)
+    if relative:
+      self.relativeSuperDBs.add(new.url)
+    self.setDirty()
+    return len(changes)
+
+  def _copyChanges(self, old:Model, new:Model) -> tuple[list[tuple[Relation, bool, GraphObject]], list[str]]:
+    '''
+    What referring to *new* in place of *old* takes (see *replaceSuperModel()*).
+
+    :returns: For each reference to one of *old*'s objects: (the relation,
+      whether it's its source, the object with the same id in *new*); and why
+      any of those can't be (eg: not in *new*, or named differently there).
+    '''
     changes:list[tuple[Relation, bool, GraphObject]] = []
     problems:list[str] = []
     for obj in list(self._db.values()):
@@ -1485,28 +1528,19 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
           problems.append(f'#{end._id} ({end.name}): in "{new.url}", it\'s {type(target).__name__} "{target.name}"')
         else:
           changes.append((obj, isSource, target))
-    if problems:
-      raise ValueError(f'"{new.url}" isn\'t a copy of "{old.url}" (as far as this model is concerned):\n  '
-                       + "\n  ".join(sorted(set(problems))))
+    return changes, problems
+
+  def _redirect(self, old:Model, new:Model, changes:list[tuple[Relation, bool, GraphObject]]) -> None:
+    '''
+    Make the *changes* (see *_copyChanges()*), and note that *new* replaced *old* (see *replacedModels*).
+    '''
     for rel, isSource, target in changes:
       rel.connect(source=target) if isSource else rel.connect(destination=target)
-    supers = [new if db is old else db for db in self.superDBs]
-    if not any(db is new for db in supers):
-      supers.append(new)
-    kept:list[PRDb] = []
-    for db in supers: # (new may have been one already: once, where it first is)
-      if not any(db is k for k in kept):
-        kept.append(db)
-    self.superDBs[:] = kept #type: ignore[assignment]
-    self.relativeSuperDBs.discard(old.url)
-    if relative:
-      self.relativeSuperDBs.add(new.url)
     for k, v in list(self.replacedModels.items()): # (anything replaced by old is now replaced by new)
       if v == old.url:
         self.replacedModels[k] = new.url
     self.replacedModels[old.url] = new.url
     self.setDirty()
-    return len(changes)
 
   def setSuperModels(self, paths:list[str]) -> None:
     '''
@@ -1517,11 +1551,17 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     file -- or URL, for a model on the web -- and are saved relative to it
     however far from it they are (see *PRDb.relativeSuperDBs*); others are
     saved as they are, unless they're near it (see *PRDb.relativeURL()*).
-    Nothing is changed unless all of them are fine.
+    A super-model dropped that this model's objects still refer to must have
+    a copy among those added (eg: "pythonOntology.snm" beside it in place of
+    the plugin's): they're made to refer to the copy's objects instead (see
+    *replaceSuperModel()*), so the model never quietly depends on a file that
+    isn't one of its super-models. Nothing is changed unless all of them are
+    fine.
 
     :param paths: The super-models' files (or URLs).
     :raises ValueError: listing the paths that can't be used, and why: eg:
-      not a model, can't be read, or builds on this one.
+      not a model, can't be read, or builds on this one; or a super-model
+      that's still referred to is dropped without a copy in its place.
     '''
     implicit = self.implicitSuperDBs()
     dbs:list[PRDb] = []
@@ -1552,9 +1592,30 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
           dbs.append(db)
         if isRelative:
           relative.add(db.url)
+    new = implicit + dbs
+    redirects:list[tuple[Model, Model, list]] = []
+    if not problems: # (a super-model dropped that objects still refer to: to a copy of it put in its place, or not at all)
+      allowed = {id(self)} | {id(m) for db in new for m in (db, *db.allSuperDBs())}
+      added = [db for db in dbs if not any(db is o for o in self.superDBs)]
+      for old, n in self.referredModels().items():
+        if id(old) in allowed:
+          continue
+        for copy in sorted(added, key=lambda db: db.name != old.name): # (one by the same name first)
+          changes, wrong = self._copyChanges(old, copy)
+          if not wrong:
+            redirects.append((old, cast(Model, copy), changes))
+            break
+        else:
+          if any(old is db for db in self.superDBs):
+            problems.append(f'"{self.superDBRef(old)}": {n} of this model\'s references are to its objects, and none of '
+                            f'the others is a copy of it. To use another copy, put it in its place (Edit | Replace '
+                            f'super-model...).')
     if problems:
       raise ValueError("\n".join(problems))
-    new = implicit + dbs
+    for old, copy, changes in redirects:
+      self._redirect(old, copy, changes)
+      logger.warning(f'{self.name}: {len(changes)} reference{"s" if len(changes) > 1 else ""} to objects in "{old.url}" '
+                     f'now refer to the same objects in "{copy.url}".')
     if new != self.superDBs or missing != self._missingSuperDBs or relative != self.relativeSuperDBs:
       self.superDBs[:] = new #type: ignore[assignment]
       self._missingSuperDBs[:] = missing
