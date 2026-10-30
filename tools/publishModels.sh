@@ -25,9 +25,9 @@ models="$(cd "$1" && pwd)"
 found=0
 while IFS= read -r -d '' f; do
   own="$(grep -o -m1 'value="file:[^"]*"' "$f" || true)"
-  others="$(grep -o 'value="file:[^"]*"' "$f" | sort -u | grep -v -x -F "${own:-none}" || true)"
+  others="$(grep -o 'value="file:[^"]*"' "$f" | sed -e 's/#[^"]*"$/"/' | sort -u | grep -v -x -F "${own:-none}" || true)" # (each file once, not each object in it)
   if [ -n "${others}" ]; then
-    [ "${found}" = 1 ] || echo "These refer to files that won't be on the web (copy them into ${models}, and save the referring ones again):"
+    [ "${found}" = 1 ] || echo "These refer to files that won't be on the web (copy them into ${models}, and make the referring ones refer to the copies):"
     found=1
     echo "  ${f#"${models}/"}:"
     sed -e 's/^value="\(.*\)"$/    \1/' <<< "${others}"
