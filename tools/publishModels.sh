@@ -35,8 +35,9 @@ models="$(cd "$1" && pwd)"
 # so nothing is published while there are any (unless --force).
 found=0
 while IFS= read -r -d '' f; do
-  others="$(grep -v -e 'key="url"' -e 'key="previousURL"' "$f" | grep -o 'value="file:[^"]*"' \
-            | sed -e 's/#[^"]*"$/"/' | sort | uniq -c || true)" # (each file once, with how many references to it)
+  own="$(grep -o -m1 'value="file:[^"#]*"' "$f" || true)" # (the first: its own, in the header -- in older files, on the line after key="url")
+  others="$(grep -v -e 'key="previousURL"' "$f" | grep -o 'value="file:[^"]*"' | sed -e 's/#[^"]*"$/"/' \
+            | grep -v -x -F "${own:-none}" | sort | uniq -c || true)" # (each file once, with how many references to it)
   if [ -n "${others}" ]; then
     [ "${found}" = 1 ] || echo "These refer to files that won't be on the web (copy them into ${models}, and make the referring ones refer to the copies -- eg: Edit | Replace super-model...):"
     found=1
