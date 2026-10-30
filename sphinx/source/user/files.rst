@@ -134,7 +134,12 @@ URL...**). Models on the web are read-only here.
   refer only to its own super-models; if some refer to a model that isn't one
   (eg: the local copy of an ontology, when the web one is the super-model),
   you're told which, and how many -- **Replace super-model...** puts that
-  right.
+  right. If one of its super-models has the same file name and the same
+  objects (eg: a copy of a plugin's ontology put beside the model), they're
+  made to refer to that one straight away, and you're told; save the model to
+  keep it. And in **Model preferences...**, a super-model the objects still
+  refer to can't just be taken off the list: listing a copy of it in its place
+  makes them refer to the copy instead.
 - **Moved models**: if a model (or a whole folder of them, eg: a web site)
   moves, list where it was and where it is now in the ``model/urlAliases``
   setting -- ``old -> new``, one per line; an ``old`` ending in ``/`` moves
