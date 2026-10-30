@@ -460,7 +460,8 @@ have a context contain something that stays outside its window (its arc is
 then drawn).</p></li>
 </ul>
 <p>Windows can be nested: an object dropped where windows overlap goes into the
-innermost one.</p>
+innermost one. A window goes only into a plain context, though: one dropped on
+a rule, definition or requirement isn’t put in it, but pushed off it.</p>
 <p>A window holds only what its context contains – and the relations between
 things it holds (eg: a pattern relation’s isa link to its type variable),
 which needn’t be contained themselves. Anything else that ends up in it – a window dropped or expanded over it, an object dropped half on its
@@ -471,6 +472,13 @@ smaller is pushed off, carrying its contents. A relation’s label that floats
 between its ends keeps out of windows that don’t contain it. This happens
 when a change is made – a drop, not while dragging – and is undone with
 it.</p>
+<p>A variable means something only in its pattern, so one that’s outside the
+window it belongs in (eg: placed by <strong>show all</strong>, or in a view saved that
+way) is put back in it, in its pane, at the next change – the window grows
+if there’s no room.</p>
+<p>The layouts (arranged now, or kept arranged) don’t arrange what’s in
+windows, and don’t put anything on a window: a window that what they arrange
+would land on is moved aside, the least it takes, carrying its contents.</p>
 </section>
 <section id="variables">
 <h2>Variables<a class="headerlink" href="#variables" title="Link to this heading">¶</a></h2>

@@ -821,7 +821,9 @@ preference): a model with more to show is shown by its types instead (see
 <span class="sig-name descname"><span class="pre">showAllModel</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin.showAllModel" title="Link to this definition">¶</a></dt>
 <dd><p>Show all the model’s objects that aren’t in the view yet, on a grid – or,
 if there are more than <em>SHOW_ALL_MAX</em>, just its node types (see
-<em>showTypes()</em>), to be expanded as they’re wanted.</p>
+<em>showTypes()</em>), to be expanded as they’re wanted. The variables go into
+the windows they belong in (see <em>homeStrays()</em>), and what’s landed in a
+window it doesn’t belong in is pushed out (see <em>bumpIntruders()</em>).</p>
 </dd></dl>
 
 <dl class="py method">

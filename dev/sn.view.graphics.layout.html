@@ -1476,7 +1476,9 @@ when it’s undone, if it did before.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>view</strong> (<a class="reference internal" href="sn.view.graphics.sngView.html#sn.view.graphics.sngView.SNGView" title="sn.view.graphics.sngView.SNGView"><em>SNGView</em></a>)</p></li>
 <li><p><strong>name</strong> (<em>str</em>) – What the undo menu calls it.</p></li>
-<li><p><strong>targets</strong> (<em>dict</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>) – Where things go (their top left corners): those already there are left out.</p></li>
+<li><p><strong>targets</strong> (<em>dict</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>) – Where things go (their top left corners): those already there are left out. A
+context window they’d land on is moved out of their way, with its contents (see
+<em>windowsOutOfTheWay()</em>).</p></li>
 <li><p><strong>animate</strong> (<em>bool</em>) – Whether to move them smoothly when it’s first done.</p></li>
 </ul>
 </dd>
@@ -1658,6 +1660,33 @@ from <em>DoList</em> when new commands override the tail of the do-queue.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>list[<em>Sequence</em>[float]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.layout.windowsOutOfTheWay">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.layout.</span></span><span class="sig-name descname"><span class="pre">windowsOutOfTheWay</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.layout.windowsOutOfTheWay" title="Link to this definition">¶</a></dt>
+<dd><p>Where to put the context windows that what a layout arranges would land
+on: each is moved whole – with what it carries (see
+<em>VObject.carriedContents()</em>) – the least it takes to be <em>gap</em> clear of
+what’s arranged, and off everything else (other windows too), so nothing
+ends up in a window it doesn’t belong in, and a window’s contents stay in
+it. (A layout moves things without carrying: see <em>LayoutMoves</em>.) Windows
+inside another window, and what <em>targets</em> moves itself, are left be.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>view</strong> (<a class="reference internal" href="sn.view.graphics.sngView.html#sn.view.graphics.sngView.SNGView" title="sn.view.graphics.sngView.SNGView"><em>SNGView</em></a>) – A view.</p></li>
+<li><p><strong>targets</strong> (<em>dict</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>) – Where the layout puts things (their top left).</p></li>
+<li><p><strong>gap</strong> (<em>float</em>) – The clearance.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Where the windows moved, and what they carry, go (their top left).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, tuple[float, float]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2225,6 +2254,7 @@ no such place, they’re ignored).</p></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#sn.view.graphics.layout.shownBoxes"><code class="docutils literal notranslate"><span class="pre">shownBoxes()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.layout.windowsOutOfTheWay"><code class="docutils literal notranslate"><span class="pre">windowsOutOfTheWay()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.layout.clearBelow"><code class="docutils literal notranslate"><span class="pre">clearBelow()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.layout.freeRingSpot"><code class="docutils literal notranslate"><span class="pre">freeRingSpot()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.layout.FindFree"><code class="docutils literal notranslate"><span class="pre">FindFree</span></code></a><ul>

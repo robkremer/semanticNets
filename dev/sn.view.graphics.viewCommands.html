@@ -370,12 +370,32 @@ and the commands that does it with; and <em>keptWith()</em>, what “erase every
 else” keeps.</p>
 <p>Created on Oct 18, 2026 (from sngView.py)</p>
 <p><em>Code author: Rob Kremer &lt;<a class="reference external" href="mailto:robkremer&#37;&#52;&#48;me&#46;com">robkremer<span>&#64;</span>me<span>&#46;</span>com</a>&gt;</em></p>
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.viewCommands._place">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewCommands.</span></span><span class="sig-name descname"><span class="pre">_place</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">was</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">box</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewCommands._place" title="Link to this definition">¶</a></dt>
+<dd><p>Put <em>vo</em>, whose box is <em>was</em>, at <em>box</em>: moved (a context window carries its
+contents), or, if its size differs, reshaped (a window grown for what’s put in it).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vo</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p></li>
+<li><p><strong>was</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>box</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="sn.view.graphics.viewCommands._BumpIntruders">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewCommands.</span></span><span class="sig-name descname"><span class="pre">_BumpIntruders</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewCommands._BumpIntruders" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.command.html#util.command.Command" title="(in pythonUtils)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Command</span></code></a></p>
-<p>Push what’s in a context window it doesn’t belong in out of it (see
-<em>SNGView.bumpIntruders()</em>). What to move is worked out when it’s first done
+<p>Put the variables that have strayed out of their windows back in them
+(see <em>SNGView.homeStrays()</em>), and push what’s in a context window it
+doesn’t belong in out of it (see <em>SNGView.bumpIntruders()</em>). What to move is worked out when it’s first done
 – after the commands before it, so a drop into a pane has already made the
 object contained – and replayed on a redo.</p>
 <dl class="field-list simple">
@@ -639,6 +659,18 @@ elsewhere (eg: by a program, or in another window).</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewCommands.ViewDoList._bump">
+<span class="sig-name descname"><span class="pre">_bump</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewCommands.ViewDoList._bump" title="Link to this definition">¶</a></dt>
+<dd><p>Push what’s in a context window it doesn’t belong in out of it (see
+<em>SNGView.bumpIntruders()</em>), as part of the undo entry just done.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.viewCommands.ViewDoList.undo">
 <span class="sig-name descname"><span class="pre">undo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewCommands.ViewDoList.undo" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
@@ -841,6 +873,7 @@ be None: eg: a relation type’s, dangling); else None.</p></li>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">sn.view.graphics.viewCommands module</a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.viewCommands._place"><code class="docutils literal notranslate"><span class="pre">_place()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewCommands._BumpIntruders"><code class="docutils literal notranslate"><span class="pre">_BumpIntruders</span></code></a><ul>
 <li><a class="reference internal" href="#sn.view.graphics.viewCommands._BumpIntruders.__init__"><code class="docutils literal notranslate"><span class="pre">_BumpIntruders.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewCommands._BumpIntruders.moves"><code class="docutils literal notranslate"><span class="pre">_BumpIntruders.moves</span></code></a></li>
@@ -869,6 +902,7 @@ be None: eg: a relation type’s, dangling); else None.</p></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewCommands.ViewDoList.adjustAgain"><code class="docutils literal notranslate"><span class="pre">ViewDoList.adjustAgain()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewCommands.ViewDoList._refuses"><code class="docutils literal notranslate"><span class="pre">ViewDoList._refuses()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewCommands.ViewDoList.do"><code class="docutils literal notranslate"><span class="pre">ViewDoList.do()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewCommands.ViewDoList._bump"><code class="docutils literal notranslate"><span class="pre">ViewDoList._bump()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewCommands.ViewDoList.undo"><code class="docutils literal notranslate"><span class="pre">ViewDoList.undo()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewCommands.ViewDoList.redo"><code class="docutils literal notranslate"><span class="pre">ViewDoList.redo()</span></code></a></li>
 </ul>

@@ -892,6 +892,8 @@ it’s in both, which only an explicit relation can say.</p></li>
 <li><p>Leaving a window it was in removes that window’s containment of it.</p></li>
 <li><p>Containment of an object sitting outside the window (eg: out in the “real
 world”, with its contains arc showing) is left alone.</p></li>
+<li><p>A window goes into another only if that’s a plain context (one pane,
+“contains”): not into a rule, definition or requirement.</p></li>
 </ul>
 <p>Relations in <em>draggedAlong</em> only moved because an end did, so their
 labels’ positions say little: one is put in a window only if both its
@@ -929,6 +931,67 @@ grows downward. A collapsed window is expanded first. Floating relations
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin._gatherPlan">
+<span class="sig-name descname"><span class="pre">_gatherPlan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">which</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">homes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin._gatherPlan" title="Link to this definition">¶</a></dt>
+<dd><p>Where to put what context window <em>w</em> holds that isn’t in its pane (see
+<em>gatherIntoWindow()</em>), and how big <em>w</em> must be for it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>which</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>]</em><em>, </em><em>bool</em><em>] </em><em>| </em><em>None</em>) – Just those of them this says (default: all).</p></li>
+<li><p><strong>homes</strong> (<em>dict</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>tuple</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>str</em><em>]</em><em>] </em><em>| </em><em>None</em>) – <em>containmentHomes()</em>, if the caller has it.</p></li>
+<li><p><strong>w</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>w</em>’s box (as expanded, if it’s collapsed: grown, if need be),
+and (object, its box now, its box there) for each to move – or None if
+there’s nothing to move.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[list[float], list[tuple[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, list[float], list[float]]]] | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin.strayVariables">
+<span class="sig-name descname"><span class="pre">strayVariables</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">homes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin.strayVariables" title="Link to this definition">¶</a></dt>
+<dd><p>The variables outside the window they belong in (see
+<em>containmentHomes()</em>): a variable means something only in its pattern,
+so one out on the canvas – eg: put there by “show all”, or a layout –
+is never where it’s meant to be. Not those of a collapsed or hidden window.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>homes</strong> (<em>dict</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>tuple</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>str</em><em>]</em><em>] </em><em>| </em><em>None</em>) – <em>containmentHomes()</em>, if the caller has it.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Each window’s strays.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, list[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin.homeStrays">
+<span class="sig-name descname"><span class="pre">homeStrays</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin.homeStrays" title="Link to this definition">¶</a></dt>
+<dd><p>Put each variable that’s outside the window it belongs in (see
+<em>strayVariables()</em>) back in it: in its pane, at a free spot, as
+<em>gatherIntoWindow()</em> would (growing the window if there’s no room). Done
+after every command (see <em>ViewDoList</em>), with <em>bumpIntruders()</em>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>(object, its box before, after) for each one moved or resized, in order.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[tuple[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, list[int], list[int]]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1022,6 +1085,9 @@ grows downward. A collapsed window is expanded first. Floating relations
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin._containNewRelation"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin._containNewRelation()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin._updateContainment"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin._updateContainment()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin.gatherIntoWindow"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin.gatherIntoWindow()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin._gatherPlan"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin._gatherPlan()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin.strayVariables"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin.strayVariables()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin.homeStrays"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin.homeStrays()</span></code></a></li>
 </ul>
 </li>
 </ul>
