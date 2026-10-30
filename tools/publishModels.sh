@@ -39,12 +39,8 @@ pages="${work}/gh-pages"
 trap 'git -C "${projectRoot}" worktree remove --force "${pages}" 2>/dev/null || true; rm -rf "${work}"' EXIT
 
 cd "${projectRoot}"
-if git show-ref --verify --quiet refs/heads/gh-pages; then
-  git worktree add --quiet "${pages}" gh-pages
-elif git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
-  git fetch --quiet origin gh-pages
-  git worktree add --quiet -b gh-pages "${pages}" FETCH_HEAD
-else
+source "${projectRoot}/tools/ghPages.sh"
+if ! ghPagesWorktree "${pages}"; then
   echo "There's no gh-pages branch yet: publish the documentation first (tools/publishDocs.sh)." >&2
   exit 1
 fi

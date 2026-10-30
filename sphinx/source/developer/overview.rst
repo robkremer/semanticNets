@@ -134,6 +134,12 @@ it). It lists any reference to a file outside *FOLDER*, as that won't be on
 the web: models and views in the folder refer to one another by relative
 names. The builds leave the models out of the Help they bundle.
 
+Both scripts first catch the local ``gh-pages`` up with origin's (in
+``tools/ghPages.sh``), so publishing works from any machine, whatever the
+others published since. If the local one has commits origin hasn't (an
+unpushed ``--no-push``) while origin has newer ones too, it starts from
+origin's and keeps the local one as a ``gh-pages-unpushed-``\ *DATE* branch.
+
 The rest of ``sphinx/source`` -- this guide and the User Guide -- is written
 by hand. Images go in ``sphinx/source/images``. The pythonUtils documentation
 is linked through intersphinx, from its own build's ``objects.inv``: build
