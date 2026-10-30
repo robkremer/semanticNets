@@ -807,7 +807,9 @@ class LayoutMoves(Command):
     :param view:
     :type view: SNGView
     :param name: What the undo menu calls it.
-    :param targets: Where things go (their top left corners): those already there are left out.
+    :param targets: Where things go (their top left corners): those already there are left out. A
+      context window they'd land on is moved out of their way, with its contents (see
+      *windowsOutOfTheWay()*).
     :param animate: Whether to move them smoothly when it's first done.
     '''
     super().__init__(name)
@@ -816,6 +818,8 @@ class LayoutMoves(Command):
     self.first = True
     self.moves:list[tuple[VObject, tuple[float, float], tuple[float, float], bool|None]] = []
     "(object, from, to, whether it floated: for a relation's label)"
+    if targets and getattr(view, "contextWindows", None) is not None:
+      targets = {**targets, **windowsOutOfTheWay(view, targets)}
     for vo, (x, y) in targets.items():
       bb = vo.boundingBox()
       if abs(bb[0] - x) >= 0.5 or abs(bb[1] - y) >= 0.5:
@@ -907,6 +911,60 @@ def shownBoxes(view, exclude:Iterable[VObject]=(), around:Sequence[float]|None=N
   return [b for vo in view.values()
           if isinstance(vo, VObject) and (b := vo.boundingBox())[0] < x2 and x1 < b[2] and b[1] < y2 and y1 < b[3]
           and id(vo) not in skip and not vo.isHidden() and vo._shape is not None and vo._shape.id in shapes]
+
+def windowsOutOfTheWay(view, targets:dict[VObject, tuple[float, float]], gap:float=20.0) -> dict[VObject, tuple[float, float]]:
+  '''
+  Where to put the context windows that what a layout arranges would land
+  on: each is moved whole -- with what it carries (see
+  *VObject.carriedContents()*) -- the least it takes to be *gap* clear of
+  what's arranged, and off everything else (other windows too), so nothing
+  ends up in a window it doesn't belong in, and a window's contents stay in
+  it. (A layout moves things without carrying: see *LayoutMoves*.) Windows
+  inside another window, and what *targets* moves itself, are left be.
+
+  :param view: A view.
+  :type view: SNGView
+  :param targets: Where the layout puts things (their top left).
+  :param gap: The clearance.
+  :returns: Where the windows moved, and what they carry, go (their top left).
+  '''
+  windows = [w for w in view.contextWindows() if not w.isHidden() and w not in targets]
+  if not windows or not targets:
+    return {}
+  homes = view.containmentHomes()
+  arranged:list[list[float]] = []
+  for vo, (x, y) in targets.items():
+    if vo in homes or (not isinstance(vo, VRelation) and vo.isContextWindow()): # (what moves with a window)
+      continue
+    bb = vo.boundingBox()
+    arranged.append([x, y, x + bb[2] - bb[0], y + bb[3] - bb[1]])
+  if not arranged:
+    return {}
+  hit = lambda b, g: any(a[0] - g < b[2] and b[0] < a[2] + g and a[1] - g < b[3] and b[1] < a[3] + g for a in arranged)
+  moving = sorted((w for w in windows if homes.get(w) is None and hit(w.boundingBox(), gap)), # (not one inside another: it goes with that one)
+                  key=lambda w: (w.boundingBox()[1], w.boundingBox()[0]))
+  if not moving:
+    return {}
+  carried = {w: [vo for vo in w.carriedContents() if vo not in targets] for w in moving}
+  skip = {id(vo) for w in moving for vo in [w, *carried[w]]} | {id(vo) for vo in targets}
+  floats = lambda vo: isinstance(vo, VRelation) and vo.floating()
+  others = [list(vo.boundingBox()) for vo in view.values()
+            if isinstance(vo, VObject) and id(vo) not in skip and vo._isConnected() and not vo.isHidden() and not floats(vo)]
+  ret:dict[VObject, tuple[float, float]] = {}
+  for w in moving:
+    box = list(w.boundingBox())
+    near = [box[0] - 2000, box[1] - 2000, box[2] + 2000, box[3] + 2000]
+    keepOut = [a for a in arranged if a[0] < near[2] and near[0] < a[2] and a[1] < near[3] and near[1] < a[3]]
+    obstacles = [o for o in others if o[0] < near[2] and near[0] < o[2] and o[1] < near[3] and near[1] < o[3]]
+    d = clearOf(box, keepOut, obstacles, gap=gap)
+    if d is None or d == (0.0, 0.0):
+      continue
+    dx, dy = round(d[0]), round(d[1])
+    for vo in [w, *carried[w]]:
+      bb = vo.boundingBox()
+      ret[vo] = (bb[0] + dx, bb[1] + dy)
+    others.append([box[0] + dx, box[1] + dy, box[2] + dx, box[3] + dy]) # (the next keeps off it)
+  return ret
 
 def clearBelow(boxes:Iterable[Sequence[float]], x1:float, x2:float, y:float, height:float, gap:float) -> float:
   '''

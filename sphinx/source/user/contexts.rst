@@ -87,7 +87,8 @@ Putting things into a window
   then drawn).
 
 Windows can be nested: an object dropped where windows overlap goes into the
-innermost one.
+innermost one. A window goes only into a plain context, though: one dropped on
+a rule, definition or requirement isn't put in it, but pushed off it.
 
 A window holds only what its context contains -- and the relations between
 things it holds (eg: a pattern relation's isa link to its type variable),
@@ -99,6 +100,15 @@ smaller is pushed off, carrying its contents. A relation's label that floats
 between its ends keeps out of windows that don't contain it. This happens
 when a change is made -- a drop, not while dragging -- and is undone with
 it.
+
+A variable means something only in its pattern, so one that's outside the
+window it belongs in (eg: placed by **show all**, or in a view saved that
+way) is put back in it, in its pane, at the next change -- the window grows
+if there's no room.
+
+The layouts (arranged now, or kept arranged) don't arrange what's in
+windows, and don't put anything on a window: a window that what they arrange
+would land on is moved aside, the least it takes, carrying its contents.
 
 Variables
 ---------
