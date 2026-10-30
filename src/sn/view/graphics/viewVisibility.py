@@ -38,7 +38,7 @@ from contextlib import contextmanager
 from typing import Iterator, Iterable
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
-from sn.view.graphics.layout import nodeNamed, nodeTypes, relationNamed, relationTypes
+from sn.view.graphics.layout import nodeTypes, relationTypes
 from util.commandParser import CompositeCommandMgr
 from sn.view.graphics.viewBase import ViewBase
 
@@ -49,6 +49,15 @@ RELATION_CATEGORY = "relations: "
 
 NODE_CATEGORY = "nodes: "
 "How a node type's category (for hiding or erasing its individuals) is named: see *SNGView.nodeCategory()*."
+
+def _isaNamed(mo:GraphObject, name:str) -> bool:
+  '''
+  Whether *mo* is an instance of a type named *name* (or of its subtypes).
+  By name, not by the type itself: a model may reach two copies of an
+  ontology (eg: one beside it, and the one its objects were made with), and
+  a type category is chosen, and saved with the view, by its name.
+  '''
+  return any(t is not mo and t.name == name for t in mo.isa())
 
 class VisibilityMixin(ViewBase):
   '''
@@ -193,13 +202,9 @@ class VisibilityMixin(ViewBase):
     name = str(typ if isinstance(typ, str) else typ.name)
     category = RELATION_CATEGORY + name
     if category not in self.categories.keys():
-      found:dict[str, Relation|None] = {}
       def test(mo:GraphObject) -> bool:
-        if "t" not in found: # (looked up when first needed: eg: a view read before its model's super-models)
-          found["t"] = typ if isinstance(typ, Relation) else relationNamed(self.model, name)
-        t = found["t"]
-        return t is not None and isinstance(mo, Relation) and not isinstance(mo, IsaIndividual) \
-               and mo.isIndividual() and mo.isa(t)
+        return isinstance(mo, Relation) and not isinstance(mo, IsaIndividual) and mo.isIndividual() \
+               and _isaNamed(mo, name)
       self.categories.addCategory(category, test)
     return category
 
@@ -216,13 +221,8 @@ class VisibilityMixin(ViewBase):
     name = str(typ if isinstance(typ, str) else typ.name)
     category = NODE_CATEGORY + name
     if category not in self.categories.keys():
-      found:dict[str, Node|None] = {}
       def test(mo:GraphObject) -> bool:
-        if "t" not in found: # (looked up when first needed: eg: a view read before its model's super-models)
-          found["t"] = typ if isinstance(typ, Node) else nodeNamed(self.model, name)
-        t = found["t"]
-        return t is not None and isinstance(mo, Node) and not isinstance(mo, Relation) \
-               and mo.isIndividual() and mo.isa(t)
+        return isinstance(mo, Node) and not isinstance(mo, Relation) and mo.isIndividual() and _isaNamed(mo, name)
       self.categories.addCategory(category, test)
     return category
 

@@ -319,6 +319,26 @@ class Test(unittest.TestCase):
     self.assertEqual(len(list(v.values())), count)
     self.assertIn("alice", self.shown())
 
+  def test0620relationCategoryByName(self):
+    '''
+    A relation type's category hides the relations of every type of that name:
+    eg: of two copies of an ontology a model reaches (one beside it, and the
+    one its objects were made with) -- as with views read from the web.
+    '''
+    v, m = self.view, self.model
+    likes = next(o for o in m.values() if o is not None and o.name == "likes" and not o.isIndividual())
+    person = next(o for o in m.values() if o is not None and o.name == "person" and not o.isIndividual())
+    alice, bob = self.vo("alice").modelObject, self.vo("bob").modelObject
+    copy = Relation(m, parents=[m.RELATION], src=person, dst=person, name="likes") # (another type of the same name)
+    rel = Relation(m, parents=[copy], src=bob, dst=alice, individual=True, name="likes")
+    self.pump()
+    vo = v.findViewObjectForGraphObject(rel) or v.makeViewObjectForGraphObject(rel)
+    self.pump()
+    self.assertIsNot(copy, likes)
+    v.context.visibility(v.relationCategory("likes"), "hide")
+    self.pump()
+    self.assertTrue(vo._hidden)
+
   def test0700containment(self):
     v = self.view
     rule = self.vo("uncle rule")
