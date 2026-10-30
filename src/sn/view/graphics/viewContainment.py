@@ -553,6 +553,8 @@ class ContainmentMixin(ViewBase):
     - Leaving a window it was in removes that window's containment of it.
     - Containment of an object sitting outside the window (eg: out in the "real
       world", with its contains arc showing) is left alone.
+    - A window goes into another only if that's a plain context (one pane,
+      "contains"): not into a rule, definition or requirement.
 
     Relations in *draggedAlong* only moved because an end did, so their
     labels' positions say little: one is put in a window only if both its
@@ -574,7 +576,9 @@ class ContainmentMixin(ViewBase):
       if mo is None or not vo._isConnected() or not self._containable(vo):
         continue
       new = vo.centerPt()
-      target = self._windowAt(new, exclude=[w for w in windows if w is vo or nestedIn(w, vo)])
+      isWindow = not isinstance(vo, VRelation) and vo.isContextWindow()
+      # (a window goes only into a plain context: one dropped on a rule, say, is just on it -- and pushed off)
+      target = self._windowAt(new, exclude=[w for w in windows if w is vo or nestedIn(w, vo) or (isWindow and "contains" not in w.panes())])
       ends = [e.centerPt() for e in (vo.src, vo.dst) if isinstance(e, VObject)] if vo in along and isinstance(vo, VRelation) else None
       for w in windows:
         if w is vo:
@@ -615,23 +619,49 @@ class ContainmentMixin(ViewBase):
     '''
     if not w.isContextWindow():
       return
+    plan = self._gatherPlan(w)
+    if plan is None:
+      logger.info(f'"{w.name}": nothing to gather.')
+      return
+    bb, moves = plan
+    with CompositeCommandMgr(self.context):
+      if w.collapsed:
+        self.context.collapse(w, False)
+      if bb != list(w.fullBoundingBox()):
+        self.context.resize(w, bb[0], bb[1], bb[2], bb[3])
+      for vo, box, placed in moves:
+        self.context.move(vo, placed[0], placed[1], _oldPos=box, adjustPos=False)
+    self.resetScrollRegion(shrink=True)
+    logger.info(f'"{w.name}": gathered {len(moves)} object{"" if len(moves) == 1 else "s"}.')
+
+  def _gatherPlan(self, w:VObject, which:Callable[[VObject], bool]|None=None,
+                  homes:dict[VObject, tuple[VObject, str]]|None=None) -> tuple[list[float], list[tuple[VObject, list[float], list[float]]]]|None:
+    '''
+    Where to put what context window *w* holds that isn't in its pane (see
+    *gatherIntoWindow()*), and how big *w* must be for it.
+
+    :param which: Just those of them this says (default: all).
+    :param homes: *containmentHomes()*, if the caller has it.
+    :returns: *w*'s box (as expanded, if it's collapsed: grown, if need be),
+      and (object, its box now, its box there) for each to move -- or None if
+      there's nothing to move.
+    '''
     floats = lambda o: isinstance(o, VRelation) and o.floating()
     margin = 10.0
     near = 100.0 # (how far out of its pane something can be and still be just nudged in; otherwise it's set out in rows)
     topMargin = 22.0 if len(w.panes()) > 1 else margin # (room for the pane labels)
-    allHomes = self.containmentHomes()
+    allHomes = self.containmentHomes() if homes is None else homes
     def elsewhere(vo:VObject) -> bool: # (in another window that has it)
       other = allHomes.get(vo, (None, None))[0]
       return other is not None and other is not w and other.paneAt(vo.centerPt()) is not None
     homes = {vo: pane for vo, (_, pane) in self.containmentHomes(window=w).items()
-             if not floats(vo) and not elsewhere(vo)}
+             if not floats(vo) and not elsewhere(vo) and (which is None or which(vo))}
     def inside(box:list[float], rect:list[float]) -> bool:
       return rect[0] <= box[0] and rect[1] <= box[1] and box[2] <= rect[2] and box[3] <= rect[3]
     toMove = sorted((vo for vo, pane in homes.items() if not inside(vo.boundingBox(), self.homeRect(w, pane))),
                     key=lambda vo: (vo.boundingBox()[1], vo.boundingBox()[0]))
     if not toMove:
-      logger.info(f'"{w.name}": nothing to gather.')
-      return
+      return None
     # Plan it all first (the commands only run when the composite ends): where each goes, and how
     # big the window must be.
     moving = set(toMove)
@@ -669,12 +699,52 @@ class ContainmentMixin(ViewBase):
       placed = [box[0] + d[0], box[1] + d[1], box[2] + d[0], box[3] + d[1]]
       obstacles.append(placed)
       moves.append((vo, box, placed))
-    with CompositeCommandMgr(self.context):
-      if w.collapsed:
-        self.context.collapse(w, False)
-      if bb != W:
-        self.context.resize(w, bb[0], bb[1], bb[2], bb[3])
-      for vo, box, placed in moves:
-        self.context.move(vo, placed[0], placed[1], _oldPos=box, adjustPos=False)
-    self.resetScrollRegion(shrink=True)
-    logger.info(f'"{w.name}": gathered {len(toMove)} object{"" if len(toMove) == 1 else "s"}.')
+    return bb, moves
+
+  def strayVariables(self, homes:dict[VObject, tuple[VObject, str]]|None=None) -> dict[VObject, list[VObject]]:
+    '''
+    The variables outside the window they belong in (see
+    *containmentHomes()*): a variable means something only in its pattern,
+    so one out on the canvas -- eg: put there by "show all", or a layout --
+    is never where it's meant to be. Not those of a collapsed or hidden window.
+
+    :param homes: *containmentHomes()*, if the caller has it.
+    :returns: Each window's strays.
+    '''
+    homes = self.containmentHomes() if homes is None else homes
+    ret:dict[VObject, list[VObject]] = {}
+    for vo, (w, _) in homes.items():
+      mo = vo.modelObject
+      if mo is None or isinstance(vo, VRelation) or vo.isHidden() or w.isHidden() or w.collapsed or not mo.isVariable():
+        continue
+      if not vo.isContextWindow() and w.paneAt(vo.centerPt()) is None:
+        ret.setdefault(w, []).append(vo)
+    return ret
+
+  def homeStrays(self) -> list[tuple[VObject, list[int], list[int]]]:
+    '''
+    Put each variable that's outside the window it belongs in (see
+    *strayVariables()*) back in it: in its pane, at a free spot, as
+    *gatherIntoWindow()* would (growing the window if there's no room). Done
+    after every command (see *ViewDoList*), with *bumpIntruders()*.
+
+    :returns: (object, its box before, after) for each one moved or resized, in order.
+    '''
+    homes = self.containmentHomes()
+    strays = self.strayVariables(homes)
+    moves:list[tuple[VObject, list[int], list[int]]] = []
+    for w, vos in strays.items():
+      plan = self._gatherPlan(w, which=set(vos).__contains__, homes=homes)
+      if plan is None:
+        continue
+      bb, planned = plan
+      old = list(w.boundingBox())
+      if bb != old:
+        w.reshape(bb)
+        moves.append((w, old, list(w.boundingBox())))
+      for vo, box, placed in planned:
+        vo.moveTo(placed[0], placed[1], adjustPos=False)
+        moves.append((vo, [int(v) for v in box], list(vo.boundingBox())))
+    if (n := sum(1 for vo, _, _ in moves if vo not in strays)):
+      logger.info(f"put {n} variable{' back in its window' if n == 1 else 's back in their windows'}.")
+    return moves

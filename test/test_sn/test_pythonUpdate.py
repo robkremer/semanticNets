@@ -163,6 +163,24 @@ class TestUpdateModel(unittest.TestCase):
     self.assertEqual(done.added + done.removed, []) #type: ignore[attr-defined]
     self.assertFalse(model.isDirty())
 
+  def test_strayPrefs(self):
+    'A file whose prefs were written as a reference to its objects (as the serializer once could) -- and saved again since, with copies of objects removed since -- reads without them.'
+    from sn.model.model import IsaIndividual
+    from util.attribute import Attribute
+    model, done = self.update()
+    removed = done.removed + [r for o in done.removed for r in o._outgoing if isinstance(r, IsaIndividual)] #type: ignore[attr-defined]
+    dict.update(model.prefs, {str(k): o for k, o in model._db.items() if k}, **{f"x{i}": o for i, o in enumerate(removed)})
+    model.save()
+    model.unload()
+    model, done = self.update(None)
+    self.assertEqual(done.added + done.removed, []) #type: ignore[attr-defined]
+    self.assertTrue(all(isinstance(v, Attribute) for v in dict.values(model.prefs)))
+    for o in model.values():
+      if o.model is model:
+        for r in o._outgoing + o._incoming:
+          if isinstance(r, IsaIndividual) or r.model is model:
+            self.assertTrue(r._isConnected(), r)
+
   def test_leavesOwn(self):
     'Objects and attributes of one\'s own are left as they are (but a relation to something removed goes with it).'
     model = Model(self.modelPath)

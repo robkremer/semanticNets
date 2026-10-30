@@ -335,6 +335,76 @@ class Test(unittest.TestCase):
     v.restackWindows()
     self.assertEqual(v.validate(), 0) # (how many problems it found)
 
+  def intruders(self) -> list:
+    'What overlaps a context window it doesn\'t belong in: (object, window) names.'
+    v = self.view
+    homes = v.containmentHomes()
+    return [(o.modelObject.name, w.modelObject.name) for w in v._visibleWindows() for o in v.values()
+            if o is not None and o._isConnected() and not o.isHidden() and v._intrudes(o, w, homes)]
+
+  def test0710strayVariablesGoHome(self):
+    'Show all puts a rule\'s variables in its window; one moved out of it goes back after the next change, undone with it.'
+    v = self.view
+    rule = self.vo("uncle rule")
+    self.assertEqual(v.strayVariables(), {})
+    x = next(vo for vo, (w, _) in v.containmentHomes().items() if w is rule and vo.modelObject.isVariable())
+    rb = rule.boundingBox()
+    x.moveTo(rb[2] + 300, rb[3] + 300, adjustPos=False) # (not a command: eg: as an old view might have it)
+    self.assertEqual(v.strayVariables(), {rule: [x]})
+    alice = self.vo("alice")
+    bb = alice.boundingBox()
+    v.context.move(alice, bb[0] + 5, bb[1], _oldPos=list(bb))
+    self.pump()
+    self.assertIsNotNone(rule.paneAt(x.centerPt()))
+    self.assertEqual(v.strayVariables(), {})
+    self.assertEqual(self.intruders(), [])
+    v.context.undo()
+    self.pump()
+    self.assertEqual(v.strayVariables(), {rule: [x]})
+
+  def test0720windowsDontGoIntoRules(self):
+    'A window dropped on a rule isn\'t put in it (it\'s pushed off); dropped in a plain context, it is.'
+    from util.commandParser import CompositeCommandMgr
+    v = self.view
+    rule, brother, query = self.vo("uncle rule"), self.vo("brother def"), self.vo("who likes dave?")
+    def drop(w, on):
+      old = {w: w.centerPt()}
+      bb, (px1, py1, px2, py2) = w.boundingBox(), next(iter(on.panes().values()))
+      x, y = (px1 + px2 - bb[2] + bb[0]) / 2, (py1 + py2 - bb[3] + bb[1]) / 2
+      w.moveTo(x, y, adjustPos=False) # (as the drag moves it, before it's dropped: see VObject.onB1_ButtonRelease())
+      with CompositeCommandMgr(v.context):
+        v.context.move(w, x, y, _oldPos=list(bb), _drag=True)
+        v._updateContainment(old)
+      self.pump()
+    drop(brother, rule)
+    self.assertEqual(rule.containmentOf(brother.modelObject), [])
+    self.assertEqual(self.intruders(), [])
+    rb, bb = rule.boundingBox(), brother.boundingBox()
+    self.assertFalse(rb[0] < bb[2] and bb[0] < rb[2] and rb[1] < bb[3] and bb[1] < rb[3], "still on the rule")
+    drop(brother, query)
+    self.assertNotEqual(query.containmentOf(brother.modelObject), [])
+
+  def test0730layoutsMoveWindowsAside(self):
+    'What a layout arranges onto a context window moves the window aside, with its contents: nothing ends up in a window it doesn\'t belong in.'
+    from sn.view.graphics.treeLayout import TreeLayout
+    v = self.view
+    rule = self.vo("uncle rule")
+    layout = TreeLayout(v, relation="isa", direction="down", others="rows")
+    targets = layout.targets()
+    person = self.vo("person")
+    x, y = targets.get(person, person.boundingBox()[:2])
+    rb = rule.boundingBox()
+    v.context.move(rule, x - 20, y - 20, _oldPos=list(rb)) # (where the tree will be)
+    self.pump()
+    inRule = {vo: pane for vo, (w, pane) in v.containmentHomes().items() if w is rule and not (hasattr(vo, "floating") and vo.floating())}
+    self.assertTrue(inRule)
+    layout.arrange(animate=False)
+    self.pump()
+    self.assertEqual(self.intruders(), [])
+    self.assertNotEqual(rule.boundingBox()[:2], [x - 20, y - 20])
+    for vo, pane in inRule.items():
+      self.assertIsNotNone(rule.paneAt(vo.centerPt()), vo.modelObject.name)
+
   def test0800editing(self):
     v, m = self.view, self.model
     n = len(m)
