@@ -46,10 +46,21 @@ if TYPE_CHECKING:
 
 logger:sn.SNLogger = sn.getLogger(__name__)
 
+def _place(vo:VObject, was:list[int], box:list[int]) -> None:
+  '''
+  Put *vo*, whose box is *was*, at *box*: moved (a context window carries its
+  contents), or, if its size differs, reshaped (a window grown for what's put in it).
+  '''
+  if box[2] - box[0] != was[2] - was[0] or box[3] - box[1] != was[3] - was[1]:
+    vo.reshape(box)
+  else:
+    vo.moveTo(box[0], box[1], adjustPos=False)
+
 class _BumpIntruders(Command):
   '''
-  Push what's in a context window it doesn't belong in out of it (see
-  *SNGView.bumpIntruders()*). What to move is worked out when it's first done
+  Put the variables that have strayed out of their windows back in them
+  (see *SNGView.homeStrays()*), and push what's in a context window it
+  doesn't belong in out of it (see *SNGView.bumpIntruders()*). What to move is worked out when it's first done
   -- after the commands before it, so a drop into a pane has already made the
   object contained -- and replayed on a redo.
   '''
@@ -68,16 +79,16 @@ class _BumpIntruders(Command):
     super().do()
     assert self.view is not None
     if self.moves is None:
-      self.moves = self.view.bumpIntruders()
+      self.moves = self.view.homeStrays() + self.view.bumpIntruders()
       return
-    for vo, _, new in self.moves:
-      vo.moveTo(new[0], new[1], adjustPos=False)
+    for vo, old, new in self.moves:
+      _place(vo, old, new)
 
   @override
   def undo(self):
     super().undo()
-    for vo, old, _ in reversed(self.moves or []):
-      vo.moveTo(old[0], old[1], adjustPos=False)
+    for vo, old, new in reversed(self.moves or []):
+      _place(vo, new, old)
 
   @override
   def delete(self):
@@ -184,6 +195,7 @@ class ViewDoList(DoList):
         if adjustment is not None and not adjustment.isEmpty():
           adjustment.do()
           self.queue[self.index] = _Adjusted(c, adjustment)
+          self._bump()
       except Exception:
         logger.exception(f'the view\'s dynamic layout ("{layout.NAME}") couldn\'t adjust it')
     self.view.canvas.after_idle(again)
@@ -219,22 +231,30 @@ class ViewDoList(DoList):
     if self.view.model.nextID > first:
       self.view.__dict__.setdefault("_madeHere", set()).update(range(first, self.view.model.nextID))
     if c.mutatedData and 0 <= self.index < len(self.queue) and self.queue[self.index] is c:
-      try:
-        bump = _BumpIntruders(self.view)
-        bump.do()
-        if bump.moves:
-          self.queue[self.index] = _Bumped(c, bump)
-      except Exception:
-        logger.exception("couldn't bump objects out of the windows they don't belong in")
+      self._bump()
       if not getattr(c, "isLayout", False) and self.view.localLayout is not None: # (None: a program's turned it off for now)
         try:
           adjustment = self.view.localLayout.adjust(c)
           if adjustment is not None and not adjustment.isEmpty():
             adjustment.do()
             self.queue[self.index] = _Adjusted(self.queue[self.index], adjustment)
+            self._bump() # (what the layout's put in a window it doesn't belong in, if anything)
         except Exception:
           logger.exception(f'the view\'s dynamic layout ("{self.view.localLayout.NAME}") couldn\'t adjust it')
     return ret
+
+  def _bump(self) -> None:
+    '''
+    Push what's in a context window it doesn't belong in out of it (see
+    *SNGView.bumpIntruders()*), as part of the undo entry just done.
+    '''
+    try:
+      bump = _BumpIntruders(self.view)
+      bump.do()
+      if bump.moves:
+        self.queue[self.index] = _Bumped(self.queue[self.index], bump)
+    except Exception:
+      logger.exception("couldn't bump objects out of the windows they don't belong in")
 
   @override
   def undo(self) -> Any:
