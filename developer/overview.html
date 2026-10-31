@@ -320,6 +320,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/snSourceCode.html">Semantic Nets Source Code Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/families.html">Families Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modelsDoc/homeAutomation.html">Home Automation</a></li>
 </ul>
 </li>
 </ul>
@@ -473,8 +474,9 @@ leaves the branch’s <code class="docutils literal notranslate"><span class="pr
 web too, at <a class="reference external" href="https://robkremer.github.io/semanticNets/models/">https://robkremer.github.io/semanticNets/models/</a>, for sn to open
 from there: <code class="docutils literal notranslate"><span class="pre">tools/publishModels.sh</span> <span class="pre">FOLDER</span></code> makes the <code class="docutils literal notranslate"><span class="pre">models</span></code> folder of
 <code class="docutils literal notranslate"><span class="pre">gh-pages</span></code> a copy of <em>FOLDER</em>, and pushes it (<code class="docutils literal notranslate"><span class="pre">--no-push</span></code>: just commits
-it). It lists any reference to a file outside <em>FOLDER</em>, as that won’t be on
-the web: models and views in the folder refer to one another by relative
+it). It lists any reference to a file outside <em>FOLDER</em> (a <code class="docutils literal notranslate"><span class="pre">file:</span></code> URL), as
+that won’t be on the web, and then publishes nothing (<code class="docutils literal notranslate"><span class="pre">--force</span></code>: publishes
+anyway): models and views in the folder refer to one another by relative
 names. The builds leave the models out of the Help they bundle.</p>
 <p>Both scripts first catch the local <code class="docutils literal notranslate"><span class="pre">gh-pages</span></code> up with origin’s (in
 <code class="docutils literal notranslate"><span class="pre">tools/ghPages.sh</span></code>), so publishing works from any machine, whatever the

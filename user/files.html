@@ -320,6 +320,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/snSourceCode.html">Semantic Nets Source Code Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/families.html">Families Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modelsDoc/homeAutomation.html">Home Automation</a></li>
 </ul>
 </li>
 </ul>
@@ -488,7 +489,12 @@ they’re opened. Save the model (and the views) to keep it.</p></li>
 refer only to its own super-models; if some refer to a model that isn’t one
 (eg: the local copy of an ontology, when the web one is the super-model),
 you’re told which, and how many – <strong>Replace super-model…</strong> puts that
-right.</p></li>
+right. If one of its super-models has the same file name and the same
+objects (eg: a copy of a plugin’s ontology put beside the model), they’re
+made to refer to that one straight away, and you’re told; save the model to
+keep it. And in <strong>Model preferences…</strong>, a super-model the objects still
+refer to can’t just be taken off the list: listing a copy of it in its place
+makes them refer to the copy instead.</p></li>
 <li><p><strong>Moved models</strong>: if a model (or a whole folder of them, eg: a web site)
 moves, list where it was and where it is now in the <code class="docutils literal notranslate"><span class="pre">model/urlAliases</span></code>
 setting – <code class="docutils literal notranslate"><span class="pre">old</span> <span class="pre">-&gt;</span> <span class="pre">new</span></code>, one per line; an <code class="docutils literal notranslate"><span class="pre">old</span></code> ending in <code class="docutils literal notranslate"><span class="pre">/</span></code> moves

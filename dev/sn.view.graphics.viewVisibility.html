@@ -320,6 +320,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/snSourceCode.html">Semantic Nets Source Code Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/families.html">Families Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modelsDoc/homeAutomation.html">Home Automation</a></li>
 </ul>
 </li>
 </ul>
@@ -376,6 +377,26 @@
 <dt class="sig sig-object py" id="sn.view.graphics.viewVisibility.NODE_CATEGORY">
 <span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewVisibility.</span></span><span class="sig-name descname"><span class="pre">NODE_CATEGORY</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'nodes:</span> <span class="pre">'</span></span><a class="headerlink" href="#sn.view.graphics.viewVisibility.NODE_CATEGORY" title="Link to this definition">¶</a></dt>
 <dd><p>How a node type’s category (for hiding or erasing its individuals) is named: see <em>SNGView.nodeCategory()</em>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.viewVisibility._isaNamed">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewVisibility.</span></span><span class="sig-name descname"><span class="pre">_isaNamed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewVisibility._isaNamed" title="Link to this definition">¶</a></dt>
+<dd><p>Whether <em>mo</em> is an instance of a type named <em>name</em> (or of its subtypes).
+By name, not by the type itself: a model may reach two copies of an
+ontology (eg: one beside it, and the one its objects were made with), and
+a type category is chosen, and saved with the view, by its name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mo</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p></li>
+<li><p><strong>name</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py class">
@@ -769,6 +790,7 @@ out, or puts them back: see <em>SNGView.update()</em>). Nested, only the outermo
 <li><a class="reference internal" href="#">sn.view.graphics.viewVisibility module</a><ul>
 <li><a class="reference internal" href="#sn.view.graphics.viewVisibility.RELATION_CATEGORY"><code class="docutils literal notranslate"><span class="pre">RELATION_CATEGORY</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewVisibility.NODE_CATEGORY"><code class="docutils literal notranslate"><span class="pre">NODE_CATEGORY</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewVisibility._isaNamed"><code class="docutils literal notranslate"><span class="pre">_isaNamed()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewVisibility.VisibilityMixin"><code class="docutils literal notranslate"><span class="pre">VisibilityMixin</span></code></a><ul>
 <li><a class="reference internal" href="#sn.view.graphics.viewVisibility.VisibilityMixin.isFiltered"><code class="docutils literal notranslate"><span class="pre">VisibilityMixin.isFiltered()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewVisibility.VisibilityMixin._erasedRelation"><code class="docutils literal notranslate"><span class="pre">VisibilityMixin._erasedRelation()</span></code></a></li>

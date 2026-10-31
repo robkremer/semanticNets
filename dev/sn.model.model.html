@@ -320,6 +320,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/snSourceCode.html">Semantic Nets Source Code Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/families.html">Families Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modelsDoc/homeAutomation.html">Home Automation</a></li>
 </ul>
 </li>
 </ul>
@@ -1576,6 +1577,20 @@ still referring to the local copy (see <em>replaceSuperModel()</em>).</p>
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.model.Model.referredModels">
+<span class="sig-name descname"><span class="pre">referredModels</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.model.Model.referredModels" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The other models this one’s objects refer to (by relations’
+ends), each with how many references there are to it.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict[<a class="reference internal" href="#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>, int]</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sn.model.model.Model.UNRESOLVED_SHOWN">
 <span class="sig-name descname"><span class="pre">UNRESOLVED_SHOWN</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">10</span></span><a class="headerlink" href="#sn.model.model.Model.UNRESOLVED_SHOWN" title="Link to this definition">¶</a></dt>
@@ -1933,6 +1948,46 @@ this model, or builds on it.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="sn.model.model.Model._copyChanges">
+<span class="sig-name descname"><span class="pre">_copyChanges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">old</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.model.Model._copyChanges" title="Link to this definition">¶</a></dt>
+<dd><p>What referring to <em>new</em> in place of <em>old</em> takes (see <em>replaceSuperModel()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>old</strong> (<a class="reference internal" href="#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>)</p></li>
+<li><p><strong>new</strong> (<a class="reference internal" href="#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>For each reference to one of <em>old</em>’s objects: (the relation,
+whether it’s its source, the object with the same id in <em>new</em>); and why
+any of those can’t be (eg: not in <em>new</em>, or named differently there).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[list[tuple[<a class="reference internal" href="#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a>, bool, <a class="reference internal" href="#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>]], list[str]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.model.Model._redirect">
+<span class="sig-name descname"><span class="pre">_redirect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">old</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">changes</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.model.Model._redirect" title="Link to this definition">¶</a></dt>
+<dd><p>Make the <em>changes</em> (see <em>_copyChanges()</em>), and note that <em>new</em> replaced <em>old</em> (see <em>replacedModels</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>old</strong> (<a class="reference internal" href="#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>)</p></li>
+<li><p><strong>new</strong> (<a class="reference internal" href="#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>)</p></li>
+<li><p><strong>changes</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><a class="reference internal" href="#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a><em>, </em><em>bool</em><em>, </em><a class="reference internal" href="#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>]</em><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="sn.model.model.Model.setSuperModels">
 <span class="sig-name descname"><span class="pre">setSuperModels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">paths</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.model.Model.setSuperModels" title="Link to this definition">¶</a></dt>
 <dd><p>Make this model’s super-models those at <em>paths</em>, in that order, after the
@@ -1942,7 +1997,12 @@ in its preferences (see <em>superModelPaths()</em>). Relative paths (eg:
 file – or URL, for a model on the web – and are saved relative to it
 however far from it they are (see <em>PRDb.relativeSuperDBs</em>); others are
 saved as they are, unless they’re near it (see <em>PRDb.relativeURL()</em>).
-Nothing is changed unless all of them are fine.</p>
+A super-model dropped that this model’s objects still refer to must have
+a copy among those added (eg: “pythonOntology.snm” beside it in place of
+the plugin’s): they’re made to refer to the copy’s objects instead (see
+<em>replaceSuperModel()</em>), so the model never quietly depends on a file that
+isn’t one of its super-models. Nothing is changed unless all of them are
+fine.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>paths</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – The super-models’ files (or URLs).</p>
@@ -1952,7 +2012,8 @@ Nothing is changed unless all of them are fine.</p>
 </dd>
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>ValueError</strong> – listing the paths that can’t be used, and why: eg:
-not a model, can’t be read, or builds on this one.</p>
+not a model, can’t be read, or builds on this one; or a super-model
+that’s still referred to is dropped without a copy in its place.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3042,6 +3103,7 @@ and/or destination of the Relation. This method ONLY applies to <em>Relations</e
 <li><a class="reference internal" href="#sn.model.model.Model._inferringDepth"><code class="docutils literal notranslate"><span class="pre">Model._inferringDepth</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.Model._initCache"><code class="docutils literal notranslate"><span class="pre">Model._initCache()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.Model.unlistedModels"><code class="docutils literal notranslate"><span class="pre">Model.unlistedModels()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.model.Model.referredModels"><code class="docutils literal notranslate"><span class="pre">Model.referredModels()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.Model.UNRESOLVED_SHOWN"><code class="docutils literal notranslate"><span class="pre">Model.UNRESOLVED_SHOWN</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.Model._wasRead"><code class="docutils literal notranslate"><span class="pre">Model._wasRead()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.Model.__init__"><code class="docutils literal notranslate"><span class="pre">Model.__init__()</span></code></a></li>
@@ -3079,6 +3141,8 @@ and/or destination of the Relation. This method ONLY applies to <em>Relations</e
 <li><a class="reference internal" href="#sn.model.model.Model.superModelPaths"><code class="docutils literal notranslate"><span class="pre">Model.superModelPaths()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.Model.replacedRef"><code class="docutils literal notranslate"><span class="pre">Model.replacedRef()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.Model.replaceSuperModel"><code class="docutils literal notranslate"><span class="pre">Model.replaceSuperModel()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.model.Model._copyChanges"><code class="docutils literal notranslate"><span class="pre">Model._copyChanges()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.model.Model._redirect"><code class="docutils literal notranslate"><span class="pre">Model._redirect()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.Model.setSuperModels"><code class="docutils literal notranslate"><span class="pre">Model.setSuperModels()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.Model.removeSuperDB"><code class="docutils literal notranslate"><span class="pre">Model.removeSuperDB()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.Model.save"><code class="docutils literal notranslate"><span class="pre">Model.save()</span></code></a></li>

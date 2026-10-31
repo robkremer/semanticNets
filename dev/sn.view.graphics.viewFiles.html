@@ -320,6 +320,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/snSourceCode.html">Semantic Nets Source Code Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/families.html">Families Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modelsDoc/homeAutomation.html">Home Automation</a></li>
 </ul>
 </li>
 </ul>
@@ -709,6 +710,29 @@ saved with the view. A write-locked model’s view can’t be unlocked.</p>
 </dl>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewFiles.FilesMixin.MODEL_EDIT_ITEMS">
+<span class="sig-name descname"><span class="pre">MODEL_EDIT_ITEMS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('Edit|Model</span> <span class="pre">preferences...',</span> <span class="pre">'Edit|Replace</span> <span class="pre">super-model...')</span></span><a class="headerlink" href="#sn.view.graphics.viewFiles.FilesMixin.MODEL_EDIT_ITEMS" title="Link to this definition">¶</a></dt>
+<dd><p>The menu bar items that change the model (not its objects): greyed out
+while this view can’t change it (see <em>isModelEditor()</em>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewFiles.FilesMixin.refreshLock">
+<span class="sig-name descname"><span class="pre">refreshLock</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewFiles.FilesMixin.refreshLock" title="Link to this definition">¶</a></dt>
+<dd><p>Show whether the model can be changed in this view (see <em>isModelEditor()</em>),
+now that it’s been locked or unlocked, or the model write-locked: “Edit |
+Lock view”, the pencil in the reasoning toolbar, and the <em>MODEL_EDIT_ITEMS</em>
+– greyed out if it can’t, while they’re this view’s (its window’s focused:
+see <em>onWindowFocusIn()</em>). “Lock view” is greyed out (and checked) if the
+model’s write-locked: it can’t be unlocked.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 </section>
@@ -792,6 +816,8 @@ saved with the view. A write-locked model’s view can’t be unlocked.</p>
 <li><a class="reference internal" href="#sn.view.graphics.viewFiles.FilesMixin._editLockedVar"><code class="docutils literal notranslate"><span class="pre">FilesMixin._editLockedVar()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewFiles.FilesMixin._onLockViewItem"><code class="docutils literal notranslate"><span class="pre">FilesMixin._onLockViewItem()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewFiles.FilesMixin.setEditLocked"><code class="docutils literal notranslate"><span class="pre">FilesMixin.setEditLocked()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewFiles.FilesMixin.MODEL_EDIT_ITEMS"><code class="docutils literal notranslate"><span class="pre">FilesMixin.MODEL_EDIT_ITEMS</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewFiles.FilesMixin.refreshLock"><code class="docutils literal notranslate"><span class="pre">FilesMixin.refreshLock()</span></code></a></li>
 </ul>
 </li>
 </ul>
