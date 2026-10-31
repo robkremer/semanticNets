@@ -30,13 +30,16 @@ done
 models="$(cd "$1" && pwd)"
 
 # References the web copies can't follow: "file:" URLs, other than a file's own
-# URL and where it was copied from (sn takes the one it was read from instead).
+# URL and where it was copied from (sn takes the one it was read from instead),
+# and the record of the super-models it replaced (key="replacedModels", in the
+# head: old URL -> new URL, kept for its views; not something it refers to).
 # A model whose objects refer to a file on this computer would only work here,
 # so nothing is published while there are any (unless --force).
 found=0
 while IFS= read -r -d '' f; do
   own="$(grep -o -m1 'value="file:[^"#]*"' "$f" || true)" # (the first: its own, in the header -- in older files, on the line after key="url")
-  others="$(grep -v -e 'key="previousURL"' "$f" | grep -o 'value="file:[^"]*"' | sed -e 's/#[^"]*"$/"/' \
+  others="$(awk '/key="replacedModels"/{skip=1} !skip && !/key="previousURL"/{print} skip && /<\/property>/{skip=0}' "$f" \
+            | grep -o 'value="file:[^"]*"' | sed -e 's/#[^"]*"$/"/' \
             | grep -v -x -F "${own:-none}" | sort | uniq -c || true)" # (each file once, with how many references to it)
   if [ -n "${others}" ]; then
     [ "${found}" = 1 ] || echo "These refer to files that won't be on the web (copy them into ${models}, and make the referring ones refer to the copies -- eg: Edit | Replace super-model...):"
