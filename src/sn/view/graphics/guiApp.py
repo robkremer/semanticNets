@@ -642,9 +642,7 @@ class Application(tk.Tk):
     view = getattr(window, "view", None)
     if readOnly and view is not None and already is None:
       view.model._writeLocked = True
-      bar = view.__dict__.get("_reasoningToolbar")
-      if bar is not None:
-        bar.refreshLock()
+      view.refreshLock() # (greys out what would change it)
       logger.info(f'"{view.model.url}" is open read-only (write-locked): it can\'t be changed or saved.')
       self._refreshDirectory()
     return window

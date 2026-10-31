@@ -67,6 +67,7 @@ class FakeView:
   lockedReason = SNGView.lockedReason
   editLocked = SNGView.editLocked
   setEditLocked = SNGView.setEditLocked
+  refreshLock = SNGView.refreshLock
 
 class Recorder(Command):
   def __init__(self, log:list, name:str):

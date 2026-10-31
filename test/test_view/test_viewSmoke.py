@@ -259,7 +259,26 @@ class Test(unittest.TestCase):
     v.setEditLocked(False)
     self.assertTrue(v.isModelEditor())
     v.onWindowFocusIn()
+    from util.utils import getMenuBar, getSubMenu
+    edit = getSubMenu(getMenuBar(), "Edit", makeIfNone=None) # type: ignore[arg-type]
+    assert edit is not None
+    states = lambda: [str(edit.entrycget(path.split("|")[1], "state")) for path in v.MODEL_EDIT_ITEMS]
+    self.assertEqual(states(), ["normal", "normal"])
+    v.setEditLocked(True) # (greyed out while the model can't be changed here)
+    self.assertEqual(states(), ["disabled", "disabled"])
+    v.setEditLocked(False)
+    self.assertEqual(states(), ["normal", "normal"])
     v.onWindowFocusOut()
+    v.setEditLocked(True) # (not its items now: nothing's done to them)
+    v.setEditLocked(False)
+    v.model._writeLocked = True
+    try:
+      v.onWindowFocusIn()
+      self.assertEqual(states(), ["disabled", "disabled"])
+      v.onWindowFocusOut()
+    finally:
+      v.model._writeLocked = False
+      v.setEditLocked(False)
     v.save()
     text = Path(urlPath(v.url) or "").read_text(encoding="utf-8")
     for prop in ("viewport", "layout", "hides", "editLocked"):
