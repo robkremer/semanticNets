@@ -322,7 +322,8 @@ class FilesMixin(ViewBase):
     addToMenuBar("Edit|Replace super-model...", self.doReplaceSuperModel, enabled=self.isModelEditor())
     self._menuBarItemsShown = True
     self._editLockedVar().set(not self.isModelEditor()) # (the model may have been write-locked since)
-    addCheckToMenuBar("Edit|Lock view", self._editLockedVar(), self._onLockViewItem, separatorBefore=True)
+    addCheckToMenuBar("Edit|Lock view", self._editLockedVar(), self._onLockViewItem, separatorBefore=True,
+                      enabled=not self.model.writeLocked()) # (a write-locked model's view stays locked)
     addCheckToMenuBar("View|Layout panel", self._layoutPanelShown(), self._onLayoutPanelItem,
                       cascadePositions={"View": self._afterFileMenu() + 1}) # (after "Edit", made just above)
     addCheckToMenuBar("View|Reasoning toolbar", self._reasoningToolbarShown(),
@@ -511,12 +512,14 @@ class FilesMixin(ViewBase):
     now that it's been locked or unlocked, or the model write-locked: "Edit |
     Lock view", the pencil in the reasoning toolbar, and the *MODEL_EDIT_ITEMS*
     -- greyed out if it can't, while they're this view's (its window's focused:
-    see *onWindowFocusIn()*).
+    see *onWindowFocusIn()*). "Lock view" is greyed out (and checked) if the
+    model's write-locked: it can't be unlocked.
     '''
     self._editLockedVar().set(not self.isModelEditor())
     if self.__dict__.get("_menuBarItemsShown", False):
       for path in self.MODEL_EDIT_ITEMS:
         enableMenuBarItem(path, self.isModelEditor())
+      enableMenuBarItem("Edit|Lock view", not self.model.writeLocked())
     bar = self.__dict__.get("_reasoningToolbar")
     if bar is not None:
       bar.refreshLock()

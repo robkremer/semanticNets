@@ -275,6 +275,12 @@ class Test(unittest.TestCase):
     try:
       v.onWindowFocusIn()
       self.assertEqual(states(), ["disabled", "disabled"])
+      self.assertEqual(str(edit.entrycget("Lock view", "state")), "disabled") # (and checked: it can't be unlocked)
+      self.assertTrue(v._editLockedVar().get())
+      v.model._writeLocked = False
+      v.refreshLock()
+      self.assertEqual(str(edit.entrycget("Lock view", "state")), "normal")
+      self.assertEqual(states(), ["normal", "normal"])
       v.onWindowFocusOut()
     finally:
       v.model._writeLocked = False
