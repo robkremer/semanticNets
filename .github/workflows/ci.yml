@@ -57,12 +57,15 @@ jobs:
 
       - name: semanticNets' tests
         working-directory: semanticNets/test
+        timeout-minutes: 20 # (they take 2-3 minutes)
         env:
           PYTHONPATH: ${{ github.workspace }}/semanticNets/src${{ runner.os == 'Windows' && ';' || ':' }}${{ github.workspace }}/pythonUtils/src
         run: HOME="$RUNNER_TEMP/home" USERPROFILE="$RUNNER_TEMP/home" python -m unittest discover -s . -p "test_*.py"
 
       - name: pythonUtils' tests
         working-directory: pythonUtils/test
+        timeout-minutes: 10 # (they take under a minute: one hung on macOS once, until cancelled)
         env:
           PYTHONPATH: ${{ github.workspace }}/pythonUtils/src
-        run: HOME="$RUNNER_TEMP/home" USERPROFILE="$RUNNER_TEMP/home" python -m unittest discover -s . -p "test_*.py"
+          PYTHONUNBUFFERED: "1"
+        run: HOME="$RUNNER_TEMP/home" USERPROFILE="$RUNNER_TEMP/home" python -m unittest discover -v -s . -p "test_*.py" # (-v: each test's name, so a hang shows where)

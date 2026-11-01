@@ -33,7 +33,7 @@ import tkinter as tk
 import sn
 from sn.model.model import Model
 from typing import Any, cast
-from util.utils import fixURL, urlExists, addToMenuBar, afterMenu, addCheckToMenuBar, removeFromMenuBar, urlPath
+from util.utils import fixURL, urlExists, addToMenuBar, afterMenu, addCheckToMenuBar, removeFromMenuBar, enableMenuBarItem, urlPath
 from util.persistence.pRef import PRDb
 from sn.view.graphics.guiApp import Application
 from sn.view.graphics.directoryWindow import noteSaved
@@ -317,10 +317,13 @@ class FilesMixin(ViewBase):
     addToMenuBar("Edit|Copy as picture", lambda: self._editAction("copy image"), accelerator=KEY_COPY_IMAGE[1])
     addToMenuBar("Edit|Select All", lambda: self._editAction("select all"), accelerator=KEY_SELECT_ALL[1])
     addToMenuBar("Edit|Find...", self.openSearchDialog, accelerator=KEY_FIND[1], separatorBefore=True)
-    addToMenuBar("Edit|Model preferences...", self.doModelPreferences, separatorBefore=True)
-    addToMenuBar("Edit|Replace super-model...", self.doReplaceSuperModel)
+    addToMenuBar("Edit|Model preferences...", self.doModelPreferences, separatorBefore=True,
+                 enabled=self.isModelEditor()) # (greyed out while it can't change the model: see refreshLock())
+    addToMenuBar("Edit|Replace super-model...", self.doReplaceSuperModel, enabled=self.isModelEditor())
+    self._menuBarItemsShown = True
     self._editLockedVar().set(not self.isModelEditor()) # (the model may have been write-locked since)
-    addCheckToMenuBar("Edit|Lock view", self._editLockedVar(), self._onLockViewItem, separatorBefore=True)
+    addCheckToMenuBar("Edit|Lock view", self._editLockedVar(), self._onLockViewItem, separatorBefore=True,
+                      enabled=not self.model.writeLocked()) # (a write-locked model's view stays locked)
     addCheckToMenuBar("View|Layout panel", self._layoutPanelShown(), self._onLayoutPanelItem,
                       cascadePositions={"View": self._afterFileMenu() + 1}) # (after "Edit", made just above)
     addCheckToMenuBar("View|Reasoning toolbar", self._reasoningToolbarShown(),
@@ -345,6 +348,7 @@ class FilesMixin(ViewBase):
     this view never added the item (e.g. its window was never focused) --
     *removeFromMenuBar()* is a no-op in that case.
     '''
+    self._menuBarItemsShown = False
     removeFromMenuBar("File|Save view")
     removeFromMenuBar("File|Save view as...")
     removeFromMenuBar("File|Save model")
@@ -493,8 +497,29 @@ class FilesMixin(ViewBase):
     if locked != self.editLocked():
       self._editLocked = locked
       self.setDirty() # (saved with the view)
+    self.refreshLock()
+    return True
+
+  MODEL_EDIT_ITEMS = ("Edit|Model preferences...", "Edit|Replace super-model...")
+  '''
+  The menu bar items that change the model (not its objects): greyed out
+  while this view can't change it (see *isModelEditor()*).
+  '''
+
+  def refreshLock(self) -> None:
+    '''
+    Show whether the model can be changed in this view (see *isModelEditor()*),
+    now that it's been locked or unlocked, or the model write-locked: "Edit |
+    Lock view", the pencil in the reasoning toolbar, and the *MODEL_EDIT_ITEMS*
+    -- greyed out if it can't, while they're this view's (its window's focused:
+    see *onWindowFocusIn()*). "Lock view" is greyed out (and checked) if the
+    model's write-locked: it can't be unlocked.
+    '''
     self._editLockedVar().set(not self.isModelEditor())
+    if self.__dict__.get("_menuBarItemsShown", False):
+      for path in self.MODEL_EDIT_ITEMS:
+        enableMenuBarItem(path, self.isModelEditor())
+      enableMenuBarItem("Edit|Lock view", not self.model.writeLocked())
     bar = self.__dict__.get("_reasoningToolbar")
     if bar is not None:
       bar.refreshLock()
-    return True

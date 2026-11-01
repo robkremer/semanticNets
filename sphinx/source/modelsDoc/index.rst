@@ -8,6 +8,7 @@ These are example models (different from the example plugins).
 
    snSourceCode
    families
+   homeAutomation
 
 
 Indices and tables

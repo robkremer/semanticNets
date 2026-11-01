@@ -130,8 +130,9 @@ Example models and views (larger ones than the program comes with) are on the
 web too, at https://robkremer.github.io/semanticNets/models/, for sn to open
 from there: ``tools/publishModels.sh FOLDER`` makes the ``models`` folder of
 ``gh-pages`` a copy of *FOLDER*, and pushes it (``--no-push``: just commits
-it). It lists any reference to a file outside *FOLDER*, as that won't be on
-the web: models and views in the folder refer to one another by relative
+it). It lists any reference to a file outside *FOLDER* (a ``file:`` URL), as
+that won't be on the web, and then publishes nothing (``--force``: publishes
+anyway): models and views in the folder refer to one another by relative
 names. The builds leave the models out of the Help they bundle.
 
 Both scripts first catch the local ``gh-pages`` up with origin's (in

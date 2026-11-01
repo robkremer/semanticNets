@@ -41,8 +41,26 @@ class Test(unittest.TestCase):
 
   def test0100unlisted(self):
     self.assertEqual(self.m.unlistedModels(), {})
-    self.m.setSuperModels([])
+    self.m.removeSuperDB(self.base)
     self.assertEqual(self.m.unlistedModels(), {self.base: 1})
+
+  def test0110droppedStillReferredTo(self):
+    'A super-model its objects refer to can\'t just be dropped from the list: nothing changes.'
+    with self.assertRaises(ValueError) as cm:
+      self.m.setSuperModels([])
+    self.assertIn("base.snm", str(cm.exception))
+    self.assertIn(self.base, self.m.superDBs)
+    self.assertEqual(self.m.unlistedModels(), {})
+
+  def test0120copyInItsPlace(self):
+    'A copy listed in its place: the references follow it (as replaceSuperModel()).'
+    with self.assertLogs("sn.model.model", level="WARNING"):
+      self.m.setSuperModels(["copy.snm"])
+    copy = Model.getDB((self.folder / "copy.snm").as_uri())
+    self.assertIs(self.isaOf(self.fred).localDst, copy["person"])
+    self.assertNotIn(self.base, self.m.superDBs)
+    self.assertEqual(self.m.unlistedModels(), {})
+    self.assertEqual(self.m.replacedModels, {self.base.url: copy.url})
 
   def test0200replace(self):
     copy = Model.getDB((self.folder / "copy.snm").as_uri())
@@ -74,6 +92,29 @@ class Test(unittest.TestCase):
     self.assertIn("person", str(cm.exception))
     self.assertIs(self.isaOf(self.fred).localDst, self.person)
     self.assertEqual(self.m.replacedModels, {})
+
+  def test0300readWithSameNamedCopy(self):
+    '''
+    A model read whose objects refer to a model that isn't one of its
+    super-models (eg: a plugin's copy of an ontology), while one of its
+    super-models is a copy of it by the same name: they're made to refer to
+    that, and it says so.
+    '''
+    (self.folder / "web").mkdir()
+    shutil.copy(self.folder / "base.snm", self.folder / "web" / "base.snm")
+    self.m.save()
+    text = (self.folder / "main.snm").read_text(encoding="utf-8")
+    text = text.replace('<item value="base.snm" />', '<item value="web/base.snm" />')
+    self.assertIn('"base.snm#', text) # (the objects still refer to the other one)
+    (self.folder / "main.snm").write_text(text, encoding="utf-8")
+    Model._initCache()
+    with self.assertLogs("sn.model.model", level="WARNING") as logs:
+      m = Model.getDB((self.folder / "main.snm").as_uri())
+    web = Model.getDB((self.folder / "web" / "base.snm").as_uri())
+    self.assertIs(self.isaOf(m["fred"]).localDst, web["person"])
+    self.assertEqual(m.unlistedModels(), {})
+    self.assertTrue(m.isDirty())
+    self.assertTrue(any("now refer to the same objects" in line for line in logs.output))
 
   def test0400deletedType(self):
     'A type deleted from the super-model: the object says so (its isa link is left unconnected).'
