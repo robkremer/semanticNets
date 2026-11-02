@@ -578,11 +578,24 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     if not isinstance(template, str): # ("" is a template too: no label -- eg: a relation shown only by its marks)
       pref = "gui/relationLabel" if isinstance(mo, Relation) else "gui/label"
       template = snPrefs.get(pref, storeDefault=DEFAULT_LABEL, storeType=str) # (its note: see sn.PREFS)
+    template = str(template)
+    # Remembered until the model changes (any change to it bumps the view's
+    # structure version: see SNGView.update()) or the template does: expanding
+    # it looks attributes up through the object's types at every draw, which
+    # was most of the cost of drawing a label. Not with a hook in it, which is
+    # promised a call each time (see labels).
+    key = (self.view.__dict__.get("_structureVersion", 0), template) if "$(" not in template else None
+    memo = self.__dict__.get("_labelMemo")
+    if key is not None and memo is not None and memo[0] == key:
+      return memo[1]
     try:
-      return expand(str(template), labelLookup(mo), self.templateCall("vis/label")).strip()
+      text = expand(template, labelLookup(mo), self.templateCall("vis/label")).strip()
     except TemplateError as ex:
       logger.warning(f'{mo.name}: bad label template: {ex}')
-      return (mo.name or "").strip()
+      text = (mo.name or "").strip()
+    if key is not None:
+      self.__dict__["_labelMemo"] = (key, text)
+    return text
 
   def templateCall(self, key:str) -> Callable[[str], str]:
     '''

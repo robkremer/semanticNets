@@ -213,6 +213,44 @@ class ContainmentMixin(ViewBase):
   BOTH_PANES = BOTH_PANES
   "The pseudo-pane (see *containmentHomes()*) of something a rule or definition uses on both sides: astride the divider."
 
+  def _containmentMaps(self, window:VObject|None=None) -> tuple[dict[int, dict[VObject, list[Relation]]], dict[int, dict[VObject, set[str|None]]]]:
+    '''
+    What *containmentHomes()* works from, from the model: {id(contained model
+    object): {window: its containments of it}} and {id(variable): {window:
+    the panes of the contained relations using it}} -- for every window, or
+    just *window*. Asked for by every floating label as it's placed (eg: each
+    relation of a dragged node, every tick), so remembered until the view or
+    model changes (see *structureChanged()*: every change to the model bumps it).
+    '''
+    version = self.__dict__.get("_structureVersion", 0)
+    cache = self.__dict__.setdefault("_containmentMapsCache", {})
+    key = id(window) if window is not None else None
+    hit = cache.get(key)
+    if hit is not None and hit[0] == version:
+      return hit[1], hit[2]
+    if len(cache) > 64: # (windows come and go: don't keep every one's for ever)
+      cache.clear()
+    m = self.model
+    byObj:dict[int, dict[VObject, list[Relation]]] = {} # id(contained model object) -> {window: its containments of it}
+    uses:dict[int, dict[VObject, set[str|None]]] = {}   # id(variable) -> {window: the panes of the contained relations using it}
+    for w in (self.contextWindows() if window is None else [window]):
+      mo = w.modelObject
+      if mo is None:
+        continue
+      panes = w.panes()
+      for r, _ in mo._getOutgoing(lambda r: r.isIndividual() and r.isa(m.CONTAINS)):
+        d = r.localDst
+        if d is None or d is mo:
+          continue
+        byObj.setdefault(id(d), {}).setdefault(w, []).append(r)
+        if isinstance(d, Relation) and d.isIndividual():
+          pane = "contains" if "contains" in panes else next((p for p in panes if r.isa(self._paneType(p))), None)
+          for e in (d.localSrc, d.localDst, *d.getParents()):
+            if e is not None and e is not mo and e.isVariable():
+              uses.setdefault(id(e), {}).setdefault(w, set()).add(pane)
+    cache[key] = (version, byObj, uses)
+    return byObj, uses
+
   def containmentHomes(self, among:Iterable[VObject]|None=None, window:VObject|None=None) -> dict[VObject, tuple[VObject, str]]:
     '''
     Where each contained object belongs: the context window, and its pane
@@ -245,23 +283,7 @@ class ContainmentMixin(ViewBase):
     :returns: Each contained view object: (its window, the pane's name).
     '''
     m = self.model
-    byObj:dict[int, dict[VObject, list[Relation]]] = {} # id(contained model object) -> {window: its containments of it}
-    uses:dict[int, dict[VObject, set[str|None]]] = {}   # id(variable) -> {window: the panes of the contained relations using it}
-    for w in (self.contextWindows() if window is None else [window]):
-      mo = w.modelObject
-      if mo is None:
-        continue
-      panes = w.panes()
-      for r, _ in mo._getOutgoing(lambda r: r.isIndividual() and r.isa(m.CONTAINS)):
-        d = r.localDst
-        if d is None or d is mo:
-          continue
-        byObj.setdefault(id(d), {}).setdefault(w, []).append(r)
-        if isinstance(d, Relation) and d.isIndividual():
-          pane = "contains" if "contains" in panes else next((p for p in panes if r.isa(self._paneType(p))), None)
-          for e in (d.localSrc, d.localDst, *d.getParents()):
-            if e is not None and e is not mo and e.isVariable():
-              uses.setdefault(id(e), {}).setdefault(w, set()).add(pane)
+    byObj, uses = self._containmentMaps(window)
     if not byObj:
       return {}
     memo:dict[int, tuple[VObject, str]|None] = {}

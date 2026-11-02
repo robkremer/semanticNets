@@ -258,6 +258,10 @@ def _bezierBlossom(p0: PointType, p1: PointType, p2: PointType, ta: float, tb: f
           w0 * p0[1] + w1 * p1[1] + w2 * p2[1])
 
 
+_BOUNDARY_TOLERANCE = 0.25
+"How close (view units) _findBoundaryParam() pins a curve's crossing of a shape's edge down to."
+
+
 def _insideTest(vobj: VObject) -> Callable[[PointType], bool]:
   """*vobj.containsPt()*, but with its outline worked out once, not for each
   point: for testing many points while it stays put (eg: bisecting, as
@@ -282,9 +286,10 @@ def _findBoundaryParam(vobj: VObject|Callable[[PointType], bool], p0: PointType,
   two points, so the result is an exact point ON the curve rather than a
   straight-line approximation.
 
-  24 iterations halves the search interval 24 times (~1 part in 16 million
-  of the full curve) — comfortably sub-pixel for any on-screen curve length,
-  so a fixed count is used rather than a pixel-distance stopping condition.
+  Stops once the two bracketing points are within *_BOUNDARY_TOLERANCE* of
+  each other (view units: a fraction of a pixel) -- 9 to 13 steps for a
+  curve of ordinary length -- or after *iterations* steps at most (24: ~1
+  part in 16 million of the curve, however long it is).
 
   :param vobj: The shape being clipped against (needs .containsPt()) -- or
     what tests whether a point's in it (see *_insideTest()*).
@@ -292,12 +297,16 @@ def _findBoundaryParam(vobj: VObject|Callable[[PointType], bool], p0: PointType,
   :param tOutside: A parameter value where _bezierPoint(...) is outside vobj.
   """
   inside = vobj.containsPt if isinstance(vobj, VObject) else vobj
+  pIn, pOut = _bezierPoint(p0, p1, p2, tInside), _bezierPoint(p0, p1, p2, tOutside)
   for _ in range(iterations):
+    if abs(pIn[0] - pOut[0]) < _BOUNDARY_TOLERANCE and abs(pIn[1] - pOut[1]) < _BOUNDARY_TOLERANCE:
+      break # (the crossing's pinned down to a fraction of a pixel: the rest of the steps would be wasted)
     tMid = (tInside + tOutside) / 2
-    if inside(_bezierPoint(p0, p1, p2, tMid)):
-      tInside = tMid
+    pMid = _bezierPoint(p0, p1, p2, tMid)
+    if inside(pMid):
+      tInside, pIn = tMid, pMid
     else:
-      tOutside = tMid
+      tOutside, pOut = tMid, pMid
   return tOutside
 
 

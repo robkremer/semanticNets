@@ -183,6 +183,19 @@ def _font(canvas, font:tuple) -> tkfont.Font:
     f = _fonts[font] = tkfont.Font(root=canvas, family=font[0], size=font[1])
   return f
 
+_lineSpaces:dict[tuple, int] = {}
+"Each font's line spacing (see _lineSpace())."
+
+def _lineSpace(canvas, font:tuple) -> int:
+  '''
+  The line spacing of the font (family, size): asked of Tk once per font (a
+  round-trip, and it's asked for at every draw of every label).
+  '''
+  ls = _lineSpaces.get(font)
+  if ls is None:
+    ls = _lineSpaces[font] = int(_font(canvas, font).metrics("linespace"))
+  return ls
+
 def textPieces(text:str) -> list[str]:
   '''
   Split *text* after each character in *BREAK_AFTER* -- but not just before a
@@ -358,7 +371,7 @@ class WrappingText(Text):
     '''
     The height (view units) of a box holding one line of text: the smallest useful box.
     '''
-    return (_font(self.owner.canvas, self.baseFont()).metrics("linespace") + 2 * self.PAD) / self.textInset()[1]
+    return (_lineSpace(self.owner.canvas, self.baseFont()) + 2 * self.PAD) / self.textInset()[1]
 
   def preferredBoundingBox(self) -> list[int]:
     '''
