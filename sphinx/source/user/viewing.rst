@@ -256,6 +256,7 @@ For example:
    vis/terminator1 = diamond   <>----      (UML aggregation: the diamond on the whole)
    vis/terminator4 = @}        ----@}      (ER: zero or many)
    vis/terminator4 = |}        ----|}      (ER: one or many)
+   vis/terminator1 = {|        {|----      (the same at the source end: the toes toward the source)
 
 A mark may be followed by its sizes in parentheses: ``arrow(8,10,3)`` (tip to
 neck, tip to trailing points, and how far the trailing points stand out from
@@ -263,7 +264,9 @@ the line), ``circle(6)``, ``dot(6)`` and ``ring(6)`` (the diameter), ``bar(12)``
 (its length across the line), ``diamond(12,7)`` and ``crow(10,10)`` (along the
 line, and across it). Marks may be separated by spaces or commas:
 ``circle(6) arrow(8,10,3)``. A circle (or dot, or ring) right at the end of a
-line is centred on the end, as circle terminators always were.
+line is centred on the end, as circle terminators always were. Sizes are in
+the view's units, like the line's width: marks zoom with the view, so they
+stay in proportion to the line and the nodes at every zoom.
 
 ``o`` and ``*`` look the same wherever ``vis/lineFillColor`` is the line's
 colour (as it is by default): use ``@`` for a circle that is always empty.
@@ -273,7 +276,10 @@ A relation shown only by its marks has its label set to nothing
 line runs through the label to them, and the label's box is just big enough
 to hold them, to select and drag the relation by. If the label shows text,
 the middle marks go on the line just before the label, on the source side
-(``--|||--[ text ]----``), where they don't cover the text.
+(``--|||--[ text ]----``), where they don't cover the text. A relation with an
+end it has nothing to draw to (a relation type with no ends of its own, or
+one whose end isn't shown) draws a short stub for it, with that end's marks;
+with no label text the stubs run through the label too, meeting at its centre.
 
 Labels
 ------

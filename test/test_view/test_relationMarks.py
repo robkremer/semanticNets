@@ -386,6 +386,28 @@ class Test(unittest.TestCase):
     stubs = vf.__dict__["_stubIds"]
     self.assertGreater(math.dist(c.coords(stubs["src"].line)[-2:], self.view.viewToWindow(*vf.centerPt())), 3.0)
 
+  def test0680marksZoomWithTheView(self):
+    'Marks are drawn in view units: zooming the view scales them with the line (an arrowhead twice as big at 2x), and back.'
+    c = self.view.canvas
+    self.set("vis/terminator4", "o>")
+    def extents():
+      info = self.vr.connectInfo
+      head = next(i for i in info.destTerminatorIDs if c.type(i) == "polygon")
+      ring = next(i for i in info.destTerminatorIDs if c.type(i) == "oval")
+      hx = c.coords(head); rx = c.coords(ring)
+      return (max(hx[0::2]) - min(hx[0::2]), max(hx[1::2]) - min(hx[1::2])), (rx[2] - rx[0])
+    (hw1, hh1), d1 = extents()
+    self.view.zoom(2.0)
+    self.pump()
+    (hw2, hh2), d2 = extents()
+    self.assertAlmostEqual(d2, 2 * d1, delta=0.5)                           # (the circle's diameter doubles)
+    self.assertAlmostEqual(math.hypot(hw2, hh2), 2 * math.hypot(hw1, hh1), delta=1.5) # (so does the head)
+    self.view.zoom(1.0)
+    self.pump()
+    (hw3, hh3), d3 = extents()
+    self.assertAlmostEqual(d3, d1, delta=0.5)
+    self.assertAlmostEqual(math.hypot(hw3, hh3), math.hypot(hw1, hh1), delta=1.5)
+
   def test0700typeChangeRedrawsInheritors(self):
     'Changing a type\'s look redraws its instances and subtypes in the view -- and those below them that inherit it.'
     m, v, c = self.model, self.view, self.view.canvas
