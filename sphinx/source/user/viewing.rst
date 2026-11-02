@@ -219,7 +219,7 @@ attribute              where its marks go
 ``vis/terminator2``    where the line from the source meets the label
 ``vis/terminator3``    where the line to the destination leaves the label
 ``vis/terminator4``    at the destination end (``arrow``, by default)
-``vis/midMarks``       centred on the label
+``vis/midMarks``       in the middle: on the label, or just before it (below)
 =====================  ==============================================
 
 ========================  ====================================================
@@ -250,10 +250,12 @@ across the line). Marks may be separated by spaces or commas:
 ``circle(6) arrow(8,10,3)``. A circle (or dot) right at the end of a line is
 centred on the end, as circle terminators always were.
 
-The middle marks are drawn over the label's text, if it has any. A relation
-shown only by its marks has its label set to nothing (``vis/label`` = ``""``):
-its line then runs through the label to the marks, and the label's box is just
-big enough to hold them, to select and drag the relation by.
+A relation shown only by its marks has its label set to nothing
+(``vis/label`` = ``""``): the middle marks are then centred on the label, its
+line runs through the label to them, and the label's box is just big enough
+to hold them, to select and drag the relation by. If the label shows text,
+the middle marks go on the line just before the label, on the source side
+(``--|||--[ text ]----``), where they don't cover the text.
 
 Labels
 ------
