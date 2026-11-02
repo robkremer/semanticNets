@@ -174,6 +174,23 @@ class Test(unittest.TestCase):
     self.set("vis/midMarks", "")
     self.assertEqual(self.vr.connectInfo.middleIDs, [])
 
+  def test0380emptyLabelNoMiddleMarks(self):
+    'A label with no text and no middle marks: the line runs through it too, the halves meeting at its centre (no gap, no kink), its end marks there.'
+    c = self.view.canvas
+    self.set("vis/terminator2", "||>")
+    self.set("vis/label", "")
+    info = self.vr.connectInfo
+    centre = self.view.viewToWindow(*self.vr.centerPt())
+    self.assertLess(math.dist(c.coords(info.destLineID)[:2], centre), 1.0)
+    self.assertEqual(self.types(info.labelNearTerminatorIDs), ["line", "line", "polygon"])
+    head = info.labelNearTerminatorIDs[-1]
+    self.assertLess(math.dist(c.coords(head)[:2], centre), 1.0)           # (the arrowhead's tip at the centre)
+    self.assertEqual(info.middleIDs, [])
+    self.set("vis/lineType", "straight")
+    info = self.vr.connectInfo
+    self.assertLess(math.dist(c.coords(info.labelNearTerminatorIDs[-1])[:2], centre), 1.0) # (likewise, straight)
+    self.assertLess(math.dist(c.coords(info.destLineID)[:2], centre), 1.0)
+
   def test0400straight(self):
     '"<|>" in the middle of a straight connector: two arrowheads and a bar.'
     self.set("vis/lineType", "straight")
