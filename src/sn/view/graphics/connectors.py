@@ -66,7 +66,7 @@ import sn
 from sn.view.graphics.vobjects import VObject
 from util.utils import midpoint, pointInPoly
 from util.lineMarks import Mark, MarkLayout, MarkSpecError, MarkedPathIDs, MIDDLE, parseMarks, layoutMarks, \
-  drawMarks, drawMarkedPath, paramAtDistance, subPath
+  drawMarks, drawMarkedPath, paramAtDistance, subPath, deleteItem
 
 logger: sn.SNLogger = sn.getLogger(__name__)
 
@@ -400,14 +400,15 @@ def _unit(v: PointType, default: PointType = (1.0, 0.0)) -> PointType:
 
 def _deleteItems(canvas, *ids:Optional[int]) -> None:
   """
-  Delete canvas items: those that aren't None.
+  Delete canvas items: those that aren't None -- and forget their types, as
+  *util.lineMarks* remembers them (see its *deleteItem()*).
 
   :param canvas: The canvas.
   :param ids: Canvas item ids, or None.
   """
   for i in ids:
     if i is not None:
-      canvas.delete(i)
+      deleteItem(canvas, i)
 
 
 class _Style:
