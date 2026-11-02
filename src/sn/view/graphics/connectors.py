@@ -567,9 +567,9 @@ def drawSmoothConnector(source: Optional[VObject], label: VObject, destination: 
   The terminators are marks (see util.lineMarks) at each arc's ends: an arc
   is cut back (exactly, along the curve) where its marks stop it. The
   middle's marks are centred on Cl, turned to the curve's direction there
-  (exactly Cd - Cs, for this curve). With *throughLabel* (and middle marks),
-  the two arcs aren't clipped at the label's edge: they run on to the middle
-  marks (meeting at Cl if none of them stops the line, eg: bars).
+  (exactly Cd - Cs, for this curve). With *throughLabel*, the two arcs aren't
+  clipped at the label's edge: they run on to the middle marks (meeting at Cl
+  if none of them stops the line, eg: bars -- or there are none).
 
   Assumes source, label and destination don't overlap each other and share
   the same canvas (source.canvas is used).
@@ -608,9 +608,10 @@ def drawSmoothConnector(source: Optional[VObject], label: VObject, destination: 
     colour).
   :param fillColor: Fill colour for "circle" marks.
   :param tags: Canvas tags applied to every item this call touches.
-  :param throughLabel: Whether the lines run through the label to its middle
-    marks (eg: it shows no text), rather than stopping at its edge. No
-    effect without middle marks.
+  :param throughLabel: Whether the lines run through the label (eg: it shows
+    no text) -- to its middle marks, or meeting at its centre if it has none
+    -- rather than stopping at its edge, which would leave a gap in the line
+    (and a kink, where the curve bends at the label) with nothing to show for it.
   :param lineKwargs: Extra options merged into both create_line() calls
     (width, dash, etc.).
   :returns: The ids of everything drawn, for passing back in on the next
@@ -625,7 +626,7 @@ def drawSmoothConnector(source: Optional[VObject], label: VObject, destination: 
     return prior
   style = _Style(label.view, lineColor, fillColor, tags, lineKwargs)
   middle = layoutMarks(_marks(terminators.middle), MIDDLE, style.width)
-  through = throughLabel and bool(middle.marks)
+  through = throughLabel
   if source is None:
     assert destination is not None
     return _drawSingleSegment(label, destination, False, terminators, prior, style, middle, through)
@@ -727,7 +728,7 @@ def drawStraightConnector(source: Optional[VObject], label: VObject, destination
     return prior
   style = _Style(label.view, lineColor, fillColor, tags, lineKwargs)
   middle = layoutMarks(_marks(terminators.middle), MIDDLE, style.width)
-  through = throughLabel and bool(middle.marks)
+  through = throughLabel
   if source is None:
     assert destination is not None
     return _drawSingleSegment(label, destination, False, terminators, prior, style, middle, through)
