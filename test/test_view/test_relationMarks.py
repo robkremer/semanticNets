@@ -38,12 +38,14 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
+from unittest import mock
 import tkinter as tk
 
 import sn
 from util import terminal
 from util.utils import fixURL
 from sn.model.model import Model, Node, Relation
+from util.attribute import Attribute
 
 class Test(unittest.TestCase):
 
@@ -183,13 +185,67 @@ class Test(unittest.TestCase):
     self.assertEqual(self.types(info.middleIDs), ["line", "polygon", "line", "polygon"]) # (the line between the heads, then the marks)
 
   def test0500badSpec(self):
-    'A spec that can\'t be read draws nothing (and says so in the log).'
+    'A spec that can\'t be read (eg: in a saved model) draws nothing (and says so in the log).'
     from sn.view.graphics import connectors
     connectors._badSpecs.discard("arow") # (each is warned about once)
-    with self.assertLogs("sn.view.graphics.connectors", level="WARNING"):
+    with self.assertLogs("sn.view.graphics.connectors", level="WARNING"), \
+         mock.patch("sn.model.snAttribute.checkMarks", return_value=None): # (past the check on setting it: see test0510)
       self.set("vis/terminator4", "arow")
     self.assertEqual(self.vr.connectInfo.destTerminatorIDs, [])
     self.assertIsNotNone(self.vr.connectInfo.destLineID)
+
+  def test0510badSpecRefused(self):
+    'A marks attribute set to a spec that can\'t be read is refused, saying why; one that can is taken.'
+    from sn.model.snAttribute import MARKS_ATTRS
+    for key in MARKS_ATTRS:
+      with self.subTest(key=key):
+        was = self.rel[key]
+        with self.assertRaises(ValueError) as caught:
+          self.rel[key] = "arow"
+        self.assertIn(f'key "{key}"', str(caught.exception))
+        self.assertIn('unknown mark "arow"', str(caught.exception))
+        self.assertEqual(self.rel[key], was)
+    with self.assertRaises(ValueError) as caught:
+      self.rel.setAttr("vis/midMarks", Attribute("o)", None, None))               # (a value-only record, as the editor makes)
+    self.assertIn('unexpected ")"', str(caught.exception))
+    self.rel["vis/terminator4"] = "o>"
+    self.rel["vis/midMarks"] = ""
+    self.rel.setAttr("vis/terminator1", Attribute("circle(6) arrow(8,10,3)", None, None))
+    self.assertEqual((self.rel["vis/terminator4"], self.rel["vis/midMarks"], self.rel["vis/terminator1"]),
+                     ("o>", "", "circle(6) arrow(8,10,3)"))
+    self.rel["vis/label"] = "arow"                                     # (other attributes aren't checked as marks)
+    self.pump()
+    self.assertEqual(self.vr.cache["vis/terminator4"], "o>")
+
+  def test0520editorShowsWhy(self):
+    'The attribute editor checks a marks spec before it saves, as it checks the inheritance rules: the message names the key and the mark.'
+    from util.attributeEditor import HierarchicalAttrEditor
+    editor = HierarchicalAttrEditor(self.view.canvas, self.rel, title="marks")
+    try:
+      editor.withdraw()
+      editor.updatedKeys = {"vis/terminator4": Attribute("arow", None, None), "vis/midMarks": Attribute("|||", None, None), "vis/lineColor": Attribute("red", None, None)}
+      errors = editor._validateUpdates()
+      self.assertEqual(len(errors), 1, errors)
+      self.assertIn('key "vis/terminator4"', errors[0])
+      self.assertIn('unknown mark "arow"', errors[0])
+      editor.updatedKeys = {"vis/terminator4": Attribute("o>", None, None)}
+      self.assertEqual(editor._validateUpdates(), [])
+    finally:
+      editor.destroy()
+
+  def test0530savedBadSpecStillLoads(self):
+    'A saved model with a spec that can\'t be read (from before the check) still loads, with the spec as saved.'
+    url = (Path(self.tmp.name).resolve() / "saved.snm").as_uri()
+    m = Model(url)
+    a, b = Node(m, [m.NODE], individual=True, name="a"), Node(m, [m.NODE], individual=True, name="b")
+    r = Relation(m, [m.RELATION], a, b, individual=True, name="r")
+    with mock.patch("sn.model.snAttribute.checkMarks", return_value=None):
+      r["vis/terminator4"] = "arow"
+    m.save()
+    Model._initCache()
+    again = Model.getDB(url, mode="r")
+    loaded = next(o for o in again.values() if isinstance(o, Relation) and o.name == "r")
+    self.assertEqual(loaded["vis/terminator4"], "arow")
 
   def test0600danglingStub(self):
     'A relation with no destination of its own: a stub, with its terminators at its end, grabbed there.'
