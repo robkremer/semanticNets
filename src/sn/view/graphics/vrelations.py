@@ -265,8 +265,9 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     :returns: Whether its label shows any text (as last drawn). Without, its line runs through it to its
       middle marks, if it has any (see *drawSmoothConnector()*'s *throughLabel*).
     '''
+    from sn.view.graphics.decorators import Text
     text = self.decorators.get("text") if getattr(self, "decorators", None) else None
-    return text is not None and bool(str(getattr(text, "kwargs", {}).get("text", "")).strip())
+    return isinstance(text, Text) and bool(text.shownText().strip())
 
   def _styleEnds(self) -> None:
     '''
