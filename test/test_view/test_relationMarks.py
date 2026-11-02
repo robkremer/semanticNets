@@ -170,17 +170,47 @@ class Test(unittest.TestCase):
     self.set("vis/label", "$name")                                       # with text: the lines stop at its edge again
     info = self.vr.connectInfo
     self.assertGreater(math.dist(c.coords(info.sourceLineID)[-2:], centre), 3.0)
-    self.assertEqual(len(info.middleIDs), 3)                             # (the marks still drawn, over the text)
+    self.assertEqual(info.middleIDs, [])                                 # (the marks aren't over the text ...
+    self.assertEqual(self.types(info.labelNearTerminatorIDs), ["line"] * 3) # ... but just before the label, on the source side)
+    x1, y1, x2, y2 = c.bbox(self.vr._shape.id)
+    for bar in info.labelNearTerminatorIDs:
+      bx1, _, bx2, _ = c.bbox(bar)
+      self.assertLess((bx1 + bx2) / 2, x1)                               # (left of the label's box: the source is on the left)
+      self.assertGreater(bx1, c.coords(info.sourceLineID)[0])            # (on the source line, not off its start)
     self.set("vis/midMarks", "")
-    self.assertEqual(self.vr.connectInfo.middleIDs, [])
+    self.assertEqual(self.vr.connectInfo.labelNearTerminatorIDs, [])
+
+  def test0350middleMarksWithTextAndNearMarks(self):
+    '"<|>" before a label that shows text, with its own label-near marks: one stack, the label-near marks innermost.'
+    c = self.view.canvas
+    self.set("vis/midMarks", "<|>")
+    self.set("vis/terminator2", "o")
+    info = self.vr.connectInfo
+    kinds = [t for t in self.types(info.labelNearTerminatorIDs) if t != "line"]
+    self.assertEqual(kinds, ["polygon", "polygon", "oval"])              # (<, >, then o against the label)
+    heads = [i for i in info.labelNearTerminatorIDs if c.type(i) == "polygon"]
+    circle = next(i for i in info.labelNearTerminatorIDs if c.type(i) == "oval")
+    self.assertLess(max(c.bbox(h)[2] for h in heads), c.bbox(circle)[2])
+    x1 = c.bbox(self.vr._shape.id)[0]
+    cx1, _, cx2, _ = c.bbox(circle)
+    self.assertLess(abs((cx1 + cx2) / 2 - x1), 4)                        # (the circle is centred on the label's edge)
+    self.assertEqual(info.middleIDs, [])
+    self.set("vis/label", "")                                            # no text: back to the middle, the line through the label
+    info = self.vr.connectInfo
+    self.assertEqual(self.types(info.middleIDs), ["line", "polygon", "line", "polygon"])
+    self.assertEqual(self.types(info.labelNearTerminatorIDs), ["oval"])
 
   def test0400straight(self):
-    '"<|>" in the middle of a straight connector: two arrowheads and a bar.'
+    '"<|>" in the middle of a straight connector: two arrowheads and a bar -- before the label while it shows text.'
     self.set("vis/lineType", "straight")
     self.set("vis/midMarks", "<|>")
+    info = self.vr.connectInfo
+    self.assertEqual(info.middleIDs, [])
+    self.assertEqual(self.types(info.labelNearTerminatorIDs), ["line", "polygon", "line", "polygon"]) # (as in the middle, below)
     self.set("vis/label", "")
     info = self.vr.connectInfo
     self.assertEqual(self.types(info.middleIDs), ["line", "polygon", "line", "polygon"]) # (the line between the heads, then the marks)
+    self.assertEqual(info.labelNearTerminatorIDs, [])
 
   def test0500badSpec(self):
     'A spec that can\'t be read draws nothing (and says so in the log).'
@@ -203,6 +233,20 @@ class Test(unittest.TestCase):
     self.assertEqual([t for t in self.types(stub.end) if t != "line"], ["oval", "polygon"])
     end = self.view.viewToWindow(*vl.__dict__["_stubEnds"]["dst"])
     self.assertEqual(vl._terminalAt(*end), "dst")
+    self.view.context.set_attribute(loose, "vis/midMarks", "||")         # with text, and no destination side: before the label
+    self.pump()
+    info = vl.connectInfo
+    self.assertEqual(info.middleIDs, [])
+    self.assertEqual(self.types(info.labelNearTerminatorIDs), ["line", "line"])
+    other = Relation(m, [m.RELATION], None, self.b, individual=True, name="loose2")
+    self.pump()
+    vo = self.view.findViewObjectForGraphObject(other)
+    self.view.context.set_attribute(other, "vis/midMarks", "||")         # no source side: just after the label, on the destination side
+    self.pump()
+    info = vo.connectInfo
+    self.assertEqual(info.middleIDs, [])
+    self.assertEqual(self.types(info.labelFarTerminatorIDs), ["line", "line"])
+    self.assertEqual(info.labelNearTerminatorIDs, [])
 
   def test0700typeChangeRedrawsInheritors(self):
     'Changing a type\'s look redraws its instances and subtypes in the view -- and those below them that inherit it.'
