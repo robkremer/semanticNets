@@ -92,7 +92,9 @@ class Test(unittest.TestCase):
     m = self.model = Model((Path(self.tmp.name).resolve() / "marks.snm").as_uri())
     self.a = Node(m, [m.NODE], individual=True, name="a")
     self.b = Node(m, [m.NODE], individual=True, name="b")
-    self.rel = Relation(m, [m.RELATION], self.a, self.b, individual=True, name="r")
+    # (as a model has them: an individual relation of a relation type -- not an instance of "relation" itself)
+    self.relType = Relation(m, [m.RELATION], None, None, individual=False, name="R")
+    self.rel = Relation(m, [self.relType], self.a, self.b, individual=True, name="r")
     self.view = v = SNGView(fixURL(m.url, ".snv", replaceExt=True, mode="w")[0], model=m)
     v.window.withdraw()
     v._askName = lambda mo: None
@@ -407,6 +409,25 @@ class Test(unittest.TestCase):
     (hw3, hh3), d3 = extents()
     self.assertAlmostEqual(d3, d1, delta=0.5)
     self.assertAlmostEqual(math.hypot(hw3, hh3), math.hypot(hw1, hh1), delta=1.5)
+
+  def test0690labelFollowsTheModel(self):
+    'The label text (remembered between draws) follows the model: the object renamed, its type renamed (an inherited name), its template changed.'
+    m, c, ctx = self.model, self.view.canvas, self.view.context
+    shown = lambda: c.itemcget(self.vr.decorators["text"].id, "text").replace("\n", "") # (as drawn -- wrapped to its box)
+    self.set("vis/label", "$name")
+    self.assertEqual(shown(), "r")
+    ctx.set_attribute(self.rel, "name", "r-renamed")
+    self.pump()
+    self.assertEqual(shown(), "r-renamed")
+    ctx.set_attribute(self.rel, "vis/label", "$type: $name")
+    self.pump()
+    self.assertEqual(shown(), "R: r-renamed")
+    ctx.set_attribute(self.relType, "name", "R2")                          # (the type's name, shown by $type)
+    self.pump()
+    self.assertEqual(shown(), "R2: r-renamed")
+    ctx.set_attribute(self.rel, "vis/label", "")
+    self.pump()
+    self.assertEqual(self.vr.labelText(), "")
 
   def test0700typeChangeRedrawsInheritors(self):
     'Changing a type\'s look redraws its instances and subtypes in the view -- and those below them that inherit it.'

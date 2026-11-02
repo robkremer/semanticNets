@@ -838,7 +838,11 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       except Exception:
         logger.exception(f'{self.name}.update({subject}, {topics}): Unexpected subject.')
         return
-      vChanged = False
+      # The model changed: what's remembered from it (labels, shape options, containment -- see
+      # structureChanged()) is stale, and must be before this is drawn again below -- the view's own
+      # update(), which notes it too, may not have run yet (each observes the model for itself)
+      self.view.structureChanged()
+      vChanged = childrenChanged = False
       for topic in topics:
         topicName = topic[0]
         if topicName == "new attribute" or topicName == "mod attribute": # no point in changing an object we're removing!
@@ -848,6 +852,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
             vChanged = True
           else: # (the label may show any attribute: see labelText())
             vChanged = True
+          if attname == "name":
+            childrenChanged = True # (their labels may show it: "$type")
         elif topicName == "del attribute":
           attname = topic[1][0]
           if attname in self.cache:
@@ -876,6 +882,14 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       if vChanged:
         self.view.freshPaint()
         self.draw() 
+      if childrenChanged and self.modelObject is not None and self.modelObject.isType():
+        # (a type renamed: its instances' and subtypes' labels may show its name ("$type"), and
+        # nothing tells them -- they're told only of attributes they inherit from it)
+        for child in self.modelObject.getChildren():
+          vo = self.view.findViewObjectForGraphObject(child)
+          if vo is not None and vo._isConnected():
+            vo.view.freshPaint()
+            vo.draw()
 
   def validate(self) -> list[str]:
     '''
