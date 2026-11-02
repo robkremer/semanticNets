@@ -840,6 +840,16 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
           if attname in self.cache:
             self.cache.refresh(attname)
           vChanged = True # (the label may show any attribute: see labelText())
+        elif topicName == "mod inherited attribute": # (a type above it changed one it inherits -- see AttributedObject._notifyAttributeInheritors())
+          attname = topic[1][0]
+          if self._isConnected(): # (not one taken out of the view: drawing it would put it back)
+            if attname in self.cache:
+              self.cache.refresh(attname)
+            vChanged = True
+        elif topicName == "mod supers": # (an isa link above it made, moved or taken out: what it inherits may differ -- see IsaIndividual._supersChanged())
+          if self._isConnected():
+            self.cache.refresh()
+            vChanged = True
           
         elif topicName in ("asserted", "inferred"): # (marked as asserted, or that undone: drawn faded or not -- see isInferred())
           vChanged = True
