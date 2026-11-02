@@ -104,6 +104,7 @@ VREL_ATTRIBUTES:dict[str,Any] = VATTRIBUTES | \
                     'vis/terminator2'    : "",
                     'vis/terminator3'    : "",
                     'vis/terminator4'    : "arrow",
+                    'vis/midMarks'       : "",
                     'vis/lineColor'      : "black",
                     'vis/lineFillColor'  : "black",
                     'vis/lineType'       : "smooth",
@@ -574,7 +575,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     if mo is None:
       return "?"
     template = mo.get("vis/label", None)
-    if not isinstance(template, str) or not template:
+    if not isinstance(template, str): # ("" is a template too: no label -- eg: a relation shown only by its marks)
       pref = "gui/relationLabel" if isinstance(mo, Relation) else "gui/label"
       template = snPrefs.get(pref, storeDefault=DEFAULT_LABEL, storeType=str) # (its note: see sn.PREFS)
     try:
@@ -758,6 +759,14 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     ret = [vo for vo, (w, _) in homes.items() if w is self]
     return ret + [vo for vo in self.windowContents() if vo not in homes and vo not in ret]
 
+  def emptyLabelSize(self) -> tuple[float, float]:
+    '''
+    :returns: The least (width, height) its box is sized to when its label is empty
+      (see *WrappingText.preferredLayout()*), besides "vis/minSize": none here (see
+      *VRelation.emptyLabelSize()*).
+    '''
+    return (0.0, 0.0)
+
   def isResizable(self) -> bool:
     '''
     False iff "vis/minSize" == "vis/maxSize": the size is fixed, so it can\'t be resized by hand. (Windows always can be.)
@@ -821,14 +830,14 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         topicName = topic[0]
         if topicName == "new attribute" or topicName == "mod attribute": # no point in changing an object we're removing!
           attname, value = topic[1]
-          if attname in VATTRIBUTES:
+          if attname in self.cache: # (one it caches: a relation's line attributes too -- see VREL_ATTRIBUTES)
             self.cache[attname] = value
             vChanged = True
           else: # (the label may show any attribute: see labelText())
             vChanged = True
         elif topicName == "del attribute":
           attname = topic[1][0]
-          if attname in VATTRIBUTES:
+          if attname in self.cache:
             self.cache.refresh(attname)
           vChanged = True # (the label may show any attribute: see labelText())
           

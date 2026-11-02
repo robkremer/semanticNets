@@ -41,7 +41,6 @@ Created on Oct 8, 2026
 # SOFTWARE.                                                                     #
 #################################################################################
 from __future__ import annotations
-import math
 import os
 import shutil
 import tempfile
@@ -50,6 +49,7 @@ import tkinter as tk
 import tkinter.font as tkfont
 from typing import Iterable, Sequence
 from util.platformSupport import pdfToPNG, copyPNG
+from util.lineMarks import arrowHead # (a Tk line's arrowhead: drawn here for a line with "arrow" set)
 
 Point = tuple[float, float]
 
@@ -201,28 +201,6 @@ def _ellipse(x1:float, y1:float, x2:float, y2:float) -> list[tuple[Point, ...]]:
           ((cx - k * rx, cy + ry), (cx - rx, cy + k * ry), (cx - rx, cy)),
           ((cx - rx, cy - k * ry), (cx - k * rx, cy - ry), (cx, cy - ry)),
           ((cx + k * rx, cy - ry), (cx + rx, cy - k * ry), (cx + rx, cy))]
-
-def arrowHead(tip:Point, toward:Point, width:float, shape:tuple[float, float, float]) -> tuple[list[Point], Point]:
-  '''
-  A Tk line's arrowhead at *tip*, the line coming from *toward*.
-
-  :param shape: Its "arrowshape": (d1, d2, d3) -- as far along the line from
-    the tip to the neck, and to the trailing points, and how far the trailing
-    points are out from the line's edge.
-  :returns: The head's polygon, and where the line is to end (under the head).
-  '''
-  d1, d2, d3 = shape
-  dx, dy = tip[0] - toward[0], tip[1] - toward[1]
-  n = math.hypot(dx, dy) or 1.0
-  ux, uy = dx / n, dy / n
-  px, py = -uy, ux
-  out = width / 2 + d3
-  neck = (tip[0] - ux * d1, tip[1] - uy * d1)
-  a = (tip[0] - ux * d2 + px * out, tip[1] - uy * d2 + py * out)
-  b = (tip[0] - ux * d2 - px * out, tip[1] - uy * d2 - py * out)
-  frac = (width / 2) / out if out else 0
-  back = frac * d2 + d1 * (1 - frac) / 2
-  return [tip, a, neck, b], (tip[0] - ux * back, tip[1] - uy * back)
 
 class Renderer:
   '''

@@ -87,7 +87,7 @@ Keys: any attribute, and
 Eg:
   $name${constraints:+ {$constraints}}   "fred", or "?p {alive}" (the default)
   $type${name:+: $name}                  Sowa's "person: fred"
-An object's "vis/label" attribute (eg: on its type) overrides this.'''
+An object's "vis/label" attribute (eg: on its type) overrides this; set to "", it shows no label.'''
 "The note on the label template preferences (and \"vis/label\"): shown as its tooltip."
 
 _NAME = re.compile(r"[A-Za-z_]\w*")
