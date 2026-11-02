@@ -360,10 +360,11 @@ def _clipToEdgeStraight(vobj: VObject, farPt: PointType, granularity: int = 1) -
   findIntersection()/arePtsClose() already do, reimplemented here as a free
   function so it doesn't need a VRelation instance.
   """
+  inside = _insideTest(vobj) # (its outline worked out once, not per step: see _insideTest())
   p1, p2 = farPt, vobj.centerPt()
   while not (abs(p1[0] - p2[0]) < granularity and abs(p1[1] - p2[1]) < granularity):
     pc = midpoint(p1, p2)
-    if vobj.containsPt(pc):
+    if inside(pc):
       p2 = pc
     else:
       p1 = pc
