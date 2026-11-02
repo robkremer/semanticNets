@@ -362,6 +362,30 @@ class Test(unittest.TestCase):
     self.assertEqual(self.types(info.labelFarTerminatorIDs), ["line", "line"])
     self.assertEqual(info.labelNearTerminatorIDs, [])
 
+  def test0650floatingTypeEmptyLabel(self):
+    'A relation type with both ends floating and a label with no text: its two stubs run through the label and meet at its centre (no hole), the label-near marks there.'
+    m, c = self.model, self.view.canvas
+    floaty = Relation(m, [m.RELATION], None, None, individual=False, name="floaty")
+    self.pump()
+    vf = self.view.findViewObjectForGraphObject(floaty)
+    for key, value in (("vis/label", ""), ("vis/terminator2", "||>"), ("vis/terminator4", "*>")):
+      self.view.context.set_attribute(floaty, key, value)
+    self.pump()
+    self.assertEqual(vf.labelText(), "")
+    centre = self.view.viewToWindow(*vf.centerPt())
+    stubs = vf.__dict__["_stubIds"]
+    self.assertLess(math.dist(c.coords(stubs["dst"].line)[:2], centre), 1.0)    # (the destination stub starts at the centre...)
+    self.assertEqual([t for t in self.types(stubs["src"].end) if t != "line"], ["polygon"]) # (...where the source stub's "||>" head has its tip)
+    self.assertLess(math.dist(c.coords(stubs["src"].end[-1])[:2], centre), 1.0)
+    self.assertLess(math.dist(c.coords(stubs["src"].line)[-2:], centre), 15.0)  # (its line cut back just by the marks: no hole)
+    for end in ("src", "dst"):                                                  # (still grabbed at the stubs' outer ends)
+      ex, ey = self.view.viewToWindow(*vf.__dict__["_stubEnds"][end])
+      self.assertEqual(vf._terminalAt(ex, ey), end)
+    self.view.context.set_attribute(floaty, "vis/label", "$name")               # with text: the stubs stop at its edge again
+    self.pump()
+    stubs = vf.__dict__["_stubIds"]
+    self.assertGreater(math.dist(c.coords(stubs["src"].line)[-2:], self.view.viewToWindow(*vf.centerPt())), 3.0)
+
   def test0700typeChangeRedrawsInheritors(self):
     'Changing a type\'s look redraws its instances and subtypes in the view -- and those below them that inherit it.'
     m, v, c = self.model, self.view, self.view.canvas

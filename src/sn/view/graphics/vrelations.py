@@ -304,8 +304,11 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
           dx, dy = dx / n, dy / n
         else:
           dx, dy = (-1.0, 0.0) if end == "src" else (1.0, 0.0)
-        a = _clipToEdgeStraight(self, _farPointAlong(self, (dx, dy)))
-        b = (a[0] + dx * self.STUB_LENGTH, a[1] + dy * self.STUB_LENGTH)
+        edge = _clipToEdgeStraight(self, _farPointAlong(self, (dx, dy)))
+        b = (edge[0] + dx * self.STUB_LENGTH, edge[1] + dy * self.STUB_LENGTH)
+        # a label showing no text: the stub runs through it to its centre, as a connected line does (see
+        # drawSmoothConnector()'s throughLabel) -- else the two stubs would leave a hole where the invisible box is
+        a = edge if self._labelShown() else self.centerPt()
         # faded if the end isn't set; in the relation's own colour if it is set,
         # but its object isn't shown (eg: erased from the view)
         ownEnd = (self.modelObject.localSrc if end == "src" else self.modelObject.localDst) if self.modelObject is not None else None
