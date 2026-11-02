@@ -565,6 +565,18 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
       return []
     return [other for _rel,other in self._getIncoming(lambda r: isinstance(r, IsaIndividual)) if other is not None]    
 
+  @override
+  def getSubs(self) -> list[GraphObject]:
+    '''
+    :returns: The objects directly below this one, told when an attribute
+      they inherit from it changes (see *AttributedObject._notifyAttributeInheritors()*):
+      its isa-children (see *getChildren()*). (Not the isa links below the
+      isa relation type, which have no isa links of their own -- see
+      *IsaIndividual.getParents()* -- but it's in the base rules, which
+      can't be changed here.)
+    '''
+    return self.getChildren()
+
   def variableKind(self) -> NameKind:
     '''
     :returns: What this object's name makes it (see *sn.model.names*): a
@@ -2347,14 +2359,45 @@ class IsaIndividual(Relation):
       if obj is not None:
         obj.retract()
     super()._endpointChanged(end, old, new)
+    self._supersChanged(*((old, new) if end == "src" else (self.localSrc,)))
 
   @override
   def connect(self, source:Optional[GraphObject]=None, destination:Optional[GraphObject]=None):
     retract = source      is not None and source      is not self.localSrc or \
               destination is not None and destination is not self.localDst  
+    oldSrc = self.localSrc
     super().connect(source, destination)
     if retract: #TODO: could be a lot more efficient by just fixing the parentCache's.
       self.retract()
+      self._supersChanged(oldSrc, self.localSrc)
     self.setDirty()
+
+  @override
+  def _disconnect(self, keep:GraphObject|None=None, **kwargs) -> None: #type: ignore[override]
+    super()._disconnect(keep=keep, **kwargs)
+    if keep is not self.localSrc: # (not its source being taken out, with its isa links)
+      self._supersChanged(self.localSrc)
+
+  @override
+  def _reconnect(self, kept:GraphObject|None=None, **kwargs):
+    super()._reconnect(kept=kept, **kwargs)
+    if kept is not self.localSrc: # (not its source being put back, with its isa links)
+      self._supersChanged(self.localSrc)
+
+  def _supersChanged(self, *objs:GraphObject|None) -> None:
+    '''
+    This isa link was made, moved, taken out or put back: the supertypes of
+    *objs* (its source, before and after) changed. Their observers (eg: the
+    view objects showing them), and those of the objects below them, are
+    told (see *AttributedObject.notifySupersChanged()*): what they inherit
+    (eg: their colours) may have changed. Not while the model is being read.
+    '''
+    if self.db.reading:
+      return
+    done:set[int] = set()
+    for o in objs:
+      if o is not None and id(o) not in done and o._isConnected():
+        done.add(id(o))
+        o.notifySupersChanged()
     
     

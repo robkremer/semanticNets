@@ -1623,6 +1623,7 @@ def materialize(model:Model, inferences:Inferences, models:list[Model]) -> None:
         elif local.inferred and local.value != v:
           local.value = v
           x.notify(("mod attribute", (k, v)))
+          x._notifyAttributeInheritors(k)
       except Exception as ex:
         logger.warning(f"Couldn't give {x.name} the inferred {k}={v}: {type(ex).__name__}: {ex}")
     real = lambda o: nodes.get(_newObjectKey(o)) if isinstance(o, NewObject) else o

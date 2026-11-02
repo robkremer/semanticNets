@@ -23,7 +23,8 @@
 A relation's marks in a real view (in a hidden window): stacked terminators
 ("vis/terminator4" = "o>", ">>"), middle marks ("vis/midMarks" = "|||"), the
 line running through a label with no text, a dangling end's stub -- and that
-changing a relation's own line attributes redraws it.
+changing a relation's own line attributes redraws it, as does changing a type
+it (or a node) inherits them from, or making it an instance of another type.
 
 Created on Nov 2, 2026
 
@@ -202,6 +203,67 @@ class Test(unittest.TestCase):
     self.assertEqual([t for t in self.types(stub.end) if t != "line"], ["oval", "polygon"])
     end = self.view.viewToWindow(*vl.__dict__["_stubEnds"]["dst"])
     self.assertEqual(vl._terminalAt(*end), "dst")
+
+  def test0700typeChangeRedrawsInheritors(self):
+    'Changing a type\'s look redraws its instances and subtypes in the view -- and those below them that inherit it.'
+    m, v, c = self.model, self.view, self.view.canvas
+    ctx = v.context
+    T = Node(m, [m.NODE], individual=False, name="T")
+    S = Node(m, [T], individual=False, name="S")                         # (a subtype)
+    t = Node(m, [S], individual=True, name="t")                          # (an instance of the subtype)
+    R = Relation(m, [m.RELATION], m.NODE, m.NODE, individual=False, name="R")
+    r = Relation(m, [R], self.a, self.b, individual=True, name="r2")
+    self.pump()
+    vS, vt, vr = (v.findViewObjectForGraphObject(o) for o in (S, t, r))
+    fill = lambda vo: c.itemcget(vo._shape.id, "fill")
+    ctx.set_attribute(T, "vis/fillColor", "#ff0000")                     # (the view doesn't show T)
+    self.pump()
+    self.assertEqual(vS.cache["vis/fillColor"], "#ff0000")
+    self.assertEqual(fill(vS), "#ff0000")
+    self.assertEqual(fill(vt), "#ff0000")
+    ctx.set_attribute(S, "vis/fillColor", "#00ff00")                     # (S's own: hides T's from S and t)
+    ctx.set_attribute(T, "vis/fillColor", "#0000ff")
+    self.pump()
+    self.assertEqual(fill(vt), "#00ff00")
+    ctx.delete_attribute(S, "vis/fillColor")
+    self.pump()
+    self.assertEqual(fill(vt), "#0000ff")                                # (T's again)
+    ctx.set_attribute(R, "vis/lineColor", "red")                         # a relation type
+    ctx.set_attribute(R, "vis/terminator4", "o>")
+    self.pump()
+    self.assertEqual(c.itemcget(vr.connectInfo.destLineID, "fill"), "red")
+    self.assertEqual([x for x in self.types(vr.connectInfo.destTerminatorIDs) if x != "line"], ["oval", "polygon"])
+
+  def test0800newTypeRedraws(self):
+    'Making an object an instance of another type (an isa link made, moved, taken out or put back) redraws it with what it now inherits.'
+    from sn.model.model import IsaIndividual
+    m, v, c = self.model, self.view, self.view.canvas
+    T = Node(m, [m.NODE], individual=False, name="T")
+    T["vis/fillColor"] = "#ff0000"
+    U = Node(m, [m.NODE], individual=False, name="U")
+    U["vis/fillColor"] = "#00ff00"
+    self.pump()
+    va = v.findViewObjectForGraphObject(self.a)
+    fill = lambda: c.itemcget(va._shape.id, "fill")
+    plain = fill()
+    self.assertNotIn(plain, ("#ff0000", "#00ff00"))
+    v.context.new_relation([m.ISA], individual=True, source=self.a, destination=T, model=m)
+    self.pump()
+    toNode, toT = (next(r for r, o in self.a._getOutgoing(lambda r: isinstance(r, IsaIndividual)) if o is t) for t in (m.NODE, T))
+    self.assertEqual(fill(), plain)                                      # (the first parent's comes first: NODE's)
+    toNode._disconnect()                                                 # taken out: T's now
+    self.pump()
+    self.assertEqual(fill(), "#ff0000")
+    toT.dst = U                                                          # moved: U's
+    self.pump()
+    self.assertEqual(fill(), "#00ff00")
+    toT.dst = T
+    toNode._reconnect()                                                  # put back (after T's now)
+    self.pump()
+    self.assertEqual(fill(), "#ff0000")
+    v.context.undo()                                                     # (the isa link to T taken out again)
+    self.pump()
+    self.assertEqual(fill(), plain)
 
 if __name__ == "__main__":
   unittest.main()
