@@ -147,6 +147,13 @@ class Text(Decorator):
     text = self.owner.labelText()
     self.kwargs['text'] = text
     return text
+
+  def shownText(self) -> str:
+    '''
+    :returns: The text it shows (as last drawn: see *setText()*); "" if none, or it's been deleted.
+    '''
+    kwargs = self.kwargs
+    return str(kwargs.get("text", "")) if kwargs else ""
           
   def setFontToScale(self):
     self.kwargs["font"] = (self.owner.view._fontFace, self.owner.view.fontSize())

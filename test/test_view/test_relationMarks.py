@@ -154,6 +154,47 @@ class Test(unittest.TestCase):
     self.assertGreater(math.dist(end, last), 10)                          # (more than one arrowhead back)
     self.assertEqual(self.vr._terminalAt(*end), "dst")                    # (still grabbed at its end)
 
+  def test0250ringIsHollow(self):
+    '"@": a ring is outlined in the line colour and filled with the canvas background -- whatever vis/lineFillColor is.'
+    c = self.view.canvas
+    back = c.cget("background")
+    self.set("vis/lineColor", "blue")
+    self.set("vis/lineFillColor", "blue")                              # (as the family example does: "o" and "*" look the same)
+    self.set("vis/terminator4", "o")
+    circle, = self.vr.connectInfo.destTerminatorIDs
+    self.assertEqual((c.itemcget(circle, "fill"), c.itemcget(circle, "outline")), ("blue", "blue"))
+    self.set("vis/terminator4", "@>")
+    info = self.vr.connectInfo
+    ring = next(i for i in info.destTerminatorIDs if c.type(i) == "oval")
+    self.assertEqual((c.itemcget(ring, "fill"), c.itemcget(ring, "outline")), (back, "blue"))
+    self.set("vis/lineColor", "red")                                   # (recoloured with the line)
+    ring = next(i for i in self.vr.connectInfo.destTerminatorIDs if c.type(i) == "oval")
+    self.assertEqual((c.itemcget(ring, "fill"), c.itemcget(ring, "outline")), (back, "red"))
+
+  def test0270diamondsAndCrowsFeet(self):
+    '"diamond" at the source (UML aggregation), "@}" at the destination (ER zero-or-many): drawn, the line cut back to them.'
+    c = self.view.canvas
+    self.set("vis/terminator1", "diamond")
+    self.set("vis/terminator4", "@}")
+    info = self.vr.connectInfo
+    diamond, = info.sourceTerminatorIDs
+    self.assertEqual(c.type(diamond), "polygon")
+    self.assertEqual(len(c.coords(diamond)), 8)
+    self.assertEqual((c.itemcget(diamond, "fill"), c.itemcget(diamond, "outline")), (c.cget("background"), self.vr.cache["vis/lineColor"]))
+    sx, sy = self.view.viewToWindow(*info.sourceEnd)
+    self.assertLess(math.dist((sx, sy), c.coords(diamond)[:2]), 1.0)     # (its tip on the source's edge)
+    self.assertGreater(math.dist((sx, sy), c.coords(info.sourceLineID)[:2]), 10) # (the line cut back to its other tip)
+    self.assertEqual(self.types(info.destTerminatorIDs), ["line", "oval", "line"]) # (the line on from the ring, the ring, the foot)
+    foot = info.destTerminatorIDs[-1]
+    self.assertEqual(len(c.coords(foot)), 6)
+    dx, dy = self.view.viewToWindow(*info.destEnd)
+    toes = c.coords(foot)
+    self.assertLess(abs(math.dist((dx, dy), toes[:2]) - math.dist((dx, dy), toes[4:])), 0.5) # (toes either side of the end)
+    self.assertLess(math.dist((dx, dy), toes[2:4]), 11)                  # (the heel 10 back from it)
+    self.set("vis/terminator1", "fdiamond")
+    diamond, = self.vr.connectInfo.sourceTerminatorIDs
+    self.assertEqual(c.itemcget(diamond, "fill"), self.vr.cache["vis/lineColor"])
+
   def test0300middleMarks(self):
     '"|||" in the middle with no label text: three bars, and the line runs through the label to them.'
     c = self.view.canvas

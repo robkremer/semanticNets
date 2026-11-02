@@ -228,9 +228,19 @@ mark                      is
 ``>``, ``<``              an arrowhead pointing toward the destination, or
                           toward the source
 ``arrow``                 an arrowhead pointing off the end of the line it's at
+                          (toward the destination, in the middle)
 ``o``, ``circle``         a circle, filled with ``vis/lineFillColor``
 ``*``, ``dot``            a solid circle, in ``vis/lineColor``
+``@``, ``ring``           a hollow circle: outlined in ``vis/lineColor``, filled
+                          with the view's background, whatever
+                          ``vis/lineFillColor`` is
 ``|``, ``bar``            a bar across the line (the line runs through it)
+``diamond``               a hollow diamond, its tip on the end of the line
+                          (UML's aggregation); ``fdiamond``, a filled one, in
+                          ``vis/lineColor`` (composition)
+``}``, ``{``, ``crow``    a crow's foot -- ER's "many": its toes spread toward
+                          the destination, or the source; ``crow``, toward the
+                          end of the line it's at
 ========================  ====================================================
 
 For example:
@@ -242,13 +252,21 @@ For example:
    vis/terminator1 = <o        <o----
    vis/midMarks    = |||       --|||--
    vis/midMarks    = <|>       --<|>--
+   vis/terminator4 = @>        ----@>      (a hollow circle behind the arrowhead)
+   vis/terminator1 = diamond   <>----      (UML aggregation: the diamond on the whole)
+   vis/terminator4 = @}        ----@}      (ER: zero or many)
+   vis/terminator4 = |}        ----|}      (ER: one or many)
 
 A mark may be followed by its sizes in parentheses: ``arrow(8,10,3)`` (tip to
 neck, tip to trailing points, and how far the trailing points stand out from
-the line), ``circle(6)`` and ``dot(6)`` (the diameter), ``bar(12)`` (its length
-across the line). Marks may be separated by spaces or commas:
-``circle(6) arrow(8,10,3)``. A circle (or dot) right at the end of a line is
-centred on the end, as circle terminators always were.
+the line), ``circle(6)``, ``dot(6)`` and ``ring(6)`` (the diameter), ``bar(12)``
+(its length across the line), ``diamond(12,7)`` and ``crow(10,10)`` (along the
+line, and across it). Marks may be separated by spaces or commas:
+``circle(6) arrow(8,10,3)``. A circle (or dot, or ring) right at the end of a
+line is centred on the end, as circle terminators always were.
+
+``o`` and ``*`` look the same wherever ``vis/lineFillColor`` is the line's
+colour (as it is by default): use ``@`` for a circle that is always empty.
 
 The middle marks are drawn over the label's text, if it has any. A relation
 shown only by its marks has its label set to nothing (``vis/label`` = ``""``):
