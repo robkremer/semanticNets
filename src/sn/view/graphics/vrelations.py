@@ -262,8 +262,8 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
 
   def _labelShown(self) -> bool:
     '''
-    :returns: Whether its label shows any text (as last drawn). Without, its line runs through it to its
-      middle marks, if it has any (see *drawSmoothConnector()*'s *throughLabel*).
+    :returns: Whether its label shows any text (as last drawn). Without, its line runs through it -- to its
+      middle marks, if it has any, else meeting at its centre (see *drawSmoothConnector()*'s *throughLabel*).
     '''
     text = self.decorators.get("text") if getattr(self, "decorators", None) else None
     return text is not None and bool(str(getattr(text, "kwargs", {}).get("text", "")).strip())
