@@ -228,6 +228,46 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     mix = lambda c, back: int((c * k + back * (1 - k)) / 257)
     return f'#{mix(r, br):02x}{mix(g, bgg):02x}{mix(b, bb):02x}'
 
+  def _terminators(self) -> ConnectorTerminators:
+    '''
+    :returns: Its connector's marks (see *util.lineMarks*): "vis/terminator1" to "vis/terminator4" at its
+      four line ends, and "vis/midMarks" in its middle.
+    '''
+    c = self.cache
+    return ConnectorTerminators(c['vis/terminator1'], c['vis/terminator2'], c['vis/terminator3'],
+                                c['vis/terminator4'], c['vis/midMarks'])
+
+  def _middleLayout(self):
+    '''
+    :returns: Its middle marks ("vis/midMarks"), laid out (see *util.lineMarks.layoutMarks()*): none if it
+      can't be read.
+    '''
+    from util.lineMarks import layoutMarks, MIDDLE, MarkSpecError
+    try:
+      return layoutMarks(self.cache['vis/midMarks'], MIDDLE, float(self.cache['vis/lineWidth']))
+    except MarkSpecError:
+      return layoutMarks(None, MIDDLE)
+
+  @override
+  def emptyLabelSize(self) -> tuple[float, float]:
+    '''
+    :returns: Room for its middle marks ("vis/midMarks"), if it has any: a square they fit in, whichever
+      way the line runs -- so they're inside the box it's selected (and picked out) by.
+    '''
+    lay = self._middleLayout()
+    if not lay.marks:
+      return (0.0, 0.0)
+    side = max(lay.length(), lay.breadth) + 4
+    return (side, side)
+
+  def _labelShown(self) -> bool:
+    '''
+    :returns: Whether its label shows any text (as last drawn). Without, its line runs through it to its
+      middle marks, if it has any (see *drawSmoothConnector()*'s *throughLabel*).
+    '''
+    text = self.decorators.get("text") if getattr(self, "decorators", None) else None
+    return text is not None and bool(str(getattr(text, "kwargs", {}).get("text", "")).strip())
+
   def _styleEnds(self) -> None:
     '''
     After the connector is drawn: an inherited end's half of it (line and
@@ -240,22 +280,20 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     info = self.connectInfo
     if info is None or not self.canvas:
       return
-    from sn.view.graphics.connectors import _clipToEdgeStraight, _farPointAlong, _mergeArrowOptions, \
-      _drawCircleTerminator, ConnectorTerminators
+    from sn.view.graphics.connectors import _clipToEdgeStraight, _farPointAlong, _marks
+    from util.lineMarks import drawMarkedPath, recolorMarks, MarkedPathIDs
     canvas = self.canvas
     line, fill = self.cache['vis/lineColor'], self.cache['vis/lineFillColor']
-    terms = ConnectorTerminators(self.cache['vis/terminator1'], self.cache['vis/terminator2'],
-                                 self.cache['vis/terminator3'], self.cache['vis/terminator4'])
-    stubs = self.__dict__.setdefault("_stubIds", {})
+    terms = self._terminators()
+    stubs:dict[str, MarkedPathIDs] = self.__dict__.setdefault("_stubIds", {})
+    stubEnds:dict[str, tuple[float, float]] = self.__dict__.setdefault("_stubEnds", {})
     for end in ("src", "dst"):
-      fields = ("sourceLineID", "sourceTerminatorID", "labelNearTerminatorID") if end == "src" \
-               else ("destLineID", "labelFarTerminatorID", "destTerminatorID")
       other = self.src if end == "src" else self.dst
       if other is None: # dangling: remove the old side, draw a stub
-        for f in fields:
-          if getattr(info, f) is not None:
-            canvas.delete(getattr(info, f))
-            setattr(info, f, None)
+        if end == "src":
+          info.clearSource(canvas)
+        else:
+          info.clearDest(canvas)
         present = self.dst if end == "src" else self.src
         cx, cy = self.centerPt()
         if present is not None:
@@ -274,34 +312,22 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
         fillColor = fill if ownEnd is not None else self._faded(fill)
         # the same terminators this side of the connector would have, at the same ends
         if end == "dst":
-          pts, nearSpec, farSpec = (a, b), terms.labelFar, terms.destination
+          path, startSpec, endSpec = [a, b], terms.labelFar, terms.destination
         else:
-          pts, nearSpec, farSpec = (b, a), terms.source, terms.labelNear
-        coords = self.view.viewToWindow([pts[0][0], pts[0][1], pts[1][0], pts[1][1]])
-        opts:dict[str, Any] = dict(fill=lineColor, width=self.lineWidth())
-        opts.update(_mergeArrowOptions(nearSpec, farSpec))
-        if stubs.get(end) is None:
-          stubs[end] = canvas.create_line(coords, tags=[self.tag, "stub"], **opts)
-        else:
-          canvas.coords(stubs[end], coords)
-          canvas.itemconfigure(stubs[end], **opts)
-        for key, spec, pt in ((end + "-near", nearSpec, pts[0]), (end + "-far", farSpec, pts[1])):
-          stubs[key] = _drawCircleTerminator(self.view, spec, pt, stubs.get(key), lineColor, fillColor, [self.tag, "stub"])
+          path, startSpec, endSpec = [b, a], terms.source, terms.labelNear
+        width = self.lineWidth()
+        stubs[end] = drawMarkedPath(canvas, path, _marks(startSpec), _marks(endSpec), stubs.get(end),
+                                    width=width / float(getattr(self.view, "_scale", 1.0) or 1.0), strokeWidth=width,
+                                    lineColor=lineColor, fillColor=fillColor, tags=[self.tag, "stub"],
+                                    toWindow=self.view.viewToWindow)
+        stubEnds[end] = b # (its outer end: where it's grabbed -- see _terminalAt())
       else:
-        for key in (end, end + "-near", end + "-far"):
-          if stubs.get(key) is not None:
-            canvas.delete(stubs.pop(key))
-        faded = self.inheritedEnds[end]
-        lineColor = self._faded(line) if faded else line
-        fillColor = self._faded(fill) if faded else fill
-        for f in fields:
-          i = getattr(info, f)
-          if i is None:
-            continue
-          if canvas.type(i) == "line":
-            canvas.itemconfigure(i, fill=lineColor)
-          else: # a circle terminator
-            canvas.itemconfigure(i, outline=lineColor, fill=fillColor)
+        old = stubs.pop(end, None)
+        if old is not None:
+          old.deleteAll(canvas)
+        stubEnds.pop(end, None)
+        if self.inheritedEnds[end]:
+          recolorMarks(canvas, info.sourceIDs() if end == "src" else info.destIDs(), self._faded(line), self._faded(fill))
    
   ### DESTRUCTOR ########################################################################
 
@@ -361,22 +387,13 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
       return
     if self.modelObject.isSystemObject() and self.modelObject.name == "relation":
       return
-    terminators = ConnectorTerminators(self.cache['vis/terminator1'], self.cache['vis/terminator2'], self.cache['vis/terminator3'], self.cache['vis/terminator4'])
-    lineType = self.cache['vis/lineType']
-    if lineType == "straight":
-      self.connectInfo = drawStraightConnector(self.src, self, self.dst, 
-            terminators, self.connectInfo, 
-            lineColor=self.cache['vis/lineColor'], 
-            fillColor=self.cache['vis/lineFillColor'], 
-            width=self.lineWidth(),
-            tags=[self.tag], **self._inferredLine())
-    else:
-      self.connectInfo = drawSmoothConnector(self.src, self, self.dst, 
-            terminators, self.connectInfo, 
-            lineColor=self.cache['vis/lineColor'], 
-            fillColor=self.cache['vis/lineFillColor'], 
-            width=self.lineWidth(),
-            tags=[self.tag], **self._inferredLine())
+    draw = drawStraightConnector if self.cache['vis/lineType'] == "straight" else drawSmoothConnector
+    self.connectInfo = draw(self.src, self, self.dst,
+          self._terminators(), self.connectInfo,
+          lineColor=self.cache['vis/lineColor'],
+          fillColor=self.cache['vis/lineFillColor'],
+          width=self.lineWidth(),
+          tags=[self.tag], throughLabel=not self._labelShown(), **self._inferredLine())
     self._styleEnds()
     self._applyHidden()
 
@@ -608,21 +625,14 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     if info is None:
       return None
     ends:list[tuple[str, float, float]] = []
-    if info.sourceLineID is not None:
-      c = self.view.canvas.coords(info.sourceLineID)   # drawn from the src end...
-      if len(c) >= 2:
-        ends.append(("src", c[0], c[1]))
-    if info.destLineID is not None:
-      c = self.view.canvas.coords(info.destLineID)     # ...and to the dst end
-      if len(c) >= 2:
-        ends.append(("dst", c[-2], c[-1]))
-    # a dangling end's stub: its outer end (the src stub is drawn from it, the dst stub to it)
-    stubs = self.__dict__.get("_stubIds", {})
-    for end, first in (("src", True), ("dst", False)):
-      if stubs.get(end) is not None:
-        c = self.view.canvas.coords(stubs[end])
-        if len(c) >= 4:
-          ends.append((end, c[0], c[1]) if first else (end, c[-2], c[-1]))
+    # where it meets its src and dst (its lines may stop short of there, for their terminators) --
+    # or a dangling end's stub's outer end
+    stubEnds = self.__dict__.get("_stubEnds", {})
+    for end, pt in (("src", info.sourceEnd), ("dst", info.destEnd)):
+      pt = stubEnds.get(end, pt)
+      if pt is not None:
+        ex, ey = self.view.viewToWindow(pt[0], pt[1])
+        ends.append((end, ex, ey))
     r = self.TERMINAL_HIT_RADIUS
     for end, ex, ey in ends:
       if abs(x - ex) <= r and abs(y - ey) <= r:

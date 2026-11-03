@@ -312,8 +312,9 @@ class WrappingText(Text):
     fx, fy = self.textInset()
     font = self.baseFont()
     canvas = self.owner.canvas
-    if not text:
-      return int(minW), int(round(minW * aspect)), max(1.0, minW * fx - 2 * self.PAD)
+    if not text: # (at least the room the owner wants then: eg: a relation's middle marks)
+      ew, eh = self.owner.emptyLabelSize()
+      return max(int(minW), int(round(ew))), max(int(round(minW * aspect)), int(round(eh))), max(1.0, minW * fx - 2 * self.PAD)
 
     # 1: the line breaks that best give the text block the aspect ratio
     _, naturalW, _ = layoutText(canvas, text, font)
@@ -375,7 +376,7 @@ class WrappingText(Text):
       return
     text = super().setText()
     sig = (text, owner.cache["vis/minSize"], owner.cache["vis/maxSize"], owner.cache["vis/aspectRatio"],
-           type(owner._shape).__name__, self.baseFont())
+           type(owner._shape).__name__, self.baseFont(), owner.emptyLabelSize() if not text else None)
     if sig == self._fitted:
       return
     self._fitted = sig

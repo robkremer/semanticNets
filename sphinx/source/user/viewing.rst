@@ -188,6 +188,10 @@ attribute                   controls
 ``vis/lineColor``,          a relation's line
 ``vis/lineWidth``,
 ``vis/lineType``
+``vis/terminator1`` ..      a relation's marks: at the ends of its line, and
+``vis/terminator4``,        in its middle (below)
+``vis/midMarks``,
+``vis/lineFillColor``
 ``vis/minSize``,            its size limits, and the shape of its box
 ``vis/maxSize``,
 ``vis/aspectRatio``
@@ -199,6 +203,57 @@ attribute                   controls
 ``vis/tooltipWrap``         the width its tooltip wraps at, in pixels
                             (0: no wrapping)
 ==========================  =============================================
+
+Relation marks
+--------------
+
+A relation's line can carry marks -- arrowheads, circles, bars -- at its ends
+and in its middle, turned to follow the line. Each place takes a sequence of
+marks, written in order from the source end toward the destination end, so
+that what you type looks like what you get:
+
+=====================  ==============================================
+attribute              where its marks go
+=====================  ==============================================
+``vis/terminator1``    at the source end of the line
+``vis/terminator2``    where the line from the source meets the label
+``vis/terminator3``    where the line to the destination leaves the label
+``vis/terminator4``    at the destination end (``arrow``, by default)
+``vis/midMarks``       centred on the label
+=====================  ==============================================
+
+========================  ====================================================
+mark                      is
+========================  ====================================================
+``>``, ``<``              an arrowhead pointing toward the destination, or
+                          toward the source
+``arrow``                 an arrowhead pointing off the end of the line it's at
+``o``, ``circle``         a circle, filled with ``vis/lineFillColor``
+``*``, ``dot``            a solid circle, in ``vis/lineColor``
+``|``, ``bar``            a bar across the line (the line runs through it)
+========================  ====================================================
+
+For example:
+
+.. code-block:: none
+
+   vis/terminator4 = o>        ----o>
+   vis/terminator4 = >>        ---->>
+   vis/terminator1 = <o        <o----
+   vis/midMarks    = |||       --|||--
+   vis/midMarks    = <|>       --<|>--
+
+A mark may be followed by its sizes in parentheses: ``arrow(8,10,3)`` (tip to
+neck, tip to trailing points, and how far the trailing points stand out from
+the line), ``circle(6)`` and ``dot(6)`` (the diameter), ``bar(12)`` (its length
+across the line). Marks may be separated by spaces or commas:
+``circle(6) arrow(8,10,3)``. A circle (or dot) right at the end of a line is
+centred on the end, as circle terminators always were.
+
+The middle marks are drawn over the label's text, if it has any. A relation
+shown only by its marks has its label set to nothing (``vis/label`` = ``""``):
+its line then runs through the label to the marks, and the label's box is just
+big enough to hold them, to select and drag the relation by.
 
 Labels
 ------
@@ -238,7 +293,7 @@ constraints in braces if there are any. ``$type${name:+: $name}`` gives the
 
 The template is the object's ``vis/label`` attribute, if it has one (set it
 on a type for all its instances); otherwise the ``gui/label`` setting
-(``gui/relationLabel`` for relations).
+(``gui/relationLabel`` for relations). A ``vis/label`` of ``""`` shows no label.
 
 Tooltips are templates too: the object's ``vis/tooltip`` attribute, or else the
 ``gui/tooltip`` setting -- by default, the name, and then the note if there is
