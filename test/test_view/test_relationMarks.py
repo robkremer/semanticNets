@@ -410,6 +410,22 @@ class Test(unittest.TestCase):
     self.assertAlmostEqual(d3, d1, delta=0.5)
     self.assertAlmostEqual(math.hypot(hw3, hh3), math.hypot(hw1, hh1), delta=1.5)
 
+  def test0685edgeSearchFinerWhenZoomed(self):
+    'Where a curve crosses a node\'s edge is pinned down to a fraction of a pixel at any zoom: finer, in view units, zoomed in.'
+    from sn.view.graphics import connectors
+    vb = self.view.findViewObjectForGraphObject(self.b)
+    self.assertEqual(connectors._boundaryTolerance(vb), connectors._BOUNDARY_TOLERANCE)
+    self.view.zoom(8.0)
+    self.pump()
+    tol = connectors._boundaryTolerance(vb)
+    self.assertAlmostEqual(tol, connectors._BOUNDARY_TOLERANCE / 8)
+    inside = lambda p: math.hypot(p[0] - 100.0, p[1]) <= 50.0                # (a circle: its edge at x = 50 on the line)
+    p0, p1, p2 = (0.0, 0.0), (50.0, 0.0), (100.0, 0.0)
+    x = connectors._bezierPoint(p0, p1, p2, connectors._findBoundaryParam(inside, p0, p1, p2, tInside=1.0, tOutside=0.0, tolerance=tol))[0]
+    self.assertTrue(0.0 <= 50.0 - x < tol, x)                                # (just outside the edge, by less than the tolerance)
+    self.view.zoom(1.0)
+    self.pump()
+
   def test0690labelFollowsTheModel(self):
     'The label text (remembered between draws) follows the model: the object renamed, its type renamed (an inherited name), its template changed.'
     m, c, ctx = self.model, self.view.canvas, self.view.context

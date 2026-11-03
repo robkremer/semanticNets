@@ -259,7 +259,16 @@ def _bezierBlossom(p0: PointType, p1: PointType, p2: PointType, ta: float, tb: f
 
 
 _BOUNDARY_TOLERANCE = 0.25
-"How close (view units) _findBoundaryParam() pins a curve's crossing of a shape's edge down to."
+"How close (window units: pixels) _findBoundaryParam() pins a curve's crossing of a shape's edge down to (see _boundaryTolerance())."
+
+
+def _boundaryTolerance(vobj: VObject) -> float:
+  """*_BOUNDARY_TOLERANCE* in view units, for *vobj*'s view: finer when it's
+  zoomed in, so a line still meets a node's edge to within a fraction of a
+  pixel (a fixed quarter of a view unit is a pixel short at 4x, two at 8x).
+  """
+  scale = getattr(getattr(vobj, "view", None), "_scale", 1.0) or 1.0
+  return _BOUNDARY_TOLERANCE / max(1.0, scale)
 
 
 def _insideTest(vobj: VObject) -> Callable[[PointType], bool]:
@@ -277,7 +286,8 @@ def _insideTest(vobj: VObject) -> Callable[[PointType], bool]:
 
 
 def _findBoundaryParam(vobj: VObject|Callable[[PointType], bool], p0: PointType, p1: PointType, p2: PointType,
-                        tInside: float, tOutside: float, iterations: int = 24) -> float:
+                        tInside: float, tOutside: float, iterations: int = 24,
+                        tolerance: float = _BOUNDARY_TOLERANCE) -> float:
   """Bisect the Bezier's parameter *t* between a point known to be inside
   *vobj* (tInside) and one known to be outside it (tOutside) to find where
   the curve [p0,p1,p2] crosses *vobj*'s boundary — the curved-path analogue
@@ -286,20 +296,21 @@ def _findBoundaryParam(vobj: VObject|Callable[[PointType], bool], p0: PointType,
   two points, so the result is an exact point ON the curve rather than a
   straight-line approximation.
 
-  Stops once the two bracketing points are within *_BOUNDARY_TOLERANCE* of
-  each other (view units: a fraction of a pixel) -- 9 to 13 steps for a
-  curve of ordinary length -- or after *iterations* steps at most (24: ~1
-  part in 16 million of the curve, however long it is).
+  Stops once the two bracketing points are within *tolerance* of each other
+  (view units: a fraction of a pixel -- see *_boundaryTolerance()*) -- 9 to
+  13 steps for a curve of ordinary length -- or after *iterations* steps at
+  most (24: ~1 part in 16 million of the curve, however long it is).
 
   :param vobj: The shape being clipped against (needs .containsPt()) -- or
     what tests whether a point's in it (see *_insideTest()*).
   :param tInside: A parameter value where _bezierPoint(...) is inside vobj.
   :param tOutside: A parameter value where _bezierPoint(...) is outside vobj.
+  :param tolerance: How close (view units) to pin the crossing down to.
   """
   inside = vobj.containsPt if isinstance(vobj, VObject) else vobj
   pIn, pOut = _bezierPoint(p0, p1, p2, tInside), _bezierPoint(p0, p1, p2, tOutside)
   for _ in range(iterations):
-    if abs(pIn[0] - pOut[0]) < _BOUNDARY_TOLERANCE and abs(pIn[1] - pOut[1]) < _BOUNDARY_TOLERANCE:
+    if abs(pIn[0] - pOut[0]) < tolerance and abs(pIn[1] - pOut[1]) < tolerance:
       break # (the crossing's pinned down to a fraction of a pixel: the rest of the steps would be wasted)
     tMid = (tInside + tOutside) / 2
     pMid = _bezierPoint(p0, p1, p2, tMid)
@@ -333,8 +344,9 @@ def _clippedArc(vobj0: VObject, vobj2: VObject, p0: PointType, p1: PointType, p2
     # logger.debug(f'_clippedArc(): {vobj0} and {vobj2} appear to overlap; clip may look wrong.')
     pass
 
-  t0 = _findBoundaryParam(inside0, p0, p1, p2, tInside=0.0, tOutside=1.0)
-  t2 = _findBoundaryParam(inside2, p0, p1, p2, tInside=1.0, tOutside=0.0)
+  tol = _boundaryTolerance(vobj0)
+  t0 = _findBoundaryParam(inside0, p0, p1, p2, tInside=0.0, tOutside=1.0, tolerance=tol)
+  t2 = _findBoundaryParam(inside2, p0, p1, p2, tInside=1.0, tOutside=0.0, tolerance=tol)
   if t0 >= t2:
     # logger.debug(f'_clippedArc(): boundary crossings out of order (t0={t0}, t2={t2}); skipping clip.')
     return None
@@ -520,13 +532,13 @@ def _clippedHalf(vobj: VObject, p0: PointType, p1: PointType, p2: PointType, nod
   if nodeAtStart:
     if not inside(p0):
       return None
-    t0: Optional[float] = _findBoundaryParam(inside, p0, p1, p2, tInside=0.0, tOutside=1.0)
+    t0: Optional[float] = _findBoundaryParam(inside, p0, p1, p2, tInside=0.0, tOutside=1.0, tolerance=_boundaryTolerance(vobj))
     t1 = paramAtDistance(path, max(0.0, stop), fromEnd=True)
   else:
     if not inside(p2):
       return None
     t0 = paramAtDistance(path, max(0.0, stop))
-    t1 = _findBoundaryParam(inside, p0, p1, p2, tInside=1.0, tOutside=0.0)
+    t1 = _findBoundaryParam(inside, p0, p1, p2, tInside=1.0, tOutside=0.0, tolerance=_boundaryTolerance(vobj))
   if t0 is None or t1 is None or t0 >= t1:
     return None
   q0, q1, q2 = subPath(path, t0, t1)
