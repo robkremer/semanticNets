@@ -20,8 +20,9 @@
 # SOFTWARE.                                                                     #
 #################################################################################
 from util.attribute import AttributedObject, Attribute, LOCAL
+from util.lineMarks import checkMarks
 from util.persistence.serialize import SerializableType
-from typing import override
+from typing import Optional, override
 '''
 Created on Sep 25, 2026
 
@@ -34,6 +35,10 @@ RELATIONAL_ATTRS:list = [
   "reflexive",
   "irreflexive",
   "transitive"]
+
+MARKS_ATTRS:tuple[str, ...] = ("vis/terminator1", "vis/terminator2", "vis/terminator3", "vis/terminator4", "vis/midMarks")
+"""The attributes that hold a relation's marks: mark specs (see *util.lineMarks*), checked when they're set
+(see *SNAttributedObject._validateOverride()*)."""
 
 class SNAttributedObject(AttributedObject):
   '''
@@ -49,8 +54,21 @@ class SNAttributedObject(AttributedObject):
     - reflexive
     - irreflexive
     - transitive
-    
+
+  It also checks the marks attributes (*MARKS_ATTRS*) as they're set: a mark
+  spec that can't be read is refused with a message saying why (the attribute
+  editor shows it while the user can still fix it) -- it would otherwise be
+  accepted as a string and draw nothing.
   '''
+
+  @override
+  @classmethod
+  def _validateOverride(cls, key:str, isIndividual:bool, attr:Attribute, superAttr:Optional[Attribute]):
+    super()._validateOverride(key, isIndividual, attr, superAttr)
+    if key in MARKS_ATTRS and isinstance(attr.value, str):
+      err = checkMarks(attr.value)
+      if err is not None:
+        raise ValueError(f'key "{key}": {err}')
 
   @override
   def __setitem__(self, key:str, value:SerializableType)->None:
