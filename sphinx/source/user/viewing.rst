@@ -238,9 +238,10 @@ mark                      is
 ``diamond``               a hollow diamond, its tip on the end of the line
                           (UML's aggregation); ``fdiamond``, a filled one, in
                           ``vis/lineColor`` (composition)
-``}``, ``{``, ``crow``    a crow's foot -- ER's "many": its toes spread toward
-                          the destination, or the source; ``crow``, toward the
-                          end of the line it's at
+``{``, ``}``, ``crow``    a crow's foot -- ER's "many": its toes spread toward
+                          the destination, or the source (the brace opens
+                          toward them, as text ER notations write it);
+                          ``crow``, toward the end of the line it's at
 ========================  ====================================================
 
 For example:
@@ -254,9 +255,9 @@ For example:
    vis/midMarks    = <|>       --<|>--
    vis/terminator4 = @>        ----@>      (a hollow circle behind the arrowhead)
    vis/terminator1 = diamond   <>----      (UML aggregation: the diamond on the whole)
-   vis/terminator4 = @}        ----@}      (ER: zero or many)
-   vis/terminator4 = |}        ----|}      (ER: one or many)
-   vis/terminator1 = {|        {|----      (the same at the source end: the toes toward the source)
+   vis/terminator4 = @{        ----@{      (ER: zero or many)
+   vis/terminator4 = |{        ----|{      (ER: one or many)
+   vis/terminator1 = }|        }|----      (the same at the source end: the toes toward the source)
 
 A mark may be followed by its sizes in parentheses: ``arrow(8,10,3)`` (tip to
 neck, tip to trailing points, and how far the trailing points stand out from

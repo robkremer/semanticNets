@@ -176,10 +176,10 @@ class Test(unittest.TestCase):
     self.assertEqual((c.itemcget(ring, "fill"), c.itemcget(ring, "outline")), (back, "red"))
 
   def test0270diamondsAndCrowsFeet(self):
-    '"diamond" at the source (UML aggregation), "@}" at the destination (ER zero-or-many): drawn, the line cut back to them.'
+    '"diamond" at the source (UML aggregation), "@{" at the destination (ER zero-or-many): drawn, the line cut back to them.'
     c = self.view.canvas
     self.set("vis/terminator1", "diamond")
-    self.set("vis/terminator4", "@}")
+    self.set("vis/terminator4", "@{")
     info = self.vr.connectInfo
     diamond, = info.sourceTerminatorIDs
     self.assertEqual(c.type(diamond), "polygon")
