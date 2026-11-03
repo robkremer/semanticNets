@@ -108,9 +108,12 @@ class ConnectorIDs:
   rather than delete-and-recreate them.
 
   Each line end's marks (and the bits of line among them) are a list of
-  items; so are the middle's. *sourceEnd*/*destEnd* are where the connector
-  meets its source and destination (view coordinates): its lines may stop
-  short of there, for the marks.
+  items; so are the middle's -- when they're drawn in the middle, that is,
+  centred on the label: while the label shows text they go on the line just
+  before it instead, as part of the label-near end's stack (see
+  *_labelNearMarks()*), and *middleIDs* is empty. *sourceEnd*/*destEnd* are
+  where the connector meets its source and destination (view coordinates):
+  its lines may stop short of there, for the marks.
   """
   sourceLineID: Optional[int] = None
   destLineID: Optional[int] = None
@@ -423,22 +426,66 @@ class _Style:
     self.lineOptions = opts
     self.width = self.strokeWidth / float(getattr(view, "_scale", 1.0) or 1.0)
 
-  def half(self, path: Sequence[PointType], startSpec: Optional[str], endSpec: Optional[str],
+  def half(self, path: Sequence[PointType], startMarks: MarksArg, endMarks: MarksArg,
            priorLine: Optional[int], priorStart: Sequence[int], priorEnd: Sequence[int]) -> MarkedPathIDs:
     """Draw (or update) one of the connector's lines, *path* (2 points, or 3:
-    a smooth arc), with the marks *startSpec* and *endSpec* at its ends.
+    a smooth arc), with the marks *startMarks* and *endMarks* (specs, or
+    marks already read) at its ends.
     """
-    return drawMarkedPath(self.canvas, path, _marks(startSpec), _marks(endSpec),
+    return drawMarkedPath(self.canvas, path, _asMarks(startMarks), _asMarks(endMarks),
                           MarkedPathIDs(priorLine, list(priorStart), list(priorEnd)),
                           width=self.width, strokeWidth=self.strokeWidth,
                           lineColor=self.lineColor, fillColor=self.fillColor, tags=self.tags,
                           toWindow=self.view.viewToWindow, lineOptions=self.lineOptions)
 
-  def middle(self, layout: MarkLayout, at: PointType, direction: PointType, prior: Sequence[int]) -> list[int]:
-    """Draw (or update, or remove) the middle's marks: centred on *at*, turned to *direction*."""
+  def middle(self, layout: MarkLayout, at: PointType, direction: PointType, prior: Sequence[int],
+             through: bool) -> list[int]:
+    """Draw (or update, or remove) the middle's marks: centred on *at*, turned
+    to *direction* -- only while the line runs *through* the label: otherwise
+    they're drawn at the label-near end instead (see *_labelNearMarks()*), and
+    any drawn here before are removed.
+    """
+    if not through:
+      _deleteItems(self.canvas, *prior)
+      return []
     return drawMarks(self.canvas, layout, at, _unit(direction), width=self.width, strokeWidth=self.strokeWidth,
                      lineColor=self.lineColor, fillColor=self.fillColor, tags=self.tags, existing=prior,
                      toWindow=self.view.viewToWindow, lineOptions=self.lineOptions)
+
+
+MarksArg = Optional[str] | Sequence[Mark]
+"A mark spec (see *_marks()*), or marks already read from one."
+
+
+def _asMarks(marks: MarksArg) -> tuple[Mark, ...]:
+  """*marks* as marks: read, if it's a spec."""
+  return _marks(marks) if marks is None or isinstance(marks, str) else tuple(marks)
+
+
+def _labelNearMarks(terminators: ConnectorTerminators, middle: MarkLayout, through: bool) -> tuple[Mark, ...]:
+  """The marks at the label end of the source→label line: its own
+  (*terminators.labelNear*) -- and, before them, the middle's, while the label
+  shows text (not *through*). Drawn centred on the label they'd cover the
+  text, so they go on the line just before the label instead, on the source
+  side (``--|||--[ text ]----``), laid out as an end stack with the label-near
+  marks innermost. (With no source side at all, see *_labelFarMarks()*.)
+  """
+  near = _marks(terminators.labelNear)
+  if through or not middle.marks:
+    return near
+  return tuple(p.mark for p in middle.marks) + near
+
+
+def _labelFarMarks(terminators: ConnectorTerminators, middle: MarkLayout, through: bool) -> tuple[Mark, ...]:
+  """The marks at the label end of the label→destination line: its own
+  (*terminators.labelFar*) -- followed by the middle's, while the label shows
+  text and there's no source side to put them on (``[ text ]--|||---->``; see
+  *_labelNearMarks()*).
+  """
+  far = _marks(terminators.labelFar)
+  if through or not middle.marks:
+    return far
+  return far + tuple(p.mark for p in middle.marks)
 
 
 def _middleStops(middle: MarkLayout) -> tuple[float, float]:
@@ -519,20 +566,20 @@ def _drawSingleSegment(label: VObject, other: VObject, otherIsSource: bool,
 
   result = ConnectorIDs()
   if otherIsSource:
-    h = style.half([otherEdge, labelEdge], terminators.source, terminators.labelNear,
+    h = style.half([otherEdge, labelEdge], terminators.source, _labelNearMarks(terminators, middle, through),
                    prior.sourceLineID, prior.sourceTerminatorIDs, prior.labelNearTerminatorIDs)
     result.sourceLineID, result.sourceTerminatorIDs, result.labelNearTerminatorIDs = h.line, h.start, h.end
     result.sourceEnd = otherEdge
     result.destLineID, result.labelFarTerminatorIDs = prior.destLineID, list(prior.labelFarTerminatorIDs)
     result.destTerminatorIDs, result.destEnd = list(prior.destTerminatorIDs), prior.destEnd
   else:
-    h = style.half([labelEdge, otherEdge], terminators.labelFar, terminators.destination,
+    h = style.half([labelEdge, otherEdge], _labelFarMarks(terminators, middle, through), terminators.destination,
                    prior.destLineID, prior.labelFarTerminatorIDs, prior.destTerminatorIDs)
     result.destLineID, result.labelFarTerminatorIDs, result.destTerminatorIDs = h.line, h.start, h.end
     result.destEnd = otherEdge
     result.sourceLineID, result.sourceTerminatorIDs = prior.sourceLineID, list(prior.sourceTerminatorIDs)
     result.labelNearTerminatorIDs, result.sourceEnd = list(prior.labelNearTerminatorIDs), prior.sourceEnd
-  result.middleIDs = style.middle(middle, cl, axis, prior.middleIDs)
+  result.middleIDs = style.middle(middle, cl, axis, prior.middleIDs, through)
   return result
 
 
@@ -565,11 +612,14 @@ def drawSmoothConnector(source: Optional[VObject], label: VObject, destination: 
   so the rendered curve matches this function's own math exactly.
 
   The terminators are marks (see util.lineMarks) at each arc's ends: an arc
-  is cut back (exactly, along the curve) where its marks stop it. The
-  middle's marks are centred on Cl, turned to the curve's direction there
-  (exactly Cd - Cs, for this curve). With *throughLabel* (and middle marks),
-  the two arcs aren't clipped at the label's edge: they run on to the middle
-  marks (meeting at Cl if none of them stops the line, eg: bars).
+  is cut back (exactly, along the curve) where its marks stop it. With
+  *throughLabel* (and middle marks), the middle's marks are centred on Cl,
+  turned to the curve's direction there (exactly Cd - Cs, for this curve),
+  and the two arcs aren't clipped at the label's edge: they run on to the
+  middle marks (meeting at Cl if none of them stops the line, eg: bars).
+  Without *throughLabel* -- the label shows text -- the middle's marks go on
+  the source→label arc just before the label, where they don't cover the
+  text (see _labelNearMarks()).
 
   Assumes source, label and destination don't overlap each other and share
   the same canvas (source.canvas is used).
@@ -609,8 +659,9 @@ def drawSmoothConnector(source: Optional[VObject], label: VObject, destination: 
   :param fillColor: Fill colour for "circle" marks.
   :param tags: Canvas tags applied to every item this call touches.
   :param throughLabel: Whether the lines run through the label to its middle
-    marks (eg: it shows no text), rather than stopping at its edge. No
-    effect without middle marks.
+    marks (eg: it shows no text), rather than stopping at its edge -- and so
+    whether the middle's marks are drawn in the middle at all, rather than
+    on the line just before the label. No effect without middle marks.
   :param lineKwargs: Extra options merged into both create_line() calls
     (width, dash, etc.).
   :returns: The ids of everything drawn, for passing back in on the next
@@ -659,7 +710,7 @@ def drawSmoothConnector(source: Optional[VObject], label: VObject, destination: 
   result = ConnectorIDs()
 
   if arcA is not None:
-    h = style.half(arcA, terminators.source, terminators.labelNear,
+    h = style.half(arcA, terminators.source, _labelNearMarks(terminators, middle, through),
                    prior.sourceLineID, prior.sourceTerminatorIDs, prior.labelNearTerminatorIDs)
     result.sourceLineID, result.sourceTerminatorIDs, result.labelNearTerminatorIDs = h.line, h.start, h.end
     result.sourceEnd = arcA[0]
@@ -679,7 +730,7 @@ def drawSmoothConnector(source: Optional[VObject], label: VObject, destination: 
   else: # (likewise)
     _deleteItems(canvas, *prior.destIDs())
 
-  result.middleIDs = style.middle(middle, cl, _sub(cd, cs), prior.middleIDs) # (the curve's direction at cl, exactly)
+  result.middleIDs = style.middle(middle, cl, _sub(cd, cs), prior.middleIDs, through) # (the curve's direction at cl, exactly)
   return result
 
 
@@ -705,7 +756,9 @@ def drawStraightConnector(source: Optional[VObject], label: VObject, destination
 
   The middle's marks are turned to the average of the two lines' directions
   at the label; with *throughLabel*, the lines run on to them along that
-  direction, instead of stopping at the label's edge.
+  direction, instead of stopping at the label's edge. Without it, they go on
+  the source→label line just before the label, as drawSmoothConnector()
+  puts them.
 
   Also like drawSmoothConnector(), *source is destination* (a self-loop) is
   special-cased -- see its docstring and _selfLoopOffset() -- so the two
@@ -758,7 +811,7 @@ def drawStraightConnector(source: Optional[VObject], label: VObject, destination
     labelFarEdge = _clipToEdgeStraight(label, _farPointAlong(label, _sub(cd, cl)))
 
   result = ConnectorIDs()
-  h = style.half([sourceEdge, labelNearEdge], terminators.source, terminators.labelNear,
+  h = style.half([sourceEdge, labelNearEdge], terminators.source, _labelNearMarks(terminators, middle, through),
                  prior.sourceLineID, prior.sourceTerminatorIDs, prior.labelNearTerminatorIDs)
   result.sourceLineID, result.sourceTerminatorIDs, result.labelNearTerminatorIDs = h.line, h.start, h.end
   result.sourceEnd = sourceEdge
@@ -766,5 +819,5 @@ def drawStraightConnector(source: Optional[VObject], label: VObject, destination
                  prior.destLineID, prior.labelFarTerminatorIDs, prior.destTerminatorIDs)
   result.destLineID, result.labelFarTerminatorIDs, result.destTerminatorIDs = h.line, h.start, h.end
   result.destEnd = destEdge
-  result.middleIDs = style.middle(middle, cl, axis, prior.middleIDs)
+  result.middleIDs = style.middle(middle, cl, axis, prior.middleIDs, through)
   return result
