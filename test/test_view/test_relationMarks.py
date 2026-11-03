@@ -154,6 +154,23 @@ class Test(unittest.TestCase):
     self.assertGreater(math.dist(end, last), 10)                          # (more than one arrowhead back)
     self.assertEqual(self.vr._terminalAt(*end), "dst")                    # (still grabbed at its end)
 
+  def test0250ringIsHollow(self):
+    '"@": a ring is outlined in the line colour and filled with the canvas background -- whatever vis/lineFillColor is.'
+    c = self.view.canvas
+    back = c.cget("background")
+    self.set("vis/lineColor", "blue")
+    self.set("vis/lineFillColor", "blue")                              # (as the family example does: "o" and "*" look the same)
+    self.set("vis/terminator4", "o")
+    circle, = self.vr.connectInfo.destTerminatorIDs
+    self.assertEqual((c.itemcget(circle, "fill"), c.itemcget(circle, "outline")), ("blue", "blue"))
+    self.set("vis/terminator4", "@>")
+    info = self.vr.connectInfo
+    ring = next(i for i in info.destTerminatorIDs if c.type(i) == "oval")
+    self.assertEqual((c.itemcget(ring, "fill"), c.itemcget(ring, "outline")), (back, "blue"))
+    self.set("vis/lineColor", "red")                                   # (recoloured with the line)
+    ring = next(i for i in self.vr.connectInfo.destTerminatorIDs if c.type(i) == "oval")
+    self.assertEqual((c.itemcget(ring, "fill"), c.itemcget(ring, "outline")), (back, "red"))
+
   def test0300middleMarks(self):
     '"|||" in the middle with no label text: three bars, and the line runs through the label to them.'
     c = self.view.canvas

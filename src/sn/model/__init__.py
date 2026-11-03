@@ -66,8 +66,9 @@ MARKS_NOTE = '''Marks are written in order from the source end toward the destin
   arrow       an arrowhead pointing off this end of the line
   o  circle   a circle, filled with vis/lineFillColor
   *  dot      a solid circle, in vis/lineColor
+  @  ring     a hollow circle: outlined in vis/lineColor, filled with the view's background
   |  bar      a bar across the line (the line runs through it)
-Each may be followed by its sizes in parentheses: arrow(<tip-to-neck>,<tip-to-trailing-points>,<width>), circle(<diameter>), dot(<diameter>), bar(<length>). Eg: "o>" gives ----o>, ">>" ---->>, "|||" --|||--.'''
+Each may be followed by its sizes in parentheses: arrow(<tip-to-neck>,<tip-to-trailing-points>,<width>), circle(<diameter>), dot(<diameter>), ring(<diameter>), bar(<length>). Eg: "o>" gives ----o>, ">>" ---->>, "|||" --|||--.'''
 "The part of the notes on a relation's marks attributes (vis/terminator1..4, vis/midMarks) that says how they're written."
 
 
