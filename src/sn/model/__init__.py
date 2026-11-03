@@ -63,11 +63,14 @@ LineType = "choices[smooth,straight]"
 
 MARKS_NOTE = '''Marks are written in order from the source end toward the destination end:
   >  <        an arrowhead pointing toward the destination / the source
-  arrow       an arrowhead pointing off this end of the line
+  arrow       an arrowhead pointing off this end of the line (toward the destination, in the middle)
   o  circle   a circle, filled with vis/lineFillColor
   *  dot      a solid circle, in vis/lineColor
+  @  ring     a hollow circle: outlined in vis/lineColor, filled with the view's background
   |  bar      a bar across the line (the line runs through it)
-Each may be followed by its sizes in parentheses: arrow(<tip-to-neck>,<tip-to-trailing-points>,<width>), circle(<diameter>), dot(<diameter>), bar(<length>). Eg: "o>" gives ----o>, ">>" ---->>, "|||" --|||--.'''
+  diamond     a hollow diamond, its tip on the end (UML aggregation); fdiamond: filled (composition)
+  {  }        a crow's foot, toes toward the destination / the source (ER "many": "|{" one or many); crow: toward this end
+Each may be followed by its sizes in parentheses: arrow(<tip-to-neck>,<tip-to-trailing-points>,<width>), circle(<diameter>), dot(<diameter>), ring(<diameter>), bar(<length>), diamond(<along>,<across>), crow(<along>,<across>). Eg: "o>" gives ----o>, ">>" ---->>, "|||" --|||--, "@{" ----@{ (zero or many).'''
 "The part of the notes on a relation's marks attributes (vis/terminator1..4, vis/midMarks) that says how they're written."
 
 
@@ -181,7 +184,7 @@ class TopModel(Model):
     self.RELATION['vis/terminator2'] = Attribute("", TerminatorType, VAR_DEFAULTED, "The marks at the label end of the source side of the relation connector in the GUI.\n" + MARKS_NOTE)
     self.RELATION['vis/terminator3'] = Attribute("", TerminatorType, VAR_DEFAULTED, "The marks at the label end of the destination side of the relation connector in the GUI.\n" + MARKS_NOTE)
     self.RELATION['vis/terminator4'] = Attribute("arrow", TerminatorType, VAR_DEFAULTED, "The marks at the destination end of the relation connector in the GUI: eg \"arrow\", \"o>\" (----o>), \">>\" (---->>).\n" + MARKS_NOTE)
-    self.RELATION['vis/midMarks']    = Attribute("", TerminatorType, VAR_DEFAULTED, "The marks in the middle of the relation connector in the GUI, centred on its label and turned to its line: eg \"|||\" (--|||--), \"o|\", \"<|>\". If the label shows no text (eg: vis/label is \"\"), the line runs through it.\n" + MARKS_NOTE)
+    self.RELATION['vis/midMarks']    = Attribute("", TerminatorType, VAR_DEFAULTED, "The marks in the middle of the relation connector in the GUI, turned to its line: eg \"|||\" (--|||--), \"o|\", \"<|>\". If the label shows no text (eg: vis/label is \"\"), they're centred on it and the line runs through it; if it shows text, they go on the line just before the label, on the source side (--|||--[ text ]----).\n" + MARKS_NOTE)
     self.RELATION['vis/lineColor']   = Attribute("black", "color", VAR_DEFAULTED, "The line color of the relation connector in the GUI.")
     self.RELATION['vis/lineFillColor'] = Attribute("black", "color", VAR_DEFAULTED, "The terminal's fill color of the relation connector in the GUI.")
     self.RELATION['vis/lineType']    = Attribute("smooth", LineType, VAR_DEFAULTED, "The curve type of the line of the relation connector in the GUI.\n  smooth | straight")

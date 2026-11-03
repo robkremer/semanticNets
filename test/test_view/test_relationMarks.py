@@ -38,12 +38,14 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
+from unittest import mock
 import tkinter as tk
 
 import sn
 from util import terminal
 from util.utils import fixURL
 from sn.model.model import Model, Node, Relation
+from util.attribute import Attribute
 
 class Test(unittest.TestCase):
 
@@ -90,7 +92,9 @@ class Test(unittest.TestCase):
     m = self.model = Model((Path(self.tmp.name).resolve() / "marks.snm").as_uri())
     self.a = Node(m, [m.NODE], individual=True, name="a")
     self.b = Node(m, [m.NODE], individual=True, name="b")
-    self.rel = Relation(m, [m.RELATION], self.a, self.b, individual=True, name="r")
+    # (as a model has them: an individual relation of a relation type -- not an instance of "relation" itself)
+    self.relType = Relation(m, [m.RELATION], None, None, individual=False, name="R")
+    self.rel = Relation(m, [self.relType], self.a, self.b, individual=True, name="r")
     self.view = v = SNGView(fixURL(m.url, ".snv", replaceExt=True, mode="w")[0], model=m)
     v.window.withdraw()
     v._askName = lambda mo: None
@@ -154,6 +158,47 @@ class Test(unittest.TestCase):
     self.assertGreater(math.dist(end, last), 10)                          # (more than one arrowhead back)
     self.assertEqual(self.vr._terminalAt(*end), "dst")                    # (still grabbed at its end)
 
+  def test0250ringIsHollow(self):
+    '"@": a ring is outlined in the line colour and filled with the canvas background -- whatever vis/lineFillColor is.'
+    c = self.view.canvas
+    back = c.cget("background")
+    self.set("vis/lineColor", "blue")
+    self.set("vis/lineFillColor", "blue")                              # (as the family example does: "o" and "*" look the same)
+    self.set("vis/terminator4", "o")
+    circle, = self.vr.connectInfo.destTerminatorIDs
+    self.assertEqual((c.itemcget(circle, "fill"), c.itemcget(circle, "outline")), ("blue", "blue"))
+    self.set("vis/terminator4", "@>")
+    info = self.vr.connectInfo
+    ring = next(i for i in info.destTerminatorIDs if c.type(i) == "oval")
+    self.assertEqual((c.itemcget(ring, "fill"), c.itemcget(ring, "outline")), (back, "blue"))
+    self.set("vis/lineColor", "red")                                   # (recoloured with the line)
+    ring = next(i for i in self.vr.connectInfo.destTerminatorIDs if c.type(i) == "oval")
+    self.assertEqual((c.itemcget(ring, "fill"), c.itemcget(ring, "outline")), (back, "red"))
+
+  def test0270diamondsAndCrowsFeet(self):
+    '"diamond" at the source (UML aggregation), "@{" at the destination (ER zero-or-many): drawn, the line cut back to them.'
+    c = self.view.canvas
+    self.set("vis/terminator1", "diamond")
+    self.set("vis/terminator4", "@{")
+    info = self.vr.connectInfo
+    diamond, = info.sourceTerminatorIDs
+    self.assertEqual(c.type(diamond), "polygon")
+    self.assertEqual(len(c.coords(diamond)), 8)
+    self.assertEqual((c.itemcget(diamond, "fill"), c.itemcget(diamond, "outline")), (c.cget("background"), self.vr.cache["vis/lineColor"]))
+    sx, sy = self.view.viewToWindow(*info.sourceEnd)
+    self.assertLess(math.dist((sx, sy), c.coords(diamond)[:2]), 1.0)     # (its tip on the source's edge)
+    self.assertGreater(math.dist((sx, sy), c.coords(info.sourceLineID)[:2]), 10) # (the line cut back to its other tip)
+    self.assertEqual(self.types(info.destTerminatorIDs), ["line", "oval", "line"]) # (the line on from the ring, the ring, the foot)
+    foot = info.destTerminatorIDs[-1]
+    self.assertEqual(len(c.coords(foot)), 6)
+    dx, dy = self.view.viewToWindow(*info.destEnd)
+    toes = c.coords(foot)
+    self.assertLess(abs(math.dist((dx, dy), toes[:2]) - math.dist((dx, dy), toes[4:])), 0.5) # (toes either side of the end)
+    self.assertLess(math.dist((dx, dy), toes[2:4]), 11)                  # (the heel 10 back from it)
+    self.set("vis/terminator1", "fdiamond")
+    diamond, = self.vr.connectInfo.sourceTerminatorIDs
+    self.assertEqual(c.itemcget(diamond, "fill"), self.vr.cache["vis/lineColor"])
+
   def test0300middleMarks(self):
     '"|||" in the middle with no label text: three bars, and the line runs through the label to them.'
     c = self.view.canvas
@@ -170,26 +215,127 @@ class Test(unittest.TestCase):
     self.set("vis/label", "$name")                                       # with text: the lines stop at its edge again
     info = self.vr.connectInfo
     self.assertGreater(math.dist(c.coords(info.sourceLineID)[-2:], centre), 3.0)
-    self.assertEqual(len(info.middleIDs), 3)                             # (the marks still drawn, over the text)
+    self.assertEqual(info.middleIDs, [])                                 # (the marks aren't over the text ...
+    self.assertEqual(self.types(info.labelNearTerminatorIDs), ["line"] * 3) # ... but just before the label, on the source side)
+    x1, y1, x2, y2 = c.bbox(self.vr._shape.id)
+    for bar in info.labelNearTerminatorIDs:
+      bx1, _, bx2, _ = c.bbox(bar)
+      self.assertLess((bx1 + bx2) / 2, x1)                               # (left of the label's box: the source is on the left)
+      self.assertGreater(bx1, c.coords(info.sourceLineID)[0])            # (on the source line, not off its start)
     self.set("vis/midMarks", "")
-    self.assertEqual(self.vr.connectInfo.middleIDs, [])
+    self.assertEqual(self.vr.connectInfo.labelNearTerminatorIDs, [])
+
+  def test0350middleMarksWithTextAndNearMarks(self):
+    '"<|>" before a label that shows text, with its own label-near marks: one stack, the label-near marks innermost.'
+    c = self.view.canvas
+    self.set("vis/midMarks", "<|>")
+    self.set("vis/terminator2", "o")
+    info = self.vr.connectInfo
+    kinds = [t for t in self.types(info.labelNearTerminatorIDs) if t != "line"]
+    self.assertEqual(kinds, ["polygon", "polygon", "oval"])              # (<, >, then o against the label)
+    heads = [i for i in info.labelNearTerminatorIDs if c.type(i) == "polygon"]
+    circle = next(i for i in info.labelNearTerminatorIDs if c.type(i) == "oval")
+    self.assertLess(max(c.bbox(h)[2] for h in heads), c.bbox(circle)[2])
+    x1 = c.bbox(self.vr._shape.id)[0]
+    cx1, _, cx2, _ = c.bbox(circle)
+    self.assertLess(abs((cx1 + cx2) / 2 - x1), 4)                        # (the circle is centred on the label's edge)
+    self.assertEqual(info.middleIDs, [])
+    self.set("vis/label", "")                                            # no text: back to the middle, the line through the label
+    info = self.vr.connectInfo
+    self.assertEqual(self.types(info.middleIDs), ["line", "polygon", "line", "polygon"])
+    self.assertEqual(self.types(info.labelNearTerminatorIDs), ["oval"])
+
+  def test0380emptyLabelNoMiddleMarks(self):
+    'A label with no text and no middle marks: the line runs through it too, the halves meeting at its centre (no gap, no kink), its end marks there.'
+    c = self.view.canvas
+    self.set("vis/terminator2", "||>")
+    self.set("vis/label", "")
+    info = self.vr.connectInfo
+    centre = self.view.viewToWindow(*self.vr.centerPt())
+    self.assertLess(math.dist(c.coords(info.destLineID)[:2], centre), 1.0)
+    self.assertEqual(self.types(info.labelNearTerminatorIDs), ["line", "line", "polygon"])
+    head = info.labelNearTerminatorIDs[-1]
+    self.assertLess(math.dist(c.coords(head)[:2], centre), 1.0)           # (the arrowhead's tip at the centre)
+    self.assertEqual(info.middleIDs, [])
+    self.set("vis/lineType", "straight")
+    info = self.vr.connectInfo
+    self.assertLess(math.dist(c.coords(info.labelNearTerminatorIDs[-1])[:2], centre), 1.0) # (likewise, straight)
+    self.assertLess(math.dist(c.coords(info.destLineID)[:2], centre), 1.0)
 
   def test0400straight(self):
-    '"<|>" in the middle of a straight connector: two arrowheads and a bar.'
+    '"<|>" in the middle of a straight connector: two arrowheads and a bar -- before the label while it shows text.'
     self.set("vis/lineType", "straight")
     self.set("vis/midMarks", "<|>")
+    info = self.vr.connectInfo
+    self.assertEqual(info.middleIDs, [])
+    self.assertEqual(self.types(info.labelNearTerminatorIDs), ["line", "polygon", "line", "polygon"]) # (as in the middle, below)
     self.set("vis/label", "")
     info = self.vr.connectInfo
     self.assertEqual(self.types(info.middleIDs), ["line", "polygon", "line", "polygon"]) # (the line between the heads, then the marks)
+    self.assertEqual(info.labelNearTerminatorIDs, [])
 
   def test0500badSpec(self):
-    'A spec that can\'t be read draws nothing (and says so in the log).'
+    'A spec that can\'t be read (eg: in a saved model) draws nothing (and says so in the log).'
     from sn.view.graphics import connectors
     connectors._badSpecs.discard("arow") # (each is warned about once)
-    with self.assertLogs("sn.view.graphics.connectors", level="WARNING"):
+    with self.assertLogs("sn.view.graphics.connectors", level="WARNING"), \
+         mock.patch("sn.model.snAttribute.checkMarks", return_value=None): # (past the check on setting it: see test0510)
       self.set("vis/terminator4", "arow")
     self.assertEqual(self.vr.connectInfo.destTerminatorIDs, [])
     self.assertIsNotNone(self.vr.connectInfo.destLineID)
+
+  def test0510badSpecRefused(self):
+    'A marks attribute set to a spec that can\'t be read is refused, saying why; one that can is taken.'
+    from sn.model.snAttribute import MARKS_ATTRS
+    for key in MARKS_ATTRS:
+      with self.subTest(key=key):
+        was = self.rel[key]
+        with self.assertRaises(ValueError) as caught:
+          self.rel[key] = "arow"
+        self.assertIn(f'key "{key}"', str(caught.exception))
+        self.assertIn('unknown mark "arow"', str(caught.exception))
+        self.assertEqual(self.rel[key], was)
+    with self.assertRaises(ValueError) as caught:
+      self.rel.setAttr("vis/midMarks", Attribute("o)", None, None))               # (a value-only record, as the editor makes)
+    self.assertIn('unexpected ")"', str(caught.exception))
+    self.rel["vis/terminator4"] = "o>"
+    self.rel["vis/midMarks"] = ""
+    self.rel.setAttr("vis/terminator1", Attribute("circle(6) arrow(8,10,3)", None, None))
+    self.assertEqual((self.rel["vis/terminator4"], self.rel["vis/midMarks"], self.rel["vis/terminator1"]),
+                     ("o>", "", "circle(6) arrow(8,10,3)"))
+    self.rel["vis/label"] = "arow"                                     # (other attributes aren't checked as marks)
+    self.pump()
+    self.assertEqual(self.vr.cache["vis/terminator4"], "o>")
+
+  def test0520editorShowsWhy(self):
+    'The attribute editor checks a marks spec before it saves, as it checks the inheritance rules: the message names the key and the mark.'
+    from util.attributeEditor import HierarchicalAttrEditor
+    editor = HierarchicalAttrEditor(self.view.canvas, self.rel, title="marks")
+    try:
+      editor.withdraw()
+      editor.updatedKeys = {"vis/terminator4": Attribute("arow", None, None), "vis/midMarks": Attribute("|||", None, None), "vis/lineColor": Attribute("red", None, None)}
+      errors = editor._validateUpdates()
+      self.assertEqual(len(errors), 1, errors)
+      self.assertIn('key "vis/terminator4"', errors[0])
+      self.assertIn('unknown mark "arow"', errors[0])
+      editor.updatedKeys = {"vis/terminator4": Attribute("o>", None, None)}
+      self.assertEqual(editor._validateUpdates(), [])
+    finally:
+      editor.destroy()
+
+  def test0530savedBadSpecStillLoads(self):
+    'A saved model with a spec that can\'t be read (from before the check) still loads, with the spec as saved.'
+    url = (Path(self.tmp.name).resolve() / "saved.snm").as_uri()
+    m = Model(url)
+    a, b = Node(m, [m.NODE], individual=True, name="a"), Node(m, [m.NODE], individual=True, name="b")
+    r = Relation(m, [m.RELATION], a, b, individual=True, name="r")
+    with mock.patch("sn.model.snAttribute.checkMarks", return_value=None):
+      r["vis/terminator4"] = "arow"
+    m.save()
+    Model._initCache()
+    again = Model.getDB(url, mode="r")
+    loaded = next(o for o in again.values() if isinstance(o, Relation) and o.name == "r")
+    self.assertEqual(loaded["vis/terminator4"], "arow")
 
   def test0600danglingStub(self):
     'A relation with no destination of its own: a stub, with its terminators at its end, grabbed there.'
@@ -203,6 +349,123 @@ class Test(unittest.TestCase):
     self.assertEqual([t for t in self.types(stub.end) if t != "line"], ["oval", "polygon"])
     end = self.view.viewToWindow(*vl.__dict__["_stubEnds"]["dst"])
     self.assertEqual(vl._terminalAt(*end), "dst")
+    self.view.context.set_attribute(loose, "vis/midMarks", "||")         # with text, and no destination side: before the label
+    self.pump()
+    info = vl.connectInfo
+    self.assertEqual(info.middleIDs, [])
+    self.assertEqual(self.types(info.labelNearTerminatorIDs), ["line", "line"])
+    other = Relation(m, [m.RELATION], None, self.b, individual=True, name="loose2")
+    self.pump()
+    vo = self.view.findViewObjectForGraphObject(other)
+    self.view.context.set_attribute(other, "vis/midMarks", "||")         # no source side: just after the label, on the destination side
+    self.pump()
+    info = vo.connectInfo
+    self.assertEqual(info.middleIDs, [])
+    self.assertEqual(self.types(info.labelFarTerminatorIDs), ["line", "line"])
+    self.assertEqual(info.labelNearTerminatorIDs, [])
+
+  def test0650floatingTypeEmptyLabel(self):
+    'A relation type with both ends floating and a label with no text: its two stubs run through the label and meet at its centre (no hole), the label-near marks there.'
+    m, c = self.model, self.view.canvas
+    floaty = Relation(m, [m.RELATION], None, None, individual=False, name="floaty")
+    self.pump()
+    vf = self.view.findViewObjectForGraphObject(floaty)
+    for key, value in (("vis/label", ""), ("vis/terminator2", "||>"), ("vis/terminator4", "*>")):
+      self.view.context.set_attribute(floaty, key, value)
+    self.pump()
+    self.assertEqual(vf.labelText(), "")
+    centre = self.view.viewToWindow(*vf.centerPt())
+    stubs = vf.__dict__["_stubIds"]
+    self.assertLess(math.dist(c.coords(stubs["dst"].line)[:2], centre), 1.0)    # (the destination stub starts at the centre...)
+    self.assertEqual([t for t in self.types(stubs["src"].end) if t != "line"], ["polygon"]) # (...where the source stub's "||>" head has its tip)
+    self.assertLess(math.dist(c.coords(stubs["src"].end[-1])[:2], centre), 1.0)
+    self.assertLess(math.dist(c.coords(stubs["src"].line)[-2:], centre), 15.0)  # (its line cut back just by the marks: no hole)
+    for end in ("src", "dst"):                                                  # (still grabbed at the stubs' outer ends)
+      ex, ey = self.view.viewToWindow(*vf.__dict__["_stubEnds"][end])
+      self.assertEqual(vf._terminalAt(ex, ey), end)
+    self.view.context.set_attribute(floaty, "vis/label", "$name")               # with text: the stubs stop at its edge again
+    self.pump()
+    stubs = vf.__dict__["_stubIds"]
+    self.assertGreater(math.dist(c.coords(stubs["src"].line)[-2:], self.view.viewToWindow(*vf.centerPt())), 3.0)
+
+  def test0680marksZoomWithTheView(self):
+    'Marks are drawn in view units: zooming the view scales them with the line (an arrowhead twice as big at 2x), and back.'
+    c = self.view.canvas
+    self.set("vis/terminator4", "o>")
+    def extents():
+      info = self.vr.connectInfo
+      head = next(i for i in info.destTerminatorIDs if c.type(i) == "polygon")
+      ring = next(i for i in info.destTerminatorIDs if c.type(i) == "oval")
+      hx = c.coords(head); rx = c.coords(ring)
+      return (max(hx[0::2]) - min(hx[0::2]), max(hx[1::2]) - min(hx[1::2])), (rx[2] - rx[0])
+    (hw1, hh1), d1 = extents()
+    self.view.zoom(2.0)
+    self.pump()
+    (hw2, hh2), d2 = extents()
+    self.assertAlmostEqual(d2, 2 * d1, delta=0.5)                           # (the circle's diameter doubles)
+    self.assertAlmostEqual(math.hypot(hw2, hh2), 2 * math.hypot(hw1, hh1), delta=1.5) # (so does the head)
+    self.view.zoom(1.0)
+    self.pump()
+    (hw3, hh3), d3 = extents()
+    self.assertAlmostEqual(d3, d1, delta=0.5)
+    self.assertAlmostEqual(math.hypot(hw3, hh3), math.hypot(hw1, hh1), delta=1.5)
+
+  def test0685edgeSearchFinerWhenZoomed(self):
+    'Where a curve crosses a node\'s edge is pinned down to a fraction of a pixel at any zoom: finer, in view units, zoomed in.'
+    from sn.view.graphics import connectors
+    vb = self.view.findViewObjectForGraphObject(self.b)
+    self.assertEqual(connectors._boundaryTolerance(vb), connectors._BOUNDARY_TOLERANCE)
+    self.view.zoom(8.0)
+    self.pump()
+    tol = connectors._boundaryTolerance(vb)
+    self.assertAlmostEqual(tol, connectors._BOUNDARY_TOLERANCE / 8)
+    inside = lambda p: math.hypot(p[0] - 100.0, p[1]) <= 50.0                # (a circle: its edge at x = 50 on the line)
+    p0, p1, p2 = (0.0, 0.0), (50.0, 0.0), (100.0, 0.0)
+    x = connectors._bezierPoint(p0, p1, p2, connectors._findBoundaryParam(inside, p0, p1, p2, tInside=1.0, tOutside=0.0, tolerance=tol))[0]
+    self.assertTrue(0.0 <= 50.0 - x < tol, x)                                # (just outside the edge, by less than the tolerance)
+    self.view.zoom(1.0)
+    self.pump()
+
+  def test0690labelFollowsTheModel(self):
+    'The label text (remembered between draws) follows the model: the object renamed, its type renamed (an inherited name), its template changed.'
+    m, c, ctx = self.model, self.view.canvas, self.view.context
+    shown = lambda: c.itemcget(self.vr.decorators["text"].id, "text").replace("\n", "") # (as drawn -- wrapped to its box)
+    self.set("vis/label", "$name")
+    self.assertEqual(shown(), "r")
+    ctx.set_attribute(self.rel, "name", "r-renamed")
+    self.pump()
+    self.assertEqual(shown(), "r-renamed")
+    ctx.set_attribute(self.rel, "vis/label", "$type: $name")
+    self.pump()
+    self.assertEqual(shown(), "R: r-renamed")
+    ctx.set_attribute(self.relType, "name", "R2")                          # (the type's name, shown by $type)
+    self.pump()
+    self.assertEqual(shown(), "R2: r-renamed")
+    ctx.set_attribute(self.rel, "vis/label", "")
+    self.pump()
+    self.assertEqual(self.vr.labelText(), "")
+
+  def test0695typeChangeForgetsOnlyWhatsTold(self):
+    'A type\'s change told to its instances: each forgets only its own remembered label and shape options, not all the view has worked out (once per instance); a rename (maybe a variable now) makes the view work it out afresh.'
+    m, v, c, ctx = self.model, self.view, self.view.canvas, self.view.context
+    T = Node(m, [m.NODE], individual=False, name="T")
+    insts = [Node(m, [T], individual=True, name=f"t{i}") for i in range(5)]
+    ctx.set_attribute(T, "vis/label", "$note")
+    ctx.set_attribute(T, "note", "a")
+    self.pump()
+    vos = [v.findViewObjectForGraphObject(o) for o in insts]
+    shown = lambda vo: c.itemcget(vo.decorators["text"].id, "text").replace("\n", "")
+    self.assertEqual([shown(vo) for vo in vos], ["a"] * 5)
+    version = v.__dict__.get("_structureVersion", 0)
+    ctx.set_attribute(T, "note", "b")                                      # (inherited: the label template's unchanged, the text isn't)
+    ctx.set_attribute(T, "vis/fillColor", "#ff0000")
+    self.pump()
+    self.assertEqual([shown(vo) for vo in vos], ["b"] * 5)
+    self.assertEqual([c.itemcget(vo._shape.id, "fill") for vo in vos], ["#ff0000"] * 5)
+    self.assertEqual(v.__dict__.get("_structureVersion", 0), version)      # (the view's left as it was)
+    ctx.set_attribute(insts[0], "name", "?x")                              # a rename
+    self.pump()
+    self.assertGreater(v.__dict__.get("_structureVersion", 0), version)
 
   def test0700typeChangeRedrawsInheritors(self):
     'Changing a type\'s look redraws its instances and subtypes in the view -- and those below them that inherit it.'

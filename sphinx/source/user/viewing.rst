@@ -219,7 +219,7 @@ attribute              where its marks go
 ``vis/terminator2``    where the line from the source meets the label
 ``vis/terminator3``    where the line to the destination leaves the label
 ``vis/terminator4``    at the destination end (``arrow``, by default)
-``vis/midMarks``       centred on the label
+``vis/midMarks``       in the middle: on the label, or just before it (below)
 =====================  ==============================================
 
 ========================  ====================================================
@@ -228,9 +228,20 @@ mark                      is
 ``>``, ``<``              an arrowhead pointing toward the destination, or
                           toward the source
 ``arrow``                 an arrowhead pointing off the end of the line it's at
+                          (toward the destination, in the middle)
 ``o``, ``circle``         a circle, filled with ``vis/lineFillColor``
 ``*``, ``dot``            a solid circle, in ``vis/lineColor``
+``@``, ``ring``           a hollow circle: outlined in ``vis/lineColor``, filled
+                          with the view's background, whatever
+                          ``vis/lineFillColor`` is
 ``|``, ``bar``            a bar across the line (the line runs through it)
+``diamond``               a hollow diamond, its tip on the end of the line
+                          (UML's aggregation); ``fdiamond``, a filled one, in
+                          ``vis/lineColor`` (composition)
+``{``, ``}``, ``crow``    a crow's foot -- ER's "many": its toes spread toward
+                          the destination, or the source (the brace opens
+                          toward them, as text ER notations write it);
+                          ``crow``, toward the end of the line it's at
 ========================  ====================================================
 
 For example:
@@ -242,18 +253,34 @@ For example:
    vis/terminator1 = <o        <o----
    vis/midMarks    = |||       --|||--
    vis/midMarks    = <|>       --<|>--
+   vis/terminator4 = @>        ----@>      (a hollow circle behind the arrowhead)
+   vis/terminator1 = diamond   <>----      (UML aggregation: the diamond on the whole)
+   vis/terminator4 = @{        ----@{      (ER: zero or many)
+   vis/terminator4 = |{        ----|{      (ER: one or many)
+   vis/terminator1 = }|        }|----      (the same at the source end: the toes toward the source)
 
 A mark may be followed by its sizes in parentheses: ``arrow(8,10,3)`` (tip to
 neck, tip to trailing points, and how far the trailing points stand out from
-the line), ``circle(6)`` and ``dot(6)`` (the diameter), ``bar(12)`` (its length
-across the line). Marks may be separated by spaces or commas:
-``circle(6) arrow(8,10,3)``. A circle (or dot) right at the end of a line is
-centred on the end, as circle terminators always were.
+the line), ``circle(6)``, ``dot(6)`` and ``ring(6)`` (the diameter), ``bar(12)``
+(its length across the line), ``diamond(12,7)`` and ``crow(10,10)`` (along the
+line, and across it). Marks may be separated by spaces or commas:
+``circle(6) arrow(8,10,3)``. A circle (or dot, or ring) right at the end of a
+line is centred on the end, as circle terminators always were. Sizes are in
+the view's units, like the line's width: marks zoom with the view, so they
+stay in proportion to the line and the nodes at every zoom.
 
-The middle marks are drawn over the label's text, if it has any. A relation
-shown only by its marks has its label set to nothing (``vis/label`` = ``""``):
-its line then runs through the label to the marks, and the label's box is just
-big enough to hold them, to select and drag the relation by.
+``o`` and ``*`` look the same wherever ``vis/lineFillColor`` is the line's
+colour (as it is by default): use ``@`` for a circle that is always empty.
+
+A relation shown only by its marks has its label set to nothing
+(``vis/label`` = ``""``): the middle marks are then centred on the label, its
+line runs through the label to them, and the label's box is just big enough
+to hold them, to select and drag the relation by. If the label shows text,
+the middle marks go on the line just before the label, on the source side
+(``--|||--[ text ]----``), where they don't cover the text. A relation with an
+end it has nothing to draw to (a relation type with no ends of its own, or
+one whose end isn't shown) draws a short stub for it, with that end's marks;
+with no label text the stubs run through the label too, meeting at its centre.
 
 Labels
 ------

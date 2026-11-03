@@ -262,11 +262,12 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
 
   def _labelShown(self) -> bool:
     '''
-    :returns: Whether its label shows any text (as last drawn). Without, its line runs through it to its
-      middle marks, if it has any (see *drawSmoothConnector()*'s *throughLabel*).
+    :returns: Whether its label shows any text (as last drawn). Without, its line runs through it -- to its
+      middle marks, if it has any, else meeting at its centre (see *drawSmoothConnector()*'s *throughLabel*).
     '''
+    from sn.view.graphics.decorators import Text
     text = self.decorators.get("text") if getattr(self, "decorators", None) else None
-    return text is not None and bool(str(getattr(text, "kwargs", {}).get("text", "")).strip())
+    return isinstance(text, Text) and bool(text.shownText().strip())
 
   def _styleEnds(self) -> None:
     '''
@@ -303,8 +304,11 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
           dx, dy = dx / n, dy / n
         else:
           dx, dy = (-1.0, 0.0) if end == "src" else (1.0, 0.0)
-        a = _clipToEdgeStraight(self, _farPointAlong(self, (dx, dy)))
-        b = (a[0] + dx * self.STUB_LENGTH, a[1] + dy * self.STUB_LENGTH)
+        edge = _clipToEdgeStraight(self, _farPointAlong(self, (dx, dy)))
+        b = (edge[0] + dx * self.STUB_LENGTH, edge[1] + dy * self.STUB_LENGTH)
+        # a label showing no text: the stub runs through it to its centre, as a connected line does (see
+        # drawSmoothConnector()'s throughLabel) -- else the two stubs would leave a hole where the invisible box is
+        a = edge if self._labelShown() else self.centerPt()
         # faded if the end isn't set; in the relation's own colour if it is set,
         # but its object isn't shown (eg: erased from the view)
         ownEnd = (self.modelObject.localSrc if end == "src" else self.modelObject.localDst) if self.modelObject is not None else None
@@ -729,6 +733,8 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     '''
     if getattr(self.view, "_closed", False): # (sent before the view's window closed: see SNGView.detachFromModel())
       return
+    if any(t[0] in ("mod src", "mod dst", "mod inherited src", "mod inherited dst") for t in topics):
+      self.view.structureChanged() # (an end moved: what a context window contains may differ -- see VObject.update())
     rest = []
     for topic in topics:
       if topic[0] in ("mod src", "mod dst", "mod inherited src", "mod inherited dst"):

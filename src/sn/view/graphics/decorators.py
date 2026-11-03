@@ -147,6 +147,13 @@ class Text(Decorator):
     text = self.owner.labelText()
     self.kwargs['text'] = text
     return text
+
+  def shownText(self) -> str:
+    '''
+    :returns: The text it shows (as last drawn: see *setText()*); "" if none, or it's been deleted.
+    '''
+    kwargs = self.kwargs
+    return str(kwargs.get("text", "")) if kwargs else ""
           
   def setFontToScale(self):
     self.kwargs["font"] = (self.owner.view._fontFace, self.owner.view.fontSize())
@@ -175,6 +182,19 @@ def _font(canvas, font:tuple) -> tkfont.Font:
   if f is None:
     f = _fonts[font] = tkfont.Font(root=canvas, family=font[0], size=font[1])
   return f
+
+_lineSpaces:dict[tuple, int] = {}
+"Each font's line spacing (see _lineSpace())."
+
+def _lineSpace(canvas, font:tuple) -> int:
+  '''
+  The line spacing of the font (family, size): asked of Tk once per font (a
+  round-trip, and it's asked for at every draw of every label).
+  '''
+  ls = _lineSpaces.get(font)
+  if ls is None:
+    ls = _lineSpaces[font] = int(_font(canvas, font).metrics("linespace"))
+  return ls
 
 def textPieces(text:str) -> list[str]:
   '''
@@ -351,7 +371,7 @@ class WrappingText(Text):
     '''
     The height (view units) of a box holding one line of text: the smallest useful box.
     '''
-    return (_font(self.owner.canvas, self.baseFont()).metrics("linespace") + 2 * self.PAD) / self.textInset()[1]
+    return (_lineSpace(self.owner.canvas, self.baseFont()) + 2 * self.PAD) / self.textInset()[1]
 
   def preferredBoundingBox(self) -> list[int]:
     '''
@@ -531,12 +551,27 @@ class ConstraintMarker(MarkerWithTooltip):
     super().__init__(owner, *self.OK, condition=self.shown, tooltipFunc=self.tip)
 
   @staticmethod
+  def state(owner) -> tuple[bool, bool]:
+    '''
+    :returns: (whether *owner*'s object is a variable with constraints, whether they can't be read) --
+      remembered until the object hears of a change to its attributes (see *VObject._forgetRemembered()*)
+      or the view's structure changes (see *SNGView.structureChanged()*): working it out looks the
+      object's name up through its types and parses its constraints, and it was asked at every draw.
+    '''
+    version = owner.view.__dict__.get("_structureVersion", 0)
+    memo = owner.__dict__.get("_constraintMarkerMemo")
+    if memo is None or memo[0] != version:
+      mo = owner.modelObject
+      isVar = mo is not None and mo.isVariable()
+      memo = owner.__dict__["_constraintMarkerMemo"] = (version, isVar and bool(mo.constraintsText()), isVar and mo.constraintsError() is not None)
+    return memo[1], memo[2]
+
+  @staticmethod
   def shown(owner) -> bool:
     '''
     Whether the marker is shown on *owner*: a variable with constraints, while the preferences show them.
     '''
-    mo = owner.modelObject
-    return mo is not None and mo.isVariable() and bool(mo.constraintsText()) \
+    return ConstraintMarker.state(owner)[0] \
            and bool(snPrefs.get("gui/showConstraintMarker", storeDefault=True, storeType=bool)) # (its note: see sn.PREFS)
 
   def tip(self) -> str:
@@ -549,8 +584,7 @@ class ConstraintMarker(MarkerWithTooltip):
 
   @override
   def draw(self, at:list[int]) -> bool:
-    mo = self.owner.modelObject
-    look = self.BAD if mo is not None and mo.constraintsError() else self.OK
+    look = self.BAD if self.state(self.owner)[1] else self.OK
     if (self.label, self.fg, self.bg) != look: # (the text and colours are set when the items are made)
       self.erase()
       self.label, self.fg, self.bg = look
