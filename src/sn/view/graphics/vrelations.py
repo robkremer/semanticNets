@@ -733,7 +733,8 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     '''
     if getattr(self.view, "_closed", False): # (sent before the view's window closed: see SNGView.detachFromModel())
       return
-    self.view.structureChanged() # (before it's drawn again: see VObject.update())
+    if any(t[0] in ("mod src", "mod dst", "mod inherited src", "mod inherited dst") for t in topics):
+      self.view.structureChanged() # (an end moved: what a context window contains may differ -- see VObject.update())
     rest = []
     for topic in topics:
       if topic[0] in ("mod src", "mod dst", "mod inherited src", "mod inherited dst"):

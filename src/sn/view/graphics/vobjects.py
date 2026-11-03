@@ -579,11 +579,12 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       pref = "gui/relationLabel" if isinstance(mo, Relation) else "gui/label"
       template = snPrefs.get(pref, storeDefault=DEFAULT_LABEL, storeType=str) # (its note: see sn.PREFS)
     template = str(template)
-    # Remembered until the model changes (any change to it bumps the view's
-    # structure version: see SNGView.update()) or the template does: expanding
-    # it looks attributes up through the object's types at every draw, which
-    # was most of the cost of drawing a label. Not with a hook in it, which is
-    # promised a call each time (see labels).
+    # Remembered until the template changes, this object hears of a change to
+    # its attributes (see _forgetRemembered(), from update()), or the view's
+    # structure changes (see SNGView.structureChanged()): expanding it looks
+    # attributes up through the object's types at every draw, which was most of
+    # the cost of drawing a label. Not with a hook in it, which is promised a
+    # call each time (see labels).
     key = (self.view.__dict__.get("_structureVersion", 0), template) if "$(" not in template else None
     memo = self.__dict__.get("_labelMemo")
     if key is not None and memo is not None and memo[0] == key:
@@ -596,6 +597,22 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     if key is not None:
       self.__dict__["_labelMemo"] = (key, text)
     return text
+
+  def _forgetRemembered(self) -> None:
+    '''
+    Forget what's remembered of this one's model object between draws -- its
+    label (see *labelText()*), which shape options it has (see
+    *Shape.updateKwargs()*) and its constraint marker's state (see
+    *ConstraintMarker.state()*) -- so the next draw asks the model again. For
+    a change to its own attributes (see *update()*): what the whole view
+    remembers is forgotten only when its structure changes (see
+    *SNGView.structureChanged()*).
+    '''
+    self.__dict__.pop("_labelMemo", None)
+    self.__dict__.pop("_constraintMarkerMemo", None)
+    shape = getattr(self, "_shape", None)
+    if shape is not None:
+      shape.__dict__.pop("_presentOptions", None)
 
   def templateCall(self, key:str) -> Callable[[str], str]:
     '''
@@ -838,10 +855,17 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       except Exception:
         logger.exception(f'{self.name}.update({subject}, {topics}): Unexpected subject.')
         return
-      # The model changed: what's remembered from it (labels, shape options, containment -- see
-      # structureChanged()) is stale, and must be before this is drawn again below -- the view's own
-      # update(), which notes it too, may not have run yet (each observes the model for itself)
-      self.view.structureChanged()
+      # What's remembered from the model between draws must be forgotten before this is drawn again,
+      # below. The view itself isn't told of changes to an object's attributes (only of objects made
+      # and deleted), so: an ordinary attribute change forgets only this one's own (its label, shape
+      # options, constraint marker); a retype, new types above it, or a rename (a name can make an
+      # object a variable, which changes what a context window uses: see containmentHomes()) forget
+      # what the whole view has worked out too. Not everything for every change: one change can reach
+      # hundreds of objects (eg: a type's look, told to all its instances), each drawn in turn.
+      if any(t[0] in ("mod individual", "mod supers") or (t[0] in ("new attribute", "mod attribute", "del attribute") and t[1][0] == "name") for t in topics):
+        self.view.structureChanged()
+      else:
+        self._forgetRemembered()
       vChanged = childrenChanged = False
       for topic in topics:
         topicName = topic[0]
@@ -888,6 +912,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         for child in self.modelObject.getChildren():
           vo = self.view.findViewObjectForGraphObject(child)
           if vo is not None and vo._isConnected():
+            vo._forgetRemembered()
             vo.view.freshPaint()
             vo.draw()
 

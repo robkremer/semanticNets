@@ -429,6 +429,28 @@ class Test(unittest.TestCase):
     self.pump()
     self.assertEqual(self.vr.labelText(), "")
 
+  def test0695typeChangeForgetsOnlyWhatsTold(self):
+    'A type\'s change told to its instances: each forgets only its own remembered label and shape options, not all the view has worked out (once per instance); a rename (maybe a variable now) makes the view work it out afresh.'
+    m, v, c, ctx = self.model, self.view, self.view.canvas, self.view.context
+    T = Node(m, [m.NODE], individual=False, name="T")
+    insts = [Node(m, [T], individual=True, name=f"t{i}") for i in range(5)]
+    ctx.set_attribute(T, "vis/label", "$note")
+    ctx.set_attribute(T, "note", "a")
+    self.pump()
+    vos = [v.findViewObjectForGraphObject(o) for o in insts]
+    shown = lambda vo: c.itemcget(vo.decorators["text"].id, "text").replace("\n", "")
+    self.assertEqual([shown(vo) for vo in vos], ["a"] * 5)
+    version = v.__dict__.get("_structureVersion", 0)
+    ctx.set_attribute(T, "note", "b")                                      # (inherited: the label template's unchanged, the text isn't)
+    ctx.set_attribute(T, "vis/fillColor", "#ff0000")
+    self.pump()
+    self.assertEqual([shown(vo) for vo in vos], ["b"] * 5)
+    self.assertEqual([c.itemcget(vo._shape.id, "fill") for vo in vos], ["#ff0000"] * 5)
+    self.assertEqual(v.__dict__.get("_structureVersion", 0), version)      # (the view's left as it was)
+    ctx.set_attribute(insts[0], "name", "?x")                              # a rename
+    self.pump()
+    self.assertGreater(v.__dict__.get("_structureVersion", 0), version)
+
   def test0700typeChangeRedrawsInheritors(self):
     'Changing a type\'s look redraws its instances and subtypes in the view -- and those below them that inherit it.'
     m, v, c = self.model, self.view, self.view.canvas

@@ -230,9 +230,10 @@ class Shape:
   def updateKwargs(self):
     '''
     Take the shape's options from the object's attributes (those it has: see
-    *shapeOptionsMap*). Which of them it has is remembered until the view or
-    model changes (see *SNGView.structureChanged()*): asking the model object
-    looks each up through its types, at every draw.
+    *shapeOptionsMap*). Which of them it has is remembered until the object
+    hears of a change to its attributes (see *VObject._forgetRemembered()*) or
+    the view's structure changes (see *SNGView.structureChanged()*): asking the
+    model object looks each up through its types, at every draw.
     '''
     vo = self.vobject
     mo = vo.modelObject

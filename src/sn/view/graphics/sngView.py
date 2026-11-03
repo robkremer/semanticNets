@@ -778,9 +778,12 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
 
   def structureChanged(self) -> None:
     '''
-    Note that what's in the view, or the model, has changed: an object was
-    added to or taken out of the view, or the model changed. What's worked out
-    from that and remembered (see *contextWindows()*) is worked out afresh.
+    Note that what's in the view, or the model's structure, has changed: an
+    object was added to or taken out of the view or the model, or one was
+    retyped or renamed, or a relation's end moved (see *VObject.update()* and
+    *VRelation.update()*). What's worked out from that and remembered (see
+    *contextWindows()*, *_containmentMaps()*, and each object's label, shape
+    options and constraint marker) is worked out afresh.
     '''
     self.__dict__["_structureVersion"] = self.__dict__.get("_structureVersion", 0) + 1
 

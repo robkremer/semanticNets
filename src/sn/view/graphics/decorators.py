@@ -554,7 +554,8 @@ class ConstraintMarker(MarkerWithTooltip):
   def state(owner) -> tuple[bool, bool]:
     '''
     :returns: (whether *owner*'s object is a variable with constraints, whether they can't be read) --
-      remembered until the model changes (see *SNGView.structureChanged()*): working it out looks the
+      remembered until the object hears of a change to its attributes (see *VObject._forgetRemembered()*)
+      or the view's structure changes (see *SNGView.structureChanged()*): working it out looks the
       object's name up through its types and parses its constraints, and it was asked at every draw.
     '''
     version = owner.view.__dict__.get("_structureVersion", 0)

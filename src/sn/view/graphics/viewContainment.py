@@ -219,8 +219,9 @@ class ContainmentMixin(ViewBase):
     object): {window: its containments of it}} and {id(variable): {window:
     the panes of the contained relations using it}} -- for every window, or
     just *window*. Asked for by every floating label as it's placed (eg: each
-    relation of a dragged node, every tick), so remembered until the view or
-    model changes (see *structureChanged()*: every change to the model bumps it).
+    relation of a dragged node, every tick), so remembered until the view's
+    structure changes (see *structureChanged()*: objects added or deleted,
+    retyped or renamed, or a relation's end moved).
     '''
     version = self.__dict__.get("_structureVersion", 0)
     cache = self.__dict__.setdefault("_containmentMapsCache", {})
