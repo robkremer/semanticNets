@@ -262,6 +262,7 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
     if count:
       self.__dict__.pop("_byModelObject", None) # (see viewObjectsFor())
       self._observeModel(new)
+      self.structureChanged() # (what's remembered between draws -- labels, shape options, ... -- was of the old objects)
       self.setDirty()
       self.repaint()
     return count
