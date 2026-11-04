@@ -66,7 +66,7 @@ import sn
 from sn.view.graphics.vobjects import VObject
 from util.utils import midpoint, pointInPoly
 from util.lineMarks import Mark, MarkLayout, MarkSpecError, MarkedPathIDs, MIDDLE, parseMarks, layoutMarks, \
-  drawMarks, drawMarkedPath, paramAtDistance, subPath
+  drawMarks, drawMarkedPath, paramAtDistance, subPath, deleteItem
 
 logger: sn.SNLogger = sn.getLogger(__name__)
 
@@ -108,9 +108,12 @@ class ConnectorIDs:
   rather than delete-and-recreate them.
 
   Each line end's marks (and the bits of line among them) are a list of
-  items; so are the middle's. *sourceEnd*/*destEnd* are where the connector
-  meets its source and destination (view coordinates): its lines may stop
-  short of there, for the marks.
+  items; so are the middle's -- when they're drawn in the middle, that is,
+  centred on the label: while the label shows text they go on the line just
+  before it instead, as part of the label-near end's stack (see
+  *_labelNearMarks()*), and *middleIDs* is empty. *sourceEnd*/*destEnd* are
+  where the connector meets its source and destination (view coordinates):
+  its lines may stop short of there, for the marks.
   """
   sourceLineID: Optional[int] = None
   destLineID: Optional[int] = None
@@ -255,6 +258,19 @@ def _bezierBlossom(p0: PointType, p1: PointType, p2: PointType, ta: float, tb: f
           w0 * p0[1] + w1 * p1[1] + w2 * p2[1])
 
 
+_BOUNDARY_TOLERANCE = 0.25
+"How close (window units: pixels) _findBoundaryParam() pins a curve's crossing of a shape's edge down to (see _boundaryTolerance())."
+
+
+def _boundaryTolerance(vobj: VObject) -> float:
+  """*_BOUNDARY_TOLERANCE* in view units, for *vobj*'s view: finer when it's
+  zoomed in, so a line still meets a node's edge to within a fraction of a
+  pixel (a fixed quarter of a view unit is a pixel short at 4x, two at 8x).
+  """
+  scale = getattr(getattr(vobj, "view", None), "_scale", 1.0) or 1.0
+  return _BOUNDARY_TOLERANCE / max(1.0, scale)
+
+
 def _insideTest(vobj: VObject) -> Callable[[PointType], bool]:
   """*vobj.containsPt()*, but with its outline worked out once, not for each
   point: for testing many points while it stays put (eg: bisecting, as
@@ -270,7 +286,8 @@ def _insideTest(vobj: VObject) -> Callable[[PointType], bool]:
 
 
 def _findBoundaryParam(vobj: VObject|Callable[[PointType], bool], p0: PointType, p1: PointType, p2: PointType,
-                        tInside: float, tOutside: float, iterations: int = 24) -> float:
+                        tInside: float, tOutside: float, iterations: int = 24,
+                        tolerance: float = _BOUNDARY_TOLERANCE) -> float:
   """Bisect the Bezier's parameter *t* between a point known to be inside
   *vobj* (tInside) and one known to be outside it (tOutside) to find where
   the curve [p0,p1,p2] crosses *vobj*'s boundary — the curved-path analogue
@@ -279,22 +296,28 @@ def _findBoundaryParam(vobj: VObject|Callable[[PointType], bool], p0: PointType,
   two points, so the result is an exact point ON the curve rather than a
   straight-line approximation.
 
-  24 iterations halves the search interval 24 times (~1 part in 16 million
-  of the full curve) — comfortably sub-pixel for any on-screen curve length,
-  so a fixed count is used rather than a pixel-distance stopping condition.
+  Stops once the two bracketing points are within *tolerance* of each other
+  (view units: a fraction of a pixel -- see *_boundaryTolerance()*) -- 9 to
+  13 steps for a curve of ordinary length -- or after *iterations* steps at
+  most (24: ~1 part in 16 million of the curve, however long it is).
 
   :param vobj: The shape being clipped against (needs .containsPt()) -- or
     what tests whether a point's in it (see *_insideTest()*).
   :param tInside: A parameter value where _bezierPoint(...) is inside vobj.
   :param tOutside: A parameter value where _bezierPoint(...) is outside vobj.
+  :param tolerance: How close (view units) to pin the crossing down to.
   """
   inside = vobj.containsPt if isinstance(vobj, VObject) else vobj
+  pIn, pOut = _bezierPoint(p0, p1, p2, tInside), _bezierPoint(p0, p1, p2, tOutside)
   for _ in range(iterations):
+    if abs(pIn[0] - pOut[0]) < tolerance and abs(pIn[1] - pOut[1]) < tolerance:
+      break # (the crossing's pinned down to a fraction of a pixel: the rest of the steps would be wasted)
     tMid = (tInside + tOutside) / 2
-    if inside(_bezierPoint(p0, p1, p2, tMid)):
-      tInside = tMid
+    pMid = _bezierPoint(p0, p1, p2, tMid)
+    if inside(pMid):
+      tInside, pIn = tMid, pMid
     else:
-      tOutside = tMid
+      tOutside, pOut = tMid, pMid
   return tOutside
 
 
@@ -321,8 +344,9 @@ def _clippedArc(vobj0: VObject, vobj2: VObject, p0: PointType, p1: PointType, p2
     # logger.debug(f'_clippedArc(): {vobj0} and {vobj2} appear to overlap; clip may look wrong.')
     pass
 
-  t0 = _findBoundaryParam(inside0, p0, p1, p2, tInside=0.0, tOutside=1.0)
-  t2 = _findBoundaryParam(inside2, p0, p1, p2, tInside=1.0, tOutside=0.0)
+  tol = _boundaryTolerance(vobj0)
+  t0 = _findBoundaryParam(inside0, p0, p1, p2, tInside=0.0, tOutside=1.0, tolerance=tol)
+  t2 = _findBoundaryParam(inside2, p0, p1, p2, tInside=1.0, tOutside=0.0, tolerance=tol)
   if t0 >= t2:
     # logger.debug(f'_clippedArc(): boundary crossings out of order (t0={t0}, t2={t2}); skipping clip.')
     return None
@@ -357,10 +381,11 @@ def _clipToEdgeStraight(vobj: VObject, farPt: PointType, granularity: int = 1) -
   findIntersection()/arePtsClose() already do, reimplemented here as a free
   function so it doesn't need a VRelation instance.
   """
+  inside = _insideTest(vobj) # (its outline worked out once, not per step: see _insideTest())
   p1, p2 = farPt, vobj.centerPt()
   while not (abs(p1[0] - p2[0]) < granularity and abs(p1[1] - p2[1]) < granularity):
     pc = midpoint(p1, p2)
-    if vobj.containsPt(pc):
+    if inside(pc):
       p2 = pc
     else:
       p1 = pc
@@ -396,14 +421,15 @@ def _unit(v: PointType, default: PointType = (1.0, 0.0)) -> PointType:
 
 def _deleteItems(canvas, *ids:Optional[int]) -> None:
   """
-  Delete canvas items: those that aren't None.
+  Delete canvas items: those that aren't None -- and forget their types, as
+  *util.lineMarks* remembers them (see its *deleteItem()*).
 
   :param canvas: The canvas.
   :param ids: Canvas item ids, or None.
   """
   for i in ids:
     if i is not None:
-      canvas.delete(i)
+      deleteItem(canvas, i)
 
 
 class _Style:
@@ -423,22 +449,66 @@ class _Style:
     self.lineOptions = opts
     self.width = self.strokeWidth / float(getattr(view, "_scale", 1.0) or 1.0)
 
-  def half(self, path: Sequence[PointType], startSpec: Optional[str], endSpec: Optional[str],
+  def half(self, path: Sequence[PointType], startMarks: MarksArg, endMarks: MarksArg,
            priorLine: Optional[int], priorStart: Sequence[int], priorEnd: Sequence[int]) -> MarkedPathIDs:
     """Draw (or update) one of the connector's lines, *path* (2 points, or 3:
-    a smooth arc), with the marks *startSpec* and *endSpec* at its ends.
+    a smooth arc), with the marks *startMarks* and *endMarks* (specs, or
+    marks already read) at its ends.
     """
-    return drawMarkedPath(self.canvas, path, _marks(startSpec), _marks(endSpec),
+    return drawMarkedPath(self.canvas, path, _asMarks(startMarks), _asMarks(endMarks),
                           MarkedPathIDs(priorLine, list(priorStart), list(priorEnd)),
                           width=self.width, strokeWidth=self.strokeWidth,
                           lineColor=self.lineColor, fillColor=self.fillColor, tags=self.tags,
                           toWindow=self.view.viewToWindow, lineOptions=self.lineOptions)
 
-  def middle(self, layout: MarkLayout, at: PointType, direction: PointType, prior: Sequence[int]) -> list[int]:
-    """Draw (or update, or remove) the middle's marks: centred on *at*, turned to *direction*."""
+  def middle(self, layout: MarkLayout, at: PointType, direction: PointType, prior: Sequence[int],
+             through: bool) -> list[int]:
+    """Draw (or update, or remove) the middle's marks: centred on *at*, turned
+    to *direction* -- only while the line runs *through* the label: otherwise
+    they're drawn at the label-near end instead (see *_labelNearMarks()*), and
+    any drawn here before are removed.
+    """
+    if not through:
+      _deleteItems(self.canvas, *prior)
+      return []
     return drawMarks(self.canvas, layout, at, _unit(direction), width=self.width, strokeWidth=self.strokeWidth,
                      lineColor=self.lineColor, fillColor=self.fillColor, tags=self.tags, existing=prior,
                      toWindow=self.view.viewToWindow, lineOptions=self.lineOptions)
+
+
+MarksArg = Optional[str] | Sequence[Mark]
+"A mark spec (see *_marks()*), or marks already read from one."
+
+
+def _asMarks(marks: MarksArg) -> tuple[Mark, ...]:
+  """*marks* as marks: read, if it's a spec."""
+  return _marks(marks) if marks is None or isinstance(marks, str) else tuple(marks)
+
+
+def _labelNearMarks(terminators: ConnectorTerminators, middle: MarkLayout, through: bool) -> tuple[Mark, ...]:
+  """The marks at the label end of the source→label line: its own
+  (*terminators.labelNear*) -- and, before them, the middle's, while the label
+  shows text (not *through*). Drawn centred on the label they'd cover the
+  text, so they go on the line just before the label instead, on the source
+  side (``--|||--[ text ]----``), laid out as an end stack with the label-near
+  marks innermost. (With no source side at all, see *_labelFarMarks()*.)
+  """
+  near = _marks(terminators.labelNear)
+  if through or not middle.marks:
+    return near
+  return tuple(p.mark for p in middle.marks) + near
+
+
+def _labelFarMarks(terminators: ConnectorTerminators, middle: MarkLayout, through: bool) -> tuple[Mark, ...]:
+  """The marks at the label end of the label→destination line: its own
+  (*terminators.labelFar*) -- followed by the middle's, while the label shows
+  text and there's no source side to put them on (``[ text ]--|||---->``; see
+  *_labelNearMarks()*).
+  """
+  far = _marks(terminators.labelFar)
+  if through or not middle.marks:
+    return far
+  return far + tuple(p.mark for p in middle.marks)
 
 
 def _middleStops(middle: MarkLayout) -> tuple[float, float]:
@@ -462,13 +532,13 @@ def _clippedHalf(vobj: VObject, p0: PointType, p1: PointType, p2: PointType, nod
   if nodeAtStart:
     if not inside(p0):
       return None
-    t0: Optional[float] = _findBoundaryParam(inside, p0, p1, p2, tInside=0.0, tOutside=1.0)
+    t0: Optional[float] = _findBoundaryParam(inside, p0, p1, p2, tInside=0.0, tOutside=1.0, tolerance=_boundaryTolerance(vobj))
     t1 = paramAtDistance(path, max(0.0, stop), fromEnd=True)
   else:
     if not inside(p2):
       return None
     t0 = paramAtDistance(path, max(0.0, stop))
-    t1 = _findBoundaryParam(inside, p0, p1, p2, tInside=1.0, tOutside=0.0)
+    t1 = _findBoundaryParam(inside, p0, p1, p2, tInside=1.0, tOutside=0.0, tolerance=_boundaryTolerance(vobj))
   if t0 is None or t1 is None or t0 >= t1:
     return None
   q0, q1, q2 = subPath(path, t0, t1)
@@ -519,20 +589,20 @@ def _drawSingleSegment(label: VObject, other: VObject, otherIsSource: bool,
 
   result = ConnectorIDs()
   if otherIsSource:
-    h = style.half([otherEdge, labelEdge], terminators.source, terminators.labelNear,
+    h = style.half([otherEdge, labelEdge], terminators.source, _labelNearMarks(terminators, middle, through),
                    prior.sourceLineID, prior.sourceTerminatorIDs, prior.labelNearTerminatorIDs)
     result.sourceLineID, result.sourceTerminatorIDs, result.labelNearTerminatorIDs = h.line, h.start, h.end
     result.sourceEnd = otherEdge
     result.destLineID, result.labelFarTerminatorIDs = prior.destLineID, list(prior.labelFarTerminatorIDs)
     result.destTerminatorIDs, result.destEnd = list(prior.destTerminatorIDs), prior.destEnd
   else:
-    h = style.half([labelEdge, otherEdge], terminators.labelFar, terminators.destination,
+    h = style.half([labelEdge, otherEdge], _labelFarMarks(terminators, middle, through), terminators.destination,
                    prior.destLineID, prior.labelFarTerminatorIDs, prior.destTerminatorIDs)
     result.destLineID, result.labelFarTerminatorIDs, result.destTerminatorIDs = h.line, h.start, h.end
     result.destEnd = otherEdge
     result.sourceLineID, result.sourceTerminatorIDs = prior.sourceLineID, list(prior.sourceTerminatorIDs)
     result.labelNearTerminatorIDs, result.sourceEnd = list(prior.labelNearTerminatorIDs), prior.sourceEnd
-  result.middleIDs = style.middle(middle, cl, axis, prior.middleIDs)
+  result.middleIDs = style.middle(middle, cl, axis, prior.middleIDs, through)
   return result
 
 
@@ -565,11 +635,14 @@ def drawSmoothConnector(source: Optional[VObject], label: VObject, destination: 
   so the rendered curve matches this function's own math exactly.
 
   The terminators are marks (see util.lineMarks) at each arc's ends: an arc
-  is cut back (exactly, along the curve) where its marks stop it. The
-  middle's marks are centred on Cl, turned to the curve's direction there
-  (exactly Cd - Cs, for this curve). With *throughLabel* (and middle marks),
-  the two arcs aren't clipped at the label's edge: they run on to the middle
-  marks (meeting at Cl if none of them stops the line, eg: bars).
+  is cut back (exactly, along the curve) where its marks stop it. With
+  *throughLabel* -- the label shows no text -- the middle's marks are centred
+  on Cl, turned to the curve's direction there (exactly Cd - Cs, for this
+  curve), and the two arcs aren't clipped at the label's edge: they run on to
+  the middle marks (meeting at Cl if none of them stops the line, eg: bars --
+  or there are none). Without *throughLabel* -- the label shows text -- the
+  middle's marks go on the source→label arc just before the label, where they
+  don't cover the text (see _labelNearMarks()).
 
   Assumes source, label and destination don't overlap each other and share
   the same canvas (source.canvas is used).
@@ -608,9 +681,12 @@ def drawSmoothConnector(source: Optional[VObject], label: VObject, destination: 
     colour).
   :param fillColor: Fill colour for "circle" marks.
   :param tags: Canvas tags applied to every item this call touches.
-  :param throughLabel: Whether the lines run through the label to its middle
-    marks (eg: it shows no text), rather than stopping at its edge. No
-    effect without middle marks.
+  :param throughLabel: Whether the lines run through the label (eg: it shows
+    no text) -- to its middle marks, or meeting at its centre if it has none
+    -- rather than stopping at its edge, which would leave a gap in the line
+    (and a kink, where the curve bends at the label) with nothing to show for
+    it; and so whether the middle's marks are drawn in the middle at all,
+    rather than on the line just before the label.
   :param lineKwargs: Extra options merged into both create_line() calls
     (width, dash, etc.).
   :returns: The ids of everything drawn, for passing back in on the next
@@ -625,7 +701,7 @@ def drawSmoothConnector(source: Optional[VObject], label: VObject, destination: 
     return prior
   style = _Style(label.view, lineColor, fillColor, tags, lineKwargs)
   middle = layoutMarks(_marks(terminators.middle), MIDDLE, style.width)
-  through = throughLabel and bool(middle.marks)
+  through = throughLabel
   if source is None:
     assert destination is not None
     return _drawSingleSegment(label, destination, False, terminators, prior, style, middle, through)
@@ -659,7 +735,7 @@ def drawSmoothConnector(source: Optional[VObject], label: VObject, destination: 
   result = ConnectorIDs()
 
   if arcA is not None:
-    h = style.half(arcA, terminators.source, terminators.labelNear,
+    h = style.half(arcA, terminators.source, _labelNearMarks(terminators, middle, through),
                    prior.sourceLineID, prior.sourceTerminatorIDs, prior.labelNearTerminatorIDs)
     result.sourceLineID, result.sourceTerminatorIDs, result.labelNearTerminatorIDs = h.line, h.start, h.end
     result.sourceEnd = arcA[0]
@@ -679,7 +755,7 @@ def drawSmoothConnector(source: Optional[VObject], label: VObject, destination: 
   else: # (likewise)
     _deleteItems(canvas, *prior.destIDs())
 
-  result.middleIDs = style.middle(middle, cl, _sub(cd, cs), prior.middleIDs) # (the curve's direction at cl, exactly)
+  result.middleIDs = style.middle(middle, cl, _sub(cd, cs), prior.middleIDs, through) # (the curve's direction at cl, exactly)
   return result
 
 
@@ -705,7 +781,9 @@ def drawStraightConnector(source: Optional[VObject], label: VObject, destination
 
   The middle's marks are turned to the average of the two lines' directions
   at the label; with *throughLabel*, the lines run on to them along that
-  direction, instead of stopping at the label's edge.
+  direction, instead of stopping at the label's edge. Without it, they go on
+  the source→label line just before the label, as drawSmoothConnector()
+  puts them.
 
   Also like drawSmoothConnector(), *source is destination* (a self-loop) is
   special-cased -- see its docstring and _selfLoopOffset() -- so the two
@@ -727,7 +805,7 @@ def drawStraightConnector(source: Optional[VObject], label: VObject, destination
     return prior
   style = _Style(label.view, lineColor, fillColor, tags, lineKwargs)
   middle = layoutMarks(_marks(terminators.middle), MIDDLE, style.width)
-  through = throughLabel and bool(middle.marks)
+  through = throughLabel
   if source is None:
     assert destination is not None
     return _drawSingleSegment(label, destination, False, terminators, prior, style, middle, through)
@@ -758,7 +836,7 @@ def drawStraightConnector(source: Optional[VObject], label: VObject, destination
     labelFarEdge = _clipToEdgeStraight(label, _farPointAlong(label, _sub(cd, cl)))
 
   result = ConnectorIDs()
-  h = style.half([sourceEdge, labelNearEdge], terminators.source, terminators.labelNear,
+  h = style.half([sourceEdge, labelNearEdge], terminators.source, _labelNearMarks(terminators, middle, through),
                  prior.sourceLineID, prior.sourceTerminatorIDs, prior.labelNearTerminatorIDs)
   result.sourceLineID, result.sourceTerminatorIDs, result.labelNearTerminatorIDs = h.line, h.start, h.end
   result.sourceEnd = sourceEdge
@@ -766,5 +844,5 @@ def drawStraightConnector(source: Optional[VObject], label: VObject, destination
                  prior.destLineID, prior.labelFarTerminatorIDs, prior.destTerminatorIDs)
   result.destLineID, result.labelFarTerminatorIDs, result.destTerminatorIDs = h.line, h.start, h.end
   result.destEnd = destEdge
-  result.middleIDs = style.middle(middle, cl, axis, prior.middleIDs)
+  result.middleIDs = style.middle(middle, cl, axis, prior.middleIDs, through)
   return result

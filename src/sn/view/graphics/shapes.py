@@ -228,13 +228,24 @@ class Shape:
     #TODO: 'vis/borderSmooth': "smooth", # seems to be am unknown option, contrary to the doc.
     
   def updateKwargs(self):
-    if self.vobject.modelObject is None:
+    '''
+    Take the shape's options from the object's attributes (those it has: see
+    *shapeOptionsMap*). Which of them it has is remembered until the object
+    hears of a change to its attributes (see *VObject._forgetRemembered()*) or
+    the view's structure changes (see *SNGView.structureChanged()*): asking the
+    model object looks each up through its types, at every draw.
+    '''
+    vo = self.vobject
+    mo = vo.modelObject
+    if mo is None:
       return
-    attrkeys = self.vobject.modelObject.keys()
-    for opt in self.shapeOptionsMap.keys():
-      if opt in attrkeys:
-        val = self.vobject.cache[opt]
-        self.kwargs[self.shapeOptionsMap[opt]] = val
+    version = vo.view.__dict__.get("_structureVersion", 0)
+    present = self.__dict__.get("_presentOptions")
+    if present is None or present[0] != version:
+      attrkeys = mo.keys()
+      present = self.__dict__["_presentOptions"] = (version, [opt for opt in self.shapeOptionsMap if opt in attrkeys])
+    for opt in present[1]:
+      self.kwargs[self.shapeOptionsMap[opt]] = vo.cache[opt]
 
   def checkShape(self) -> bool:
     '''
