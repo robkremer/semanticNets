@@ -72,6 +72,35 @@ class Test(unittest.TestCase):
     for n, off in enumerate(re.findall(rb"(\d{10}) 00000 n", data), 1): # and so is each object
       self.assertTrue(data[int(off):].startswith(f"{n} 0 obj".encode()))
 
+  def test0600pngSize(self):
+    'The PNG copied is one pixel per point of the PDF (drawn at PNG_SCALE times the canvas), marked as 72 * PNG_SCALE dpi.'
+    import os, struct, tempfile, shutil
+    from util.platformSupport import pdfToPNG
+    from sn.view.graphics.imageExport import PNG_SCALE
+    p = PDF([0, 0, 100, 50], scale=PNG_SCALE)
+    p.color((1, 0, 0), stroke=True)
+    p.path([((0, 0),), ((100, 50),)], close=False)
+    p.paint(False, True)
+    folder = tempfile.mkdtemp()
+    try:
+      pdfPath, pngPath = os.path.join(folder, "p.pdf"), os.path.join(folder, "p.png")
+      with open(pdfPath, "wb") as f:
+        f.write(p.bytes())
+      try:
+        pdfToPNG(pdfPath, pngPath, 72 * PNG_SCALE)
+      except RuntimeError as ex:
+        self.skipTest(str(ex))
+      with open(pngPath, "rb") as f:
+        png = f.read()
+    finally:
+      shutil.rmtree(folder, ignore_errors=True)
+    width, height = struct.unpack(">II", png[16:24]) # (IHDR)
+    self.assertEqual((width, height), (100 * PNG_SCALE, 50 * PNG_SCALE))
+    i = png.find(b"pHYs")
+    self.assertGreater(i, 0)
+    ppm = struct.unpack(">I", png[i + 4:i + 8])[0]
+    self.assertAlmostEqual(ppm * 0.0254, 72 * PNG_SCALE, delta=1)
+
 
 if __name__ == "__main__":
   unittest.main()

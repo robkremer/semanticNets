@@ -63,7 +63,7 @@ from types import NoneType
 from tkinter import ttk
 from sn import snPrefs
 from util.utils import afterMenu, showExceptionDialog, fixURL, urlExists, displayURL,\
-  isValidURL, keepLast
+  isValidURL, keepLast, dialogOwner
 from util.platformSupport import MAC, shortcut, openFile, setUpLook, setDPIAware, documentsFolder
 from util.singleInstance import SingleInstance
 from util.terminal import terminalRegistry, installGlobalIORouting,\
@@ -98,6 +98,7 @@ class Application(tk.Tk):
     Application.current = self
     self.title(sn.NAME)
     self.defaultChildLocation:tuple[int, int] = (20, 60)
+    "Where the next new window goes (see *nextWindowGeometry()*)."
 
     self.windows: dict[str, AppWindow] = {}
     self.terminalRegistry = terminalRegistry  # shared across all windows
@@ -178,6 +179,14 @@ class Application(tk.Tk):
     self._openedDocuments = True # (see startUp(): not then reopening the last session too)
     for p in paths:
       self.openWindow(p)
+    self._showSomething()
+
+  def _showSomething(self) -> None:
+    """If no window's open (eg: none of the files asked for could be), show the
+    model directory: the app mustn't run with nothing on the screen (off the
+    Mac, not even a menu bar)."""
+    if not self.windows and not self.directoryShown():
+      self.showDirectory()
 
   def onOpenFromAnotherCopy(self, paths:list[str]) -> None:
     """Handle the editor being started again while it's running (on Windows
@@ -190,6 +199,7 @@ class Application(tk.Tk):
     if paths:
       for p in paths:
         self.openWindow(p)
+      self._showSomething()
       return
     window = next(reversed(list(self.windows.values())), None)
     if window is not None:
@@ -439,7 +449,6 @@ class Application(tk.Tk):
         self.windows[name].lift()
         return self.windows[name]
   
-      self.defaultChildLocation = (self.defaultChildLocation[0] + 40, self.defaultChildLocation[1] + 40)
       self.windows[name] = view.window
       self._refreshDirectory()
       return view.window
@@ -456,6 +465,36 @@ class Application(tk.Tk):
       PRDb.readProgress = None
       reading.finish()
 
+
+  NEW_WINDOW_SIZE = (0.7, 1100, 800)
+  "A new view's window: this much of the screen, but no wider or taller than this (see *nextWindowGeometry()*)."
+
+  def _dialogParent(self) -> tk.Misc:
+    '''
+    :returns: What a message box should be over: the window with the focus (or
+      another on screen -- see *util.utils.dialogOwner()*), or the app (eg:
+      the model directory) -- so that on the Mac it can't come up behind a view's window.
+    '''
+    try:
+      return dialogOwner(self.focus_get() or self) or self
+    except Exception:
+      return self
+
+  def nextWindowGeometry(self) -> str:
+    '''
+    :returns: Where to put a new view's window (one with no saved place: see
+      *SNGView.__init__()*): most of the screen (see *NEW_WINDOW_SIZE*), each
+      down and to the right of the last (back at the top left when they'd go
+      off the screen) -- not each on top of the last.
+    '''
+    fraction, maxW, maxH = self.NEW_WINDOW_SIZE
+    sw, sh = self.winfo_screenwidth(), self.winfo_screenheight()
+    w, h = min(int(sw * fraction), maxW), min(int(sh * fraction), maxH)
+    x, y = self.defaultChildLocation
+    if x + w > sw or y + h > sh:
+      x, y = 20, 60
+    self.defaultChildLocation = (x + 40, y + 40)
+    return f"{w}x{h}+{x}+{y}"
 
   def openViewOn(self, model:Model, viewURL:str) -> tk.Toplevel|None:
     '''
@@ -476,10 +515,11 @@ class Application(tk.Tk):
       return self.openWindow(viewURL)
     try:
       view = SNGView(viewURL, model=model, mode="w")
-    except Exception:
+    except Exception as ex:
       logger.error(f'While opening a view of "{model.url}" at "{viewURL}"', exc_info=True)
+      messagebox.showerror("Semantic Nets", f'A view of "{model.name}" couldn\'t be opened at\n\n{_filePath(viewURL)}\n\n{ex}',
+                           parent=self._dialogParent())
       return None
-    self.defaultChildLocation = (self.defaultChildLocation[0] + 40, self.defaultChildLocation[1] + 40)
     self.windows[view.url] = view.window
     return view.window
 
@@ -530,6 +570,9 @@ class Application(tk.Tk):
     :returns: The view's new window, if it's opened.
     '''
     from sn.view.graphics.sngView import SNGView
+    if not urlExists(view.url): # (never saved: it couldn't be read again -- see FilesMixin.doChangeModel())
+      logger.error(f'The view "{view.url}" hasn\'t been saved, so it can\'t be read again to show another model: save it first.')
+      return None
     old = view.model.url
     name = next((k for k, w in self.windows.items() if w is view.window), None)
     if name is not None:
@@ -634,9 +677,19 @@ class Application(tk.Tk):
       readOnly = True
     modelURL = entry.url if entry.kind == "model" else entry.modelURL
     already = PRDb.AllDBs.get(modelURL) if modelURL else None # @undefinedVariable
+    if readOnly and isinstance(already, Model) and not already.writeLocked() and not already.dependents():
+      # (only in memory -- eg: its windows were all closed: read it afresh, read-only, once its changes are saved or not)
+      sn.checkSaveModified(already, already.url, "model")
+      try:
+        already.unload()
+        already = None
+      except RuntimeError:
+        pass
     if readOnly and already is not None and not already.writeLocked():
+      users = [_fileName(url) for kind, url in already.dependents()] if isinstance(already, Model) else []
+      where = "open" if not users else f'in use (by {", ".join(users)})'
       messagebox.showinfo(sn.NAME, f'"{entry.name}" isn\'t opened read-only: its model, '
-                          f'"{_fileName(already.url)}", is already open, and can be changed.', parent=self)
+                          f'"{_fileName(already.url)}", is already {where}, and can be changed.', parent=self._dialogParent())
       readOnly = False
     window = self.openWindow(entry.path or entry.url)
     view = getattr(window, "view", None)
@@ -809,7 +862,10 @@ class Application(tk.Tk):
     self.loadPlugins()
     for f in files:
       self.openWindow(f)
-    if files or getattr(self, "_openedDocuments", False):
+    if (files or getattr(self, "_openedDocuments", False)) and (self.windows or self.directoryShown()):
+      return
+    if files: # (none of them could be opened: each failure has been shown)
+      self.showDirectory()
       return
     geometry = snPrefs.get(self.DIRECTORY_PREF, "")
     if isinstance(geometry, str) and geometry:
@@ -889,12 +945,12 @@ class Application(tk.Tk):
     target = os.path.expanduser(self.EXAMPLES_FOLDER)
     names = sn.exampleNames()
     if not names:
-      messagebox.showerror(sn.NAME, "This version doesn't have any example models to install.")
+      messagebox.showerror(sn.NAME, "This version doesn't have any example models to install.", parent=self._dialogParent())
       return
     existing = [n for n in names if os.path.exists(os.path.join(target, n))]
     if existing and not messagebox.askokcancel(sn.NAME,
         f'Replace the example models in "{target}" with fresh copies?\n\n'
-        "Any changes you've made to them will be lost.", icon=messagebox.WARNING):
+        "Any changes you've made to them will be lost.", icon=messagebox.WARNING, parent=self._dialogParent()):
       return
     prefix = Path(target).as_uri() + "/"
     # Another model that builds on an example (eg: one of its types isa an
@@ -905,7 +961,7 @@ class Application(tk.Tk):
     if users:
       messagebox.showerror(sn.NAME, "The example models can't be replaced while other models use them:\n\n  "
                            + "\n  ".join(users) + "\n\nModels stay in memory until you quit: quit, start again, and install "
-                           "the examples before opening those.")
+                           "the examples before opening those.", parent=self._dialogParent())
       return
     for name, window in list(self.windows.items()): # (their windows: no "save changes?" -- the user has just agreed to lose them)
       view = window.view
@@ -940,7 +996,7 @@ class Application(tk.Tk):
     users = sorted({url for kind, url in model.dependents() if kind == "model"})
     if users:
       messagebox.showerror(sn.NAME, f'"{os.path.basename(model.url)}" can\'t be closed while other models use it:\n\n  '
-                           + "\n  ".join(users) + "\n\nModels stay in memory until you quit.")
+                           + "\n  ".join(users) + "\n\nModels stay in memory until you quit.", parent=self._dialogParent())
       return False
     for name, window in list(self.windows.items()):
       if window.view is not None and window.view.model is model:
@@ -1042,8 +1098,14 @@ class Application(tk.Tk):
       self.quit()
 
   def quit(self) -> None:
-    """Tear down the entire application, including the hidden root.
+    """Tear down the entire application, including the hidden root -- first
+    offering to save the modified models (and settings), while the windows
+    can still ask (see *sn.saveAtExit()*): eg, when the last window's closed.
+    Left to the exit itself (atexit), with no root left, the question would
+    be asked by a stray second Tk (or not at all), and the changes lost.
     """
+    sn.saveAtExit()        # (once: the atexit call is then a no-op)
+    sn.savePrefsIfChanged()
     self.destroy()
 
   def run(self) -> None:
@@ -1068,6 +1130,20 @@ def _fileName(url:str) -> str:
   '''
   return os.path.basename(_filePath(url)) or url
 
+def windowTitle(url:str) -> str:
+  '''
+  :param url: A view's URL.
+  :returns: The title of its window: its file's name, then the folder it's in,
+    as the user knows it (eg: "family.snv \u2014 ~/Documents/Models"); for one on
+    the web, the folder's URL.
+  '''
+  name = _fileName(url)
+  path = _filePath(url)
+  folder = os.path.dirname(path) if path != url else url.rsplit("/", 1)[0]
+  if path != url:
+    folder = displayURL(Path(folder).as_uri()) if folder else folder
+  return f"{name} \u2014 {folder}" if folder else name
+
 class AppWindow(tk.Toplevel):
   '''
   A top-level SN app window that also acts as the holder of the SNContext
@@ -1084,8 +1160,7 @@ class AppWindow(tk.Toplevel):
     # initialize the window
     super().__init__(tkdottk, **kwargs)
     self.geometry(geometry)
-    name = viewURL
-    self.title(name)
+    self.title(windowTitle(viewURL))
     self.protocol("WM_DELETE_WINDOW", lambda: self._root()._closeWindowOf(self)) #type: ignore[misc, attr-defined]
 
     self.view: SNGView|None = None

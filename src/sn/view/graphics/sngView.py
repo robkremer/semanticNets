@@ -103,7 +103,7 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
   _modelsReplaced:list[tuple[str, str]] = []
   "The models put in place of others (see *modelReplacements*) while views were being read: noted in each, when it's read."
 
-  def __new__(cls, url:str, model:Model, *, mode="w", geometry:str="300x400+20+20", _reading:bool=False):
+  def __new__(cls, url:str, model:Model, *, mode="w", geometry:str|None=None, _reading:bool=False):
     '''
     The view at *url* (by default, beside *model*'s file): the one in memory, if there is one (see
     *PRDb.__new__()*).
@@ -112,10 +112,11 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
       url = fixURL(model.url, extension=".snv", replaceExt=True, mode="w")[0]
     return PRDb.__new__(cls, url, mode=mode, memoryResident=False, _reading=_reading)
 
-  def __init__(self, url:str, model:Model, *, mode="w", geometry:str="300x400+20+20", _reading:bool=False):
+  def __init__(self, url:str, model:Model, *, mode="w", geometry:str|None=None, _reading:bool=False):
     '''
-    A view of *model*, saved at *url*, in a new window (at *geometry*) -- unless it's one in memory already
-    (see *__new__()*).
+    A view of *model*, saved at *url*, in a new window (at *geometry*: by default, for a new view, where the
+    app puts the next new window -- see *Application.nextWindowGeometry()*) -- unless it's one in memory
+    already (see *__new__()*).
     '''
     if hasattr(self, "_initialized"): # This means the __new__ method has returned an existing object, so don't truck over it!
       return
@@ -136,6 +137,9 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
     # global way to get the tk application-root window
     self.root = tk._default_root # type: ignore[attr-defined] # @UndefinedVariable 
     
+    if geometry is None:
+      nextGeometry = getattr(self.root, "nextWindowGeometry", None)
+      geometry = nextGeometry() if callable(nextGeometry) else "300x400+20+20"
     self.window = AppWindow(self.root, self.url, geometry) # (self.url: where it is -- eg: a copied file's, not the URL stored in it)
     self.window.view = self  # so AppWindow's focus handling can dispatch to this SNGView (see onWindowFocusIn()/onWindowFocusOut())
     self.canvas:tk.Canvas = self.window.appPanedWidget.canvasFrame.canvas
