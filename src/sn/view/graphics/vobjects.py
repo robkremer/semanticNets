@@ -585,7 +585,11 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     # attributes up through the object's types at every draw, which was most of
     # the cost of drawing a label. Not with a hook in it, which is promised a
     # call each time (see labels).
-    key = (self.view.__dict__.get("_structureVersion", 0), template) if "$(" not in template else None
+    # ... and, for a template showing its types ("$type"), their names: a type renamed tells only its own
+    # observers and what inherits its name -- not an instance with a name of its own, in a view the type
+    # isn't in (SNGView.structureChanged() is bumped for a rename only by an object the view shows).
+    key = (self.view.__dict__.get("_structureVersion", 0), template,
+           tuple(p.name for p in mo.getParents()) if "type" in template else None) if "$(" not in template else None
     memo = self.__dict__.get("_labelMemo")
     if key is not None and memo is not None and memo[0] == key:
       return memo[1]

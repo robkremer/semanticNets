@@ -591,6 +591,7 @@ class ContainmentMixin(ViewBase):
     along = set(draggedAlong)
     m = self.model
     windows = self.contextWindows()
+    changed = False
     def nestedIn(w:VObject, outer:VObject) -> bool: # w is on outer's window (at any depth)?
       inner = outer.windowContents() if outer.isContextWindow() else []
       return w in inner or any(nestedIn(w, i) for i in inner if i.isContextWindow())
@@ -622,9 +623,16 @@ class ContainmentMixin(ViewBase):
           for r in others:    # switched panes
             self.context.remove(r)
           self.context.new_relation([want], individual=True, source=w.modelObject, destination=mo, model=self.model)
+          changed = True
         elif move == "out":
           for r in rels:
             self.context.remove(r)
+          changed = True
+    if changed:
+      # What the windows contain is remembered from the model (see _containmentMaps()) and read again as soon
+      # as this command's done -- by _BumpIntruders, which puts stray variables back in their windows -- but
+      # the model's notifications of the change, which forget it, come later (see Model.notifyLater()).
+      self.structureChanged()
 
   def gatherIntoWindow(self, w:VObject) -> None:
     '''
