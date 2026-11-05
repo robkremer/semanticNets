@@ -91,7 +91,9 @@ Reasoning (see :doc:`reasoning`):
 ``answer query``       answer a query (or any context): ``answer query
                        ?likes-fred``
 ``ask reasoner``       ask the reasoner directly, in its own language (for
-                       experts: clingo rules defining ``ans``)
+                       experts: clingo -- or Nemo -- rules defining ``ans``)
+``explain``            why a relation holds, step by step (with the optional
+                       Nemo engine): ``explain ancestorOf ann fred``
 =====================  =======================================================
 
 In a window, there are also commands for the view -- the ones the canvas

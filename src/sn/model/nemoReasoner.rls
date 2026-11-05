@@ -1,0 +1,185 @@
+%################################################################################
+% (c) Copyright 2026, Rob Kremer, MIT open source license.                      #
+%################################################################################
+%
+% Rule base for sn.model.nemoReasoner.NemoReasoner (Nemo: Datalog with stratified
+% negation and aggregates; see https://github.com/knowsys/nemo).
+%
+% A port of clingoReasoner.lp, rule for rule: see there for what each rule
+% means. Where Nemo differs from clingo:
+%
+%   - Every GraphObject is a constant <#N>; a symbol (out, symmetric, ...) a
+%     bare constant; a string is percent-encoded (Nemo strings have no escapes:
+%     see NemoReasoner._term()).
+%   - There are no tuples or function terms. A violation with N arguments is
+%     violation0_N(Code,Sev,Subject,A1,...,AN) (and violation_N, as reported);
+%     an object a rule creates is a string, "%new|#Rule|K|#V0|#V1..." (one per
+%     match of the rule), and one a cardinality creates "%card|#T|of|#X" (or
+%     "to"): see NemoReasoner._value().
+%   - Nemo checks that the whole program is stratified before it runs. A
+%     rule's negated attribute test can't be on attr/3 (which the rules'
+%     conclusions feed), so it's on attr_base/3: the attributes the model
+%     gives (see NemoReasoner._patternBody()).
+%   - Counting is an aggregate in a rule's head, and a count of nothing is no
+%     row: the "too few" violations have a rule for none at all.
+%
+% ---- Input facts, see sn.model.reasoner.Reasoner.facts() -----------------------------
+%   As clingoReasoner.lp's, but attr(O,K,V) is given as attr_base(O,K,V) (attr/3
+%   is that and what the rules conclude).
+%
+% ---- Output ------------------------------------------------------------------
+%   As clingoReasoner.lp's (isa_data/2, holds/3, inferred/3, inherited/3,
+%   classify/2, fired/4, rule_attr/4, rule_isa/3, rule_new/1, same/2), but
+%   violation/4 is violation_N/(3+N), one predicate per number of arguments.
+
+type(?O) :- obj(?O), ~individual(?O).
+rel_type(?T) :- kind(?T, relation), type(?T).
+
+% Pattern elements describe patterns, not the world (see clingoReasoner.lp).
+data(?X) :- obj(?X), ~pattern(?X).
+
+% The objects the rules create are data, but not base data: the variables of
+% rules that create objects range over base data only.
+base(?X) :- obj(?X), ~pattern(?X).
+data(?N) :- rule_new(?N).
+any_individual(?X) :- individual(?X).
+any_individual(?N) :- rule_new(?N).
+
+%%% Type hierarchy ------------------------------------------------------------
+
+isa_star(?X, ?X) :- obj(?X).
+isa_star(?X, ?Z) :- parent(?X, ?Y), isa_star(?Y, ?Z).
+isa_star(?N, ?N) :- rule_new(?N).
+isa_star(?X, ?Z) :- rule_isa(_, ?X, ?Y), isa_star(?Y, ?Z).
+isa_base(?X, ?X) :- obj(?X).
+isa_base(?X, ?Z) :- parent(?X, ?Y), isa_base(?Y, ?Z).
+
+%%% Relations -----------------------------------------------------------------
+
+asserted(?T, ?S, ?D) :- link(?R, ?S, ?D), parent(?R, ?T), rel_type(?T).
+asserted_under(?T, ?S, ?D) :- asserted(?T2, ?S, ?D), isa_base(?T2, ?T), rel_type(?T).
+
+% Relations inherit down the isa hierarchy from their source, unless refined.
+link_holds(?T, ?S, ?D) :- asserted(?T, ?S, ?D).
+link_holds(?T, ?X, ?D) :- link_holds(?T, ?S, ?D), parent(?X, ?S), data(?X), ~refined(?T, ?X, ?D).
+link_holds(?T, ?X, ?D) :- link_holds(?T, ?S, ?D), rule_isa(_, ?X, ?S), data(?X), ~refined(?T, ?X, ?D).
+% (clingo's (T2,D2) != (T,D): two rules, there being no tuples)
+refined(?T, ?X, ?D) :- asserted(?T, _, ?D), asserted(?T2, ?X, ?D2), isa_base(?T2, ?T), isa_base(?D2, ?D), ?T2 != ?T.
+refined(?T, ?X, ?D) :- asserted(?T, _, ?D), asserted(?T2, ?X, ?D2), isa_base(?T2, ?T), isa_base(?D2, ?D), ?D2 != ?D.
+inherited(?T, ?X, ?D) :- link_holds(?T, ?X, ?D), ~asserted(?T, ?X, ?D).
+
+holds(?T, ?S, ?D) :- link_holds(?T, ?S, ?D).
+holds(?T, ?S, ?D) :- fired(_, ?T, ?S, ?D).
+holds(?T2, ?S, ?D) :- holds(?T, ?S, ?D), parent(?T, ?T2), rel_type(?T2).
+
+% (The relational properties are in the base rules: see clingoReasoner.lp.)
+
+sub_holds(?T, ?S, ?D) :- holds(?T2, ?S, ?D), parent(?T2, ?T), rel_type(?T2).
+inferred(?T, ?S, ?D) :- holds(?T, ?S, ?D), ~asserted(?T, ?S, ?D), ~sub_holds(?T, ?S, ?D).
+
+%%% Signatures (domain/range) and classification ------------------------------
+
+needs_src(?R, ?T, ?C) :- src(?R, ?S), isa_star(?R, ?T), ?R != ?T, domain(?T, ?C), ~isa_star(?S, ?C).
+needs_dst(?R, ?T, ?C) :- dst(?R, ?D), isa_star(?R, ?T), ?R != ?T, range(?T, ?C), ~isa_star(?D, ?C).
+
+need(?S, ?C) :- needs_src(?R, _, ?C), src(?R, ?S), data(?R), data(?S).
+need(?D, ?C) :- needs_dst(?R, _, ?C), dst(?R, ?D), data(?R), data(?D).
+classify(?X, ?C) :- need(?X, ?C), ~need_more_specific(?X, ?C).
+need_more_specific(?X, ?C) :- need(?X, ?C), need(?X, ?C2), ?C2 != ?C, isa_star(?C2, ?C).
+
+%%% Violations ----------------------------------------------------------------
+
+violation0_3(domain, error, ?R, ?T, ?S, ?C) :- needs_src(?R, ?T, ?C), src(?R, ?S).
+violation0_3(range, error, ?R, ?T, ?D, ?C) :- needs_dst(?R, ?T, ?C), dst(?R, ?D).
+
+violation0_1(isa_cycle, error, ?X, ?P) :- parent(?X, ?P), isa_star(?P, ?X).
+violation0_1(isa_individual_parent, error, ?X, ?P) :- parent(?X, ?P), individual(?P).
+violation0_2(redundant_parent, warning, ?X, ?P1, ?P2) :-
+    parent(?X, ?P1), parent(?X, ?P2), ?P1 != ?P2, isa_star(?P1, ?P2), ~isa_star(?P2, ?P1).
+
+violation0_1(node_isa_relation, error, ?X, ?R) :- kind(?X, node), const(relation, ?R), isa_star(?X, ?R).
+violation0_1(relation_isa_node, error, ?X, ?N) :- kind(?X, relation), const(node, ?N), isa_star(?X, ?N).
+
+has_lsrc(?R) :- lsrc(?R, _).
+has_ldst(?R) :- ldst(?R, _).
+violation0_1(unset_endpoint, warning, ?R, src) :- kind(?R, relation), individual(?R), ~has_lsrc(?R).
+violation0_1(unset_endpoint, warning, ?R, dst) :- kind(?R, relation), individual(?R), ~has_ldst(?R).
+
+%%% Cardinality ---------------------------------------------------------------
+
+new_obj(?N) :- rule_new(?N).
+
+% At most one: objects that must be the same.
+same(?D1, ?D2) :- card(?T, out, _, 1), holds(?T, ?S, ?D1), holds(?T, ?S, ?D2), ?D1 != ?D2, new_obj(?D1).
+same(?S1, ?S2) :- card(?T, in, _, 1), holds(?T, ?S1, ?D), holds(?T, ?S2, ?D), ?S1 != ?S2, new_obj(?S1).
+same(?X, ?Y) :- same(?Y, ?X).
+same(?X, ?Z) :- same(?X, ?Y), same(?Y, ?Z), ?X != ?Z.
+holds(?T, ?S, ?Y) :- holds(?T, ?S, ?X), same(?X, ?Y).
+holds(?T, ?Y, ?D) :- holds(?T, ?X, ?D), same(?X, ?Y).
+attr(?Y, ?K, ?V) :- attr(?X, ?K, ?V), same(?X, ?Y).
+isa_star(?Y, ?T) :- isa_star(?X, ?T), same(?X, ?Y), ?T != ?X.
+
+% Exactly one: an object of the model's that has none gets a new one.
+card_top(?C) :- const(top, ?C).
+card_of(?T, out, ?X) :- card(?T, out, ?Min, _), ?Min > 0, domain(?T, ?C), ~card_top(?C), isa_star(?X, ?C), base(?X), individual(?X), kind(?X, node).
+card_of(?T, in, ?X) :- card(?T, in, ?Min, _), ?Min > 0, range(?T, ?C), ~card_top(?C), isa_star(?X, ?C), base(?X), individual(?X), kind(?X, node).
+card_has(?T, out, ?X) :- asserted_under(?T, ?X, _).
+card_has(?T, in, ?X) :- asserted_under(?T, _, ?X).
+card_new(?T, out, ?X) :- card_of(?T, out, ?X), card(?T, out, _, 1), ~card_has(?T, out, ?X).
+card_new(?T, in, ?X) :- card_of(?T, in, ?X), card(?T, in, _, 1), ~card_has(?T, in, ?X).
+% (clingo's new(T,Name,(("of",X),)): see NemoReasoner._value())
+card_obj(?T, out, ?X, f"%card|{?T}|of|{?X}") :- card_new(?T, out, ?X).
+card_obj(?T, in, ?X, f"%card|{?T}|to|{?X}") :- card_new(?T, in, ?X).
+rule_new(?N) :- card_obj(_, _, _, ?N).
+fired(?T, ?T, ?X, ?N) :- card_obj(?T, out, ?X, ?N).
+rule_isa(?T, ?N, ?C) :- card_obj(?T, out, _, ?N), range(?T, ?C), ~card_top(?C).
+fired(?T, ?T, ?N, ?X) :- card_obj(?T, in, ?X, ?N).
+rule_isa(?T, ?N, ?C) :- card_obj(?T, in, _, ?N), domain(?T, ?C), ~card_top(?C).
+
+% Too many, too few. A merged new object is counted once: as the object it's
+% the same as, or as the first of those that are the same (by string order).
+card_counted(?D) :- obj(?D).
+card_counted(?N) :- new_obj(?N), ~card_merged(?N).
+card_merged(?N) :- same(?N, ?X), obj(?X), new_obj(?N).
+card_merged(?N) :- same(?N, ?X), new_obj(?N), new_obj(?X), COMPARE(?X, ?N) = -1.
+
+card_max_n(?T, ?S, #count(?D)) :- card(?T, out, _, ?M), ?M >= 0, holds(?T, ?S, ?D), individual(?S), obj(?D).
+violation0_3(cardinality_max, error, ?S, ?T, ?N, ?M) :- card_max_n(?T, ?S, ?N), card(?T, out, _, ?M), ?M >= 0, ?N > ?M.
+card_max_in_n(?T, ?D, #count(?S)) :- card(?T, in, _, ?M), ?M >= 0, holds(?T, ?S, ?D), individual(?D), obj(?S).
+violation0_3(cardinality_max_in, error, ?D, ?T, ?N, ?M) :- card_max_in_n(?T, ?D, ?N), card(?T, in, _, ?M), ?M >= 0, ?N > ?M.
+
+card_min_n(?T, ?X, #count(?D)) :- card_of(?T, out, ?X), holds(?T, ?X, ?D), card_counted(?D).
+card_min_some(?T, ?X) :- card_min_n(?T, ?X, _).
+violation0_3(cardinality_min, warning, ?X, ?T, ?N, ?Min) :- card(?T, out, ?Min, _), card_of(?T, out, ?X), card_min_n(?T, ?X, ?N), ?N < ?Min.
+violation0_3(cardinality_min, warning, ?X, ?T, 0, ?Min) :- card(?T, out, ?Min, _), card_of(?T, out, ?X), ~card_min_some(?T, ?X).
+card_min_in_n(?T, ?X, #count(?S)) :- card_of(?T, in, ?X), holds(?T, ?S, ?X), card_counted(?S).
+card_min_in_some(?T, ?X) :- card_min_in_n(?T, ?X, _).
+violation0_3(cardinality_min_in, warning, ?X, ?T, ?N, ?Min) :- card(?T, in, ?Min, _), card_of(?T, in, ?X), card_min_in_n(?T, ?X, ?N), ?N < ?Min.
+violation0_3(cardinality_min_in, warning, ?X, ?T, 0, ?Min) :- card(?T, in, ?Min, _), card_of(?T, in, ?X), ~card_min_in_some(?T, ?X).
+violation0_2(bad_cardinality, warning, ?T, ?K, ?M) :- card_error(?T, ?K, ?M).
+
+%%% Attributes -----------------------------------------------------------------
+
+attr(?O, ?K, ?V) :- attr_base(?O, ?K, ?V).
+attr(?X, ?K, ?V) :- rule_attr(_, ?X, ?K, ?V).
+
+% (Report only violations about the data: violation_N :- violation0_N, data,
+% one rule for each number of arguments -- see NemoReasoner._rulesProgram().)
+
+% A variable whose name says what it ranges over, though the object is the other.
+violation_2(variable_kind, warning, ?X, individual, "a type") :- var_kind(?X, individual), type(?X).
+violation_2(variable_kind, warning, ?X, type, "an individual") :- var_kind(?X, type), individual(?X).
+
+% The isa closure, as reported: data only.
+isa_data(?X, ?T) :- isa_star(?X, ?T), data(?X).
+
+@output isa_data.
+@output holds.
+@output inferred.
+@output inherited.
+@output classify.
+@output fired.
+@output rule_attr.
+@output rule_isa.
+@output rule_new.
+@output same.

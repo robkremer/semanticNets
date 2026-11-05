@@ -99,7 +99,8 @@ Other ways to run it
 
     python3.14 -m pip install clingo requests urllib3 docstring_parser
 
-  Then run it with ``python3.14 SemanticNets-1.0.pyz [file ...]``. (If
+  (and, for the optional Nemo reasoner engine, ``nemo-python``: see
+  :doc:`reasoning`). Then run it with ``python3.14 SemanticNets-1.0.pyz [file ...]``. (If
   anything's missing, it says what.)
 
 From the source
