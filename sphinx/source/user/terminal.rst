@@ -91,7 +91,8 @@ Reasoning (see :doc:`reasoning`):
 ``answer query``       answer a query (or any context): ``answer query
                        ?likes-fred``
 ``ask reasoner``       ask the reasoner directly, in its own language (for
-                       experts: clingo -- or Nemo -- rules defining ``ans``)
+                       experts: clingo, Nemo or CLIPS rules concluding
+                       ``ans``: see :doc:`reasoning`)
 ``explain``            why a relation holds, step by step (by the Nemo
                        engine): ``explain ancestorOf ann fred``
 =====================  =======================================================

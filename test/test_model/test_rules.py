@@ -33,6 +33,10 @@ try:
   from sn.model.nemoReasoner import NemoReasoner
 except ModuleNotFoundError: # (an optional engine: pip install nemo-python)
   NemoReasoner = None # type: ignore[assignment,misc]
+try:
+  from sn.model.clipsReasoner import ClipsReasoner
+except ModuleNotFoundError: # (an optional engine: pip install clipspy)
+  ClipsReasoner = None # type: ignore[assignment,misc]
 
 class TestRules(unittest.TestCase):
   '''
@@ -993,6 +997,17 @@ class TestRulesNemo(TestRules):
   ENGINE_NAME = "nemo"
   BAD_QUERY = "ans(?X) :- ~ ~ ~."
   SYNTAX_ERROR = "expected"
+
+
+@unittest.skipIf(ClipsReasoner is None, "the CLIPS engine isn't installed (pip install clipspy)")
+class TestRulesClips(TestRules):
+  '''
+  The rules, by the CLIPS engine (see *sn.model.clipsReasoner*).
+  '''
+  ENGINE = ClipsReasoner # type: ignore[assignment]
+  ENGINE_NAME = "clips"
+  BAD_QUERY = "(defrule q (not (not (not))) => )"
+  SYNTAX_ERROR = "Syntax Error"
 
 
 if __name__ == "__main__":

@@ -14,6 +14,7 @@ Submodules
    :maxdepth: 4
 
    sn.model.clingoReasoner
+   sn.model.clipsReasoner
    sn.model.constraints
    sn.model.copying
    sn.model.directory

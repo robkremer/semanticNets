@@ -35,6 +35,10 @@ try:
   from sn.model.nemoReasoner import NemoReasoner
 except ModuleNotFoundError: # (an optional engine: pip install nemo-python)
   NemoReasoner = None # type: ignore[assignment,misc]
+try:
+  from sn.model.clipsReasoner import ClipsReasoner
+except ModuleNotFoundError: # (an optional engine: pip install clipspy)
+  ClipsReasoner = None # type: ignore[assignment,misc]
 
 if TYPE_CHECKING: # (the spec is a mixin, so only the type checker sees it as a TestCase)
   _SpecBase = unittest.TestCase
@@ -507,6 +511,93 @@ class TestNemo(ReasonerSpec, unittest.TestCase):
       ctx.explain(self.fred)
 
 
+@unittest.skipIf(ClipsReasoner is None, "the CLIPS engine isn't installed (pip install clipspy)")
+class TestClips(ReasonerSpec, unittest.TestCase):
+  ENGINE = ClipsReasoner # type: ignore[assignment]
+
+  def test0600nativeQuery(self):
+    self.assertEqual(ClipsReasoner.language, "clips")
+    ans = self.reasoner.query('(defrule q (holds ?t ?f ?x) (name ?t "has") (name ?f "fred") => (assert (ans ?x)))')
+    self.assertEqual([a[0] for a in ans], [self.car1])
+    with self.assertRaises(RuntimeError) as cm:
+      self.reasoner.query('(defrule q (obj ?x) (not (ans ?x)) => (assert (ans ?x)))') # (not stratified: said, not run)
+    self.assertIn("stratified", str(cm.exception))
+    with self.assertRaises(RuntimeError) as cm:
+      self.reasoner.query('(defrule holds (obj ?x) => (assert (ans ?x)))') # (the rule base's name)
+    self.assertIn("more than one rule named holds", str(cm.exception))
+
+  def test0700registry(self):
+    self.assertIsInstance(Reasoner.create(self.m, "clips"), ClipsReasoner)
+
+  def test0710strings(self):
+    'Strings, symbols and numbers go there and back: names, attribute values, constraints.'
+    m, person = self._fresh("strings")
+    odd = 'a "quoted" 100% \\ back\tslash\nline, é ✓ (not) ;'
+    x = Node(m, [person], individual=True, name=odd)
+    x["note"] = odd
+    x["count"] = 3
+    x["ok"] = True
+    r = ClipsReasoner(m)
+    rows = r.query('(defrule q (attr ?x "note" ?v) (name ?x ?n) => (assert (ans ?n ?v)))')
+    self.assertEqual(rows, [(odd, odd)])
+    self.assertEqual(r.query('(defrule q (attr ?x "count" 3) (attr ?x "ok" TRUE) => (assert (ans ?x)))'), [(x,)])
+
+  def test0720stratified(self):
+    'Each rule fires once what it tests with (not ...) is complete, whatever the order of the rules.'
+    from sn.model.clipsReasoner import _rulesOf, _stratify
+    rules, _ = _rulesOf("""
+      (defrule c (b ?x) (not (a ?x)) => (assert (c ?x)))
+      (defrule b1 (e ?x) => (assert (b ?x)))
+      (defrule b2 (b ?x) (f ?x ?y) => (assert (b ?y)))
+      (defrule a (b ?x) (g ?x) => (assert (a ?x)))
+      (defrule d (c ?x) (not (b ?x)) => (assert (d ?x)))""")
+    _stratify(rules)
+    stratum = {r.name: r.stratum for r in rules}
+    self.assertEqual(stratum["b1"], stratum["b2"])
+    self.assertEqual(stratum["a"], stratum["b1"])
+    self.assertGreater(stratum["c"], stratum["a"])
+    self.assertGreater(stratum["d"], stratum["b1"])
+    self.assertIn("(declare (salience -1))", next(r for r in rules if r.name == "c").salient())
+    rules, _ = _rulesOf('(defrule p "comment" (q ?x) (not (p ?x)) => (assert (p ?x)))')
+    with self.assertRaises(ValueError):
+      _stratify(rules)
+
+  def test0725ordered(self):
+    'A compiled rule\'s conditions are matched in a good order: each sharing variables with those before it.'
+    from sn.model.clipsReasoner import _ordered
+    body = ["(data ?x)", "(data ?y)", "(data ?z)", "(holds ?t ?x ?y)", "(holds ?t ?y ?z)", "(prop ?t transitive)",
+            "(test (neq ?x ?z))", "(not (attr ?x \"k\" ?v))", "(not (prop ?t symmetric))"]
+    out = _ordered(body)
+    self.assertEqual(sorted(out), sorted(body))
+    self.assertEqual(out[0], "(prop ?t transitive)")                         # (a constant)
+    self.assertEqual(out[1], "(not (prop ?t symmetric))")                    # (as soon as ?t is bound)
+    self.assertLess(out.index("(holds ?t ?y ?z)"), out.index("(data ?z)"))   # (a relation before what's at its ends)
+    self.assertLess(out.index("(holds ?t ?x ?y)"), out.index("(data ?x)"))
+    self.assertGreater(out.index("(test (neq ?x ?z))"), out.index("(holds ?t ?y ?z)"))
+    self.assertGreater(out.index('(not (attr ?x "k" ?v))'), out.index("(holds ?t ?x ?y)")) # (?v is its own)
+
+  def test0730negatedAttributesInRules(self):
+    '''
+    A rule's "not" attribute test is about the attributes the model gives:
+    the program must be stratified, and the rules' conclusions depend on the rules.
+    '''
+    m, person = self._fresh("notattr")
+    a, b = (Node(m, [person], individual=True, name=n) for n in "ab")
+    a["gender"] = "female"
+    tagged = lambda: {(x.name, k, v) for _, x, k, v in ClipsReasoner(m).run().ruleAttrs}
+    def rule(name, test, conclusion):
+      r = Node(m, [m.RULE], individual=True, name=name)
+      X, X2 = Node(m, [person], individual=True, name="?x"), Node(m, [m.NODE], individual=True, name="?x")
+      X["constraints"] = test
+      X2["constraints"] = conclusion
+      Relation(m, [m.ANTECEDENT], r, X, individual=True)
+      Relation(m, [m.CONSEQUENT], r, X2, individual=True)
+    rule("unknown", "not gender", "unknown: yes")
+    self.assertEqual(tagged(), {("b", "unknown", "yes")})
+    rule("guess", "not gender: female", "gender: male")                   # (concludes what "unknown" tests: b's still unknown)
+    self.assertEqual(tagged(), {("b", "unknown", "yes"), ("b", "gender", "male")})
+
+
 class TestEngines(unittest.TestCase):
   'Which engines there are, whether they\'re installed, and what a missing one says (none of it needs Nemo).'
 
@@ -537,6 +628,19 @@ class TestEngines(unittest.TestCase):
     from sn.model.reasoner import ENGINES
     typ = sn.PREFS["reasoner/engine"][0]
     self.assertEqual(typ, f"choices[{','.join(ENGINES)}]")
+
+  def test0110savedChoices(self):
+    'Preferences saved when there were fewer engines get today\'s choices (keeping their value, if it\'s still one).'
+    from util.attribute import Attribute, VAR_DEFAULTED
+    from util.prefs import Prefs
+    typ = sn.PREFS["reasoner/engine"][0]
+    prefs = Prefs()
+    prefs.setAttr("reasoner/engine", Attribute("nemo", "choices[clingo,nemo]", VAR_DEFAULTED, ""))
+    sn.initPrefs(prefs)
+    self.assertEqual((dict.get(prefs, "reasoner/engine").type, prefs["reasoner/engine"]), (typ, "nemo"))
+    prefs.setAttr("reasoner/engine", Attribute("gone", "choices[clingo,gone]", VAR_DEFAULTED, ""))
+    sn.initPrefs(prefs)
+    self.assertEqual((dict.get(prefs, "reasoner/engine").type, prefs["reasoner/engine"]), (typ, "clingo"))
 
   def test0200installed(self):
     from sn.model.reasoner import engineInstalled, installedEngines

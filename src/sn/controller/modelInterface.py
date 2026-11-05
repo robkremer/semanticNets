@@ -368,7 +368,7 @@ class ModelContext(CommandContext):
     too, until the next "reason" or "clear reasoning".
 
     :param model: The model to reason over. By default, the default model.
-    :param engine: The reasoner engine: clingo or nemo. By default, the "reasoner/engine" preference's.
+    :param engine: The reasoner engine: clingo, nemo or clips. By default, the "reasoner/engine" preference's.
     :param silent: Don't add what's inferred to the views of the model (they
       show only the problems), and report only a summary: eg: so that queries
       find what the rules conclude.
@@ -449,7 +449,7 @@ class ModelContext(CommandContext):
 
     :param query: The query (or other context).
     :param model: Ignored: a query is answered from its own model.
-    :param engine: The reasoner engine: clingo or nemo. By default, the "reasoner/engine" preference's.
+    :param engine: The reasoner engine: clingo, nemo or clips. By default, the "reasoner/engine" preference's.
     '''
     from sn.model.reasoner import Reasoner
     if type(query) is str: # the environment failed to interpret the object
@@ -478,10 +478,12 @@ class ModelContext(CommandContext):
     engine, ASP: eg, ans(X) :- holds(T,F,X), name(T,"owns"), name(F,"fred").
     For the nemo engine, Nemo's Datalog: eg,
     ans(?X) :- holds(?T,?F,?X), name(?T,"owns"), name(?F,"fred").
+    For the clips engine, CLIPS rules asserting "ans" facts: eg,
+    (defrule q (holds ?t ?f ?x) (name ?t "owns") (name ?f "fred") => (assert (ans ?x))).
 
     :param query: The query.
     :param model: The model to reason over. By default, the default model.
-    :param engine: The reasoner engine: clingo or nemo. By default, the "reasoner/engine" preference's.
+    :param engine: The reasoner engine: clingo, nemo or clips. By default, the "reasoner/engine" preference's.
     '''
     from sn.model.reasoner import Reasoner
     if model is None:
