@@ -26,6 +26,20 @@ every engine must share (*ReasonerSpec*), and ``test/test_model/test_rules.py``
 runs the rules tests by each engine. There's a second one already: Nemo (see
 `The Nemo engine`_ below).
 
+What the program knows about an engine before it's imported is in
+:py:data:`~sn.model.reasoner.ENGINES`: the Python module it needs, the package
+that provides it, and whether it can explain a conclusion. So
+:py:func:`~sn.model.reasoner.engineInstalled` can tell whether one can be used
+without loading it, *Reasoner.create()* raises
+:py:class:`~sn.model.reasoner.EngineMissing` (an *ImportError*) for one that
+isn't installed -- which the GUI shows with a link to the User Guide's
+"Installing an engine" (:py:data:`~sn.model.reasoner.INSTALL_HELP`, by
+:py:func:`~sn.view.graphics.viewReasoning.showEngineMissing`) -- and
+**explain** uses :py:func:`~sn.model.reasoner.explainingEngine`: the default
+engine if it can explain, or else an installed one that can. A new engine adds
+itself to *ENGINES*, to the ``reasoner/engine`` preference's choices
+(``sn.PREFS``: a test checks the two agree), and to "Installing an engine".
+
 Why ASP
 -------
 
@@ -309,7 +323,8 @@ The Nemo engine
   on `Nemo <https://github.com/knowsys/nemo>`_, a Datalog engine (stratified
   negation, aggregates) from TU Dresden, through its Python bindings
   (``pip install nemo-python``, imported as ``nmo_python``). It's optional:
-  the module says how to install it if it's missing, and the tests skip it.
+  if it's missing, the program says how to install it (see above), and the
+  tests skip it.
 
 Its rule base, ``nemoReasoner.rls``, is ``clingoReasoner.lp`` ported rule
 for rule, and ``_rulesProgram()`` compiles the user's rules the same way, so

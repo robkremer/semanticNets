@@ -497,9 +497,9 @@ class ModelContext(CommandContext):
     '''
     Say why the reasoner concludes that *source* is related to *destination*
     by *relation*: the rules it follows by (the model's, and the base rules:
-    eg, transitive), down to what the model asserts. Uses the nemo reasoner
-    engine, which can say how it reached a conclusion (clingo can't),
-    whichever engine "reason" uses. Nemo is optional: pip install nemo-python.
+    eg, transitive), down to what the model asserts. Uses an engine that can
+    say how it reached a conclusion -- nemo (clingo can't) -- whichever engine
+    "reason" uses. Nemo is optional: pip install nemo-python.
 
     :param relation: The relation type (eg: ancestorOf) -- or a relation, eg:
       one "reason" inferred: then why it holds, without *source* and *destination*.
@@ -534,8 +534,8 @@ class ModelContext(CommandContext):
       relation = types[0]
     elif source is None or destination is None:
       raise ValueError('explain: a relation type needs a source and a destination.')
-    from sn.model.reasoner import Reasoner
-    reasoner:Any = Reasoner.create(model, "nemo")
+    from sn.model.reasoner import Reasoner, explainingEngine
+    reasoner:Any = Reasoner.create(model, explainingEngine())
     reasoner.run()
     name = lambda o: o.tostring(relativeTo=model, format="friendly")
     if isa:

@@ -169,8 +169,9 @@ PREFS:dict[str, tuple[Any, Any, str]] = {
     "inferences. For debugging the base rules; best left off."),
   "reasoner/engine": ("choices[clingo,nemo]", "clingo",
     "The reasoner engine that \"reason\" and queries use: clingo (answer set programming), or nemo (Datalog, "
-    "which can also say why a conclusion holds: the \"explain\" command). Nemo is optional: pip install nemo-python. "
-    "See sn.model.reasoner.Reasoner.create()."),
+    "which can also say why a conclusion holds: the \"explain\" command). Nemo is optional: if it isn't installed, "
+    "the program says how to install it (\"Installing an engine\", in the User Guide's Reasoning page). "
+    "See sn.model.reasoner.ENGINES."),
   "text/wrap": (bool, False,
     "Whether long lines wrap in the terminal pane (else it scrolls sideways)."),
   "text/backgroundColor": ("color", "white",

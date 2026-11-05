@@ -52,7 +52,6 @@ import tkinter as tk
 import weakref
 import traceback
 import itertools
-import importlib.util
 from abc import abstractmethod
 
 from util.persistence.serialize import InstantiationInfo, ParamInfo, PropertyInfo
@@ -1385,7 +1384,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       menu.add_command(label="mark as asserted" + (" (the model is write-locked)" if locked else ""),
                        state=tk.DISABLED if locked else tk.NORMAL,
                        command=lambda: self.view.context.mark_asserted(mo))
-      if isinstance(mo, Relation) and mo.isIndividual() and importlib.util.find_spec("nmo_python") is not None:
+      if isinstance(mo, Relation) and mo.isIndividual():
         menu.add_command(label="explain (why it holds)", command=lambda: self.explainInferred(mo))
       menu.add_separator()
       return
@@ -1413,12 +1412,18 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
   def explainInferred(self, mo:Relation) -> None:
     '''
     Print why the reasoner concludes *mo* (an inferred relation, or isa link)
-    to the window's terminal (see *ModelContext.explain()*: by the nemo
-    engine, which can say how it reached a conclusion).
+    to the window's terminal (see *ModelContext.explain()*: by an engine that
+    can say how it reached a conclusion -- if none is installed, a dialog says
+    how to install one).
     '''
+    from sn.model.reasoner import EngineMissing
     try:
       print(self.view.context.explain(mo, model=self.view.model))
-    except Exception as ex: # (eg: Nemo isn't installed, or rules it can't read: said, not a traceback)
+    except EngineMissing as ex:
+      from sn.view.graphics.viewReasoning import showEngineMissing
+      logger.error(f'Can\'t explain "{mo.name}": {ex}')
+      showEngineMissing(self.canvas, ex, purpose="Explaining why a conclusion holds needs it.")
+    except Exception as ex: # (eg: rules it can't read: said, not a traceback)
       logger.error(f'Can\'t explain "{mo.name}": {ex}')
 
   MENU_PREFIX = ".menu/"
