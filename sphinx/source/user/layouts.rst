@@ -19,7 +19,9 @@ but the program can arrange a view for you too. The background menu's
 
 **animate**
   The animation layout: objects push and pull one another until they
-  settle, and you watch it happen. See :doc:`animation`.
+  settle, and you watch it happen. Starting it switches a layout that
+  keeps things arranged itself (eg: a tree) to **avoid overlaps**; undoing
+  the run puts it back. See :doc:`animation`.
 
 A layout with settings (its menu item ends with "...") opens its page in the
 layout panel (see below), to choose them there; one without is done straight

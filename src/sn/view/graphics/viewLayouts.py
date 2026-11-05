@@ -36,12 +36,40 @@ from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
 from sn.view.graphics.layout import relationTypes, relationNamed, LayoutHeuristic, intoRect, gatherShifts, STATIC, DYNAMIC, FindFree, ANIMATED, layoutsFor, NoLayout, finishTween
 from util.commandParser import CompositeCommandMgr
+from util.command import Command
 from sn.view.graphics.viewBase import ViewBase
 if TYPE_CHECKING:
   from sn.view.graphics.sngView import SNGView
   from sn.view.graphics.layoutPanel import LayoutSplit
 
 logger:sn.SNLogger = sn.getLogger(__name__)
+
+class SwitchedLayout(Command):
+  '''
+  The view's dynamic layout switched (eg: by starting the animation layout:
+  see *LayoutsMixin.toggleAnimationLayout()*), as part of an undoable
+  command: undone, the old one is put back as it was (with its pins: see
+  *treeLayout.TreeLayout.pins*), and redone, the new one -- neither arranging
+  anything (see *LayoutsMixin._putDynamicLayout()*).
+  '''
+  isLayout = True
+  "So the view's dynamic layout doesn't adjust after it (see *viewCommands.ViewDoList*)."
+
+  def __init__(self, view, old:LayoutHeuristic, new:LayoutHeuristic):
+    super().__init__("keep arranged")
+    self.view, self.old, self.new = view, old, new
+
+  def do(self) -> None:
+    super().do()
+    self.view._putDynamicLayout(self.new)
+
+  def undo(self) -> None:
+    super().undo()
+    self.view._putDynamicLayout(self.old)
+
+  def delete(self) -> None:
+    super().delete()
+    self.view = self.old = self.new = None # type: ignore[assignment]
 
 class LayoutsMixin(ViewBase):
   '''
@@ -288,16 +316,35 @@ class LayoutsMixin(ViewBase):
     repel one another and relations pull them together, until things settle
     (see *animatedLayouts.FieldsLayout*). The whole run is one undoable command.
     A dynamic layout that arranges things itself (eg: a tree) would undo what
-    it does, so the view's dynamic layout becomes "avoid overlaps" first.
+    it does, so the view's dynamic layout becomes "avoid overlaps" first --
+    and stays so, though undoing the run puts the old one back, as it was
+    (see *SwitchedLayout*).
     '''
     layout = self.animationLayout()
     if layout.active:
       layout.kill()
       return
     if not isinstance(self.localLayout, (FindFree, NoLayout)):
-      logger.info(f'The animation layout: the dynamic layout is now "{FindFree.NAME}" (it was "{self.localLayout.NAME}").')
-      self.setDynamicLayout(FindFree(self))
+      old = self.localLayout
+      logger.info(f'The animation layout: the dynamic layout is now "{FindFree.NAME}" (it was "{old.NAME}": '
+                  f'undoing the animation puts it back).')
+      self._putDynamicLayout(FindFree(self))
+      layout._switchedLayout = (old, self.localLayout) # (part of the run's undoable command: see FieldsLayout._finish())
     layout(autoOff=True)
+
+  def _putDynamicLayout(self, layout:LayoutHeuristic) -> None:
+    '''
+    Make *layout* the view's dynamic layout, as it is -- without it arranging
+    anything (see *setDynamicLayout()*): eg: putting back the one there was
+    (see *SwitchedLayout*).
+
+    :param layout: A dynamic layout of this view.
+    '''
+    finishTween(self)
+    self.localLayout = layout
+    if getattr(self, "_layoutVar", None) is not None:
+      self._layoutVar.set(layout.NAME)
+    self.setDirty()
 
   def _layoutMenu(self, parent:tk.Menu) -> tk.Menu:
     '''

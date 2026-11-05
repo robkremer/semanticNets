@@ -447,7 +447,10 @@ class LayoutHeuristic(ABC):
     remember = getattr(self.view, "rememberLayoutParameters", None)
     if remember is not None: # (offered next time: see SNGView.lastLayoutParameters())
       remember(self, STATIC)
-    cmd = LayoutMoves(self.view, f"arrange: {self.NAME}", self.targets(), animate=animate)
+    finishTween(self.view) # (an earlier arrangement under way: from where it ends, as the command's undo puts it back there)
+    targets = self.targets()
+    targets.update(otherLabelTargets(self.view, targets))
+    cmd = LayoutMoves(self.view, f"arrange: {self.NAME}", targets, animate=animate)
     self.arranged(cmd)
     if cmd.isEmpty():
       return None
@@ -756,6 +759,17 @@ class _Tween:
     _moveAll(self.view, [(vo, x1, y1) for vo, _, (x1, y1) in self.moves])
     _settled(self.view)
 
+def pinnableLabel(r:VRelation) -> bool:
+  '''
+  :returns: Whether a layout (or the user, dropping it) may pin *r*'s label
+    somewhere (see *LayoutMoves*, *SNGContext._Move*): a relation type's (it
+    has a place of its own, as a node does); or an individual relation's that
+    shows text (as last drawn) -- not one that shows none (eg: an isa link's):
+    its line runs through it, so it floats between its ends.
+  '''
+  mo = r.modelObject
+  return (mo is not None and mo.isType()) or r._labelShown()
+
 def finishTween(view) -> None:
   '''
   Finish the view's tweened move, if one's under way (see *tween()*): eg:
@@ -797,7 +811,9 @@ class LayoutMoves(Command):
   A layout's moves, as one undoable command: tweened (see *tween()*) when
   first done, if asked; at once when redone or undone. A relation's label it
   moves is pinned (no longer floats between its ends) -- and floats again
-  when it's undone, if it did before.
+  when it's undone, if it did before. (Not a label that shows no text, eg: an
+  isa link's: its line runs through it, so it's left to float between its
+  ends.)
   '''
   isLayout = True
   "So the view's dynamic layout doesn't adjust after it (see *viewCommands.ViewDoList*)."
@@ -821,6 +837,8 @@ class LayoutMoves(Command):
     if targets and getattr(view, "contextWindows", None) is not None:
       targets = {**targets, **windowsOutOfTheWay(view, targets)}
     for vo, (x, y) in targets.items():
+      if isinstance(vo, VRelation) and not pinnableLabel(vo):
+        continue
       bb = vo.boundingBox()
       if abs(bb[0] - x) >= 0.5 or abs(bb[1] - y) >= 0.5:
         self.moves.append((vo, (bb[0], bb[1]), (x, y), vo.floating() if isinstance(vo, VRelation) else None))
@@ -855,7 +873,7 @@ class LayoutMoves(Command):
     _moveAll(self.view, [(vo, x, y) for vo, (x, y), _, _ in reversed(self.moves)])
     for vo, _, _, floated in self.moves:
       if floated is not None and vo._isConnected():
-        vo.floating(floated) #type: ignore[attr-defined]
+        vo._floatingAnchor = floated #type: ignore[attr-defined] # (directly: put back where it was, not recentred between its ends)
     for _, undo in reversed(self.also):
       undo()
     _settled(self.view)
@@ -911,6 +929,62 @@ def shownBoxes(view, exclude:Iterable[VObject]=(), around:Sequence[float]|None=N
   return [b for vo in view.values()
           if isinstance(vo, VObject) and (b := vo.boundingBox())[0] < x2 and x1 < b[2] and b[1] < y2 and y1 < b[3]
           and id(vo) not in skip and not vo.isHidden() and vo._shape is not None and vo._shape.id in shapes]
+
+def otherLabelTargets(view, targets:dict[VObject, tuple[float, float]]) -> dict[VObject, tuple[float, float]]:
+  '''
+  For a static layout (see *LayoutHeuristic.arrange()*): where to put the
+  labels of the relations it doesn't place itself, of what it moves, that
+  would land on something: midway between their ends (where they're going) is
+  where they float to; one that'd be on something there goes in the nearest
+  free place instead (as *FindFree.placeLabels()* puts them), against where
+  everything's going. Only floating labels that show text: the rest are left
+  to follow their ends.
+
+  :param view:
+  :type view: SNGView
+  :param targets: Where the layout puts things (their top left).
+  :returns: Where those labels go (their top left).
+  '''
+  level = labelPlacementLevel()
+  if level == 0 or not targets or not getattr(view, "canvas", None):
+    return {}
+  labels:list[VRelation] = []
+  seen:set[int] = set()
+  for vo in targets:
+    for r in (vo.relations or ()) if not isinstance(vo, VRelation) else ():
+      if isinstance(r, VRelation) and r not in targets and id(r) not in seen and r._isConnected() and not r.isHidden() \
+         and r.floating() and r._labelShown() and isinstance(r.src, VObject) and isinstance(r.dst, VObject) and r.src is not r.dst:
+        seen.add(id(r))
+        labels.append(r)
+  if not labels:
+    return {}
+  def box(vo:VObject) -> list[float]:
+    bb = vo.boundingBox()
+    if vo in targets:
+      x, y = targets[vo]
+      return [x, y, x + bb[2] - bb[0], y + bb[3] - bb[1]]
+    return list(bb)
+  index = _BoxIndex([*shownBoxes(view, [*labels, *targets]),
+                     *(box(vo) for vo in targets if not vo.isHidden() and vo._shape is not None)])
+  ff = FindFree(view)
+  maxRings = level * level
+  ret:dict[VObject, tuple[float, float]] = {}
+  for r in labels:
+    bb = r.boundingBox()
+    w, h = bb[2] - bb[0], bb[3] - bb[1]
+    if w <= 0 or h <= 0:
+      continue
+    s, d = box(r.src), box(r.dst) #type: ignore[arg-type]
+    cx, cy = (s[0] + s[2] + d[0] + d[2]) / 4, (s[1] + s[3] + d[1] + d[3]) / 4
+    rect = [int(round(cx - w / 2)), int(round(cy - h / 2))]
+    rect += [rect[0] + int(w), rect[1] + int(h)]
+    if index.hits(rect, ff.expandFactor_relations):
+      pt = freeRingSpot(rect, index, ff.expandFactor_relations, quanta=ff.quanta, maxRings=maxRings)
+      if pt is not None:
+        rect = [pt[0], pt[1], pt[0] + int(w), pt[1] + int(h)]
+        ret[r] = (float(pt[0]), float(pt[1]))
+    index.add(rect)
+  return ret
 
 def windowsOutOfTheWay(view, targets:dict[VObject, tuple[float, float]], gap:float=20.0) -> dict[VObject, tuple[float, float]]:
   '''
@@ -981,7 +1055,7 @@ def clearBelow(boxes:Iterable[Sequence[float]], x1:float, x2:float, y:float, hei
 
 def freeRingSpot(rect:Sequence[int], index:_BoxIndex, gap:float, *, quanta:int=10,
                  limit:Sequence[int]=(-UNBOUNDED, -UNBOUNDED, UNBOUNDED, UNBOUNDED),
-                 maxRings:int=100) -> tuple[int, int]|None:
+                 maxRings:int=100, nearest:bool=False) -> tuple[int, int]|None:
   '''
   Where to put *rect* (its top left) so it isn't on, or within *gap* of, any
   of *index*'s boxes: the first such place met looking out from where it is,
@@ -993,6 +1067,8 @@ def freeRingSpot(rect:Sequence[int], index:_BoxIndex, gap:float, *, quanta:int=1
 
   :param rect: [x1, y1, x2, y2], ints.
   :param limit: [x1, y1, x2, y2], ints: where its top left may go.
+  :param nearest: Try each ring's places nearest first (eg: for something
+    dropped: nudged the shortest way off what it's on), not from its top left.
   :returns: Its new top left -- or None if there's no such place within *maxRings* rings.
   '''
   w, h = rect[2] - rect[0], rect[3] - rect[1]
@@ -1001,14 +1077,20 @@ def freeRingSpot(rect:Sequence[int], index:_BoxIndex, gap:float, *, quanta:int=1
   for dist in range(0, maxRings): # the width/height of the rectangular scan
     yStart = max(limit[1], rect[1] - dist * quanta)
     yEnd   = min(limit[3], rect[1] + dist * quanta)
+    ring:list[tuple[int, int]] = []
     for y in range(yStart, yEnd + 1, quanta):
       xStart = max(limit[0], rect[0] - dist * quanta)
       xEnd   = min(limit[2], rect[0] + dist * quanta)
       # the ring's perimeter: all of its top and bottom rows, just the ends of the others
       xIncr  = quanta if y == yStart or y == yEnd else max(1, xEnd - xStart)
       for x in range(xStart, xEnd + 1, xIncr):
-        if not index.hits([x, y, x + w, y + h], gap):
+        if nearest:
+          ring.append((x, y))
+        elif not index.hits([x, y, x + w, y + h], gap):
           return x, y
+    for x, y in sorted(ring, key=lambda p: (p[0] - rect[0]) ** 2 + (p[1] - rect[1]) ** 2):
+      if not index.hits([x, y, x + w, y + h], gap):
+        return x, y
   return None # (nowhere free within maxRings)
 
 @registerLayout
@@ -1054,8 +1136,9 @@ class FindFree(LayoutHeuristic):
           if node.modelObject is not None and node.modelObject.isIndividual() and isinstance(node, VRelation) \
           else self.expandFactor_nodes
     
+    dropped = node.__dict__.get("_dropping") # (the user dropped it, with these: see sngContext._Move)
     if direction == Direction.UNSPECIFIED:
-      if loc is not None:
+      if loc is not None or (dropped is not None and referenceNode is None): # (a drop: off what it's on, any way)
         direction = Direction.NEAREST
       elif referenceNode is not None:
         if node.modelObject.isa(referenceNode.modelObject): # type: ignore[union-attr, arg-type]
@@ -1118,9 +1201,15 @@ class FindFree(LayoutHeuristic):
     finalLimit = [int(i) for i in self._inHome(node, rect, [leftLimit, topLimit, rightLimit, bottomLimit], expandFactor)]
     reach = maxRings * self.quanta + expandFactor # (as far as the search goes)
     around = [rect[0] - reach, rect[1] - reach, rect[2] + reach, rect[3] + reach]
-    # (not on itself, nor on its own relations' labels)
-    pt = freeRingSpot([int(i) for i in rect], self.obstacles(around, [node, *node.relations]), expandFactor,
-                      quanta=self.quanta, limit=finalLimit, maxRings=maxRings)
+    # (not on itself, nor on its own relations' labels -- nor, for a drop, on what was dropped with it)
+    exclude = [node, *node.relations] if dropped is None else [o for d in {id(d): d for d in [node, *dropped]}.values() for o in (d, *d.relations)]
+    index = self.obstacles(around, exclude)
+    irect = [int(i) for i in rect]
+    if dropped is not None and not index.hits(irect, 0) and \
+       finalLimit[0] <= irect[0] <= finalLimit[2] and finalLimit[1] <= irect[1] <= finalLimit[3]: # (dropped on nothing: it stays exactly there)
+      bb = node.boundingBox()
+      return bb[0], bb[1]
+    pt = freeRingSpot(irect, index, expandFactor, quanta=self.quanta, limit=finalLimit, maxRings=maxRings, nearest=dropped is not None)
     if pt is None: # (nowhere free close enough: it stays where it is)
       bb = node.boundingBox()
       return bb[0], bb[1]
