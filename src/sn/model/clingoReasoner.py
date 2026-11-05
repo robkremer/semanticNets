@@ -88,11 +88,13 @@ class ClingoReasoner(Reasoner, engine="clingo"):
         self._objs.append(x)
       return f'o({n})'
     if isinstance(x, Sym):
-      return str(x) if _SYMBOL.match(x) else _str(str(x)) # (eg: a word in a constraint's report that isn't one)
+      return str(x) if _SYMBOL.match(x) and x not in _KEYWORDS else _str(str(x)) # (eg: a word in a constraint's report that isn't one, or is "not")
     if isinstance(x, bool):
       return "true" if x else "false"
     if isinstance(x, int) and abs(x) < 2**30:
       return str(x)
+    if isinstance(x, float) and x.is_integer() and abs(x) < 2**30:
+      return str(int(x)) # (the same value as the int: 2.0 is 2, so "height: 2" matches a height of 2.0 -- and "age: 30.0" an age of 30)
     return _str(str(x))
 
   def _program(self, facts:list[Fact]) -> str:
@@ -111,12 +113,16 @@ class ClingoReasoner(Reasoner, engine="clingo"):
       a *program* that refers to objects by their o(N) terms, which must come
       from the same rendering. Rendered afresh if None.
     '''
-    ctl = clingo.Control(["--warn=none"])
-    ctl.add("base", [], self.rules.read_text(encoding="utf-8"))
-    ctl.add("base", [], self._program(self.facts()) if facts is None else facts)
-    if program:
-      ctl.add("base", [], program)
-    ctl.ground([("base", [])])
+    messages:list[str] = []
+    ctl = clingo.Control(["--warn=none"], logger=lambda _code, msg: messages.append(msg.strip()), message_limit=10)
+    try:
+      ctl.add("base", [], self.rules.read_text(encoding="utf-8"))
+      ctl.add("base", [], self._program(self.facts()) if facts is None else facts)
+      if program:
+        ctl.add("base", [], program)
+      ctl.ground([("base", [])])
+    except RuntimeError as ex: # (eg: a native query with a syntax error: clingo's own message says where)
+      raise RuntimeError(f"The rules couldn't be compiled: {'; '.join(messages) or ex}") from ex
     symbols:list[clingo.Symbol] = []
     with ctl.solve(yield_=True) as handle:
       for m in handle: # the rule base is stratified, so exactly one model
@@ -380,6 +386,9 @@ class ClingoReasoner(Reasoner, engine="clingo"):
 
 _SYMBOL = re.compile(r"_*[a-z]\w*$")
 "A clingo symbolic constant (eg: symmetric)."
+
+_KEYWORDS:frozenset[str] = frozenset({"not"})
+"Words that look like symbolic constants (see *_SYMBOL*) but are clingo's: written as strings."
 
 def _str(s:str) -> str:
   '''

@@ -18,10 +18,13 @@ The reasoner works out what follows from a model. It's in two layers:
 
 Engines register themselves by name (``class ClingoReasoner(Reasoner,
 engine="clingo")``) and are made with
-:py:meth:`Reasoner.create(model, engine) <sn.model.reasoner.Reasoner.create>`.
-Another engine (eg: a description logic reasoner) would implement the same
-interface; ``test/test_model/test_reasoner.py`` pins down the semantics every
-engine must share.
+:py:meth:`Reasoner.create(model, engine) <sn.model.reasoner.Reasoner.create>`
+(by default, the ``reasoner/engine`` preference's: see
+:py:func:`~sn.model.reasoner.defaultEngine`). Another engine implements the
+same interface; ``test/test_model/test_reasoner.py`` pins down the semantics
+every engine must share (*ReasonerSpec*), and ``test/test_model/test_rules.py``
+runs the rules tests by each engine. There's a second one already: Nemo (see
+`The Nemo engine`_ below).
 
 Why ASP
 -------
@@ -298,6 +301,41 @@ objects aren't facts, and their conclusions are reported as plain
 inferences, unless the ``reasoner/showSysRules`` preference (or the
 reasoner's *showSysRules*) is on.
 
+The Nemo engine
+---------------
+
+:py:mod:`sn.model.nemoReasoner`
+  :py:class:`~sn.model.nemoReasoner.NemoReasoner` (``engine="nemo"``), built
+  on `Nemo <https://github.com/knowsys/nemo>`_, a Datalog engine (stratified
+  negation, aggregates) from TU Dresden, through its Python bindings
+  (``pip install nemo-python``, imported as ``nmo_python``). It's optional:
+  the module says how to install it if it's missing, and the tests skip it.
+
+Its rule base, ``nemoReasoner.rls``, is ``clingoReasoner.lp`` ported rule
+for rule, and ``_rulesProgram()`` compiles the user's rules the same way, so
+the two give the same results. Where Nemo differs:
+
+- Objects are constants ``<#N>``. Nemo strings have no escapes, so strings
+  are percent-encoded (``%22`` for a quote, ...), and decoded on the way back.
+- There are no tuples or function terms: a violation with *N* arguments is
+  ``violation0_N``/``violation_N``; an object a rule creates is a string
+  (``"%new|K|#V0|..."``, K saying which rule and variable) made with an
+  f-string in the rule's head.
+- Nemo checks that the whole program is stratified before it runs. A rule's
+  negated attribute test can't be on ``attr/3`` (which the rules feed), so it's
+  on ``attr_base/3``, the attributes the model gives -- a small difference in
+  meaning from clingo's, for rules only.
+- Counting is an aggregate in a rule's head, so "too few" has a rule for none
+  at all.
+- Nemo takes a moment for each fact it parses, so most facts go to it as
+  tab-separated tables it imports (in a temporary folder).
+
+What it adds is :py:meth:`~sn.model.nemoReasoner.NemoReasoner.explain`: the
+derivation of a conclusion from Nemo's trace, as
+:py:class:`~sn.model.nemoReasoner.Step` objects, briefly (leaving out the
+bookkeeping: what's data, a type, ...) or in full. The terminal's
+``explain`` and an inferred relation's **explain (why it holds)** use it.
+
 Queries
 -------
 
@@ -306,4 +344,5 @@ query's pattern to an ``ans(...)`` rule, solves it with the model's facts
 and the results of reasoning (a query's variables *do* range over created
 objects), and returns one dict per match: variable to object.
 :py:meth:`~sn.model.clingoReasoner.ClingoReasoner.query` takes clingo
-rules defining ``ans`` directly (the terminal's ``ask reasoner``).
+rules defining ``ans`` directly (the terminal's ``ask reasoner``); Nemo's
+takes Nemo rules (``ans(?X) :- holds(?T,?F,?X), name(?T,"owns"), ...``).

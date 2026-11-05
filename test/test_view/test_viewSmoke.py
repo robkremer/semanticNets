@@ -37,6 +37,7 @@ Created on Oct 18, 2026
 .. codeauthor:: Rob Kremer <robkremer@me.com>
 '''
 import builtins
+import importlib.util
 import logging
 import os
 import sys
@@ -53,6 +54,7 @@ import sn
 from util import terminal
 from util.utils import fixURL
 from sn.model.model import Model, Relation, IsaIndividual
+from util.commandParser import CompositeCommandMgr
 
 class Test(unittest.TestCase):
 
@@ -100,7 +102,7 @@ class Test(unittest.TestCase):
     self.view = v = SNGView(url, model=self.model)
     self.assertTrue(v.url.startswith(self.folder.as_uri()), v.url)
     v.window.withdraw()
-    v._askName = lambda mo: None # (a new type's attribute editor: not here)
+    v._askName = lambda mo, objectID=None: None # (a new type's attribute editor: not here)
     v.showAllModel()
     self.pump()
 
@@ -183,6 +185,20 @@ class Test(unittest.TestCase):
     inferred = [o for o in v.values() if o is not None and o.isInferred()]
     self.assertTrue(inferred, "nothing inferred is shown")
     self.assertIn("inferred", v.reasoningSummary().lower() + " inferred") # (a summary, whatever it says)
+    rel = next(o for o in inferred if isinstance(o.modelObject, Relation) and o.modelObject.isIndividual()
+               and not isinstance(o.modelObject, IsaIndividual))
+    menu = tk.Menu(v.window)
+    try:
+      rel.addModelEditingMenuItems(menu)
+      labels = [menu.entrycget(i, "label") for i in range(menu.index("end") + 1) if menu.type(i) == "command"] # type: ignore[operator]
+    finally:
+      menu.destroy()
+    self.assertIn("mark as asserted", labels)
+    if importlib.util.find_spec("nmo_python") is not None: # (the optional Nemo engine: it explains)
+      self.assertIn("explain (why it holds)", labels)
+      with mock.patch("builtins.print") as printed:
+        rel.explainInferred(rel.modelObject)
+      self.assertTrue(printed.call_args and "doesn't hold" not in str(printed.call_args[0][0]), printed.call_args)
     v.clearReasoning()
     self.pump()
     self.assertFalse([o for o in v.values() if o is not None and o._isConnected() and o.isInferred()])
@@ -248,6 +264,146 @@ class Test(unittest.TestCase):
       self.assertEqual(vo.boundingBox()[0], far, name)
     self.assertIn(self.vo("base2")._id, v.localLayout.pins)
     self.assertNotIn(self.vo("base1")._id, v.localLayout.pins) # (a root's kept where it is anyway)
+
+  def test0440arrangedLabelsOffNodes(self):
+    # "arrange now": the labels of the relations the layout doesn't place itself (here: all but isa) aren't left
+    # on the nodes it arranges; one undo puts them back. An isa link's label (it shows no text) isn't pinned.
+    from sn.view.graphics.treeLayout import TreeLayout
+    from sn.view.graphics.balloonLayout import HubLayout
+    from sn.view.graphics.vrelations import VRelation
+    v = self.view
+    def onNodes() -> list:
+      inWindows = v.containmentHomes()
+      shown = [o for o in v._shownObjects() if o not in inWindows and not o.isContextWindow()]
+      nodes = [o for o in shown if not isinstance(o, VRelation)]
+      overlap = lambda a, b: a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
+      return [(r.name, n.name) for r in shown if isinstance(r, VRelation) and r._labelShown()
+              for n in nodes if overlap(r.boundingBox(), n.boundingBox())]
+    # (what's put back exactly: not floating labels -- they go between their ends, wherever those are)
+    places = lambda: {o: o.boundingBox()[:2] for o in v._shownObjects() if not (isinstance(o, VRelation) and o.floating())}
+    for cls in (TreeLayout, HubLayout):
+      with self.subTest(layout=cls.NAME):
+        before = places()
+        floating = {o for o in v._shownObjects() if isinstance(o, VRelation) and o.floating()}
+        cls(v, **{p.name: p.default for p in cls.PARAMETERS}).arrange(animate=False)
+        self.pump()
+        self.assertEqual(onNodes(), [])
+        isas = [r for r in v._shownObjects() if isinstance(r, VRelation) and isinstance(r.modelObject, IsaIndividual)]
+        self.assertTrue(isas)
+        self.assertTrue(all(r.floating() for r in isas)) # (no text: not pinned -- its line runs through it)
+        v.context.undo()
+        self.pump()
+        self.assertEqual(places(), before)
+        self.assertEqual({o for o in v._shownObjects() if isinstance(o, VRelation) and o.floating()}, floating)
+
+  def test0450animationSwitchesLayoutBack(self):
+    # starting the animation switches a kept tree layout to "avoid overlaps"; undoing the run puts the tree back,
+    # as it was (its pins too), without arranging anything; redoing it switches again
+    from sn.view.graphics.treeLayout import TreeLayout
+    from sn.view.graphics.layout import FindFree
+    from sn.view.graphics.vrelations import VRelation
+    v = self.view
+    tree = TreeLayout(v, **{p.name: p.default for p in TreeLayout.PARAMETERS})
+    v.setDynamicLayout(tree)
+    self.pump()
+    tree.pins.add(12345)
+    v.toggleAnimationLayout()
+    self.assertIsInstance(v.localLayout, FindFree)
+    self.pump(0.3)
+    v.toggleAnimationLayout() # (stopped: the run's one command)
+    self.pump()
+    self.assertIsInstance(v.localLayout, FindFree)
+    nodes = lambda: {o: o.boundingBox()[:2] for o in v._shownObjects() if not isinstance(o, VRelation)}
+    after = nodes()
+    v.context.undo()
+    self.pump()
+    self.assertIs(v.localLayout, tree)
+    self.assertIn(12345, tree.pins)
+    v.context.redo()
+    self.pump()
+    self.assertIsInstance(v.localLayout, FindFree)
+    self.assertEqual(nodes(), after)
+
+  def inheritance(self):
+    '''
+    A class with two bases, and a grandchild: under a tree of "inherits-from", base1 -> derived -> grandchild; the
+    relation from derived to base2 shapes the tree but isn't a tree relation ("loose").
+
+    :returns: The view objects of base1, base2, derived, grandchild, and the loose relation.
+    '''
+    from sn.model.model import Node
+    v, m = self.view, self.model
+    klass = Node(m, [m.NODE], name="klass")
+    inherits = Relation(m, [m.RELATION], klass, klass, name="inherits-from")
+    a, b, c, d = (Node(m, [klass], individual=True, name=n) for n in ("base1", "base2", "derived", "grandchild"))
+    Relation(m, [inherits], c, a, individual=True)
+    loose = Relation(m, [inherits], c, b, individual=True)
+    Relation(m, [inherits], d, c, individual=True)
+    self.pump()
+    v.showAllModel()
+    self.pump()
+    return (*(self.vo(n) for n in ("base1", "base2", "derived", "grandchild")), v.findViewObjectForGraphObject(loose))
+
+  def dropLabel(self, rel) -> list:
+    'Drag the label of *rel* clear of everything, and drop it, as the user does: :returns: where it was dropped.'
+    v = self.view
+    bb = rel.boundingBox()
+    far = max(o.boundingBox()[2] for o in v.values() if o is not None and o._isConnected()) + 500
+    v.context.move(rel, far, bb[1], _oldPos=list(bb), _drag=True, _wasFloating=rel.floating(), _group=[rel])
+    self.pump()
+    return [far, bb[1]]
+
+  def test0420keptLayoutsLeaveLooseLabels(self):
+    # a kept tree (and balloon) layout leaves the label of a relation that isn't a tree relation as it is: floating,
+    # or where the user dropped it; undoing the drop floats it again
+    from sn.view.graphics.treeLayout import TreeLayout
+    from sn.view.graphics.balloonLayout import BalloonLayout
+    from sn.view.graphics.relationTable import RelationTable
+    v = self.view
+    _a, _b, _c, _d, loose = self.inheritance()
+    table = lambda: RelationTable.decode("inherits-from:shapes:destination")
+    for layout in (TreeLayout(v, relations=table(), direction="down", others="near"), BalloonLayout(v, relations=table())):
+      with self.subTest(layout=layout.NAME):
+        loose.floating(True)
+        v.setDynamicLayout(layout)
+        self.pump()
+        self.assertIn(loose, v.localLayout.structure(dynamic=True)[4] if isinstance(layout, TreeLayout)
+                             else v.localLayout._tree().structure(dynamic=True)[4])
+        self.assertTrue(loose.floating())
+        at = self.dropLabel(loose)
+        self.assertFalse(loose.floating())
+        self.assertEqual(loose.boundingBox()[:2], at)
+        v.context.new_node("node", name=f"another {layout.NAME}", individual=True) # (a command: the layout adjusts after it)
+        self.pump()
+        self.assertFalse(loose.floating())
+        self.assertEqual(loose.boundingBox()[:2], at)
+        v.context.undo() # (the new node)
+        v.context.undo() # (the drop)
+        self.pump()
+        self.assertTrue(loose.floating())
+
+  def test0430subtreeDraggedTogether(self):
+    # a parent dragged together with its child under a kept tree layout: the parent is pinned, as the root of
+    # its subtree, and the child stays under it
+    from sn.view.graphics.treeLayout import TreeLayout
+    from sn.view.graphics.relationTable import RelationTable
+    v = self.view
+    _a, _b, c, d, _loose = self.inheritance()
+    v.setDynamicLayout(TreeLayout(v, relations=RelationTable.decode("inherits-from:shapes:destination"), direction="down",
+                                  others="near"))
+    self.pump()
+    far = max(o.boundingBox()[2] for o in v.values() if o is not None and o._isConnected()) + 500
+    with CompositeCommandMgr(v.context):
+      for n in (c, d):
+        bb = n.boundingBox()
+        v.context.move(n, far + bb[0] - c.boundingBox()[0], bb[1], _oldPos=list(bb), _drag=True, _group=[c, d])
+    self.pump()
+    self.assertIn(c._id, v.localLayout.pins)
+    self.assertNotIn(d._id, v.localLayout.pins)
+    roots, children, _, _, _ = v.localLayout.structure(dynamic=True)
+    self.assertIn(c, roots)
+    self.assertIn(d, [k for g in children.get(c, []) for k in g])
+    self.assertEqual(c.boundingBox()[0], far)
 
   def test0500filesAndLock(self):
     v = self.view
@@ -429,6 +585,136 @@ class Test(unittest.TestCase):
     drop(brother, query)
     self.assertNotEqual(query.containmentOf(brother.modelObject), [])
 
+  def nested(self):
+    '''
+    "brother def" dropped in the query "who likes dave?" (a plain context): a window in a window. With nothing
+    hidden by a category (a fresh view's default).
+
+    :returns: The query's window and brother def's.
+    '''
+    v = self.view
+    query, brother = self.vo("who likes dave?"), self.vo("brother def")
+    for c in list(v.hides):
+      v.context.visibility(c, "show")
+    old = {brother: brother.centerPt()}
+    bb, (px1, py1, px2, py2) = brother.boundingBox(), query.panes()["contains"]
+    x, y = (px1 + px2 - bb[2] + bb[0]) / 2, (py1 + py2 - bb[3] + bb[1]) / 2
+    if bb[2] - bb[0] > px2 - px1 or bb[3] - bb[1] > py2 - py1: # (room for it)
+      qb = query.boundingBox()
+      query.boundingBox([qb[0], qb[1], qb[2] + bb[2] - bb[0] + 40, qb[3] + bb[3] - bb[1] + 40])
+      v.freshPaint(); query.draw()
+      px1, py1, px2, py2 = query.panes()["contains"]
+      x, y = (px1 + px2 - bb[2] + bb[0]) / 2, (py1 + py2 - bb[3] + bb[1]) / 2
+    brother.moveTo(x, y, adjustPos=False)
+    with CompositeCommandMgr(v.context):
+      v.context.move(brother, x, y, _oldPos=list(bb), _drag=True)
+      v._updateContainment(old)
+    self.pump()
+    self.assertNotEqual(query.containmentOf(brother.modelObject), [])
+    return query, brother
+
+  def test0740nestedWindows(self):
+    # collapsing (or erasing) a window with a window in it hides (erases) the inner window's contents too
+    v = self.view
+    query, brother = self.nested()
+    inner = [vo for vo in brother.windowContents() if vo._isConnected()]
+    self.assertTrue(inner)
+    self.assertFalse(any(vo.isHidden() for vo in inner))
+    v.context.collapse(query, True)
+    self.pump()
+    self.assertTrue(brother.isHidden())
+    self.assertEqual([vo.modelObject.name for vo in inner if not vo.isHidden()], [])
+    v.context.collapse(query, False)
+    self.pump()
+    self.assertEqual([vo.modelObject.name for vo in inner if vo.isHidden()], [])
+    v.context.visibility("queries", "erase")
+    self.pump()
+    self.assertEqual([vo.modelObject.name for vo in [query, brother, *inner] if vo._isConnected()], [])
+    v.context.undo()
+    self.pump()
+    self.assertTrue(all(vo._isConnected() for vo in [query, brother, *inner]))
+
+  def test0750relationIntoNestedWindow(self):
+    # a relation from something in a window to something in a window inside it belongs in the outer window
+    from sn.model.model import Node
+    v, m = self.view, self.model
+    query, brother = self.nested()
+    homes = v.containmentHomes()
+    b = next(vo for vo, (w, _) in homes.items() if w is brother and not isinstance(vo.modelObject, Relation))
+    person = next(o for o in m.values() if o is not None and o.name == "person" and o.isType())
+    likes = next(o for o in m.values() if o is not None and o.name == "likes" and o.isType())
+    a = Node(m, [person], individual=True, name="?asker")
+    Relation(m, [m.CONTAINS], query.modelObject, a, individual=True)
+    rel = Relation(m, [likes], a, b.modelObject, individual=True)
+    self.pump()
+    v.showAllModel()
+    self.pump()
+    va, vr = v.findViewObjectForGraphObject(a), v.findViewObjectForGraphObject(rel)
+    pane = query.panes()["contains"]
+    va.moveTo(pane[0] + 10, pane[1] + 10, adjustPos=False)
+    self.pump()
+    self.assertEqual(v.containmentHomes([vr]).get(vr), (query, "contains"))
+    v.bumpIntruders()
+    self.assertIsNotNone(query.paneAt(vr.centerPt()))
+
+  def test0760collapseHidesUsedVariables(self):
+    # collapsing a rule hides the variables its patterns use, not just those it contains (eg: the base rules');
+    # dragging a variable the rule's patterns use out of it doesn't take it out of the rule
+    from sn.model.model import Node
+    v, m = self.view, self.model
+    rule = v.context.new_node("rule", name="symmetric likes", individual=True)
+    self.pump()
+    person = next(o for o in m.values() if o is not None and o.name == "person" and o.isType())
+    likes = next(o for o in m.values() if o is not None and o.name == "likes" and o.isType())
+    p, q = (Node(m, [person], individual=True, name=n) for n in ("?p", "?q"))
+    Relation(m, [m.ANTECEDENT], rule, Relation(m, [likes], p, q, individual=True), individual=True)
+    Relation(m, [m.CONSEQUENT], rule, Relation(m, [likes], q, p, individual=True), individual=True)
+    self.pump()
+    v.showAllModel()
+    self.pump()
+    vr = self.vo("symmetric likes")
+    v.gatherIntoWindow(vr)
+    self.pump()
+    vp, vq = v.findViewObjectForGraphObject(p), v.findViewObjectForGraphObject(q)
+    self.assertIsNotNone(vr.paneAt(vp.centerPt()))
+    v.context.collapse(vr, True)
+    self.pump()
+    self.assertTrue(vp.isHidden() and vq.isHidden())
+    v.context.collapse(vr, False)
+    self.pump()
+    self.assertFalse(vp.isHidden() or vq.isHidden())
+    Relation(m, [m.CONTAINS], rule, p, individual=True) # (contained too: eg: by an older version)
+    self.pump()
+    rb, bb = vr.boundingBox(), vp.boundingBox()
+    old = {vp: vp.centerPt()}
+    vp.moveTo(rb[2] + 200, rb[3] + 200, adjustPos=False) # (as the drag moves it)
+    with CompositeCommandMgr(v.context):
+      v.context.move(vp, rb[2] + 200, rb[3] + 200, _oldPos=list(bb), _drag=True)
+      v._updateContainment(old)
+    self.pump()
+    self.assertNotEqual(vr.containmentOf(p), [])
+    self.assertIsNotNone(vr.paneAt(vp.centerPt())) # (put back: see homeStrays())
+
+  def test0770ruleConcludesAType(self):
+    # with "types" hidden, a rule that concludes ?x isa person still shows its isa link -- and person
+    from sn.model.model import Node
+    v, m = self.view, self.model
+    rule = v.context.new_node("rule", name="persons", individual=True)
+    self.pump()
+    person = next(o for o in m.values() if o is not None and o.name == "person" and o.isType())
+    x = Node(m, [person], individual=True, name="?someone")
+    isa = next(o for o in m.values() if isinstance(o, IsaIndividual) and o.src is x)
+    Relation(m, [m.CONSEQUENT], rule, isa, individual=True)
+    self.pump()
+    v.showAllModel()
+    self.pump()
+    v.gatherIntoWindow(self.vo("persons"))
+    self.pump()
+    v.context.visibility("types", "hide")
+    self.pump(0.4)
+    self.assertFalse(v.findViewObjectForGraphObject(isa).isHidden())
+    self.assertFalse(self.vo("person").isHidden())
+
   def test0730layoutsMoveWindowsAside(self):
     'What a layout arranges onto a context window moves the window aside, with its contents: nothing ends up in a window it doesn\'t belong in.'
     from sn.view.graphics.treeLayout import TreeLayout
@@ -475,6 +761,371 @@ class Test(unittest.TestCase):
     self.assertTrue(v.search("carol"))
     v.clearHighlights()
     self.assertTrue(v.pictureObjects())
+
+  def test0855findFarApart(self):
+    # Find with matches too far apart to fit in the window: it shows the one nearest the middle, and goes
+    # through them one by one, round again after the last
+    v = self.view
+    c = v.canvas
+    for name, x in (("zz-one", -4000), ("zz-two", 4000)):
+      v.context.new_node("person", name=name, individual=True)
+      self.pump()
+      self.vo(name).moveTo(x, 2000, adjustPos=False)
+    v.resetScrollRegion()
+    found, _ = v.search("zz-")
+    self.assertEqual(len(found), 2)
+    self.pump()
+    def inMiddle(vo) -> bool:
+      x, y = v.viewToWindow(*vo.centerPt())
+      mx, my = c.canvasx(c.winfo_width() / 2), c.canvasy(c.winfo_height() / 2)
+      return abs(x - mx) <= c.winfo_width() / 2 + 2 and abs(y - my) <= c.winfo_height() / 2 + 2
+    self.assertTrue(any(inMiddle(vo) for vo in found))
+    seen = []
+    for _ in range(3):
+      k, n = v.showMatch(1)
+      self.assertEqual(n, 2)
+      vo = v._liveMatches()[k - 1]
+      self.assertTrue(inMiddle(vo), vo.name)
+      seen.append(vo.name)
+    self.assertEqual(seen[0], seen[2])
+    self.assertNotEqual(seen[0], seen[1])
+    self.assertEqual(v.showMatch(-1)[0], [vo.name for vo in v._liveMatches()].index(seen[1]) + 1)
+
+  def test0860isaChoices(self):
+    # making an isa link (see SNView.makeRelationFrom()): only a type can be chosen as the parent -- not
+    # one it has already, nor one that'd make an isa cycle; and a cycle is said, not a traceback
+    v, m = self.view, self.model
+    v.context.new_node("person", name="employee", type=True)
+    self.pump()
+    alice, bob, person, employee = (self.vo(n) for n in ("alice", "bob", "person", "employee"))
+    def choices(origin):
+      v.makeRelationFrom(origin, m.ISA)
+      assert v._elasticLineChoiceData is not None
+      choose = v._elasticLineChoiceData.filter
+      v.cancelElasticLine()
+      return choose
+    choose = choices(alice)
+    self.assertFalse(choose(bob))      # (an individual)
+    self.assertFalse(choose(person))   # (already)
+    self.assertTrue(choose(employee))
+    self.assertFalse(choices(person)(employee)) # (a cycle)
+    n = len(m)
+    with self.assertLogs(level="ERROR") as logs:
+      v.makeRelation(person, employee, m.ISA)
+    self.assertNotIn("Traceback", "\n".join(logs.output))
+    self.assertEqual(len(m), n)
+    with self.assertRaises(ValueError): # (a second isa link to the same parent)
+      v.context.new_relation("isa", source=alice.modelObject, destination=person.modelObject)
+
+  def test0865reEndRubberBand(self):
+    # re-ending a relation: while choosing, the half being re-ended isn't drawn (the rubber band, thin and dashed,
+    # stands in for it); cancelled, it's back
+    from sn.view.graphics.vrelations import VRelation
+    v = self.view
+    rel = next(o for o in v._shownObjects() if isinstance(o, VRelation) and not isinstance(o.modelObject, IsaIndividual)
+               and o.src is not None and o.dst is not None and o.connectInfo is not None)
+    c = v.canvas
+    for end, half in (("dst", rel.connectInfo.destIDs()), ("src", rel.connectInfo.sourceIDs())):
+      with self.subTest(end=end):
+        self.assertTrue(half)
+        states = {i: c.itemcget(i, "state") for i in half}
+        rel.chooseNewEndpoint(end)
+        data = v._elasticLineChoiceData
+        self.assertIsNotNone(data)
+        self.assertEqual({c.itemcget(i, "state") for i in half}, {"hidden"})
+        self.assertNotEqual(c.itemcget(data.lineID, "dash"), "")
+        self.assertLessEqual(float(c.itemcget(data.lineID, "width")), 2)
+        v.cancelElasticLine()
+        self.assertIsNone(v._elasticLineChoiceData)
+        self.assertEqual({i: c.itemcget(i, "state") for i in half}, states)
+
+  def test0866undoRefused(self):
+    # an undo that fails (eg: what it would change can't be) says why, and stays where it was: undoing again tries
+    # it again, not the command before it
+    from util.command import Command
+    v = self.view
+    class Refusing(Command):
+      def __init__(self):
+        super().__init__("refusing")
+        self.refuse = True
+      def do(self):
+        super().do()
+      def undo(self):
+        super().undo()
+        if self.refuse:
+          raise PermissionError("not now")
+    v.context.new_node("person", name="eve", individual=True)
+    self.pump()
+    c = Refusing()
+    v.context.doList.do(c)
+    with self.assertLogs(level="ERROR") as logs:
+      v.context.undo()
+    self.assertIn('Can\'t undo "refusing": not now', "\n".join(logs.output))
+    self.assertIn("eve", self.shown())
+    c.refuse = False
+    v.context.undo() # (it, this time)
+    v.context.undo() # (eve)
+    self.pump()
+    self.assertNotIn("eve", self.shown())
+
+  def test0870madeWhileZoomed(self):
+    # a new object's box is drawn where it is, at the view's zoom -- its shadow too (a type's)
+    v = self.view
+    v.zoom(2.0)
+    self.pump()
+    for name, kw in (("eve", {"individual": True}), ("employee", {"type": True})):
+      v.context.new_node("person", name=name, **kw)
+      self.pump()
+      vo = self.vo(name)
+      expected = [float(c) for c in v.viewToWindow(vo._shape.points())]
+      self.assertEqual([round(c, 3) for c in v.canvas.coords(vo._shape.id)], [round(c, 3) for c in expected], name)
+    shadow = self.vo("employee").decorators.get("shadow")
+    if shadow is not None and shadow.id is not None:
+      sx = v.canvas.coords(shadow.id)[0::2]
+      bx = v.canvas.coords(self.vo("employee")._shape.id)[0::2]
+      self.assertLess(abs(min(sx) - min(bx)), 20) # (beside the box, not at half its coordinates)
+
+  def test0880zoomRepaints(self):
+    # what's a fixed size on the screen stays so after a zoom: eg, the selection handles
+    v = self.view
+    alice = self.vo("alice")
+    v.selected.clear()
+    alice.selected(True)
+    self.pump()
+    handle = alice.decorators["selected"]
+    size = lambda: (lambda c: round(c[2] - c[0]))(v.canvas.coords(next(iter(handle.ids.values()))))
+    before = size()
+    v.zoom(2.5)
+    self.pump()
+    self.assertEqual(size(), before)
+    marker = next((m for m in alice.decorators["markers"].markers if m.id is not None), None)
+    if marker is not None: # (its letter in the view's font, at its zoom: not Tk's fixed font)
+      self.assertNotIn("TkSmallCaptionFont", str(v.canvas.itemcget(marker.id, "font")))
+
+  def test0890hideZoomShow(self):
+    # objects hidden while the view zooms are inside the scroll region when they're shown again
+    v = self.view
+    person = self.vo("person")
+    person.moveTo(3000, 2500, adjustPos=False)
+    v.resetScrollRegion()
+    self.pump()
+    v.context.visibility("types", "hide")
+    self.pump()
+    v.zoom(1.25)
+    self.pump()
+    v.context.visibility("types", "show")
+    self.pump()
+    x1, y1, x2, y2 = (float(c) for c in str(v.canvas.cget("scrollregion")).split())
+    bx1, by1, bx2, by2 = v.canvas.bbox(person._shape.id)
+    self.assertTrue(x1 <= bx1 and y1 <= by1 and bx2 <= x2 and by2 <= y2, ((x1, y1, x2, y2), (bx1, by1, bx2, by2)))
+
+  def test0895changedWhileErased(self):
+    # an object changed while it's erased from the view comes back as it is now
+    v, m = self.view, self.model
+    alice = self.vo("alice")
+    v.doErase([alice])
+    self.pump()
+    v.context.set_attribute(alice.modelObject, "name", "alicia")
+    v.context.set_attribute(m["person"], "vis/fillColor", "red")
+    self.pump()
+    v.context.undo() # (the colour)
+    v.context.undo() # (the name)
+    v.context.undo() # (the erase)
+    self.pump()
+    self.assertIn("alice", v.canvas.itemcget(alice.decorators["text"].id, "text"))
+    v.doErase([alice])
+    self.pump()
+    m["person"]["vis/fillColor"] = "green" # (inherited: changed while it's erased -- not a command, so undo puts back the erase)
+    self.pump()
+    v.context.undo() # (the erase)
+    self.pump()
+    self.assertEqual(alice.cache["vis/fillColor"], "green")
+    self.assertEqual(v.canvas.itemcget(alice._shape.id, "fill"), "green")
+
+  def test0898undoEraseChecks(self):
+    # undoing an erase doesn't put back an object the view shows already (the model's undo brought it
+    # back), nor one that's gone from the model since
+    v, m = self.view, self.model
+    alice = self.vo("alice")
+    mo = alice.modelObject
+    v.doErase([alice])
+    self.pump()
+    v.context.remove(mo)
+    self.pump()
+    v.context.undo() # (the remove: the view shows it again, with a new view object)
+    self.pump()
+    v.context.undo() # (the erase)
+    self.pump()
+    self.assertEqual(len([o for o in v.viewObjectsFor(mo) if o._isConnected()]), 1)
+    bob = self.vo("bob")
+    v.doErase([bob])
+    self.pump()
+    bob.modelObject._disconnect() # (gone from the model -- not by a command of this view's)
+    self.pump()
+    v.context.undo() # (the erase)
+    self.pump()
+    self.assertFalse(bob._isConnected())
+    self.assertEqual(v.validate(), 0)
+
+  def test0899drops(self):
+    # a dropped object stays where it's dropped if it's on nothing (not 15 units clear of everything); one
+    # dropped on something is nudged off the shortest way (left too); what's dropped together keeps its shape
+    v = self.view
+    a, b = self.vo("alice"), self.vo("bob")
+    b.moveTo(5000, 5000, adjustPos=False)
+    w = a.boundingBox()[2] - a.boundingBox()[0]
+    v.context.move(a, 5000 - w - 6, 5000, _drag=True)
+    self.assertEqual(a.boundingBox()[:2], [5000 - w - 6, 5000])
+    v.context.move(a, 5000 - w + 10, 5000, _drag=True) # (10 into b's left edge)
+    x, y = a.boundingBox()[:2]
+    self.assertLess(x, 5000 - w)
+    self.assertEqual(y, 5000)
+    a.moveTo(5000 - w - 6, 5000, adjustPos=False)
+    with CompositeCommandMgr(v.context):
+      for n, dx in ((a, -w - 6), (b, 0)):
+        v.context.move(n, 7000 + dx, 7000, _drag=True, _group=[a, b])
+    self.assertEqual(a.boundingBox()[:2], [7000 - w - 6, 7000])
+    self.assertEqual(b.boundingBox()[:2], [7000, 7000])
+
+  def test0900undoHideKeepsShownAnyway(self):
+    # an object shown anyway in a hidden category: hidden again when that's undone; shown again when hiding
+    # the category again is undone
+    v = self.view
+    person = self.vo("person")
+    v.context.visibility("types", "hide")
+    self.pump()
+    self.assertTrue(person._hidden)
+    v.context.represent([person.modelObject]) # (asked for: shown anyway)
+    self.pump()
+    self.assertFalse(person._hidden)
+    v.context.undo()
+    self.pump()
+    self.assertTrue(person._hidden)
+    v.context.redo()
+    self.pump()
+    self.assertFalse(person._hidden)
+    v.context.visibility("types", "show")
+    v.context.visibility("types", "hide") # (hides it too)
+    self.pump()
+    self.assertTrue(person._hidden)
+    v.context.undo() # (the second hide)
+    v.context.undo() # (the show)
+    self.pump()
+    self.assertEqual(v.hides.get("types"), "hide")
+    self.assertFalse(person._hidden)
+    v.context.redo()
+    v.context.redo()
+    self.pump()
+    self.assertTrue(person._hidden)
+
+  def test0910showHiddenOfTypes(self):
+    # "show" > "relations..." and "nodes...": those of the types chosen that are hidden by their category are
+    # shown (not "they're all shown already"); undone
+    v = self.view
+    rel = next(o for o in v.values() if o is not None and o._isConnected() and isinstance(o.modelObject, Relation)
+               and not isinstance(o.modelObject, IsaIndividual) and o.modelObject.isIndividual())
+    typeName = next(p for p in rel.modelObject.getParents() if p is not None).name
+    alice = self.vo("alice")
+    class Dialog: # (chooses the type, instead of asking)
+      def __init__(self, _parent, _title, types, _checked, note="", options=()):
+        self.types, self.options = types, {label: on for label, on in options}
+      def show(self):
+        return {id(t) for t in self.types if t.name in (typeName, "person")}
+    for category, vo, show in ((v.relationCategory(typeName), rel, v.showRelationsOfTypes),
+                               ("individuals", alice, v.showNodesOfTypes)):
+      v.context.visibility(category, "hide")
+      self.pump()
+      self.assertTrue(vo._hidden)
+      with mock.patch("sn.view.graphics.visibilityDialog.TypesDialog", Dialog), \
+           mock.patch("tkinter.messagebox.showinfo") as info:
+        show()
+      self.pump()
+      info.assert_not_called()
+      self.assertFalse(vo._hidden, category)
+      v.context.undo()
+      self.pump()
+      self.assertTrue(vo._hidden, category)
+      v.context.undo() # (the hide)
+      self.pump()
+
+  def test0920arrangeDuringTween(self):
+    # arranging again while an arrangement is still moving things smoothly: undoing it puts them back where the
+    # first one put them (not part way there)
+    from sn.view.graphics.treeLayout import TreeLayout
+    from sn.view.graphics.balloonLayout import BalloonLayout
+    v = self.view
+    defaults = lambda cls: {p.name: p.default for p in cls.PARAMETERS}
+    first = TreeLayout(v, **defaults(TreeLayout)).arrange()
+    self.assertIsNotNone(first)
+    self.pump(0.06) # (part way)
+    BalloonLayout(v, **defaults(BalloonLayout)).arrange()
+    self.pump(0.5)
+    v.context.undo()
+    self.pump()
+    for vo, _, (x, y), _ in first.moves:
+      if vo._isConnected():
+        self.assertEqual([round(c) for c in vo.boundingBox()[:2]], [round(x), round(y)], vo.name)
+
+  def test0930undoLabelDrag(self):
+    # dropping a dragged relation label pins it there; undoing that floats it again (it follows its ends)
+    from sn.view.graphics.vrelations import VRelation
+    v = self.view
+    rel = next(o for o in v._shownObjects() if isinstance(o, VRelation) and o.floating()
+               and not isinstance(o.modelObject, IsaIndividual) and o.src is not None and o.dst is not None)
+    def drag(vo, dx, dy):
+      x, y = v.viewToWindow(*vo.centerPt())
+      x, y = x - v.canvas.canvasx(0), y - v.canvas.canvasy(0)
+      vo.onButton_1(self.event(x, y))
+      for i in range(1, 11):
+        vo.onB1_Motion(self.event(x + dx * i / 10, y + dy * i / 10))
+      vo.onB1_ButtonRelease(self.event(x + dx, y + dy))
+      self.pump()
+    drag(rel, 120, 90)
+    self.assertFalse(rel.floating())
+    v.context.undo()
+    self.pump()
+    self.assertTrue(rel.floating())
+    before = rel.centerPt()
+    rel.src.moveTo(rel.src.boundingBox()[0] + 200, rel.src.boundingBox()[1], adjustPos=False)
+    self.pump()
+    self.assertNotEqual(rel.centerPt(), before) # (it followed its end)
+    v.context.redo()
+    self.pump()
+    self.assertFalse(rel.floating())
+
+  def test0894longWindowTitle(self):
+    # a window's title stays in its banner, clear of its kind ("rule"): cut short, with an ellipsis
+    v, m = self.view, self.model
+    r = v.context.new_node("rule", name="a rule with a name far too long for its window", individual=True)
+    self.pump()
+    vr = self.vo(r.name)
+    x1, y1, _, y2 = vr.boundingBox()
+    vr.boundingBox([x1, y1, x1 + 180, y2])
+    v.freshPaint(); vr.draw(); self.pump()
+    frame = vr.decorators["frame"]
+    c = v.canvas
+    title, kind, banner = (c.bbox(frame.ids[k]) for k in ("title", "kind", "banner"))
+    self.assertTrue(c.itemcget(frame.ids["title"], "text").endswith("\u2026"))
+    self.assertLessEqual(title[2], kind[0])
+    self.assertLessEqual(kind[2], banner[2])
+
+  def test0896becomesAWindow(self):
+    # a node made a rule is drawn as a window; made a plain node again, it has its text back
+    v, m = self.view, self.model
+    x = v.context.new_node("node", name="x", individual=True)
+    self.pump()
+    vx = self.vo("x")
+    self.assertIn("text", vx.decorators)
+    v.context.new_relation("isa", source=x, destination=m.RULE)
+    self.pump()
+    self.assertIn("frame", vx.decorators)
+    self.assertNotIn("text", vx.decorators)
+    v.context.undo()
+    self.pump()
+    self.assertIn("text", vx.decorators)
+    self.assertNotIn("frame", vx.decorators)
+    x1, y1, x2, y2 = vx.boundingBox()
+    self.assertLess(x2 - x1, vx.WINDOW_MIN[0]) # (as big as its text again)
 
   def test0850danglingEnds(self):
     # a relation whose own end is top, while top isn't shown, is left dangling there (see
@@ -599,7 +1250,7 @@ class Test(unittest.TestCase):
     from sn.model.model import Node
     v, m = self.view, self.model
     asked:list[str] = []
-    v._askName = lambda mo: asked.append(mo.name)
+    v._askName = lambda mo, objectID=None: asked.append(mo.name)
     v.context.new_node("person", name="eve", individual=True)
     self.pump()
     self.assertEqual(asked, ["eve"])
@@ -608,6 +1259,71 @@ class Test(unittest.TestCase):
     self.pump()
     self.assertEqual(asked, ["eve"])
     self.assertIn("made0", self.shown()) # (shown, without asking)
+
+  def test1110cancelledNewObject(self):
+    'A new object left nameless (its editor cancelled) isn\'t made after all: undone, and not to be redone -- in a window\'s pane too. Named, it stays.'
+    from sn.view.graphics import viewEditing
+    v, m = self.view, self.model
+    del v._askName # (the real one, with the editor stood in for)
+    def make(into=None) -> None:
+      menu = tk.Menu(v.canvas)
+      v.addNewObjectMenus(menu, (100, 100), into=into)
+      types = menu.nametowidget(menu.entrycget("new instance of Node", "menu"))
+      types.nametowidget(types.entrycget(m.name, "menu")).invoke("person")
+      self.pump()
+    def gone() -> list:
+      return [o for o in v.values() if o is not None and o.modelObject is not None and not o.modelObject._isConnected()]
+    query = self.vo("who likes dave?")
+    for into in (None, (query, "contains")):
+      n, undo = len(list(m.values())), v.context.doList.getUndoDesc()
+      with mock.patch.object(viewEditing, "applyEditAttrsBox"): # (cancelled: nothing changed)
+        make(into)
+      self.assertEqual(len(list(m.values())), n, into)
+      self.assertEqual(v.context.doList.getUndoDesc(), undo)
+      self.assertEqual(v.context.doList.getRedoDesc(), "<nothing to redo>")
+      self.assertEqual(gone(), [])
+    with mock.patch.object(viewEditing, "applyEditAttrsBox", side_effect=lambda parent, mo, **kw: mo.__setitem__("name", "zed")):
+      make()
+    self.assertIn("zed", self.shown())
+    v.context.undo()
+    self.pump()
+    self.assertNotIn("zed", self.shown())
+    v.context.redo() # (a named one comes back)
+    self.pump()
+    self.assertIn("zed", self.shown())
+
+  def test1120selectionRedraw(self):
+    'Selecting a relation thickens its line, deselecting thins it again; a node loses its handles. What\'s selected, erased and put back by undo: shown unselected -- and the context windows remembered are the ones there are.'
+    from sn.view.graphics.vrelations import VRelation
+    v = self.view
+    r = next(o for o in v.values() if isinstance(o, VRelation) and not o._hidden and o.connectInfo is not None and o.connectInfo.sourceLineID is not None)
+    def width() -> float:
+      assert r.connectInfo is not None and r.connectInfo.sourceLineID is not None
+      return float(v.canvas.itemcget(r.connectInfo.sourceLineID, "width"))
+    before = width()
+    r.selected(True)
+    self.assertGreater(width(), before)
+    r.selected(False)
+    self.assertEqual(width(), before)
+    n = self.vo("alice")
+    n.selected(True)
+    self.assertTrue(v.canvas.find_withtag("handle"))
+    n.selected(False)
+    self.assertFalse(v.canvas.find_withtag("handle"))
+    query = self.vo("who likes dave?")
+    v.contextWindows() # (remembered: kept up to date as they're erased and put back)
+    for vo in (query, r, n):
+      vo.selected(True, _multi=True)
+    v.doErase([query, r, n])
+    self.pump()
+    self.assertNotIn(query, v.contextWindows())
+    self.assertEqual(v.selected, set())
+    v.context.undo()
+    self.pump()
+    self.assertIn(query, v.contextWindows())
+    self.assertEqual(v.contextWindows(), [w for w in v.values() if w is not None and not isinstance(w, VRelation) and w._isConnected() and w.isContextWindow()])
+    self.assertFalse(r.selected())
+    self.assertEqual(width(), before)
 
   def test1200newViewOfOpenModel(self):
     'New... a view of a model whose view is open: the model in memory is used, not read again -- which would show all of it in that view.'

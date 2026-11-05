@@ -52,6 +52,7 @@ import tkinter as tk
 import weakref
 import traceback
 import itertools
+import importlib.util
 from abc import abstractmethod
 
 from util.persistence.serialize import InstantiationInfo, ParamInfo, PropertyInfo
@@ -570,7 +571,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     ("gui/relationLabel" for relations). A template that can't be expanded
     gives the name, with a warning.
     '''
-    from sn.view.graphics.labels import expand, labelLookup, DEFAULT_LABEL, TemplateError
+    from sn.view.graphics.labels import expand, labelLookup, DEFAULT_LABEL, TemplateError, hasHookCall
     mo = self.modelObject
     if mo is None:
       return "?"
@@ -585,7 +586,11 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     # attributes up through the object's types at every draw, which was most of
     # the cost of drawing a label. Not with a hook in it, which is promised a
     # call each time (see labels).
-    key = (self.view.__dict__.get("_structureVersion", 0), template) if "$(" not in template else None
+    # ... and, for a template showing its types ("$type"), their names: a type renamed tells only its own
+    # observers and what inherits its name -- not an instance with a name of its own, in a view the type
+    # isn't in (SNGView.structureChanged() is bumped for a rename only by an object the view shows).
+    key = (self.view.__dict__.get("_structureVersion", 0), template,
+           tuple(p.name for p in mo.getParents()) if "type" in template else None) if not hasHookCall(template) else None
     memo = self.__dict__.get("_labelMemo")
     if key is not None and memo is not None and memo[0] == key:
       return memo[1]
@@ -885,19 +890,19 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
           vChanged = True # (the label may show any attribute: see labelText())
         elif topicName == "mod inherited attribute": # (a type above it changed one it inherits -- see AttributedObject._notifyAttributeInheritors())
           attname = topic[1][0]
-          if self._isConnected(): # (not one taken out of the view: drawing it would put it back)
-            if attname in self.cache:
-              self.cache.refresh(attname)
-            vChanged = True
+          if attname in self.cache: # (even one erased from the view: it's put back as it is now -- draw() leaves it alone till then)
+            self.cache.refresh(attname)
+          vChanged = True
         elif topicName == "mod supers": # (an isa link above it made, moved or taken out: what it inherits may differ -- see IsaIndividual._supersChanged())
-          if self._isConnected():
-            self.cache.refresh()
-            vChanged = True
+          self.cache.refresh() # (even one erased from the view: see above)
+          self._rechooseDecorators() # (eg: made a rule: drawn as a window)
+          vChanged = True
           
         elif topicName in ("asserted", "inferred"): # (marked as asserted, or that undone: drawn faded or not -- see isInferred())
           vChanged = True
         elif topicName == "mod individual": # (made a type, or an individual: what it inherits may differ, and it may be in a hidden category now)
           self.cache.refresh()
+          self._rechooseDecorators() # (eg: a type's shadow)
           self.view._exemptIfFiltered(self)
           vChanged = True
         else:
@@ -1111,6 +1116,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     # move, not just its last FindFree-driven leg.
     movedSet = self.view.selected if self.selected() else [self]
     self.dragStartPositions:dict["VObject", list[int]] = {n: n.boundingBox() for n in movedSet}
+    from sn.view.graphics.vrelations import VRelation
+    self.dragStartFloating:dict["VObject", bool] = {n: n.floating() for n in movedSet if isinstance(n, VRelation)}
+    "Whether each relation label dragged floated: a drop pins it, and undoing the drop floats it again."
     # where the moved objects, and the relations they drag along, were -- to
     # tell what's been dropped into or dragged out of a context window (see
     # SNGView._updateContainment())
@@ -1231,7 +1239,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
           for n in movedObjects:
             bb = n.boundingBox()
             startPos = self.dragStartPositions.get(n, bb)
-            self.view.context.move(n, bb[0], bb[1], _oldPos=startPos, _drag=True)
+            self.view.context.move(n, bb[0], bb[1], _oldPos=startPos, _drag=True, _group=list(movedObjects),
+                                   _wasFloating=self.__dict__.get("dragStartFloating", {}).get(n))
           self.view._updateContainment(self.dragStartCenters, draggedAlong=self.dragAlong)
       else: # this was a click, not a drag: toggle the selection state
         s = event.state
@@ -1376,6 +1385,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       menu.add_command(label="mark as asserted" + (" (the model is write-locked)" if locked else ""),
                        state=tk.DISABLED if locked else tk.NORMAL,
                        command=lambda: self.view.context.mark_asserted(mo))
+      if isinstance(mo, Relation) and mo.isIndividual() and importlib.util.find_spec("nmo_python") is not None:
+        menu.add_command(label="explain (why it holds)", command=lambda: self.explainInferred(mo))
       menu.add_separator()
       return
     disabled = self._systemLocked()
@@ -1398,6 +1409,17 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     menu.add_command(label="copy", command=self.copySelection)
     menu.add_command(label="copy as picture", command=lambda: self.copySelection(picture=True))
     menu.add_separator()
+
+  def explainInferred(self, mo:Relation) -> None:
+    '''
+    Print why the reasoner concludes *mo* (an inferred relation, or isa link)
+    to the window's terminal (see *ModelContext.explain()*: by the nemo
+    engine, which can say how it reached a conclusion).
+    '''
+    try:
+      print(self.view.context.explain(mo, model=self.view.model))
+    except Exception as ex: # (eg: Nemo isn't installed, or rules it can't read: said, not a traceback)
+      logger.error(f'Can\'t explain "{mo.name}": {ex}')
 
   MENU_PREFIX = ".menu/"
   '''The start of the attributes that add items to an object's menu (see
@@ -1620,7 +1642,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     expMenu.add_command(label="3 levels", command=lambda: self.view.context.expand(self, levels=2, also=also))
     expMenu.add_command(label="4 levels", command=lambda: self.view.context.expand(self, levels=3, also=also))
     rels = removeDuplicateObjects([r for vo in targets for r in vo.expandableRelations()])
-    menu.add_cascade(menu=expMenu, label=f"expand all ({len(rels)}{selected})")
+    inView = self.view._shownModelObjects()
+    new = sum(1 for r in rels if id(r) not in inView or any(e is not None and id(e) not in inView for e in (r.localSrc, r.localDst)))
+    count = f"{len(rels)}" if new == len(rels) else f"{len(rels)}, all shown" if new == 0 else f"{new} new of {len(rels)}"
+    menu.add_cascade(menu=expMenu, label=f"expand all ({count}{selected})")
     menu.add_command(label="expand by relation..." + (f" ({n} selected)" if n > 1 else ""), command=self.expandByRelation)
     menu.add_command(label="erase from view" + (f" ({n} selected)" if n > 1 else ""), accelerator="Delete",
                      command=lambda: self.view.doErase(self.selectionOrSelf()))
@@ -1698,23 +1723,67 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
 
   # ---- DRAWING ---------------------------------------------------------------
   
-  def makeDecorators(self):
+  def _decoratorKinds(self) -> dict[str, type]:
+    '''
+    :returns: The decorators this object has, by key, as its model object
+      is now: eg: a window's frame, or a type's shadow (see *makeDecorators()*).
+    '''
+    ret:dict[str, type] = {}
     notIsIsa = type(self.modelObject) is not IsaIndividual if self.modelObject is not None else True
     if self.isContextWindow():
-      self.decorators["frame"] = ContextFrame(self) # a window, titled in its banner
+      ret["frame"] = ContextFrame # a window, titled in its banner
     elif notIsIsa:
-      self.decorators["text"] = WrappingText(self)
-    self.decorators["markers"] = MarkerContainer(self)
+      ret["text"] = WrappingText
+    ret["markers"] = MarkerContainer
     mo = self.modelObject
     try:
       if mo is not None and mo.isIndividual() and isinstance(mo, Node) and mo.isa(mo.model.CONTEXT): # (it may be disabled: see GraphObject.isDisabled())
-        self.decorators["disabled"] = DisabledSlash(self)
+        ret["disabled"] = DisabledSlash
     except Exception: # (eg: half-built)
       pass
     # shadow types only. The decorator is also drawn only while "gui/shadowTypes" is on (see ShadowDecorator.draw())
     if notIsIsa and self.modelObject is not None and self.modelObject.isType() and \
         snPrefs.get("gui/shadowTypes", storeDefault=True, storeType=bool): # (its note: see sn.PREFS)
-      self.decorators["shadow"] = ShadowDecorator(self)
+      ret["shadow"] = ShadowDecorator
+    return ret
+
+  def makeDecorators(self):
+    for key, cls in self._decoratorKinds().items():
+      self.decorators[key] = cls(self)
+
+  _CHOSEN_DECORATORS = ("frame", "text", "disabled", "shadow")
+  "The decorators that depend on what the model object is (see *_decoratorKinds()*): chosen again when that changes."
+
+  def _rechooseDecorators(self) -> bool:
+    '''
+    The model object's types (or kind) changed: give it the decorators it
+    should have now -- eg: a node made a rule is drawn as a window, and one
+    that stops being one has its text again; an individual made a type gets
+    its shadow (see *_decoratorKinds()*).
+
+    :returns: Whether any changed.
+    '''
+    want = self._decoratorKinds()
+    wasWindow = "frame" in self.decorators
+    changed = False
+    for key in self._CHOSEN_DECORATORS:
+      have = self.decorators.get(key)
+      cls = want.get(key)
+      if (type(have) if have is not None else None) is cls:
+        continue
+      changed = True
+      if have is not None:
+        have.delete()
+        self.decorators.pop(key, None)
+      if cls is not None:
+        self.decorators[key] = cls(self)
+    if changed and wasWindow and "frame" not in want and not self.userSized: # (no longer a window: as big as its text again)
+      x1, y1, _, _ = self.boundingBox()
+      self.boundingBox([x1, y1, x1 + 20, y1 + 20])
+      text = self.decorators.get("text")
+      if isinstance(text, WrappingText):
+        text._fitted = None
+    return changed
 
   def draw(self, fast=False, **kwargs):#, rect=None):
     '''
@@ -2035,16 +2104,19 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     from sn.view.graphics.expandDialog import relationChoices, OUT, IN, BOTH
     view = self.view
     merged:dict = {}
+    inView = view._shownModelObjects()
+    shown = lambda r: id(r) in inView and all(e is None or id(e) in inView for e in (r.localSrc, r.localDst))
     for vo in targets:
       mo = vo.modelObject
       if mo is None:
         continue
       hidden = lambda r, mo=mo: view.isFiltered(r) or any(e is not None and e is not mo and view.isFiltered(e) for e in (r.localSrc, r.localDst))
-      for c in relationChoices(mo, vo.expandableRelations(withHidden=True), hidden=hidden): # type: ignore[misc]
+      for c in relationChoices(mo, vo.expandableRelations(withHidden=True), hidden=hidden, shown=shown): # type: ignore[misc]
         key = (id(c.type), c.direction)
         if key in merged:
           merged[key].count += c.count
           merged[key].hidden += c.hidden
+          merged[key].shown += c.shown
         else:
           merged[key] = c
     return sorted(merged.values(), key=lambda c: (c.type.name or "", [OUT, BOTH, IN].index(c.direction))) # (as relationChoices() sorts them)
@@ -2073,10 +2145,9 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
               if s is not self: s.selected(False)
           self.view.selected.add(self)
       elif self.decorators is not None: # setting not selected
-        if "selected" in self.decorators:
+        if "selected" in self.decorators: # (only its handles go: nothing else of it is drawn differently -- a relation's line is: see VRelation.selected())
           self.decorators["selected"].delete()
           assert "selected" not in self.decorators
-          self.draw()
           self.view.selected.discard(self)
     return "selected" in self.decorators if self.decorators is not None else None
 
@@ -2206,24 +2277,45 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
             setattr(r, end, None) # (AGRelation's setter takes it off our lists too)
             detached.append((r, end))
     self._detachedTypeEnds = detached
-    if self.selected(): # (out of the selection too: else deselecting it later -- eg: a click elsewhere -- would draw it again)
-      self.selected(False)
+    sel = self.decorators.get("selected") if self.decorators is not None else None
+    if sel is not None: # (out of the selection too: else deselecting it later -- eg: a click elsewhere -- would draw it again; but not drawn again now, unselected, as it goes)
+      sel.delete()
     self.view.selected.discard(self)
     super()._disconnect(**kwargs)
-    self.view.structureChanged()
+    self.view.structureChanged(removed=self)
     self._hideItems()
     for r, _ in detached:
       r.view.freshPaint()
       r.draw()
     
   @override
+  def _canReconnect(self) -> bool:
+    '''
+    Whether undoing (or redoing) its being taken out of the view may put it
+    back (see *_reconnect()*): its model object is still in the model (not
+    removed since), and the view doesn't show it already -- eg: removed from
+    the model and put back by the model's own undo, the view made a new view
+    object for it.
+    '''
+    mo = self.modelObject
+    if mo is None:
+      return True
+    if not mo._isConnected():
+      return False
+    return not any(o is not self for o in self.view.viewObjectsFor(mo))
+
   def _reconnect(self, **kwargs):
+    for ends in (self._incoming, self._outgoing): # (its relations come back with it -- not those that can't: see _canReconnect())
+      for r in [r for r in ends if not r._isConnected() and not r._canReconnect()]:
+        ends.remove(r)
     super()._reconnect(**kwargs)
-    self.view.structureChanged()
+    self.view.structureChanged(added=self)
     if self.__dict__.get("_firstDrawPending"): # (taken out before it was ever drawn: see _firstDraw())
       self._firstDraw()
     self._showItems() # (a redraw hides it again if it should be -- see _applyHidden())
     self._hidden = False
+    self.view.freshPaint() # (as it is now: it may have changed while it was out of the view -- eg, renamed)
+    self.draw()
     for r, end in getattr(self, "_detachedTypeEnds", []): # re-attach the relation types' ends
       if r._isConnected() and getattr(r, end) is None:
         setattr(r, end, self)

@@ -84,16 +84,28 @@ class SearchDialog(tk.Toplevel):
     self.supersButton.grid(row=3, column=0, columnspan=4, sticky=tk.W, padx=(22, 0), pady=(2, 0))
     self._onWholeModel()
 
-    self.status = ttk.Label(frame, text="", foreground="gray40", wraplength=340)
-    self.status.grid(row=4, column=0, columnspan=4, sticky=tk.W, pady=(8, 0))
+    self.status = ttk.Label(frame, text="", foreground="gray40", wraplength=300)
+    self.status.grid(row=4, column=0, columnspan=3, sticky=tk.W, pady=(8, 0))
 
     buttons = ttk.Frame(frame)
     buttons.grid(row=5, column=0, columnspan=4, sticky=tk.EW, pady=(10, 0))
     ttk.Button(buttons, text="Clear highlights", command=self.clear).pack(side=tk.LEFT)
     ttk.Button(buttons, text="Find", command=self.find, default="active").pack(side=tk.RIGHT, padx=(6, 0))
     ttk.Button(buttons, text="Close", command=self.destroy).pack(side=tk.RIGHT)
-    self.bind("<Return>", lambda _e: self.find())
-    self.bind("<KP_Enter>", lambda _e: self.find())
+    steps = ttk.Frame(frame)
+    steps.grid(row=4, column=3, sticky=tk.E, pady=(8, 0))
+    self.prevButton = ttk.Button(steps, text="\u25b2", width=3, command=lambda: self.step(-1))
+    self.nextButton = ttk.Button(steps, text="\u25bc", width=3, command=lambda: self.step(1))
+    self.prevButton.pack(side=tk.LEFT)
+    self.nextButton.pack(side=tk.LEFT, padx=(2, 0))
+    self._searched:dict|None = None
+    self._found:str = ""
+    "What the last search found, said (see *find()*)."
+    "What the last search was for (see *find()*): Return again shows the next of what it found."
+    self._enableSteps(False)
+    self.bind("<Return>", lambda _e: self.findOrNext())
+    self.bind("<KP_Enter>", lambda _e: self.findOrNext())
+    self.bind("<Shift-Return>", lambda _e: self.step(-1))
     self.bind("<Escape>", lambda _e: self.destroy())
     self.bind(shortcut("w")[0], lambda _e: self.destroy())
     self._place()
@@ -133,11 +145,32 @@ class SearchDialog(tk.Toplevel):
       return True
     return messagebox.askyesno("Find", f"{n} objects that match aren't in the view. Show them all?", parent=self)
 
+  def findOrNext(self) -> None:
+    "Return: the next of what was found, if it's the same search again; else search."
+    if self._searched is not None and self._searched == {"pattern": self.pattern.get(), **{k: v.get() for k, v in self.options.items()}}:
+      self.step(1)
+    else:
+      self.find()
+
+  def step(self, by:int) -> None:
+    "Show the next (*by* 1) or previous (-1) of what was found (see *SNGView.showMatch()*), and say which."
+    k, n = self.view.showMatch(by)
+    if n:
+      self._say(f"{self._found}: {k} of {n}.")
+    else:
+      self._enableSteps(False)
+
+  def _enableSteps(self, on:bool) -> None:
+    for b in (self.prevButton, self.nextButton):
+      b.state(["!disabled"] if on else ["disabled"])
+
   def find(self) -> None:
     "Search (see *SNGView.search()*), and say what was found."
     pattern = self.pattern.get()
     opts = {k: v.get() for k, v in self.options.items()}
     SearchDialog.last = {"pattern": pattern, **opts}
+    self._searched = None
+    self._enableSteps(False)
     if pattern == "":
       self._say("Type what to look for.", error=True)
       return
@@ -152,7 +185,10 @@ class SearchDialog(tk.Toplevel):
       return
     nodes = sum(1 for vo in found if not self._isRelation(vo))
     say = f"{nodes} node{'' if nodes == 1 else 's'} and {len(found) - nodes} relation{'' if len(found) - nodes == 1 else 's'} highlighted"
-    self._say(say + (f" ({brought} newly shown)." if brought else "."))
+    self._found = say
+    self._searched = {"pattern": pattern, **opts}
+    self._enableSteps(len(found) > 1)
+    self._say(say + (f" ({brought} newly shown)" if brought else "") + (": \u25b2 \u25bc (or Return) go through them." if len(found) > 1 else "."))
 
   @staticmethod
   def _isRelation(vo:Any) -> bool:
@@ -162,6 +198,9 @@ class SearchDialog(tk.Toplevel):
   def clear(self) -> None:
     "Remove the highlights."
     self.view.clearHighlights()
+    self.view.__dict__["_matches"] = []
+    self._searched = None
+    self._enableSteps(False)
     self._say("")
 
   def _say(self, text:str, error:bool=False) -> None:

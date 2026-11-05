@@ -28,7 +28,11 @@ import unittest
 from pathlib import Path
 from sn.model.model import Model, Node, Relation, IsaIndividual
 from sn.model.clingoReasoner import ClingoReasoner
-from sn.model.reasoner import ruleOf, constraintOf, constraintSpecs, patternOf
+from sn.model.reasoner import Reasoner, ruleOf, constraintOf, constraintSpecs, patternOf
+try:
+  from sn.model.nemoReasoner import NemoReasoner
+except ModuleNotFoundError: # (an optional engine: pip install nemo-python)
+  NemoReasoner = None # type: ignore[assignment,misc]
 
 class TestRules(unittest.TestCase):
   '''
@@ -37,7 +41,11 @@ class TestRules(unittest.TestCase):
   the rules know about ("mirrored", "chained"), so the rules alone give the
   results; then with the built-in tags, where they must agree with the
   built-in reasoning.
+
+  Every engine runs them: see *TestRulesNemo*.
   '''
+  ENGINE:type[Reasoner] = ClingoReasoner
+  ENGINE_NAME = "clingo"
 
   def setUp(self):
     Path("temp_rules.xml").unlink(missing_ok=True) # (saved at exit by an earlier run)
@@ -92,7 +100,7 @@ class TestRules(unittest.TestCase):
     return self.rule(f"{tag} transitivity", ante, [self.rel(R, A, C)])
 
   def reason(self):
-    return ClingoReasoner(self.m).run()
+    return self.ENGINE(self.m).run()
 
   def pairs(self, triples, typ):
     return {(s.name, d.name) for t, s, d in triples if t is typ}
@@ -165,7 +173,7 @@ class TestRules(unittest.TestCase):
     q = Node(self.m, [self.m.QUERY], individual=True, name="parents?")
     X = self.var("?x"); X["constraints"] = "isParent"
     self.rel(self.m.CONTAINS, q, X)
-    self.assertEqual([row[X] for row in ClingoReasoner(self.m).answer(q)], [fred])
+    self.assertEqual([row[X] for row in self.ENGINE(self.m).answer(q)], [fred])
 
   def test0500problems(self):
     'A rule that concludes something its antecedent doesn\'t bind (other than a new object) is reported, and not used.'
@@ -199,7 +207,7 @@ class TestRules(unittest.TestCase):
     self.assertIn(("mary", "candy"), self.pairs(res.inherited, self.likes))   # inherited through the concluded isa
     q = Node(m, [m.QUERY], individual=True, name="children?"); K = self.var("?k", child)
     self.rel(m.CONTAINS, q, K)
-    self.assertEqual([row[K] for row in ClingoReasoner(m).answer(q)], [mary])
+    self.assertEqual([row[K] for row in self.ENGINE(m).answer(q)], [mary])
 
   def test0700newObjects(self):
     'A consequent variable the antecedent doesn\'t bind is a new object, one per match -- and rules don\'t chain on them.'
@@ -219,7 +227,7 @@ class TestRules(unittest.TestCase):
     self.assertTrue(any("(new ?m for ?p=alice" in line for line in res.ruleConclusions(r)))
     q = Node(m, [m.QUERY], individual=True, name="alive?"); X = self.var("?x", self.person); X["constraints"] = "alive"
     self.rel(m.CONTAINS, q, X)
-    self.assertEqual(len(ClingoReasoner(m).answer(q)), 5)  # queries do see them
+    self.assertEqual(len(self.ENGINE(m).answer(q)), 5)  # queries do see them
 
   def test0710newObjectsInTheModel(self):
     'What a rule concludes exists is put in the model, as inferred nodes, with its types, attributes and relations.'
@@ -230,7 +238,7 @@ class TestRules(unittest.TestCase):
     P, P2, M = self.var("?p", self.person), self.var("?p"), self.var("?m", self.person)
     M["constraints"] = "alive"
     self.rule("everyone has a mother", [P], [self.rel(mother, P2, M)])
-    reason(m)
+    reason(m, self.ENGINE_NAME)
     nodes = [o for o in m.inferredObjects() if isinstance(o, Node)]
     self.assertEqual(len(nodes), 5)
     alices = [n for n in nodes if n.name == "(m for alice)"]
@@ -240,18 +248,42 @@ class TestRules(unittest.TestCase):
     self.assertIs(am.get("alive", None), True)                             # ... its attributes...
     self.assertIn(am, self.p["alice"].getRelatedTo(mother))                # ... and its relations
     self.assertFalse(am.isVariable())                                      # (not a pattern variable)
-    reason(m)
+    reason(m, self.ENGINE_NAME)
     self.assertEqual({id(o) for o in m.inferredObjects() if isinstance(o, Node)}, {id(n) for n in nodes}) # kept
     rel = next(r for r, o in self.p["alice"]._getOutgoing(lambda r: r.inferred and r.isa(mother)))
     ModelContext(m).mark_asserted(am)                                      # with the relation the rule gave it
     self.assertFalse(am.inferred or rel.inferred)
-    reason(m)                                                              # alice has a mother now: no new one...
+    reason(m, self.ENGINE_NAME)                                                              # alice has a mother now: no new one...
     names = [o.name for o in m.inferredObjects() if isinstance(o, Node)]
     self.assertNotIn("(m for alice)", names)
     self.assertIn("(m for (m for alice))", names)                          # ... but she's a person: she has one
     clearReasoning(m)
     self.assertEqual([o for o in m.inferredObjects() if isinstance(o, Node)], [])
     self.assertTrue(am._isConnected())                                     # (asserted: stays)
+
+  def test0711keptNewObjectsFollowTheRule(self):
+    'A new object kept by the next reason takes the types and attributes the rule gives it now, not those it gave before.'
+    from sn.model.reasoner import reason, clearReasoning
+    m = self.m
+    woman = Node(m, [self.person], name="woman")
+    mother = Relation(m, [m.RELATION], self.person, self.person, name="mother")
+    P, P2, M = self.var("?p", self.person), self.var("?p"), self.var("?m", self.person)
+    M["constraints"] = "alive, gender: female"
+    self.rule("everyone has a mother", [P], [self.rel(mother, P2, M)])
+    try:
+      reason(m, self.ENGINE_NAME)
+      am = next(o for o in m.inferredObjects() if o.name == "(m for alice)")
+      self.assertEqual(am.getParents(), [self.person])
+      self.assertEqual(am.get("gender", None), "female")
+      IsaIndividual(m, M, woman); next(r for r in M._outgoing if isinstance(r, IsaIndividual) and r.localDst is self.person)._disconnect()
+      M["constraints"] = "alive"
+      reason(m, self.ENGINE_NAME)
+      self.assertIs(next(o for o in m.inferredObjects() if o.name == "(m for alice)"), am) # (kept...)
+      self.assertEqual(am.getParents(), [woman])                                         # (... as the rule says now)
+      self.assertIsNone(am.get("gender", None))
+      self.assertIs(am.get("alive", None), True)
+    finally:
+      clearReasoning(m)
 
   def test0715queriesFindNewObjects(self):
     'A query answered with an object a rule concluded exists gets its inferred node, once "reason" has made it.'
@@ -264,10 +296,10 @@ class TestRules(unittest.TestCase):
     W = self.var("?who")
     self.rel(m.CONTAINS, q, W)
     self.rel(m.CONTAINS, q, self.rel(mother, self.p["alice"], W))
-    [row] = ClingoReasoner(m).answer(q)
+    [row] = self.ENGINE(m).answer(q)
     self.assertIsInstance(row[W], NewObject)                               # (not reasoned yet: no node for it)
-    reason(m)
-    [row] = ClingoReasoner(m).answer(q)
+    reason(m, self.ENGINE_NAME)
+    [row] = self.ENGINE(m).answer(q)
     self.assertIsInstance(row[W], Node)
     self.assertEqual(row[W].name, "(m for alice)")
     self.assertTrue(row[W].inferred)
@@ -314,24 +346,60 @@ class TestRules(unittest.TestCase):
     self.definition("brother", [self.rel(brother, X, Y)], [self.rel(self.sib, X2, Y2), Y2])
     self.rel(brother, p["carol"], p["dave"])                      # so dave is male
     m.setDirty(False)
-    reason(m)
+    reason(m, self.ENGINE_NAME)
     dave = p["dave"]
     attr = dave.getLocalAttr("gender")
     self.assertTrue(attr is not None and attr.inferred and attr.value == "male")
     self.assertFalse(m.isDirty())                                 # not a change
     saved = next(q for q in AttributedObject.getInstantiationInfo().postconSetters if q.name == "attributes").getter(dave)
     self.assertNotIn("gender", saved) # type: ignore[arg-type]   # not saved
-    reason(m)
+    reason(m, self.ENGINE_NAME)
     self.assertIs(dave.getLocalAttr("gender"), attr)              # kept (and the reasoner didn't read it as given)
     dave["gender"] = "male"                                       # given now
     self.assertFalse(dave.getLocalAttr("gender").inferred) # type: ignore[union-attr]
     self.assertTrue(m.isDirty())
-    reason(m)
+    reason(m, self.ENGINE_NAME)
     self.assertFalse(dave.getLocalAttr("gender").inferred) # type: ignore[union-attr] # given beats inferred
     del dave["gender"]
-    reason(m)
+    reason(m, self.ENGINE_NAME)
     clearReasoning(m)
     self.assertIsNone(dave.getLocalAttr("gender"))                # retracted
+
+  def test0805conclusionsReportedAfterReason(self):
+    'reason() adds what the rules concluded to the model (inferred): its report still lists those attribute values and types as news.'
+    from sn.model.reasoner import reason, clearReasoning
+    m, p = self.m, self.p
+    man = Node(m, [self.person], name="man")
+    brother = Relation(m, [m.RELATION], self.person, self.person, name="brother")
+    X, Y = self.var("?X"), self.var("?Y")
+    X2, Y2 = self.var("?X"), self.var("?Y", man); Y2["constraints"] = "gender: male"
+    d = self.definition("brother", [self.rel(brother, X, Y)], [self.rel(self.sib, X2, Y2), Y2])
+    self.rel(brother, p["carol"], p["dave"])
+    try:
+      res = reason(m, self.ENGINE_NAME)
+      self.assertTrue(p["dave"].getLocalAttr("gender").inferred) # type: ignore[union-attr] # (in the model now...)
+      lines = res.ruleConclusions(d, m)
+      self.assertTrue(any(l.startswith("dave") and "{gender: male}" in l for l in lines), lines) # (... and still news)
+      self.assertTrue(any(l.startswith("dave") and "-isa-> man" in l for l in lines), lines)
+      p["alice"]["gender"] = "male"; IsaIndividual(m, p["alice"], man)        # (given: not news)
+      self.rel(brother, p["carol"], p["alice"])
+      lines = reason(m, self.ENGINE_NAME).ruleConclusions(d, m)
+      self.assertFalse(any(l.startswith("alice") and ("{gender" in l or "-isa->" in l) for l in lines), lines)
+    finally:
+      clearReasoning(m)
+
+  def test0807boundCopyTypes(self):
+    'A consequent\'s copy of an antecedent variable concludes its drawn types too, not just its constraints.'
+    m, p = self.m, self.p
+    man = Node(m, [self.person], name="man")
+    brother = Relation(m, [m.RELATION], self.person, self.person, name="brother")
+    X, Y = self.var("?X"), self.var("?Y")
+    Y2 = self.var("?Y", man); Y2["constraints"] = "gender: male"
+    r = self.rule("brothers are male men", [self.rel(brother, X, Y)], [Y2])
+    self.rel(brother, p["carol"], p["bob"])
+    res = self.reason()
+    self.assertIn(("bob", "man"), {(x.name, t.name) for rr, x, t in res.ruleIsa if rr is r})
+    self.assertIn(("bob", "gender", "male"), {(x.name, k, v) for rr, x, k, v in res.ruleAttrs if rr is r})
 
   def test0806inferredValuesOfInheritedAttributes(self):
     'A concluded value of an attribute a type declares takes the type\'s type (made one, if need be): eg: a colour, or a number.'
@@ -345,7 +413,7 @@ class TestRules(unittest.TestCase):
     X["constraints"] = "gender: male"
     X2["constraints"] = "vis/borderColor: blue, height: 2"        # (2: an int, for a float)
     self.rule("gender: male color", [X], [X2])
-    reason(m)
+    reason(m, self.ENGINE_NAME)
     fred = p["fred"]
     self.assertEqual(fred["vis/borderColor"], "blue")
     self.assertTrue(fred.getLocalAttr("vis/borderColor").inferred) # type: ignore[union-attr]
@@ -483,6 +551,42 @@ class TestRules(unittest.TestCase):
     vs = self.reason().violations
     self.assertFalse(any(v.code == "narcissism" for v in vs))
     self.assertTrue(any(v.code == "constraint_report" and v.subject is c for v in vs))
+
+  def test0921reportWordNot(self):
+    'A word in a constraint\'s report that is one of clingo\'s ("not") is just a word: the reasoner still runs.'
+    X = self.var("?x")
+    self.constraint("narcissism", [self.rel(self.likes, X, X)], report="?x, not, strange", severity="warning")
+    self.rel(self.likes, self.p["alice"], self.p["alice"])
+    vs = [v for v in self.reason().violations if v.code == "narcissism"]
+    self.assertEqual([(v.subject.name, v.args) for v in vs], [("alice", ("not", "strange"))])
+
+  BAD_QUERY = "ans(X) :- not not not."
+  "A native query the engine can't read."
+  SYNTAX_ERROR = "syntax error"
+  "What the engine's message for *BAD_QUERY* says."
+
+  def test0922compileErrorSaid(self):
+    'A native query the engine can\'t read: an error saying so (and where), not a bare "parsing failed".'
+    with self.assertRaises(RuntimeError) as cm:
+      self.ENGINE(self.m).query(self.BAD_QUERY)
+    self.assertIn("couldn't be compiled", str(cm.exception))
+    self.assertIn(self.SYNTAX_ERROR, str(cm.exception))
+
+  def test0923intsAndFloats(self):
+    'A number in a constraint is the same value whether it\'s written 2 or 2.0: it matches an int or a float attribute.'
+    from util.attribute import Attribute, Restriction
+    alice, bob = self.p["alice"], self.p["bob"]
+    alice.setAttr("height", Attribute(2.0, float, Restriction.fromstring("VAR")))
+    bob.setAttr("age", Attribute(30, int, Restriction.fromstring("VAR")))
+    def matches(constraints):
+      X = self.var("?x"); X["constraints"] = constraints
+      c = self.constraint(f"c {constraints}", [X], report="?x")
+      return {v.subject.name for v in self.reason().violations if v.code == c.name}
+    self.assertEqual(matches("height: 2"), {"alice"})
+    self.assertEqual(matches("height: 2.0"), {"alice"})
+    self.assertEqual(matches("age: 30"), {"bob"})
+    self.assertEqual(matches("age: 30.0"), {"bob"})
+    self.assertEqual(matches("height: 2.5"), set())
 
   def test0925negatedConstraints(self):
     '"not" constraints: a negated test (negation as failure: no value at all passes too); not allowed in a consequent.'
@@ -630,7 +734,7 @@ class TestRules(unittest.TestCase):
     X, Y = self.var("?x"), self.var("?_y")
     for x in (X, Y, self.rel(self.likes, X, Y)):
       self.rel(self.m.CONTAINS, q, x)
-    rows = ClingoReasoner(self.m).answer(q)
+    rows = self.ENGINE(self.m).answer(q)
     self.assertEqual(len(rows), 3)                                         # (matched as usual: alice twice)
     self.assertEqual(sorted(r[X].name for r in reportedAnswers(rows)), ["alice", "bob"])
     self.assertEqual({v.name for r in reportedAnswers(rows) for v in r}, {"?x"})
@@ -689,7 +793,7 @@ class TestRules(unittest.TestCase):
     # "everyone has a parent": not invented for those with a father (has-father isa has-parent)
     Q, Q2, R = self.var("?q", self.person), self.var("?q"), self.var("?r", self.person)
     self.rule("everyone has a parent", [Q], [self.rel(parentOf, Q2, R)])
-    reason(m)
+    reason(m, self.ENGINE_NAME)
     invented = {o.name for o in m.inferredObjects() if getattr(o, "inferredKind", None) == "new" and o.name.startswith("(r for")}
     self.assertNotIn("(r for alice)", invented)
     self.assertIn("(r for carol)", invented)
@@ -708,8 +812,8 @@ class TestRules(unittest.TestCase):
   def test0930systemRules(self):
     'The base rules\' conclusions are plain inferences -- unless showSysRules.'
     self.rel(self.sib, self.p["alice"], self.p["bob"])
-    hidden = ClingoReasoner(self.m, showSysRules=False).run()
-    shown = ClingoReasoner(self.m, showSysRules=True).run()
+    hidden = self.ENGINE(self.m, showSysRules=False).run()
+    shown = self.ENGINE(self.m, showSysRules=True).run()
     self.assertIn(("bob", "alice"), self.pairs(hidden.inferred, self.sib))
     self.assertEqual(hidden.fired, [])
     self.assertIn(("bob", "alice"), {(s.name, d.name) for r, t, s, d in shown.fired if r.name == "symmetric"}) # type: ignore[union-attr]
@@ -729,7 +833,7 @@ class TestRules(unittest.TestCase):
     self.assertEqual(self.m.superModelPaths(), [])
     self.m.setSuperModels([])
     self.assertEqual(self.m.superDBs, self.m.implicitSuperDBs())
-    r = ClingoReasoner(self.m)
+    r = self.ENGINE(self.m)
     self.assertFalse(any(o.model in base for o in r.objects()))           # rules, not data
     self.assertTrue(any(o.model in base for o in r.ruleObjects()))
     with tempfile.TemporaryDirectory() as folder:
@@ -876,8 +980,19 @@ class TestRules(unittest.TestCase):
     q = Node(m, [m.QUERY], individual=True, name="whose father?")
     X, F = self.var("?x", self.person), self.var("?f")
     self.rel(m.CONTAINS, q, X); self.rel(m.CONTAINS, q, F); self.rel(m.CONTAINS, q, self.rel(father, X, F))
-    rows = ClingoReasoner(m).answer(q)
+    rows = self.ENGINE(m).answer(q)
     self.assertEqual(len([r for r in rows if r[X] is self.p["alice"]]), 1)
+
+
+@unittest.skipIf(NemoReasoner is None, "the Nemo engine isn't installed (pip install nemo-python)")
+class TestRulesNemo(TestRules):
+  '''
+  The rules, by the Nemo engine (see *sn.model.nemoReasoner*).
+  '''
+  ENGINE = NemoReasoner # type: ignore[assignment]
+  ENGINE_NAME = "nemo"
+  BAD_QUERY = "ans(?X) :- ~ ~ ~."
+  SYNTAX_ERROR = "expected"
 
 
 if __name__ == "__main__":

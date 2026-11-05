@@ -275,13 +275,24 @@ def pasteInto(clip:Clip, model:Model) -> list[GraphObject]:
         made[i] = Node(model, [], individual=e.individual)
       elif e.kind == "relation":
         made[i] = Relation(model, [], individual=e.individual)
-    # ... then their ends, then the isa links (whose ends must be there when they're made) ...
+    # ... then the isa links (whose ends must be there when they're made -- an
+    # end may be another isa link, so they're made as their ends are), ...
+    pending = [i for i, e in enumerate(clip.entries) if e.kind == "isa"]
+    while pending:
+      waiting = [i for i in pending if any(isinstance(r, int) and made[r] is None for r in (clip.entries[i].src, clip.entries[i].dst))]
+      if len(waiting) == len(pending): # (they're each other's ends: never copied so)
+        raise ValueError("The copy's isa links lead to each other: it can't be pasted.")
+      for i in pending:
+        if i not in waiting:
+          made[i] = IsaIndividual(model, end(clip.entries[i].src), end(clip.entries[i].dst))
+      pending = waiting
+    # ... then the relations' ends (any of the above: in particular, an isa
+    # link that comes after the relation in the clip, as *closure()* puts them) ...
     for i, e in enumerate(clip.entries):
       o = made[i]
-      if isinstance(o, Relation):
+      if e.kind == "relation":
+        assert isinstance(o, Relation)
         o.connect(end(e.src), end(e.dst))
-      elif e.kind == "isa":
-        made[i] = IsaIndividual(model, end(e.src), end(e.dst))
     # ... then the attributes (as they were: they were legal with these types)
     for i, e in enumerate(clip.entries):
       o = made[i]

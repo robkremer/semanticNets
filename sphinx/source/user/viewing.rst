@@ -18,11 +18,14 @@ What's shown
 - **view | show | node** lists the model's objects that aren't in the view:
   choose one to bring it in.
 - **expand all** (on an object's menu; it says how many relations the object
-  has) brings in everything related to it, 1 to 4 levels out.
+  has -- and, if some are in the view already, how many of them are new, or
+  *all shown*) brings in everything related to it, 1 to 4 levels out. If
+  there's nothing new to bring in, the terminal says so.
 - **expand by relation...** asks which relations to follow: each type the
   object's relations are, each way round -- *has-mother →* (its mother) or
   *← has-mother* (its children) -- with how many there are; a type includes its
-  subtypes (*has-parent →* takes *has-father* and *has-mother* too). Or all
+  subtypes (*has-parent →* takes *has-father* and *has-mother* too), and how
+  many of those are new (those all in the view already are greyed). Or all
   relations, all outgoing, or all incoming (which, at every level, follow
   any relation that way). And how many **levels** out to go. Relations in a
   hidden or erased category (eg: isa links) are listed too, greyed and
@@ -78,6 +81,12 @@ out of the view. Unchecking it shows them again. Relations to or from hidden
 objects are hidden too. Either way, **expand** won't bring more of them in.
 The settings are saved with the view.
 
+What a rule (or other context window) shown says is shown whatever its
+category: its relations, and the variables they use -- and the ends of those
+relations: eg: with *types* hidden, a rule that concludes *?x isa person*
+still shows *person*, and the terminal says so. Collapsing a window hides
+all of that, and what's in the windows inside it.
+
 Hiding is *soft*: it applies to what's there when you check the category. An
 object you make (or ask for, with **show node**) that's in a hidden category
 is shown anyway, and a message in the terminal says so. To hide it too,
@@ -101,9 +110,12 @@ Finding things
 **Edit | Find...** (**Cmd-F**, or **view | find...**) opens a find dialog:
 type part of a name and press **Return** (or **Find**), and every node and
 relation in the view whose name has it in it is highlighted -- not isa
-links, nor anything hidden -- and the view scrolls to show them. The dialog
-stays open, to search again; **Escape** closes it, and in the window clears
-the highlights (as does **Clear highlights**).
+links, nor anything hidden -- and the view scrolls to show them (if they're
+too far apart to fit in the window, the one nearest its middle). The arrow
+buttons (or **Return** again, and **Shift-Return** back) go through them one
+by one, row by row, saying which of how many it is. The dialog stays open,
+to search again; **Escape** closes it, and in the window clears the
+highlights (as does **Clear highlights**).
 
 ==========================  ===================================================
 option                      finds
@@ -184,7 +196,6 @@ attribute                   controls
 ``vis/borderWidth``,
 ``vis/borderSmooth``
 ``vis/textColor``           its text
-``vis/shadowColor``         a type's shadow
 ``vis/lineColor``,          a relation's line
 ``vis/lineWidth``,
 ``vis/lineType``
@@ -203,6 +214,10 @@ attribute                   controls
 ``vis/tooltipWrap``         the width its tooltip wraps at, in pixels
                             (0: no wrapping)
 ==========================  =============================================
+
+Widths (``vis/borderWidth``, ``vis/lineWidth``) are in the view's units, as
+sizes are: they zoom with the view, as the shapes, marks and text do -- but a
+line is never drawn thinner than a pixel, however far out you zoom.
 
 Relation marks
 --------------

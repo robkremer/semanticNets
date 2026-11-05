@@ -33,8 +33,9 @@ from typing import override, Any, Optional, Iterable, Callable, cast
 from util.commandParser import TopCommandParser, CommandContext, Command
 from util.persistence.serialize import SerializationStrategy
 from util.persistence.serialize import DEFAULT_STRATEGY
-from util.utils import getClass, fixURL, isValidURL, urlExists
-from util.attribute import Attribute, Restriction
+from util.utils import getClass, fixURL, isValidURL, urlExists, strToBool
+from util.attribute import Attribute, Restriction, coerceValue
+from sn.model.snAttribute import RELATIONAL_ATTRS
 from util.persistence.pRef import PRDb, DuplicateNameError
 from sn import snPrefs
 from util.observer import Subject
@@ -359,7 +360,7 @@ class ModelContext(CommandContext):
     return ret
 
 
-  def reason(self, /, model:Model|None=None, engine:str="clingo", silent:bool=False) -> str:
+  def reason(self, /, model:Model|None=None, engine:str|None=None, silent:bool=False) -> str:
     '''
     Run the reasoner over a model: report rule violations, relations inferred
     or inherited down the isa hierarchy, and suggested classifications. The
@@ -367,7 +368,7 @@ class ModelContext(CommandContext):
     too, until the next "reason" or "clear reasoning".
 
     :param model: The model to reason over. By default, the default model.
-    :param engine: The reasoner engine (see *sn.model.reasoner.Reasoner.create()*).
+    :param engine: The reasoner engine: clingo or nemo. By default, the "reasoner/engine" preference's.
     :param silent: Don't add what's inferred to the views of the model (they
       show only the problems), and report only a summary: eg: so that queries
       find what the rules conclude.
@@ -441,14 +442,14 @@ class ModelContext(CommandContext):
           + [f'  {u}  (couldn\'t be read)' for u in model._missingSuperDBs]
     return "\n".join(messages + lines)
 
-  def answer_query(self, query:GraphObject, /, model:Model|None=None, engine:str="clingo") -> str:
+  def answer_query(self, query:GraphObject, /, model:Model|None=None, engine:str|None=None) -> str:
     '''
     Answer a query: a context (eg: a query node, or a rule -- its antecedent)
     whose contents are a pattern with ?variables. Each line is one match.
 
     :param query: The query (or other context).
     :param model: Ignored: a query is answered from its own model.
-    :param engine: The reasoner engine (see *sn.model.reasoner.Reasoner.create()*).
+    :param engine: The reasoner engine: clingo or nemo. By default, the "reasoner/engine" preference's.
     '''
     from sn.model.reasoner import Reasoner
     if type(query) is str: # the environment failed to interpret the object
@@ -470,15 +471,17 @@ class ModelContext(CommandContext):
     name = lambda o: o.tostring(relativeTo=model, format="friendly") if isinstance(o, GraphObject) else str(o)
     return "\n".join(", ".join(f"{v.name} = {name(x)}" for v, x in row.items()) for row in rows)
 
-  def ask_reasoner(self, query:str, /, model:Model|None=None, engine:str="clingo") -> str:
+  def ask_reasoner(self, query:str, /, model:Model|None=None, engine:str|None=None) -> str:
     '''
-    Ask the reasoner a question in its own query language -- for the clingo
-    engine, ASP rules defining an "ans" predicate over the reasoner's facts
-    and results, eg: ans(X) :- holds(T,F,X), name(T,"owns"), name(F,"fred").
+    Ask the reasoner a question in its own query language: rules defining an
+    "ans" predicate over the reasoner's facts and results. For the clingo
+    engine, ASP: eg, ans(X) :- holds(T,F,X), name(T,"owns"), name(F,"fred").
+    For the nemo engine, Nemo's Datalog: eg,
+    ans(?X) :- holds(?T,?F,?X), name(?T,"owns"), name(?F,"fred").
 
     :param query: The query.
     :param model: The model to reason over. By default, the default model.
-    :param engine: The reasoner engine (see *sn.model.reasoner.Reasoner.create()*).
+    :param engine: The reasoner engine: clingo or nemo. By default, the "reasoner/engine" preference's.
     '''
     from sn.model.reasoner import Reasoner
     if model is None:
@@ -488,6 +491,62 @@ class ModelContext(CommandContext):
     def cell(v:Any) -> str:
       return v.tostring(relativeTo=model, format="friendly") if isinstance(v, GraphObject) else str(v)
     return "\n".join(", ".join(cell(v) for v in row) for row in rows) if rows else "(no answers)"
+
+  def explain(self, relation:str|GraphObject, source:GraphObject|None=None, destination:GraphObject|None=None, /,
+              model:Model|None=None, full:bool=False) -> str:
+    '''
+    Say why the reasoner concludes that *source* is related to *destination*
+    by *relation*: the rules it follows by (the model's, and the base rules:
+    eg, transitive), down to what the model asserts. Uses the nemo reasoner
+    engine, which can say how it reached a conclusion (clingo can't),
+    whichever engine "reason" uses. Nemo is optional: pip install nemo-python.
+
+    :param relation: The relation type (eg: ancestorOf) -- or a relation, eg:
+      one "reason" inferred: then why it holds, without *source* and *destination*.
+    :type relation: Relation
+    :param source: The source (eg: ann).
+    :param destination: The destination (eg: fred).
+    :param model: The model to reason over. By default, the default model.
+    :param full: Every step, as the reasoner has it (with the rules of its rule base), not just those that matter.
+    '''
+    if model is None:
+      model = self.defaults["model"]
+    assert model is not None
+    if isinstance(relation, str): # (the command line leaves it a str: a relation type's name is its relations' too)
+      text = relation
+      try:
+        relation = _lookup(text, model)
+      except NoSuchObjectError:
+        raise
+      except Exception: # (eg: ambiguous: take the type)
+        relation = _lookup(text, model, filtr=lambda o: o.isType())
+    source, destination = _object(source, model), _object(destination, model)
+    if not isinstance(relation, Relation):
+      raise TypeError(f'explain: expected a relation, got {type(relation).__name__}.')
+    isa = isinstance(relation, IsaIndividual) # (an isa link: why the one isa the other)
+    if relation.isIndividual(): # (a relation: why it holds)
+      if source is not None or destination is not None:
+        raise ValueError('explain: a relation, or a relation type with a source and destination: not both.')
+      types = [p for p in relation.getParents() if isinstance(p, Relation)]
+      source, destination = relation.src, relation.dst
+      if not types or source is None or destination is None:
+        raise ValueError(f'explain: "{relation.name}" doesn\'t relate two objects.')
+      relation = types[0]
+    elif source is None or destination is None:
+      raise ValueError('explain: a relation type needs a source and a destination.')
+    from sn.model.reasoner import Reasoner
+    reasoner:Any = Reasoner.create(model, "nemo")
+    reasoner.run()
+    name = lambda o: o.tostring(relativeTo=model, format="friendly")
+    if isa:
+      step = reasoner.explain(source, destination, predicate="isa_star")
+      what = f'{name(source)} isa {name(destination)}'
+    else:
+      step = reasoner.explain(relation, source, destination)
+      what = f'{name(source)} -{name(relation)}-> {name(destination)}'
+    if step is None:
+      return f'{what} doesn\'t hold (as far as the reasoner can tell).'
+    return "\n".join(step.lines(brief=not full))
 
   def search(self, pattern:str, /, word:bool=False, case:bool=False, regex:bool=False, supers:bool=False,
              model:Model|None=None) -> str:
@@ -668,9 +727,12 @@ class ModelContext(CommandContext):
       _refuseInferred("change", object)
       self.attr:Attribute|None = value if isinstance(value, Attribute) else None
       "A complete (or value-only) Attribute record, eg: from the attribute editor, is set as is."
+      self.typeGiven:bool = type is not None
+      self.restrictionGiven:bool = restriction is not None
       if type is not None: # check the type string to make sure it represents an actual type
         typ = getClass(type) if type is not None else None
-        assert typ is not None
+        if typ is None:
+          raise ValueError(f'--type {type}: there\'s no such type.')
       else: # (from the command line, values are str)
         typ = builtins.type(value) if isinstance(value, (bool, int, float)) else str
       self.typ = typ 
@@ -678,33 +740,43 @@ class ModelContext(CommandContext):
       self.key:str = key
       self.value:Any = value
       if typ is not None and isinstance(value, str) and self.attr is None:
-        self.value = typ(value)
-      if self.object._getSuperAttr(self.key) is None and restriction is None:
+        self.value = coerceValue(typ, value) # (eg: "false" for a bool is False, not bool("false"): its ValueError says why it can't be)
+      self.clearTag:bool = False
+      "A relational property (eg: symmetric) set false: it's a tag, there or not, so it's taken away (see *do()*)."
+      if key in RELATIONAL_ATTRS and self.attr is None and isinstance(value, (str, bool)):
+        self.clearTag = not (value if isinstance(value, bool) else strToBool(value)) # (ValueError: neither)
+      localObj = self.object.getLocalAttr(key)
+      if self.object._getSuperAttr(self.key) is None and restriction is None and (localObj is None or localObj.restriction is None):
         restriction = "VAR"
       self.restrictionStr = restriction
-      self.restriction:Restriction|None = Restriction.fromstring(restriction) if restriction is not None else None
+      self.restriction:Restriction|None = Restriction.fromstring(restriction) if restriction is not None else \
+                                          (localObj.restriction if localObj is not None else None) # (a new type: the restriction it had)
 
-      localObj = self.object.getLocalAttr(key)
       self.oldAttrValue = None if localObj is None else copy.copy(localObj) # (a copy: setting may change the record in place -- eg: "name" -- and undo must put the old one back)
 
     @override
     def do(self):
       super().do()
-      if self.attr is not None:
+      local = self.object.getLocalAttr(self.key)
+      if self.clearTag:
+        if local is not None:
+          del self.object[self.key]
+      elif self.attr is not None:
         self.object.setAttr(self.key, self.attr)
-        self.created = self.oldAttrValue is None
+      elif local is not None and not self.typeGiven and not self.restrictionGiven:
+        self.object[self.key] = self.value # (its own record: of its type -- the value's made that type -- and restriction)
       elif self.object._getSuperAttr(self.key) is None:
         self.object.setAttr(self.key, Attribute(self.value, self.typ, restriction=self.restriction))
-        self.created = True
       else:
         self.object[self.key] = self.value
-        self.created = False
+      self.created = self.oldAttrValue is None and self.object.getLocalAttr(self.key) is not None
   
     @override
     def undo(self):
       super().undo()
       if self.oldAttrValue is None:
-        del self.object[self.key]
+        if self.object.getLocalAttr(self.key) is not None:
+          del self.object[self.key]
       else:
         self.object.setAttr(self.key, self.oldAttrValue)
       
@@ -986,12 +1058,15 @@ class ModelContext(CommandContext):
         self.typ = eval_(objects[0], model, filtr=lambda o: o.isType())
         try:
           self.obj1 = eval_(objects[1], model, filtr=lambda o: isinstance(o, GraphObject))
-        except:
+        except NoSuchObjectError: # (not an ambiguous name -- DuplicateNameError -- which is an error, not a new object)
           assert isinstance(objects[1], str)
           self.obj1 = None
           self.objName = objects[1]
-        if self.obj1 is not None and (problem := self.obj1.parentProblem(self.typ)) is not None:
-          raise ValueError(problem)
+        _refuseInferred("make an instance of", self.typ)
+        if self.obj1 is not None:
+          _refuseInferred("give a type to", self.obj1)
+        if self.obj1 is not None and not self.obj1.isaLinksTo(self.typ) and (problem := self.obj1.parentProblem(self.typ)) is not None:
+          raise ValueError(problem) # (one it has already is fine: nothing to do -- see do())
       elif expLen == 3: # relational expression: rel must be a relation type
         # obj1.isType()&pbj2.isType() -> modify rel type src&dst
         # obj1.isIndividual()&obj2.isIndividual() -> create new rel instance 
@@ -999,12 +1074,17 @@ class ModelContext(CommandContext):
         self.rel = eval_(objects[1], model, filtr=lambda o: isinstance(o, Relation) and o.isType()) #type: ignore[assignment]
         assert isinstance(self.rel, Relation)
         self.obj2 = eval_(objects[2], model)
+        _refuseInferred("relate", self.obj1, self.obj2)
       assert (self.rel is None) ^ (self.typ is None) # xor
       self.artifact:GraphObject|None = None
       
     @override
     def do(self) -> GraphObject:
       super().do()
+      if self.oldSrcDst is not None: # a redo of a relation type's new ends: connect them again
+        assert isinstance(self.rel, Relation) and self.obj1 is not None and self.obj2 is not None
+        self.rel.connect(self.obj1, self.obj2)
+        return self.rel
       if self.artifact is not None: # this is a redo: just reconnect the object
         self.artifact._reconnect()
         return self.artifact
@@ -1013,6 +1093,8 @@ class ModelContext(CommandContext):
       if self.typ:
         t = type(self.typ)
         if self.obj1: # we are just adding a parent type to an existing object
+          if self.obj1.isaLinksTo(self.typ): # (already: nothing to do -- eg, a script of asserts run again. An inferred one is asserted now, though.)
+            return self.obj1
           self.artifact = IsaIndividual(self.model, self.obj1, self.typ)
           return self.obj1
         else: # we are creating a new object.
@@ -1050,13 +1132,14 @@ class ModelContext(CommandContext):
         
     @override
     def undo(self):
-      assert self.artifact is not None
       super().undo()
-      if self.oldSrcDst:
+      if self.oldSrcDst is not None: # (the relation type's ends as they were -- None for an end it didn't have)
         assert isinstance(self.rel, Relation)
-        self.rel.connect(self.oldSrcDst[0], self.oldSrcDst[1])
-      else:
-        self.artifact._disconnect()
+        self.rel.src, self.rel.dst = self.oldSrcDst # (the setters: connect() leaves an end alone for None)
+        return self.rel
+      if self.artifact is None: # (it changed nothing: see do())
+        return self.obj1
+      self.artifact._disconnect()
       return self.artifact
       
       
@@ -1500,7 +1583,7 @@ class ModelContext(CommandContext):
         raise ValueError('reconnect: an isa link needs both ends; they can be changed but not cleared.')
       if isinstance(relation, IsaIndividual) and (source is not None or destination is not None):
         child, parent = source or relation.localSrc, destination or relation.localDst
-        if child is not None and (problem := child.parentProblem(parent)) is not None:
+        if child is not None and (problem := child.parentProblem(parent, except_=relation)) is not None:
           raise ValueError(problem)
       self.relation:Relation = relation
       self.source = source

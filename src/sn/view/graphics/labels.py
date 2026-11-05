@@ -109,6 +109,14 @@ def expand(template:str, lookup:Callable[[str], str], call:Callable[[str], str]|
   out, i = _expand(template, 0, lookup, call, closer=None)
   return out
 
+def hasHookCall(template:str) -> bool:
+  '''
+  :returns: Whether *template* calls a hook -- "$(module:function)", or as a
+    key, "${(module:function):+...}": it's called each time the label's
+    drawn, so the label can't be remembered between draws.
+  '''
+  return "$(" in template or "${(" in template
+
 def _call(t:str, i:int, call:Callable[[str], str]|None) -> tuple[str, int]:
   '''
   A hook's call, "(module:function)", starting at the "(": (what it returns, the index after its ")").

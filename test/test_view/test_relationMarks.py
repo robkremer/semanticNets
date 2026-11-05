@@ -97,7 +97,7 @@ class Test(unittest.TestCase):
     self.rel = Relation(m, [self.relType], self.a, self.b, individual=True, name="r")
     self.view = v = SNGView(fixURL(m.url, ".snv", replaceExt=True, mode="w")[0], model=m)
     v.window.withdraw()
-    v._askName = lambda mo: None
+    v._askName = lambda mo, objectID=None: None
     v.showAllModel()
     self.pump()
     va, vb, self.vr = (v.findViewObjectForGraphObject(o) for o in (self.a, self.b, self.rel))
@@ -388,8 +388,56 @@ class Test(unittest.TestCase):
     stubs = vf.__dict__["_stubIds"]
     self.assertGreater(math.dist(c.coords(stubs["src"].line)[-2:], self.view.viewToWindow(*vf.centerPt())), 3.0)
 
+  def test0660noEndsMiddleMarks(self):
+    'A relation type with no ends of its own shows its middle marks (with or without label text), and they follow its label.'
+    m, c = self.model, self.view.canvas
+    floaty = Relation(m, [m.RELATION], None, None, individual=False, name="floaty2")
+    self.pump()
+    vf = self.view.findViewObjectForGraphObject(floaty)
+    self.view.context.set_attribute(floaty, "vis/midMarks", "o")              # (a ring: the line stops at it)
+    self.view.context.set_attribute(floaty, "vis/label", "")
+    self.pump()
+    self.assertTrue(vf.connectInfo.middleIDs)
+    centre = self.view.viewToWindow(*vf.centerPt())
+    xs = [x for i in vf.connectInfo.middleIDs for x in c.coords(i)[0::2]]
+    self.assertLess(abs((min(xs) + max(xs)) / 2 - centre[0]), 3.0)
+    x1, y1, _, _ = vf.boundingBox()
+    vf.moveTo(x1 + 100, y1 + 50, adjustPos=False)
+    self.view.freshPaint(); vf.draw(); self.pump()
+    centre = self.view.viewToWindow(*vf.centerPt())
+    xs = [x for i in vf.connectInfo.middleIDs for x in c.coords(i)[0::2]]
+    self.assertLess(abs((min(xs) + max(xs)) / 2 - centre[0]), 3.0)              # (moved with it)
+    stubs = vf.__dict__["_stubIds"]                                              # (the stubs stop at the marks: not through them)
+    self.assertGreater(math.dist(c.coords(stubs["dst"].line)[:2], centre), 2.0)
+
+  def test0670selfLoopAndFarSideMarks(self):
+    'A self-loop\'s middle marks are turned from its node to its label; an "arrow" in the middle points toward the destination, wherever it\'s drawn.'
+    m, c = self.model, self.view.canvas
+    loop = Relation(m, [self.relType], self.a, self.a, individual=True, name="loop")
+    self.pump()
+    vl = self.view.findViewObjectForGraphObject(loop)
+    self.view.context.set_attribute(loop, "vis/label", "")
+    self.view.context.set_attribute(loop, "vis/midMarks", "|")
+    self.pump()
+    va = self.view.findViewObjectForGraphObject(self.a)
+    axis = (vl.centerPt()[0] - va.centerPt()[0], vl.centerPt()[1] - va.centerPt()[1])
+    bar = c.coords(vl.connectInfo.middleIDs[0])
+    along = (bar[2] - bar[0]) * axis[0] + (bar[3] - bar[1]) * axis[1]           # (a bar is across the line: square to the axis)
+    self.assertLess(abs(along) / max(1e-6, math.hypot(*axis) * math.hypot(bar[2] - bar[0], bar[3] - bar[1])), 0.2)
+    other = Relation(m, [m.RELATION], None, self.b, individual=True, name="toB") # (no source side: the middle goes after the label)
+    self.pump()
+    vo = self.view.findViewObjectForGraphObject(other)
+    self.view.context.set_attribute(other, "vis/midMarks", "arrow")
+    self.pump()
+    head = next(i for i in vo.connectInfo.labelFarTerminatorIDs if c.type(i) == "polygon")
+    hx = c.coords(head)[0::2]
+    tipX = max(hx) if self.view.findViewObjectForGraphObject(self.b).centerPt()[0] > vo.centerPt()[0] else min(hx)
+    lx = c.coords(vo.connectInfo.destLineID)[0::2]
+    self.assertTrue(min(lx) - 1 <= tipX <= max(lx) + 1)                          # (pointing along the line, toward b)
+    self.assertGreater(abs(tipX - self.view.viewToWindow(*vo.centerPt())[0]), abs(sum(hx) / len(hx) - self.view.viewToWindow(*vo.centerPt())[0]))
+
   def test0680marksZoomWithTheView(self):
-    'Marks are drawn in view units: zooming the view scales them with the line (an arrowhead twice as big at 2x), and back.'
+    'Marks, lines and borders are drawn in view units: zooming the view scales them (an arrowhead and the line twice as big at 2x), and back.'
     c = self.view.canvas
     self.set("vis/terminator4", "o>")
     def extents():
@@ -398,17 +446,27 @@ class Test(unittest.TestCase):
       ring = next(i for i in info.destTerminatorIDs if c.type(i) == "oval")
       hx = c.coords(head); rx = c.coords(ring)
       return (max(hx[0::2]) - min(hx[0::2]), max(hx[1::2]) - min(hx[1::2])), (rx[2] - rx[0])
+    lineWidth = lambda: float(c.itemcget(self.vr.connectInfo.sourceLineID, "width"))
+    vb = self.view.findViewObjectForGraphObject(self.b)
+    borderWidth = lambda: float(c.itemcget(vb._shape.id, "width"))
     (hw1, hh1), d1 = extents()
+    w1, b1 = lineWidth(), borderWidth()
     self.view.zoom(2.0)
     self.pump()
     (hw2, hh2), d2 = extents()
     self.assertAlmostEqual(d2, 2 * d1, delta=0.5)                           # (the circle's diameter doubles)
     self.assertAlmostEqual(math.hypot(hw2, hh2), 2 * math.hypot(hw1, hh1), delta=1.5) # (so does the head)
+    self.assertAlmostEqual(lineWidth(), 2 * w1)                             # (and the line's width, and the border's)
+    self.assertAlmostEqual(borderWidth(), 2 * b1)
+    self.view.zoom(0.25)
+    self.pump()
+    self.assertEqual(lineWidth(), 1.0)                                      # (never under a pixel)
     self.view.zoom(1.0)
     self.pump()
     (hw3, hh3), d3 = extents()
     self.assertAlmostEqual(d3, d1, delta=0.5)
     self.assertAlmostEqual(math.hypot(hw3, hh3), math.hypot(hw1, hh1), delta=1.5)
+    self.assertAlmostEqual(lineWidth(), w1)
 
   def test0685edgeSearchFinerWhenZoomed(self):
     'Where a curve crosses a node\'s edge is pinned down to a fraction of a pixel at any zoom: finer, in view units, zoomed in.'

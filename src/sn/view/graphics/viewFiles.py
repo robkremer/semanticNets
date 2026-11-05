@@ -33,7 +33,7 @@ import tkinter as tk
 import sn
 from sn.model.model import Model
 from typing import Any, cast
-from util.utils import fixURL, urlExists, addToMenuBar, afterMenu, addCheckToMenuBar, removeFromMenuBar, enableMenuBarItem, urlPath
+from util.utils import fixURL, urlExists, addToMenuBar, afterMenu, addCheckToMenuBar, removeFromMenuBar, enableMenuBarItem, urlPath, canWriteUrl
 from util.persistence.pRef import PRDb
 from sn.view.graphics.guiApp import Application
 from sn.view.graphics.directoryWindow import noteSaved
@@ -172,7 +172,14 @@ class FilesMixin(ViewBase):
         f'{missing} of the {len(shown)} objects of "{old.name}" shown in this view aren\'t in "{new.name}" (no object '
         f'there has the same id): they\'ll be shown as missing. Change it anyway?', parent=self.window):
       return
-    if self.isDirty():
+    if not urlExists(self.url): # (eg: made with File | New, and not saved yet: there's no file to read it from again)
+      if not messagebox.askokcancel("Change model", "The view's read again from its file, to show the other model, "
+                                    "but it hasn't been saved yet. Save it now?", parent=self.window):
+        return
+      self.doSaveView()
+      if not urlExists(self.url):
+        return
+    elif self.isDirty():
       answer = messagebox.askyesnocancel("Change model", "The view's read again from its file, to show the other "
                                          "model. Save its changes first? (If not, they're lost.)", parent=self.window)
       if answer is None:
@@ -306,7 +313,7 @@ class FilesMixin(ViewBase):
     '''
     addToMenuBar("File|Save view", self.doSaveView)
     addToMenuBar("File|Save view as...", self.doSaveViewAs)
-    addToMenuBar("File|Save model", self.doSaveModel)
+    addToMenuBar("File|Save model", self.doSaveModel, enabled=not self.model.writeLocked()) # (see refreshLock())
     addToMenuBar("File|Save model as...", self.doSaveModelAs)
     addToMenuBar("File|Close model", self.doCloseModel, separatorBefore=True) # (after the saves)
     addToMenuBar("File|Change model...", self.doChangeModel)
@@ -374,8 +381,14 @@ class FilesMixin(ViewBase):
   '''
   The file name of the system model's (sn's) view, in the sn.model package's
   folder: sn has no file of its own, so it's taken to be there -- with the base
-  rules (see *superModelView()*).
+  rules (see *superModelView()*) -- or, if the program's folders can't be
+  written (eg: an installed app), in *SUPER_VIEWS_FOLDER*.
   '''
+
+  SUPER_VIEWS_FOLDER = "views"
+  '''Where the views of the system model and the base rules go (in *sn.SN_FOLDER*)
+  if they can't go next to them, in the program's own folders: eg, an installed
+  app's, which can't be written (see *superModelView()*).'''
 
   def _superModelsMenu(self) -> tk.Menu:
     '''
@@ -410,7 +423,9 @@ class FilesMixin(ViewBase):
     ".snv" -- for the base rules, next to the file they come from (see
     *sn.model.reasoner.baseRulesSource()*), not the copy they're read from; for
     the system model (sn), which has no file, in the sn.model package's folder
-    (see *SN_VIEW*).
+    (see *SN_VIEW*). If it's not there, and can't be written there (eg: the
+    program's folder, in an installed app), in *SUPER_VIEWS_FOLDER* in
+    *sn.SN_FOLDER*.
 
     :param model: A super-model.
     :returns: (the URL of the model's file -- or "" for sn, which has none --
@@ -419,10 +434,14 @@ class FilesMixin(ViewBase):
     import importlib.resources
     from pathlib import Path
     from sn.model.reasoner import baseRulesSource
+    def writable(url:str) -> str:
+      if not url.startswith("file:") or urlExists(url) or canWriteUrl(url):
+        return url
+      return Path(sn.snFolder(self.SUPER_VIEWS_FOLDER), os.path.basename(urlPath(url) or self.SN_VIEW)).as_uri()
     if model is self.model.TOP.model:
-      return "", Path(str(importlib.resources.files("sn.model").joinpath(self.SN_VIEW))).as_uri()
+      return "", writable(Path(str(importlib.resources.files("sn.model").joinpath(self.SN_VIEW))).as_uri())
     src = baseRulesSource(model) or model.url
-    return src, fixURL(src, ".snv", replaceExt=True, mode="w")[0]
+    return src, writable(fixURL(src, ".snv", replaceExt=True, mode="")[0]) # (not "w": it may be somewhere that can't be written)
 
   def openSuperModel(self, model:Model) -> None:
     '''
@@ -506,6 +525,13 @@ class FilesMixin(ViewBase):
   while this view can't change it (see *isModelEditor()*).
   '''
 
+  WRITE_LOCKED_ITEMS = ("File|Save model",)
+  '''
+  The menu bar items that can't be used on a write-locked model (eg: one opened
+  read-only): greyed out while it is (see *refreshLock()*). (Not "Save model
+  as...": a copy can be saved.)
+  '''
+
   def refreshLock(self) -> None:
     '''
     Show whether the model can be changed in this view (see *isModelEditor()*),
@@ -519,6 +545,8 @@ class FilesMixin(ViewBase):
     if self.__dict__.get("_menuBarItemsShown", False):
       for path in self.MODEL_EDIT_ITEMS:
         enableMenuBarItem(path, self.isModelEditor())
+      for path in self.WRITE_LOCKED_ITEMS:
+        enableMenuBarItem(path, not self.model.writeLocked())
       enableMenuBarItem("Edit|Lock view", not self.model.writeLocked())
     bar = self.__dict__.get("_reasoningToolbar")
     if bar is not None:

@@ -114,6 +114,18 @@ class Test(unittest.TestCase):
     m.replaceSuperModel(self.far, far2, relative=True)
     self.assertEqual(m.superModelPaths(), ["base.snm", "../../../../lib/far2.snm"])
 
+  def test0600dropForACopyAlreadyThere(self):
+    '''A super-model still referred to can be dropped when a copy of it is already a super-model.'''
+    m = self.makeMain(self.far.url)
+    self.far.save(saveas=str(self.dir / "site/lib/far2.snm")) # (a copy)
+    far2 = Model.getDB((self.dir / "site/lib/far2.snm").as_uri())
+    m.setSuperModels(["base.snm", self.far.url, "../../../../lib/far2.snm"])
+    old = m["penny"].getParents()[0]
+    m.setSuperModels(["base.snm", "../../../../lib/far2.snm"])
+    self.assertEqual(m.superModelPaths(), ["base.snm", "../../../../lib/far2.snm"])
+    self.assertIs(m["penny"].getParents()[0].model, far2)
+    self.assertIsNot(m["penny"].getParents()[0], old)
+
 
 if __name__ == "__main__":
   unittest.main()

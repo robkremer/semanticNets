@@ -103,7 +103,7 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
   _modelsReplaced:list[tuple[str, str]] = []
   "The models put in place of others (see *modelReplacements*) while views were being read: noted in each, when it's read."
 
-  def __new__(cls, url:str, model:Model, *, mode="w", geometry:str="300x400+20+20", _reading:bool=False):
+  def __new__(cls, url:str, model:Model, *, mode="w", geometry:str|None=None, _reading:bool=False):
     '''
     The view at *url* (by default, beside *model*'s file): the one in memory, if there is one (see
     *PRDb.__new__()*).
@@ -112,10 +112,11 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
       url = fixURL(model.url, extension=".snv", replaceExt=True, mode="w")[0]
     return PRDb.__new__(cls, url, mode=mode, memoryResident=False, _reading=_reading)
 
-  def __init__(self, url:str, model:Model, *, mode="w", geometry:str="300x400+20+20", _reading:bool=False):
+  def __init__(self, url:str, model:Model, *, mode="w", geometry:str|None=None, _reading:bool=False):
     '''
-    A view of *model*, saved at *url*, in a new window (at *geometry*) -- unless it's one in memory already
-    (see *__new__()*).
+    A view of *model*, saved at *url*, in a new window (at *geometry*: by default, for a new view, where the
+    app puts the next new window -- see *Application.nextWindowGeometry()*) -- unless it's one in memory
+    already (see *__new__()*).
     '''
     if hasattr(self, "_initialized"): # This means the __new__ method has returned an existing object, so don't truck over it!
       return
@@ -136,6 +137,9 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
     # global way to get the tk application-root window
     self.root = tk._default_root # type: ignore[attr-defined] # @UndefinedVariable 
     
+    if geometry is None:
+      nextGeometry = getattr(self.root, "nextWindowGeometry", None)
+      geometry = nextGeometry() if callable(nextGeometry) else "300x400+20+20"
     self.window = AppWindow(self.root, self.url, geometry) # (self.url: where it is -- eg: a copied file's, not the URL stored in it)
     self.window.view = self  # so AppWindow's focus handling can dispatch to this SNGView (see onWindowFocusIn()/onWindowFocusOut())
     self.canvas:tk.Canvas = self.window.appPanedWidget.canvasFrame.canvas
@@ -262,6 +266,7 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
     if count:
       self.__dict__.pop("_byModelObject", None) # (see viewObjectsFor())
       self._observeModel(new)
+      self.structureChanged() # (what's remembered between draws -- labels, shape options, ... -- was of the old objects)
       self.setDirty()
       self.repaint()
     return count
@@ -521,7 +526,7 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
           madeHere = modelID in made # (by one of this view's commands: see ViewDoList.do() -- not by a program, or another window)
           made.discard(modelID)
           if (modelObj.isType() or isinstance(modelObj, Node)) and self.canvas and not pasted and madeHere:
-            self._askName(modelObj)
+            self._askName(modelObj, modelID)
           typ:type = type(modelObj)
           newObj:VObject|None = None
           if typ is Collection:
@@ -776,16 +781,32 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
     
 
 
-  def structureChanged(self) -> None:
+  def structureChanged(self, added:VObject|None=None, removed:VObject|None=None) -> None:
     '''
     Note that what's in the view, or the model's structure, has changed: an
     object was added to or taken out of the view or the model, or one was
     retyped or renamed, or a relation's end moved (see *VObject.update()* and
     *VRelation.update()*). What's worked out from that and remembered (see
     *contextWindows()*, *_containmentMaps()*, and each object's label, shape
-    options and constraint marker) is worked out afresh.
+    options and constraint marker) is worked out afresh -- except the list of
+    context windows, when all that's changed is that one object, *added*
+    (put back in the view) or *removed* (taken out of it): that's just
+    updated, not worked out again from every object in the view (which,
+    for each of thousands of objects erased together, or put back by an
+    undo, took the square of the time).
     '''
-    self.__dict__["_structureVersion"] = self.__dict__.get("_structureVersion", 0) + 1
+    version = self.__dict__.get("_structureVersion", 0)
+    self.__dict__["_structureVersion"] = version + 1
+    cached = self.__dict__.get("_contextWindowsCache")
+    if cached is None or cached[0] != version or (added is None and removed is None):
+      return
+    windows = cached[1]
+    if removed is not None:
+      windows = [w for w in windows if w is not removed]
+    if added is not None and not isinstance(added, VRelation) and added._isConnected() and added.isContextWindow() \
+       and not any(w is added for w in windows):
+      windows = [*windows, added] # (where a fresh list would have it: put back in the view, it's last in it)
+    self.__dict__["_contextWindowsCache"] = (version + 1, windows)
 
 
   

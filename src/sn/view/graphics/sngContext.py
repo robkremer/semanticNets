@@ -40,8 +40,11 @@ from sn.view.textUserInterface import UIContext
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
 from sn.view.graphics.viewCommands import ViewDoList
+import sn
 if TYPE_CHECKING:
   from sn.view.graphics.sngView import SNGView # (sngView imports this module: the view is imported where it's needed at run time)
+
+logger:sn.SNLogger = sn.getLogger(__name__)
 
 class SNGContext(UIContext):
   @override
@@ -78,7 +81,7 @@ class SNGContext(UIContext):
     self.defaults["view"] = self.view
     
   def move(self, obj:"VObject", x:int|float, y:int|float, _oldPos:list[int]|None=None, adjustPos:bool=True, _carry:bool=True, #type: ignore[name-defined]
-           _wasFloating:bool|None=None, _drag:bool=False):
+           _wasFloating:bool|None=None, _drag:bool=False, _group:list|None=None):
     '''
     This is a dummy graphic command.
     '''
@@ -86,7 +89,7 @@ class SNGContext(UIContext):
 
   class _Move(Command):
     def __init__(self, obj:"VObject", x:int|float, y:int|float, _oldPos:list[int]|None=None, adjustPos:bool=True, _carry:bool=True, #type: ignore[name-defined]
-                 _wasFloating:bool|None=None, _drag:bool=False):
+                 _wasFloating:bool|None=None, _drag:bool=False, _group:list|None=None):
       '''
       :param adjustPos: [default=True] Passed to *obj.moveTo()*: whether to let
         the local layout heuristic (FindFree) nudge *obj* off anything it
@@ -117,15 +120,21 @@ class SNGContext(UIContext):
         dragged (see *VObject.onB1_ButtonRelease()*), not a program moving it:
         eg: a tree layout pins a dragged node where it's dropped (see
         *treeLayout.TreeLayout.adjust()*).
+      :param _group: For a drop: everything dropped with it (eg: the rest of
+        the selection): the dynamic layout leaves a dropped object where it's
+        dropped if it's on nothing else, and doesn't count those as things it's
+        on (see *layout.FindFree.placeNode()*).
       '''
       super().__init__("move")
       self.drag:bool = _drag
+      self.group:list = list(_group) if _group is not None else [obj]
       self.obj:VObject = obj
       self.oldPos:list[int]|None = list(_oldPos) if _oldPos is not None else None
       self.x, self.y = x, y
       self.adjustPos = adjustPos
       self.carry = _carry
-      self.pin = _wasFloating is not None
+      from sn.view.graphics.layout import pinnableLabel
+      self.pin = _wasFloating is not None and (not isinstance(obj, VRelation) or pinnableLabel(obj)) # (not a label with no text: see pinnableLabel())
       if isinstance(self.obj, VRelation):
         self.floating:bool = self.obj.floating() if _wasFloating is None else _wasFloating
 
@@ -136,7 +145,12 @@ class SNGContext(UIContext):
         self.oldPos = self.obj.boundingBox()
       if self.pin and isinstance(self.obj, VRelation):
         self.obj._floatingAnchor = False # (directly: not recentred between its ends first)
-      self.obj.moveTo(self.x, self.y, adjustPos=self.adjustPos, carry=self.carry)
+      if self.drag: # (see layout.FindFree.placeNode())
+        self.obj.__dict__["_dropping"] = self.group
+      try:
+        self.obj.moveTo(self.x, self.y, adjustPos=self.adjustPos, carry=self.carry)
+      finally:
+        self.obj.__dict__.pop("_dropping", None)
       self.obj.view.repaintSoon() # (not now: a layout's run is many moves -- see repaintSoon())
   
     @override
@@ -303,6 +317,9 @@ class SNGContext(UIContext):
         assert isinstance(temp, GraphObject)
         self.modelObjects.append(temp)
       self.vobjects:list[VObject] = []
+      self.exempted:list[VObject] = []
+      "Objects already in the view, but hidden by their category, that this showed anyway: hidden again by an undo."
+      self.originalDo:bool = True
   
     @override
     def do(self) -> None:
@@ -311,7 +328,8 @@ class SNGContext(UIContext):
           self.vobjects.append(tup[1])
       super().do()
       view = self.view
-      if len(self.vobjects) == 0: # first call
+      if self.originalDo: # first call
+        self.originalDo = False
         # setup a callback to place an newly created VObjects in self.vobjects
         detachCode = view.attachCallback(callback)
         for mo in self.modelObjects:
@@ -320,7 +338,10 @@ class SNGContext(UIContext):
         for mo in self.modelObjects: # (asked for explicitly: shown even if in a hidden category)
           vo = self.view.findViewObjectForGraphObject(mo)
           if vo is not None:
+            was = vo.categoryExempt
             self.view._exemptIfFiltered(vo)
+            if vo.categoryExempt and not was and vo not in self.vobjects:
+              self.exempted.append(vo)
       else: # subsequent call (redo)
         # Nodes first: a node's _reconnect() also restores the relations it
         # kept a reference to (see AGObject._disconnect()/_reconnect()), from
@@ -328,8 +349,12 @@ class SNGContext(UIContext):
         # that kept end a second time.
         n:VObject
         for n in sorted(self.vobjects, key=lambda vo: isinstance(vo, VRelation)):
-          if not n._isConnected():
+          if not n._isConnected() and n._canReconnect():
             n._reconnect()
+        for n in self.exempted:
+          if n._isConnected() and not n.categoryExempt:
+            n.categoryExempt = True
+            n._applyHidden()
   
     @override
     def undo(self):
@@ -339,6 +364,10 @@ class SNGContext(UIContext):
       for vo in reversed(self.vobjects):
         if vo._isConnected():
           vo._disconnect()
+      for vo in self.exempted: # (in a hidden category again)
+        if vo._isConnected() and vo.categoryExempt:
+          vo.categoryExempt = False
+          vo._applyHidden()
   
     @override
     def delete(self):
@@ -346,6 +375,7 @@ class SNGContext(UIContext):
       self.modelObjects = None # type: ignore[assignment]
       self.view = None # type: ignore[assignment]
       self.vobjects = None # type: ignore[assignment]
+      self.exempted = []
   
     @override
     def __str__(self):
@@ -396,7 +426,7 @@ class SNGContext(UIContext):
       super().undo()
       with self.objects[0].view.batchedItemStates():
         for obj in reversed(self.erased): # (the ends of relations before the relations)
-          if not obj._isConnected():
+          if not obj._isConnected() and obj._canReconnect(): # (not if it's gone from the model since, or shown again another way)
             obj._reconnect()
       
     @override
@@ -478,6 +508,7 @@ class SNGContext(UIContext):
       self.category, self.mode = category, mode
       self.oldMode:str = view.hides.get(category, "show")
       self.erased:list[VObject] = []
+      self.unexempted:list[VObject]|None = None # (the objects shown anyway that this hides again)
 
     @override
     def do(self) -> None:
@@ -487,16 +518,22 @@ class SNGContext(UIContext):
         v.hides.pop(self.category, None)
       else:
         v.hides[self.category] = self.mode
-        for vo in v.values(): # (hiding again hides what was shown anyway since)
-          if vo is not None and vo.categoryExempt and vo.modelObject is not None \
-             and v.categories.isCategory(vo.modelObject, [self.category]):
-            vo.categoryExempt = False
+        if self.unexempted is None: # (first time: hiding again hides what was shown anyway since)
+          self.unexempted = [vo for vo in v.values() if vo is not None and vo.categoryExempt and vo.modelObject is not None
+                             and v.categories.isCategory(vo.modelObject, [self.category])]
+        for vo in self.unexempted:
+          vo.categoryExempt = False
       if self.mode == "erase":
         if not self.erased: # (first time: what to erase)
           victims = [vo for vo in v.values() if vo is not None and vo._isConnected() and vo.modelObject is not None
                      and v.categories.isCategory(vo.modelObject, [self.category])]
-          for w in [vo for vo in victims if not isinstance(vo, VRelation) and vo.isContextWindow()]:
-            victims += [c for c in w.windowContents() if c not in victims] # (not left floating)
+          windows = [vo for vo in victims if not isinstance(vo, VRelation) and vo.isContextWindow()]
+          while windows: # (their contents too, not left floating: and those of the windows in them)
+            for c in windows.pop().windowContents():
+              if c not in victims:
+                victims.append(c)
+                if not isinstance(c, VRelation) and c.isContextWindow():
+                  windows.append(c)
           # nodes first: that takes their relations too
           self.erased = sorted(victims, key=lambda vo: isinstance(vo, VRelation))
         for vo in self.erased:
@@ -514,9 +551,10 @@ class SNGContext(UIContext):
       else:
         v.hides[self.category] = self.oldMode
       for vo in self.erased: # (nodes first, as in _Represent)
-        mo = vo.modelObject
-        if not vo._isConnected() and (mo is None or mo._isConnected()): # (not an inferred object a later "reason" took out of the model)
+        if not vo._isConnected() and vo._canReconnect(): # (not eg: an inferred object a later "reason" took out of the model)
           vo._reconnect()
+      for vo in self.unexempted or ():
+        vo.categoryExempt = True
       v.setDirty()
       v.applyVisibility()
 
@@ -525,6 +563,7 @@ class SNGContext(UIContext):
       super().delete()
       self.view = None # type: ignore[assignment]
       self.erased = []
+      self.unexempted = []
 
     @override
     def __str__(self):
@@ -567,9 +606,11 @@ class SNGContext(UIContext):
         detachCode = view.attachCallback(lambda com, tup: self.createdObjects.append(tup[1]) if com=='new' else 0) # (tup is (id, VObject))
         self.obj.expand(filter=self.filter, expand=self.levels, _exempted=self.exempted, also=self.also)
         view.detachCallback(detachCode)
+        if not self.createdObjects and not self.exempted:
+          logger.info("Nothing new to show: what that leads to is in the view already (or hidden).")
       else: # redo: nodes first (see _Represent.do())
         for obj in sorted(self.createdObjects, key=lambda vo: isinstance(vo, VRelation)):
-          if not obj._isConnected():
+          if not obj._isConnected() and obj._canReconnect():
             obj._reconnect()
         for obj in self.exempted:
           if obj._isConnected() and not obj.categoryExempt:

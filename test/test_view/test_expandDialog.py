@@ -88,6 +88,19 @@ class Test(unittest.TestCase):
     self.assertTrue(getattr(choiceFilter("chosen", [isa]), "showsHidden", False))
     self.assertFalse(getattr(choiceFilter("all", []), "showsHidden", False))     # (all: categories still apply)
 
+  def test0400shown(self):
+    'Relations in the view already (with what they lead to) are counted as such: none new, the choice is greyed.'
+    shownRels = {id(r) for r in self.rels if r.getParents()[0].name == "has-father"}
+    choices = {(c.type.name, c.direction): c for c in relationChoices(self.edna, self.rels, shown=lambda r: id(r) in shownRels)}
+    father, parent = choices[("has-father", OUT)], choices[("has-parent", OUT)]
+    self.assertEqual((father.count, father.shown), (1, 1))
+    self.assertTrue(father.label().endswith("(1, all shown)"))
+    self.assertTrue(father.nothingNew())
+    self.assertEqual((parent.count, parent.shown), (2, 1))
+    self.assertTrue(parent.label().endswith("(2, 1 new)"))
+    self.assertFalse(parent.nothingNew())
+    self.assertTrue(choices[("has-mother", OUT)].label().endswith("(1)"))
+
 
 if __name__ == "__main__":
   unittest.main()

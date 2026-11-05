@@ -15,6 +15,12 @@ with the **Start** button at the top of the layout panel's **Animate** page
 (see :doc:`layouts`). Start it again (or press **Stop**) to stop it early. A whole run is a single command: **Cmd-Z** puts
 everything back where it was.
 
+If a layout that arranges things itself (a tree, balloon, radial or hubs
+layout) keeps the view arranged, starting the animation switches it to
+**avoid overlaps** first -- otherwise it would put everything straight back
+after the run -- and it stays so after the run (the log says so). **Cmd-Z**
+on the run puts the old layout back too, as it was.
+
 What moves
 ----------
 

@@ -1,0 +1,3 @@
+# The optional Nemo reasoner engine (sn.model.nemoReasoner: "reasoner/engine" = nemo, and "explain").
+# Pinned: its Python bindings call themselves experimental, and change between releases.
+nemo-python==0.10.1

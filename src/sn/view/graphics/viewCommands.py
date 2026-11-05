@@ -170,6 +170,7 @@ class ViewDoList(DoList):
     super().__init__()
     self.view:SNGView = view
     self._adjustingAgain = False
+    self._lastMade:tuple[Command, range]|None = None # (the last command that made model objects, and their ids: see made())
 
   def adjustAgain(self) -> None:
     '''
@@ -199,6 +200,19 @@ class ViewDoList(DoList):
       except Exception:
         logger.exception(f'the view\'s dynamic layout ("{layout.NAME}") couldn\'t adjust it')
     self.view.canvas.after_idle(again)
+
+  def made(self, objectID:int) -> bool:
+    '''
+    Whether the last thing done (and not undone) made the model object
+    numbered *objectID* -- whatever's been added to its undo entry since (a
+    layout's adjustment, the bumping out of windows).
+    '''
+    if self._lastMade is None or not 0 <= self.index < len(self.queue):
+      return False
+    c = self.queue[self.index]
+    while isinstance(c, (_Adjusted, _Bumped)):
+      c = c.commands[0]
+    return c is self._lastMade[0] and objectID in self._lastMade[1]
 
   def _refuses(self, c:Command, doing:str) -> bool:
     '''
@@ -230,6 +244,8 @@ class ViewDoList(DoList):
     ret = super().do(c)
     if self.view.model.nextID > first:
       self.view.__dict__.setdefault("_madeHere", set()).update(range(first, self.view.model.nextID))
+      if c.mutatedData:
+        self._lastMade = (c, range(first, self.view.model.nextID))
     if c.mutatedData and 0 <= self.index < len(self.queue) and self.queue[self.index] is c:
       self._bump()
       if not getattr(c, "isLayout", False) and self.view.localLayout is not None: # (None: a program's turned it off for now)
@@ -261,14 +277,32 @@ class ViewDoList(DoList):
     finishTween(self.view)
     if 0 <= self.index < len(self.queue) and self._refuses(self.queue[self.index], "undo"):
       return None
-    return super().undo()
+    return self._said("undo", self.queue[self.index] if 0 <= self.index < len(self.queue) else None, super().undo)
 
   @override
   def redo(self) -> Any:
     finishTween(self.view)
     if 0 <= self.index + 1 < len(self.queue) and self._refuses(self.queue[self.index + 1], "redo"):
       return None
-    return super().redo()
+    return self._said("redo", self.queue[self.index + 1] if 0 <= self.index + 1 < len(self.queue) else None, super().redo)
+
+  def _said(self, doing:str, c:Command|None, run:Callable[[], Any]) -> Any:
+    '''
+    Undo or redo (*run*), saying why if it can't be (eg: the model's
+    write-locked, or what it changes is inferred): a message, not a traceback.
+    It's left where it was (see *DoList.undo()*): undoing (redoing) again
+    tries it again.
+
+    :param doing: "undo" or "redo", for the message.
+    :param c: The command.
+    '''
+    try:
+      return run()
+    except (PermissionError, ValueError) as ex: # (what a command refuses with: anything else is a bug, and its traceback says where)
+      logger.error(f'Can\'t {doing} "{c.name if c is not None else "it"}": {ex}')
+      if self.view.canvas:
+        self.view.window.bell()
+      return None
 
 class _ContainCreated(Command):
   '''

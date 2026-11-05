@@ -46,7 +46,9 @@ there again.
   same name, ending ".snv" -- or, if there isn't one, a new view that will be
   saved there. The base rules' view is next to the file they come with; the
   system model, sn, has no file, so its view is taken to be there too
-  (``sn.snv``). Both are read-only.
+  (``sn.snv``). Both are read-only. (Where those can't be written -- eg, an
+  installed app's own folders -- their views are kept in the ``views``
+  folder of the program's own folder, ``~/.sn``, instead.)
 - **File | New...** makes a new view, of a new or existing model.
 - **File | Save view** saves the window's view.
 - **File | Save model** saves the window's model.
@@ -215,6 +217,8 @@ setting                                          controls
                                                  relation's label when placing it: 0 (not
                                                  at all) to 10 (furthest; slow in a crowded
                                                  view, as when showing a big model)
+``reasoner/engine``                              the reasoner engine: clingo, or the optional
+                                                 nemo (see :doc:`reasoning`)
 ``loggingLevel``                                 how much detail the program's messages go
                                                  into
 ===============================================  ==========================================

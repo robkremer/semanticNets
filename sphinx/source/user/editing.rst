@@ -16,7 +16,9 @@ From an object's menu: **make new instance** and **make new subtype** make an
 individual of that type, or a subtype of it.
 
 You're asked for the new object's name. (A variable's name can carry its
-constraints: see :doc:`contexts`.)
+constraints: see :doc:`contexts`.) Cancel (or leave the name empty) and the
+object isn't made after all: it's taken out again, and **Redo** doesn't bring
+it back.
 
 Making relations
 ----------------

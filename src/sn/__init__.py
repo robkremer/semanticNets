@@ -33,7 +33,7 @@ from util.utils import askYesNo
 
 NAME = "Semantic Nets"
 SHORT_NAME = "sn"
-VERSION = "1.0.1"
+VERSION = "1.1"
 "The program's version: written in the files it saves (see *SerializationStrategy.appVersion*)."
 
 SCHEMA = "sn"
@@ -167,6 +167,10 @@ PREFS:dict[str, tuple[Any, Any, str]] = {
     "Show the base rules (the meaning of symmetric, transitive, ...: see sn.model.reasoner.BASE_RULES) in the "
     "reasoner's results: their objects as data, and what they conclude as rule conclusions rather than plain "
     "inferences. For debugging the base rules; best left off."),
+  "reasoner/engine": ("choices[clingo,nemo]", "clingo",
+    "The reasoner engine that \"reason\" and queries use: clingo (answer set programming), or nemo (Datalog, "
+    "which can also say why a conclusion holds: the \"explain\" command). Nemo is optional: pip install nemo-python. "
+    "See sn.model.reasoner.Reasoner.create()."),
   "text/wrap": (bool, False,
     "Whether long lines wrap in the terminal pane (else it scrolls sideways)."),
   "text/backgroundColor": ("color", "white",

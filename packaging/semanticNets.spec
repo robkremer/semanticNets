@@ -44,6 +44,7 @@ MIN_MACOS = {"x86_64": "10.15", "arm64": "11.0"}
 
 datas = [
   (os.path.join(SRC, "sn", "model", "clingoReasoner.lp"), os.path.join("sn", "model")),
+  (os.path.join(SRC, "sn", "model", "nemoReasoner.rls"), os.path.join("sn", "model")), # (the optional engine's: used if nemo-python is in the build venv)
   (os.path.join(SRC, "sn", "model", "baseRules.snm"), os.path.join("sn", "model")),
   (os.path.join(SRC, "sn", "examples"), os.path.join("sn", "examples")),
 ]

@@ -145,7 +145,8 @@ class ViewportMixin(ViewBase):
       self._scale *= scale
     else:
       self._scale = scale
-    self.canvas.scale("all", 0, 0, self._scale / oldScale, self._scale / oldScale)
+    factor = self._scale / oldScale
+    self.canvas.scale("all", 0, 0, factor, factor)
     for child_widget in self.canvas.find_withtag("text"):
       self.canvas.itemconfigure(child_widget, font=(self._fontFace, self.fontSize()))
     try:
@@ -153,11 +154,17 @@ class ViewportMixin(ViewBase):
     except:
       bb = [0, 0, 0, 0]
     bb = [bb[0] - 800, bb[1] - 600, bb[2] + 800, bb[3] + 600] # (the canvas extends every way: coordinates may be negative)
+    old = getattr(self, "scrollRegion", None)
+    if old is not None and len(old) == 4: # (what's hidden isn't in the bbox: the old region, zoomed too, still covers it)
+      old = [float(c) * factor for c in old]
+      bb = [min(bb[0], old[0]), min(bb[1], old[1]), max(bb[2], old[2]), max(bb[3], old[3])]
     self.scrollRegion = tuple(bb) # (what resetScrollRegion() grows from -- in canvas units, which zooming changes)
     self.canvas.configure(scrollregion=bb) #type: ignore[call-overload]
     bar = self.__dict__.get("_reasoningToolbar") # (it shows the zoom)
     if bar is not None:
       bar.refreshZoom()
+    if abs(factor - 1.0) > 1e-9: # (what's drawn a fixed size on the screen -- eg: selection handles, window titles, glows -- once it's idle: once, however many steps of a drag-zoom)
+      self.repaintSoon()
 
   def _viewportState(self) -> str:
     '''

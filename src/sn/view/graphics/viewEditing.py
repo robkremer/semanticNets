@@ -103,6 +103,21 @@ class EditingMixin(ViewBase):
   and the type it's making one of, until it's made (see *makeMenu()*, *_newObjectLocation()*).
   '''
 
+  def _cancelNew(self, mo:GraphObject, objectID:int) -> None:
+    '''
+    *mo* was left without a name when it was made (see *_askName()*): undo
+    the command that made it -- if that's still the last thing done, and
+    it's still nameless -- and forget it, so redo doesn't make it again. (A
+    window's contents made with it go too: eg, its pane's containment.)
+    '''
+    dl = self.context.doList
+    if getattr(self, "_closed", False) or not mo._isConnected() or mo.name or not isinstance(dl, ViewDoList) or not dl.made(objectID):
+      return
+    self.context.undo()
+    if not mo._isConnected():
+      dl.dropRedo()
+      logger.info("New object cancelled: it was given no name.")
+
   def _placeNew(self, vo:VObject, under:VObject|None) -> None:
     '''
     Move a newly made view object to the nearest free place (see *FindFree*):
@@ -110,7 +125,7 @@ class EditingMixin(ViewBase):
     dynamic layout puts it -- and then let that layout adjust the rest (see
     *ViewDoList.adjustAgain()*).
     '''
-    if not vo._isConnected() or vo.isHidden():
+    if not vo._isConnected() or vo.isHidden() or (vo.modelObject is not None and not vo.modelObject._isConnected()): # (gone from the model meanwhile: eg, cancelled -- see _cancelNew())
       return
     if vo._shape is None or vo._shape.id is None: # (not drawn yet: it'd be invisible to the search)
       self.freshPaint()
@@ -290,8 +305,15 @@ class EditingMixin(ViewBase):
       self.canvas.update_idletasks()
       tags = {vo.tag for vo in vos}
       items = [i for i in self.canvas.find_all() if tags.intersection(self.canvas.gettags(i))]
-      w, h = copyImage(self.canvas, items)
+      missing:dict[str, set[int]] = {}
+      w, h = copyImage(self.canvas, items, missing=missing)
       print(f"Copied a picture of {len(vos)} object{'' if len(vos) == 1 else 's'} ({w}\u00d7{h}), to paste into another program.")
+      if missing:
+        byTag = {vo.tag: vo for vo in vos}
+        names = dict.fromkeys(str(byTag[t].name) for its in missing.values() for i in sorted(its)
+                              for t in self.canvas.gettags(i) if t in byTag)
+        logger.warning(f'The picture shows {"".join(sorted(missing))} as "?": the picture\'s fonts don\'t have '
+                       f'{"it" if len(missing) == 1 else "them"} (in {", ".join(names) or "some text"}).')
     except Exception as ex:
       logger.error(f"Can't copy a picture: {ex}")
     finally:
@@ -681,7 +703,9 @@ class EditingMixin(ViewBase):
     Highlight the nodes and relations in the view whose names match *pattern*
     (see *sn.model.model.nameMatcher()*) -- not isa links, nor those not drawn
     just now (see *VObject.isHidden()*) -- replacing any earlier highlights,
-    and scroll to show them. With *wholeModel*, those in the model (and, with
+    and scroll to show them: all of them, if they fit in the window; else the
+    one nearest the middle of the window (see *showMatch()* for the others).
+    With *wholeModel*, those in the model (and, with
     *superModels*, its super-models) that aren't in the view are shown first
     (one undoable command: see *represent()*), even if they're in a hidden or
     erased category; and so are any of those in the view in such a category.
@@ -719,13 +743,47 @@ class EditingMixin(ViewBase):
       if not vo.isHidden():
         vo.highlight(True)
         ret.append(vo)
+    self.__dict__["_matches"], self.__dict__["_matchAt"] = list(ret), None
     if ret and self.canvas:
       def show() -> None: # (once anything just shown is placed: see makeViewObjectForGraphObject())
-        boxes = [vo.boundingBox() for vo in ret if vo._isConnected()]
-        if boxes:
-          self.scrollToShow([min(b[0] for b in boxes), min(b[1] for b in boxes), max(b[2] for b in boxes), max(b[3] for b in boxes)])
+        found = self._liveMatches()
+        if not found:
+          return
+        boxes = [vo.boundingBox() for vo in found]
+        union = [min(b[0] for b in boxes), min(b[1] for b in boxes), max(b[2] for b in boxes), max(b[3] for b in boxes)]
+        x1, y1, x2, y2 = self.viewToWindow(*union)
+        c = self.canvas
+        if x2 - x1 + 40 <= c.winfo_width() and y2 - y1 + 40 <= c.winfo_height(): # (all of them: see scrollToShow()'s margin)
+          self.scrollToShow(union)
+          return
+        mx, my = self.windowToView(c.canvasx(c.winfo_width() / 2), c.canvasy(c.winfo_height() / 2))
+        nearest = min(range(len(found)), key=lambda i: (found[i].centerPt()[0] - mx) ** 2 + (found[i].centerPt()[1] - my) ** 2)
+        self.__dict__["_matchAt"] = nearest
+        self._centreOn(*found[nearest].centerPt())
       self.canvas.after_idle(show)
     return ret, brought
+
+  def _liveMatches(self) -> list[VObject]:
+    ":returns: What the last search highlighted (see *search()*) that's still shown: in reading order (by rows, then across)."
+    found = [vo for vo in self.__dict__.get("_matches", ()) if vo._isConnected() and not vo.isHidden()]
+    return sorted(found, key=lambda vo: (round(vo.centerPt()[1] / 20), vo.centerPt()[0]))
+
+  def showMatch(self, step:int) -> tuple[int, int]:
+    '''
+    Scroll to the next (*step* 1) or previous (-1) of what the last search
+    found (see *search()*), in reading order -- round again after the last --
+    and put it in the middle of the window.
+
+    :returns: Which one it is (from 1), and how many there are: (0, 0) if none.
+    '''
+    found = self._liveMatches()
+    if not found:
+      return 0, 0
+    at = self.__dict__.get("_matchAt")
+    i = (0 if step > 0 else len(found) - 1) if at is None else (at + step) % len(found)
+    self.__dict__["_matchAt"] = i
+    self._centreOn(*found[i].centerPt())
+    return i + 1, len(found)
 
   def openSearchDialog(self) -> None:
     '''
@@ -759,9 +817,15 @@ class EditingMixin(ViewBase):
       # an isa link needs both ends.
       onEmpty = None if typ is None or typ is self.model.ISA else \
         (lambda orig, typ=typ: self.makeRelation(orig, None, typ))
+      def isaParent(n:VObject) -> bool: # (as resetting an isa link's destination: see VRelation.chooseNewEndpoint())
+        child, parent = node.modelObject, n.modelObject
+        return n is not node and not n.isInferred() and parent is not None and parent.isType() \
+               and isinstance(n, VRelation) == isinstance(node, VRelation) \
+               and (child is None or child.parentProblem(parent) is None)
       self.elasticLineChoice(node, 
                              callback=lambda orig, sel, typ=typ: callback(orig, sel, typ), #type: ignore[misc]
-                             arrowHeads=2, color="blue", onEmpty=onEmpty)
+                             filter=isaParent if typ is self.model.ISA else lambda n: True,
+                             arrowHeads=2, onEmpty=onEmpty)
     else:
       if not isinstance(typ, Relation):
         raise TypeError(f'SNView.makeRelationFrom(): "typ" argument must be a model Relation; got object of class {type(typ).__name__}.')
@@ -795,17 +859,28 @@ class EditingMixin(ViewBase):
                                   source=fromNode.modelObject, model=self.model)
         if toNode is not None and mgr.commands:
           self._containNewRelation(mgr, mgr.commands[-1], typ, fromNode, toNode)
+    except (ValueError, PermissionError) as ex: # (eg: an isa cycle: said, not a traceback)
+      logger.error(str(ex))
     except Exception:
       logger.exception("SNView.makeRelation():")
 
-  def _askName(self, mo:GraphObject) -> None:
+  def _askName(self, mo:GraphObject, objectID:int|None=None) -> None:
     '''
     Ask for a new object's name (and anything else about it), in the
-    attribute editor -- unless it's gone (eg: undone).
+    attribute editor -- unless it's gone (eg: undone). Left without a name
+    (the editor cancelled, or the name left blank), it isn't made after all
+    (see *_cancelNew()*).
+
+    :param objectID: Its id in the model: unless the last command made it
+      (see *ViewDoList.made()*), a nameless one is left.
     '''
     if getattr(self, "_closed", False) or not mo._isConnected():
       return
     applyEditAttrsBox(self.canvas, mo, title=mo.name, editKey="name")
+    if not mo.name:
+      if objectID is not None: # (once its view object's made: this is called as the model says it's new, before then)
+        self.canvas.after_idle(lambda: self._cancelNew(mo, objectID))
+      return
     # a variable's name may be typed with constraints: "?p :where: alive" (see sn.model.constraints)
     if WHERE in mo.name:
       self._applyWhere(mo)
