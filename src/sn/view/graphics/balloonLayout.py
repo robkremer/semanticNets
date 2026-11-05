@@ -58,8 +58,8 @@ from util.utils import Point
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
 from sn.view.graphics.layout import (LayoutHeuristic, LayoutParameter, LayoutMoves, FindFree, Direction,
-                                     registerLayout, layoutSize, STATIC, DYNAMIC)
-from sn.view.graphics.treeLayout import (TreeLayout, isMember, isLink, upgradeRelation, relationsParameter, RELATIONS_NOTE,
+                                     registerLayout, layoutSize, finishTween, pinnableLabel, STATIC, DYNAMIC)
+from sn.view.graphics.treeLayout import (TreeLayout, isMember, isLink, hasLabel, upgradeRelation, relationsParameter, RELATIONS_NOTE,
                                          RelationTable, IGNORED, NEAR_BIAS, _BoxIndex, nearestFree)
 
 K = TypeVar("K", bound=Hashable)
@@ -750,7 +750,10 @@ class _RoundLayout(LayoutHeuristic):
   pinned there, as the root (only hub) of a group of its own, with what's
   under it, until the next static round layout; dropping a root moves its
   group. The nodes in no group are put as by the static layout, each time --
-  except those the user drops somewhere, which are pinned there.
+  except those the user drops somewhere, which are pinned there. The label of
+  a relation between nodes arranged that isn't a group's floats between its
+  ends, unless there's more than one between the same two: those are put
+  side by side (but not one the user drops somewhere: see *labelled*).
   '''
   CATEGORIES = (STATIC, DYNAMIC)
 
@@ -760,6 +763,9 @@ class _RoundLayout(LayoutHeuristic):
     "The ids (*VObject._id*) of the nodes the user has dropped, pinned as roots of their own (see *adjust()*)."
     self.known:set[int]|None = None
     "The ids of the nodes it laid out last time (None: all those there are): a new one doesn't anchor its group."
+    self.labelled:set[int] = set()
+    '''The ids of the relations whose labels it placed last time: one it no longer places floats between its
+    ends again; a pinned label not among them (eg: dropped by the user) is left where it is.'''
     self._fallback = FindFree(view)
     "What places what it doesn't arrange (see *placeNode()*)."
     self._treeLayout:TreeLayout|None = None
@@ -788,11 +794,14 @@ class _RoundLayout(LayoutHeuristic):
     raise NotImplementedError
 
   def _withLabels(self, positions:dict[VObject, tuple[float, float]], sizes:dict[VObject, tuple[float, float]],
-                  edges:list[tuple[VObject, VObject, Any]]) -> dict[VObject, tuple[float, float]]:
-    ":returns: *positions*, and where the labels of the relations between them go (see *_labelTargets()*, *_otherLabels()*)."
+                  edges:list[tuple[VObject, VObject, Any]], dynamic:bool=False) -> dict[VObject, tuple[float, float]]:
+    '''
+    :param dynamic: Whether it's for keeping things arranged (see *_otherLabels()*).
+    :returns: *positions*, and where the labels of the relations between them go (see *_labelTargets()*, *_otherLabels()*).
+    '''
     ret:dict[VObject, tuple[float, float]] = {n: p for n, p in positions.items()}
     ret.update(self._labelTargets(positions, sizes, edges))
-    ret.update(self._otherLabels(positions, sizes, edges))
+    ret.update(self._otherLabels(positions, sizes, edges, dynamic=dynamic))
     return ret
 
   @override
@@ -854,7 +863,7 @@ class _RoundLayout(LayoutHeuristic):
       width = max([ROW_LENGTH] + [x + sizes[n][0] - x0 for n, (x, _) in positions.items()])
       rows = self._tree()._rows(laid.rows, sizes, cursor, x0, cursor, [(None, [x0, cursor, x0 + width, cursor])]) #type: ignore[list-item]
       positions.update({n: (float(round(x)), float(round(y))) for n, (x, y) in rows.items()})
-    return self._withLabels(positions, sizes, laid.edges)
+    return self._withLabels(positions, sizes, laid.edges, dynamic=True)
 
   @override
   def placeNode(self, node:VObject, referenceNode:Optional[VObject]=None, direction:Direction=Direction.UNSPECIFIED,
@@ -869,28 +878,41 @@ class _RoundLayout(LayoutHeuristic):
       return bb[0], bb[1]
     return self._fallback.placeNode(node, referenceNode, direction, loc, **kwargs)
 
-  def _adjustment(self, name:str, pinned:set[int]) -> LayoutMoves:
+  def _adjustment(self, name:str, pinned:set[int], dropped:set[int]=set()) -> LayoutMoves:
     '''
     :param name: What the undo menu calls it.
     :param pinned: Ids of nodes to pin now (see *pins*).
+    :param dropped: Ids of relations whose labels the user just dropped: left where they are (see *labelled*).
     :returns: The moves that keep things arranged (see *compute()*), with
-      *pinned* pinned, and what it knows updated: not done yet.
+      *pinned* pinned, the labels it no longer places made to float, and
+      what it knows updated: not done yet.
     '''
-    oldPins, oldKnown = set(self.pins), self.known
+    finishTween(self.view) # (an earlier move under way: from where it ends, as the command's undo puts it back there)
+    oldPins, oldKnown, oldLabelled = set(self.pins), self.known, set(self.labelled)
     self.pins |= pinned # (for compute(): put back below, and done by the command)
+    self.labelled -= dropped
     try:
       targets = self.compute(fresh=pinned)
     finally:
-      self.pins = oldPins
+      self.pins, self.labelled = oldPins, set(oldLabelled)
     cmd = LayoutMoves(self.view, name, targets)
     newPins = oldPins | pinned
-    newKnown = {vo._id for vo in self._tree().scope()[0]}
+    inScope, edges = self._tree().scope()
+    newKnown = {vo._id for vo in inScope}
+    newLabelled = {vo._id for vo in targets if isinstance(vo, VRelation)}
     def do() -> None:
-      self.pins, self.known = set(newPins), set(newKnown)
+      self.pins, self.known, self.labelled = set(newPins), set(newKnown), set(newLabelled)
     def undo() -> None:
-      self.pins, self.known = set(oldPins), (set(oldKnown) if oldKnown is not None else None)
-    if newPins != oldPins or newKnown != oldKnown:
+      self.pins, self.known, self.labelled = set(oldPins), (set(oldKnown) if oldKnown is not None else None), set(oldLabelled)
+    if newPins != oldPins or newKnown != oldKnown or newLabelled != oldLabelled:
       cmd.also.append((do, undo))
+    # (a label it placed, and no longer does, floats between its ends again; and so does one with no text that
+    # was pinned -- eg: by an older version: its line runs through it, see pinnableLabel())
+    placed = [r for r in self.view.values() if isinstance(r, VRelation) and r._id in oldLabelled - dropped and r not in targets]
+    textless = [r for r in edges if isinstance(r, VRelation) and not pinnableLabel(r)]
+    for r in dict.fromkeys(placed + textless):
+      if r._isConnected() and not r.floating():
+        cmd.also.append((lambda r=r: r.floating(True), lambda r=r: r.floating(False)))
     return cmd
 
   @override
@@ -914,8 +936,10 @@ class _RoundLayout(LayoutHeuristic):
     user dropped (see *SNGView._Move*) that isn't the root of its group is
     pinned where it's dropped (see *_pinnable()*).
     '''
-    drops = [vo for vo in self._tree()._drops(command) if isMember(vo)]
-    return self._adjustment(command.name, self._pinnable(drops) if drops else set())
+    allDrops = self._tree()._drops(command)
+    drops = [vo for vo in allDrops if isMember(vo)]
+    dropped = {vo._id for vo in allDrops if isinstance(vo, VRelation) and not isMember(vo)}
+    return self._adjustment(command.name, self._pinnable(drops) if drops else set(), dropped)
 
   # ---- saving it with the view -----------------------------------------------------
 
@@ -976,7 +1000,7 @@ class _RoundLayout(LayoutHeuristic):
     '''
     ret:dict[VObject, tuple[float, float]] = {}
     for p, k, r in edges:
-      if not isinstance(r, VRelation) or p not in positions or k not in positions: # (not a relation type's link to its end: no label)
+      if not hasLabel(r) or p not in positions or k not in positions: # (not a relation type's link to its end, nor one with no text: no label)
         continue
       (px, py), (kx, ky) = positions[p], positions[k]
       pc = (px + sizes[p][0] / 2, py + sizes[p][1] / 2)
@@ -991,24 +1015,30 @@ class _RoundLayout(LayoutHeuristic):
     return ret
 
   def _otherLabels(self, positions:dict[VObject, tuple[float, float]], sizes:dict[VObject, tuple[float, float]],
-                   edges:list[tuple[VObject, VObject, Any]]) -> dict[VObject, tuple[float, float]]:
+                   edges:list[tuple[VObject, VObject, Any]], dynamic:bool=False) -> dict[VObject, tuple[float, float]]:
     '''
     :param edges: The relations whose labels are put already (see *_labelTargets()*).
+    :param dynamic: Whether it's for keeping things arranged: a label pinned
+      that it didn't place last time (eg: the user dropped it somewhere: see
+      *labelled*) is left out.
     :returns: Where the label of each other relation shown between the nodes
-      arranged goes (its top left): midway between its ends' centres -- or,
-      for more than one between the same two, side by side across the line
-      between them, round the middle.
+      arranged goes (its top left), for more than one between the same two:
+      side by side across the line between them, round the middle. (Not a
+      label alone between its ends: it floats there anyway, so it keeps
+      following its ends.)
     '''
     done = {id(r) for _, _, r in edges}
     pairs:dict[tuple[int, int], list[VRelation]] = {}
     for r in sorted((r for r in self.view.values() if isLink(r)), key=lambda r: r._id):
-      if id(r) in done or r.src is r.dst \
+      if id(r) in done or r.src is r.dst or not hasLabel(r) \
          or r.src not in positions or r.dst not in positions: #type: ignore[operator]
         continue
       pairs.setdefault((min(id(r.src), id(r.dst)), max(id(r.src), id(r.dst))), []).append(r)
     spacing = float(self.params["spacing"])
     ret:dict[VObject, tuple[float, float]] = {}
     for rs in pairs.values():
+      if len(rs) == 1: # (it floats there anyway: kept arranged, it keeps following its ends; arranged once, it's
+        continue       # moved off anything it'd be on -- see layout.otherLabelTargets())
       a, b = rs[0].src, rs[0].dst
       (ax, ay), (bx, by) = positions[a], positions[b] #type: ignore[index]
       ac = (ax + sizes[a][0] / 2, ay + sizes[a][1] / 2) #type: ignore[index]
@@ -1018,6 +1048,8 @@ class _RoundLayout(LayoutHeuristic):
       sizesOf = [layoutSize(r) for r in rs]
       step = max(radius(sz) for sz in sizesOf) * 2 + spacing / 2
       for i, (r, (lw, lh)) in enumerate(zip(rs, sizesOf)):
+        if dynamic and not r.floating() and r._id not in self.labelled: # (put somewhere by the user)
+          continue
         off = (i - (len(rs) - 1) / 2) * step
         x, y = (ac[0] + bc[0]) / 2 + across[0] * off, (ac[1] + bc[1]) / 2 + across[1] * off
         ret[r] = (float(round(x - lw / 2)), float(round(y - lh / 2)))
@@ -1026,7 +1058,7 @@ class _RoundLayout(LayoutHeuristic):
   def _edgeRoom(self, edges:list[tuple[VObject, VObject, Any]]) -> dict[VObject, float]:
     ":returns: The room each child needs between it and its parent: its relation's label (its circle), if it has one, and the spacing."
     spacing = float(self.params["spacing"])
-    return {k: (2 * radius(layoutSize(r)) if isinstance(r, VRelation) else 0.0) + spacing for _, k, r in edges}
+    return {k: (2 * radius(layoutSize(r)) if hasLabel(r) else 0.0) + spacing for _, k, r in edges}
 
 class _TreeRoundLayout(_RoundLayout):
   '''
@@ -1175,7 +1207,7 @@ class _TreeRoundLayout(_RoundLayout):
     any root: it may be joined to another tree, as a child (pinned, it isn't).
     '''
     if self.params["trees"] == "joined":
-      return {vo._id for vo in drops}
+      return {vo._id for vo in self._tree().topmost(drops)} # (not one dragged with its parent: see TreeLayout.topmost())
     return self._tree().pinnable(drops)
 
   @override

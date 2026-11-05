@@ -65,6 +65,12 @@ class Test(unittest.TestCase):
     self.assertEqual(expand("${(m:nothing):-no code}", lookup, call), "no code")
     self.assertEqual(expand("${(m.n:code)}", lookup, call), "def f():\n  pass")
 
+  def test0350hasHookCall(self): # (a label calling a hook, either way, isn't remembered between draws: see VObject.labelText())
+    from sn.view.graphics.labels import hasHookCall
+    self.assertTrue(hasHookCall("$name $(m.n:code)"))
+    self.assertTrue(hasHookCall("${(m.n:code):+has code}"))
+    self.assertFalse(hasHookCall("${note:+$name}"))
+
   def test0400badCalls(self):
     for t in ["$(m:code", "$(code)", "$(m:a b)", "${(m:code)x}", "$()"]:
       with self.assertRaises(TemplateError, msg=t):

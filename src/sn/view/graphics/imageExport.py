@@ -59,10 +59,16 @@ MARGIN = 10
 PNG_SCALE = 2
 "How much bigger than the canvas the PNG is drawn (see the module's description)."
 
-SYMBOLS = {"→": 0xAE, "←": 0xAC, "↑": 0xAD, "↓": 0xAF, "⇒": 0xDE, "⇐": 0xDC,
-           "∀": 0x22, "∃": 0x24, "∈": 0xCE, "≠": 0xB9, "≤": 0xA3, "≥": 0xB3,
-           "×": 0xB4, "∞": 0xA5, "∧": 0xD9, "∨": 0xDA}
-"Characters not in Helvetica that PDF's Symbol font has: its codes for them."
+SYMBOLS = {"→": 0xAE, "←": 0xAC, "↑": 0xAD, "↓": 0xAF, "↔": 0xAB, "⇒": 0xDE, "⇐": 0xDC, "⇑": 0xDD, "⇓": 0xDF, "⇔": 0xDB,
+           "∀": 0x22, "∃": 0x24, "∈": 0xCE, "∉": 0xCF, "∋": 0x27, "≠": 0xB9, "≤": 0xA3, "≥": 0xB3, "≡": 0xBA, "≈": 0xBB,
+           "≅": 0x40, "∼": 0x7E, "∝": 0xB5, "×": 0xB4, "∞": 0xA5, "∧": 0xD9, "∨": 0xDA, "∴": 0x5C, "⊥": 0x5E,
+           "⊂": 0xCC, "⊃": 0xC9, "⊆": 0xCD, "⊇": 0xCA, "⊄": 0xCB, "∪": 0xC8, "∩": 0xC7, "∅": 0xC6,
+           "⊕": 0xC5, "⊗": 0xC4, "√": 0xD6, "∑": 0xE5, "∏": 0xD5, "∫": 0xF2, "∂": 0xB6, "∇": 0xD1, "∠": 0xD0,
+           "⋅": 0xD7, "∗": 0x2A, "−": 0x2D, "′": 0xA2, "″": 0xB2, "◊": 0xE0, "〈": 0xE1, "〉": 0xF1, "⟨": 0xE1, "⟩": 0xF1,
+           # the Greek alphabet
+           **{g: 0x41 + i for i, g in enumerate("ΑΒΧΔΕΦΓΗΙϑΚΛΜΝΟΠΘΡΣΤΥςΩΞΨΖ")},
+           **{g: 0x61 + i for i, g in enumerate("αβχδεφγηιϕκλμνοπθρστυϖωξψζ")}}
+"Characters not in Helvetica (as Windows-1252 has it) that PDF's Symbol font has: its codes for them."
 
 TRIANGLES = {"▼": "down", "▾": "down", "▶": "right", "▸": "right",
              "▲": "up", "▴": "up", "◀": "left", "◂": "left"}
@@ -210,6 +216,8 @@ class Renderer:
     self.c, self.pdf = canvas, pdf
     self._rgb:dict[str, tuple[float, float, float]|None] = {}
     self._fonts:dict[str, tkfont.Font] = {}
+    self.missing:dict[str, set[int]] = {}
+    "The characters that couldn't be drawn (they're drawn as \"?\"): each with the items it's in."
 
   def rgb(self, color:str) -> tuple[float, float, float]|None:
     '''
@@ -347,18 +355,26 @@ class Renderer:
     for i, (line, w) in enumerate(zip(lines, widths)):
       x = left if justify == "left" else right - w if justify == "right" else (left + right - w) / 2
       y = top + i * linespace + ascent
-      self.drawRuns(line, f, x, y, name, size, color, ascent)
+      self.drawRuns(line, f, x, y, name, size, color, ascent, item)
 
   def drawRuns(self, line:str, f:tkfont.Font, x:float, y:float, name:str, size:float,
-               color:tuple[float, float, float], ascent:float) -> None:
+               color:tuple[float, float, float], ascent:float, item:int=0) -> None:
     '''
     Set *line* at (*x*, *y*) (its baseline): in runs of Helvetica, Symbol, and
     triangles (see *SYMBOLS*, *TRIANGLES*), each placed as the canvas places it.
+    A character none of those has is drawn as "?", and noted (see *missing*).
+
+    :param item: The text item it's from (for *missing*).
     '''
     p = self.pdf
     run = ""
     def flush(at:float) -> None:
       if run:
+        for ch in run:
+          try:
+            ch.encode("cp1252")
+          except UnicodeEncodeError:
+            self.missing.setdefault(ch, set()).add(item)
         p.text(at, y, run.encode("cp1252", errors="replace"), name, size)
     start = x
     for i, ch in enumerate(line):
@@ -387,10 +403,12 @@ class Renderer:
         run += ch
     flush(start)
 
-def drawItems(canvas:tk.Canvas, items:Iterable[int], scale:float=1.0) -> bytes|None:
+def drawItems(canvas:tk.Canvas, items:Iterable[int], scale:float=1.0, missing:dict[str, set[int]]|None=None) -> bytes|None:
   '''
   :param items: Canvas item ids, bottom first.
   :param scale: Points per canvas pixel.
+  :param missing: If given, the characters that couldn't be drawn (they're
+    drawn as "?") are put in it: each with the items it's in.
   :returns: A PDF of *items* (those that aren't hidden), on a white page just
     big enough for them, or None if there's nothing to draw.
   '''
@@ -407,17 +425,21 @@ def drawItems(canvas:tk.Canvas, items:Iterable[int], scale:float=1.0) -> bytes|N
   r = Renderer(canvas, pdf)
   for i in shown:
     r.draw(i)
+  if missing is not None:
+    for ch, its in r.missing.items():
+      missing.setdefault(ch, set()).update(its)
   return pdf.bytes()
 
-def copyImage(canvas:tk.Canvas, items:list[int]) -> tuple[int, int]:
+def copyImage(canvas:tk.Canvas, items:list[int], missing:dict[str, set[int]]|None=None) -> tuple[int, int]:
   '''
   Put a picture of canvas items *items* (bottom first) on the system clipboard, as a PNG.
 
+  :param missing: See *drawItems()*.
   :returns: The picture's size (canvas pixels).
   :raises RuntimeError: If there's nothing to draw, or the PNG can't be made or
     put on the clipboard (see *util.platformSupport.pdfToPNG()*, *copyPNG()*).
   '''
-  data = drawItems(canvas, items, scale=PNG_SCALE)
+  data = drawItems(canvas, items, scale=PNG_SCALE, missing=missing)
   if data is None:
     raise RuntimeError("there's nothing drawn to copy.")
   folder = tempfile.mkdtemp(prefix="snImage-")

@@ -178,6 +178,23 @@ class Test(unittest.TestCase):
       c.paste()
     self.assertIn("removed", str(cm.exception))
 
+  def test1100relationOfAnIsaLink(self): # (a relation whose end is an isa link -- copied after it, as closure() puts them)
+    m = self.m
+    commentOn = Relation(m, [m.RELATION], name="comment-on")
+    bob = Node(m, [self.person], individual=True, name="bob")
+    link = next(r for r in bob._outgoing if isinstance(r, IsaIndividual))
+    r = Relation(m, [commentOn], link, self.fred, individual=True)
+    for asked in ([bob, r], [r, bob]):
+      clip = copying.copyObjects(asked)
+      at = {id(e.original):i for i, e in enumerate(clip.entries)}
+      self.assertGreater(at[id(link)], at[id(r)])
+      made = copying.pasteInto(clip, m)
+      r2, bob2 = made[at[id(r)]], made[at[id(bob)]]
+      self.assertIsInstance(r2.localSrc, IsaIndividual, asked)
+      self.assertIs(r2.localSrc.localSrc, bob2)
+      self.assertIs(r2.localSrc.localDst, self.person)
+      self.assertIs(r2.localDst, self.fred)
+
 
 if __name__ == "__main__":
   unittest.main()

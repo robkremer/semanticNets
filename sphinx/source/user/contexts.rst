@@ -173,7 +173,9 @@ constraint          means
 ``alive``           has the attribute *alive* (with any value)
 ``age: 30``         has *age* equal to 30. A value is a number, ``true`` or
                     ``false``, or text -- quoted (``'Big Al'``) if it has
-                    commas, colons or quotes in it
+                    commas, colons or quotes in it. A whole number is the
+                    same value written either way: ``height: 2`` matches a
+                    height of 2.0, and ``age: 30.0`` an age of 30
 ``age: ?a``         has *age* equal to the value of every other constraint
                     that uses ``?a``
 ``symmetric``       (of a relation type) is tagged symmetric;

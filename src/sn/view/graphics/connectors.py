@@ -66,7 +66,8 @@ import sn
 from sn.view.graphics.vobjects import VObject
 from util.utils import midpoint, pointInPoly
 from util.lineMarks import Mark, MarkLayout, MarkSpecError, MarkedPathIDs, MIDDLE, parseMarks, layoutMarks, \
-  drawMarks, drawMarkedPath, paramAtDistance, subPath, deleteItem
+  drawMarks, drawMarkedPath, paramAtDistance, subPath, deleteItem, FORWARD, BACKWARD
+import dataclasses
 
 logger: sn.SNLogger = sn.getLogger(__name__)
 
@@ -330,8 +331,8 @@ def _clippedArc(vobj0: VObject, vobj2: VObject, p0: PointType, p1: PointType, p2
 
   Assumes vobj0/vobj2 don't overlap and each contains its own center (true
   for any reasonably-shaped, reasonably-separated pair of nodes); returns
-  None — logging a warning — if that assumption looks violated, rather than
-  producing a nonsensical clip.
+  None if that assumption looks violated, rather than producing a
+  nonsensical clip.
   """
   inside0, inside2 = _insideTest(vobj0), _insideTest(vobj2)
   if not inside0(p0):
@@ -340,9 +341,8 @@ def _clippedArc(vobj0: VObject, vobj2: VObject, p0: PointType, p1: PointType, p2
   if not inside2(p2):
     # logger.debug(f'_clippedArc(): {vobj2} does not contain its own center point; skipping clip.')
     return None
-  if inside0(p2) or inside2(p0):
-    # logger.debug(f'_clippedArc(): {vobj0} and {vobj2} appear to overlap; clip may look wrong.')
-    pass
+  if inside0(p2) or inside2(p0): # (they overlap -- eg: a label dropped on its own end: no line, rather than a stray arc out the far side)
+    return None
 
   tol = _boundaryTolerance(vobj0)
   t0 = _findBoundaryParam(inside0, p0, p1, p2, tInside=0.0, tOutside=1.0, tolerance=tol)
@@ -432,10 +432,22 @@ def _deleteItems(canvas, *ids:Optional[int]) -> None:
       deleteItem(canvas, i)
 
 
+def zoomedWidth(view, width:float) -> float:
+  """
+  :param view: The view (its zoom: *_scale*).
+  :param width: A line's (or border's) width, in view units.
+  :returns: Its width on the canvas, at the view's zoom: as the marks, shapes
+    and text are zoomed -- but at least a pixel, so a line zoomed far out
+    still shows.
+  """
+  return max(1.0, width * float(getattr(view, "_scale", 1.0) or 1.0))
+
+
 class _Style:
   """How a connector is drawn, from a drawing function's arguments: its
-  colours, its tags, its line's width (as the canvas takes it, and in view
-  units, for the marks' sizes) and other line options (eg: dash).
+  colours, its tags, its line's width (given in view units, as the marks'
+  sizes are; and as the canvas takes it, zoomed -- but never under a pixel)
+  and other line options (eg: dash).
   """
 
   def __init__(self, view, lineColor: str, fillColor: str, tags: Optional[Sequence[str]], lineKwargs: dict):
@@ -445,9 +457,9 @@ class _Style:
     self.tags = list(tags) if tags else []
     opts = dict(lineKwargs)
     opts.pop('fill', None)
-    self.strokeWidth = float(opts.pop('width', 1) or 1)
+    self.width = float(opts.pop('width', 1) or 1)
     self.lineOptions = opts
-    self.width = self.strokeWidth / float(getattr(view, "_scale", 1.0) or 1.0)
+    self.strokeWidth = zoomedWidth(view, self.width)
 
   def half(self, path: Sequence[PointType], startMarks: MarksArg, endMarks: MarksArg,
            priorLine: Optional[int], priorStart: Sequence[int], priorEnd: Sequence[int]) -> MarkedPathIDs:
@@ -485,6 +497,14 @@ def _asMarks(marks: MarksArg) -> tuple[Mark, ...]:
   return _marks(marks) if marks is None or isinstance(marks, str) else tuple(marks)
 
 
+def _middleMarks(middle: MarkLayout) -> tuple[Mark, ...]:
+  """The middle's marks, each turned the way it's laid out (see *layoutMarks()*):
+  so moved to an end stack they still point the way they do in the middle --
+  an "arrow" toward the destination, even at the start of a line, where an
+  arrow would otherwise point back off it."""
+  return tuple(dataclasses.replace(p.mark, direction=FORWARD if p.forward else BACKWARD) for p in middle.marks)
+
+
 def _labelNearMarks(terminators: ConnectorTerminators, middle: MarkLayout, through: bool) -> tuple[Mark, ...]:
   """The marks at the label end of the source→label line: its own
   (*terminators.labelNear*) -- and, before them, the middle's, while the label
@@ -496,7 +516,7 @@ def _labelNearMarks(terminators: ConnectorTerminators, middle: MarkLayout, throu
   near = _marks(terminators.labelNear)
   if through or not middle.marks:
     return near
-  return tuple(p.mark for p in middle.marks) + near
+  return _middleMarks(middle) + near
 
 
 def _labelFarMarks(terminators: ConnectorTerminators, middle: MarkLayout, through: bool) -> tuple[Mark, ...]:
@@ -508,7 +528,7 @@ def _labelFarMarks(terminators: ConnectorTerminators, middle: MarkLayout, throug
   far = _marks(terminators.labelFar)
   if through or not middle.marks:
     return far
-  return far + tuple(p.mark for p in middle.marks)
+  return far + _middleMarks(middle)
 
 
 def _middleStops(middle: MarkLayout) -> tuple[float, float]:
@@ -529,6 +549,8 @@ def _clippedHalf(vobj: VObject, p0: PointType, p1: PointType, p2: PointType, nod
   """
   inside = _insideTest(vobj)
   path = [p0, p1, p2]
+  if inside(p2 if nodeAtStart else p0): # (the label's centre is in it -- eg: dropped on it: no line, rather than a stray arc)
+    return None
   if nodeAtStart:
     if not inside(p0):
       return None
@@ -603,6 +625,19 @@ def _drawSingleSegment(label: VObject, other: VObject, otherIsSource: bool,
     result.sourceLineID, result.sourceTerminatorIDs = prior.sourceLineID, list(prior.sourceTerminatorIDs)
     result.labelNearTerminatorIDs, result.sourceEnd = list(prior.labelNearTerminatorIDs), prior.sourceEnd
   result.middleIDs = style.middle(middle, cl, axis, prior.middleIDs, through)
+  return result
+
+
+def _middleOnly(label: VObject, prior: ConnectorIDs, style: _Style, middle: MarkLayout, through: bool) -> ConnectorIDs:
+  """For a connector with neither end to draw to (eg: a relation type with no
+  ends of its own): just its middle's marks, on its label, along the stubs'
+  axis (see *VRelation._styleEnds()*) -- where the label is now. The rest of
+  *prior* is left as it is (its ends' stubs are the relation's)."""
+  result = dataclasses.replace(prior, sourceTerminatorIDs=list(prior.sourceTerminatorIDs),
+                               labelNearTerminatorIDs=list(prior.labelNearTerminatorIDs),
+                               labelFarTerminatorIDs=list(prior.labelFarTerminatorIDs),
+                               destTerminatorIDs=list(prior.destTerminatorIDs))
+  result.middleIDs = style.middle(middle, label.centerPt(), (1.0, 0.0), prior.middleIDs, through)
   return result
 
 
@@ -696,12 +731,11 @@ def drawSmoothConnector(source: Optional[VObject], label: VObject, destination: 
     terminators = ConnectorTerminators()
   prior = ids if ids is not None else ConnectorIDs()
 
-  if source is None and destination is None:
-    # logger.debug('drawSmoothConnector(): source and destination are both None; nothing to connect -- no-op.')
-    return prior
   style = _Style(label.view, lineColor, fillColor, tags, lineKwargs)
   middle = layoutMarks(_marks(terminators.middle), MIDDLE, style.width)
   through = throughLabel
+  if source is None and destination is None:
+    return _middleOnly(label, prior, style, middle, through)
   if source is None:
     assert destination is not None
     return _drawSingleSegment(label, destination, False, terminators, prior, style, middle, through)
@@ -755,7 +789,8 @@ def drawSmoothConnector(source: Optional[VObject], label: VObject, destination: 
   else: # (likewise)
     _deleteItems(canvas, *prior.destIDs())
 
-  result.middleIDs = style.middle(middle, cl, _sub(cd, cs), prior.middleIDs, through) # (the curve's direction at cl, exactly)
+  direction = _sub(cd, cs) if source is not destination else _sub(cl, source.centerPt()) # (a self-loop's: from its node to its label)
+  result.middleIDs = style.middle(middle, cl, direction, prior.middleIDs, through) # (the curve's direction at cl, exactly)
   return result
 
 
@@ -800,12 +835,11 @@ def drawStraightConnector(source: Optional[VObject], label: VObject, destination
     terminators = ConnectorTerminators()
   prior = ids if ids is not None else ConnectorIDs()
 
-  if source is None and destination is None:
-    # logger.debug('drawStraightConnector(): source and destination are both None; nothing to connect -- no-op.')
-    return prior
   style = _Style(label.view, lineColor, fillColor, tags, lineKwargs)
   middle = layoutMarks(_marks(terminators.middle), MIDDLE, style.width)
   through = throughLabel
+  if source is None and destination is None:
+    return _middleOnly(label, prior, style, middle, through)
   if source is None:
     assert destination is not None
     return _drawSingleSegment(label, destination, False, terminators, prior, style, middle, through)
@@ -844,5 +878,6 @@ def drawStraightConnector(source: Optional[VObject], label: VObject, destination
                  prior.destLineID, prior.labelFarTerminatorIDs, prior.destTerminatorIDs)
   result.destLineID, result.labelFarTerminatorIDs, result.destTerminatorIDs = h.line, h.start, h.end
   result.destEnd = destEdge
-  result.middleIDs = style.middle(middle, cl, axis, prior.middleIDs, through)
+  marksAxis = axis if source is not destination else _unit(_sub(cl, source.centerPt())) # (a self-loop's: from its node to its label)
+  result.middleIDs = style.middle(middle, cl, marksAxis, prior.middleIDs, through)
   return result

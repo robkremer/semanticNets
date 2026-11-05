@@ -71,7 +71,10 @@ class InputMixin(ViewBase):
   _dragZoom: tuple[int, float, list[float], int, int]|None
 
   ElasticLineChoiceData:tuple[VObject, int, Callable[[VObject],bool], Callable[[VObject,VObject],Any]] \
-            = namedtuple('ElasticLineChoiceData', 'originNode lineID filter callback onEmpty', defaults=(None,))
+            = namedtuple('ElasticLineChoiceData', 'originNode lineID filter callback onEmpty onEnd', defaults=(None, None))
+
+  RUBBER_BAND:dict[str, Any] = {"fill": "#2f6fd6", "width": 2, "dash": (6, 4)}
+  "How the elastic line of a choice is drawn (see *elasticLineChoice()*): thin, dashed, and the same for every choice."
 
   def makeBindings(self):
     '''
@@ -450,8 +453,9 @@ class InputMixin(ViewBase):
   def elasticLineChoice(self, originNode:VObject, 
                         callback:Callable[[VObject, VObject], Any],
                         filter:Callable[[VObject],bool]=lambda x: True, 
-                        arrowHeads:int=2, color:str="cyan",
-                        onEmpty:Callable[[VObject], Any]|None=None):
+                        arrowHeads:int=2, color:str|None=None,
+                        onEmpty:Callable[[VObject], Any]|None=None,
+                        onEnd:Callable[[], Any]|None=None):
     '''
     Animate an elastic line from the *originNode* to the cursor to select an
     object for which *filter* returns True, then call *callback* with the *originNode*
@@ -465,9 +469,13 @@ class InputMixin(ViewBase):
     :param arrowHeads: 0=no arrowheads, 1=arrowhead at the origin, 2=arrowhead
       at the cursor, 3=arrowhead at both ends. For anything larger, just he lowest
       2 bits will be used. [Optional, default=2]
+    :param color: The line's colour: by default, the rubber band's (see *RUBBER_BAND*).
     :param onEmpty: If given, called with *originNode* when the line is dropped
       on empty space (no object at all under the cursor); otherwise that
       abandons the choice, as Escape always does (see *cancelElasticLine()*).
+    :param onEnd: If given, called when the choice ends, however it ends --
+      before *callback* or *onEmpty*: eg: to show again what was hidden
+      while choosing (see *VRelation.chooseNewEndpoint()*).
     '''
     assert isinstance(originNode, VObject)
     arrowHeads %= 4 # strip any high bits
@@ -476,10 +484,12 @@ class InputMixin(ViewBase):
       case 2: arrow = tk.LAST
       case 3: arrow = tk.BOTH
       case _: arrow = tk.NONE
+    if self._elasticLineChoiceData is not None: # (one at a time)
+      self.cancelElasticLine()
     lineID = self.canvas.create_line( #type: ignore[call-overload]
       self.viewToWindow(flattenPairs([originNode.centerPt(), originNode.centerPt()])),
-      fill=color, width=3, arrow=arrow)
-    self._elasticLineChoiceData = self.ElasticLineChoiceData(originNode, lineID, filter, callback, onEmpty)
+      **{**self.RUBBER_BAND, **({"fill": color} if color else {})}, arrow=arrow)
+    self._elasticLineChoiceData = self.ElasticLineChoiceData(originNode, lineID, filter, callback, onEmpty, onEnd)
     self.canvas.focus_set() # so Escape reaches us (see cancelElasticLine())
 
   def cancelElasticLine(self, event:tk.Event|None=None) -> None:
@@ -489,8 +499,10 @@ class InputMixin(ViewBase):
     :param event: The Tk event.
     '''
     if self._elasticLineChoiceData is not None:
-      self.canvas.delete(self._elasticLineChoiceData.lineID)
-      self._elasticLineChoiceData = None
+      data, self._elasticLineChoiceData = self._elasticLineChoiceData, None
+      self.canvas.delete(data.lineID)
+      if data.onEnd is not None:
+        data.onEnd()
     else:
       self.clearHighlights()
 
@@ -567,6 +579,8 @@ class InputMixin(ViewBase):
       byTag = {n.tag: n for n in typeList if n is not None}
       item = next((byTag[tag] for _id in reversed(ids) for tag in self.canvas.gettags(_id) if tag in byTag), None)
       self.canvas.delete(self._elasticLineChoiceData.lineID)
+      if self._elasticLineChoiceData.onEnd is not None:
+        self._elasticLineChoiceData.onEnd()
       if item is not None:
         self._elasticLineChoiceData.callback(self._elasticLineChoiceData.originNode, item)
       else:
@@ -587,10 +601,12 @@ class InputMixin(ViewBase):
       ids = tuple(self.canvas.find("overlapping", bb[0], bb[1], bb[2], bb[3]) if len(bb) == 4 else [])
       for s in self.selected.copy():  # unselect everything
         s.selected(False)
+      byShape = {n._shape.id: n for n in self.values() # (once: not every view object for every canvas item)
+                 if n is not None and n._shape is not None and n._shape.id is not None}
       for _id in ids:
-        for n in self.values():  # self.nodes()+self.relations():
-          if n is not None and n._shape.id == _id:
-            n.selected(True, _multi=True)
+        n = byShape.get(_id)
+        if n is not None:
+          n.selected(True, _multi=True)
       self.canvas.delete(self._selectionBoxInfo[0])
       self._selectionBoxInfo = None
 

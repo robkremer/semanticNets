@@ -43,7 +43,7 @@ from sn.view.graphics.vnodes import VNode
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
 from sn.view.graphics.layout import (LayoutHeuristic, LayoutParameter, LayoutMoves, FindFree, Direction,
-                                     registerLayout, layoutSize, STATIC, DYNAMIC,
+                                     registerLayout, layoutSize, finishTween, pinnableLabel, STATIC, DYNAMIC,
                                      _BoxIndex) # (_BoxIndex: for those that import it from here)
 from sn.view.graphics.relationTable import (RelationTable, RelationRoles, PARENT_ENDS, SHAPES, PULLS, IGNORED,
                                             TERMINALS) # (PARENT_ENDS, ...: for those that import them from here)
@@ -364,6 +364,16 @@ def isMember(vo:VObject) -> bool:
   mo = vo.modelObject
   return mo is not None and (isinstance(vo, VNode) or (isinstance(vo, VRelation) and mo.isType()))
 
+def hasLabel(r:Any) -> bool:
+  '''
+  :param r: A tree's (or group's) relation: a relation, or a relation type's link to an end (see *Terminal*).
+  :returns: Whether it's a relation whose label shows text (as last drawn: see
+    *VRelation._labelShown()*): room is made for it, and it's put in place. One
+    that shows none (eg: an isa link's) isn't: its line runs through it, and it
+    floats between its ends (see *LayoutMoves*).
+  '''
+  return isinstance(r, VRelation) and r._labelShown()
+
 def isLink(r:Any) -> bool:
   '''
   :param r: A view object.
@@ -518,6 +528,10 @@ class TreeLayout(LayoutHeuristic):
     "The ids (*VObject._id*) of the tree nodes the user has dropped, pinned as roots of their own (see *adjust()*)."
     self.known:set[int]|None = None
     "The ids of the nodes it laid out last time (None: all those there are): a new one goes after the others."
+    self.labelled:set[int] = set()
+    '''The ids of the relations whose labels it placed last time (as tree relations): one that's no longer a
+    tree relation floats between its ends again (see *_adjustment()*); others' labels are left as they are
+    (eg: where the user dropped them).'''
     self._fallback = FindFree(view)
     "What places what isn't in a tree (see *placeNode()*)."
 
@@ -708,10 +722,10 @@ class TreeLayout(LayoutHeuristic):
             if k in seen:
               continue
             seen.add(k)
-            if isinstance(parentRel[k], VRelation):
+            if hasLabel(parentRel[k]):
               w, h = layoutSize(parentRel[k])
               ret[d] = max(ret.get(d, MIN_LEVEL_GAP), (h if vertical else w) + MIN_LINE + 2 * LABEL_GAP)
-            else: # (no label)
+            else: # (no label: or one with no text, eg: an isa link's, that its line runs through)
               ret[d] = ret.get(d, MIN_LEVEL_GAP)
             nxt.append((k, d + 1))
       level = nxt
@@ -729,7 +743,7 @@ class TreeLayout(LayoutHeuristic):
     ret:dict[VObject, tuple[float, float]] = {}
     for child, r in parentRel.items():
       parent = self._ends(r)[0]
-      if not isinstance(r, VRelation) or parent not in positions or child not in positions:
+      if not hasLabel(r) or parent not in positions or child not in positions: # (no text: its line runs through it)
         continue
       (px, py), (pw, ph) = positions[parent], sizes[parent]
       (cx, cy), (cw, ch) = positions[child], sizes[child]
@@ -1023,6 +1037,7 @@ class TreeLayout(LayoutHeuristic):
       *pinned* pinned, the relations that are no longer tree relations made to
       float, and what it knows updated: not done yet.
     '''
+    finishTween(self.view) # (an earlier move under way: from where it ends, as the command's undo puts it back there)
     oldPins, oldKnown = set(self.pins), self.known
     self.pins |= pinned # (for compute(): put back below, and done by the command)
     try:
@@ -1031,14 +1046,20 @@ class TreeLayout(LayoutHeuristic):
       self.pins = oldPins
     cmd = LayoutMoves(self.view, name, targets)
     newPins = oldPins | pinned
-    newKnown = {vo._id for vo in self.scope()[0]}
+    inScope, edges = self.scope()
+    newKnown = {vo._id for vo in inScope}
+    oldLabelled = set(self.labelled)
+    newLabelled = {vo._id for vo in targets if isinstance(vo, VRelation)}
     def do() -> None:
-      self.pins, self.known = set(newPins), set(newKnown)
+      self.pins, self.known, self.labelled = set(newPins), set(newKnown), set(newLabelled)
     def undo() -> None:
-      self.pins, self.known = set(oldPins), (set(oldKnown) if oldKnown is not None else None)
-    if newPins != oldPins or newKnown != oldKnown:
+      self.pins, self.known, self.labelled = set(oldPins), (set(oldKnown) if oldKnown is not None else None), set(oldLabelled)
+    if newPins != oldPins or newKnown != oldKnown or newLabelled != oldLabelled:
       cmd.also.append((do, undo))
-    for r in loose: # (no longer a tree relation: its label floats between its ends again)
+    # (no longer a tree relation: its label, placed as one, floats between its ends again; and so does one
+    # with no text that was pinned -- eg: by an older version: its line runs through it, see pinnableLabel())
+    refloat = [r for r in loose if r._id in oldLabelled] + [r for r in edges if isinstance(r, VRelation) and not pinnableLabel(r)]
+    for r in dict.fromkeys(refloat):
       if not r.floating():
         cmd.also.append((lambda r=r: r.floating(True), lambda r=r: r.floating(False)))
     return cmd
@@ -1073,14 +1094,42 @@ class TreeLayout(LayoutHeuristic):
     '''
     :param drops: Nodes the user dropped.
     :returns: The ids of those to pin: all but the roots of trees (a root's
-      kept where it is anyway). By the trees as *structure()* finds them, not
+      kept where it is anyway), and those dropped with an ancestor (see
+      *topmost()*). By the trees as *structure()* finds them, not
       just by the relations there are: a node that's only the parent end of
       relations whose children all went under other parents (eg: a second
       base class) is in no tree, and is put near what it's related to (see
       *others*) unless it's pinned -- so, dropped, it'd go straight back.
     '''
-    roots = set(self.structure(dynamic=True)[0])
-    return {vo._id for vo in drops if vo not in roots}
+    roots, _children, parentRel, _others, _loose = self.structure(dynamic=True)
+    rootSet = set(roots)
+    return {vo._id for vo in self.topmost(drops, parentRel) if vo not in rootSet}
+
+  def topmost(self, drops:list[VObject], parentRel:dict[VObject, Any]|None=None) -> list[VObject]:
+    '''
+    :param drops: Nodes the user dropped (together: eg: a selection).
+    :param parentRel: Each child's tree relation (see *structure()*): by default, as the trees are now.
+    :returns: Those of *drops* with no ancestor (in the trees) among them: a
+      node dragged along with its parent (or its parent's parent...) goes with
+      it, as part of its subtree, not pinned on its own -- which would take it
+      out of the subtree dragged.
+    '''
+    if parentRel is None:
+      parentRel = self.structure(dynamic=True)[2]
+    dropped = set(drops)
+    def dragged(vo:VObject) -> bool:
+      seen = {vo}
+      r = parentRel.get(vo)
+      while r is not None:
+        p = self._ends(r)[0]
+        if p in dropped:
+          return True
+        if p in seen:
+          return False
+        seen.add(p)
+        r = parentRel.get(p)
+      return False
+    return [vo for vo in drops if not dragged(vo)]
 
   # ---- saving it with the view -----------------------------------------------------
 

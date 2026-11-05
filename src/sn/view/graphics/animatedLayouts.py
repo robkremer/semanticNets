@@ -908,7 +908,7 @@ class FieldsLayout():
     '''
     What a move does when it's dropped, for every floating relation label: put
     it back between its ends, and if it lands on something, find it a free place
-    nearby (see *VRelation.reposition()*: the local layout). During the run the
+    nearby -- all at once (see *FindFree.placeLabels()*). During the run the
     labels just follow their ends -- relations aren't bodies in the layout --
     so they can end up on top of objects (eg: a node in a layer between the
     relation's ends). Labels placed by hand (not floating) stay put, as they
@@ -916,13 +916,19 @@ class FieldsLayout():
 
     :param view: The view laid out.
     '''
-    for vo in list(view.values()):
-      if isinstance(vo, VRelation) and vo._isConnected() and not vo.isHidden() and vo.modelObject is not None \
-         and vo.floating():
-        try:
-          vo.reposition(adjustPos=True)
-        except Exception:
-          logger.exception(f"FieldsLayout: couldn't settle the label of {vo.name}")
+    labels = [vo for vo in list(view.values()) if isinstance(vo, VRelation) and vo._isConnected() and not vo.isHidden()
+              and vo.modelObject is not None and vo.floating()]
+    for vo in labels:
+      try:
+        vo.reposition(adjustPos=False) # (between its ends: placed below, all at once)
+      except Exception:
+        logger.exception(f"FieldsLayout: couldn't settle the label of {vo.name}")
+    from sn.view.graphics.layout import FindFree
+    placer = view.localLayout if isinstance(view.localLayout, FindFree) else FindFree(view)
+    try:
+      placer.placeLabels(labels) # (against what's there gathered once, not each label against everything: see FindFree.placeLabels())
+    except Exception:
+      logger.exception("FieldsLayout: couldn't place the labels")
 
   def _cool(self, energy:float):
     '''
@@ -967,6 +973,7 @@ class FieldsLayout():
     logger.info("FieldsLayout animation off")
     start, self._start = self._start, {}
     wasFloating, self._wasFloating = self._wasFloating, {}
+    switched = self.__dict__.pop("_switchedLayout", None) # (the view's dynamic layout, switched for the run: see LayoutsMixin.toggleAnimationLayout())
     try:
       view = self.view
     except WeakrefError:
@@ -975,9 +982,14 @@ class FieldsLayout():
       if self.placeLabels:
         self._settleLabels(view)
       moved = [(vo, bb) for vo, bb in start.values() if vo._isConnected() and list(vo.boundingBox()) != bb]
-      if moved:
+      if switched is not None and view.localLayout is not switched[1]: # (another chosen since: that stays)
+        switched = None
+      if moved or switched is not None:
         from util.commandParser import CompositeCommandMgr
-        with CompositeCommandMgr(view.context):
+        from sn.view.graphics.viewLayouts import SwitchedLayout
+        with CompositeCommandMgr(view.context) as mgr:
+          if switched is not None: # (first: undone last)
+            mgr._addCommand(SwitchedLayout(view, *switched))
           for vo, bb in moved:
             now = vo.boundingBox()
             view.context.move(vo, now[0], now[1], _oldPos=bb, adjustPos=False, _carry=False, _wasFloating=wasFloating.get(id(vo)))

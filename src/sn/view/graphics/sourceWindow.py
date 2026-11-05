@@ -158,7 +158,7 @@ class SourceWindow(tk.Toplevel):
     '''
     root = parent.winfo_toplevel() if isinstance(parent, tk.Misc) else tk._get_default_root() #type: ignore[attr-defined] # @undefinedVariable
     super().__init__(root)
-    ownDialog(self, parent) # (over its parent's window, not full screen: see ownDialog())
+    ownDialog(self, parent, keep=False) # (over its parent's window -- not full screen -- then a window of its own: it stays open, so mustn't be that one's child -- see ownDialog())
     self.path = path
     self.title(os.path.basename(path))
     self.geometry("820x600")

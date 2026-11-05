@@ -112,9 +112,11 @@ It's worth keeping the two roles of a pattern straight:
   each match: its relations, its variables' types and its variables'
   constraints all become conclusions.
 
-None of the reasoner's conclusions are added to the model: they're shown, and
-reported, but the model still says only what you drew. (Use them as hints:
-draw the ones you want to keep.)
+The conclusions are added to the model, but as **inferred** objects and
+attributes (see above): faded, not saved, not editable, taken away by
+**Retract** (and by the next reason, once they're no longer concluded --
+those still concluded are kept). The model still says only what you drew,
+until you **mark as asserted** the ones you want to keep.
 
 Validation
 ----------
