@@ -167,10 +167,11 @@ PREFS:dict[str, tuple[Any, Any, str]] = {
     "Show the base rules (the meaning of symmetric, transitive, ...: see sn.model.reasoner.BASE_RULES) in the "
     "reasoner's results: their objects as data, and what they conclude as rule conclusions rather than plain "
     "inferences. For debugging the base rules; best left off."),
-  "reasoner/engine": ("choices[clingo,nemo]", "clingo",
-    "The reasoner engine that \"reason\" and queries use: clingo (answer set programming), or nemo (Datalog, "
-    "which can also say why a conclusion holds: the \"explain\" command). Nemo is optional: if it isn't installed, "
-    "the program says how to install it (\"Installing an engine\", in the User Guide's Reasoning page). "
+  "reasoner/engine": ("choices[clingo,nemo,clips]", "clingo",
+    "The reasoner engine that \"reason\" and queries use: clingo (answer set programming), nemo (Datalog, "
+    "which can also say why a conclusion holds: the \"explain\" command), or clips (a production rule system). "
+    "Nemo and CLIPS are optional: if one isn't installed, the program says how to install it (\"Installing an "
+    "engine\", in the User Guide's Reasoning page). "
     "See sn.model.reasoner.ENGINES."),
   "reasoner/python": (str, "",
     "For the app (which has its own Python): a Python on this computer, of the same version as the app's, whose "
@@ -291,6 +292,8 @@ def initPrefs(prefs:Prefs) -> None:
   Put each of *PREFS* in *prefs*: with its default, if it isn't there; and its
   note, unless the user has written their own. (Notes aren't saved -- only the
   user's: see *Attribute.userNote* -- so adding them doesn't change the file.)
+  A preference whose value is one of a list ("choices[...]") gets the list
+  as it is now: eg, the reasoner engines, with one added since it was saved.
 
   :param prefs: The preferences.
   '''
@@ -298,7 +301,14 @@ def initPrefs(prefs:Prefs) -> None:
     attr = dict.get(prefs, key) # (the stored Attribute itself: getAttr() gives a copy)
     if attr is None:
       prefs.setAttr(key, Attribute(default, typ, VAR_DEFAULTED, note))
-    elif not (getattr(attr, "userNote", False) and attr.note): # (an empty "user's" note: from a file written before notes were left out of it)
+      continue
+    if isinstance(typ, str) and typ.startswith("choices[") and attr.type != typ:
+      try:
+        attr.type = typ
+      except TypeError: # (its value isn't one of them any more)
+        prefs.setAttr(key, Attribute(default, typ, VAR_DEFAULTED, note))
+        continue
+    if not (getattr(attr, "userNote", False) and attr.note): # (an empty "user's" note: from a file written before notes were left out of it)
       attr.note = note
       attr.userNote = False
 

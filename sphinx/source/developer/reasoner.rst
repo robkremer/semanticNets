@@ -23,8 +23,8 @@ engine="clingo")``) and are made with
 :py:func:`~sn.model.reasoner.defaultEngine`). Another engine implements the
 same interface; ``test/test_model/test_reasoner.py`` pins down the semantics
 every engine must share (*ReasonerSpec*), and ``test/test_model/test_rules.py``
-runs the rules tests by each engine. There's a second one already: Nemo (see
-`The Nemo engine`_ below).
+runs the rules tests by each engine. There are two more already: Nemo and
+CLIPS (see `The Nemo engine`_ and `The CLIPS engine`_ below).
 
 What the program knows about an engine before it's imported is in
 :py:data:`~sn.model.reasoner.ENGINES`: the Python module it needs, the package
@@ -363,6 +363,44 @@ derivation of a conclusion from Nemo's trace, as
 bookkeeping: what's data, a type, ...) or in full. The terminal's
 ``explain`` and an inferred relation's **explain (why it holds)** use it.
 
+The CLIPS engine
+----------------
+
+:py:mod:`sn.model.clipsReasoner`
+  :py:class:`~sn.model.clipsReasoner.ClipsReasoner` (``engine="clips"``),
+  built on `CLIPS <https://www.clipsrules.net>`_, a forward-chaining
+  production rule system, through its Python bindings (``pip install
+  clipspy``, imported as ``clips``). The apps don't include it: they use it
+  from a Python on the computer (see above). For the ``.pyz`` and the source
+  it's optional, as Nemo is.
+
+Its rule base, ``clipsReasoner.clp``, is ``clingoReasoner.lp`` ported rule
+for rule, as ordered facts (``(holds ?t ?s ?d)``), and ``_rulesProgram()``
+compiles the user's rules the same way, so the engines give the same results.
+Where CLIPS differs:
+
+- CLIPS fires a rule as soon as its conditions match, so a ``(not ...)`` is
+  only right once what it tests is complete. The engine reads the rules (the
+  rule base's, the model's and a query's: a small reader of CLIPS's
+  parentheses, ``_read()``), sorts their predicates into strata
+  (``_stratify()``: the groups that conclude each other, each after those it
+  tests with ``(not ...)``), and gives each rule the salience of its stratum,
+  so that it fires only once the strata below are done. A program that isn't
+  stratified is refused, as Nemo refuses one -- so a rule's negated attribute
+  test is on ``attr_base``, as Nemo's is.
+- CLIPS matches a rule's conditions in order, keeping every partial match: a
+  condition that shares no variable with those before it multiplies them. So
+  the rule base's conditions are written in a good order, and the engine
+  orders a compiled rule's (``_ordered()``): first a pattern with a constant,
+  then each that shares the most with those before, each test or
+  ``(not ...)`` as soon as its variables are bound. (Before that, a
+  transitive rule's ``(data ?x) (data ?y) (data ?z)`` took a minute.)
+- Objects are symbols ``#N``; an object a rule creates is a symbol
+  (``%new:K:#V0:...``) made with ``sym-cat`` in the rule's action.
+- There are no aggregates: the cardinality violations that count (too many,
+  too few) are counted in Python, from the ``holds``, ``card``, ``card_of``
+  and ``card_counted`` facts (``_counted()``).
+
 Queries
 -------
 
@@ -372,4 +410,6 @@ and the results of reasoning (a query's variables *do* range over created
 objects), and returns one dict per match: variable to object.
 :py:meth:`~sn.model.clingoReasoner.ClingoReasoner.query` takes clingo
 rules defining ``ans`` directly (the terminal's ``ask reasoner``); Nemo's
-takes Nemo rules (``ans(?X) :- holds(?T,?F,?X), name(?T,"owns"), ...``).
+takes Nemo rules (``ans(?X) :- holds(?T,?F,?X), name(?T,"owns"), ...``), and
+CLIPS's CLIPS rules asserting ``ans`` facts (``(defrule q (holds ?t ?f ?x)
+(name ?t "owns") ... => (assert (ans ?x)))``).

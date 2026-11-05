@@ -7,7 +7,8 @@ implied by relations' properties, what rules and definitions conclude -- and
 what's wrong. It uses `clingo <https://potassco.org/clingo/>`_, an answer set
 programming system -- or, if you choose it, `Nemo
 <https://github.com/knowsys/nemo>`_, a Datalog engine that can also say *why* a
-conclusion holds (see `Engines and explanations`_ below).
+conclusion holds, or `CLIPS <https://www.clipsrules.net>`_, a production rule
+system (see `Engines and explanations`_ below).
 
 Reasoning
 ---------
@@ -90,11 +91,17 @@ same as the button.
 Engines and explanations
 ------------------------
 
-The reasoner has two engines, which reach the same conclusions: **clingo**
-(the default) and **Nemo**. The apps include both (see `Installing an
-engine`_ for the ``.pyz`` and the source). The ``reasoner/engine`` setting
+The reasoner has three engines, which reach the same conclusions:
+**clingo** (the default), **Nemo** and **CLIPS**. The apps include clingo and
+Nemo; CLIPS is installed separately (see `Installing an engine`_, which also
+covers the ``.pyz`` and the source). The ``reasoner/engine`` setting
 (**Settings...**, in the application menu) says which one **reason**, queries
 and ``ask reasoner`` use; ``reason --engine nemo`` picks one for a single run.
+``ask reasoner`` takes a question in the engine's own language: for clingo,
+``'ans(X) :- holds(T,F,X), name(T,"owns"), name(F,"fred").'``; for Nemo,
+``'ans(?X) :- holds(?T,?F,?X), name(?T,"owns"), name(?F,"fred").'``; for
+CLIPS, ``'(defrule q (holds ?t ?f ?x) (name ?t "owns") (name ?f "fred") =>
+(assert (ans ?x)))'``.
 
 What Nemo adds is explanations. An inferred relation's menu has **explain
 (why it holds)**, which prints the steps to the terminal pane: the rules it
@@ -111,10 +118,10 @@ The terminal's ``explain`` does the same for any relation, or any type and
 two objects: ``explain ancestorOf ann fred`` (``--full`` for every step the
 engine took). It uses Nemo whichever engine reasons.
 
-One difference: in a rule (not a constraint or a query), Nemo tests a
-**not** attribute constraint (eg: ``not gender: female``) against the
-attributes the model gives, not those other rules conclude -- it needs the
-rules in an order it can work through, one layer at a time.
+One difference: in a rule (not a constraint or a query), Nemo and CLIPS
+test a **not** attribute constraint (eg: ``not gender: female``) against the
+attributes the model gives, not those other rules conclude -- they need the
+rules in an order they can work through, one layer at a time.
 
 Installing an engine
 ~~~~~~~~~~~~~~~~~~~~
@@ -126,14 +133,15 @@ the one the setting picks, it also offers to reason with one that is
 installed: this time, or from now on.
 
 **In the apps**
-  clingo and Nemo are in them. An engine an app doesn't include can be
-  installed for a Python 3.14 on the computer -- the same version as the
-  app's own, for the same kind of processor (eg: Apple silicon) -- and the app
-  uses it from there::
+  clingo and Nemo are in them. An engine an app doesn't include -- CLIPS --
+  can be installed for a Python 3.14 on the computer -- the same version as
+  the app's own, for the same kind of processor (eg: Apple silicon) -- and the
+  app uses it from there::
 
-    python3.14 -m pip install <the engine's package>
+    python3.14 -m pip install clipspy
 
-  (on Windows, ``py -3.14 -m pip install ...``). The app looks for that
+  (on Windows, ``py -3.14 -m pip install clipspy``). If there's no Python
+  3.14 on the computer yet, install one from https://www.python.org first. The app looks for that
   Python where its installers put it (python.org's, Homebrew's, ...) and on
   the ``PATH``; if it's somewhere else (eg: a virtual environment), give its
   executable as the ``reasoner/python`` setting (eg:
@@ -141,10 +149,10 @@ installed: this time, or from now on.
 
 **The** ``.pyz`` **or the source**
   Install the engine for the Python that runs the program (see
-  :doc:`gettingStarted`): clingo with ``python3.14 -m pip install clingo``, and
-  Nemo with::
+  :doc:`gettingStarted`): clingo with ``python3.14 -m pip install clingo``,
+  Nemo with ``python3.14 -m pip install nemo-python``, and CLIPS with::
 
-    python3.14 -m pip install nemo-python
+    python3.14 -m pip install clipspy
 
 Then start the program again.
 

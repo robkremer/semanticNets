@@ -1031,6 +1031,7 @@ class EngineInfo:
 ENGINES:dict[str, EngineInfo] = {e.name: e for e in (
   EngineInfo("clingo", "clingo", "clingo"),
   EngineInfo("nemo", "nmo_python", "nemo-python", explains=True),
+  EngineInfo("clips", "clips", "clipspy", bundled=False),
 )}
 '''
 The known reasoner engines, by name. A new engine adds itself here, and to the

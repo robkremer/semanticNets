@@ -39,7 +39,7 @@ jobs:
         run: |
           uv venv --python 3.14 --managed-python venv
           uv pip install --python venv -r semanticNets/packaging/requirements.txt
-          uv pip install --python venv -r semanticNets/packaging/requirements-nemo.txt # (the optional engine: so its tests run too)
+          uv pip install --python venv -r semanticNets/packaging/requirements-nemo.txt -r semanticNets/packaging/requirements-clips.txt # (the optional engines: so their tests run too)
           if [ "$RUNNER_OS" = Windows ]; then echo "$PWD/venv/Scripts" >> "$GITHUB_PATH"; else echo "$PWD/venv/bin" >> "$GITHUB_PATH"; fi
 
       - name: A display (Linux)
