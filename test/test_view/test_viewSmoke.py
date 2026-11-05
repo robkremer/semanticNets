@@ -37,6 +37,7 @@ Created on Oct 18, 2026
 .. codeauthor:: Rob Kremer <robkremer@me.com>
 '''
 import builtins
+import importlib.util
 import logging
 import os
 import sys
@@ -184,6 +185,20 @@ class Test(unittest.TestCase):
     inferred = [o for o in v.values() if o is not None and o.isInferred()]
     self.assertTrue(inferred, "nothing inferred is shown")
     self.assertIn("inferred", v.reasoningSummary().lower() + " inferred") # (a summary, whatever it says)
+    rel = next(o for o in inferred if isinstance(o.modelObject, Relation) and o.modelObject.isIndividual()
+               and not isinstance(o.modelObject, IsaIndividual))
+    menu = tk.Menu(v.window)
+    try:
+      rel.addModelEditingMenuItems(menu)
+      labels = [menu.entrycget(i, "label") for i in range(menu.index("end") + 1) if menu.type(i) == "command"] # type: ignore[operator]
+    finally:
+      menu.destroy()
+    self.assertIn("mark as asserted", labels)
+    if importlib.util.find_spec("nmo_python") is not None: # (the optional Nemo engine: it explains)
+      self.assertIn("explain (why it holds)", labels)
+      with mock.patch("builtins.print") as printed:
+        rel.explainInferred(rel.modelObject)
+      self.assertTrue(printed.call_args and "doesn't hold" not in str(printed.call_args[0][0]), printed.call_args)
     v.clearReasoning()
     self.pump()
     self.assertFalse([o for o in v.values() if o is not None and o._isConnected() and o.isInferred()])

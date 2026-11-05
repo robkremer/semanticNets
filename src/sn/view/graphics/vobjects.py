@@ -52,6 +52,7 @@ import tkinter as tk
 import weakref
 import traceback
 import itertools
+import importlib.util
 from abc import abstractmethod
 
 from util.persistence.serialize import InstantiationInfo, ParamInfo, PropertyInfo
@@ -1384,6 +1385,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       menu.add_command(label="mark as asserted" + (" (the model is write-locked)" if locked else ""),
                        state=tk.DISABLED if locked else tk.NORMAL,
                        command=lambda: self.view.context.mark_asserted(mo))
+      if isinstance(mo, Relation) and mo.isIndividual() and importlib.util.find_spec("nmo_python") is not None:
+        menu.add_command(label="explain (why it holds)", command=lambda: self.explainInferred(mo))
       menu.add_separator()
       return
     disabled = self._systemLocked()
@@ -1406,6 +1409,17 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     menu.add_command(label="copy", command=self.copySelection)
     menu.add_command(label="copy as picture", command=lambda: self.copySelection(picture=True))
     menu.add_separator()
+
+  def explainInferred(self, mo:Relation) -> None:
+    '''
+    Print why the reasoner concludes *mo* (an inferred relation, or isa link)
+    to the window's terminal (see *ModelContext.explain()*: by the nemo
+    engine, which can say how it reached a conclusion).
+    '''
+    try:
+      print(self.view.context.explain(mo, model=self.view.model))
+    except Exception as ex: # (eg: Nemo isn't installed, or rules it can't read: said, not a traceback)
+      logger.error(f'Can\'t explain "{mo.name}": {ex}')
 
   MENU_PREFIX = ".menu/"
   '''The start of the attributes that add items to an object's menu (see

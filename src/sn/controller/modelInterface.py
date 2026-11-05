@@ -360,7 +360,7 @@ class ModelContext(CommandContext):
     return ret
 
 
-  def reason(self, /, model:Model|None=None, engine:str="clingo", silent:bool=False) -> str:
+  def reason(self, /, model:Model|None=None, engine:str|None=None, silent:bool=False) -> str:
     '''
     Run the reasoner over a model: report rule violations, relations inferred
     or inherited down the isa hierarchy, and suggested classifications. The
@@ -368,7 +368,7 @@ class ModelContext(CommandContext):
     too, until the next "reason" or "clear reasoning".
 
     :param model: The model to reason over. By default, the default model.
-    :param engine: The reasoner engine (see *sn.model.reasoner.Reasoner.create()*).
+    :param engine: The reasoner engine: clingo or nemo. By default, the "reasoner/engine" preference's.
     :param silent: Don't add what's inferred to the views of the model (they
       show only the problems), and report only a summary: eg: so that queries
       find what the rules conclude.
@@ -442,14 +442,14 @@ class ModelContext(CommandContext):
           + [f'  {u}  (couldn\'t be read)' for u in model._missingSuperDBs]
     return "\n".join(messages + lines)
 
-  def answer_query(self, query:GraphObject, /, model:Model|None=None, engine:str="clingo") -> str:
+  def answer_query(self, query:GraphObject, /, model:Model|None=None, engine:str|None=None) -> str:
     '''
     Answer a query: a context (eg: a query node, or a rule -- its antecedent)
     whose contents are a pattern with ?variables. Each line is one match.
 
     :param query: The query (or other context).
     :param model: Ignored: a query is answered from its own model.
-    :param engine: The reasoner engine (see *sn.model.reasoner.Reasoner.create()*).
+    :param engine: The reasoner engine: clingo or nemo. By default, the "reasoner/engine" preference's.
     '''
     from sn.model.reasoner import Reasoner
     if type(query) is str: # the environment failed to interpret the object
@@ -471,15 +471,17 @@ class ModelContext(CommandContext):
     name = lambda o: o.tostring(relativeTo=model, format="friendly") if isinstance(o, GraphObject) else str(o)
     return "\n".join(", ".join(f"{v.name} = {name(x)}" for v, x in row.items()) for row in rows)
 
-  def ask_reasoner(self, query:str, /, model:Model|None=None, engine:str="clingo") -> str:
+  def ask_reasoner(self, query:str, /, model:Model|None=None, engine:str|None=None) -> str:
     '''
-    Ask the reasoner a question in its own query language -- for the clingo
-    engine, ASP rules defining an "ans" predicate over the reasoner's facts
-    and results, eg: ans(X) :- holds(T,F,X), name(T,"owns"), name(F,"fred").
+    Ask the reasoner a question in its own query language: rules defining an
+    "ans" predicate over the reasoner's facts and results. For the clingo
+    engine, ASP: eg, ans(X) :- holds(T,F,X), name(T,"owns"), name(F,"fred").
+    For the nemo engine, Nemo's Datalog: eg,
+    ans(?X) :- holds(?T,?F,?X), name(?T,"owns"), name(?F,"fred").
 
     :param query: The query.
     :param model: The model to reason over. By default, the default model.
-    :param engine: The reasoner engine (see *sn.model.reasoner.Reasoner.create()*).
+    :param engine: The reasoner engine: clingo or nemo. By default, the "reasoner/engine" preference's.
     '''
     from sn.model.reasoner import Reasoner
     if model is None:
@@ -489,6 +491,62 @@ class ModelContext(CommandContext):
     def cell(v:Any) -> str:
       return v.tostring(relativeTo=model, format="friendly") if isinstance(v, GraphObject) else str(v)
     return "\n".join(", ".join(cell(v) for v in row) for row in rows) if rows else "(no answers)"
+
+  def explain(self, relation:str|GraphObject, source:GraphObject|None=None, destination:GraphObject|None=None, /,
+              model:Model|None=None, full:bool=False) -> str:
+    '''
+    Say why the reasoner concludes that *source* is related to *destination*
+    by *relation*: the rules it follows by (the model's, and the base rules:
+    eg, transitive), down to what the model asserts. Uses the nemo reasoner
+    engine, which can say how it reached a conclusion (clingo can't),
+    whichever engine "reason" uses. Nemo is optional: pip install nemo-python.
+
+    :param relation: The relation type (eg: ancestorOf) -- or a relation, eg:
+      one "reason" inferred: then why it holds, without *source* and *destination*.
+    :type relation: Relation
+    :param source: The source (eg: ann).
+    :param destination: The destination (eg: fred).
+    :param model: The model to reason over. By default, the default model.
+    :param full: Every step, as the reasoner has it (with the rules of its rule base), not just those that matter.
+    '''
+    if model is None:
+      model = self.defaults["model"]
+    assert model is not None
+    if isinstance(relation, str): # (the command line leaves it a str: a relation type's name is its relations' too)
+      text = relation
+      try:
+        relation = _lookup(text, model)
+      except NoSuchObjectError:
+        raise
+      except Exception: # (eg: ambiguous: take the type)
+        relation = _lookup(text, model, filtr=lambda o: o.isType())
+    source, destination = _object(source, model), _object(destination, model)
+    if not isinstance(relation, Relation):
+      raise TypeError(f'explain: expected a relation, got {type(relation).__name__}.')
+    isa = isinstance(relation, IsaIndividual) # (an isa link: why the one isa the other)
+    if relation.isIndividual(): # (a relation: why it holds)
+      if source is not None or destination is not None:
+        raise ValueError('explain: a relation, or a relation type with a source and destination: not both.')
+      types = [p for p in relation.getParents() if isinstance(p, Relation)]
+      source, destination = relation.src, relation.dst
+      if not types or source is None or destination is None:
+        raise ValueError(f'explain: "{relation.name}" doesn\'t relate two objects.')
+      relation = types[0]
+    elif source is None or destination is None:
+      raise ValueError('explain: a relation type needs a source and a destination.')
+    from sn.model.reasoner import Reasoner
+    reasoner:Any = Reasoner.create(model, "nemo")
+    reasoner.run()
+    name = lambda o: o.tostring(relativeTo=model, format="friendly")
+    if isa:
+      step = reasoner.explain(source, destination, predicate="isa_star")
+      what = f'{name(source)} isa {name(destination)}'
+    else:
+      step = reasoner.explain(relation, source, destination)
+      what = f'{name(source)} -{name(relation)}-> {name(destination)}'
+    if step is None:
+      return f'{what} doesn\'t hold (as far as the reasoner can tell).'
+    return "\n".join(step.lines(brief=not full))
 
   def search(self, pattern:str, /, word:bool=False, case:bool=False, regex:bool=False, supers:bool=False,
              model:Model|None=None) -> str:

@@ -217,6 +217,8 @@ setting                                          controls
                                                  relation's label when placing it: 0 (not
                                                  at all) to 10 (furthest; slow in a crowded
                                                  view, as when showing a big model)
+``reasoner/engine``                              the reasoner engine: clingo, or the optional
+                                                 nemo (see :doc:`reasoning`)
 ``loggingLevel``                                 how much detail the program's messages go
                                                  into
 ===============================================  ==========================================

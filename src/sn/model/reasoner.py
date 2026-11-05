@@ -1021,7 +1021,8 @@ class Reasoner(ABC):
     class MyReasoner(Reasoner, engine="mine"): ...
 
   :py:meth:`create` imports *sn.model.<engine>Reasoner* on demand, so an engine
-  that lives there needs no other registration.
+  that lives there needs no other registration; which engine is used by
+  default is a preference (see *defaultEngine()*).
   '''
 
   engines:ClassVar[dict[str, type[Reasoner]]] = {}
@@ -1039,11 +1040,16 @@ class Reasoner(ABC):
       Reasoner.engines[engine] = cls
 
   @classmethod
-  def create(cls, model:Model, engine:str="clingo", **kwargs) -> Reasoner:
+  def create(cls, model:Model, engine:str|None=None, **kwargs) -> Reasoner:
     '''
     A reasoner over *model* by *engine* (its module, sn.model.<engine>Reasoner, imported if need be); *kwargs*
     are its constructor's.
+
+    :param engine: The engine's name (eg: "clingo", "nemo"); by default, the preference's (see *defaultEngine()*).
+    :raises ImportError: If the engine (or what it needs: eg, nemo's Nemo) isn't installed.
     '''
+    if engine is None:
+      engine = defaultEngine()
     if engine not in cls.engines:
       import_module(f'sn.model.{engine}Reasoner')
     return cls.engines[engine](model, **kwargs)
@@ -1348,7 +1354,14 @@ class Reasoner(ABC):
 
 # ── Shared results ────────────────────────────────────────────────────────
 
-def reason(model:Model, engine:str="clingo", silent:bool=False) -> Inferences:
+def defaultEngine() -> str:
+  '''
+  :returns: The name of the reasoner engine to use when none is given: the
+    "reasoner/engine" preference (clingo, unless it's set to another).
+  '''
+  return str(sn.snPrefs.get("reasoner/engine", "clingo") or "clingo")
+
+def reason(model:Model, engine:str|None=None, silent:bool=False) -> Inferences:
   '''
   Run the reasoner over *model* and keep the results on the model (see
   *reasoningFor()*), where everything using the model -- the command line,
@@ -1357,6 +1370,7 @@ def reason(model:Model, engine:str="clingo", silent:bool=False) -> Inferences:
   and aren't updated as it's edited: they're a snapshot until the next
   *reason()* or *clearReasoning()*.
 
+  :param engine: The reasoner engine; by default the preference's (see *defaultEngine()*).
   :param silent: True if views shouldn't show what's inferred (eg: just so
     that queries find it): they show only the problems (see *SNGView._showReasoning()*).
   '''

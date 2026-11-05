@@ -5,7 +5,9 @@ Reasoning
 The reasoner works out what follows from a model: what's inherited, what's
 implied by relations' properties, what rules and definitions conclude -- and
 what's wrong. It uses `clingo <https://potassco.org/clingo/>`_, an answer set
-programming system.
+programming system -- or, if you choose it, `Nemo
+<https://github.com/knowsys/nemo>`_, a Datalog engine that can also say *why* a
+conclusion holds (see `Engines and explanations`_ below).
 
 Reasoning
 ---------
@@ -84,6 +86,36 @@ changing the model. Reasoning again keeps the inferred relations that are
 still inferred (where you've put them), adds new ones, and removes the
 rest. Typing ``reason`` (or ``clear reasoning``) in the terminal does the
 same as the button.
+
+Engines and explanations
+------------------------
+
+The reasoner has two engines, which reach the same conclusions: **clingo**
+(the default) and **Nemo**. Nemo is optional: install it with
+``python3.14 -m pip install nemo-python`` (it isn't in the stand-alone apps
+yet). The ``reasoner/engine`` setting (**Settings...**, in the application menu) says which
+one **reason**, queries and ``ask reasoner`` use; ``reason --engine nemo``
+picks one for a single run.
+
+What Nemo adds is explanations. With it installed, an inferred relation's
+menu has **explain (why it holds)**, which prints the steps to the terminal
+pane: the rules it follows by (yours, and the base rules: eg, *transitive*),
+down to what the model asserts. Eg::
+
+  ann -ancestorOf-> fred
+    ann -ancestorOf-> fred, by the rule "transitive"
+      ann -ancestorOf-> mary (asserted)
+      mary -ancestorOf-> fred (asserted)
+      ancestorOf is transitive
+
+The terminal's ``explain`` does the same for any relation, or any type and
+two objects: ``explain ancestorOf ann fred`` (``--full`` for every step the
+engine took). It uses Nemo whichever engine reasons.
+
+One difference: in a rule (not a constraint or a query), Nemo tests a
+**not** attribute constraint (eg: ``not gender: female``) against the
+attributes the model gives, not those other rules conclude -- it needs the
+rules in an order it can work through, one layer at a time.
 
 Switching rules off
 -------------------

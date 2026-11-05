@@ -20,5 +20,6 @@ Submodules
    sn.model.model
    sn.model.modelPrefs
    sn.model.names
+   sn.model.nemoReasoner
    sn.model.reasoner
    sn.model.snAttribute

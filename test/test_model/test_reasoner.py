@@ -31,6 +31,10 @@ from sn.model.model import Model, Node, Relation
 from sn.model.reasoner import Reasoner, Inferences
 from sn.model.clingoReasoner import ClingoReasoner
 from typing import TYPE_CHECKING, cast
+try:
+  from sn.model.nemoReasoner import NemoReasoner
+except ModuleNotFoundError: # (an optional engine: pip install nemo-python)
+  NemoReasoner = None # type: ignore[assignment,misc]
 
 if TYPE_CHECKING: # (the spec is a mixin, so only the type checker sees it as a TestCase)
   _SpecBase = unittest.TestCase
@@ -392,6 +396,115 @@ class TestClingo(ReasonerSpec, unittest.TestCase):
 
   def test0700registry(self):
     self.assertIsInstance(Reasoner.create(self.m, "clingo"), ClingoReasoner)
+
+
+@unittest.skipIf(NemoReasoner is None, "the Nemo engine isn't installed (pip install nemo-python)")
+class TestNemo(ReasonerSpec, unittest.TestCase):
+  ENGINE = NemoReasoner # type: ignore[assignment]
+
+  def test0600nativeQuery(self):
+    self.assertEqual(NemoReasoner.language, "nemo")
+    ans = self.reasoner.query('ans(?X) :- holds(?T,?F,?X), name(?T,"has"), name(?F,"fred").')
+    self.assertEqual([a[0] for a in ans], [self.car1])
+    with self.assertRaises(RuntimeError):
+      self.reasoner.query('ans(?X) :- obj(?X), ~ans(?X).') # (not stratified: said, not a crash)
+
+  def test0700registry(self):
+    self.assertIsInstance(Reasoner.create(self.m, "nemo"), NemoReasoner)
+
+  def test0710strings(self):
+    'Strings Nemo can\'t write (it has no escapes) go there and back: names, attribute values, constraints.'
+    from sn.model.reasoner import reasoningFor
+    m, person = self._fresh("strings")
+    odd = 'a "quoted" 100% \\ back\tslash\nline, é ✓'
+    x = Node(m, [person], individual=True, name=odd)
+    x["note"] = odd
+    x["count"] = 3
+    x["ok"] = True
+    r = NemoReasoner(m)
+    rows = r.query('ans(?N, ?V) :- attr(?X, "note", ?V), name(?X, ?N).')
+    self.assertEqual(rows, [(odd, odd)])
+    self.assertEqual(r.query('ans(?X) :- attr(?X, "count", 3), attr(?X, "ok", true).'), [(x,)])
+
+  def test0720explain(self):
+    'Nemo can say why a conclusion holds: the rules it follows by, down to what the model asserts.'
+    r = NemoReasoner(self.m)
+    self.assertIsNone(r.explain(self.ancestor, self.ann, self.fred)) # (no run yet)
+    r.run()
+    step = r.explain(self.ancestor, self.ann, self.fred)
+    assert step is not None
+    self.assertEqual((step.predicate, step.args), ("holds", (self.ancestor, self.ann, self.fred)))
+    text = str(step)
+    name = lambda o: o.tostring(relativeTo=self.m, format="friendly")
+    self.assertIn('by the rule "transitive"', text)
+    self.assertIn(f'{name(self.ann)} -{name(self.ancestor)}-> {name(self.mary)} (asserted)', text)
+    self.assertIn(f'{name(self.mary)} -{name(self.ancestor)}-> {name(self.fred)} (asserted)', text)
+    self.assertIn(f'{name(self.ancestor)} is transitive', text)
+    self.assertNotIn("data(", text)                                      # (bookkeeping: brief leaves it out)
+    self.assertIn("data(", "\n".join(step.lines(brief=False)))
+    inherited = str(r.explain(self.has, self.rex, self.tail))
+    self.assertIn(f'{name(self.dog)} -{name(self.has)}-> {name(self.tail)} (asserted)', inherited)
+    self.assertIn(f'{name(self.rex)} isa {name(self.dog)}', inherited)
+    self.assertIsNone(r.explain(self.ancestor, self.fred, self.ann))     # (doesn't hold)
+    isa = str(r.explain(self.spot, self.thing, predicate="isa_star"))
+    self.assertIn(f'{name(self.spot)} isa {name(self.puppy)}', isa)
+    self.assertIn(f'{name(self.puppy)} isa {name(self.dog)}', isa)
+
+  def test0730negatedAttributesInRules(self):
+    '''
+    A rule's "not" attribute test is about the attributes the model gives:
+    Nemo needs the program stratified, and the rules' conclusions depend on the rules.
+    '''
+    m, person = self._fresh("notattr")
+    a, b = (Node(m, [person], individual=True, name=n) for n in "ab")
+    a["gender"] = "female"
+    tagged = lambda: {(x.name, k, v) for _, x, k, v in NemoReasoner(m).run().ruleAttrs}
+    def rule(name, test, conclusion):
+      r = Node(m, [m.RULE], individual=True, name=name)
+      X, X2 = Node(m, [person], individual=True, name="?x"), Node(m, [m.NODE], individual=True, name="?x")
+      X["constraints"] = test
+      X2["constraints"] = conclusion
+      Relation(m, [m.ANTECEDENT], r, X, individual=True)
+      Relation(m, [m.CONSEQUENT], r, X2, individual=True)
+    rule("unknown", "not gender", "unknown: yes")
+    self.assertEqual(tagged(), {("b", "unknown", "yes")})
+    rule("guess", "not gender: female", "gender: male")                   # (concludes what "unknown" tests: b's still unknown)
+    self.assertEqual(tagged(), {("b", "unknown", "yes"), ("b", "gender", "male")})
+
+  def test0740defaultEngine(self):
+    'The "reasoner/engine" preference says which engine is used when none is named.'
+    from unittest import mock
+    from sn.model.reasoner import defaultEngine
+    get = sn.snPrefs.get
+    self.assertEqual(defaultEngine(), "clingo")
+    with mock.patch.object(sn.snPrefs, "get", side_effect=lambda key, *a, **kw: "nemo" if key == "reasoner/engine" else get(key, *a, **kw)):
+      self.assertEqual(defaultEngine(), "nemo")
+      self.assertIsInstance(Reasoner.create(self.m), NemoReasoner)
+    self.assertIsInstance(Reasoner.create(self.m), ClingoReasoner)
+
+  def test0810explainCommand(self):
+    from sn.controller.modelInterface import ModelContext
+    from sn.model.model import IsaIndividual
+    from sn.model.reasoner import reason, clearReasoning
+    name = lambda o: o.tostring(relativeTo=self.m, format="friendly")
+    ctx = ModelContext(self.m)
+    text = ctx.parser.parseLine("explain ancestorOf ann fred") # (the type: its relations have its name too)
+    self.assertIn('by the rule "transitive"', text)
+    self.assertIn("doesn't hold", ctx.parser.parseLine("explain ancestorOf fred ann"))
+    self.assertIn("data(", ctx.parser.parseLine("explain ancestorOf ann fred --full"))
+    link = next(r for r in self.m.values() if isinstance(r, IsaIndividual) and r.src is self.spot)
+    self.assertEqual(ctx.explain(link), f'{name(self.spot)} isa {name(self.puppy)}')
+    clearReasoning(self.m)
+    try:
+      reason(self.m, "clingo") # (whichever engine reasoned: nemo explains)
+      rel = next(r for r in self.m.inferredObjects() if isinstance(r, Relation) and r.isa(self.has) and r.localSrc is self.rex)
+      text = ctx.explain(rel)
+      self.assertTrue(text.startswith(f'{name(self.rex)} -{name(self.has)}-> {name(self.tail)}'), text)
+      self.assertIn(f'{name(self.dog)} -{name(self.has)}-> {name(self.tail)} (asserted)', text)
+    finally:
+      clearReasoning(self.m)
+    with self.assertRaises(TypeError):
+      ctx.explain(self.fred)
 
 
 if __name__ == "__main__":

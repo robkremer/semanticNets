@@ -98,16 +98,19 @@ class ReasoningMixin(ViewBase):
     from sn.model.reasoner import reasoningFor
     return reasoningFor(self.model)
 
-  def reason(self, engine:str="clingo", silent:bool=False) -> None:
+  def reason(self, engine:str|None=None, silent:bool=False) -> None:
     '''
     Run the reasoner over this view's model and print the report to this
     window's terminal. The results are kept with the model, so this and every
     other view of it show them (see *_showReasoning()*), as they do when
     "reason" is typed at the command line.
 
+    :param engine: The reasoner engine; by default the preference's (see *sn.model.reasoner.defaultEngine()*).
     :param silent: See *reasonSilently()*.
     '''
-    from sn.model.reasoner import reason, summary
+    from sn.model.reasoner import reason, summary, defaultEngine
+    if engine is None:
+      engine = defaultEngine()
     try:
       result = reason(self.model, engine, silent=silent)
     except ImportError as ex:
