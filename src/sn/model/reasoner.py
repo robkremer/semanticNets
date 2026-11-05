@@ -1027,11 +1027,14 @@ class EngineInfo:
   "Whether it can say why a conclusion holds (see *sn.model.nemoReasoner.NemoReasoner.explain()*)."
   bundled:bool = True
   "Whether the apps include it (their self-test checks that it's there: see *sn.__main__.selftest()*)."
+  needs:str = ""
+  "What must be installed before *package*, if anything (eg: SWI-Prolog, which janus-swi is the Python interface to)."
 
 ENGINES:dict[str, EngineInfo] = {e.name: e for e in (
   EngineInfo("clingo", "clingo", "clingo"),
   EngineInfo("nemo", "nmo_python", "nemo-python", explains=True),
   EngineInfo("clips", "clips", "clipspy", bundled=False),
+  EngineInfo("prolog", "janus_swi", "janus-swi", bundled=False, needs="SWI-Prolog (9.1.12 or later, from swi-prolog.org)"),
 )}
 '''
 The known reasoner engines, by name. A new engine adds itself here, and to the
@@ -1060,7 +1063,8 @@ class EngineMissing(ImportError):
     self.engine:str = engine
     self.package:str|None = info.package if info is not None else None
     self.detail:str = detail
-    how = f'install it with "{PIP} install {info.package}" ' if info is not None else ""
+    how = "" if info is None else \
+          f'install {info.needs}, then "{PIP} install {info.package}" ' if info.needs else f'install it with "{PIP} install {info.package}" '
     super().__init__(f'The "{engine}" reasoner engine isn\'t {"working" if detail else "installed"}'
                      f'{f" ({detail})" if detail else ""}: {how}(see "Installing an engine" in the User Guide).',
                      name=info.module if info is not None else None)

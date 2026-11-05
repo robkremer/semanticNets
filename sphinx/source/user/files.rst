@@ -217,8 +217,8 @@ setting                                          controls
                                                  relation's label when placing it: 0 (not
                                                  at all) to 10 (furthest; slow in a crowded
                                                  view, as when showing a big model)
-``reasoner/engine``                              the reasoner engine: clingo, nemo or clips
-                                                 (see :doc:`reasoning`)
+``reasoner/engine``                              the reasoner engine: clingo, nemo, clips or
+                                                 prolog (see :doc:`reasoning`)
 ``reasoner/python``                              for the app: a Python 3.14 on the computer
                                                  whose packages it may use, for an engine it
                                                  doesn't include (blank: it looks for one;

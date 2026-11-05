@@ -37,6 +37,10 @@ try:
   from sn.model.clipsReasoner import ClipsReasoner
 except ModuleNotFoundError: # (an optional engine: pip install clipspy)
   ClipsReasoner = None # type: ignore[assignment,misc]
+try:
+  from sn.model.prologReasoner import PrologReasoner
+except ImportError: # (an optional engine: SWI-Prolog, and pip install janus-swi)
+  PrologReasoner = None # type: ignore[assignment,misc]
 
 class TestRules(unittest.TestCase):
   '''
@@ -1008,6 +1012,17 @@ class TestRulesClips(TestRules):
   ENGINE_NAME = "clips"
   BAD_QUERY = "(defrule q (not (not (not))) => )"
   SYNTAX_ERROR = "Syntax Error"
+
+
+@unittest.skipIf(PrologReasoner is None, "the Prolog engine isn't installed (SWI-Prolog, and pip install janus-swi)")
+class TestRulesProlog(TestRules):
+  '''
+  The rules, by the SWI-Prolog engine (see *sn.model.prologReasoner*).
+  '''
+  ENGINE = PrologReasoner # type: ignore[assignment]
+  ENGINE_NAME = "prolog"
+  BAD_QUERY = "ans(X) :- not not not."
+  SYNTAX_ERROR = "Syntax error"
 
 
 if __name__ == "__main__":

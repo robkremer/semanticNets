@@ -39,6 +39,10 @@ try:
   from sn.model.clipsReasoner import ClipsReasoner
 except ModuleNotFoundError: # (an optional engine: pip install clipspy)
   ClipsReasoner = None # type: ignore[assignment,misc]
+try:
+  from sn.model.prologReasoner import PrologReasoner
+except ImportError: # (an optional engine: SWI-Prolog, and pip install janus-swi)
+  PrologReasoner = None # type: ignore[assignment,misc]
 
 if TYPE_CHECKING: # (the spec is a mixin, so only the type checker sees it as a TestCase)
   _SpecBase = unittest.TestCase
@@ -596,6 +600,94 @@ class TestClips(ReasonerSpec, unittest.TestCase):
     self.assertEqual(tagged(), {("b", "unknown", "yes")})
     rule("guess", "not gender: female", "gender: male")                   # (concludes what "unknown" tests: b's still unknown)
     self.assertEqual(tagged(), {("b", "unknown", "yes"), ("b", "gender", "male")})
+
+
+@unittest.skipIf(PrologReasoner is None, "the Prolog engine isn't installed (SWI-Prolog, and pip install janus-swi)")
+class TestProlog(ReasonerSpec, unittest.TestCase):
+  ENGINE = PrologReasoner # type: ignore[assignment]
+
+  def test0600nativeQuery(self):
+    self.assertEqual(PrologReasoner.language, "prolog")
+    ans = self.reasoner.query('ans(X) :- name(T,"has"), name(F,"fred"), holds(T,F,X).')
+    self.assertEqual([a[0] for a in ans], [self.car1])
+    self.assertEqual(self.reasoner.query('ans(N) :- name(T,"has"), rel_type(T), aggregate_all(count, holds(T,_,_), N).'), # (Prolog's own predicates too)
+                     [(len(self.reasoner.query('ans(S,D) :- name(T,"has"), rel_type(T), holds(T,S,D).')),)])
+    with self.assertRaises(RuntimeError) as cm:
+      self.reasoner.query('ans(X) :- nothing(X).')            # (an error as it runs: said)
+    self.assertIn("nothing/1", str(cm.exception))
+    with self.assertRaises(RuntimeError) as cm:
+      self.reasoner.query('ans(X) :- obj(X).\nans(X :- obj(X).') # (where: the query's line 2)
+    self.assertIn("the query, line 2", str(cm.exception))
+
+  def test0700registry(self):
+    self.assertIsInstance(Reasoner.create(self.m, "prolog"), PrologReasoner)
+
+  def test0710strings(self):
+    'Strings, symbols and numbers go there and back: names, attribute values, constraints.'
+    m, person = self._fresh("strings")
+    odd = 'a "quoted" 100% \\ back\tslash\nline, é ✓ (not) \'x\' \x01;'
+    x = Node(m, [person], individual=True, name=odd)
+    x["note"] = odd
+    x["count"] = 3
+    x["ok"] = True
+    x["big"] = 2**70
+    r = PrologReasoner(m)
+    rows = r.query('ans(N,V) :- attr(X,"note",V), name(X,N).')
+    self.assertEqual(rows, [(odd, odd)])
+    self.assertEqual(r.query('ans(X) :- attr(X,"count",3), attr(X,"ok",true).'), [(x,)])
+    self.assertEqual(r.query('ans(V) :- attr(_,"big",V).'), [(str(2**70),)])
+
+  def test0720ordered(self):
+    'A compiled rule\'s body runs in a good order: each literal sharing variables with those before it, tests once bound.'
+    from sn.model.prologReasoner import _ordered
+    body = ["data(X)", "data(Y)", "data(Z)", "holds(T,X,Y)", "holds(T,Y,Z)", "prop(T,'transitive')",
+            "X \\== Z", 'not_exists(attr(X,"k",V))', "\\+ prop(T,'symmetric')"]
+    out = _ordered(body)
+    self.assertEqual(sorted(out), sorted(body))
+    self.assertEqual(out[0], "prop(T,'transitive')")                        # (a constant)
+    self.assertEqual(out[1], "\\+ prop(T,'symmetric')")                     # (as soon as T is bound)
+    self.assertLess(out.index("holds(T,Y,Z)"), out.index("data(Z)"))       # (a relation before what's at its ends)
+    self.assertLess(out.index("holds(T,X,Y)"), out.index("data(X)"))
+    self.assertGreater(out.index("X \\== Z"), out.index("holds(T,Y,Z)"))
+    self.assertGreater(out.index('not_exists(attr(X,"k",V))'), out.index("holds(T,X,Y)")) # (V is its own)
+
+  def test0730negatedAttributesInRules(self):
+    '''
+    A rule's "not" attribute test is about the attributes the rules conclude
+    too, as for clingo (Prolog's tabling has the well-founded semantics).
+    '''
+    m, person = self._fresh("notattr")
+    a, b = (Node(m, [person], individual=True, name=n) for n in "ab")
+    a["gender"] = "female"
+    tagged = lambda engine: {(x.name, k, v) for _, x, k, v in Reasoner.create(m, engine).run().ruleAttrs}
+    def rule(name, test, conclusion):
+      r = Node(m, [m.RULE], individual=True, name=name)
+      X, X2 = Node(m, [person], individual=True, name="?x"), Node(m, [m.NODE], individual=True, name="?x")
+      X["constraints"] = test
+      X2["constraints"] = conclusion
+      Relation(m, [m.ANTECEDENT], r, X, individual=True)
+      Relation(m, [m.CONSEQUENT], r, X2, individual=True)
+    rule("unknown", "not gender", "unknown: yes")
+    self.assertEqual(tagged("prolog"), {("b", "unknown", "yes")})
+    rule("guess", "not gender: female", "gender: male")                   # (concludes what "unknown" tests: b's gender is known now)
+    self.assertEqual(tagged("prolog"), {("b", "gender", "male")})
+    self.assertEqual(tagged("prolog"), tagged("clingo"))
+
+  def test0740undecided(self):
+    'A rule that negates what it concludes (a loop through "not": undecided): what depends on it isn\'t concluded, and the rest is.'
+    m, person = self._fresh("undecided")
+    a = Node(m, [person], individual=True, name="a")
+    a["tall"] = True
+    def rule(name, test, conclusion):
+      r = Node(m, [m.RULE], individual=True, name=name)
+      X, X2 = Node(m, [person], individual=True, name="?x"), Node(m, [m.NODE], individual=True, name="?x")
+      X["constraints"] = test
+      X2["constraints"] = conclusion
+      Relation(m, [m.ANTECEDENT], r, X, individual=True)
+      Relation(m, [m.CONSEQUENT], r, X2, individual=True)
+    rule("odd", "not odd", "odd: yes")
+    rule("plain", "tall", "seen: yes")
+    self.assertEqual({(x.name, k) for _, x, k, _v in PrologReasoner(m).run().ruleAttrs}, {("a", "seen")})
 
 
 class TestEngines(unittest.TestCase):

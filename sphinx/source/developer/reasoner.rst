@@ -23,12 +23,14 @@ engine="clingo")``) and are made with
 :py:func:`~sn.model.reasoner.defaultEngine`). Another engine implements the
 same interface; ``test/test_model/test_reasoner.py`` pins down the semantics
 every engine must share (*ReasonerSpec*), and ``test/test_model/test_rules.py``
-runs the rules tests by each engine. There are two more already: Nemo and
-CLIPS (see `The Nemo engine`_ and `The CLIPS engine`_ below).
+runs the rules tests by each engine. There are three more already: Nemo,
+CLIPS and SWI-Prolog (see `The Nemo engine`_, `The CLIPS engine`_ and `The
+Prolog engine`_ below).
 
 What the program knows about an engine before it's imported is in
 :py:data:`~sn.model.reasoner.ENGINES`: the Python module it needs, the package
-that provides it, whether it can explain a conclusion, and whether the apps
+that provides it (and what must be installed before it, if anything: SWI-Prolog,
+for janus-swi), whether it can explain a conclusion, and whether the apps
 include it (their ``--selftest`` reasons, and explains, with each one they
 should have: see ``sn/__main__.py``). So
 :py:func:`~sn.model.reasoner.engineInstalled` can tell whether one can be used
@@ -401,6 +403,56 @@ Where CLIPS differs:
   too few) are counted in Python, from the ``holds``, ``card``, ``card_of``
   and ``card_counted`` facts (``_counted()``).
 
+The Prolog engine
+-----------------
+
+:py:mod:`sn.model.prologReasoner`
+  :py:class:`~sn.model.prologReasoner.PrologReasoner` (``engine="prolog"``),
+  built on `SWI-Prolog <https://www.swi-prolog.org>`_ (9.1.12 or later)
+  through its Python interface, janus (``pip install janus-swi``, imported as
+  ``janus_swi``; pip builds it against the ``swipl`` it finds, so SWI-Prolog
+  comes first). The apps don't include either: they use them from the
+  computer (see above), as CLIPS.
+
+Its rule base, ``prologReasoner.pl``, is ``clingoReasoner.lp`` ported rule
+for rule, and ``_rulesProgram()`` compiles the user's rules as clingo's does
+(Prolog's syntax is close to ASP's), so the engines give the same results.
+Each run loads the rule base, the facts and the rules, as one text, into a
+module of its own (``in_temporary_module/3``), which goes when it's done; a
+small helper module (``_HELPER``, loaded once) does that, keeps the errors
+(to raise them in Python, saying whether the query or the rules have them),
+and gives the true answers back as Python values. Prolog runs on one thread
+(``_call()``), whichever thread asks. Where Prolog differs:
+
+- It's top-down: SWI-Prolog's tabling, with the well-founded semantics, does
+  what clingo's grounding does -- recursion ends, and a negation (``tnot/1``,
+  ``not_exists/1``) waits until what it tests is known. So a rule's negated
+  attribute test is about what the rules conclude too, as clingo's is (Nemo
+  and CLIPS need a stratified program). A loop through a negation leaves what
+  depends on it undefined, and only true answers are read.
+- It works in two steps. The closure -- what the rules conclude, and what that
+  depends on -- is tabled, with ``r_holds/3``, ``r_isa_star/2`` and
+  ``r_attr/3`` for the rules to test. Then ``sn_close/0`` states its results
+  as facts (``holds/3``, ``isa_star/2``, ``attr/3``), and the rest -- what's
+  inferred, the violations, the constraints, queries -- reads them with plain
+  Prolog. A tabled call makes a table for each call pattern: asking about
+  each triple that way worked each out again (a model of 3,000 objects took
+  45 s); a fact is just looked up.
+- Prolog runs a body in order, so a compiled rule's literals are ordered as
+  CLIPS's conditions are (``_ordered()``): first one with a constant, then
+  each sharing the most, each test or negation once what it tests is bound.
+- Objects are atoms ``'#N'``, not clingo's ``o(N)``: Prolog finds a fact by an
+  atom argument, but not by the number inside a compound term (with ``o(N)``,
+  every ``kind/2`` lookup read every fact: 30 s of a 10,000-object model's
+  31). An object a rule creates is a term ``new(Rule,Var,[[Name,Value],...])``
+  -- made last in a clause's body, not in its head, where a call like
+  ``holds(T,S,S)`` would unify a variable with a term holding it.
+- The facts are grouped by predicate: SWI-Prolog warns of each clause that
+  isn't with the others of its predicate, slowly (8 s of a big model's load).
+
+A 15,000-object model takes about as long as with clingo (most of it the
+shared export of the facts).
+
 Queries
 -------
 
@@ -410,6 +462,8 @@ and the results of reasoning (a query's variables *do* range over created
 objects), and returns one dict per match: variable to object.
 :py:meth:`~sn.model.clingoReasoner.ClingoReasoner.query` takes clingo
 rules defining ``ans`` directly (the terminal's ``ask reasoner``); Nemo's
-takes Nemo rules (``ans(?X) :- holds(?T,?F,?X), name(?T,"owns"), ...``), and
+takes Nemo rules (``ans(?X) :- holds(?T,?F,?X), name(?T,"owns"), ...``),
 CLIPS's CLIPS rules asserting ``ans`` facts (``(defrule q (holds ?t ?f ?x)
-(name ?t "owns") ... => (assert (ans ?x)))``).
+(name ?t "owns") ... => (assert (ans ?x)))``), and Prolog's Prolog clauses
+(``ans(X) :- name(T,"owns"), name(F,"fred"), holds(T,F,X).``: they run in the
+order they're written).

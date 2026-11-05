@@ -11,7 +11,7 @@ them). Run from the project's top folder:
 The app is the graphical editor (sn/__main__.py) with its own Python, Tk and
 reasoner engines (clingo and Nemo) inside. It's ad hoc signed, without the
 hardened runtime, so it can also load an engine's compiled package from a
-Python installed on the computer (eg: CLIPS's: see util.localPython, and
+Python installed on the computer (eg: CLIPS's, or SWI-Prolog's: see util.localPython, and
 sn.model.reasoner.engineInstalled()): with the hardened runtime, that would
 need the com.apple.security.cs.disable-library-validation entitlement. It bundles, at the same relative places sn.resourcePath() looks:
 
@@ -50,6 +50,7 @@ datas = [
   (os.path.join(SRC, "sn", "model", "clingoReasoner.lp"), os.path.join("sn", "model")),
   (os.path.join(SRC, "sn", "model", "nemoReasoner.rls"), os.path.join("sn", "model")), # (Nemo's: nemo-python is in the build venv -- see requirements-build.txt)
   (os.path.join(SRC, "sn", "model", "clipsReasoner.clp"), os.path.join("sn", "model")), # (CLIPS's: clipspy itself comes from a Python on the computer -- see util.localPython)
+  (os.path.join(SRC, "sn", "model", "prologReasoner.pl"), os.path.join("sn", "model")), # (SWI-Prolog's: it, and janus-swi, come from the computer -- see util.localPython)
   (os.path.join(SRC, "sn", "model", "baseRules.snm"), os.path.join("sn", "model")),
   (os.path.join(SRC, "sn", "examples"), os.path.join("sn", "examples")),
 ]
@@ -98,7 +99,7 @@ a = Analysis(
   datas=datas,
   hiddenimports=hiddenimports,
   excludes=["matplotlib", "numpy", "mypyc", "util.rtValuesDialog", # (not used: keep the app small)
-            "clips"], # (an engine the app uses from a Python on the computer, even if the build venv has it: see sn.model.reasoner.ENGINES)
+            "clips", "janus_swi"], # (engines the app uses from a Python on the computer, even if the build venv has them: see sn.model.reasoner.ENGINES)
     + (["PIL", "pypdfium2"] if MAC else []), # (pictures are made with sips there, not these -- see util.platformSupport.pdfToPNG() -- and Pillow, if it's in .venv-build, isn't universal)
   noarchive=False,
 )
