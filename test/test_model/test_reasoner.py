@@ -507,5 +507,97 @@ class TestNemo(ReasonerSpec, unittest.TestCase):
       ctx.explain(self.fred)
 
 
+class TestEngines(unittest.TestCase):
+  'Which engines there are, whether they\'re installed, and what a missing one says (none of it needs Nemo).'
+
+  def setUp(self):
+    from unittest import mock
+    self.mock = mock
+    self.engines = mock.patch.dict(Reasoner.engines) # (an engine "not installed" mustn't be registered)
+    self.engines.start()
+    self.addCleanup(self.engines.stop)
+
+  def _notInstalled(self, engine:str, error:ImportError|None=None):
+    'Patches that make *engine* look uninstalled (or broken: its import raises *error*).'
+    from sn.model import reasoner
+    from sn.model.reasoner import ENGINES
+    Reasoner.engines.pop(engine, None)
+    module = ENGINES[engine].module
+    if error is None:
+      error = ModuleNotFoundError(f"No module named '{module}'", name=module)
+    def importModule(name, *args):
+      raise error
+    real = reasoner.importlib.util.find_spec
+    return (self.mock.patch.object(reasoner, "import_module", importModule),
+            self.mock.patch.object(reasoner.importlib.util, "find_spec",
+                                   lambda name, *a: None if name == module else real(name, *a)))
+
+  def test0100enginesAreTheSettingsChoices(self):
+    'Every known engine is a choice of the "reasoner/engine" setting, and the other way round.'
+    from sn.model.reasoner import ENGINES
+    typ = sn.PREFS["reasoner/engine"][0]
+    self.assertEqual(typ, f"choices[{','.join(ENGINES)}]")
+
+  def test0200installed(self):
+    from sn.model.reasoner import engineInstalled, installedEngines
+    self.assertTrue(engineInstalled("clingo"))
+    self.assertIn("clingo", installedEngines())
+    self.assertFalse(engineInstalled("bogus"))
+    importing, finding = self._notInstalled("nemo")
+    with importing, finding:
+      self.assertFalse(engineInstalled("nemo"))
+      self.assertNotIn("nemo", installedEngines())
+
+  def test0300missing(self):
+    'Making a reasoner by an engine that isn\'t installed says how to install it.'
+    from sn.model.reasoner import EngineMissing
+    importing, finding = self._notInstalled("nemo")
+    with importing, finding, self.assertRaises(EngineMissing) as cm:
+      Reasoner.create(None, "nemo") # type: ignore[arg-type]
+    ex = cm.exception
+    self.assertIsInstance(ex, ImportError)
+    self.assertEqual((ex.engine, ex.package, ex.detail, ex.name), ("nemo", "nemo-python", "", "nmo_python"))
+    self.assertIn("isn't installed", str(ex))
+    self.assertIn("pip install nemo-python", str(ex))
+    self.assertIn("Installing an engine", str(ex))
+
+  def test0310broken(self):
+    'An engine that\'s installed but won\'t load says why.'
+    from sn.model.reasoner import EngineMissing
+    importing, _finding = self._notInstalled("nemo", ImportError("DLL load failed", name="nmo_python.nmo_python"))
+    with importing, self.assertRaises(EngineMissing) as cm:
+      Reasoner.create(None, "nemo") # type: ignore[arg-type]
+    self.assertEqual(cm.exception.detail, "DLL load failed")
+    self.assertIn("isn't working (DLL load failed)", str(cm.exception))
+
+  def test0320unknown(self):
+    with self.assertRaises(ValueError) as cm:
+      Reasoner.create(None, "bogus") # type: ignore[arg-type]
+    self.assertIn("clingo, nemo", str(cm.exception))
+
+  def test0400explainingEngine(self):
+    'Explaining uses an engine that can: nemo, installed or not (then it says how to install it).'
+    from sn.model.reasoner import explainingEngine
+    self.assertEqual(explainingEngine(), "nemo")
+    importing, finding = self._notInstalled("nemo")
+    with importing, finding:
+      self.assertEqual(explainingEngine(), "nemo")
+
+  def test0500setDefaultEngine(self):
+    'Choosing the default engine keeps the setting a choice (a plain value would make it any text).'
+    from sn.model.reasoner import setDefaultEngine, defaultEngine
+    before = sn.snPrefs.getAttr("reasoner/engine")
+    wasDirty = sn.snPrefs.isDirty()
+    try:
+      setDefaultEngine("nemo")
+      self.assertEqual(defaultEngine(), "nemo")
+      self.assertEqual(sn.snPrefs.getAttr("reasoner/engine").type, sn.PREFS["reasoner/engine"][0])
+    finally:
+      sn.snPrefs["reasoner/engine"] = before
+      if not wasDirty:
+        sn.snPrefs.setDirty(False)
+    self.assertEqual(defaultEngine(), before.value)
+
+
 if __name__ == "__main__":
   unittest.main()

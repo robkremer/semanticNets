@@ -31,12 +31,59 @@ from __future__ import annotations
 import tkinter as tk
 import sn
 from sn.model.model import IsaIndividual, GraphObject
-from typing import Any, cast, TYPE_CHECKING
+from typing import Any, Callable, cast, TYPE_CHECKING
+from functools import partial
+from html import escape
 from sn.view.graphics.viewBase import ViewBase
 if TYPE_CHECKING:
   from sn.view.graphics.sngView import SNGView
+  from sn.model.reasoner import EngineMissing
+  from util.actionDialog import ActionDialog
 
 logger:sn.SNLogger = sn.getLogger(__name__)
+
+def showEngineMissing(parent:tk.Misc, missing:str|EngineMissing, *, purpose:str="", chosen:bool=False,
+                      instead:Callable[[str], None]|None=None) -> ActionDialog:
+  '''
+  Say that a reasoner engine isn't installed (or won't load), in a dialog with a
+  link to how to install it (*sn.model.reasoner.INSTALL_HELP*, in the User
+  Guide) -- and, if it's the one the "reasoner/engine" setting picks, links to
+  pick an installed one instead.
+
+  :param parent: What it's shown over.
+  :param missing: The engine's name, or the error saying it's missing (see *sn.model.reasoner.Reasoner.create()*).
+  :param purpose: What it was wanted for, as a sentence: eg, "Explaining a conclusion needs it."
+  :param chosen: It was just chosen in Settings.
+  :param instead: Called with an installed engine's name to use it this time
+    (eg: to reason with it): if given, there's a link for each.
+  :returns: The dialog.
+  '''
+  from util.actionDialog import ActionDialog
+  from sn.model.reasoner import EngineMissing, INSTALL_HELP, defaultEngine, setDefaultEngine, installedEngines
+  from sn.view.graphics import guiApp
+  engine = missing.engine if isinstance(missing, EngineMissing) else missing
+  detail = missing.detail if isinstance(missing, EngineMissing) else ""
+  others = [e for e in installedEngines() if e != engine]
+  actions:dict[str, Callable[[], None]] = {"help": lambda: guiApp.showHelp(INSTALL_HELP)}
+  lines = [f'<b>The "{escape(engine)}" reasoner engine isn\'t {"working" if detail else "installed"}.</b>']
+  if detail:
+    lines.append(f"It seems to be installed, but won\'t load: {escape(detail)}")
+  if chosen:
+    lines.append("Settings now says to reason with it: reasoning will ask for it until it\'s installed.")
+  if purpose:
+    lines.append(escape(purpose))
+  lines.append('<a id="help">How to install it</a> (in the User Guide)')
+  for e in others:
+    if instead is not None:
+      actions[f"use:{e}"] = partial(instead, e)
+      lines.append(f'<a id="use:{escape(e)}">Use {escape(e)} this time</a>')
+    if defaultEngine() == engine:
+      actions[f"pref:{e}"] = partial(setDefaultEngine, e)
+      lines.append(f'<a id="pref:{escape(e)}">Use {escape(e)} from now on</a> (the reasoner/engine setting)')
+  dialog = ActionDialog(cast(Any, parent), "Reasoner engine not installed",
+                        lines[0] + "<br><br>" + "<br>".join(lines[1:]), actions, width=70)
+  dialog.geometry("") # (its own size: just the few lines it has)
+  return dialog
 
 class ReasoningMixin(ViewBase):
   '''
@@ -108,13 +155,14 @@ class ReasoningMixin(ViewBase):
     :param engine: The reasoner engine; by default the preference's (see *sn.model.reasoner.defaultEngine()*).
     :param silent: See *reasonSilently()*.
     '''
-    from sn.model.reasoner import reason, summary, defaultEngine
+    from sn.model.reasoner import reason, summary, defaultEngine, EngineMissing
     if engine is None:
       engine = defaultEngine()
     try:
       result = reason(self.model, engine, silent=silent)
-    except ImportError as ex:
-      logger.error(f'The "{engine}" reasoner isn\'t available: {ex}')
+    except EngineMissing as ex: # (said, with a link to how to install it -- or to use another this time)
+      logger.error(str(ex))
+      showEngineMissing(self.canvas, ex, instead=lambda other: self.reason(other, silent=silent))
       return
     except RuntimeError as ex: # (eg: rules that can't be compiled: said, not a traceback -- and the summary's left as it was)
       logger.error(f'Couldn\'t reason over {self.model.name}: {ex}')

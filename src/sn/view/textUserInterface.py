@@ -41,6 +41,7 @@ import sys
 from sn.model.model import Model, GraphObject
 from sn.controller.modelInterface import ModelContext
 import logging
+from functools import partial
 from typing import Any, Callable, cast
 try:
   import readline  # noqa: F401 — importing enables input() line editing
@@ -308,7 +309,7 @@ class SNTerminalWidget(SNAbstractTerminal, TerminalWidget):
     SNAbstractTerminal.__init__(self, model, context)
     if "wrap" not in kwargs:
       kwargs["wrap"] = tk.WORD if snPrefs.get("text/wrap", storeDefault=False, storeType=bool) else tk.NONE
-    TerminalWidget.__init__(self, master, self.context.parser.parseLine, self.getPrompt, #type: ignore[arg-type]
+    TerminalWidget.__init__(self, master, self._onLine, self.getPrompt, #type: ignore[arg-type]
                             resultToStringFun=lambda obj: printLists(obj, contextModel=self.context.defaults["model"]), # type: ignore[arg-type, return-value]
                             registry=registry, 
                             bg=bg, fg=fg, stderrfg=stderrfg, queryfg=queryfg,
@@ -317,6 +318,22 @@ class SNTerminalWidget(SNAbstractTerminal, TerminalWidget):
                             errorFlashCount=errorFlashCount,
                             background=snPrefs.get("text/backgroundColor", storeDefault="white", storeType="color"),
                             **kwargs) 
+
+
+  def _onLine(self, line:str) -> Any:
+    '''
+    Run a typed command (on the terminal's worker thread). A reasoner engine
+    it needs that isn't installed is said in a line, not a traceback, and a
+    dialog links to how to install it (see *showEngineMissing()*).
+    '''
+    from sn.model.reasoner import EngineMissing
+    try:
+      return self.context.parser.parseLine(line)
+    except EngineMissing as ex:
+      from sn.view.graphics.viewReasoning import showEngineMissing
+      logger.error(str(ex))
+      self.after(0, partial(showEngineMissing, self, ex))
+      return None
 
 
 class SNPlainTextTerminal(SNAbstractTerminal, PlainTextTerminal):

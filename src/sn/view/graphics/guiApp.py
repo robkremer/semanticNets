@@ -81,6 +81,23 @@ logger:sn.SNLogger = sn.getLogger(__name__)
 class UnexpectedObjectInFile(Exception):
   pass
 
+def showHelp(page:str) -> None:
+  """Show a page of the documentation in the web browser: the copy bundled
+  in a packaged app, or else the project's built documentation. It's served
+  from 127.0.0.1 (see *util.folderServer*), not opened as a file: URL,
+  since Safari won't load a file: page's stylesheets from its parent
+  folder ("../_static/"), so it would show unstyled.
+
+  :param page: The page, relative to the documentation's top, eg:
+    "user/index.html", perhaps with a section: eg, "user/reasoning.html#installing-an-engine".
+  """
+  from util.folderServer import openInBrowser
+  for top in (sn.resourcePath("help"), sn.resourcePath("sphinx", "build", "html")):
+    if os.path.exists(os.path.join(top, page.partition("#")[0])):
+      openInBrowser(top, page)
+      return
+  logger.error(f'The documentation ("{page}") isn\'t available: build it with the "doc" ant target.')
+
 class Application(tk.Tk):
   """The invisible root Tk window and manages one or more Toplevel windows.
 
@@ -288,20 +305,8 @@ class Application(tk.Tk):
     return menubar
 
   def showHelp(self, page:str) -> None:
-    """Show a page of the documentation in the web browser: the copy bundled
-    in a packaged app, or else the project's built documentation. It's served
-    from 127.0.0.1 (see *util.folderServer*), not opened as a file: URL,
-    since Safari won't load a file: page's stylesheets from its parent
-    folder ("../_static/"), so it would show unstyled.
-
-    :param page: The page, relative to the documentation's top, eg: "user/index.html".
-    """
-    from util.folderServer import openInBrowser
-    for top in (sn.resourcePath("help"), sn.resourcePath("sphinx", "build", "html")):
-      if os.path.exists(os.path.join(top, page)):
-        openInBrowser(top, page)
-        return
-    logger.error(f'The documentation ("{page}") isn\'t available: build it with the "doc" ant target.')
+    'See the module\'s *showHelp()*.'
+    showHelp(page)
 
   def openSettings(self) -> None:
     """Show the app-wide Settings dialog: an attribute editor on *sn.snPrefs*,
@@ -310,8 +315,13 @@ class Application(tk.Tk):
     types and qualifiers are fixed, and their notes -- documentation, from
     *sn.PREFS* -- are their names' tooltips.
     """
+    from sn.model.reasoner import defaultEngine, engineInstalled
+    engine = defaultEngine()
     applyEditAttrsBox(self, snPrefs, title="Semantic Nets Preferences", hideColumns=("type", "qualifiers", "note"))
     self._fillRecentMenu() # (in case "gui/recentFiles" changed)
+    if defaultEngine() != engine and not engineInstalled(defaultEngine()): # (just chosen: say how to install it)
+      from sn.view.graphics.viewReasoning import showEngineMissing
+      showEngineMissing(self.focus_get() or self, defaultEngine(), chosen=True)
 
   def doOpen(self, ): 
     'Respond to the "Open..." menu item.'

@@ -91,16 +91,15 @@ Engines and explanations
 ------------------------
 
 The reasoner has two engines, which reach the same conclusions: **clingo**
-(the default) and **Nemo**. Nemo is optional: install it with
-``python3.14 -m pip install nemo-python`` (it isn't in the stand-alone apps
-yet). The ``reasoner/engine`` setting (**Settings...**, in the application menu) says which
+(the default) and **Nemo**. Nemo is optional (see `Installing an engine`_).
+The ``reasoner/engine`` setting (**Settings...**, in the application menu) says which
 one **reason**, queries and ``ask reasoner`` use; ``reason --engine nemo``
 picks one for a single run.
 
-What Nemo adds is explanations. With it installed, an inferred relation's
-menu has **explain (why it holds)**, which prints the steps to the terminal
-pane: the rules it follows by (yours, and the base rules: eg, *transitive*),
-down to what the model asserts. Eg::
+What Nemo adds is explanations. An inferred relation's menu has **explain
+(why it holds)**, which prints the steps to the terminal pane: the rules it
+follows by (yours, and the base rules: eg, *transitive*), down to what the
+model asserts. Eg::
 
   ann -ancestorOf-> fred
     ann -ancestorOf-> fred, by the rule "transitive"
@@ -116,6 +115,29 @@ One difference: in a rule (not a constraint or a query), Nemo tests a
 **not** attribute constraint (eg: ``not gender: female``) against the
 attributes the model gives, not those other rules conclude -- it needs the
 rules in an order it can work through, one layer at a time.
+
+Installing an engine
+~~~~~~~~~~~~~~~~~~~~
+
+When an engine that isn't installed is wanted -- **reason** with the
+``reasoner/engine`` setting on it, **explain (why it holds)**, or the
+terminal's ``explain`` -- the program says so, with a link to here. If it's
+the one the setting picks, it also offers to reason with one that is
+installed: this time, or from now on.
+
+**clingo**
+  Comes with the apps. For the ``.pyz``, or the source, install it with
+  ``python3.14 -m pip install clingo`` (see :doc:`gettingStarted`).
+
+**Nemo**
+  Isn't in the apps yet. To use it, run the program from the ``.pyz`` or the
+  source (see :doc:`gettingStarted`), and install Nemo for the Python that
+  runs it::
+
+    python3.14 -m pip install nemo-python
+
+  (on Windows, ``py -3.14 -m pip install nemo-python``). Then start the
+  program again.
 
 Switching rules off
 -------------------
