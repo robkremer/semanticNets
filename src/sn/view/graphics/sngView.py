@@ -526,7 +526,7 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
           madeHere = modelID in made # (by one of this view's commands: see ViewDoList.do() -- not by a program, or another window)
           made.discard(modelID)
           if (modelObj.isType() or isinstance(modelObj, Node)) and self.canvas and not pasted and madeHere:
-            self._askName(modelObj)
+            self._askName(modelObj, modelID)
           typ:type = type(modelObj)
           newObj:VObject|None = None
           if typ is Collection:
@@ -781,16 +781,32 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
     
 
 
-  def structureChanged(self) -> None:
+  def structureChanged(self, added:VObject|None=None, removed:VObject|None=None) -> None:
     '''
     Note that what's in the view, or the model's structure, has changed: an
     object was added to or taken out of the view or the model, or one was
     retyped or renamed, or a relation's end moved (see *VObject.update()* and
     *VRelation.update()*). What's worked out from that and remembered (see
     *contextWindows()*, *_containmentMaps()*, and each object's label, shape
-    options and constraint marker) is worked out afresh.
+    options and constraint marker) is worked out afresh -- except the list of
+    context windows, when all that's changed is that one object, *added*
+    (put back in the view) or *removed* (taken out of it): that's just
+    updated, not worked out again from every object in the view (which,
+    for each of thousands of objects erased together, or put back by an
+    undo, took the square of the time).
     '''
-    self.__dict__["_structureVersion"] = self.__dict__.get("_structureVersion", 0) + 1
+    version = self.__dict__.get("_structureVersion", 0)
+    self.__dict__["_structureVersion"] = version + 1
+    cached = self.__dict__.get("_contextWindowsCache")
+    if cached is None or cached[0] != version or (added is None and removed is None):
+      return
+    windows = cached[1]
+    if removed is not None:
+      windows = [w for w in windows if w is not removed]
+    if added is not None and not isinstance(added, VRelation) and added._isConnected() and added.isContextWindow() \
+       and not any(w is added for w in windows):
+      windows = [*windows, added] # (where a fresh list would have it: put back in the view, it's last in it)
+    self.__dict__["_contextWindowsCache"] = (version + 1, windows)
 
 
   

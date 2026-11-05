@@ -70,14 +70,27 @@ class Choice:
   "How many of the object's relations it follows."
   hidden:int = 0
   "How many of those are in a hidden or erased category (or lead to something that is)."
+  shown:int = 0
+  "How many of those are in the view already, with what they lead to: following them brings in nothing new."
 
   def label(self) -> str:
+    '''
+    :returns: Eg: "has-parent → (3)"; "(3, 1 new)" if the rest are in the view
+      already, "(3, all shown)" if they all are; "(3; 1 hidden)", or "(3, hidden)",
+      for those in a hidden or erased category.
+    '''
     what = ARROWS[self.direction].format(self.type.name or "?")
-    if self.hidden == 0:
-      return f"{what} ({self.count})"
-    if self.hidden == self.count:
+    if self.count and self.hidden == self.count:
       return f"{what} ({self.count}, hidden)"
-    return f"{what} ({self.count}; {self.hidden} hidden)"
+    if self.count and self.shown == self.count:
+      return f"{what} ({self.count}, all shown)"
+    new = f", {self.count - self.shown} new" if self.shown else ""
+    hidden = f"; {self.hidden} hidden" if self.hidden else ""
+    return f"{what} ({self.count}{new}{hidden})"
+
+  def nothingNew(self) -> bool:
+    ":returns: Whether following it brings in nothing (see *shown*, *hidden*): it's greyed."
+    return bool(self.count) and (self.hidden == self.count or self.shown == self.count)
 
 def _types(rel:Relation) -> list[Relation]:
   '''
@@ -105,11 +118,13 @@ def follows(rel:Relation, mo:GraphObject, typ:Relation, direction:str) -> bool:
   d = _direction(rel, mo)
   return (d == direction or d == BOTH or direction == BOTH) and any(t is typ or t.isa(typ) for t in _types(rel))
 
-def relationChoices(mo:GraphObject, rels:list[Relation], hidden:Callable[[Relation], bool]=lambda _r: False) -> list[Choice]:
+def relationChoices(mo:GraphObject, rels:list[Relation], hidden:Callable[[Relation], bool]=lambda _r: False,
+                    shown:Callable[[Relation], bool]=lambda _r: False) -> list[Choice]:
   '''
   :param mo: The object being expanded.
   :param rels: Its relations (eg: those the view would follow: see *VObject.expandableRelations()*).
   :param hidden: Whether a relation is in a hidden or erased category, or leads to something that is (see *Choice.hidden*).
+  :param shown: Whether a relation is in the view already, with what it leads to (see *Choice.shown*).
   :returns: The choices for "expand by relation...": each type and way round
     that *rels* are, and each type that two or more of those types (the same
     way round) are kinds of -- but not the system's *relation* -- with how
@@ -133,7 +148,7 @@ def relationChoices(mo:GraphObject, rels:list[Relation], hidden:Callable[[Relati
   ret = list(direct.values()) + list(shared.values())
   for c in ret:
     mine = [r for r in rels if follows(r, mo, c.type, c.direction)]
-    c.count, c.hidden = len(mine), sum(1 for r in mine if hidden(r))
+    c.count, c.hidden, c.shown = len(mine), sum(1 for r in mine if hidden(r)), sum(1 for r in mine if not hidden(r) and shown(r))
   return sorted(ret, key=lambda c: (c.type.name or "", [OUT, BOTH, IN].index(c.direction)))
 
 def choiceFilter(mode:str, chosen:list[Choice]) -> Callable[[Any, Relation], bool]:
@@ -190,7 +205,7 @@ class ExpandDialog(tk.Toplevel):
     style.configure("Hidden.TCheckbutton", foreground="gray50") # (in a hidden category: see Choice.hidden)
     for c, var in zip(choices, self.checks):
       ttk.Checkbutton(frame, text=c.label(), variable=var, command=lambda: self.mode.set("chosen"),
-                      style="Hidden.TCheckbutton" if c.hidden == c.count and c.count else "TCheckbutton") \
+                      style="Hidden.TCheckbutton" if c.nothingNew() else "TCheckbutton") \
         .grid(row=row, column=0, columnspan=2, sticky=tk.W, padx=(36, 10), pady=1)
       row += 1
     if not choices:

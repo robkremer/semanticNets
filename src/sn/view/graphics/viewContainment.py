@@ -29,7 +29,7 @@ Created on Oct 18, 2026 (from sngView.py)
 #################################################################################
 from __future__ import annotations
 import sn
-from sn.model.model import Relation
+from sn.model.model import GraphObject, Relation
 from typing import Iterable, Callable, Collection, Mapping, Sequence, cast
 from util.utils import expandRect
 from util.command import Command
@@ -293,13 +293,27 @@ class ContainmentMixin(ViewBase):
         memo[id(vo)] = None # (so a relation between relations can't go round in circles)
         memo[id(vo)] = homeOf(vo)
       return memo[id(vo)]
-    def between(vo:VRelation) -> tuple[VObject, str]|None: # (a relation whose ends belong in the same window)
+    def chain(h:tuple[VObject, str]|None) -> list[tuple[VObject, str]]: # (the window something belongs in, the one that's in, and so on out)
+      ret:list[tuple[VObject, str]] = []
+      while h is not None and all(h[0] is not w for w, _ in ret):
+        ret.append(h)
+        h = home(h[0])
+      return ret
+    def between(vo:VRelation) -> tuple[VObject, str]|None: # (a relation whose ends belong in the same window: or one nested in it)
       if vo.modelObject.isa(m.CONTAINS) or not all(isinstance(e, VObject) and e._isConnected() for e in (vo.src, vo.dst)): # type: ignore[union-attr]
         return None
       hs, hd = home(vo.src), home(vo.dst) #type: ignore[arg-type]
-      if hs is None or hd is None or hs[0] is not hd[0]:
+      if hs is None or hd is None:
         return None
-      return hs[0], sharedPane(hs[1], hd[1])
+      if hs[0] is hd[0]:
+        return hs[0], sharedPane(hs[1], hd[1])
+      # (one end in a window inside the other's: the innermost window both are in, and the pane each is in --
+      # or the window inside it that's carrying it is)
+      outer = {id(w): p for w, p in chain(hd)}
+      for w, p in chain(hs):
+        if id(w) in outer:
+          return w, sharedPane(p, outer[id(w)])
+      return None
     def homeOf(vo:VObject) -> tuple[VObject, str]|None:
       mo = vo.modelObject if vo is not None else None
       if mo is None or not vo._isConnected():
@@ -595,6 +609,15 @@ class ContainmentMixin(ViewBase):
     def nestedIn(w:VObject, outer:VObject) -> bool: # w is on outer's window (at any depth)?
       inner = outer.windowContents() if outer.isContextWindow() else []
       return w in inner or any(nestedIn(w, i) for i in inner if i.isContextWindow())
+    def usedBy(w:VObject, mo:GraphObject) -> list[VObject]: # the view objects of the relations w contains that use variable mo
+      if not mo.isVariable() or w.modelObject is None:
+        return []
+      ret = []
+      for r, _ in w.modelObject._getOutgoing(lambda r: r.isIndividual() and r.isa(m.CONTAINS)):
+        d = r.localDst
+        if isinstance(d, Relation) and d.isIndividual() and any(e is mo for e in (d.localSrc, d.localDst, *d.getParents())):
+          ret += [vo for vo in self.viewObjectsFor(d) if vo._isConnected()]
+      return ret
     for vo, old in oldCenters.items():
       mo = vo.modelObject
       if mo is None or not vo._isConnected() or not self._containable(vo):
@@ -625,6 +648,12 @@ class ContainmentMixin(ViewBase):
           self.context.new_relation([want], individual=True, source=w.modelObject, destination=mo, model=self.model)
           changed = True
         elif move == "out":
+          users = usedBy(w, mo)
+          if users and not all(u in oldCenters for u in users): # (left behind: it'd mean nothing out here)
+            logger.warning(f'"{mo.name}" stays in "{w.modelObject.name}": '
+                           f'{", ".join(dict.fromkeys(str(u.name) for u in users))} there use{"s" if len(users) == 1 else ""} it. '
+                           f'To take it out, take {"that" if len(users) == 1 else "those"} out too.')
+            continue
           for r in rels:
             self.context.remove(r)
           changed = True

@@ -117,7 +117,7 @@ class TestExpandBatch(unittest.TestCase):
     v.window.withdraw()
     v.context.visibility("system objects", "hide")
     self.assertIsInstance(v.localLayout, layout.FindFree)
-    v._askName = lambda mo: None
+    v._askName = lambda mo, objectID=None: None
     self.manyVO = v.makeViewObjectForGraphObject(self.many, atPoint=(400, 50))
     self.fewVO = v.makeViewObjectForGraphObject(self.few, atPoint=(50, 50))
     v.canvas.update()
@@ -230,7 +230,7 @@ class TestExpandBatch(unittest.TestCase):
     self.assertEqual(self.shown("m") + self.shown("f"), [])
 
   def test_notSelected(self):
-    'Its owner not selected, "expand all" expands just it.'
+    'Its owner not selected, "expand all" expands just it; then it says there\'s nothing new.'
     v = self.view
     self.manyVO.selected(True)
     menu, labels = self.menuLabels(self.fewVO)
@@ -240,6 +240,12 @@ class TestExpandBatch(unittest.TestCase):
     v.canvas.update()
     self.assertEqual(len(self.shown("f")), 5)
     self.assertEqual(self.shown("m"), [])
+    self.manyVO.selected(False)
+    menu, labels = self.menuLabels(self.fewVO)
+    self.assertIn("expand all (5, all shown)", labels)
+    with self.assertLogs(level="INFO") as logs:
+      menu.nametowidget(menu.entrycget(labels.index("expand all (5, all shown)"), "menu")).invoke(0)
+    self.assertIn("Nothing new to show", "\n".join(logs.output))
 
   def test_expandChoices(self):
     '"expand by relation..." for the selection: its choices are everything selected\'s, merged.'

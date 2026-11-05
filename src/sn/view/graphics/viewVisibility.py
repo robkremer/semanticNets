@@ -137,34 +137,49 @@ class VisibilityMixin(ViewBase):
         return True
       if any(isinstance(e, VObject) and e is not vo and e._isConnected() and e.isHidden() for e in (vo.src, vo.dst)):
         return True
-    if self.hides: # (windows are only hidden by a category)
-      for w in self.contextWindows():
-        if w is not vo and w.isHidden() and w.paneAt(vo.centerPt()) is not None and w.containmentOf(mo):
-          return True
+    for w in self.contextWindows(): # (hidden by a category, or inside a window collapsed or hidden: nested ones too)
+      if w is not vo and w.isHidden() and w.paneAt(vo.centerPt()) is not None and self._holds(w, mo):
+        return True
     return False
+
+  def _holds(self, w:VObject, mo:GraphObject) -> bool:
+    '''
+    :returns: Whether context window *w*'s content includes *mo*: *w* contains
+      it, or it's a variable that what *w* contains uses (eg: the base rules'
+      !a and !b, which their patterns use but they don't contain): see
+      *containmentHomes()*.
+    '''
+    if w.containmentOf(mo):
+      return True
+    _byObj, uses = self._containmentMaps()
+    return w in uses.get(id(mo), ())
 
   def _inCollapsedWindow(self, vo:VObject) -> bool:
     '''
-    Whether *vo* is drawn inside a collapsed context window (see *VObject.setCollapsed()*), and so not shown.
+    Whether *vo* is drawn inside a collapsed context window (see
+    *VObject.setCollapsed()*), and so not shown: part of its content (see
+    *_holds()*). (What's in a window inside it is hidden with that window: see
+    *shouldHide()*.)
     '''
     mo = vo.modelObject
-    return any(w.collapsed and w is not vo and w.paneAt(vo.centerPt()) is not None and w.containmentOf(mo)
+    return any(w.collapsed and w is not vo and w.paneAt(vo.centerPt()) is not None and self._holds(w, mo)
                for w in self.contextWindows())
 
   def _inShownContext(self, vo:VObject) -> bool:
     '''
-    Whether *vo* is part of a shown context window's content (eg: an isa link
-    in a rule's consequent): it's then shown whatever its category -- it's
-    what the rule says, not clutter.
+    Whether *vo* is part of a shown context window's content (see *_holds()*:
+    eg: an isa link in a rule's consequent): it's then shown whatever its
+    category -- it's what the rule says, not clutter.
     '''
     mo = vo.modelObject
-    return any(not w.isHidden() and not w.collapsed and w is not vo and w.containmentOf(mo) for w in self.contextWindows())
+    return any(not w.isHidden() and not w.collapsed and w is not vo and self._holds(w, mo) for w in self.contextWindows())
 
   def applyVisibility(self) -> None:
     'Bring every object into line with the current *hides* (see *VObject._applyHidden()*).'
     vos = [vo for vo in self.values() if vo is not None and vo._isConnected()]
     for vo in sorted(vos, key=lambda vo: isinstance(vo, VRelation)): # (nodes first: relations follow their ends)
       vo._applyHidden()
+    self.resetScrollRegion() # (what's shown again may be outside it: eg, after a zoom while it was hidden -- it only grows)
 
   def _visibilityMenu(self, mode:str) -> tk.Menu:
     '''
@@ -241,9 +256,15 @@ class VisibilityMixin(ViewBase):
       elif category.startswith(NODE_CATEGORY):
         self.nodeCategory(category[len(NODE_CATEGORY):])
 
-  def _shownModelObjects(self) -> set[int]:
-    ":returns: The ids of the model objects shown in the view (not erased: hidden ones too)."
-    return {id(vo.modelObject) for vo in self.values() if vo is not None and vo._isConnected() and vo.modelObject is not None}
+  def _shownModelObjects(self, visibleOnly:bool=False) -> set[int]:
+    '''
+    :param visibleOnly: Leave out those hidden by their category (and not
+      shown anyway): showing them again shows them (see *_Represent*).
+    :returns: The ids of the model objects shown in the view (not erased:
+      hidden ones too, unless *visibleOnly*).
+    '''
+    return {id(vo.modelObject) for vo in self.values() if vo is not None and vo._isConnected() and vo.modelObject is not None
+            and not (visibleOnly and not vo.categoryExempt and self.isFiltered(vo.modelObject, ("hide",)))}
 
   def showRelationsOfTypes(self) -> None:
     '''
@@ -263,7 +284,7 @@ class VisibilityMixin(ViewBase):
     if not chosen:
       return
     chosenTypes = [t for t in types if id(t) in chosen]
-    shown = self._shownModelObjects()
+    shown = self._shownModelObjects(visibleOnly=True) # (those hidden by their category are shown again, if asked for)
     nodes:list[GraphObject] = []
     rels:list[GraphObject] = []
     for r in self.model.values():
@@ -298,7 +319,7 @@ class VisibilityMixin(ViewBase):
     if not chosen:
       return
     chosenTypes = [t for t in types if id(t) in chosen]
-    shown = self._shownModelObjects()
+    shown = self._shownModelObjects(visibleOnly=True) # (those hidden by their category are shown again, if asked for)
     nodes:list[GraphObject] = [n for n in self.model.values() if isinstance(n, Node) and not isinstance(n, Relation)
                                and n.isIndividual() and n._isConnected() and id(n) not in shown and any(n.isa(t) for t in chosenTypes)]
     rels:list[GraphObject] = []
