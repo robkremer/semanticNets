@@ -28,6 +28,7 @@ Created on Oct 18, 2026 (from sngView.py)
 # SOFTWARE.                                                                     #
 #################################################################################
 from __future__ import annotations
+import sys
 import tkinter as tk
 import sn
 from sn.model.model import IsaIndividual, GraphObject
@@ -72,6 +73,8 @@ def showEngineMissing(parent:tk.Misc, missing:str|EngineMissing, *, purpose:str=
     lines.append("Settings now says to reason with it: reasoning will ask for it until it\'s installed.")
   if purpose:
     lines.append(escape(purpose))
+  if getattr(sys, "frozen", False): # (the app: its own Python can't have it installed, but one on the computer can)
+    lines.append(f"The app can use it installed for a Python {sys.version_info[0]}.{sys.version_info[1]} on this computer.")
   lines.append('<a id="help">How to install it</a> (in the User Guide)')
   for e in others:
     if instead is not None:

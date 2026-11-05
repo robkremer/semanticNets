@@ -92,8 +92,8 @@ Reasoning (see :doc:`reasoning`):
                        ?likes-fred``
 ``ask reasoner``       ask the reasoner directly, in its own language (for
                        experts: clingo -- or Nemo -- rules defining ``ans``)
-``explain``            why a relation holds, step by step (with the optional
-                       Nemo engine): ``explain ancestorOf ann fred``
+``explain``            why a relation holds, step by step (by the Nemo
+                       engine): ``explain ancestorOf ann fred``
 =====================  =======================================================
 
 In a window, there are also commands for the view -- the ones the canvas

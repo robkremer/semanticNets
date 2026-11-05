@@ -172,6 +172,11 @@ PREFS:dict[str, tuple[Any, Any, str]] = {
     "which can also say why a conclusion holds: the \"explain\" command). Nemo is optional: if it isn't installed, "
     "the program says how to install it (\"Installing an engine\", in the User Guide's Reasoning page). "
     "See sn.model.reasoner.ENGINES."),
+  "reasoner/python": (str, "",
+    "For the app (which has its own Python): a Python on this computer, of the same version as the app's, whose "
+    "packages it may use -- its executable, eg /usr/local/bin/python3.14 -- for a reasoner engine the app doesn't "
+    "include, installed for that Python. Blank: it looks for one in the usual places. "
+    "See util.localPython and \"Installing an engine\", in the User Guide's Reasoning page."),
   "text/wrap": (bool, False,
     "Whether long lines wrap in the terminal pane (else it scrolls sideways)."),
   "text/backgroundColor": ("color", "white",

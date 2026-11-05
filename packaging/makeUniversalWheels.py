@@ -5,7 +5,7 @@ PyInstaller can build a universal app (see build.xml's "universalWheels" and
 
 Python itself (python.org's) and Tk are universal already, as are some packages'
 wheels (eg: charset_normalizer). But PyPI has only separate x86_64 and arm64
-wheels of clingo and cffi: this downloads both of the installed version of each,
+wheels of clingo, cffi and nemo-python: this downloads both of the installed version of each,
 fuses them (delocate-merge) into a universal2 wheel, and installs that in their
 place. (The universal2 packages work for an arm64-only build too.)
 
@@ -20,7 +20,7 @@ from pathlib import Path
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 WHEELS = os.path.join(ROOT, "build", "wheels")
-PACKAGES = ["clingo", "cffi"]
+PACKAGES = ["clingo", "cffi", "nemo-python"]
 "The packages whose PyPI wheels aren't universal."
 
 PLATFORMS = {"arm64": "macosx_11_0_arm64", "x86_64": "macosx_10_15_x86_64"}
@@ -51,6 +51,10 @@ def fuseWheels(arm64:str, x86_64:str, outDir:str) -> None:
   os.makedirs(outDir, exist_ok=True)
   fuse.fuse_wheels(Path(arm64), Path(x86_64), Path(outDir))
 
+def wheelName(package:str) -> str:
+  ''':returns: How *package*'s wheel files start (eg: "nemo_python" for "nemo-python").'''
+  return re.sub(r"[-_.]+", "_", package)
+
 def pip(*args:str) -> None:
   subprocess.run([sys.executable, "-m", "pip", *args], check=True)
 
@@ -65,10 +69,10 @@ def main() -> None:
       pip("download", "--quiet", "--no-deps", "--only-binary=:all:", "--implementation", "cp",
           "--python-version", PYTHON, "--abi", f"cp{PYTHON}", "--platform", platform,
           "--dest", folder, f"{package}=={version}")
-      [found[arch]] = glob.glob(os.path.join(folder, f"{package}-{version}-*.whl"))
+      [found[arch]] = glob.glob(os.path.join(folder, f"{wheelName(package)}-{version}-*.whl"))
     out = os.path.join(WHEELS, "universal2")
     fuseWheels(found["arm64"], found["x86_64"], out)
-    [wheel] = glob.glob(os.path.join(out, f"{package}-{version}-*.whl"))
+    [wheel] = glob.glob(os.path.join(out, f"{wheelName(package)}-{version}-*.whl"))
     merged.append(wheel)
   pip("install", "--quiet", "--force-reinstall", "--no-deps", *merged)
   for wheel in merged:

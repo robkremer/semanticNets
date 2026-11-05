@@ -1,3 +1,4 @@
-# The optional Nemo reasoner engine (sn.model.nemoReasoner: "reasoner/engine" = nemo, and "explain").
+# The Nemo reasoner engine (sn.model.nemoReasoner: "reasoner/engine" = nemo, and "explain"): in the
+# apps (requirements-build.txt, and the Build workflow), optional for the .pyz and the source.
 # Pinned: its Python bindings call themselves experimental, and change between releases.
 nemo-python==0.10.1

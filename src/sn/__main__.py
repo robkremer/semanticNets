@@ -4,9 +4,11 @@ also the entry point of the packaged app, and of the .pyz.
 
 ``--selftest`` instead checks that the program's parts are all there and work,
 without opening a window: it reasons over a copy of the bundled family example
-and checks the conclusions, and installs the bundled plugins (in a scratch
-folder), imports all their modules, and makes a model with each (see
-*selftestPlugins()*) -- as the "app" and "pyz" ant targets do after a build.
+with each reasoner engine (in the apps, every one they include; else, every
+one installed) and checks the conclusions -- and asks one that can explain why
+one holds -- and installs the bundled plugins (in a scratch folder), imports
+all their modules, and makes a model with each (see *selftestPlugins()*) -- as
+the "app" and "pyz" ant targets, and the Build workflow, do after a build.
 It exits with 0 if all's well, and 1 if not.
 
 .. codeauthor:: Rob Kremer <robkremer@me.com>
@@ -22,17 +24,38 @@ def selftest() -> int:
   from pathlib import Path
   import sn
   from sn.model.model import Model
-  from sn.model.reasoner import reason
+  from sn.model.reasoner import reason, clearReasoning, ENGINES, engineInstalled
+  from sn.controller.modelInterface import ModelContext
   atexit.unregister(sn.savePrefsIfChanged) # (a test mustn't touch the user's preferences or models)
   atexit.unregister(sn.saveAtExit)
   folder = tempfile.mkdtemp()
   try:
     sn.copyExamples(folder, ["family.snm", "family.snv"])
     model = Model.getDB(Path(folder, "family.snm").as_uri())
-    report = reason(model).report(model)
-    print(report)
     expected = ["-has-brother->", "-has-uncle->", "Violations: 0 error(s)"] # (alice has-brother bob, so carol has-uncle bob)
-    missing = [e for e in expected if e not in report] + selftestPlugins(folder)
+    missing:list[str] = []
+    for engine, info in ENGINES.items():
+      if not engineInstalled(engine):
+        if getattr(sys, "frozen", False) and info.bundled:
+          missing.append(f"the {engine} reasoner engine (the app should include it)")
+        else:
+          print(f"(the {engine} reasoner engine isn't installed: not tested)")
+        continue
+      clearReasoning(model)
+      try:
+        report = reason(model, engine).report(model)
+        print(f"── {engine} ──\n{report}")
+        missing += [f"{e} (by {engine})" for e in expected if e not in report]
+        if info.explains:
+          why = ModelContext(model).parser.parseLine("explain has-uncle carol bob")
+          print(why)
+          if 'by the rule "uncle rule"' not in why:
+            missing.append(f"why carol has-uncle bob (by {engine})")
+      except Exception as ex:
+        import traceback
+        traceback.print_exc()
+        missing.append(f"the {engine} reasoner engine ({ex})")
+    missing += selftestPlugins(folder)
     import platform
     print("selftest:", ("FAILED: missing " + ", ".join(missing)) if missing else "ok", f"({platform.machine()})")
     return 1 if missing else 0
