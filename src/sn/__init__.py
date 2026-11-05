@@ -97,22 +97,33 @@ def copyExamples(target:str, names:list[str]|None=None) -> list[str]:
   Copy the example models that come with the program (see *exampleNames()*)
   into the folder *target* (made if need be), and make each copy refer to where
   it now is -- they're stored as being in *EXAMPLES_PLACEHOLDER* -- so that it
-  isn't taken to have been moved when it's opened.
+  isn't taken to have been moved when it's opened. Copies already there that
+  have been locked, or made read-only, are unlocked and replaced.
 
   :param target: The folder to copy them to.
   :param names: The files to copy (eg: ["family.snm", "family.snv"]); by default, all of them.
   :returns: The paths of the copies.
+  :raises OSError: If one can't be written: eg, a *PermissionError* if the
+    Mac's privacy protection won't let the program use the folder (see
+    *util.platformSupport.privacyBlocked()*).
   '''
   import importlib.resources
   from pathlib import Path
+  from util.platformSupport import makeWritable
   folder = importlib.resources.files("sn").joinpath("examples")
   os.makedirs(target, exist_ok=True)
   ret = []
   for f in names if names is not None else exampleNames():
-    text = folder.joinpath(f).read_text(encoding="utf-8")
+    text = folder.joinpath(f).read_text(encoding="utf-8").replace(EXAMPLES_PLACEHOLDER, Path(target).as_uri())
     path = os.path.join(target, f)
-    with open(path, "w", encoding="utf-8") as fd:
-      fd.write(text.replace(EXAMPLES_PLACEHOLDER, Path(target).as_uri()))
+    try:
+      Path(path).write_text(text, encoding="utf-8")
+    except PermissionError:
+      unlocked = makeWritable(path)
+      unlocked = makeWritable(target) or unlocked # (both: either may be what's locked)
+      if not unlocked:
+        raise
+      Path(path).write_text(text, encoding="utf-8")
     ret.append(path)
   return ret
 
