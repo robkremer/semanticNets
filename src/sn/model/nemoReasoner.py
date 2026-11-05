@@ -282,12 +282,17 @@ class NemoReasoner(Reasoner, engine="nemo"):
     '''
     if facts is None:
       facts = self._program(self.facts())
-    with tempfile.TemporaryDirectory(prefix="sn-nemo-") as folder:
+    # (Nemo closes the files once it has reasoned; ignore_cleanup_errors only
+    # matters if it fails before that, while holding one open on Windows.)
+    with tempfile.TemporaryDirectory(prefix="sn-nemo-", ignore_cleanup_errors=True) as folder:
       imports = []
       for i, ((pred, formats), rows) in enumerate(facts.tables.items()):
         path = Path(folder, f"{i}.tsv")
         path.write_text("\n".join(rows) + "\n", encoding="utf-8")
-        imports.append(f'@import {pred} :- tsv{{resource="{path.as_posix()}", format=({", ".join(formats)})}}.')
+        # The native path: Nemo reads "C:/x" as an IRI with the scheme "C", but
+        # "C:\x" (which no IRI can be) as a file. Its strings have no escapes,
+        # so the backslashes go in as they are.
+        imports.append(f'@import {pred} :- tsv{{resource="{path}", format=({", ".join(formats)})}}.')
       text = "\n".join((self.rules.read_text(encoding="utf-8"), *imports, *facts.text, program))
       try:
         prog = nmo_python.load_string(text)
