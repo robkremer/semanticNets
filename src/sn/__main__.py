@@ -44,7 +44,7 @@ def selftest() -> int:
       clearReasoning(model)
       try:
         report = reason(model, engine).report(model)
-        print(f"── {engine} ──\n{report}")
+        print(f"--- {engine} ---\n{report}") # (ASCII: a Windows console may not take more)
         missing += [f"{e} (by {engine})" for e in expected if e not in report]
         if info.explains:
           why = ModelContext(model).parser.parseLine("explain has-uncle carol bob")
