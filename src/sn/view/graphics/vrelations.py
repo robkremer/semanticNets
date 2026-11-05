@@ -48,7 +48,7 @@ from util.abstractGraph import AGRelation
 from sn.model.model import GraphObject, Relation, IsaIndividual
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.connectors import drawSmoothConnector, ConnectorIDs,\
-  drawStraightConnector, ConnectorTerminators, _insideTest
+  drawStraightConnector, ConnectorTerminators, _insideTest, zoomedWidth, _middleStops
 
 if TYPE_CHECKING:
   from sn.view.graphics.sngView import SNGView
@@ -237,14 +237,15 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     return ConnectorTerminators(c['vis/terminator1'], c['vis/terminator2'], c['vis/terminator3'],
                                 c['vis/terminator4'], c['vis/midMarks'])
 
-  def _middleLayout(self):
+  def _middleLayout(self, width:float|None=None):
     '''
+    :param width: The line's width (view units): by default, "vis/lineWidth".
     :returns: Its middle marks ("vis/midMarks"), laid out (see *util.lineMarks.layoutMarks()*): none if it
       can't be read.
     '''
     from util.lineMarks import layoutMarks, MIDDLE, MarkSpecError
     try:
-      return layoutMarks(self.cache['vis/midMarks'], MIDDLE, float(self.cache['vis/lineWidth']))
+      return layoutMarks(self.cache['vis/midMarks'], MIDDLE, float(self.cache['vis/lineWidth']) if width is None else width)
     except MarkSpecError:
       return layoutMarks(None, MIDDLE)
 
@@ -306,9 +307,15 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
           dx, dy = (-1.0, 0.0) if end == "src" else (1.0, 0.0)
         edge = _clipToEdgeStraight(self, _farPointAlong(self, (dx, dy)))
         b = (edge[0] + dx * self.STUB_LENGTH, edge[1] + dy * self.STUB_LENGTH)
-        # a label showing no text: the stub runs through it to its centre, as a connected line does (see
-        # drawSmoothConnector()'s throughLabel) -- else the two stubs would leave a hole where the invisible box is
-        a = edge if self._labelShown() else self.centerPt()
+        # a label showing no text: the stub runs through it to its middle marks -- or its centre, without
+        # any -- as a connected line does (see drawSmoothConnector()'s throughLabel): else the two stubs
+        # would leave a hole where the invisible box is
+        if self._labelShown():
+          a = edge
+        else:
+          stops = _middleStops(self._middleLayout(self.lineWidth()))
+          stop = stops[0] if end == "src" else stops[1]
+          a = (cx + dx * stop, cy + dy * stop)
         # faded if the end isn't set; in the relation's own colour if it is set,
         # but its object isn't shown (eg: erased from the view)
         ownEnd = (self.modelObject.localSrc if end == "src" else self.modelObject.localDst) if self.modelObject is not None else None
@@ -321,7 +328,7 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
           path, startSpec, endSpec = [b, a], terms.source, terms.labelNear
         width = self.lineWidth()
         stubs[end] = drawMarkedPath(canvas, path, _marks(startSpec), _marks(endSpec), stubs.get(end),
-                                    width=width / float(getattr(self.view, "_scale", 1.0) or 1.0), strokeWidth=width,
+                                    width=width, strokeWidth=zoomedWidth(self.view, width), # (view units, zoomed: as the line's -- see connectors._Style)
                                     lineColor=lineColor, fillColor=fillColor, tags=[self.tag, "stub"],
                                     toWindow=self.view.viewToWindow)
         stubEnds[end] = b # (its outer end: where it's grabbed -- see _terminalAt())
@@ -332,6 +339,11 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
         stubEnds.pop(end, None)
         if self.inheritedEnds[end]:
           recolorMarks(canvas, info.sourceIDs() if end == "src" else info.destIDs(), self._faded(line), self._faded(fill))
+    # the middle's marks are faded with the half they'd be drawn on beside a label with text (the source's,
+    # or without a source side, the destination's: see connectors._labelNearMarks()) -- with or without text
+    half = "src" if self.src is not None else "dst"
+    if info.middleIDs and (self.src is not None or self.dst is not None) and self.inheritedEnds[half]:
+      recolorMarks(canvas, info.middleIDs, self._faded(line), self._faded(fill))
    
   ### DESTRUCTOR ########################################################################
 
@@ -387,6 +399,13 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     if self._drawVersion >= self.view._drawVersion or not self._isConnected(): # (see VObject.draw())
       return
     super().draw(fast=fast, **kwargs)
+    self._drawConnector()
+
+  def _drawConnector(self) -> None:
+    '''
+    Draw its connector (or draw it again), by its line type -- not its label:
+    eg, at its new width when it's selected (see *selected()*).
+    '''
     if self.modelObject is None:
       return
     if self.modelObject.isSystemObject() and self.modelObject.name == "relation":
@@ -422,13 +441,17 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
   def selected(self, val:Optional[bool]=None, _multi:bool=False) -> bool|None:
     '''
     As *VObject.selected()* -- and a change redraws its line, which is
-    thicker while it's selected (see *lineWidth()*).
+    thicker while it's selected (see *lineWidth()*): just its connector, if
+    it's been drawn (its label's as it was).
     '''
     was = super().selected()
     ret = super().selected(val, _multi)
     if val is not None and bool(ret) != bool(was) and self.canvas and self._isConnected():
-      self.view.freshPaint()
-      self.draw()
+      if self.connectInfo is None or self._shape is None or self._shape.id is None: # (not drawn yet)
+        self.view.freshPaint()
+        self.draw()
+      else:
+        self._drawConnector()
     return ret
 
   INFERRED_DASH = {"inferred": (6, 4), "inherited": (2, 3)}
@@ -443,6 +466,22 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     if not self.isInferred():
       return {"dash": ""}
     return {"dash": self.INFERRED_DASH.get(getattr(self.modelObject, "inferredKind", "inferred"), self.INFERRED_DASH["inferred"])}
+
+  @override
+  def _applyHidden(self) -> None:
+    '''
+    As *VObject._applyHidden()*; but a relation that's part of a shown context
+    window's content (eg: a rule's conclusion that ?x isa person) shows its
+    ends too: one hidden by its category (eg: "types") is shown anyway (see
+    *SNGView._exemptIfFiltered()*), or what the window says would be cut short.
+    '''
+    v = self.view
+    if self._isConnected() and self.canvas is not None and v.hides and v._inShownContext(self):
+      for e in (self.src, self.dst):
+        if isinstance(e, VObject) and e is not self and e._isConnected() and e.modelObject is not None \
+           and not e.categoryExempt and v.isFiltered(e.modelObject, ("hide",)):
+          v._exemptIfFiltered(e)
+    super()._applyHidden()
 
   def inWindow(self) -> bool:
     '''
@@ -719,9 +758,27 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
         self.view.context.reconnect(mo, clear_source=True)
       else:
         self.view.context.reconnect(mo, clear_destination=True)
-    color = self.cache['vis/lineColor'] or "green"
+    # while choosing, the half being re-ended isn't drawn: the rubber band, from the label, stands in for it
+    canvas, info = self.view.canvas, self.connectInfo
+    half = (info.sourceIDs() if end == "src" else info.destIDs()) if info is not None else []
+    stub = self.__dict__.get("_stubIds", {}).get(end) # (a dangling end's stub: see _styleEnds())
+    if stub is not None:
+      half += stub.all()
+    states = {}
+    for i in half:
+      try:
+        states[i] = canvas.itemcget(i, "state")
+        canvas.itemconfigure(i, state="hidden")
+      except tk.TclError: # (gone)
+        pass
+    def ended() -> None:
+      for i, state in states.items():
+        try:
+          canvas.itemconfigure(i, state=state)
+        except tk.TclError:
+          pass
     self.view.elasticLineChoice(self, chosen, filter=acceptable,
-                                arrowHeads=1 if end == "src" else 2, color=color,
+                                arrowHeads=1 if end == "src" else 2, onEnd=ended,
                                 onEmpty=None if isinstance(self.modelObject, IsaIndividual) else cleared) # isa links need both ends
 
   @override
@@ -768,10 +825,3 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     '''
     self.canvas.configure(cursor="sb_h_double_arrow")
     
-  def onB1_ButtonRelease(self, event):
-    '''
-    :param event: The Tk event.
-    '''
-    if self.dragInfo is not None and self.dragInfo[4]:
-      self.floating(False)
-    super().onB1_ButtonRelease(event)

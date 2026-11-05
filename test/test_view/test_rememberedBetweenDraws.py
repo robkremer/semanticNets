@@ -121,7 +121,7 @@ class Test(unittest.TestCase):
     from sn.view.graphics.sngView import SNGView
     v = SNGView((self.folder / name).as_uri(), model=m)
     v.window.withdraw()
-    v._askName = lambda mo: None
+    v._askName = lambda mo, objectID=None: None
     v.showAllModel()
     self.views.append(v)
     self.pump()

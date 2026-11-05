@@ -101,6 +101,30 @@ class Test(unittest.TestCase):
     ppm = struct.unpack(">I", png[i + 4:i + 8])[0]
     self.assertAlmostEqual(ppm * 0.0254, 72 * PNG_SCALE, delta=1)
 
+  def test0700symbolsAndMissing(self):
+    'Greek and logic symbols are drawn in the Symbol font; a character neither font has is drawn as "?", and noted.'
+    import tkinter as tk
+    from sn.view.graphics.imageExport import drawItems, SYMBOLS
+    self.assertEqual(SYMBOLS["\u03b1"], 0x61)          # alpha
+    self.assertEqual(SYMBOLS["\u03a9"], 0x57)          # Omega
+    self.assertEqual(SYMBOLS["\u2286"], 0xCD)          # subset or equal
+    try:
+      root = tk.Tk()
+    except tk.TclError as ex:
+      self.skipTest(f"no display: {ex}")
+    try:
+      root.withdraw()
+      c = tk.Canvas(root, width=300, height=100)
+      a = c.create_text(10, 10, text="\u03b1 \u2286 B", anchor="nw")
+      b = c.create_text(10, 50, text="Tokyo \u6771\u4eac", anchor="nw")
+      missing:dict = {}
+      data = drawItems(c, [a, b], missing=missing)
+      self.assertIsNotNone(data)
+      self.assertIn(b"/BaseFont /Symbol", data) # type: ignore[operator]
+      self.assertEqual(missing, {"\u6771": {b}, "\u4eac": {b}})
+    finally:
+      root.destroy()
+
 
 if __name__ == "__main__":
   unittest.main()

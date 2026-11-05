@@ -246,6 +246,12 @@ class Shape:
       present = self.__dict__["_presentOptions"] = (version, [opt for opt in self.shapeOptionsMap if opt in attrkeys])
     for opt in present[1]:
       self.kwargs[self.shapeOptionsMap[opt]] = vo.cache[opt]
+    if "vis/borderWidth" in present[1]: # (in view units: zoomed, as the shape is -- see connectors.zoomedWidth())
+      from sn.view.graphics.connectors import zoomedWidth
+      try:
+        self.kwargs["width"] = zoomedWidth(vo.view, float(vo.cache["vis/borderWidth"]))
+      except (TypeError, ValueError):
+        pass
 
   def checkShape(self) -> bool:
     '''
@@ -270,7 +276,7 @@ class Shape:
       self.updateKwargs() 
     self.kwargs.update(kwargs) # then from the parameters
     if self.id is None: # original draw
-      self.id = self.vobject.canvas.create_polygon(self.points(fast=fast), **self.kwargs)
+      self.id = self.vobject.canvas.create_polygon(self.vobject.view.viewToWindow(self.points(fast=fast)), **self.kwargs) # (window coordinates, as a redraw: eg: made while zoomed)
       self.vobject.canvas.itemconfigure(self.id, tags=[self.vobject.tag, 'vis/shape'])
     else: # a redraw
       try:

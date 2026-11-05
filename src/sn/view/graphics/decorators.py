@@ -338,6 +338,7 @@ class WrappingText(Text):
 
     # 1: the line breaks that best give the text block the aspect ratio
     _, naturalW, _ = layoutText(canvas, text, font)
+    naturalW = max(1, naturalW) # (not 0: eg: text in a script no font here has, measured as nothing)
     longest = max(1, min(self.longestWord(text, font), naturalW))
     def trial(wrap:int) -> tuple[float, float, int, float, float]: # (badness, area, wrap, block w, block h)
       _, tw, th = layoutText(canvas, text, font, 0 if wrap >= naturalW else wrap)
@@ -450,13 +451,13 @@ class Marker:
       self.erase()
       return False
       
+    self.kwargs["text"] = self.label if self.label != 'E' else str(len(self.owner.statusReport())) # (the problems' count: as it is now)
     if self.id is None:       
       self.kwargs["state"] = "normal"
       self.kwargs["tags"] = [self.owner.tag, 'text']
       if "justify" not in self.kwargs: self.kwargs["justify"] = "center"
       if "anchor"   not in self.kwargs: self.kwargs["anchor"]  = "center"
-      if "font"     not in self.kwargs: self.kwargs["font"]    = ("TkSmallCaptionFont", self.owner.view.fontSize())
-      self.kwargs["text"] = self.label if self.label != 'E' else str(len(self.owner.statusReport()))
+      self.kwargs["font"] = self._font()
       self.kwargs["fill"] = self.fg
       if "fill"     not in self.kwargs2: self.kwargs2["fill"]    = self.bg
       if "outline"  not in self.kwargs2: self.kwargs2["outline"] = ""
@@ -478,10 +479,19 @@ class Marker:
                    at[0]+Marker.SIZE[0], 
                    at[1]+Marker.SIZE[1]]))
         self.owner.canvas.coords(self.id, self.owner.view.viewToWindow(at[0], at[1]))
-        self.kwargs["font"] = ("TkSmallCaptionFont", self.owner.view.fontSize())
+        self.kwargs["font"] = self._font()
         self.owner.canvas.itemconfigure(self.id, **self.kwargs)
         self.owner.canvas.itemconfigure(self.id2, **self.kwargs2)
     return True
+
+  def _font(self) -> tuple[str, int]:
+    '''
+    The letter's font: the view's, a little smaller than its text, at its zoom.
+    (Not a named font, eg: "TkSmallCaptionFont": in a tuple, Tk takes that as
+    a family, and drops the size.)
+    '''
+    view = self.owner.view
+    return (getattr(view, "_fontFace", "Arial"), max(1, int(view.fontSize() * 0.8)))
     
   def erase(self):
     if self.id is not None:
@@ -506,17 +516,20 @@ class MarkerWithTooltip(Marker):
     '''
     super().__init__(owner, label, fg, bg, condition)
     self.tooltipFunc = tooltipFunc
+    self.tooltip:Optional[CreateToolTip] = None
+    "Its item's tooltip, while it's drawn (kept across redraws, so erase() and delete() take it away)."
 
   def draw(self, at:list[int]) -> bool:
     '''
     :return: *True* iff the item actually drew (ie: *self.condition()* returns *True*
     '''
-    self.tooltip:Optional[CreateToolTip] = None
     new = True if self.id is None else False
     ret = super().draw(at)
     if not ret:
       return ret
     if new:
+      if self.tooltip is not None: # (an old item's)
+        self.tooltip.delete()
       self.tooltip = CreateToolTip(self.owner.canvas, self.tooltipFunc, self.id, 
                                  waitTime=1000, wrapLength=250, background="#FFFFC0")
     return ret
@@ -694,12 +707,12 @@ class Selected(Decorator):
     h = self.HALF
     for corner, (cx, cy) in self.cornerPoints().items():
       rect = [cx - h, cy - h, cx + h, cy + h]
-      if corner not in self.ids:
+      if corner not in self.ids: # (made on top of everything)
         self.ids[corner] = canvas.create_rectangle(rect, tags=[self.owner.tag, 'selection', 'handle'], **style)
       else:
         canvas.coords(self.ids[corner], rect)
         canvas.itemconfigure(self.ids[corner], **style)
-      canvas.tag_raise(self.ids[corner])
+        canvas.tag_raise(self.ids[corner])
 
   def delete(self):
     if self.deleted: return
@@ -708,6 +721,37 @@ class Selected(Decorator):
       self.owner.canvas.delete(i)
     self.ids = {}
     self.kwargs = None #type: ignore[assignment]
+
+
+_fonts:dict[tuple, tkfont.Font] = {}
+"Fonts measured with (see *_measure()*), by their description."
+
+def _measure(canvas, font:tuple, text:str) -> int:
+  '''
+  :returns: How wide *text* is, in pixels, in *font* (a description: eg: ("Arial", 10, "bold")).
+  '''
+  f = _fonts.get(font)
+  if f is None:
+    f = _fonts[font] = tkfont.Font(root=canvas, font=font)
+  return f.measure(text)
+
+def _fitText(canvas, font:tuple, text:str, width:float) -> str:
+  '''
+  :returns: *text* -- or as much of it as fits in *width* pixels in *font*,
+    with an ellipsis ("" if not even that fits).
+  '''
+  if _measure(canvas, font, text) <= width:
+    return text
+  lo, hi = 0, len(text) # (the longest prefix that fits, with the ellipsis)
+  while lo < hi:
+    mid = (lo + hi + 1) // 2
+    if _measure(canvas, font, text[:mid].rstrip() + "\u2026") <= width:
+      lo = mid
+    else:
+      hi = mid - 1
+  if lo == 0 and _measure(canvas, font, "\u2026") > width:
+    return ""
+  return text[:lo].rstrip() + "\u2026"
 
 
 class ContextFrame(Decorator):
@@ -765,12 +809,20 @@ class ContextFrame(Decorator):
     self._item("toggle", lambda c, **k: canvas.create_text(*c, **k), view.viewToWindow([x1 + o.TOGGLE_WIDTH / 2, y1 + bh / 2]),
                text="\u25b6" if o.collapsed else "\u25bc", anchor="center", fill=o.cache["vis/textColor"] or "black",
                font=(view._fontFace, max(5, int(fontSize * 0.8))))
-    self._item("title", lambda c, **k: canvas.create_text(*c, **k), view.viewToWindow([x1 + o.TOGGLE_WIDTH + 2, y1 + bh / 2]),
-               text=o.name, anchor="w", fill=o.cache["vis/textColor"] or "black",
-               font=(view._fontFace, fontSize, "bold"))
+    # (the title cut short, with an ellipsis, so it stays in the banner, clear of the kind -- and the kind
+    # left out if that would leave too little of the title)
+    titleFont, kindFont = (view._fontFace, fontSize, "bold"), (view._fontFace, fontSize, "italic")
     kinds = ", ".join(p.name for p in o.modelObject.getParents()) if o.modelObject is not None else ""
+    room = (x2 - x1 - o.TOGGLE_WIDTH - 2 - 6) * scale # (canvas pixels: from the title's start to the kind's end)
+    gap = fontSize
+    title = _fitText(canvas, titleFont, o.name, room - _measure(canvas, kindFont, kinds) - gap) if kinds else _fitText(canvas, titleFont, o.name, room)
+    if kinds and title != o.name and len(title) < 4:
+      kinds = ""
+      title = _fitText(canvas, titleFont, o.name, room)
+    self._item("title", lambda c, **k: canvas.create_text(*c, **k), view.viewToWindow([x1 + o.TOGGLE_WIDTH + 2, y1 + bh / 2]),
+               text=title, anchor="w", fill=o.cache["vis/textColor"] or "black", font=titleFont)
     self._item("kind", lambda c, **k: canvas.create_text(*c, **k), view.viewToWindow([x2 - 6, y1 + bh / 2]),
-               text=kinds, anchor="e", fill="gray35", font=(view._fontFace, fontSize, "italic"))
+               text=kinds, anchor="e", fill="gray35", font=kindFont)
     # a rule's (or definition's) two panes, left and right
     panes = o.panes()
     if len(panes) == 2 and not o.collapsed:
@@ -986,13 +1038,11 @@ class ShadowDecorator(Decorator):
         self.owner.canvas.coords(self.id, self.owner.view.viewToWindow(bb))
         self.owner.canvas.itemconfigure(self.id, **self.kwargs)
     else:
-      # Shape.draw() itself has a create/redraw asymmetry -- create_polygon()
-      # gets raw points() with no viewToWindow(), while the redraw coords()
-      # call applies viewToWindow() -- mirror it exactly so the shadow stays
-      # pixel-aligned with the real shape at any zoom/scroll.
+      # (in window coordinates, as Shape.draw() draws the shape: so the shadow
+      # stays aligned with it at any zoom)
       if self.id is None:
         pts = self._offsetPoints(shape.points(fast=fast))
-        self.id = self.owner.canvas.create_polygon(pts, **self.kwargs)
+        self.id = self.owner.canvas.create_polygon(self.owner.view.viewToWindow(pts), **self.kwargs)
         self.owner.canvas.itemconfigure(self.id, tags=[self.owner.tag, 'shadow'])
       else:
         pts = self._offsetPoints(shape.points(fast=fast))
