@@ -54,6 +54,7 @@ from util.attribute import Attribute, VAR_DEFAULTED
 import sys
 import atexit
 import os
+import tempfile
 from pathlib import Path
 import tkinter as tk
 import tkinter.filedialog as filedialog
@@ -64,7 +65,8 @@ from tkinter import ttk
 from sn import snPrefs
 from util.utils import afterMenu, showExceptionDialog, fixURL, urlExists, displayURL,\
   isValidURL, keepLast, dialogOwner
-from util.platformSupport import MAC, shortcut, openFile, setUpLook, setDPIAware, documentsFolder
+from util.platformSupport import MAC, shortcut, openFile, setUpLook, setDPIAware, documentsFolder,\
+  privacyBlocked, privacyHelp, openPrivacySettings
 from util.singleInstance import SingleInstance
 from util.terminal import terminalRegistry, installGlobalIORouting,\
   TerminalWidget, TerminalRegistry
@@ -926,6 +928,9 @@ class Application(tk.Tk):
     :param replace: Whether to replace copies already there. If not (as on
       the first launch), an existing folder is left as it is.
 
+    If they can't be copied, the user's told why (see *cantCopyExamples()*);
+    on the first launch, that's not tried again on the next.
+
     :returns: True iff any were opened.
     """
     if not sn.exampleNames():
@@ -934,14 +939,51 @@ class Application(tk.Tk):
     try:
       if replace or not os.path.exists(target): # (unless replacing, an existing copy is left as it is)
         sn.copyExamples(target)
-    except OSError:
+      views = sorted(f for f in os.listdir(target) if f.endswith(".snv"))
+    except OSError as ex:
       logger.error(f'Couldn\'t copy the examples to "{target}".', exc_info=True)
+      if not replace: # (the first launch: the message says how to try again, rather than every launch saying it)
+        snPrefs[self.EXAMPLES_PREF] = True
+      self.cantCopyExamples(target, ex)
       return False
     snPrefs[self.EXAMPLES_PREF] = True
-    views = sorted(f for f in os.listdir(target) if f.endswith(".snv"))
     for v in views:
       self.openWindow(os.path.join(target, v))
     return len(views) > 0
+
+  def cantCopyExamples(self, target:str, ex:OSError) -> None:
+    """Tell the user the example models couldn't be copied to *target* (see
+    *installExamples()*), and why. If it's the Mac's privacy protection (eg:
+    the app that started the program hasn't been allowed to use the Documents
+    folder: see *util.platformSupport.privacyBlocked()*), say which app to
+    allow, and offer to open the settings for it.
+
+    :param target: The folder.
+    :param ex: Why they couldn't be.
+    """
+    said = f'The example models couldn\'t be copied to "{target}"'
+    menu = "Help | Install Example Models"
+    if privacyBlocked(ex):
+      if messagebox.askyesno(sn.NAME, f"{said}.\n\n{privacyHelp(target)} Then choose {menu} to install them."
+                             "\n\nOpen the Privacy & Security settings now?", icon=messagebox.WARNING, parent=self._dialogParent()):
+        openPrivacySettings()
+    else:
+      messagebox.showerror(sn.NAME, f"{said}: {ex.strerror or ex}.\n\nYou can try again with {menu}.", parent=self._dialogParent())
+
+  def examplesBlocked(self, target:str) -> bool:
+    """:returns: Whether the Mac's privacy protection won't let the example
+      models be copied to *target* (see *installExamples()*) -- having said
+      so (see *cantCopyExamples()*) -- found by trying to make a file there.
+    """
+    try:
+      os.makedirs(target, exist_ok=True)
+      with tempfile.TemporaryFile(dir=target):
+        pass
+    except OSError as ex:
+      if privacyBlocked(ex):
+        self.cantCopyExamples(target, ex)
+        return True
+    return False
 
   def onInstallExamples(self) -> None:
     """The Help menu's *Install Example Models*: put fresh copies of the
@@ -956,6 +998,8 @@ class Application(tk.Tk):
     names = sn.exampleNames()
     if not names:
       messagebox.showerror(sn.NAME, "This version doesn't have any example models to install.", parent=self._dialogParent())
+      return
+    if self.examplesBlocked(target): # (before asking, and closing their windows)
       return
     existing = [n for n in names if os.path.exists(os.path.join(target, n))]
     if existing and not messagebox.askokcancel(sn.NAME,
