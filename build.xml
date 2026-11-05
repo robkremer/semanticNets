@@ -116,7 +116,7 @@
   </target>
 
   <target name="app" depends="doc,venv"
-          description="Make the stand-alone dist/Semantic Nets.app (its own Python, Tk and clingo; ad hoc signed), and self-test it.">
+          description="Make the stand-alone dist/Semantic Nets.app (its own Python, Tk, clingo and Nemo; ad hoc signed), and self-test it.">
     <delete dir="${app}"/>
     <exec executable="${venv}/bin/pyinstaller" dir="${basedir}" failonerror="true">
       <arg value="--noconfirm"/>
@@ -129,7 +129,7 @@
   </target>
 
   <target name="universalWheels" depends="venv"
-          description="Make the build venv's compiled packages (clingo, cffi) universal, for the universal app.">
+          description="Make the build venv's compiled packages (clingo, cffi, nemo-python) universal, for the universal app.">
     <exec executable="${venvPython}" dir="${basedir}" failonerror="true">
       <arg value="${packaging}/makeUniversalWheels.py"/>
     </exec>

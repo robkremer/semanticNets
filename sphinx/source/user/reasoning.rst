@@ -91,10 +91,10 @@ Engines and explanations
 ------------------------
 
 The reasoner has two engines, which reach the same conclusions: **clingo**
-(the default) and **Nemo**. Nemo is optional (see `Installing an engine`_).
-The ``reasoner/engine`` setting (**Settings...**, in the application menu) says which
-one **reason**, queries and ``ask reasoner`` use; ``reason --engine nemo``
-picks one for a single run.
+(the default) and **Nemo**. The apps include both (see `Installing an
+engine`_ for the ``.pyz`` and the source). The ``reasoner/engine`` setting
+(**Settings...**, in the application menu) says which one **reason**, queries
+and ``ask reasoner`` use; ``reason --engine nemo`` picks one for a single run.
 
 What Nemo adds is explanations. An inferred relation's menu has **explain
 (why it holds)**, which prints the steps to the terminal pane: the rules it
@@ -125,19 +125,28 @@ terminal's ``explain`` -- the program says so, with a link to here. If it's
 the one the setting picks, it also offers to reason with one that is
 installed: this time, or from now on.
 
-**clingo**
-  Comes with the apps. For the ``.pyz``, or the source, install it with
-  ``python3.14 -m pip install clingo`` (see :doc:`gettingStarted`).
+**In the apps**
+  clingo and Nemo are in them. An engine an app doesn't include can be
+  installed for a Python 3.14 on the computer -- the same version as the
+  app's own, for the same kind of processor (eg: Apple silicon) -- and the app
+  uses it from there::
 
-**Nemo**
-  Isn't in the apps yet. To use it, run the program from the ``.pyz`` or the
-  source (see :doc:`gettingStarted`), and install Nemo for the Python that
-  runs it::
+    python3.14 -m pip install <the engine's package>
+
+  (on Windows, ``py -3.14 -m pip install ...``). The app looks for that
+  Python where its installers put it (python.org's, Homebrew's, ...) and on
+  the ``PATH``; if it's somewhere else (eg: a virtual environment), give its
+  executable as the ``reasoner/python`` setting (eg:
+  ``/Users/me/venvs/sn/bin/python``).
+
+**The** ``.pyz`` **or the source**
+  Install the engine for the Python that runs the program (see
+  :doc:`gettingStarted`): clingo with ``python3.14 -m pip install clingo``, and
+  Nemo with::
 
     python3.14 -m pip install nemo-python
 
-  (on Windows, ``py -3.14 -m pip install nemo-python``). Then start the
-  program again.
+Then start the program again.
 
 Switching rules off
 -------------------

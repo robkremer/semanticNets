@@ -28,7 +28,9 @@ runs the rules tests by each engine. There's a second one already: Nemo (see
 
 What the program knows about an engine before it's imported is in
 :py:data:`~sn.model.reasoner.ENGINES`: the Python module it needs, the package
-that provides it, and whether it can explain a conclusion. So
+that provides it, whether it can explain a conclusion, and whether the apps
+include it (their ``--selftest`` reasons, and explains, with each one they
+should have: see ``sn/__main__.py``). So
 :py:func:`~sn.model.reasoner.engineInstalled` can tell whether one can be used
 without loading it, *Reasoner.create()* raises
 :py:class:`~sn.model.reasoner.EngineMissing` (an *ImportError*) for one that
@@ -39,6 +41,15 @@ isn't installed -- which the GUI shows with a link to the User Guide's
 engine if it can explain, or else an installed one that can. A new engine adds
 itself to *ENGINES*, to the ``reasoner/engine`` preference's choices
 (``sn.PREFS``: a test checks the two agree), and to "Installing an engine".
+
+The apps have their own Python, which pip can't install into. So when an
+engine's module isn't in an app, it looks for it in the packages of a Python
+on the computer that can share them -- the same version, build and processor
+as its own: the ``reasoner/python`` preference's, or else one where installers
+put them -- and puts their folders at the end of *sys.path* (see
+:py:mod:`util.localPython`, in *pythonUtils*). The Mac app can load that
+Python's compiled packages because it's ad hoc signed, without the hardened
+runtime.
 
 Why ASP
 -------
@@ -322,9 +333,10 @@ The Nemo engine
   :py:class:`~sn.model.nemoReasoner.NemoReasoner` (``engine="nemo"``), built
   on `Nemo <https://github.com/knowsys/nemo>`_, a Datalog engine (stratified
   negation, aggregates) from TU Dresden, through its Python bindings
-  (``pip install nemo-python``, imported as ``nmo_python``). It's optional:
-  if it's missing, the program says how to install it (see above), and the
-  tests skip it.
+  (``pip install nemo-python``, imported as ``nmo_python``). The apps include
+  it (Linux's library stripped of its debugging symbols: 233 MB down to 17);
+  for the ``.pyz`` and the source it's optional: if it's missing, the program
+  says how to install it (see above), and the tests skip it.
 
 Its rule base, ``nemoReasoner.rls``, is ``clingoReasoner.lp`` ported rule
 for rule, and ``_rulesProgram()`` compiles the user's rules the same way, so

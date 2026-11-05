@@ -9,7 +9,11 @@ them). Run from the project's top folder:
   .venv-build/bin/pyinstaller --noconfirm --distpath dist --workpath build/pyinstaller packaging/semanticNets.spec
 
 The app is the graphical editor (sn/__main__.py) with its own Python, Tk and
-clingo inside. It bundles, at the same relative places sn.resourcePath() looks:
+reasoner engines (clingo and Nemo) inside. It's ad hoc signed, without the
+hardened runtime, so it can also load an engine's compiled package from a
+Python installed on the computer (see util.localPython, and
+sn.model.reasoner.engineInstalled()): with the hardened runtime, that would
+need the com.apple.security.cs.disable-library-validation entitlement. It bundles, at the same relative places sn.resourcePath() looks:
 
   - sn/examples/  the example models (package data), installed on the first launch;
   - plugins/    the plugins that come with it (pythonParser, XMLreader: see
@@ -44,7 +48,7 @@ MIN_MACOS = {"x86_64": "10.15", "arm64": "11.0"}
 
 datas = [
   (os.path.join(SRC, "sn", "model", "clingoReasoner.lp"), os.path.join("sn", "model")),
-  (os.path.join(SRC, "sn", "model", "nemoReasoner.rls"), os.path.join("sn", "model")), # (the optional engine's: used if nemo-python is in the build venv)
+  (os.path.join(SRC, "sn", "model", "nemoReasoner.rls"), os.path.join("sn", "model")), # (Nemo's: nemo-python is in the build venv -- see requirements-build.txt)
   (os.path.join(SRC, "sn", "model", "baseRules.snm"), os.path.join("sn", "model")),
   (os.path.join(SRC, "sn", "examples"), os.path.join("sn", "examples")),
 ]

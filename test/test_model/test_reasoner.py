@@ -583,6 +583,44 @@ class TestEngines(unittest.TestCase):
     with importing, finding:
       self.assertEqual(explainingEngine(), "nemo")
 
+  def test0600lookOutside(self):
+    'In an app, an engine it doesn\'t include is looked for in a Python on the computer: the setting\'s, or one found.'
+    import sys
+    from sn.model.reasoner import EngineMissing, engineInstalled
+    importing, finding = self._notInstalled("nemo")
+    with importing, finding, self.mock.patch("util.localPython.addPackages", return_value=[]) as adding:
+      self.assertFalse(engineInstalled("nemo"))                      # (not an app: its own Python is the one)
+      adding.assert_not_called()
+      with self.mock.patch.object(sys, "frozen", True, create=True):
+        self.assertFalse(engineInstalled("nemo"))
+        adding.assert_called_with(None)
+        with self.assertRaises(EngineMissing):
+          Reasoner.create(None, "nemo") # type: ignore[arg-type]
+        get = sn.snPrefs.get
+        with self.mock.patch.object(sn.snPrefs, "get", lambda key, *a, **kw: "/my/python" if key == "reasoner/python" else get(key, *a, **kw)):
+          engineInstalled("nemo")
+        adding.assert_called_with("/my/python")
+
+  def test0610foundOutside(self):
+    'An engine found in a Python on the computer is imported from there.'
+    import sys
+    from sn.model import reasoner
+    class Found(Reasoner): # (stands for the engine, as its module would register it)
+      def run(self): ...
+      def answer(self, query): ...
+    calls = []
+    def importModule(name, *args):
+      calls.append(name)
+      if len(calls) == 1:
+        raise ModuleNotFoundError("No module named 'nmo_python'", name="nmo_python")
+      Reasoner.engines["nemo"] = Found
+    Reasoner.engines.pop("nemo", None)
+    with self.mock.patch.object(reasoner, "import_module", importModule), \
+         self.mock.patch("util.localPython.addPackages", return_value=["/its/site-packages"]), \
+         self.mock.patch.object(sys, "frozen", True, create=True):
+      self.assertIsInstance(Reasoner.create(None, "nemo"), Found) # type: ignore[arg-type]
+    self.assertEqual(calls, ["sn.model.nemoReasoner"] * 2)
+
   def test0500setDefaultEngine(self):
     'Choosing the default engine keeps the setting a choice (a plain value would make it any text).'
     from sn.model.reasoner import setDefaultEngine, defaultEngine
