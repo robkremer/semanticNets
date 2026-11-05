@@ -703,7 +703,7 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
       if not isa or mo is None or n.modelObject is None:
         return False
       child, parent = (mo.localSrc, n.modelObject) if end == "dst" else (n.modelObject, mo.localDst)
-      return child is not None and child.parentProblem(parent) is not None
+      return child is not None and child.parentProblem(parent, except_=mo) is not None
     def acceptable(n:VObject) -> bool:
       return n is not self and not n.isInferred() \
              and (not isa or other is None or isinstance(n, VRelation) == isinstance(other, VRelation)) \

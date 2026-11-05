@@ -492,6 +492,8 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
       if ret == [] and type(self) is not GraphObject:
         raise LookupError("No parent found.")
 
+    if len(ret) > 1: # (each once: a second isa link to the same parent -- eg: from an old file: see _validateSelfIsa())
+      ret = list({id(p): p for p in ret}.values())
     self._parentsCache, self._parentsGeneration = list(ret), _isaGeneration # (good until relations change: see isaStructureChanged())
     return ret   
 
@@ -502,27 +504,48 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     '''
     return [r for r in self._outgoing if isinstance(r, IsaIndividual) and r.localSrc is self and r.localDst is self]
 
+  def isaLinksTo(self, parent:GraphObject) -> list[IsaIndividual]:
+    '''
+    :returns: This object's asserted (not inferred) isa links to *parent*:
+      one at most -- a second can't be made (see *parentProblem()*), but an
+      old file may have one.
+    '''
+    return [r for r in self._outgoing if isinstance(r, IsaIndividual) and r.localSrc is self and r.localDst is parent and not r.inferred]
+
   def _validateSelfIsa(self) -> None:
     '''
-    Report an isa link to itself (see *selfIsaLinks()*) in the status report,
-    with an action that removes it.
+    Report an isa link to itself (see *selfIsaLinks()*), and a second isa
+    link to the same parent (see *isaLinksTo()*), in the status report, with
+    an action that removes it.
     '''
     for r in self.selfIsaLinks():
       self.assertToStatusReport(False, f'"{self.name}" has an isa link to itself (ignored).', "E",
                                 actions={"remove the isa link to itself": lambda r=r: [r._disconnect(), r.model.setDirty(), None][-1]}) #type: ignore[func-returns-value, misc]
+    seen:set[int] = set()
+    for r in self._outgoing:
+      if isinstance(r, IsaIndividual) and r.localSrc is self and r.localDst is not None and r.localDst is not self and not r.inferred:
+        if id(r.localDst) in seen:
+          self.assertToStatusReport(False, f'"{self.name}" has more than one isa link to "{r.localDst.name}".', "W",
+                                    actions={"remove the extra isa link": lambda r=r: [r._disconnect(), r.model.setDirty(), None][-1]}) #type: ignore[func-returns-value, misc]
+        seen.add(id(r.localDst))
 
-  def parentProblem(self, parent:GraphObject|None) -> str|None:
+  def parentProblem(self, parent:GraphObject|None, except_:GraphObject|None=None) -> str|None:
     '''
     :param parent: A would-be new parent (type) of this object: the
       destination of a new isa link from it.
+    :param except_: The isa link being moved there, if it's an existing one
+      (eg: dragging its end): it doesn't count as one already there.
     :returns: Why it can't be: it's this object itself, or one of its own
       subtypes or instances (an isa cycle, which would make each its own
-      ancestor); or None if it can.
+      ancestor), or it already has an isa link to *parent* (a second would
+      list it twice, and removing one would change nothing); or None if it can.
     '''
     if parent is None:
       return None
     if parent is self:
       return f'"{self.name}" can\'t be a type of itself.'
+    if any(r is not except_ for r in self.isaLinksTo(parent)):
+      return f'"{self.name}" already has an isa link to "{parent.name}".'
     try:
       if parent.isa(self):
         return f'"{parent.name}" is already a kind of "{self.name}": making "{self.name}" one of it would make an isa cycle.'
@@ -532,11 +555,12 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
 
   def getDescendants(self, model:Model|None=None, asTree:bool=False, rmDups:bool=True)->list:
     '''
-    :param model: If this is given, the descendents are limited to those in the 
-      model. This is necessary for things like the ISA type which may be stored
-      in a super-model and could otherwise return every isa individual in all 
-      the models. ISA will return [] if *model* is not given. By default, the 
-      descendants are limited to the model of *self*.
+    :param model: [default: the model of *self*] Used only for the ISA type,
+      whose descendants are the isa links in *model* (ISA may be stored in a
+      super-model, and would otherwise have every isa link in every model
+      that builds on it). Other objects' descendants aren't limited to any
+      model: they include those in the models open that build on this one
+      (eg: the terminal's "instances" lists them all).
     :returns: A list of all decendents to this object.
     :rtype: list[GraphObject]
     '''
@@ -1564,8 +1588,9 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     however far from it they are (see *PRDb.relativeSuperDBs*); others are
     saved as they are, unless they're near it (see *PRDb.relativeURL()*).
     A super-model dropped that this model's objects still refer to must have
-    a copy among those added (eg: "pythonOntology.snm" beside it in place of
-    the plugin's): they're made to refer to the copy's objects instead (see
+    a copy among its super-models -- one added (eg: "pythonOntology.snm"
+    beside it in place of the plugin's), or one already there: they're made
+    to refer to the copy's objects instead (see
     *replaceSuperModel()*), so the model never quietly depends on a file that
     isn't one of its super-models. Nothing is changed unless all of them are
     fine.
@@ -1612,7 +1637,8 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
       for old, n in self.referredModels().items():
         if id(old) in allowed:
           continue
-        for copy in sorted(added, key=lambda db: db.name != old.name): # (one by the same name first)
+        candidates = added + [db for db in dbs if not any(db is a for a in added)] # (new ones first, then those already there)
+        for copy in sorted(candidates, key=lambda db: db.name != old.name): # (one by the same name first)
           changes, wrong = self._copyChanges(old, copy)
           if not wrong:
             redirects.append((old, cast(Model, copy), changes))
@@ -1915,6 +1941,10 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]): #type: ignore[misc]
     if not db.reading:
       for p in parents:
         assert not hasattr(db, "RELATION") or isinstance(p, Relation)
+      if not inferred and not getattr(db, "_inferringDepth", 0): # (before it's made: see connect())
+        for end in (src, dst):
+          if end is not None and getattr(end, "inferred", False):
+            raise PermissionError(f'"{end.name}" is inferred: mark it as asserted to relate it.')
 
     # *Relation* inherits from both *GraphObject* and *AGRelation*, which both
     # in turn inherit from *AGObject* -- a single cooperative super().__init__()
@@ -1926,6 +1956,7 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]): #type: ignore[misc]
     # consumes the ones it recognizes and forwards the rest via its own
     # **kwargs (see *GraphObject.__init__()* and *AGRelation.__init__()*).
     super().__init__(db=db, parents=parents, individual=individual, name=name, src=src, dst=dst, inferred=inferred)
+    self._made = True # (from now on, connect() tells observers of the ends it changes: not while it's being made)
 
     
   @classmethod
@@ -2289,11 +2320,23 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]): #type: ignore[misc]
       (contrast :py:meth:`GraphObject._disconnect` and 
       :py:meth:`GraphObject._reconnect`) 
     
+    Observers are told of each end it changes (see *_endpointChanged()*), as
+    the *src* and *dst* setters tell them -- but not while the relation's
+    being made, or its model read.
+
     :param source: The :py:class:`GraphObject` for the *src* link.
     :param destination: The :py:class:`GraphObject` for the *dst* link.
+    :raises PermissionError: If an end would be an inferred object, and this
+      relation isn't (see *GraphObject.inferred*): an asserted relation is saved,
+      and an inferred object isn't, so the saved relation would lead nowhere.
     '''
     if (source is not None and self.localSrc is not source) or (destination is not None and self.localDst is not destination):
       isaStructureChanged()
+    if not self.inferred and not self.db.reading and not getattr(self.db, "_inferringDepth", 0):
+      for end in (source, destination):
+        if end is not None and getattr(end, "inferred", False) and end is not (self.localSrc if end is source else self.localDst):
+          raise PermissionError(f'"{end.name}" is inferred: mark it as asserted to relate it.')
+    oldSrc, oldDst = self.localSrc, self.localDst
     if source is not None:
       if self.localSrc is not source: # don't do anything if it's already done.
         if self.localSrc is not None:
@@ -2310,6 +2353,19 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]): #type: ignore[misc]
         destination._incoming.append(self)
         assert destination._incoming[-1] is self
         self.setDirty()
+    if self.__dict__.get("_made") and not self.db.reading:
+      self._endsConnected(oldSrc, oldDst)
+
+  def _endsConnected(self, oldSrc:GraphObject|None, oldDst:GraphObject|None) -> None:
+    '''
+    *connect()* changed its ends from *oldSrc* and *oldDst*: tell its observers
+    (and those below it that inherit an end), as the setters do (see
+    *_endpointChanged()*).
+    '''
+    if self.localSrc is not oldSrc:
+      self._endpointChanged("src", oldSrc, self.localSrc)
+    if self.localDst is not oldDst:
+      self._endpointChanged("dst", oldDst, self.localDst)
   # _disconnect()/_reconnect() of the src/dst ends are inherited from AGRelation.
 
 class IsaIndividual(Relation):
@@ -2367,10 +2423,27 @@ class IsaIndividual(Relation):
               destination is not None and destination is not self.localDst  
     oldSrc = self.localSrc
     super().connect(source, destination)
-    if retract: #TODO: could be a lot more efficient by just fixing the parentCache's.
+    if retract and not (self.__dict__.get("_made") and not self.db.reading): # (otherwise, _endsConnected() did)
       self.retract()
       self._supersChanged(oldSrc, self.localSrc)
     self.setDirty()
+
+  @override
+  def _endsConnected(self, oldSrc:GraphObject|None, oldDst:GraphObject|None) -> None:
+    '''
+    As *Relation*'s, but the source's supertypes are said to have changed once,
+    whichever ends moved (see *_endpointChanged()*, *_supersChanged()*).
+    '''
+    changed = [(end, old, new) for end, old, new in (("src", oldSrc, self.localSrc), ("dst", oldDst, self.localDst)) if old is not new]
+    if not changed:
+      return
+    for end, old, new in changed:
+      Relation._endpointChanged(self, end, old, new) # (not this class's: it says the supertypes changed -- below, once)
+    self.retract()
+    for obj in (oldSrc, self.localSrc):
+      if obj is not None:
+        obj.retract()
+    self._supersChanged(oldSrc, self.localSrc)
 
   @override
   def _disconnect(self, keep:GraphObject|None=None, **kwargs) -> None: #type: ignore[override]

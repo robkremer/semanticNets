@@ -759,8 +759,14 @@ class EditingMixin(ViewBase):
       # an isa link needs both ends.
       onEmpty = None if typ is None or typ is self.model.ISA else \
         (lambda orig, typ=typ: self.makeRelation(orig, None, typ))
+      def isaParent(n:VObject) -> bool: # (as resetting an isa link's destination: see VRelation.chooseNewEndpoint())
+        child, parent = node.modelObject, n.modelObject
+        return n is not node and not n.isInferred() and parent is not None and parent.isType() \
+               and isinstance(n, VRelation) == isinstance(node, VRelation) \
+               and (child is None or child.parentProblem(parent) is None)
       self.elasticLineChoice(node, 
                              callback=lambda orig, sel, typ=typ: callback(orig, sel, typ), #type: ignore[misc]
+                             filter=isaParent if typ is self.model.ISA else lambda n: True,
                              arrowHeads=2, color="blue", onEmpty=onEmpty)
     else:
       if not isinstance(typ, Relation):
@@ -795,6 +801,8 @@ class EditingMixin(ViewBase):
                                   source=fromNode.modelObject, model=self.model)
         if toNode is not None and mgr.commands:
           self._containNewRelation(mgr, mgr.commands[-1], typ, fromNode, toNode)
+    except (ValueError, PermissionError) as ex: # (eg: an isa cycle: said, not a traceback)
+      logger.error(str(ex))
     except Exception:
       logger.exception("SNView.makeRelation():")
 

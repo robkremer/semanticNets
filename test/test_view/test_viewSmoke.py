@@ -476,6 +476,32 @@ class Test(unittest.TestCase):
     v.clearHighlights()
     self.assertTrue(v.pictureObjects())
 
+  def test0860isaChoices(self):
+    # making an isa link (see SNView.makeRelationFrom()): only a type can be chosen as the parent -- not
+    # one it has already, nor one that'd make an isa cycle; and a cycle is said, not a traceback
+    v, m = self.view, self.model
+    v.context.new_node("person", name="employee", type=True)
+    self.pump()
+    alice, bob, person, employee = (self.vo(n) for n in ("alice", "bob", "person", "employee"))
+    def choices(origin):
+      v.makeRelationFrom(origin, m.ISA)
+      assert v._elasticLineChoiceData is not None
+      choose = v._elasticLineChoiceData.filter
+      v.cancelElasticLine()
+      return choose
+    choose = choices(alice)
+    self.assertFalse(choose(bob))      # (an individual)
+    self.assertFalse(choose(person))   # (already)
+    self.assertTrue(choose(employee))
+    self.assertFalse(choices(person)(employee)) # (a cycle)
+    n = len(m)
+    with self.assertLogs(level="ERROR") as logs:
+      v.makeRelation(person, employee, m.ISA)
+    self.assertNotIn("Traceback", "\n".join(logs.output))
+    self.assertEqual(len(m), n)
+    with self.assertRaises(ValueError): # (a second isa link to the same parent)
+      v.context.new_relation("isa", source=alice.modelObject, destination=person.modelObject)
+
   def test0850danglingEnds(self):
     # a relation whose own end is top, while top isn't shown, is left dangling there (see
     # VRelation._resolveEnd()): showing top attaches it (see _attachDanglingEnds())

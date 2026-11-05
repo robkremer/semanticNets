@@ -113,6 +113,9 @@ class ReasoningMixin(ViewBase):
     except ImportError as ex:
       logger.error(f'The "{engine}" reasoner isn\'t available: {ex}')
       return
+    except RuntimeError as ex: # (eg: rules that can't be compiled: said, not a traceback -- and the summary's left as it was)
+      logger.error(f'Couldn\'t reason over {self.model.name}: {ex}')
+      return
     if silent:
       print(f'Reasoned over {self.model.name} (silently): {summary(self.model)}')
       return

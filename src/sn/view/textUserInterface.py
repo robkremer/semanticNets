@@ -76,31 +76,33 @@ formatters:dict[str,str] = {
   "Model": "str",
   "GraphObject": "str"}
 
-formatOptions:dict[str, dict[str,Callable[[GraphObject],str]]] = {
+formatOptions:dict[str, dict[str,Callable[..., str]]] = {
+  # (each takes the object, and the model names are relative to -- the terminal's: see printLists())
   "Model": 
     {
-    "str"    : str,
-    "tostring": lambda m: m.tostring(relativeTo=context.defaults["model"]),
-    "repr"   : repr,
-    "torepr" : lambda m: m.torepr(relativeTo=context.defaults["model"]),
-    "members": lambda m: str(m) + "\n  " + ("\n  ".join([(getKindMarkStr(go)+getFormatter("GraphObject")(go)) for go in m.values()])),
+    "str"    : lambda m, model=None: str(m),
+    "tostring": lambda m, model=None: m.tostring(relativeTo=model),
+    "repr"   : lambda m, model=None: repr(m),
+    "torepr" : lambda m, model=None: m.torepr(relativeTo=model),
+    "members": lambda m, model=None: str(m) + "\n  " + ("\n  ".join([(getKindMarkStr(go)+getFormatter("GraphObject")(go, model)) for go in m.values()])),
     },
   "GraphObject": 
     {
-    "str"   : str,
-    "tostring": lambda go: go.tostring(relativeTo=context.defaults["model"]),
-    "repr"  : repr,
-    "torepr": lambda go: go.torepr(relativeTo=context.defaults["model"]),
-    "name"  : lambda go: quoteIfNecessary(go.name),
-    "quotedname" : lambda go: f'"{go.name}"',
-    "id"    : lambda go: str(go.id),
-    "simple": lambda go: f'{quoteIfNecessary(go.name)}:{go.id}',
+    "str"   : lambda go, model=None: str(go),
+    "tostring": lambda go, model=None: go.tostring(relativeTo=model),
+    "repr"  : lambda go, model=None: repr(go),
+    "torepr": lambda go, model=None: go.torepr(relativeTo=model),
+    "name"  : lambda go, model=None: quoteIfNecessary(go.name),
+    "quotedname" : lambda go, model=None: f'"{go.name}"',
+    "id"    : lambda go, model=None: str(go.id),
+    "simple": lambda go, model=None: f'{quoteIfNecessary(go.name)}:{go.id}',
     }
   }
 
-def getFormatter(typeName:str) -> Callable:
+def getFormatter(typeName:str) -> Callable[..., str]:
   '''
-  The formatter for objects of type *typeName*, as set (see *UIContext._format()*).
+  The formatter for objects of type *typeName*, as set (see *UIContext._format()*): called with the object,
+  and the model names are written relative to.
   '''
   return formatOptions[typeName][formatters[typeName]]
 
@@ -188,7 +190,7 @@ class UIContext(ModelContext):
     '''    
     return input(string)
     
-  def format_model(self, format:str|None=None): # @ReservedAssignment
+  def format_model(self, format:str|None=None, /): # @ReservedAssignment
     '''
     Set the output format for Models.
     
@@ -211,9 +213,9 @@ def printLists(obj:Any, nCarrets=1, contextModel=None) -> str|None:
   if obj is None:
     return None
   if isinstance(obj, (Model)):
-    printx(f'{BACK_CARRET*nCarrets} {getFormatter("Model")(obj)}')
+    printx(f'{BACK_CARRET*nCarrets} {getFormatter("Model")(obj, contextModel)}')
   elif isinstance(obj, (GraphObject)):
-    printx(f'{BACK_CARRET*nCarrets} {getKindMarkStr(obj)}{getFormatter("GraphObject")(obj)}')
+    printx(f'{BACK_CARRET*nCarrets} {getKindMarkStr(obj)}{getFormatter("GraphObject")(obj, contextModel)}')
   elif isinstance(obj, str):
     lines = obj.split('\n')
     if len(lines) == 1:

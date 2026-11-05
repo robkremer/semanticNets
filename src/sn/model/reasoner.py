@@ -252,6 +252,43 @@ class Violation:
     '''
     return f'{self.severity[0].upper()}: {self.message}'
 
+def assertedIsa(x:GraphObject, t:GraphObject) -> bool:
+  '''
+  :returns: Whether *x* is a *t* by what's asserted: following only isa links
+    that aren't inferred (see *GraphObject.inferred*) -- so not by what a
+    reason added (see *materialize()*), which a rule's conclusion is news in
+    spite of.
+  '''
+  seen:set[int] = set()
+  pending:list[GraphObject] = [x]
+  while pending:
+    o = pending.pop()
+    if o is t:
+      return True
+    if id(o) in seen:
+      continue
+    seen.add(id(o))
+    pending += [r.localDst for r in o._outgoing if isinstance(r, IsaIndividual) and r.localSrc is o and not r.inferred and r.localDst is not None]
+    if not any(isinstance(r, IsaIndividual) and r.localSrc is o for r in o._outgoing): # (no isa links: its parents are implicit -- eg: node's)
+      try:
+        pending += o.getParents()
+      except LookupError:
+        pass
+  return False
+
+def _assertedValue(x:GraphObject, key:str, value:Any) -> bool:
+  '''
+  :returns: Whether *x* has *value* for *key* by what's asserted -- its own
+    value (not an inferred one: see *materialize()*), or, without one of its
+    own, what it inherits -- so a rule's conclusion that it has isn't news.
+  '''
+  if value is PRESENT:
+    return False
+  local = x.getLocalAttr(key)
+  if local is not None:
+    return not local.inferred and local.value == value
+  return x.get(key, None) == value
+
 @dataclass
 class Inferences:
   '''
@@ -340,11 +377,10 @@ class Inferences:
     lines = [f'{_label(s, model)} {relationArrow(t)} {_label(d, model)}{by(r)}' for r, t, s, d in self.fired
              if mine(r) and ((id(t), id(s), id(d)) in new or isinstance(s, NewObject) or isinstance(d, NewObject))]
     attr = lambda k, v: k if v is True or v is PRESENT else f"{k}: {v}"
-    known = lambda x, k, v: v is not PRESENT and x.get(k, None) == v # (already so: not news)
     lines += [f'{_label(x, model)} {{{attr(k, v)}}}{by(r)}' for r, x, k, v in self.ruleAttrs
-              if mine(r) and not isinstance(x, NewObject) and not known(x, k, v)]
+              if mine(r) and not isinstance(x, NewObject) and not _assertedValue(x, k, v)]
     lines += [f'{_label(x, model)} -isa-> {_label(t, model)}{by(r)}' for r, x, t in self.ruleIsa
-              if mine(r) and not isinstance(x, NewObject) and not x.isa(t)]
+              if mine(r) and not isinstance(x, NewObject) and not assertedIsa(x, t)]
     for n in self.newObjects: # (one line each: that it exists, its types and its attributes)
       if mine(n.rule):
         types = ", ".join(_label(t, model) for _, x, t in self.ruleIsa if x == n)
@@ -638,9 +674,10 @@ def ruleOf(rule:GraphObject) -> RuleSpec:
 
     - A relation concludes a relation, between its (local) ends, for each of
       its types -- which may be variables.
-    - A variable's constraints (see *GraphObject.constraints()*) are
-      conclusions if it's the consequent's own variable (not one of the
-      antecedent's nodes, whose constraints are tests).
+    - A variable's constraints (see *GraphObject.constraints()*) and its
+      types (as drawn) are conclusions if it's the consequent's own variable
+      (not one of the antecedent's nodes, whose constraints and types are
+      tests) -- a copy of an antecedent variable, or a new one.
     - An isa link concludes an isa link.
     - A consequent variable the antecedent doesn't bind (by name) stands for a
       new object, one per match: it's concluded to exist, isa its types (as
@@ -722,7 +759,7 @@ def _spec(rule:GraphObject, parts:tuple[GraphObject, ...]|None, consequentType:G
     else:
       use(e)
   spec.new = list(new.values())
-  typed = own.values() if meaning else new.values() # (a new object isa its types, as drawn; so is a definiens' variable)
+  typed = own.values() # (the consequent's own variables -- new or bound copies -- are their types, as drawn)
   for x in {id(x): x for x in typed}.values():
     for p in x.getParents():
       if p not in (m.NODE, m.RELATION, m.TOP) and not isinstance(x, IsaIndividual):
@@ -1541,6 +1578,19 @@ def inferredNodeFor(model:Model, n:Any) -> Any:
   key = _newObjectKey(n)
   return next((o for o in model.inferredObjects() if getattr(o, "inferredKey", None) == key and o._isConnected()), n)
 
+def _retype(node:GraphObject, types:list[GraphObject]) -> None:
+  '''
+  Make inferred *node*'s types *types*: its isa links to others are taken
+  out, and ones to those it hasn't are made (inferred, as it is).
+  '''
+  links = [r for r in node._outgoing if isinstance(r, IsaIndividual) and r.localSrc is node]
+  for r in links:
+    if not any(r.localDst is t for t in types) and r._isConnected():
+      r._disconnect()
+  for t in types:
+    if not any(r.localDst is t and r._isConnected() for r in links):
+      IsaIndividual(node.model, node, t, inferred=True)
+
 def materialize(model:Model, inferences:Inferences, models:list[Model]) -> None:
   '''
   Bring *model*'s inferred objects (see *GraphObject.inferred*) into line with
@@ -1584,22 +1634,30 @@ def materialize(model:Model, inferences:Inferences, models:list[Model]) -> None:
     nodes:dict[tuple, GraphObject] = {}
     for key, n in newOnes.items():
       node = haveNodes.get(key)
+      types = [t for _, x, t in inferences.ruleIsa if isinstance(x, NewObject) and _newObjectKey(x) == key and isinstance(t, GraphObject)]
       if node is None or not node._isConnected():
-        types = [t for _, x, t in inferences.ruleIsa if isinstance(x, NewObject) and _newObjectKey(x) == key and isinstance(t, GraphObject)]
         try:
           node = Node(model, types or [model.NODE], individual=True, name=_newObjectName(n, model), inferred=True)
         except Exception as ex:
           logger.warning(f"Couldn't add the new object {n}: {type(ex).__name__}: {ex}")
           continue
         node.inferredKey, node.inferredKind = key, "new"
+      else: # (kept: but the rule may say something else about it now -- its types as it says now)
+        _retype(node, types or [model.NODE])
       nodes[key] = node
+    wantNew:dict[int, set[str]] = {id(node): set() for node in nodes.values()}
     for _, x, k, v in inferences.ruleAttrs: # (their attributes -- the model's own objects' are just reported)
       node = nodes.get(_newObjectKey(x)) if isinstance(x, NewObject) else None
-      if node is not None and node.get(k, None) != v:
-        try:
-          node[k] = v
-        except Exception as ex:
-          logger.warning(f"Couldn't give {node.name} {k}={v}: {type(ex).__name__}: {ex}")
+      if node is not None:
+        wantNew[id(node)].add(k)
+        if node.get(k, None) != v:
+          try:
+            node[k] = v
+          except Exception as ex:
+            logger.warning(f"Couldn't give {node.name} {k}={v}: {type(ex).__name__}: {ex}")
+    for node in nodes.values(): # (a kept one's attributes the rule no longer gives it)
+      for k in [k for k in dict.keys(node) if k != "name" and k not in wantNew[id(node)]]:
+        del node[k]
     # the attribute values the rules concluded for the model's own objects: inferred attributes
     # (not where the object has a value of its own -- given beats inferred)
     wantAttrs:dict[tuple[int, str], tuple[GraphObject, str, Any]] = {}
@@ -1643,8 +1701,9 @@ def materialize(model:Model, inferences:Inferences, models:list[Model]) -> None:
       try:
         obj = have.get(key)
         if obj is None or not obj._isConnected():
-          if rt is model.ISA and (problem := s.parentProblem(d)) is not None: # (a rule concluded an isa cycle)
-            logger.warning(f"Not adding the inferred isa from {s.name} to {d.name}: {problem}")
+          if rt is model.ISA and (problem := s.parentProblem(d)) is not None: # (a rule concluded an isa cycle -- or one that's asserted)
+            if not s.isaLinksTo(d):
+              logger.warning(f"Not adding the inferred isa from {s.name} to {d.name}: {problem}")
             continue
           obj = IsaIndividual(model, s, d, inferred=True) if rt is model.ISA else Relation(model, [rt], s, d, individual=True, inferred=True)
         obj.inferredKind = kinds[key] # (for how it's drawn)

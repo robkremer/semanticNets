@@ -253,6 +253,30 @@ class TestRules(unittest.TestCase):
     self.assertEqual([o for o in m.inferredObjects() if isinstance(o, Node)], [])
     self.assertTrue(am._isConnected())                                     # (asserted: stays)
 
+  def test0711keptNewObjectsFollowTheRule(self):
+    'A new object kept by the next reason takes the types and attributes the rule gives it now, not those it gave before.'
+    from sn.model.reasoner import reason, clearReasoning
+    m = self.m
+    woman = Node(m, [self.person], name="woman")
+    mother = Relation(m, [m.RELATION], self.person, self.person, name="mother")
+    P, P2, M = self.var("?p", self.person), self.var("?p"), self.var("?m", self.person)
+    M["constraints"] = "alive, gender: female"
+    self.rule("everyone has a mother", [P], [self.rel(mother, P2, M)])
+    try:
+      reason(m)
+      am = next(o for o in m.inferredObjects() if o.name == "(m for alice)")
+      self.assertEqual(am.getParents(), [self.person])
+      self.assertEqual(am.get("gender", None), "female")
+      IsaIndividual(m, M, woman); next(r for r in M._outgoing if isinstance(r, IsaIndividual) and r.localDst is self.person)._disconnect()
+      M["constraints"] = "alive"
+      reason(m)
+      self.assertIs(next(o for o in m.inferredObjects() if o.name == "(m for alice)"), am) # (kept...)
+      self.assertEqual(am.getParents(), [woman])                                         # (... as the rule says now)
+      self.assertIsNone(am.get("gender", None))
+      self.assertIs(am.get("alive", None), True)
+    finally:
+      clearReasoning(m)
+
   def test0715queriesFindNewObjects(self):
     'A query answered with an object a rule concluded exists gets its inferred node, once "reason" has made it.'
     from sn.model.reasoner import reason, NewObject
@@ -332,6 +356,42 @@ class TestRules(unittest.TestCase):
     reason(m)
     clearReasoning(m)
     self.assertIsNone(dave.getLocalAttr("gender"))                # retracted
+
+  def test0805conclusionsReportedAfterReason(self):
+    'reason() adds what the rules concluded to the model (inferred): its report still lists those attribute values and types as news.'
+    from sn.model.reasoner import reason, clearReasoning
+    m, p = self.m, self.p
+    man = Node(m, [self.person], name="man")
+    brother = Relation(m, [m.RELATION], self.person, self.person, name="brother")
+    X, Y = self.var("?X"), self.var("?Y")
+    X2, Y2 = self.var("?X"), self.var("?Y", man); Y2["constraints"] = "gender: male"
+    d = self.definition("brother", [self.rel(brother, X, Y)], [self.rel(self.sib, X2, Y2), Y2])
+    self.rel(brother, p["carol"], p["dave"])
+    try:
+      res = reason(m)
+      self.assertTrue(p["dave"].getLocalAttr("gender").inferred) # type: ignore[union-attr] # (in the model now...)
+      lines = res.ruleConclusions(d, m)
+      self.assertTrue(any(l.startswith("dave") and "{gender: male}" in l for l in lines), lines) # (... and still news)
+      self.assertTrue(any(l.startswith("dave") and "-isa-> man" in l for l in lines), lines)
+      p["alice"]["gender"] = "male"; IsaIndividual(m, p["alice"], man)        # (given: not news)
+      self.rel(brother, p["carol"], p["alice"])
+      lines = reason(m).ruleConclusions(d, m)
+      self.assertFalse(any(l.startswith("alice") and ("{gender" in l or "-isa->" in l) for l in lines), lines)
+    finally:
+      clearReasoning(m)
+
+  def test0807boundCopyTypes(self):
+    'A consequent\'s copy of an antecedent variable concludes its drawn types too, not just its constraints.'
+    m, p = self.m, self.p
+    man = Node(m, [self.person], name="man")
+    brother = Relation(m, [m.RELATION], self.person, self.person, name="brother")
+    X, Y = self.var("?X"), self.var("?Y")
+    Y2 = self.var("?Y", man); Y2["constraints"] = "gender: male"
+    r = self.rule("brothers are male men", [self.rel(brother, X, Y)], [Y2])
+    self.rel(brother, p["carol"], p["bob"])
+    res = self.reason()
+    self.assertIn(("bob", "man"), {(x.name, t.name) for rr, x, t in res.ruleIsa if rr is r})
+    self.assertIn(("bob", "gender", "male"), {(x.name, k, v) for rr, x, k, v in res.ruleAttrs if rr is r})
 
   def test0806inferredValuesOfInheritedAttributes(self):
     'A concluded value of an attribute a type declares takes the type\'s type (made one, if need be): eg: a colour, or a number.'
@@ -483,6 +543,37 @@ class TestRules(unittest.TestCase):
     vs = self.reason().violations
     self.assertFalse(any(v.code == "narcissism" for v in vs))
     self.assertTrue(any(v.code == "constraint_report" and v.subject is c for v in vs))
+
+  def test0921reportWordNot(self):
+    'A word in a constraint\'s report that is one of clingo\'s ("not") is just a word: the reasoner still runs.'
+    X = self.var("?x")
+    self.constraint("narcissism", [self.rel(self.likes, X, X)], report="?x, not, strange", severity="warning")
+    self.rel(self.likes, self.p["alice"], self.p["alice"])
+    vs = [v for v in self.reason().violations if v.code == "narcissism"]
+    self.assertEqual([(v.subject.name, v.args) for v in vs], [("alice", ("not", "strange"))])
+
+  def test0922compileErrorSaid(self):
+    'A native query clingo can\'t read: an error saying so (and where), not a bare "parsing failed".'
+    with self.assertRaises(RuntimeError) as cm:
+      ClingoReasoner(self.m).query("ans(X) :- not not not.")
+    self.assertIn("couldn't be compiled", str(cm.exception))
+    self.assertIn("syntax error", str(cm.exception))
+
+  def test0923intsAndFloats(self):
+    'A number in a constraint is the same value whether it\'s written 2 or 2.0: it matches an int or a float attribute.'
+    from util.attribute import Attribute, Restriction
+    alice, bob = self.p["alice"], self.p["bob"]
+    alice.setAttr("height", Attribute(2.0, float, Restriction.fromstring("VAR")))
+    bob.setAttr("age", Attribute(30, int, Restriction.fromstring("VAR")))
+    def matches(constraints):
+      X = self.var("?x"); X["constraints"] = constraints
+      c = self.constraint(f"c {constraints}", [X], report="?x")
+      return {v.subject.name for v in self.reason().violations if v.code == c.name}
+    self.assertEqual(matches("height: 2"), {"alice"})
+    self.assertEqual(matches("height: 2.0"), {"alice"})
+    self.assertEqual(matches("age: 30"), {"bob"})
+    self.assertEqual(matches("age: 30.0"), {"bob"})
+    self.assertEqual(matches("height: 2.5"), set())
 
   def test0925negatedConstraints(self):
     '"not" constraints: a negated test (negation as failure: no value at all passes too); not allowed in a consequent.'
