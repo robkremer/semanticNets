@@ -156,7 +156,12 @@ installed: this time, or from now on.
     python3.14 -m pip install janus-swi
 
   (pip builds it against the ``swipl`` it finds on the ``PATH``, so open a new
-  terminal after installing SWI-Prolog). If there's no Python
+  terminal after installing SWI-Prolog. The Mac app's ``swipl`` isn't on the
+  ``PATH``: put it there for pip with ``PATH=/Applications/SWI-Prolog.app/Contents/MacOS:$PATH
+  python3.14 -m pip install janus-swi``.) The program finds SWI-Prolog's files
+  itself when it reasons, even when ``swipl`` isn't on the ``PATH``; if it
+  can't, set the ``SWI_HOME_DIR`` environment variable to the folder that
+  ``swipl --dump-runtime-variables`` gives as ``PLBASE``. If there's no Python
   3.14 on the computer yet, install one from https://www.python.org first. The app looks for that
   Python where its installers put it (python.org's, Homebrew's, ...) and on
   the ``PATH``; if it's somewhere else (eg: a virtual environment), give its
