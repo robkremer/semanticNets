@@ -111,7 +111,9 @@ class FilesMixin(ViewBase):
     try:
       db.save(saveas=filename, overwrite=True) # (the dialog has asked about replacing an existing file)
     except Exception as ex:
-      messagebox.showerror("Save a copy", f"The {what} couldn't be saved as\n{filename}:\n\n{ex}", parent=self.window)
+      explain = getattr(self.window._root(), "explainPrivacy", None) # (the Application: if the Mac's privacy protection stopped it, which app to allow)
+      if not (explain and explain(ex, f'The {what} couldn\'t be saved as "{filename}"', "Then save it again.", path=filename, again=True)):
+        messagebox.showerror("Save a copy", f"The {what} couldn't be saved as\n{filename}:\n\n{ex}", parent=self.window)
       return
     logger.warning(f'Saved a copy of the {what} as "{filename}". This window is still on the original, '
                    f'"{current}", and further changes go there.')

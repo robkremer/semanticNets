@@ -81,7 +81,8 @@ Open **Semantic Nets** as you would any app, or double-click a model
   isn't allowed to (in *System Settings | Privacy & Security | Files &
   Folders*) -- or, when it's run from its source, the app that starts it isn't
   (eg: Terminal, or Eclipse) -- it says which app to allow, and offers to open
-  those settings.
+  those settings. (It does the same for any model or view there, or in
+  Desktop or Downloads, that it can't open or save.)
 - **After that**, it reopens the windows that were open when you last quit, at
   the same size and place -- as they were last saved: changes you chose not to
   save, and the undo history, are gone -- and the model directory, if it was
