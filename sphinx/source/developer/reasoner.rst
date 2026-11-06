@@ -412,7 +412,12 @@ The Prolog engine
   through its Python interface, janus (``pip install janus-swi``, imported as
   ``janus_swi``; pip builds it against the ``swipl`` it finds, so SWI-Prolog
   comes first). The apps don't include either: they use them from the
-  computer (see above), as CLIPS.
+  computer (see above), as CLIPS. Before importing janus, the module tells
+  SWI-Prolog where its home is (SWI_HOME_DIR: see
+  :py:mod:`pythonUtils:util.swiProlog`), from the library folder janus was
+  built against, or else a ``swipl`` program's: started from an IDE or the
+  Finder, with no ``swipl`` on the ``PATH``, SWI-Prolog otherwise may not find
+  it, and stops the whole program ("FATAL: could not find SWI-Prolog home").
 
 Its rule base, ``prologReasoner.pl``, is ``clingoReasoner.lp`` ported rule
 for rule, and ``_rulesProgram()`` compiles the user's rules as clingo's does

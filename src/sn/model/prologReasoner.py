@@ -51,38 +51,12 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import importlib.resources
 from importlib.resources.abc import Traversable
-import os
 import re
-import shutil
-import subprocess
-import sys
 import threading
 from typing import Any, Callable, Iterable, override
 
-def _swiHome() -> None:
-  '''
-  On Windows, tell SWI-Prolog where it's installed (the SWI_HOME_DIR
-  environment variable), from the swipl on the PATH -- the one whose DLL janus
-  loads -- unless it's set already. SWI-Prolog otherwise looks in the
-  registry, where an installer run without its dialogs (eg: by Chocolatey)
-  may not have put it: then loading janus stops the program ("Could not find
-  system resources").
-  '''
-  if sys.platform != "win32" or os.environ.get("SWI_HOME_DIR"):
-    return
-  exe = shutil.which("swipl")
-  if exe is None:
-    return
-  try:
-    out = subprocess.run([exe, "--dump-runtime-variables"], capture_output=True, text=True, timeout=60,
-                         creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0)).stdout
-  except (OSError, subprocess.SubprocessError):
-    return
-  home = re.search(r'^PLBASE="(.*)";\s*$', out, re.M)
-  if home is not None and Path(home.group(1)).is_dir():
-    os.environ["SWI_HOME_DIR"] = home.group(1)
-
-_swiHome()
+from util.swiProlog import setHome
+setHome() # (where SWI-Prolog is, before janus loads it: otherwise, eg, started from an IDE or the Finder, it may not find its home -- and stop the program)
 try:
   import janus_swi as janus # type: ignore[import-untyped]
 except ModuleNotFoundError as _ex: # (an optional engine: say how to get it -- see Reasoner.create())
