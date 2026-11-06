@@ -971,7 +971,8 @@ class Application(tk.Tk):
       messagebox.showerror(sn.NAME, f"{said}: {ex.strerror or ex}.\n\nYou can try again with {menu}.", parent=self._dialogParent())
 
   def examplesBlocked(self, target:str) -> bool:
-    """:returns: Whether the Mac's privacy protection won't let the example
+    """
+    :returns: Whether the Mac's privacy protection won't let the example
       models be copied to *target* (see *installExamples()*) -- having said
       so (see *cantCopyExamples()*) -- found by trying to make a file there.
     """

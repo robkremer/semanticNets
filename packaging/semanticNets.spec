@@ -99,7 +99,7 @@ a = Analysis(
   datas=datas,
   hiddenimports=hiddenimports,
   excludes=["matplotlib", "numpy", "mypyc", "util.rtValuesDialog", # (not used: keep the app small)
-            "clips", "janus_swi"], # (engines the app uses from a Python on the computer, even if the build venv has them: see sn.model.reasoner.ENGINES)
+            "clips", "janus_swi"] # (engines the app uses from a Python on the computer, even if the build venv has them: see sn.model.reasoner.ENGINES)
     + (["PIL", "pypdfium2"] if MAC else []), # (pictures are made with sips there, not these -- see util.platformSupport.pdfToPNG() -- and Pillow, if it's in .venv-build, isn't universal)
   noarchive=False,
 )
