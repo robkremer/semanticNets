@@ -321,6 +321,9 @@ class Application(tk.Tk):
     engine = defaultEngine()
     applyEditAttrsBox(self, snPrefs, title="Semantic Nets Preferences", hideColumns=("type", "qualifiers", "note"))
     self._fillRecentMenu() # (in case "gui/recentFiles" changed)
+    if defaultEngine() != engine:
+      from sn.view.graphics.reasoningToolbar import refreshEngines
+      refreshEngines() # (the dialog sets the settings directly: their callbacks aren't called)
     if defaultEngine() != engine and not engineInstalled(defaultEngine()): # (just chosen: say how to install it)
       from sn.view.graphics.viewReasoning import showEngineMissing
       showEngineMissing(self.focus_get() or self, defaultEngine(), chosen=True)

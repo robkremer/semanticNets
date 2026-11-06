@@ -253,6 +253,40 @@ class Test(unittest.TestCase):
     finally:
       d.destroy()
 
+  def test0312engineBox(self):
+    'The reasoning toolbar says which engine reasoning uses, and its menu chooses another -- but not one that isn\'t installed.'
+    from sn.model import reasoner
+    from sn.view.graphics import viewReasoning
+    v = self.view
+    v.showReasoningToolbar(True)
+    bar = v._reasoningToolbar
+    original = reasoner.defaultEngine()
+    self.assertEqual(bar.engineLabel.cget("text"), f"{original} ▾")
+    with mock.patch.object(bar.engineMenu, "tk_popup") as popped:
+      bar.showEngineMenu()
+    menu = bar.engineMenu
+    labels = [menu.entrycget(i, "label") for i in range(menu.index("end") + 1) if menu.type(i) != "separator"] # type: ignore[operator]
+    self.assertIn("clingo", labels)
+    self.assertEqual(len([l for l in labels if l.split()[0] in reasoner.ENGINES]), len(reasoner.ENGINES))
+    self.assertIn("How to install an engine...", labels)
+    self.assertEqual(labels[popped.call_args[0][2]].split()[0], original) # (the current one is over the box)
+    try:
+      with mock.patch("sn.model.reasoner.engineInstalled", return_value=False), \
+           mock.patch.object(viewReasoning, "showEngineMissing") as shown:
+        bar.chooseEngine("prolog")
+      shown.assert_called_once()
+      self.assertEqual(shown.call_args[0][1], "prolog")
+      self.assertEqual(reasoner.defaultEngine(), original) # (not chosen)
+      other = "nemo" if original != "nemo" else "clingo"
+      with mock.patch("sn.model.reasoner.engineInstalled", return_value=True):
+        bar.chooseEngine(other)
+      self.assertEqual(reasoner.defaultEngine(), other)
+      self.assertEqual(bar.engineLabel.cget("text"), f"{other} ▾") # (the setting's callback shows it)
+      reasoner.setDefaultEngine(original) # (eg: from the dialog's "Use ... from now on")
+      self.assertEqual(bar.engineLabel.cget("text"), f"{original} ▾")
+    finally:
+      reasoner.setDefaultEngine(original)
+
   def test0315engineMissingTyped(self):
     'A typed command that needs a missing engine says so in a line, and the dialog links to how to install it.'
     from sn.model.reasoner import EngineMissing
