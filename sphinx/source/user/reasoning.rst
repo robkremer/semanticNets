@@ -144,7 +144,7 @@ installed: this time, or from now on.
     python3.14 -m pip install clipspy
 
   (on Windows, ``py -3.14 -m pip install clipspy``). For Prolog, first install
-  `SWI-Prolog <https://www.swi-prolog.org/download/stable>`_ itself (9.1.12 or
+  `SWI-Prolog <https://www.swi-prolog.org/download/stable>`__ itself (9.1.12 or
   later: on a Mac, its app, or ``brew install swi-prolog``; on Windows, its
   installer, letting it add ``swipl`` to the ``PATH``; on Linux, its PPA or
   your distribution's package), then its Python interface::
