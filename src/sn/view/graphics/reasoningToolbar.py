@@ -20,7 +20,10 @@
 # SOFTWARE.                                                                     #
 #################################################################################
 '''
-The reasoning toolbar: a strip across the bottom of a view's window with
+The reasoning toolbar: a strip across the bottom of a view's window. At its
+left, a box says which reasoner engine reasoning uses (the "reasoner/engine"
+setting: see *sn.model.reasoner.defaultEngine()*); clicking it gives a menu of
+the engines, to choose another (see *ReasoningToolbar.chooseEngine()*). Then
 small icon buttons (each with a tooltip) to *Reason* (run the reasoner over
 the view's model: see *sn.model.reasoner.reason()*), *Reason silently* (the
 same, without adding what it infers to the views: see
@@ -42,12 +45,17 @@ Created on Oct 5, 2026
 from __future__ import annotations
 import tkinter as tk
 from tkinter import ttk
-from typing import TYPE_CHECKING
+import weakref
+from functools import partial
+from typing import TYPE_CHECKING, Any
 from util.tooltip import CreateToolTip
+import sn
 if TYPE_CHECKING:
   from sn.view.graphics.sngView import SNGView
 
 TIPS:dict[str, str] = {
+  "engine": "The reasoner engine that Reason, queries and \"ask reasoner\" use (the reasoner/engine setting). "
+            "Click to choose another.",
   "reason": "Reason: run the reasoner over the model. What it infers is shown (faded) in every view of the model, "
             "and its report goes to the terminal. It isn't redone as you edit: click again after changes.",
   "reasonSilently": "Reason silently: run the reasoner, but don't add what it infers to the views (only the problems "
@@ -63,6 +71,25 @@ TIPS:dict[str, str] = {
   "zoom": "The view's zoom (View | Zoom).",
 }
 "Tooltips for the toolbar's controls."
+
+_toolbars:weakref.WeakSet[ReasoningToolbar] = weakref.WeakSet()
+"Every view's reasoning toolbar: see *refreshEngines()*."
+
+def refreshEngines(*_args:Any) -> None:
+  '''
+  Show the reasoner engine now chosen (see *sn.model.reasoner.defaultEngine()*)
+  in every view's reasoning toolbar: called when the "reasoner/engine" setting
+  changes (as a callback of *sn.snPrefs*, and by *guiApp.Application.openSettings()*,
+  whose changes don't call those).
+  '''
+  for bar in list(_toolbars):
+    try:
+      if bar.winfo_exists():
+        bar.refreshEngine()
+    except tk.TclError: # (its window's gone)
+      pass
+
+sn.snPrefs.addCallback("reasoner/engine", refreshEngines)
 
 class ReasoningToolbar(ttk.Frame):
   '''
@@ -83,6 +110,17 @@ class ReasoningToolbar(ttk.Frame):
     super().__init__(master, padding=(self.PADDING, 2))
     self.view = view
     tip = lambda widget, text: CreateToolTip(widget, text, wrapLength=300)
+    background = ttk.Style().lookup("TFrame", "background") or self.winfo_toplevel().cget("background")
+    self.engineBox = tk.Frame(self, background=background, bd=0, highlightthickness=1,
+                              highlightbackground="gray60", highlightcolor="gray60") # (its border: a small box)
+    self.engineBox.pack(side=tk.LEFT, padx=(0, 8))
+    self.engineLabel = tk.Label(self.engineBox, background=background, foreground="gray20", padx=4, pady=0, bd=0, cursor="hand2")
+    self.engineLabel.pack()
+    for widget in (self.engineBox, self.engineLabel):
+      widget.bind("<Button-1>", lambda _event: self.showEngineMenu())
+    tip(self.engineBox, TIPS["engine"])
+    self.engineMenu = tk.Menu(self, tearoff=False)
+    self._engineVar = tk.StringVar(self)
     def button(icon:str, command, tipKey:str) -> ttk.Button:
       b = ttk.Button(self, text=icon, width=self.ICON_WIDTH, command=command, style="Toolbutton") # (compact: not a full-size push button)
       b.pack(side=tk.LEFT, padx=(0, 2))
@@ -107,6 +145,7 @@ class ReasoningToolbar(ttk.Frame):
     self.zoomLabel = ttk.Label(self, foreground="gray35", width=5, anchor=tk.E) # (wide enough for "800%": doesn't jiggle as it changes)
     self.zoomLabel.pack(side=tk.RIGHT, padx=(10, 4))
     tip(self.zoomLabel, TIPS["zoom"])
+    _toolbars.add(self)
     self.refresh()
 
   def refresh(self) -> None:
@@ -117,8 +156,59 @@ class ReasoningToolbar(ttk.Frame):
     summary = self.view.reasoningSummary()
     self.status.configure(text=summary or "not reasoned")
     self.retractButton.state(["!disabled"] if summary else ["disabled"])
+    self.refreshEngine()
     self.refreshLock()
     self.refreshZoom()
+
+  def refreshEngine(self) -> None:
+    '''
+    Show the reasoner engine that reasoning uses (see *sn.model.reasoner.defaultEngine()*).
+    '''
+    from sn.model.reasoner import defaultEngine
+    self.engineLabel.configure(text=f"{defaultEngine()} \u25be") # (a small down-pointing triangle: it's a menu)
+
+  def engineMenuItems(self) -> list[tuple[str, str]]:
+    '''
+    :returns: The engine menu's engines (see *showEngineMenu()*): each one's
+      name and label, which says if it isn't installed.
+    '''
+    from sn.model.reasoner import ENGINES, Reasoner, engineInstalled
+    return [(e, e if engineInstalled(e) else f"{e} (not installed)") for e in dict.fromkeys([*ENGINES, *Reasoner.engines])]
+
+  def showEngineMenu(self) -> None:
+    '''
+    The engine box is clicked: show a menu of the reasoner engines, the one
+    used now checked, to choose another (see *chooseEngine()*) -- and how to
+    install one, in the User Guide.
+    '''
+    from sn.model.reasoner import INSTALL_HELP, defaultEngine
+    from sn.view.graphics import guiApp
+    menu = self.engineMenu
+    menu.delete(0, tk.END)
+    current = defaultEngine()
+    self._engineVar.set(current)
+    items = self.engineMenuItems()
+    for engine, label in items:
+      menu.add_radiobutton(label=label, variable=self._engineVar, value=engine, command=partial(self.chooseEngine, engine))
+    menu.add_separator()
+    menu.add_command(label="How to install an engine...", command=lambda: guiApp.showHelp(INSTALL_HELP))
+    at = next((i for i, (engine, _label) in enumerate(items) if engine == current), 0)
+    menu.tk_popup(self.engineBox.winfo_rootx(), self.engineBox.winfo_rooty(), at) # (the current one over the box, as a pop-up menu does)
+
+  def chooseEngine(self, engine:str) -> None:
+    '''
+    Reason with *engine* from now on: the "reasoner/engine" setting (see
+    *sn.model.reasoner.setDefaultEngine()*), which every view's toolbar shows. If it
+    isn't installed, it's not chosen: a dialog says how to install it (see
+    *sn.view.graphics.viewReasoning.showEngineMissing()*).
+    '''
+    from sn.model.reasoner import defaultEngine, engineInstalled, setDefaultEngine
+    if not engineInstalled(engine):
+      from sn.view.graphics.viewReasoning import showEngineMissing
+      self._engineVar.set(defaultEngine())
+      showEngineMissing(self, engine)
+      return
+    setDefaultEngine(engine) # (whose callback shows it: see refreshEngines())
 
   def refreshLock(self) -> None:
     '''

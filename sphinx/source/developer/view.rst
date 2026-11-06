@@ -236,7 +236,10 @@ in their own look but faded (``VObject.isInferred()``; the vis cache fades
 their colours), relations with dashed lines (dotted if inherited). They take
 part in layouts, but aren't saved with the view, and don't make it dirty. The
 reasoning toolbar (``reasoningToolbar.py``) at the bottom of the window
-reasons and retracts, and says what the last reason found.
+shows (and chooses) the reasoner engine, reasons and retracts, and says what
+the last reason found. The engine box follows the ``reasoner/engine`` setting
+through a *snPrefs* callback (``refreshEngines()``); the Settings dialog sets
+attributes directly, without callbacks, so ``openSettings()`` calls it too.
 
 Interaction
 -----------

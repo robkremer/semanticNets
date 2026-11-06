@@ -20,8 +20,10 @@ model; **Retract** (↺) takes what it inferred back out again. **Reason
 silently** (▷, or **reasoning | reason silently**) reasons too, but doesn't
 add what it infers to the views -- only the problems are marked, and only a
 summary is printed: eg: so that queries find what the rules conclude without
-cluttering the canvas. (Hover over a button to see what it does.) The toolbar also
-says what the last reason found -- how many relations and new objects it
+cluttering the canvas. (Hover over a button to see what it does.) At the
+toolbar's left, a small box says which reasoner engine is used (see `Engines
+and explanations`_): click it to choose another, from a menu of the engines.
+The toolbar also says what the last reason found -- how many relations and new objects it
 inferred, and how many problems -- and, at its right, whether the model can
 be edited: a pencil, crossed out in red if it can't be here. Click the pencil
 (or choose **Edit | Lock view**) to lock the view, so it can't change the
@@ -96,8 +98,10 @@ The reasoner has four engines, which reach the same conclusions:
 **clingo** (the default), **Nemo**, **CLIPS** and **Prolog** (SWI-Prolog). The
 apps include clingo and Nemo; CLIPS and Prolog are installed separately (see
 `Installing an engine`_, which also covers the ``.pyz`` and the source). The ``reasoner/engine`` setting
-(**Settings...**, in the application menu) says which one **reason**, queries
-and ``ask reasoner`` use; ``reason --engine nemo`` picks one for a single run.
+(**Settings...**, in the application menu, or the box at the left of the
+reasoning toolbar) says which one **reason**, queries and ``ask reasoner``
+use. (In the box's menu, an engine that isn't installed isn't chosen: it says
+how to install it instead.) ``reason --engine nemo`` picks one for a single run.
 ``ask reasoner`` takes a question in the engine's own language: for clingo,
 ``'ans(X) :- holds(T,F,X), name(T,"owns"), name(F,"fred").'``; for Nemo,
 ``'ans(?X) :- holds(?T,?F,?X), name(?T,"owns"), name(?F,"fred").'``; for
