@@ -68,6 +68,7 @@ from util.utils import afterMenu, showExceptionDialog, fixURL, urlExists, displa
 from util.platformSupport import MAC, shortcut, openFile, setUpLook, setDPIAware, documentsFolder,\
   privacyError, privacyHelp, openPrivacySettings
 from util.singleInstance import SingleInstance
+from util.choiceDialog import askChoice
 from util.terminal import terminalRegistry, installGlobalIORouting,\
   TerminalWidget, TerminalRegistry
 from sn.model.model import Model
@@ -971,7 +972,8 @@ class Application(tk.Tk):
     said = f'The example models couldn\'t be copied to "{target}"'
     menu = "Help | Install Example Models"
     if not self.explainPrivacy(ex, said, f"Then choose {menu} to install them.", path=target, again=True):
-      messagebox.showerror(sn.NAME, f"{said}: {ex.strerror or ex}.\n\nYou can try again with {menu}.", parent=self._dialogParent())
+      askChoice(self._dialogParent(), sn.NAME, f"{said}: {ex.strerror or ex}.\n\nYou can try again with {menu}.", ["OK"], "OK", "OK",
+                icon="error") # (not a messagebox: at start-up, with no window on screen, that can be put half off the screen)
 
   PRIVACY_QUIET = 60.0
   "For how long (seconds) *explainPrivacy()* doesn't say the same folder's blocked again (eg: for each window reopened at start-up)."
@@ -1003,8 +1005,9 @@ class Application(tk.Tk):
       logger.error(f"{said}: macOS's privacy protection won't let it be used (see the message about {folder}).")
       return True
     self._privacyExplained[folder] = now
-    if messagebox.askyesno(sn.NAME, f"{said}.\n\n{privacyHelp(path)}{' ' + then if then else ''}"
-                           "\n\nOpen the Privacy & Security settings now?", icon=messagebox.WARNING, parent=self._dialogParent()):
+    settings, later = "Open Privacy Settings", "Not Now"
+    if askChoice(self._dialogParent(), sn.NAME, f"{said}.\n\n{privacyHelp(path)}{' ' + then if then else ''}", [settings, later],
+                 settings, later, icon="warning") == settings: # (not a messagebox: at start-up, with no window on screen, that can be put half off the screen)
       openPrivacySettings()
     return True
 

@@ -209,7 +209,7 @@ class TestAppWindows(unittest.TestCase):
     self.assertIn(target.as_uri(), copy.read_text(encoding="utf-8"))
 
   def examples(self, fail:OSError|None, replace:bool=False, answer:bool=True):
-    'Install the examples into a folder of the test\'s, with copying them failing with *fail*: (what was returned, the messagebox mock, the settings opener mock).'
+    'Install the examples into a folder of the test\'s, with copying them failing with *fail*: (what was returned, the askChoice mock, the settings opener mock).'
     from sn.view.graphics.guiApp import Application
     saved = sn.snPrefs.get(Application.EXAMPLES_PREF, False)
     self.addCleanup(lambda: sn.snPrefs.__setitem__(Application.EXAMPLES_PREF, saved))
@@ -219,8 +219,7 @@ class TestAppWindows(unittest.TestCase):
          mock.patch("util.platformSupport.MAC", True), \
          mock.patch("util.platformSupport.responsibleApp", return_value="Eclipse"), \
          mock.patch("sn.view.graphics.guiApp.openPrivacySettings") as opener, \
-         mock.patch("sn.view.graphics.guiApp.messagebox") as box:
-      box.askyesno.return_value = answer
+         mock.patch("sn.view.graphics.guiApp.askChoice", return_value="Open Privacy Settings" if answer else "Not Now") as box:
       with self.assertLogs(level="ERROR"):
         ret = self.app.installExamples(replace=replace)
     return ret, box, opener
@@ -232,7 +231,7 @@ class TestAppWindows(unittest.TestCase):
     blocked = PermissionError(errno.EPERM, "Operation not permitted", str(self.folder / "ex" / "animals.snm"))
     ret, box, opener = self.examples(blocked)
     self.assertFalse(ret)
-    message = box.askyesno.call_args[0][1]
+    message = box.call_args[0][2]
     self.assertIn("isn't letting Eclipse use", message)
     self.assertIn("Help | Install Example Models", message)
     opener.assert_called_once()
@@ -246,8 +245,8 @@ class TestAppWindows(unittest.TestCase):
     import errno
     ret, box, opener = self.examples(OSError(errno.ENOSPC, "No space left on device"))
     self.assertFalse(ret)
-    box.askyesno.assert_not_called()
-    self.assertIn("No space left on device", box.showerror.call_args[0][1])
+    self.assertEqual(box.call_args[0][3], ["OK"]) # (no settings to open)
+    self.assertIn("No space left on device", box.call_args[0][2])
     opener.assert_not_called()
 
   def test0830installExamplesChecksFirst(self):
@@ -260,12 +259,12 @@ class TestAppWindows(unittest.TestCase):
          mock.patch("util.platformSupport.responsibleApp", return_value="Eclipse"), \
          mock.patch("sn.view.graphics.guiApp.openPrivacySettings"), \
          mock.patch.object(self.app, "installExamples") as install, \
+         mock.patch("sn.view.graphics.guiApp.askChoice", return_value="Not Now") as asked, \
          mock.patch("sn.view.graphics.guiApp.messagebox") as box:
-      box.askyesno.return_value = False
       self.app.onInstallExamples()
     box.askokcancel.assert_not_called()
     install.assert_not_called()
-    self.assertIn("isn't letting Eclipse use", box.askyesno.call_args[0][1])
+    self.assertIn("isn't letting Eclipse use", asked.call_args[0][2])
     with mock.patch.object(self.app, "EXAMPLES_FOLDER", str(target)), \
          mock.patch.object(self.app, "installExamples") as install, \
          mock.patch("sn.view.graphics.guiApp.messagebox") as box:
@@ -273,13 +272,13 @@ class TestAppWindows(unittest.TestCase):
     install.assert_called_once_with(replace=True)
 
   def privacy(self):
-    'The Mac (as far as the privacy protection goes), started from Eclipse; messages mocked: (the messagebox mock, the settings opener mock).'
+    'The Mac (as far as the privacy protection goes), started from Eclipse; messages mocked: (the askChoice mock, the settings opener mock).'
     self.app._privacyExplained.clear()
     for patch in (mock.patch("util.platformSupport.MAC", True),
                   mock.patch("util.platformSupport.responsibleApp", return_value="Eclipse")):
       patch.start()
       self.addCleanup(patch.stop)
-    opener, box = mock.patch("sn.view.graphics.guiApp.openPrivacySettings"), mock.patch("sn.view.graphics.guiApp.messagebox")
+    opener, box = mock.patch("sn.view.graphics.guiApp.openPrivacySettings"), mock.patch("sn.view.graphics.guiApp.askChoice")
     self.addCleanup(opener.stop)
     self.addCleanup(box.stop)
     return box.start(), opener.start()
@@ -291,7 +290,7 @@ class TestAppWindows(unittest.TestCase):
     sn.copyExamples(str(self.folder), ["family.snm", "family.snv"])
     view = self.folder / "family.snv"
     box, opener = self.privacy()
-    box.askyesno.return_value = True
+    box.return_value = "Open Privacy Settings"
     blocked = PermissionError(errno.EPERM, "Operation not permitted", str(view))
     with mock.patch.object(SerializationStrategy, "peekTypex", side_effect=blocked), \
          mock.patch("sn.view.graphics.guiApp.showExceptionDialog") as traceback, \
@@ -299,8 +298,8 @@ class TestAppWindows(unittest.TestCase):
       self.assertIsNone(self.app.openWindow(view.as_uri()))
       self.assertIsNone(self.app.openWindow(view.as_uri())) # (just said: only logged)
     traceback.assert_not_called()
-    box.askyesno.assert_called_once()
-    message = box.askyesno.call_args[0][1]
+    box.assert_called_once()
+    message = box.call_args[0][2]
     self.assertIn('family.snv" couldn\'t be opened', message)
     self.assertIn("isn't letting Eclipse use", message)
     opener.assert_called_once()
@@ -314,7 +313,7 @@ class TestAppWindows(unittest.TestCase):
     'A menu command (eg: File | Save view) the privacy protection stopped: which app to allow, as well as the usual report.'
     import errno
     box, opener = self.privacy()
-    box.askyesno.return_value = False
+    box.return_value = "Not Now"
     path = str(self.folder / "family.snv")
     try:
       try:
@@ -324,12 +323,12 @@ class TestAppWindows(unittest.TestCase):
     except ValueError as ex:
       with mock.patch("sys.stderr"):
         self.app.report_callback_exception(type(ex), ex, ex.__traceback__)
-    self.assertIn('family.snv" couldn\'t be read or written', box.askyesno.call_args[0][1])
+    self.assertIn('family.snv" couldn\'t be read or written', box.call_args[0][2])
     opener.assert_not_called()
     box.reset_mock()
     with mock.patch("sys.stderr"):
       self.app.report_callback_exception(KeyError, KeyError("x"), None)
-    box.askyesno.assert_not_called()
+    box.assert_not_called()
 
 
 if __name__ == "__main__":
