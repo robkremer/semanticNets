@@ -97,22 +97,33 @@ def copyExamples(target:str, names:list[str]|None=None) -> list[str]:
   Copy the example models that come with the program (see *exampleNames()*)
   into the folder *target* (made if need be), and make each copy refer to where
   it now is -- they're stored as being in *EXAMPLES_PLACEHOLDER* -- so that it
-  isn't taken to have been moved when it's opened.
+  isn't taken to have been moved when it's opened. Copies already there that
+  have been locked, or made read-only, are unlocked and replaced.
 
   :param target: The folder to copy them to.
   :param names: The files to copy (eg: ["family.snm", "family.snv"]); by default, all of them.
   :returns: The paths of the copies.
+  :raises OSError: If one can't be written: eg, a *PermissionError* if the
+    Mac's privacy protection won't let the program use the folder (see
+    *util.platformSupport.privacyBlocked()*).
   '''
   import importlib.resources
   from pathlib import Path
+  from util.platformSupport import makeWritable
   folder = importlib.resources.files("sn").joinpath("examples")
   os.makedirs(target, exist_ok=True)
   ret = []
   for f in names if names is not None else exampleNames():
-    text = folder.joinpath(f).read_text(encoding="utf-8")
+    text = folder.joinpath(f).read_text(encoding="utf-8").replace(EXAMPLES_PLACEHOLDER, Path(target).as_uri())
     path = os.path.join(target, f)
-    with open(path, "w", encoding="utf-8") as fd:
-      fd.write(text.replace(EXAMPLES_PLACEHOLDER, Path(target).as_uri()))
+    try:
+      Path(path).write_text(text, encoding="utf-8")
+    except PermissionError:
+      unlocked = makeWritable(path)
+      unlocked = makeWritable(target) or unlocked # (both: either may be what's locked)
+      if not unlocked:
+        raise
+      Path(path).write_text(text, encoding="utf-8")
     ret.append(path)
   return ret
 
@@ -167,10 +178,18 @@ PREFS:dict[str, tuple[Any, Any, str]] = {
     "Show the base rules (the meaning of symmetric, transitive, ...: see sn.model.reasoner.BASE_RULES) in the "
     "reasoner's results: their objects as data, and what they conclude as rule conclusions rather than plain "
     "inferences. For debugging the base rules; best left off."),
-  "reasoner/engine": ("choices[clingo,nemo]", "clingo",
-    "The reasoner engine that \"reason\" and queries use: clingo (answer set programming), or nemo (Datalog, "
-    "which can also say why a conclusion holds: the \"explain\" command). Nemo is optional: pip install nemo-python. "
-    "See sn.model.reasoner.Reasoner.create()."),
+  "reasoner/engine": ("choices[clingo,nemo,clips,prolog]", "clingo",
+    "The reasoner engine that \"reason\" and queries use: clingo (answer set programming), nemo (Datalog, "
+    "which can also say why a conclusion holds: the \"explain\" command), clips (a production rule system) "
+    "or prolog (SWI-Prolog, with tabling). "
+    "Nemo, CLIPS and Prolog are optional: if one isn't installed, the program says how to install it (\"Installing an "
+    "engine\", in the User Guide's Reasoning page). "
+    "See sn.model.reasoner.ENGINES."),
+  "reasoner/python": (str, "",
+    "For the app (which has its own Python): a Python on this computer, of the same version as the app's, whose "
+    "packages it may use -- its executable, eg /usr/local/bin/python3.14 -- for a reasoner engine the app doesn't "
+    "include, installed for that Python. Blank: it looks for one in the usual places. "
+    "See util.localPython and \"Installing an engine\", in the User Guide's Reasoning page."),
   "text/wrap": (bool, False,
     "Whether long lines wrap in the terminal pane (else it scrolls sideways)."),
   "text/backgroundColor": ("color", "white",
@@ -285,6 +304,8 @@ def initPrefs(prefs:Prefs) -> None:
   Put each of *PREFS* in *prefs*: with its default, if it isn't there; and its
   note, unless the user has written their own. (Notes aren't saved -- only the
   user's: see *Attribute.userNote* -- so adding them doesn't change the file.)
+  A preference whose value is one of a list ("choices[...]") gets the list
+  as it is now: eg, the reasoner engines, with one added since it was saved.
 
   :param prefs: The preferences.
   '''
@@ -292,7 +313,14 @@ def initPrefs(prefs:Prefs) -> None:
     attr = dict.get(prefs, key) # (the stored Attribute itself: getAttr() gives a copy)
     if attr is None:
       prefs.setAttr(key, Attribute(default, typ, VAR_DEFAULTED, note))
-    elif not (getattr(attr, "userNote", False) and attr.note): # (an empty "user's" note: from a file written before notes were left out of it)
+      continue
+    if isinstance(typ, str) and typ.startswith("choices[") and attr.type != typ:
+      try:
+        attr.type = typ
+      except TypeError: # (its value isn't one of them any more)
+        prefs.setAttr(key, Attribute(default, typ, VAR_DEFAULTED, note))
+        continue
+    if not (getattr(attr, "userNote", False) and attr.note): # (an empty "user's" note: from a file written before notes were left out of it)
       attr.note = note
       attr.userNote = False
 

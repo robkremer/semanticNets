@@ -1,0 +1,4 @@
+# The CLIPS reasoner engine (sn.model.clipsReasoner: "reasoner/engine" = clips): optional everywhere.
+# The apps don't include it: they use it installed for a Python 3.14 on the computer (see
+# util.localPython, and "Installing an engine" in the User Guide). Pinned: the version it's tested with.
+clipspy==1.0.6

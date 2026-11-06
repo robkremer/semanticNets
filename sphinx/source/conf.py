@@ -133,6 +133,10 @@ autodoc_typehints = "description"
 description (docstrings don't repeat them: see developer/conventions.rst).
 Every parameter's type is shown, documented or not."""
 
+autodoc_mock_imports = ["nmo_python", "clips", "janus_swi"]
+"""The optional reasoner engines' packages (see sn.model.reasoner.ENGINES):
+their modules' pages are made whether they're installed or not."""
+
 autodoc_default_options = {
     'members': True,
     'member-order': 'bysource',

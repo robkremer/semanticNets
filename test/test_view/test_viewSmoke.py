@@ -194,17 +194,123 @@ class Test(unittest.TestCase):
     finally:
       menu.destroy()
     self.assertIn("mark as asserted", labels)
+    self.assertIn("explain (why it holds)", labels) # (whether or not an engine that explains is installed)
     if importlib.util.find_spec("nmo_python") is not None: # (the optional Nemo engine: it explains)
-      self.assertIn("explain (why it holds)", labels)
       with mock.patch("builtins.print") as printed:
         rel.explainInferred(rel.modelObject)
       self.assertTrue(printed.call_args and "doesn't hold" not in str(printed.call_args[0][0]), printed.call_args)
+    from sn.model.reasoner import EngineMissing
+    with mock.patch.object(v.context, "explain", side_effect=EngineMissing("nemo")), \
+         mock.patch("sn.view.graphics.viewReasoning.showEngineMissing") as shown:
+      rel.explainInferred(rel.modelObject) # (no engine that explains: a dialog says how to install one)
+    shown.assert_called_once()
+    self.assertEqual(shown.call_args[0][1].engine, "nemo")
     v.clearReasoning()
     self.pump()
     self.assertFalse([o for o in v.values() if o is not None and o._isConnected() and o.isInferred()])
     v.reasonSilently()
     self.pump()
     self.assertIsNotNone(v.reasoning)
+
+  def test0310engineMissing(self):
+    'A missing reasoner engine is said in a dialog, with a link to how to install it, and to the installed ones.'
+    from sn.model.reasoner import EngineMissing, INSTALL_HELP
+    from sn.view.graphics import viewReasoning
+    v = self.view
+    with mock.patch("sn.model.reasoner.reason", side_effect=EngineMissing("nemo")), \
+         mock.patch.object(viewReasoning, "showEngineMissing") as shown:
+      v.reason("nemo")
+    shown.assert_called_once()
+    instead = shown.call_args[1]["instead"]
+    with mock.patch.object(type(v), "reason") as reasoned:
+      instead("clingo") # (its "Use clingo this time")
+    reasoned.assert_called_once_with("clingo", silent=False)
+
+    with mock.patch("sn.model.reasoner.defaultEngine", return_value="nemo"), \
+         mock.patch("sn.model.reasoner.installedEngines", return_value=["clingo"]), \
+         mock.patch("sn.model.reasoner.setDefaultEngine") as chose:
+      d = viewReasoning.showEngineMissing(v.canvas, EngineMissing("nemo"), instead=lambda e: None)
+    try:
+      text = d.text.get("1.0", "end")
+      self.assertIn('The "nemo" reasoner engine isn\'t installed.', text)
+      self.assertIn("How to install it", text)
+      self.assertIn("Use clingo this time", text)
+      self.assertIn("Use clingo from now on", text)
+      with mock.patch("sn.view.graphics.guiApp.showHelp") as helped:
+        d._actions["help"]()
+      helped.assert_called_once_with(INSTALL_HELP)
+      d._actions["pref:clingo"]()
+      chose.assert_called_once_with("clingo")
+    finally:
+      d.destroy()
+
+    d = viewReasoning.showEngineMissing(v.canvas, EngineMissing("nemo", "DLL load failed"))
+    try:
+      text = d.text.get("1.0", "end")
+      self.assertIn("isn't working", text)
+      self.assertIn("DLL load failed", text)
+      self.assertNotIn("this time", text) # (nothing to do instead: eg, for explain)
+    finally:
+      d.destroy()
+
+  def test0312engineBox(self):
+    'The reasoning toolbar says which engine reasoning uses, and its menu chooses another -- but not one that isn\'t installed.'
+    from sn.model import reasoner
+    from sn.view.graphics import viewReasoning
+    v = self.view
+    v.showReasoningToolbar(True)
+    bar = v._reasoningToolbar
+    original = reasoner.defaultEngine()
+    self.assertEqual(bar.engineLabel.cget("text"), f"{original} ▾")
+    with mock.patch.object(bar.engineMenu, "tk_popup") as popped:
+      bar.showEngineMenu()
+    menu = bar.engineMenu
+    labels = [menu.entrycget(i, "label") for i in range(menu.index("end") + 1) if menu.type(i) != "separator"] # type: ignore[operator]
+    self.assertIn("clingo", labels)
+    self.assertEqual(len([l for l in labels if l.split()[0] in reasoner.ENGINES]), len(reasoner.ENGINES))
+    self.assertIn("How to install an engine...", labels)
+    self.assertEqual(labels[popped.call_args[0][2]].split()[0], original) # (the current one is over the box)
+    try:
+      with mock.patch("sn.model.reasoner.engineInstalled", return_value=False), \
+           mock.patch.object(viewReasoning, "showEngineMissing") as shown:
+        bar.chooseEngine("prolog")
+      shown.assert_called_once()
+      self.assertEqual(shown.call_args[0][1], "prolog")
+      self.assertEqual(reasoner.defaultEngine(), original) # (not chosen)
+      other = "nemo" if original != "nemo" else "clingo"
+      with mock.patch("sn.model.reasoner.engineInstalled", return_value=True):
+        bar.chooseEngine(other)
+      self.assertEqual(reasoner.defaultEngine(), other)
+      self.assertEqual(bar.engineLabel.cget("text"), f"{other} ▾") # (the setting's callback shows it)
+      reasoner.setDefaultEngine(original) # (eg: from the dialog's "Use ... from now on")
+      self.assertEqual(bar.engineLabel.cget("text"), f"{original} ▾")
+    finally:
+      reasoner.setDefaultEngine(original)
+
+  def test0315engineMissingTyped(self):
+    'A typed command that needs a missing engine says so in a line, and the dialog links to how to install it.'
+    from sn.model.reasoner import EngineMissing
+    from sn.view.graphics import viewReasoning
+    term = self.view.terminal
+    with mock.patch.object(term.context.parser, "parseLine", side_effect=EngineMissing("nemo")), \
+         mock.patch.object(viewReasoning, "showEngineMissing") as shown, \
+         self.assertLogs("sn", "ERROR") as logged:
+      self.assertIsNone(term._onLine("explain ancestorOf ann fred"))
+      self.pump()
+    self.assertIn("pip install nemo-python", "\n".join(logged.output))
+    shown.assert_called_once()
+    self.assertIs(shown.call_args[0][0], term)
+
+  def test0320showHelpSection(self):
+    'A help page\'s section is shown when the page is there (eg: in the bundled help).'
+    from sn.view.graphics import guiApp
+    with tempfile.TemporaryDirectory() as top:
+      os.makedirs(os.path.join(top, "user"))
+      Path(top, "user", "reasoning.html").write_text("<html></html>")
+      with mock.patch.object(sn, "resourcePath", lambda *parts: top if parts == ("help",) else "/nowhere"), \
+           mock.patch("util.folderServer.openInBrowser") as opened:
+        guiApp.showHelp("user/reasoning.html#installing-an-engine")
+    opened.assert_called_once_with(top, "user/reasoning.html#installing-an-engine")
 
   def test0400layouts(self):
     from sn.view.graphics.treeLayout import TreeLayout

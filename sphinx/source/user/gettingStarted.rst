@@ -77,6 +77,11 @@ Open **Semantic Nets** as you would any app, or double-click a model
   **Help | Install Example Models** puts fresh copies there at any time (eg:
   those of a newer version), replacing the old ones -- and any changes you've
   made to them.
+  On the Mac, macOS asks whether to let it use your Documents folder. If it
+  isn't allowed to (in *System Settings | Privacy & Security | Files &
+  Folders*) -- or, when it's run from its source, the app that starts it isn't
+  (eg: Terminal, or Eclipse) -- it says which app to allow, and offers to open
+  those settings.
 - **After that**, it reopens the windows that were open when you last quit, at
   the same size and place -- as they were last saved: changes you chose not to
   save, and the undo history, are gone -- and the model directory, if it was
@@ -99,8 +104,9 @@ Other ways to run it
 
     python3.14 -m pip install clingo requests urllib3 docstring_parser
 
-  (and, for the optional Nemo reasoner engine, ``nemo-python``: see
-  :doc:`reasoning`). Then run it with ``python3.14 SemanticNets-1.0.pyz [file ...]``. (If
+  (and, for the optional reasoner engines, ``nemo-python`` for Nemo,
+  ``clipspy`` for CLIPS and ``janus-swi`` for Prolog, after SWI-Prolog itself:
+  see :doc:`reasoning`). Then run it with ``python3.14 SemanticNets-1.0.pyz [file ...]``. (If
   anything's missing, it says what.)
 
 From the source

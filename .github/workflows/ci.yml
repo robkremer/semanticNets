@@ -39,8 +39,22 @@ jobs:
         run: |
           uv venv --python 3.14 --managed-python venv
           uv pip install --python venv -r semanticNets/packaging/requirements.txt
-          uv pip install --python venv -r semanticNets/packaging/requirements-nemo.txt # (the optional engine: so its tests run too)
+          uv pip install --python venv -r semanticNets/packaging/requirements-nemo.txt -r semanticNets/packaging/requirements-clips.txt # (the optional engines: so their tests run too)
           if [ "$RUNNER_OS" = Windows ]; then echo "$PWD/venv/Scripts" >> "$GITHUB_PATH"; else echo "$PWD/venv/bin" >> "$GITHUB_PATH"; fi
+
+      - name: SWI-Prolog (the prolog engine's, 9.1.12 or later), and janus-swi, its Python interface
+        run: |
+          case "$RUNNER_OS" in
+            macOS) brew install swi-prolog ;;
+            Linux) # (Ubuntu's own is too old for janus)
+              sudo add-apt-repository -y ppa:swi-prolog/stable && sudo apt-get update -q && sudo apt-get install -y -q swi-prolog-nox ;;
+            Windows)
+              choco install -y --no-progress swi-prolog
+              echo "C:\Program Files\swipl\bin" >> "$GITHUB_PATH"
+              export PATH="/c/Program Files/swipl/bin:$PATH" ;;
+          esac
+          swipl --version
+          uv pip install --python venv -r semanticNets/packaging/requirements-prolog.txt # (built against the swipl on the PATH)
 
       - name: A display (Linux)
         if: runner.os == 'Linux'

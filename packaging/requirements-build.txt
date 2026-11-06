@@ -1,5 +1,6 @@
 # The build venv (.venv-build): the run-time packages, plus the build tools.
 -r requirements.txt
+-r requirements-nemo.txt
 pyinstaller
 dmgbuild
 pillow

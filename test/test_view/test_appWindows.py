@@ -195,6 +195,83 @@ class TestAppWindows(unittest.TestCase):
     w, h = (int(v) for v in size(first).split("x"))
     self.assertGreater(w, 300)
 
+  def test0800examplesOverLockedCopies(self):
+    'Copies of the examples that have been made read-only (or locked, on the Mac) are unlocked and replaced.'
+    target = self.folder / "ex"
+    sn.copyExamples(str(target), ["family.snm"])
+    copy = target / "family.snm"
+    copy.write_text("changed")
+    os.chmod(copy, 0o444)
+    if hasattr(os, "chflags"):
+      import stat
+      os.chflags(copy, stat.UF_IMMUTABLE) # type: ignore[attr-defined] # @UndefinedVariable
+    sn.copyExamples(str(target), ["family.snm"])
+    self.assertIn(target.as_uri(), copy.read_text(encoding="utf-8"))
+
+  def examples(self, fail:OSError|None, replace:bool=False, answer:bool=True):
+    'Install the examples into a folder of the test\'s, with copying them failing with *fail*: (what was returned, the messagebox mock, the settings opener mock).'
+    from sn.view.graphics.guiApp import Application
+    saved = sn.snPrefs.get(Application.EXAMPLES_PREF, False)
+    self.addCleanup(lambda: sn.snPrefs.__setitem__(Application.EXAMPLES_PREF, saved))
+    sn.snPrefs[Application.EXAMPLES_PREF] = False
+    with mock.patch.object(self.app, "EXAMPLES_FOLDER", str(self.folder / "ex")), \
+         mock.patch.object(sn, "copyExamples", side_effect=fail), \
+         mock.patch("util.platformSupport.MAC", True), \
+         mock.patch("util.platformSupport.responsibleApp", return_value="Eclipse"), \
+         mock.patch("sn.view.graphics.guiApp.openPrivacySettings") as opener, \
+         mock.patch("sn.view.graphics.guiApp.messagebox") as box:
+      box.askyesno.return_value = answer
+      with self.assertLogs(level="ERROR"):
+        ret = self.app.installExamples(replace=replace)
+    return ret, box, opener
+
+  def test0810examplesPrivacyBlocked(self):
+    'If the Mac\'s privacy protection stops the examples being copied, the user\'s told which app to allow, and offered the settings; on the first launch, it\'s not tried again.'
+    import errno
+    from sn.view.graphics.guiApp import Application
+    blocked = PermissionError(errno.EPERM, "Operation not permitted", str(self.folder / "ex" / "animals.snm"))
+    ret, box, opener = self.examples(blocked)
+    self.assertFalse(ret)
+    message = box.askyesno.call_args[0][1]
+    self.assertIn("isn't letting Eclipse use", message)
+    self.assertIn("Help | Install Example Models", message)
+    opener.assert_called_once()
+    self.assertTrue(sn.snPrefs.get(Application.EXAMPLES_PREF, False)) # (not again at the next launch)
+    ret, box, opener = self.examples(blocked, replace=True, answer=False)
+    opener.assert_not_called()
+    self.assertFalse(sn.snPrefs.get(Application.EXAMPLES_PREF, False)) # (asked for: not marked done)
+
+  def test0820examplesOtherError(self):
+    'Another reason they can\'t be copied is just said.'
+    import errno
+    ret, box, opener = self.examples(OSError(errno.ENOSPC, "No space left on device"))
+    self.assertFalse(ret)
+    box.askyesno.assert_not_called()
+    self.assertIn("No space left on device", box.showerror.call_args[0][1])
+    opener.assert_not_called()
+
+  def test0830installExamplesChecksFirst(self):
+    'Help | Install Example Models says the folder can\'t be used before asking to replace the copies, or closing their windows.'
+    import errno
+    target = self.folder / "ex"
+    with mock.patch.object(self.app, "EXAMPLES_FOLDER", str(target)), \
+         mock.patch("tempfile.TemporaryFile", side_effect=PermissionError(errno.EPERM, "Operation not permitted", str(target / "tmpx"))), \
+         mock.patch("util.platformSupport.MAC", True), \
+         mock.patch("util.platformSupport.responsibleApp", return_value="Eclipse"), \
+         mock.patch("sn.view.graphics.guiApp.openPrivacySettings"), \
+         mock.patch.object(self.app, "installExamples") as install, \
+         mock.patch("sn.view.graphics.guiApp.messagebox") as box:
+      box.askyesno.return_value = False
+      self.app.onInstallExamples()
+    box.askokcancel.assert_not_called()
+    install.assert_not_called()
+    self.assertIn("isn't letting Eclipse use", box.askyesno.call_args[0][1])
+    with mock.patch.object(self.app, "EXAMPLES_FOLDER", str(target)), \
+         mock.patch.object(self.app, "installExamples") as install, \
+         mock.patch("sn.view.graphics.guiApp.messagebox") as box:
+      self.app.onInstallExamples() # (it can be: on to installing them)
+    install.assert_called_once_with(replace=True)
+
 
 if __name__ == "__main__":
   unittest.main()

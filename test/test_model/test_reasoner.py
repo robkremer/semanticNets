@@ -35,6 +35,14 @@ try:
   from sn.model.nemoReasoner import NemoReasoner
 except ModuleNotFoundError: # (an optional engine: pip install nemo-python)
   NemoReasoner = None # type: ignore[assignment,misc]
+try:
+  from sn.model.clipsReasoner import ClipsReasoner
+except ModuleNotFoundError: # (an optional engine: pip install clipspy)
+  ClipsReasoner = None # type: ignore[assignment,misc]
+try:
+  from sn.model.prologReasoner import PrologReasoner
+except ImportError: # (an optional engine: SWI-Prolog, and pip install janus-swi)
+  PrologReasoner = None # type: ignore[assignment,misc]
 
 if TYPE_CHECKING: # (the spec is a mixin, so only the type checker sees it as a TestCase)
   _SpecBase = unittest.TestCase
@@ -505,6 +513,324 @@ class TestNemo(ReasonerSpec, unittest.TestCase):
       clearReasoning(self.m)
     with self.assertRaises(TypeError):
       ctx.explain(self.fred)
+
+
+@unittest.skipIf(ClipsReasoner is None, "the CLIPS engine isn't installed (pip install clipspy)")
+class TestClips(ReasonerSpec, unittest.TestCase):
+  ENGINE = ClipsReasoner # type: ignore[assignment]
+
+  def test0600nativeQuery(self):
+    self.assertEqual(ClipsReasoner.language, "clips")
+    ans = self.reasoner.query('(defrule q (holds ?t ?f ?x) (name ?t "has") (name ?f "fred") => (assert (ans ?x)))')
+    self.assertEqual([a[0] for a in ans], [self.car1])
+    with self.assertRaises(RuntimeError) as cm:
+      self.reasoner.query('(defrule q (obj ?x) (not (ans ?x)) => (assert (ans ?x)))') # (not stratified: said, not run)
+    self.assertIn("stratified", str(cm.exception))
+    with self.assertRaises(RuntimeError) as cm:
+      self.reasoner.query('(defrule holds (obj ?x) => (assert (ans ?x)))') # (the rule base's name)
+    self.assertIn("more than one rule named holds", str(cm.exception))
+
+  def test0700registry(self):
+    self.assertIsInstance(Reasoner.create(self.m, "clips"), ClipsReasoner)
+
+  def test0710strings(self):
+    'Strings, symbols and numbers go there and back: names, attribute values, constraints.'
+    m, person = self._fresh("strings")
+    odd = 'a "quoted" 100% \\ back\tslash\nline, é ✓ (not) ;'
+    x = Node(m, [person], individual=True, name=odd)
+    x["note"] = odd
+    x["count"] = 3
+    x["ok"] = True
+    r = ClipsReasoner(m)
+    rows = r.query('(defrule q (attr ?x "note" ?v) (name ?x ?n) => (assert (ans ?n ?v)))')
+    self.assertEqual(rows, [(odd, odd)])
+    self.assertEqual(r.query('(defrule q (attr ?x "count" 3) (attr ?x "ok" TRUE) => (assert (ans ?x)))'), [(x,)])
+
+  def test0720stratified(self):
+    'Each rule fires once what it tests with (not ...) is complete, whatever the order of the rules.'
+    from sn.model.clipsReasoner import _rulesOf, _stratify
+    rules, _ = _rulesOf("""
+      (defrule c (b ?x) (not (a ?x)) => (assert (c ?x)))
+      (defrule b1 (e ?x) => (assert (b ?x)))
+      (defrule b2 (b ?x) (f ?x ?y) => (assert (b ?y)))
+      (defrule a (b ?x) (g ?x) => (assert (a ?x)))
+      (defrule d (c ?x) (not (b ?x)) => (assert (d ?x)))""")
+    _stratify(rules)
+    stratum = {r.name: r.stratum for r in rules}
+    self.assertEqual(stratum["b1"], stratum["b2"])
+    self.assertEqual(stratum["a"], stratum["b1"])
+    self.assertGreater(stratum["c"], stratum["a"])
+    self.assertGreater(stratum["d"], stratum["b1"])
+    self.assertIn("(declare (salience -1))", next(r for r in rules if r.name == "c").salient())
+    rules, _ = _rulesOf('(defrule p "comment" (q ?x) (not (p ?x)) => (assert (p ?x)))')
+    with self.assertRaises(ValueError):
+      _stratify(rules)
+
+  def test0725ordered(self):
+    'A compiled rule\'s conditions are matched in a good order: each sharing variables with those before it.'
+    from sn.model.clipsReasoner import _ordered
+    body = ["(data ?x)", "(data ?y)", "(data ?z)", "(holds ?t ?x ?y)", "(holds ?t ?y ?z)", "(prop ?t transitive)",
+            "(test (neq ?x ?z))", "(not (attr ?x \"k\" ?v))", "(not (prop ?t symmetric))"]
+    out = _ordered(body)
+    self.assertEqual(sorted(out), sorted(body))
+    self.assertEqual(out[0], "(prop ?t transitive)")                         # (a constant)
+    self.assertEqual(out[1], "(not (prop ?t symmetric))")                    # (as soon as ?t is bound)
+    self.assertLess(out.index("(holds ?t ?y ?z)"), out.index("(data ?z)"))   # (a relation before what's at its ends)
+    self.assertLess(out.index("(holds ?t ?x ?y)"), out.index("(data ?x)"))
+    self.assertGreater(out.index("(test (neq ?x ?z))"), out.index("(holds ?t ?y ?z)"))
+    self.assertGreater(out.index('(not (attr ?x "k" ?v))'), out.index("(holds ?t ?x ?y)")) # (?v is its own)
+
+  def test0730negatedAttributesInRules(self):
+    '''
+    A rule's "not" attribute test is about the attributes the model gives:
+    the program must be stratified, and the rules' conclusions depend on the rules.
+    '''
+    m, person = self._fresh("notattr")
+    a, b = (Node(m, [person], individual=True, name=n) for n in "ab")
+    a["gender"] = "female"
+    tagged = lambda: {(x.name, k, v) for _, x, k, v in ClipsReasoner(m).run().ruleAttrs}
+    def rule(name, test, conclusion):
+      r = Node(m, [m.RULE], individual=True, name=name)
+      X, X2 = Node(m, [person], individual=True, name="?x"), Node(m, [m.NODE], individual=True, name="?x")
+      X["constraints"] = test
+      X2["constraints"] = conclusion
+      Relation(m, [m.ANTECEDENT], r, X, individual=True)
+      Relation(m, [m.CONSEQUENT], r, X2, individual=True)
+    rule("unknown", "not gender", "unknown: yes")
+    self.assertEqual(tagged(), {("b", "unknown", "yes")})
+    rule("guess", "not gender: female", "gender: male")                   # (concludes what "unknown" tests: b's still unknown)
+    self.assertEqual(tagged(), {("b", "unknown", "yes"), ("b", "gender", "male")})
+
+
+@unittest.skipIf(PrologReasoner is None, "the Prolog engine isn't installed (SWI-Prolog, and pip install janus-swi)")
+class TestProlog(ReasonerSpec, unittest.TestCase):
+  ENGINE = PrologReasoner # type: ignore[assignment]
+
+  def test0600nativeQuery(self):
+    self.assertEqual(PrologReasoner.language, "prolog")
+    ans = self.reasoner.query('ans(X) :- name(T,"has"), name(F,"fred"), holds(T,F,X).')
+    self.assertEqual([a[0] for a in ans], [self.car1])
+    self.assertEqual(self.reasoner.query('ans(N) :- name(T,"has"), rel_type(T), aggregate_all(count, holds(T,_,_), N).'), # (Prolog's own predicates too)
+                     [(len(self.reasoner.query('ans(S,D) :- name(T,"has"), rel_type(T), holds(T,S,D).')),)])
+    with self.assertRaises(RuntimeError) as cm:
+      self.reasoner.query('ans(X) :- nothing(X).')            # (an error as it runs: said)
+    self.assertIn("nothing/1", str(cm.exception))
+    with self.assertRaises(RuntimeError) as cm:
+      self.reasoner.query('ans(X) :- obj(X).\nans(X :- obj(X).') # (where: the query's line 2)
+    self.assertIn("the query, line 2", str(cm.exception))
+
+  def test0700registry(self):
+    self.assertIsInstance(Reasoner.create(self.m, "prolog"), PrologReasoner)
+
+  def test0710strings(self):
+    'Strings, symbols and numbers go there and back: names, attribute values, constraints.'
+    m, person = self._fresh("strings")
+    odd = 'a "quoted" 100% \\ back\tslash\nline, é ✓ (not) \'x\' \x01;'
+    x = Node(m, [person], individual=True, name=odd)
+    x["note"] = odd
+    x["count"] = 3
+    x["ok"] = True
+    x["big"] = 2**70
+    r = PrologReasoner(m)
+    rows = r.query('ans(N,V) :- attr(X,"note",V), name(X,N).')
+    self.assertEqual(rows, [(odd, odd)])
+    self.assertEqual(r.query('ans(X) :- attr(X,"count",3), attr(X,"ok",true).'), [(x,)])
+    self.assertEqual(r.query('ans(V) :- attr(_,"big",V).'), [(str(2**70),)])
+
+  def test0720ordered(self):
+    'A compiled rule\'s body runs in a good order: each literal sharing variables with those before it, tests once bound.'
+    from sn.model.prologReasoner import _ordered
+    body = ["data(X)", "data(Y)", "data(Z)", "holds(T,X,Y)", "holds(T,Y,Z)", "prop(T,'transitive')",
+            "X \\== Z", 'not_exists(attr(X,"k",V))', "\\+ prop(T,'symmetric')"]
+    out = _ordered(body)
+    self.assertEqual(sorted(out), sorted(body))
+    self.assertEqual(out[0], "prop(T,'transitive')")                        # (a constant)
+    self.assertEqual(out[1], "\\+ prop(T,'symmetric')")                     # (as soon as T is bound)
+    self.assertLess(out.index("holds(T,Y,Z)"), out.index("data(Z)"))       # (a relation before what's at its ends)
+    self.assertLess(out.index("holds(T,X,Y)"), out.index("data(X)"))
+    self.assertGreater(out.index("X \\== Z"), out.index("holds(T,Y,Z)"))
+    self.assertGreater(out.index('not_exists(attr(X,"k",V))'), out.index("holds(T,X,Y)")) # (V is its own)
+
+  def test0730negatedAttributesInRules(self):
+    '''
+    A rule's "not" attribute test is about the attributes the rules conclude
+    too, as for clingo (Prolog's tabling has the well-founded semantics).
+    '''
+    m, person = self._fresh("notattr")
+    a, b = (Node(m, [person], individual=True, name=n) for n in "ab")
+    a["gender"] = "female"
+    tagged = lambda engine: {(x.name, k, v) for _, x, k, v in Reasoner.create(m, engine).run().ruleAttrs}
+    def rule(name, test, conclusion):
+      r = Node(m, [m.RULE], individual=True, name=name)
+      X, X2 = Node(m, [person], individual=True, name="?x"), Node(m, [m.NODE], individual=True, name="?x")
+      X["constraints"] = test
+      X2["constraints"] = conclusion
+      Relation(m, [m.ANTECEDENT], r, X, individual=True)
+      Relation(m, [m.CONSEQUENT], r, X2, individual=True)
+    rule("unknown", "not gender", "unknown: yes")
+    self.assertEqual(tagged("prolog"), {("b", "unknown", "yes")})
+    rule("guess", "not gender: female", "gender: male")                   # (concludes what "unknown" tests: b's gender is known now)
+    self.assertEqual(tagged("prolog"), {("b", "gender", "male")})
+    self.assertEqual(tagged("prolog"), tagged("clingo"))
+
+  def test0740undecided(self):
+    'A rule that negates what it concludes (a loop through "not": undecided): what depends on it isn\'t concluded, and the rest is.'
+    m, person = self._fresh("undecided")
+    a = Node(m, [person], individual=True, name="a")
+    a["tall"] = True
+    def rule(name, test, conclusion):
+      r = Node(m, [m.RULE], individual=True, name=name)
+      X, X2 = Node(m, [person], individual=True, name="?x"), Node(m, [m.NODE], individual=True, name="?x")
+      X["constraints"] = test
+      X2["constraints"] = conclusion
+      Relation(m, [m.ANTECEDENT], r, X, individual=True)
+      Relation(m, [m.CONSEQUENT], r, X2, individual=True)
+    rule("odd", "not odd", "odd: yes")
+    rule("plain", "tall", "seen: yes")
+    self.assertEqual({(x.name, k) for _, x, k, _v in PrologReasoner(m).run().ruleAttrs}, {("a", "seen")})
+
+
+class TestEngines(unittest.TestCase):
+  'Which engines there are, whether they\'re installed, and what a missing one says (none of it needs Nemo).'
+
+  def setUp(self):
+    from unittest import mock
+    self.mock = mock
+    self.engines = mock.patch.dict(Reasoner.engines) # (an engine "not installed" mustn't be registered)
+    self.engines.start()
+    self.addCleanup(self.engines.stop)
+
+  def _notInstalled(self, engine:str, error:ImportError|None=None):
+    'Patches that make *engine* look uninstalled (or broken: its import raises *error*).'
+    from sn.model import reasoner
+    from sn.model.reasoner import ENGINES
+    Reasoner.engines.pop(engine, None)
+    module = ENGINES[engine].module
+    if error is None:
+      error = ModuleNotFoundError(f"No module named '{module}'", name=module)
+    def importModule(name, *args):
+      raise error
+    real = reasoner.importlib.util.find_spec
+    return (self.mock.patch.object(reasoner, "import_module", importModule),
+            self.mock.patch.object(reasoner.importlib.util, "find_spec",
+                                   lambda name, *a: None if name == module else real(name, *a)))
+
+  def test0100enginesAreTheSettingsChoices(self):
+    'Every known engine is a choice of the "reasoner/engine" setting, and the other way round.'
+    from sn.model.reasoner import ENGINES
+    typ = sn.PREFS["reasoner/engine"][0]
+    self.assertEqual(typ, f"choices[{','.join(ENGINES)}]")
+
+  def test0110savedChoices(self):
+    'Preferences saved when there were fewer engines get today\'s choices (keeping their value, if it\'s still one).'
+    from util.attribute import Attribute, VAR_DEFAULTED
+    from util.prefs import Prefs
+    typ = sn.PREFS["reasoner/engine"][0]
+    prefs = Prefs()
+    prefs.setAttr("reasoner/engine", Attribute("nemo", "choices[clingo,nemo]", VAR_DEFAULTED, ""))
+    sn.initPrefs(prefs)
+    self.assertEqual((dict.get(prefs, "reasoner/engine").type, prefs["reasoner/engine"]), (typ, "nemo"))
+    prefs.setAttr("reasoner/engine", Attribute("gone", "choices[clingo,gone]", VAR_DEFAULTED, ""))
+    sn.initPrefs(prefs)
+    self.assertEqual((dict.get(prefs, "reasoner/engine").type, prefs["reasoner/engine"]), (typ, "clingo"))
+
+  def test0200installed(self):
+    from sn.model.reasoner import engineInstalled, installedEngines
+    self.assertTrue(engineInstalled("clingo"))
+    self.assertIn("clingo", installedEngines())
+    self.assertFalse(engineInstalled("bogus"))
+    importing, finding = self._notInstalled("nemo")
+    with importing, finding:
+      self.assertFalse(engineInstalled("nemo"))
+      self.assertNotIn("nemo", installedEngines())
+
+  def test0300missing(self):
+    'Making a reasoner by an engine that isn\'t installed says how to install it.'
+    from sn.model.reasoner import EngineMissing
+    importing, finding = self._notInstalled("nemo")
+    with importing, finding, self.assertRaises(EngineMissing) as cm:
+      Reasoner.create(None, "nemo") # type: ignore[arg-type]
+    ex = cm.exception
+    self.assertIsInstance(ex, ImportError)
+    self.assertEqual((ex.engine, ex.package, ex.detail, ex.name), ("nemo", "nemo-python", "", "nmo_python"))
+    self.assertIn("isn't installed", str(ex))
+    self.assertIn("pip install nemo-python", str(ex))
+    self.assertIn("Installing an engine", str(ex))
+
+  def test0310broken(self):
+    'An engine that\'s installed but won\'t load says why.'
+    from sn.model.reasoner import EngineMissing
+    importing, _finding = self._notInstalled("nemo", ImportError("DLL load failed", name="nmo_python.nmo_python"))
+    with importing, self.assertRaises(EngineMissing) as cm:
+      Reasoner.create(None, "nemo") # type: ignore[arg-type]
+    self.assertEqual(cm.exception.detail, "DLL load failed")
+    self.assertIn("isn't working (DLL load failed)", str(cm.exception))
+
+  def test0320unknown(self):
+    with self.assertRaises(ValueError) as cm:
+      Reasoner.create(None, "bogus") # type: ignore[arg-type]
+    self.assertIn("clingo, nemo", str(cm.exception))
+
+  def test0400explainingEngine(self):
+    'Explaining uses an engine that can: nemo, installed or not (then it says how to install it).'
+    from sn.model.reasoner import explainingEngine
+    self.assertEqual(explainingEngine(), "nemo")
+    importing, finding = self._notInstalled("nemo")
+    with importing, finding:
+      self.assertEqual(explainingEngine(), "nemo")
+
+  def test0600lookOutside(self):
+    'In an app, an engine it doesn\'t include is looked for in a Python on the computer: the setting\'s, or one found.'
+    import sys
+    from sn.model.reasoner import EngineMissing, engineInstalled
+    importing, finding = self._notInstalled("nemo")
+    with importing, finding, self.mock.patch("util.localPython.addPackages", return_value=[]) as adding:
+      self.assertFalse(engineInstalled("nemo"))                      # (not an app: its own Python is the one)
+      adding.assert_not_called()
+      with self.mock.patch.object(sys, "frozen", True, create=True):
+        self.assertFalse(engineInstalled("nemo"))
+        adding.assert_called_with(None)
+        with self.assertRaises(EngineMissing):
+          Reasoner.create(None, "nemo") # type: ignore[arg-type]
+        get = sn.snPrefs.get
+        with self.mock.patch.object(sn.snPrefs, "get", lambda key, *a, **kw: "/my/python" if key == "reasoner/python" else get(key, *a, **kw)):
+          engineInstalled("nemo")
+        adding.assert_called_with("/my/python")
+
+  def test0610foundOutside(self):
+    'An engine found in a Python on the computer is imported from there.'
+    import sys
+    from sn.model import reasoner
+    class Found(Reasoner): # (stands for the engine, as its module would register it)
+      def run(self): ...
+      def answer(self, query): ...
+    calls = []
+    def importModule(name, *args):
+      calls.append(name)
+      if len(calls) == 1:
+        raise ModuleNotFoundError("No module named 'nmo_python'", name="nmo_python")
+      Reasoner.engines["nemo"] = Found
+    Reasoner.engines.pop("nemo", None)
+    with self.mock.patch.object(reasoner, "import_module", importModule), \
+         self.mock.patch("util.localPython.addPackages", return_value=["/its/site-packages"]), \
+         self.mock.patch.object(sys, "frozen", True, create=True):
+      self.assertIsInstance(Reasoner.create(None, "nemo"), Found) # type: ignore[arg-type]
+    self.assertEqual(calls, ["sn.model.nemoReasoner"] * 2)
+
+  def test0500setDefaultEngine(self):
+    'Choosing the default engine keeps the setting a choice (a plain value would make it any text).'
+    from sn.model.reasoner import setDefaultEngine, defaultEngine
+    before = sn.snPrefs.getAttr("reasoner/engine")
+    wasDirty = sn.snPrefs.isDirty()
+    try:
+      setDefaultEngine("nemo")
+      self.assertEqual(defaultEngine(), "nemo")
+      self.assertEqual(sn.snPrefs.getAttr("reasoner/engine").type, sn.PREFS["reasoner/engine"][0])
+    finally:
+      sn.snPrefs["reasoner/engine"] = before
+      if not wasDirty:
+        sn.snPrefs.setDirty(False)
+    self.assertEqual(defaultEngine(), before.value)
 
 
 if __name__ == "__main__":

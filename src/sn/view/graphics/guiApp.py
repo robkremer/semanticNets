@@ -54,6 +54,7 @@ from util.attribute import Attribute, VAR_DEFAULTED
 import sys
 import atexit
 import os
+import tempfile
 from pathlib import Path
 import tkinter as tk
 import tkinter.filedialog as filedialog
@@ -64,7 +65,8 @@ from tkinter import ttk
 from sn import snPrefs
 from util.utils import afterMenu, showExceptionDialog, fixURL, urlExists, displayURL,\
   isValidURL, keepLast, dialogOwner
-from util.platformSupport import MAC, shortcut, openFile, setUpLook, setDPIAware, documentsFolder
+from util.platformSupport import MAC, shortcut, openFile, setUpLook, setDPIAware, documentsFolder,\
+  privacyBlocked, privacyHelp, openPrivacySettings
 from util.singleInstance import SingleInstance
 from util.terminal import terminalRegistry, installGlobalIORouting,\
   TerminalWidget, TerminalRegistry
@@ -80,6 +82,23 @@ logger:sn.SNLogger = sn.getLogger(__name__)
 
 class UnexpectedObjectInFile(Exception):
   pass
+
+def showHelp(page:str) -> None:
+  """Show a page of the documentation in the web browser: the copy bundled
+  in a packaged app, or else the project's built documentation. It's served
+  from 127.0.0.1 (see *util.folderServer*), not opened as a file: URL,
+  since Safari won't load a file: page's stylesheets from its parent
+  folder ("../_static/"), so it would show unstyled.
+
+  :param page: The page, relative to the documentation's top, eg:
+    "user/index.html", perhaps with a section: eg, "user/reasoning.html#installing-an-engine".
+  """
+  from util.folderServer import openInBrowser
+  for top in (sn.resourcePath("help"), sn.resourcePath("sphinx", "build", "html")):
+    if os.path.exists(os.path.join(top, page.partition("#")[0])):
+      openInBrowser(top, page)
+      return
+  logger.error(f'The documentation ("{page}") isn\'t available: build it with the "doc" ant target.')
 
 class Application(tk.Tk):
   """The invisible root Tk window and manages one or more Toplevel windows.
@@ -288,20 +307,8 @@ class Application(tk.Tk):
     return menubar
 
   def showHelp(self, page:str) -> None:
-    """Show a page of the documentation in the web browser: the copy bundled
-    in a packaged app, or else the project's built documentation. It's served
-    from 127.0.0.1 (see *util.folderServer*), not opened as a file: URL,
-    since Safari won't load a file: page's stylesheets from its parent
-    folder ("../_static/"), so it would show unstyled.
-
-    :param page: The page, relative to the documentation's top, eg: "user/index.html".
-    """
-    from util.folderServer import openInBrowser
-    for top in (sn.resourcePath("help"), sn.resourcePath("sphinx", "build", "html")):
-      if os.path.exists(os.path.join(top, page)):
-        openInBrowser(top, page)
-        return
-    logger.error(f'The documentation ("{page}") isn\'t available: build it with the "doc" ant target.')
+    'See the module\'s *showHelp()*.'
+    showHelp(page)
 
   def openSettings(self) -> None:
     """Show the app-wide Settings dialog: an attribute editor on *sn.snPrefs*,
@@ -310,8 +317,16 @@ class Application(tk.Tk):
     types and qualifiers are fixed, and their notes -- documentation, from
     *sn.PREFS* -- are their names' tooltips.
     """
+    from sn.model.reasoner import defaultEngine, engineInstalled
+    engine = defaultEngine()
     applyEditAttrsBox(self, snPrefs, title="Semantic Nets Preferences", hideColumns=("type", "qualifiers", "note"))
     self._fillRecentMenu() # (in case "gui/recentFiles" changed)
+    if defaultEngine() != engine:
+      from sn.view.graphics.reasoningToolbar import refreshEngines
+      refreshEngines() # (the dialog sets the settings directly: their callbacks aren't called)
+    if defaultEngine() != engine and not engineInstalled(defaultEngine()): # (just chosen: say how to install it)
+      from sn.view.graphics.viewReasoning import showEngineMissing
+      showEngineMissing(self.focus_get() or self, defaultEngine(), chosen=True)
 
   def doOpen(self, ): 
     'Respond to the "Open..." menu item.'
@@ -916,6 +931,9 @@ class Application(tk.Tk):
     :param replace: Whether to replace copies already there. If not (as on
       the first launch), an existing folder is left as it is.
 
+    If they can't be copied, the user's told why (see *cantCopyExamples()*);
+    on the first launch, that's not tried again on the next.
+
     :returns: True iff any were opened.
     """
     if not sn.exampleNames():
@@ -924,14 +942,52 @@ class Application(tk.Tk):
     try:
       if replace or not os.path.exists(target): # (unless replacing, an existing copy is left as it is)
         sn.copyExamples(target)
-    except OSError:
+      views = sorted(f for f in os.listdir(target) if f.endswith(".snv"))
+    except OSError as ex:
       logger.error(f'Couldn\'t copy the examples to "{target}".', exc_info=True)
+      if not replace: # (the first launch: the message says how to try again, rather than every launch saying it)
+        snPrefs[self.EXAMPLES_PREF] = True
+      self.cantCopyExamples(target, ex)
       return False
     snPrefs[self.EXAMPLES_PREF] = True
-    views = sorted(f for f in os.listdir(target) if f.endswith(".snv"))
     for v in views:
       self.openWindow(os.path.join(target, v))
     return len(views) > 0
+
+  def cantCopyExamples(self, target:str, ex:OSError) -> None:
+    """Tell the user the example models couldn't be copied to *target* (see
+    *installExamples()*), and why. If it's the Mac's privacy protection (eg:
+    the app that started the program hasn't been allowed to use the Documents
+    folder: see *util.platformSupport.privacyBlocked()*), say which app to
+    allow, and offer to open the settings for it.
+
+    :param target: The folder.
+    :param ex: Why they couldn't be.
+    """
+    said = f'The example models couldn\'t be copied to "{target}"'
+    menu = "Help | Install Example Models"
+    if privacyBlocked(ex):
+      if messagebox.askyesno(sn.NAME, f"{said}.\n\n{privacyHelp(target)} Then choose {menu} to install them."
+                             "\n\nOpen the Privacy & Security settings now?", icon=messagebox.WARNING, parent=self._dialogParent()):
+        openPrivacySettings()
+    else:
+      messagebox.showerror(sn.NAME, f"{said}: {ex.strerror or ex}.\n\nYou can try again with {menu}.", parent=self._dialogParent())
+
+  def examplesBlocked(self, target:str) -> bool:
+    """
+    :returns: Whether the Mac's privacy protection won't let the example
+      models be copied to *target* (see *installExamples()*) -- having said
+      so (see *cantCopyExamples()*) -- found by trying to make a file there.
+    """
+    try:
+      os.makedirs(target, exist_ok=True)
+      with tempfile.TemporaryFile(dir=target):
+        pass
+    except OSError as ex:
+      if privacyBlocked(ex):
+        self.cantCopyExamples(target, ex)
+        return True
+    return False
 
   def onInstallExamples(self) -> None:
     """The Help menu's *Install Example Models*: put fresh copies of the
@@ -946,6 +1002,8 @@ class Application(tk.Tk):
     names = sn.exampleNames()
     if not names:
       messagebox.showerror(sn.NAME, "This version doesn't have any example models to install.", parent=self._dialogParent())
+      return
+    if self.examplesBlocked(target): # (before asking, and closing their windows)
       return
     existing = [n for n in names if os.path.exists(os.path.join(target, n))]
     if existing and not messagebox.askokcancel(sn.NAME,

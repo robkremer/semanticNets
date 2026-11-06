@@ -368,7 +368,7 @@ class ModelContext(CommandContext):
     too, until the next "reason" or "clear reasoning".
 
     :param model: The model to reason over. By default, the default model.
-    :param engine: The reasoner engine: clingo or nemo. By default, the "reasoner/engine" preference's.
+    :param engine: The reasoner engine: clingo, nemo, clips or prolog. By default, the "reasoner/engine" preference's.
     :param silent: Don't add what's inferred to the views of the model (they
       show only the problems), and report only a summary: eg: so that queries
       find what the rules conclude.
@@ -449,7 +449,7 @@ class ModelContext(CommandContext):
 
     :param query: The query (or other context).
     :param model: Ignored: a query is answered from its own model.
-    :param engine: The reasoner engine: clingo or nemo. By default, the "reasoner/engine" preference's.
+    :param engine: The reasoner engine: clingo, nemo, clips or prolog. By default, the "reasoner/engine" preference's.
     '''
     from sn.model.reasoner import Reasoner
     if type(query) is str: # the environment failed to interpret the object
@@ -478,10 +478,14 @@ class ModelContext(CommandContext):
     engine, ASP: eg, ans(X) :- holds(T,F,X), name(T,"owns"), name(F,"fred").
     For the nemo engine, Nemo's Datalog: eg,
     ans(?X) :- holds(?T,?F,?X), name(?T,"owns"), name(?F,"fred").
+    For the clips engine, CLIPS rules asserting "ans" facts: eg,
+    (defrule q (holds ?t ?f ?x) (name ?t "owns") (name ?f "fred") => (assert (ans ?x))).
+    For the prolog engine, Prolog clauses (run in the order they're written): eg,
+    ans(X) :- name(T,"owns"), name(F,"fred"), holds(T,F,X).
 
     :param query: The query.
     :param model: The model to reason over. By default, the default model.
-    :param engine: The reasoner engine: clingo or nemo. By default, the "reasoner/engine" preference's.
+    :param engine: The reasoner engine: clingo, nemo, clips or prolog. By default, the "reasoner/engine" preference's.
     '''
     from sn.model.reasoner import Reasoner
     if model is None:
@@ -497,9 +501,9 @@ class ModelContext(CommandContext):
     '''
     Say why the reasoner concludes that *source* is related to *destination*
     by *relation*: the rules it follows by (the model's, and the base rules:
-    eg, transitive), down to what the model asserts. Uses the nemo reasoner
-    engine, which can say how it reached a conclusion (clingo can't),
-    whichever engine "reason" uses. Nemo is optional: pip install nemo-python.
+    eg, transitive), down to what the model asserts. Uses an engine that can
+    say how it reached a conclusion -- nemo (clingo can't) -- whichever engine
+    "reason" uses. Nemo is optional: pip install nemo-python.
 
     :param relation: The relation type (eg: ancestorOf) -- or a relation, eg:
       one "reason" inferred: then why it holds, without *source* and *destination*.
@@ -534,8 +538,8 @@ class ModelContext(CommandContext):
       relation = types[0]
     elif source is None or destination is None:
       raise ValueError('explain: a relation type needs a source and a destination.')
-    from sn.model.reasoner import Reasoner
-    reasoner:Any = Reasoner.create(model, "nemo")
+    from sn.model.reasoner import Reasoner, explainingEngine
+    reasoner:Any = Reasoner.create(model, explainingEngine())
     reasoner.run()
     name = lambda o: o.tostring(relativeTo=model, format="friendly")
     if isa:

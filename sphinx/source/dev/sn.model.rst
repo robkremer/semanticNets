@@ -14,6 +14,7 @@ Submodules
    :maxdepth: 4
 
    sn.model.clingoReasoner
+   sn.model.clipsReasoner
    sn.model.constraints
    sn.model.copying
    sn.model.directory
@@ -21,5 +22,6 @@ Submodules
    sn.model.modelPrefs
    sn.model.names
    sn.model.nemoReasoner
+   sn.model.prologReasoner
    sn.model.reasoner
    sn.model.snAttribute

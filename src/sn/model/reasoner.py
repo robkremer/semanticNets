@@ -79,9 +79,11 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from importlib import import_module
 import importlib.resources
+import importlib.util
 from importlib.resources.abc import Traversable
 import atexit
 import os
+import sys
 from pathlib import Path
 import shutil
 import tempfile
@@ -92,7 +94,7 @@ from util.persistence.pRef import PRDb
 from util.utils import urlPath
 import sn
 from sn.model.model import Model, GraphObject, Node, Collection, Relation, IsaIndividual, BASE_RULES_URL
-from util.attribute import Attribute, Restriction, coerceValue
+from util.attribute import Attribute, Restriction, coerceValue, VAR_DEFAULTED
 from sn.model.constraints import CONSTRAINTS, PRESENT, ValueVar, Not, constraintItems
 from sn.model import names
 
@@ -1005,6 +1007,129 @@ def baseRuleModels() -> list[Model]:
     ret.append(m)
   return ret
 
+# ── Engines ───────────────────────────────────────────────────────────────
+
+@dataclass(frozen=True)
+class EngineInfo:
+  '''
+  What the program knows about a reasoner engine without importing it: what it
+  needs installed, and what it can do. So a missing engine can say how to
+  install it (see *EngineMissing*), and a feature can use any installed engine
+  that can do what it needs (see *explainingEngine()*).
+  '''
+  name:str
+  "The engine's name (eg: \"nemo\"): its module is sn.model.<name>Reasoner."
+  module:str
+  "The Python module it needs (eg: \"nmo_python\")."
+  package:str
+  "The package that provides *module*, as pip names it (eg: \"nemo-python\")."
+  explains:bool = False
+  "Whether it can say why a conclusion holds (see *sn.model.nemoReasoner.NemoReasoner.explain()*)."
+  bundled:bool = True
+  "Whether the apps include it (their self-test checks that it's there: see *sn.__main__.selftest()*)."
+  needs:str = ""
+  "What must be installed before *package*, if anything (eg: SWI-Prolog, which janus-swi is the Python interface to)."
+
+ENGINES:dict[str, EngineInfo] = {e.name: e for e in (
+  EngineInfo("clingo", "clingo", "clingo"),
+  EngineInfo("nemo", "nmo_python", "nemo-python", explains=True),
+  EngineInfo("clips", "clips", "clipspy", bundled=False),
+  EngineInfo("prolog", "janus_swi", "janus-swi", bundled=False, needs="SWI-Prolog (9.1.12 or later, from swi-prolog.org)"),
+)}
+'''
+The known reasoner engines, by name. A new engine adds itself here, and to the
+"reasoner/engine" preference's choices (see *sn.PREFS*), and its install
+instructions to the User Guide (see *INSTALL_HELP*).
+'''
+
+PIP = f"python{sys.version_info[0]}.{sys.version_info[1]} -m pip"
+"How to run pip for a Python of this one's version, which an engine must be installed for: eg, \"python3.14 -m pip\"."
+
+INSTALL_HELP = "user/reasoning.html#installing-an-engine"
+"The User Guide's page (and section) on installing a reasoner engine: see *sn.view.graphics.guiApp.showHelp()*."
+
+class EngineMissing(ImportError):
+  '''
+  A reasoner engine isn't installed, or can't be loaded: raised by
+  *Reasoner.create()*, saying how to install it. (The GUI shows it with a link
+  to *INSTALL_HELP*: see *sn.view.graphics.viewReasoning.showEngineMissing()*.)
+  '''
+  def __init__(self, engine:str, detail:str=""):
+    '''
+    :param engine: The engine's name (eg: "nemo").
+    :param detail: Why it couldn't be loaded, if it's installed but broken.
+    '''
+    info = ENGINES.get(engine)
+    self.engine:str = engine
+    self.package:str|None = info.package if info is not None else None
+    self.detail:str = detail
+    how = "" if info is None else \
+          f'install {info.needs}, then "{PIP} install {info.package}" ' if info.needs else f'install it with "{PIP} install {info.package}" '
+    super().__init__(f'The "{engine}" reasoner engine isn\'t {"working" if detail else "installed"}'
+                     f'{f" ({detail})" if detail else ""}: {how}(see "Installing an engine" in the User Guide).',
+                     name=info.module if info is not None else None)
+
+def engineInstalled(engine:str) -> bool:
+  '''
+  :returns: Whether *engine* can be used: it's loaded already, or what it needs
+    is installed. (It's looked for, not loaded: if it's broken, *Reasoner.create()*
+    still raises *EngineMissing*.)
+  '''
+  if engine in Reasoner.engines:
+    return True
+  info = ENGINES.get(engine)
+  if info is None:
+    return False
+  try:
+    return importlib.util.find_spec(info.module) is not None \
+        or _lookOutside() and importlib.util.find_spec(info.module) is not None
+  except (ImportError, ValueError):
+    return False
+
+def _lookOutside() -> bool:
+  '''
+  In a packaged app -- which has its own Python, so pip can't install into it
+  -- make the packages of a Python of the same version on this computer
+  importable (see *util.localPython.addPackages()*): the "reasoner/python"
+  setting's, or else the first found. So an engine the app doesn't include can
+  be installed for that Python, and used.
+
+  :returns: Whether there's such a Python (whose packages are now on the path).
+  '''
+  if not getattr(sys, "frozen", False):
+    return False
+  from util.localPython import addPackages
+  return bool(addPackages(str(sn.snPrefs.get("reasoner/python", "") or "") or None))
+
+def _importEngine(engine:str) -> None:
+  '''
+  Import *engine*'s module (which registers it): if what it needs isn't
+  installed, after looking for it in a Python on this computer (see *_lookOutside()*).
+  '''
+  try:
+    import_module(f'sn.model.{engine}Reasoner')
+  except ModuleNotFoundError as ex:
+    info = ENGINES.get(engine)
+    if info is None or ex.name != info.module or not _lookOutside():
+      raise
+    import_module(f'sn.model.{engine}Reasoner') # (again, with that Python's packages)
+
+def installedEngines() -> list[str]:
+  ''':returns: The names of the engines that can be used (see *engineInstalled()*).'''
+  return [e for e in dict.fromkeys([*ENGINES, *Reasoner.engines]) if engineInstalled(e)]
+
+def explainingEngine() -> str:
+  '''
+  :returns: The engine to explain a conclusion with (see
+    *sn.controller.modelInterface.ModelContext.explain()*): the default one if
+    it can, or else the first installed one that can -- or, if none is
+    installed, the first that can (so *Reasoner.create()* says how to install it).
+  '''
+  able = [e for e, info in ENGINES.items() if info.explains] \
+       + [e for e, cls in Reasoner.engines.items() if e not in ENGINES and callable(getattr(cls, "explain", None))]
+  default = defaultEngine()
+  return min(able, key=lambda e: (not engineInstalled(e), e != default))
+
 class Reasoner(ABC):
   '''
   The abstract base class of all reasoner engines. Usage::
@@ -1046,12 +1171,19 @@ class Reasoner(ABC):
     are its constructor's.
 
     :param engine: The engine's name (eg: "clingo", "nemo"); by default, the preference's (see *defaultEngine()*).
-    :raises ImportError: If the engine (or what it needs: eg, nemo's Nemo) isn't installed.
+    :raises EngineMissing: If the engine (or what it needs: eg, nemo's Nemo) isn't installed, or won't load.
+    :raises ValueError: If there's no such engine.
     '''
     if engine is None:
       engine = defaultEngine()
     if engine not in cls.engines:
-      import_module(f'sn.model.{engine}Reasoner')
+      try:
+        _importEngine(engine)
+      except ImportError as ex:
+        if engine not in ENGINES and ex.name == f'sn.model.{engine}Reasoner':
+          raise ValueError(f'There\'s no "{engine}" reasoner engine: the engines are {", ".join(ENGINES)}.') from ex
+        missing = isinstance(ex, ModuleNotFoundError) and engine in ENGINES and ex.name == ENGINES[engine].module
+        raise EngineMissing(engine, "" if missing else str(ex)) from ex
     return cls.engines[engine](model, **kwargs)
 
   def __init__(self, model:Model, showSysRules:bool|None=None):
@@ -1360,6 +1492,15 @@ def defaultEngine() -> str:
     "reasoner/engine" preference (clingo, unless it's set to another).
   '''
   return str(sn.snPrefs.get("reasoner/engine", "clingo") or "clingo")
+
+def setDefaultEngine(engine:str) -> None:
+  '''
+  Make *engine* the one used when none is given: the "reasoner/engine"
+  preference, as Settings would set it (keeping its type -- the engines to
+  choose from -- which a plain value would replace).
+  '''
+  typ, _default, note = sn.PREFS["reasoner/engine"]
+  sn.snPrefs["reasoner/engine"] = Attribute(engine, typ, VAR_DEFAULTED, note)
 
 def reason(model:Model, engine:str|None=None, silent:bool=False) -> Inferences:
   '''
