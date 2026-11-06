@@ -272,6 +272,65 @@ class TestAppWindows(unittest.TestCase):
       self.app.onInstallExamples() # (it can be: on to installing them)
     install.assert_called_once_with(replace=True)
 
+  def privacy(self):
+    'The Mac (as far as the privacy protection goes), started from Eclipse; messages mocked: (the messagebox mock, the settings opener mock).'
+    self.app._privacyExplained.clear()
+    for patch in (mock.patch("util.platformSupport.MAC", True),
+                  mock.patch("util.platformSupport.responsibleApp", return_value="Eclipse")):
+      patch.start()
+      self.addCleanup(patch.stop)
+    opener, box = mock.patch("sn.view.graphics.guiApp.openPrivacySettings"), mock.patch("sn.view.graphics.guiApp.messagebox")
+    self.addCleanup(opener.stop)
+    self.addCleanup(box.stop)
+    return box.start(), opener.start()
+
+  def test0900openBlockedByPrivacy(self):
+    'A view the Mac\'s privacy protection won\'t let be read: which app to allow, not a traceback -- once for its folder, not for each window.'
+    import errno
+    from util.persistence.serialize import SerializationStrategy
+    sn.copyExamples(str(self.folder), ["family.snm", "family.snv"])
+    view = self.folder / "family.snv"
+    box, opener = self.privacy()
+    box.askyesno.return_value = True
+    blocked = PermissionError(errno.EPERM, "Operation not permitted", str(view))
+    with mock.patch.object(SerializationStrategy, "peekTypex", side_effect=blocked), \
+         mock.patch("sn.view.graphics.guiApp.showExceptionDialog") as traceback, \
+         self.assertLogs(level="ERROR"):
+      self.assertIsNone(self.app.openWindow(view.as_uri()))
+      self.assertIsNone(self.app.openWindow(view.as_uri())) # (just said: only logged)
+    traceback.assert_not_called()
+    box.askyesno.assert_called_once()
+    message = box.askyesno.call_args[0][1]
+    self.assertIn('family.snv" couldn\'t be opened', message)
+    self.assertIn("isn't letting Eclipse use", message)
+    opener.assert_called_once()
+    with mock.patch.object(SerializationStrategy, "peekTypex", side_effect=ValueError("not a view")), \
+         mock.patch("sn.view.graphics.guiApp.showExceptionDialog") as traceback, \
+         self.assertLogs(level="ERROR"):
+      self.assertIsNone(self.app.openWindow(view.as_uri()))
+    traceback.assert_called_once() # (anything else: the traceback, as before)
+
+  def test0910commandBlockedByPrivacy(self):
+    'A menu command (eg: File | Save view) the privacy protection stopped: which app to allow, as well as the usual report.'
+    import errno
+    box, opener = self.privacy()
+    box.askyesno.return_value = False
+    path = str(self.folder / "family.snv")
+    try:
+      try:
+        raise PermissionError(errno.EPERM, "Operation not permitted", path)
+      except OSError as e:
+        raise ValueError(f'Can\'t write "{path}"') from e
+    except ValueError as ex:
+      with mock.patch("sys.stderr"):
+        self.app.report_callback_exception(type(ex), ex, ex.__traceback__)
+    self.assertIn('family.snv" couldn\'t be read or written', box.askyesno.call_args[0][1])
+    opener.assert_not_called()
+    box.reset_mock()
+    with mock.patch("sys.stderr"):
+      self.app.report_callback_exception(KeyError, KeyError("x"), None)
+    box.askyesno.assert_not_called()
+
 
 if __name__ == "__main__":
   unittest.main()

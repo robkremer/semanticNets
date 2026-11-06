@@ -59,14 +59,14 @@ from pathlib import Path
 import tkinter as tk
 import tkinter.filedialog as filedialog
 from tkinter import messagebox
-from typing import cast, TYPE_CHECKING
+from typing import cast, override, TYPE_CHECKING
 from types import NoneType
 from tkinter import ttk
 from sn import snPrefs
 from util.utils import afterMenu, showExceptionDialog, fixURL, urlExists, displayURL,\
   isValidURL, keepLast, dialogOwner
 from util.platformSupport import MAC, shortcut, openFile, setUpLook, setDPIAware, documentsFolder,\
-  privacyBlocked, privacyHelp, openPrivacySettings
+  privacyError, privacyHelp, openPrivacySettings
 from util.singleInstance import SingleInstance
 from util.terminal import terminalRegistry, installGlobalIORouting,\
   TerminalWidget, TerminalRegistry
@@ -121,6 +121,8 @@ class Application(tk.Tk):
 
     self.windows: dict[str, AppWindow] = {}
     self.terminalRegistry = terminalRegistry  # shared across all windows
+    self._privacyExplained:dict[str, float] = {}
+    "When each folder was last said to be blocked by the Mac's privacy protection (see *explainPrivacy()*)."
     self.directoryPane:DirectoryPane|None = None
     "The model directory, once it's been shown: it fills this (the main) window (see *showDirectory()*)."
     self._directoryShown = tk.BooleanVar(self, value=False) # (the Window menu's check mark)
@@ -468,11 +470,13 @@ class Application(tk.Tk):
       self._refreshDirectory()
       return view.window
     
-    except Exception:
+    except Exception as ex:
       logger.error(f'While opening window for viewSpec "{viewSpec}"')#, exc_info=True)
       try:
         print(traceback.format_exc(), file=sys.__stderr__)
-        showExceptionDialog(self, title=f"Semantic Nets: Failed to open window for Model {viewSpec.url if isinstance(viewSpec, Model) else viewSpec}.")
+        name = viewSpec.url if isinstance(viewSpec, Model) else viewSpec
+        if not self.explainPrivacy(ex, f'"{displayURL(str(name))}" couldn\'t be opened'):
+          showExceptionDialog(self, title=f"Semantic Nets: Failed to open window for Model {name}.")
       except Exception:
         logger.error('While displaying exception dialog', exc_info=True)
       return None
@@ -966,12 +970,55 @@ class Application(tk.Tk):
     """
     said = f'The example models couldn\'t be copied to "{target}"'
     menu = "Help | Install Example Models"
-    if privacyBlocked(ex):
-      if messagebox.askyesno(sn.NAME, f"{said}.\n\n{privacyHelp(target)} Then choose {menu} to install them."
-                             "\n\nOpen the Privacy & Security settings now?", icon=messagebox.WARNING, parent=self._dialogParent()):
-        openPrivacySettings()
-    else:
+    if not self.explainPrivacy(ex, said, f"Then choose {menu} to install them.", path=target, again=True):
       messagebox.showerror(sn.NAME, f"{said}: {ex.strerror or ex}.\n\nYou can try again with {menu}.", parent=self._dialogParent())
+
+  PRIVACY_QUIET = 60.0
+  "For how long (seconds) *explainPrivacy()* doesn't say the same folder's blocked again (eg: for each window reopened at start-up)."
+
+  def explainPrivacy(self, ex:BaseException, said:str="", then:str="", path:str|None=None, again:bool=False) -> bool:
+    """If *ex* is (or was raised from) the Mac's privacy protection stopping
+    a file being used (see *util.platformSupport.privacyError()*) -- eg: the
+    app that started the program (Eclipse, or Terminal, ...) hasn't been
+    allowed to use the Documents folder -- tell the user which app to allow,
+    and where, offering to open those settings. A folder that's just been
+    said to be blocked (within *PRIVACY_QUIET*) is only logged.
+
+    :param ex: Why something failed.
+    :param said: What failed, eg: '"animals.snv" couldn't be opened'; by default, that the file couldn't be read or written.
+    :param then: What to do once it's allowed, eg: "Then open it again."
+    :param path: The file (or folder) to name; by default, the one *ex* names.
+    :param again: Whether to say so even if it's just been said.
+    :returns: Whether that's what it was (and it's been said, or logged).
+    """
+    import time
+    blocked = privacyError(ex)
+    if blocked is None:
+      return False
+    path = path or (blocked.filename if isinstance(blocked.filename, str) else "") or ""
+    folder = os.path.dirname(os.path.abspath(path)) if path else ""
+    said = said or (f'"{displayURL(path)}" couldn\'t be read or written' if path else "A file couldn't be read or written")
+    now = time.monotonic()
+    if not again and now - self._privacyExplained.get(folder, -self.PRIVACY_QUIET) < self.PRIVACY_QUIET:
+      logger.error(f"{said}: macOS's privacy protection won't let it be used (see the message about {folder}).")
+      return True
+    self._privacyExplained[folder] = now
+    if messagebox.askyesno(sn.NAME, f"{said}.\n\n{privacyHelp(path)}{' ' + then if then else ''}"
+                           "\n\nOpen the Privacy & Security settings now?", icon=messagebox.WARNING, parent=self._dialogParent()):
+      openPrivacySettings()
+    return True
+
+  @override
+  def report_callback_exception(self, exc:type[BaseException], val:BaseException, tb) -> None: # type: ignore[override]
+    """An error in a menu item's, button's, ... command (eg: File | Save
+    view): if the Mac's privacy protection stopped a file being used, say
+    which app to allow (see *explainPrivacy()*) -- as well as reporting it as
+    usual."""
+    super().report_callback_exception(exc, val, tb)
+    try:
+      self.explainPrivacy(val, then="Then try again.")
+    except Exception:
+      logger.error("While explaining an error", exc_info=True)
 
   def examplesBlocked(self, target:str) -> bool:
     """
@@ -984,7 +1031,7 @@ class Application(tk.Tk):
       with tempfile.TemporaryFile(dir=target):
         pass
     except OSError as ex:
-      if privacyBlocked(ex):
+      if privacyError(ex) is not None:
         self.cantCopyExamples(target, ex)
         return True
     return False
