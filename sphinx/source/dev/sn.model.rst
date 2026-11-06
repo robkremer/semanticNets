@@ -22,5 +22,6 @@ Submodules
    sn.model.modelPrefs
    sn.model.names
    sn.model.nemoReasoner
+   sn.model.prologReasoner
    sn.model.reasoner
    sn.model.snAttribute

@@ -1,0 +1,6 @@
+# The SWI-Prolog reasoner engine (sn.model.prologReasoner: "reasoner/engine" = prolog): optional everywhere.
+# It's the Python interface to SWI-Prolog, which must be installed first (9.1.12 or later: swi-prolog.org; on a
+# Mac, also "brew install swi-prolog"): pip builds it against the swipl it finds on the PATH. The apps don't
+# include either: they use them installed for a Python 3.14 on the computer (see util.localPython, and
+# "Installing an engine" in the User Guide). Pinned: the version it's tested with.
+janus-swi==1.5.3

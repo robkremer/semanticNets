@@ -178,10 +178,11 @@ PREFS:dict[str, tuple[Any, Any, str]] = {
     "Show the base rules (the meaning of symmetric, transitive, ...: see sn.model.reasoner.BASE_RULES) in the "
     "reasoner's results: their objects as data, and what they conclude as rule conclusions rather than plain "
     "inferences. For debugging the base rules; best left off."),
-  "reasoner/engine": ("choices[clingo,nemo,clips]", "clingo",
+  "reasoner/engine": ("choices[clingo,nemo,clips,prolog]", "clingo",
     "The reasoner engine that \"reason\" and queries use: clingo (answer set programming), nemo (Datalog, "
-    "which can also say why a conclusion holds: the \"explain\" command), or clips (a production rule system). "
-    "Nemo and CLIPS are optional: if one isn't installed, the program says how to install it (\"Installing an "
+    "which can also say why a conclusion holds: the \"explain\" command), clips (a production rule system) "
+    "or prolog (SWI-Prolog, with tabling). "
+    "Nemo, CLIPS and Prolog are optional: if one isn't installed, the program says how to install it (\"Installing an "
     "engine\", in the User Guide's Reasoning page). "
     "See sn.model.reasoner.ENGINES."),
   "reasoner/python": (str, "",

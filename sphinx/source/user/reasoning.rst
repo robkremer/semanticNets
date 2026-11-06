@@ -7,8 +7,9 @@ implied by relations' properties, what rules and definitions conclude -- and
 what's wrong. It uses `clingo <https://potassco.org/clingo/>`_, an answer set
 programming system -- or, if you choose it, `Nemo
 <https://github.com/knowsys/nemo>`_, a Datalog engine that can also say *why* a
-conclusion holds, or `CLIPS <https://www.clipsrules.net>`_, a production rule
-system (see `Engines and explanations`_ below).
+conclusion holds, `CLIPS <https://www.clipsrules.net>`_, a production rule
+system, or `SWI-Prolog <https://www.swi-prolog.org>`_ (see `Engines and
+explanations`_ below).
 
 Reasoning
 ---------
@@ -91,17 +92,19 @@ same as the button.
 Engines and explanations
 ------------------------
 
-The reasoner has three engines, which reach the same conclusions:
-**clingo** (the default), **Nemo** and **CLIPS**. The apps include clingo and
-Nemo; CLIPS is installed separately (see `Installing an engine`_, which also
-covers the ``.pyz`` and the source). The ``reasoner/engine`` setting
+The reasoner has four engines, which reach the same conclusions:
+**clingo** (the default), **Nemo**, **CLIPS** and **Prolog** (SWI-Prolog). The
+apps include clingo and Nemo; CLIPS and Prolog are installed separately (see
+`Installing an engine`_, which also covers the ``.pyz`` and the source). The ``reasoner/engine`` setting
 (**Settings...**, in the application menu) says which one **reason**, queries
 and ``ask reasoner`` use; ``reason --engine nemo`` picks one for a single run.
 ``ask reasoner`` takes a question in the engine's own language: for clingo,
 ``'ans(X) :- holds(T,F,X), name(T,"owns"), name(F,"fred").'``; for Nemo,
 ``'ans(?X) :- holds(?T,?F,?X), name(?T,"owns"), name(?F,"fred").'``; for
 CLIPS, ``'(defrule q (holds ?t ?f ?x) (name ?t "owns") (name ?f "fred") =>
-(assert (ans ?x)))'``.
+(assert (ans ?x)))'``; for Prolog, ``'ans(X) :- name(T,"owns"), name(F,"fred"),
+holds(T,F,X).'`` (its goals run in the order they're written, so start with
+what narrows things down most).
 
 What Nemo adds is explanations. An inferred relation's menu has **explain
 (why it holds)**, which prints the steps to the terminal pane: the rules it
@@ -133,14 +136,23 @@ the one the setting picks, it also offers to reason with one that is
 installed: this time, or from now on.
 
 **In the apps**
-  clingo and Nemo are in them. An engine an app doesn't include -- CLIPS --
-  can be installed for a Python 3.14 on the computer -- the same version as
-  the app's own, for the same kind of processor (eg: Apple silicon) -- and the
-  app uses it from there::
+  clingo and Nemo are in them. An engine an app doesn't include -- CLIPS or
+  Prolog -- can be installed for a Python 3.14 on the computer -- the same
+  version as the app's own, for the same kind of processor (eg: Apple
+  silicon) -- and the app uses it from there::
 
     python3.14 -m pip install clipspy
 
-  (on Windows, ``py -3.14 -m pip install clipspy``). If there's no Python
+  (on Windows, ``py -3.14 -m pip install clipspy``). For Prolog, first install
+  `SWI-Prolog <https://www.swi-prolog.org/download/stable>`_ itself (9.1.12 or
+  later: on a Mac, its app, or ``brew install swi-prolog``; on Windows, its
+  installer, letting it add ``swipl`` to the ``PATH``; on Linux, its PPA or
+  your distribution's package), then its Python interface::
+
+    python3.14 -m pip install janus-swi
+
+  (pip builds it against the ``swipl`` it finds on the ``PATH``, so open a new
+  terminal after installing SWI-Prolog). If there's no Python
   3.14 on the computer yet, install one from https://www.python.org first. The app looks for that
   Python where its installers put it (python.org's, Homebrew's, ...) and on
   the ``PATH``; if it's somewhere else (eg: a virtual environment), give its
@@ -150,9 +162,13 @@ installed: this time, or from now on.
 **The** ``.pyz`` **or the source**
   Install the engine for the Python that runs the program (see
   :doc:`gettingStarted`): clingo with ``python3.14 -m pip install clingo``,
-  Nemo with ``python3.14 -m pip install nemo-python``, and CLIPS with::
+  Nemo with ``python3.14 -m pip install nemo-python``, CLIPS with::
 
     python3.14 -m pip install clipspy
+
+  and Prolog, once SWI-Prolog is installed (see above), with::
+
+    python3.14 -m pip install janus-swi
 
 Then start the program again.
 
