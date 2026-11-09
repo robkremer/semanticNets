@@ -2,7 +2,8 @@
 Draw the app's (placeholder) icon -- a little semantic network: three boxes
 joined by arrows, on a rounded square -- as packaging/sn.icns, and the same
 picture as packaging/sn.ico (Windows) and sn-icon.png (Linux), and as the
-documentation's logo and favicon (sphinx/source/images/sn-*.png).
+documentation's logo and favicon (sphinx/source/images/sn-*.png), and the
+About box's (src/sn/about/icon.png).
 
 Run with the build venv's Python (it needs Pillow): see build.xml's "icon"
 target. Replace sn.icns with a designed icon whenever there is one.
@@ -70,6 +71,7 @@ def main() -> None:
   images = os.path.join(HERE, "..", "sphinx", "source", "images") # (the documentation's logo and favicon: see sphinx/source/conf.py)
   draw(128).save(os.path.join(images, "sn-logo.png"))
   draw(64).save(os.path.join(images, "sn-favicon.png"))
+  draw(128).save(os.path.join(HERE, "..", "src", "sn", "about", "icon.png"), optimize=True) # (the About box's: see sn.view.graphics.aboutBox)
   shutil.rmtree(tmp)
   print("wrote", out)
 

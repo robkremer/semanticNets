@@ -89,7 +89,10 @@ Open **Semantic Nets** as you would any app, or double-click a model
   showing. If there were none, it shows the model directory (see
   :doc:`files`).
 
-The **Help** menu has this guide.
+The **Help** menu has this guide. **About Semantic Nets** (on the Mac, first
+in the **Semantic Nets** menu -- the **Python** menu, when it's run from its
+source; elsewhere, last in the **Help** menu) shows its version, the people,
+reasoner engines, libraries and tools it's made with, and their licences.
 
 The program keeps its settings in *~/.sn/prefs.xml* (see :doc:`files`), and its log
 -- worth a look if something goes wrong -- in *~/Library/Logs/Semantic Nets*
