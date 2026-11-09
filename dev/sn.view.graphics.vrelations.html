@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.view.graphics.vrelations module - Semantic Nets 1.0.1 documentation</title>
+        <title>sn.view.graphics.vrelations module - Semantic Nets 1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -238,12 +238,15 @@
 <li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html">sn.model.clipsReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html">sn.model.nemoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html">sn.model.prologReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
 </ul>
@@ -536,6 +539,62 @@ is drawn to top if top is already shown, but never adds it.)</p></li>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vrelations.VRelation._terminators">
+<span class="sig-name descname"><span class="pre">_terminators</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vrelations.VRelation._terminators" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Its connector’s marks (see <em>util.lineMarks</em>): “vis/terminator1” to “vis/terminator4” at its
+four line ends, and “vis/midMarks” in its middle.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors.ConnectorTerminators" title="sn.view.graphics.connectors.ConnectorTerminators"><em>ConnectorTerminators</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vrelations.VRelation._middleLayout">
+<span class="sig-name descname"><span class="pre">_middleLayout</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vrelations.VRelation._middleLayout" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>width</strong> (<em>float</em><em> | </em><em>None</em>) – The line’s width (view units): by default, “vis/lineWidth”.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Its middle marks (“vis/midMarks”), laid out (see <em>util.lineMarks.layoutMarks()</em>): none if it
+can’t be read.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vrelations.VRelation.emptyLabelSize">
+<span class="sig-name descname"><span class="pre">emptyLabelSize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vrelations.VRelation.emptyLabelSize" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Room for its middle marks (“vis/midMarks”), if it has any: a square they fit in, whichever
+way the line runs – so they’re inside the box it’s selected (and picked out) by.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[float, float]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vrelations.VRelation._labelShown">
+<span class="sig-name descname"><span class="pre">_labelShown</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vrelations.VRelation._labelShown" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Whether its label shows any text (as last drawn). Without, its line runs through it – to its
+middle marks, if it has any, else meeting at its centre (see <em>drawSmoothConnector()</em>’s <em>throughLabel</em>).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.vrelations.VRelation._styleEnds">
 <span class="sig-name descname"><span class="pre">_styleEnds</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vrelations.VRelation._styleEnds" title="Link to this definition">¶</a></dt>
 <dd><p>After the connector is drawn: an inherited end’s half of it (line and
@@ -604,6 +663,18 @@ that floated is pinned once the view’s drawn: see
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vrelations.VRelation._drawConnector">
+<span class="sig-name descname"><span class="pre">_drawConnector</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vrelations.VRelation._drawConnector" title="Link to this definition">¶</a></dt>
+<dd><p>Draw its connector (or draw it again), by its line type – not its label:
+eg, at its new width when it’s selected (see <em>selected()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.vrelations.VRelation.lineWidth">
 <span class="sig-name descname"><span class="pre">lineWidth</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vrelations.VRelation.lineWidth" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
@@ -638,7 +709,8 @@ among many (eg: to follow it across a big graph).</p>
 <dt class="sig sig-object py" id="sn.view.graphics.vrelations.VRelation.selected">
 <span class="sig-name descname"><span class="pre">selected</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">val</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_multi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vrelations.VRelation.selected" title="Link to this definition">¶</a></dt>
 <dd><p>As <em>VObject.selected()</em> – and a change redraws its line, which is
-thicker while it’s selected (see <em>lineWidth()</em>).</p>
+thicker while it’s selected (see <em>lineWidth()</em>): just its connector, if
+it’s been drawn (its label’s as it was).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -669,6 +741,20 @@ canvas items are reused, eg: when one is marked as asserted).</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>dict[str, <em>Any</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vrelations.VRelation._applyHidden">
+<span class="sig-name descname"><span class="pre">_applyHidden</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vrelations.VRelation._applyHidden" title="Link to this definition">¶</a></dt>
+<dd><p>As <em>VObject._applyHidden()</em>; but a relation that’s part of a shown context
+window’s content (eg: a rule’s conclusion that ?x isa person) shows its
+ends too: one hidden by its category (eg: “types”) is shown anyway (see
+<em>SNGView._exemptIfFiltered()</em>), or what the window says would be cut short.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -890,6 +976,11 @@ items), to be completed where the drag is released – see
 </dl>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.vrelations.VRelation._abc_impl">
+<span class="sig-name descname"><span class="pre">_abc_impl</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;_abc._abc_data</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#sn.view.graphics.vrelations.VRelation._abc_impl" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.vrelations.VRelation.onButton_1">
 <span class="sig-name descname"><span class="pre">onButton_1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vrelations.VRelation.onButton_1" title="Link to this definition">¶</a></dt>
@@ -901,11 +992,6 @@ else it’s the usual drag (moving and anchoring the label).</p>
 </dd>
 </dl>
 </dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sn.view.graphics.vrelations.VRelation._abc_impl">
-<span class="sig-name descname"><span class="pre">_abc_impl</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;_abc._abc_data</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#sn.view.graphics.vrelations.VRelation._abc_impl" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.vrelations.VRelation.chooseNewEndpoint">
@@ -958,16 +1044,6 @@ by <em>VObject.update()</em>.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.vrelations.VRelation.onEnter">
 <span class="sig-name descname"><span class="pre">onEnter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vrelations.VRelation.onEnter" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>event</strong> – The Tk event.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="sn.view.graphics.vrelations.VRelation.onB1_ButtonRelease">
-<span class="sig-name descname"><span class="pre">onB1_ButtonRelease</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vrelations.VRelation.onB1_ButtonRelease" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>event</strong> – The Tk event.</p>
@@ -1046,15 +1122,21 @@ by <em>VObject.update()</em>.</p>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation._resolveEnd"><code class="docutils literal notranslate"><span class="pre">VRelation._resolveEnd()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.inheritedEnds"><code class="docutils literal notranslate"><span class="pre">VRelation.inheritedEnds</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation._faded"><code class="docutils literal notranslate"><span class="pre">VRelation._faded()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation._terminators"><code class="docutils literal notranslate"><span class="pre">VRelation._terminators()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation._middleLayout"><code class="docutils literal notranslate"><span class="pre">VRelation._middleLayout()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.emptyLabelSize"><code class="docutils literal notranslate"><span class="pre">VRelation.emptyLabelSize()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation._labelShown"><code class="docutils literal notranslate"><span class="pre">VRelation._labelShown()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation._styleEnds"><code class="docutils literal notranslate"><span class="pre">VRelation._styleEnds()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.validate"><code class="docutils literal notranslate"><span class="pre">VRelation.validate()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.floating"><code class="docutils literal notranslate"><span class="pre">VRelation.floating()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.draw"><code class="docutils literal notranslate"><span class="pre">VRelation.draw()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation._drawConnector"><code class="docutils literal notranslate"><span class="pre">VRelation._drawConnector()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.lineWidth"><code class="docutils literal notranslate"><span class="pre">VRelation.lineWidth()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.selectedLineWidth"><code class="docutils literal notranslate"><span class="pre">VRelation.selectedLineWidth()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.selected"><code class="docutils literal notranslate"><span class="pre">VRelation.selected()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.INFERRED_DASH"><code class="docutils literal notranslate"><span class="pre">VRelation.INFERRED_DASH</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation._inferredLine"><code class="docutils literal notranslate"><span class="pre">VRelation._inferredLine()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation._applyHidden"><code class="docutils literal notranslate"><span class="pre">VRelation._applyHidden()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.inWindow"><code class="docutils literal notranslate"><span class="pre">VRelation.inWindow()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.reposition"><code class="docutils literal notranslate"><span class="pre">VRelation.reposition()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.PANE_MARGIN"><code class="docutils literal notranslate"><span class="pre">VRelation.PANE_MARGIN</span></code></a></li>
@@ -1070,13 +1152,12 @@ by <em>VObject.update()</em>.</p>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation._endpointsEditable"><code class="docutils literal notranslate"><span class="pre">VRelation._endpointsEditable()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation._terminalAt"><code class="docutils literal notranslate"><span class="pre">VRelation._terminalAt()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.grabTerminal"><code class="docutils literal notranslate"><span class="pre">VRelation.grabTerminal()</span></code></a></li>
-<li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.onButton_1"><code class="docutils literal notranslate"><span class="pre">VRelation.onButton_1()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation._abc_impl"><code class="docutils literal notranslate"><span class="pre">VRelation._abc_impl</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.onButton_1"><code class="docutils literal notranslate"><span class="pre">VRelation.onButton_1()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.chooseNewEndpoint"><code class="docutils literal notranslate"><span class="pre">VRelation.chooseNewEndpoint()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.update"><code class="docutils literal notranslate"><span class="pre">VRelation.update()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation._toggleFloatingAnchor"><code class="docutils literal notranslate"><span class="pre">VRelation._toggleFloatingAnchor()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.onEnter"><code class="docutils literal notranslate"><span class="pre">VRelation.onEnter()</span></code></a></li>
-<li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.onB1_ButtonRelease"><code class="docutils literal notranslate"><span class="pre">VRelation.onB1_ButtonRelease()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -1090,7 +1171,7 @@ by <em>VObject.update()</em>.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=292eb321"></script>
+</div><script src="../_static/documentation_options.js?v=56dcb7b8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

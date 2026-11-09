@@ -3,11 +3,11 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="sn.model.snAttribute module" href="sn.model.snAttribute.html"><link rel="prev" title="sn.model.names module" href="sn.model.names.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="sn.model.snAttribute module" href="sn.model.snAttribute.html"><link rel="prev" title="sn.model.prologReasoner module" href="sn.model.prologReasoner.html">
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.model.reasoner module - Semantic Nets 1.0.1 documentation</title>
+        <title>sn.model.reasoner module - Semantic Nets 1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -238,12 +238,15 @@
 <li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
 <li class="toctree-l2 current has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" checked="" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html">sn.model.clipsReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html">sn.model.nemoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html">sn.model.prologReasoner module</a></li>
 <li class="toctree-l3 current current-page"><a class="current reference internal" href="#">sn.model.reasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
 </ul>
@@ -691,6 +694,50 @@ has a mother”: ?m). It’s not in the model – just in the reasoning results.
 </dl>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.reasoner.assertedIsa">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">assertedIsa</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.assertedIsa" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p></li>
+<li><p><strong>t</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether <em>x</em> is a <em>t</em> by what’s asserted: following only isa links
+that aren’t inferred (see <em>GraphObject.inferred</em>) – so not by what a
+reason added (see <em>materialize()</em>), which a rule’s conclusion is news in
+spite of.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.reasoner._assertedValue">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">_assertedValue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner._assertedValue" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p></li>
+<li><p><strong>key</strong> (<em>str</em>)</p></li>
+<li><p><strong>value</strong> (<em>Any</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether <em>x</em> has <em>value</em> for <em>key</em> by what’s asserted – its own
+value (not an inferred one: see <em>materialize()</em>), or, without one of its
+own, what it inherits – so a rule’s conclusion that it has isn’t news.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py class">
@@ -1277,9 +1324,10 @@ consequent is what it contains through “consequent” relations:</p>
 <ul class="simple">
 <li><p>A relation concludes a relation, between its (local) ends, for each of
 its types – which may be variables.</p></li>
-<li><p>A variable’s constraints (see <em>GraphObject.constraints()</em>) are
-conclusions if it’s the consequent’s own variable (not one of the
-antecedent’s nodes, whose constraints are tests).</p></li>
+<li><p>A variable’s constraints (see <em>GraphObject.constraints()</em>) and its
+types (as drawn) are conclusions if it’s the consequent’s own variable
+(not one of the antecedent’s nodes, whose constraints and types are
+tests) – a copy of an antecedent variable, or a new one.</p></li>
 <li><p>An isa link concludes an isa link.</p></li>
 <li><p>A consequent variable the antecedent doesn’t bind (by name) stands for a
 new object, one per match: it’s concluded to exist, isa its types (as
@@ -1658,6 +1706,229 @@ made to refer to where it then is. (None while they’re being read: see
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="sn.model.reasoner.EngineInfo">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">EngineInfo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">package</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">explains</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bundled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">needs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.EngineInfo" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>What the program knows about a reasoner engine without importing it: what it
+needs installed, and what it can do. So a missing engine can say how to
+install it (see <em>EngineMissing</em>), and a feature can use any installed engine
+that can do what it needs (see <em>explainingEngine()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>)</p></li>
+<li><p><strong>module</strong> (<em>str</em>)</p></li>
+<li><p><strong>package</strong> (<em>str</em>)</p></li>
+<li><p><strong>explains</strong> (<em>bool</em>)</p></li>
+<li><p><strong>bundled</strong> (<em>bool</em>)</p></li>
+<li><p><strong>needs</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.reasoner.EngineInfo.name">
+<span class="sig-name descname"><span class="pre">name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#sn.model.reasoner.EngineInfo.name" title="Link to this definition">¶</a></dt>
+<dd><p>The engine’s name (eg: “nemo”): its module is sn.model.&lt;name&gt;Reasoner.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.reasoner.EngineInfo.module">
+<span class="sig-name descname"><span class="pre">module</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#sn.model.reasoner.EngineInfo.module" title="Link to this definition">¶</a></dt>
+<dd><p>The Python module it needs (eg: “nmo_python”).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.reasoner.EngineInfo.package">
+<span class="sig-name descname"><span class="pre">package</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#sn.model.reasoner.EngineInfo.package" title="Link to this definition">¶</a></dt>
+<dd><p>The package that provides <em>module</em>, as pip names it (eg: “nemo-python”).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.reasoner.EngineInfo.explains">
+<span class="sig-name descname"><span class="pre">explains</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#sn.model.reasoner.EngineInfo.explains" title="Link to this definition">¶</a></dt>
+<dd><p>Whether it can say why a conclusion holds (see <em>sn.model.nemoReasoner.NemoReasoner.explain()</em>).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.reasoner.EngineInfo.bundled">
+<span class="sig-name descname"><span class="pre">bundled</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></span><a class="headerlink" href="#sn.model.reasoner.EngineInfo.bundled" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the apps include it (their self-test checks that it’s there: see <em>sn.__main__.selftest()</em>).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.reasoner.EngineInfo.needs">
+<span class="sig-name descname"><span class="pre">needs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></span><a class="headerlink" href="#sn.model.reasoner.EngineInfo.needs" title="Link to this definition">¶</a></dt>
+<dd><p>What must be installed before <em>package</em>, if anything (eg: SWI-Prolog, which janus-swi is the Python interface to).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.reasoner.EngineInfo.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">package</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">explains</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bundled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">needs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.EngineInfo.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>)</p></li>
+<li><p><strong>module</strong> (<em>str</em>)</p></li>
+<li><p><strong>package</strong> (<em>str</em>)</p></li>
+<li><p><strong>explains</strong> (<em>bool</em>)</p></li>
+<li><p><strong>bundled</strong> (<em>bool</em>)</p></li>
+<li><p><strong>needs</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.model.reasoner.ENGINES">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">ENGINES</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#sn.model.reasoner.EngineInfo" title="sn.model.reasoner.EngineInfo"><span class="pre">EngineInfo</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'clingo':</span> <span class="pre">EngineInfo(name='clingo',</span> <span class="pre">module='clingo',</span> <span class="pre">package='clingo',</span> <span class="pre">explains=False,</span> <span class="pre">bundled=True,</span> <span class="pre">needs=''),</span> <span class="pre">'clips':</span> <span class="pre">EngineInfo(name='clips',</span> <span class="pre">module='clips',</span> <span class="pre">package='clipspy',</span> <span class="pre">explains=False,</span> <span class="pre">bundled=False,</span> <span class="pre">needs=''),</span> <span class="pre">'nemo':</span> <span class="pre">EngineInfo(name='nemo',</span> <span class="pre">module='nmo_python',</span> <span class="pre">package='nemo-python',</span> <span class="pre">explains=True,</span> <span class="pre">bundled=True,</span> <span class="pre">needs=''),</span> <span class="pre">'prolog':</span> <span class="pre">EngineInfo(name='prolog',</span> <span class="pre">module='janus_swi',</span> <span class="pre">package='janus-swi',</span> <span class="pre">explains=False,</span> <span class="pre">bundled=False,</span> <span class="pre">needs='SWI-Prolog</span> <span class="pre">(9.1.12</span> <span class="pre">or</span> <span class="pre">later,</span> <span class="pre">from</span> <span class="pre">swi-prolog.org)')}</span></span><a class="headerlink" href="#sn.model.reasoner.ENGINES" title="Link to this definition">¶</a></dt>
+<dd><p>The known reasoner engines, by name. A new engine adds itself here, and to the
+“reasoner/engine” preference’s choices (see <em>sn.PREFS</em>), and its install
+instructions to the User Guide (see <em>INSTALL_HELP</em>).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.model.reasoner.PIP">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">PIP</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'python3.14</span> <span class="pre">-m</span> <span class="pre">pip'</span></span><a class="headerlink" href="#sn.model.reasoner.PIP" title="Link to this definition">¶</a></dt>
+<dd><p>How to run pip for a Python of this one’s version, which an engine must be installed for: eg, “python3.14 -m pip”.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.model.reasoner.INSTALL_HELP">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">INSTALL_HELP</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'user/reasoning.html#installing-an-engine'</span></span><a class="headerlink" href="#sn.model.reasoner.INSTALL_HELP" title="Link to this definition">¶</a></dt>
+<dd><p>The User Guide’s page (and section) on installing a reasoner engine: see <em>sn.view.graphics.guiApp.showHelp()</em>.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="sn.model.reasoner.EngineMissing">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">EngineMissing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">engine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detail</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.EngineMissing" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ImportError</span></code></p>
+<p>A reasoner engine isn’t installed, or can’t be loaded: raised by
+<em>Reasoner.create()</em>, saying how to install it. (The GUI shows it with a link
+to <em>INSTALL_HELP</em>: see <em>sn.view.graphics.viewReasoning.showEngineMissing()</em>.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>engine</strong> (<em>str</em>)</p></li>
+<li><p><strong>detail</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.reasoner.EngineMissing.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">engine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detail</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.EngineMissing.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>engine</strong> (<em>str</em>) – The engine’s name (eg: “nemo”).</p></li>
+<li><p><strong>detail</strong> (<em>str</em>) – Why it couldn’t be loaded, if it’s installed but broken.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.reasoner.EngineMissing.engine">
+<span class="sig-name descname"><span class="pre">engine</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#sn.model.reasoner.EngineMissing.engine" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.reasoner.EngineMissing.package">
+<span class="sig-name descname"><span class="pre">package</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.model.reasoner.EngineMissing.package" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.reasoner.EngineMissing.detail">
+<span class="sig-name descname"><span class="pre">detail</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#sn.model.reasoner.EngineMissing.detail" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.reasoner.engineInstalled">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">engineInstalled</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">engine</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.engineInstalled" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>engine</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether <em>engine</em> can be used: it’s loaded already, or what it needs
+is installed. (It’s looked for, not loaded: if it’s broken, <em>Reasoner.create()</em>
+still raises <em>EngineMissing</em>.)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.reasoner._lookOutside">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">_lookOutside</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner._lookOutside" title="Link to this definition">¶</a></dt>
+<dd><p>In a packaged app – which has its own Python, so pip can’t install into it
+– make the packages of a Python of the same version on this computer
+importable (see <em>util.localPython.addPackages()</em>): the “reasoner/python”
+setting’s, or else the first found. So an engine the app doesn’t include can
+be installed for that Python, and used.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Whether there’s such a Python (whose packages are now on the path).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.reasoner._importEngine">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">_importEngine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">engine</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner._importEngine" title="Link to this definition">¶</a></dt>
+<dd><p>Import <em>engine</em>’s module (which registers it): if what it needs isn’t
+installed, after looking for it in a Python on this computer (see <em>_lookOutside()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>engine</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.reasoner.installedEngines">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">installedEngines</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.installedEngines" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The names of the engines that can be used (see <em>engineInstalled()</em>).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.reasoner.explainingEngine">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">explainingEngine</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.explainingEngine" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The engine to explain a conclusion with (see
+<em>sn.controller.modelInterface.ModelContext.explain()</em>): the default one if
+it can, or else the first installed one that can – or, if none is
+installed, the first that can (so <em>Reasoner.create()</em> says how to install it).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="sn.model.reasoner.Reasoner">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">Reasoner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">showSysRules</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.Reasoner" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
@@ -1675,7 +1946,8 @@ made to refer to where it then is. (None while they’re being read: see
 </pre></div>
 </div>
 <p><a class="reference internal" href="#sn.model.reasoner.Reasoner.create" title="sn.model.reasoner.Reasoner.create"><code class="xref py py-meth docutils literal notranslate"><span class="pre">create()</span></code></a> imports <em>sn.model.&lt;engine&gt;Reasoner</em> on demand, so an engine
-that lives there needs no other registration.</p>
+that lives there needs no other registration; which engine is used by
+default is a preference (see <em>defaultEngine()</em>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1691,7 +1963,7 @@ that lives there needs no other registration.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sn.model.reasoner.Reasoner.engines">
-<span class="sig-name descname"><span class="pre">engines</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sn.model.reasoner.Reasoner" title="sn.model.reasoner.Reasoner"><span class="pre">Reasoner</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'clingo':</span> <span class="pre">&lt;class</span> <span class="pre">'sn.model.clingoReasoner.ClingoReasoner'&gt;}</span></span><a class="headerlink" href="#sn.model.reasoner.Reasoner.engines" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">engines</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sn.model.reasoner.Reasoner" title="sn.model.reasoner.Reasoner"><span class="pre">Reasoner</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'clingo':</span> <span class="pre">&lt;class</span> <span class="pre">'sn.model.clingoReasoner.ClingoReasoner'&gt;,</span> <span class="pre">'clips':</span> <span class="pre">&lt;class</span> <span class="pre">'sn.model.clipsReasoner.ClipsReasoner'&gt;,</span> <span class="pre">'nemo':</span> <span class="pre">&lt;class</span> <span class="pre">'sn.model.nemoReasoner.NemoReasoner'&gt;,</span> <span class="pre">'prolog':</span> <span class="pre">&lt;class</span> <span class="pre">'sn.model.prologReasoner.PrologReasoner'&gt;}</span></span><a class="headerlink" href="#sn.model.reasoner.Reasoner.engines" title="Link to this definition">¶</a></dt>
 <dd><p>Registered engines by name.</p>
 </dd></dl>
 
@@ -1703,18 +1975,24 @@ that lives there needs no other registration.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.model.reasoner.Reasoner.create">
-<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'clingo'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.Reasoner.create" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.Reasoner.create" title="Link to this definition">¶</a></dt>
 <dd><p>A reasoner over <em>model</em> by <em>engine</em> (its module, sn.model.&lt;engine&gt;Reasoner, imported if need be); <em>kwargs</em>
 are its constructor’s.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>engine</strong> (<em>str</em><em> | </em><em>None</em>) – The engine’s name (eg: “clingo”, “nemo”); by default, the preference’s (see <em>defaultEngine()</em>).</p></li>
 <li><p><strong>model</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>)</p></li>
-<li><p><strong>engine</strong> (<em>str</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference internal" href="#sn.model.reasoner.Reasoner" title="sn.model.reasoner.Reasoner"><em>Reasoner</em></a></p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><a class="reference internal" href="#sn.model.reasoner.EngineMissing" title="sn.model.reasoner.EngineMissing"><strong>EngineMissing</strong></a> – If the engine (or what it needs: eg, nemo’s Nemo) isn’t installed, or won’t load.</p></li>
+<li><p><strong>ValueError</strong> – If there’s no such engine.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -2036,8 +2314,38 @@ isn’t a pattern, that it relates them (<em>ref</em> refers to an end).</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="sn.model.reasoner.defaultEngine">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">defaultEngine</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.defaultEngine" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The name of the reasoner engine to use when none is given: the
+“reasoner/engine” preference (clingo, unless it’s set to another).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.reasoner.setDefaultEngine">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">setDefaultEngine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">engine</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.setDefaultEngine" title="Link to this definition">¶</a></dt>
+<dd><p>Make <em>engine</em> the one used when none is given: the “reasoner/engine”
+preference, as Settings would set it (keeping its type – the engines to
+choose from – which a plain value would replace).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>engine</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="sn.model.reasoner.reason">
-<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">reason</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'clingo'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.reason" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">reason</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.reason" title="Link to this definition">¶</a></dt>
 <dd><p>Run the reasoner over <em>model</em> and keep the results on the model (see
 <em>reasoningFor()</em>), where everything using the model – the command line,
 every view – finds the same ones. Observers of the model are told with a
@@ -2047,10 +2355,10 @@ and aren’t updated as it’s edited: they’re a snapshot until the next
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>engine</strong> (<em>str</em><em> | </em><em>None</em>) – The reasoner engine; by default the preference’s (see <em>defaultEngine()</em>).</p></li>
 <li><p><strong>silent</strong> (<em>bool</em>) – True if views shouldn’t show what’s inferred (eg: just so
 that queries find it): they show only the problems (see <em>SNGView._showReasoning()</em>).</p></li>
 <li><p><strong>model</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>)</p></li>
-<li><p><strong>engine</strong> (<em>str</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2245,6 +2553,24 @@ otherwise <em>n</em>.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="sn.model.reasoner._retype">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">_retype</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">types</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner._retype" title="Link to this definition">¶</a></dt>
+<dd><p>Make inferred <em>node</em>’s types <em>types</em>: its isa links to others are taken
+out, and ones to those it hasn’t are made (inferred, as it is).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>node</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p></li>
+<li><p><strong>types</strong> (<em>list</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="sn.model.reasoner.materialize">
 <span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">materialize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inferences</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">models</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.materialize" title="Link to this definition">¶</a></dt>
 <dd><p>Bring <em>model</em>’s inferred objects (see <em>GraphObject.inferred</em>) into line with
@@ -2351,14 +2677,14 @@ dirties the model, or is undone (see <em>Model.inferring()</em>). Each object’
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="sn.model.names.html">
+          <a class="prev-page" href="sn.model.prologReasoner.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">sn.model.names module</div>
+                <div class="title">sn.model.prologReasoner module</div>
                 
               </div>
             </a>
@@ -2420,6 +2746,8 @@ dirties the model, or is undone (see <em>Model.inferring()</em>). Each object’
 <li><a class="reference internal" href="#sn.model.reasoner.Violation.__init__"><code class="docutils literal notranslate"><span class="pre">Violation.__init__()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#sn.model.reasoner.assertedIsa"><code class="docutils literal notranslate"><span class="pre">assertedIsa()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner._assertedValue"><code class="docutils literal notranslate"><span class="pre">_assertedValue()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.Inferences"><code class="docutils literal notranslate"><span class="pre">Inferences</span></code></a><ul>
 <li><a class="reference internal" href="#sn.model.reasoner.Inferences.holds"><code class="docutils literal notranslate"><span class="pre">Inferences.holds</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.Inferences.inferred"><code class="docutils literal notranslate"><span class="pre">Inferences.inferred</span></code></a></li>
@@ -2504,6 +2832,31 @@ dirties the model, or is undone (see <em>Model.inferring()</em>). Each object’
 <li><a class="reference internal" href="#sn.model.reasoner._baseURL"><code class="docutils literal notranslate"><span class="pre">_baseURL()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner._baseURLOfModel"><code class="docutils literal notranslate"><span class="pre">_baseURLOfModel()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.baseRuleModels"><code class="docutils literal notranslate"><span class="pre">baseRuleModels()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.EngineInfo"><code class="docutils literal notranslate"><span class="pre">EngineInfo</span></code></a><ul>
+<li><a class="reference internal" href="#sn.model.reasoner.EngineInfo.name"><code class="docutils literal notranslate"><span class="pre">EngineInfo.name</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.EngineInfo.module"><code class="docutils literal notranslate"><span class="pre">EngineInfo.module</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.EngineInfo.package"><code class="docutils literal notranslate"><span class="pre">EngineInfo.package</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.EngineInfo.explains"><code class="docutils literal notranslate"><span class="pre">EngineInfo.explains</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.EngineInfo.bundled"><code class="docutils literal notranslate"><span class="pre">EngineInfo.bundled</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.EngineInfo.needs"><code class="docutils literal notranslate"><span class="pre">EngineInfo.needs</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.EngineInfo.__init__"><code class="docutils literal notranslate"><span class="pre">EngineInfo.__init__()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sn.model.reasoner.ENGINES"><code class="docutils literal notranslate"><span class="pre">ENGINES</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.PIP"><code class="docutils literal notranslate"><span class="pre">PIP</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.INSTALL_HELP"><code class="docutils literal notranslate"><span class="pre">INSTALL_HELP</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.EngineMissing"><code class="docutils literal notranslate"><span class="pre">EngineMissing</span></code></a><ul>
+<li><a class="reference internal" href="#sn.model.reasoner.EngineMissing.__init__"><code class="docutils literal notranslate"><span class="pre">EngineMissing.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.EngineMissing.engine"><code class="docutils literal notranslate"><span class="pre">EngineMissing.engine</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.EngineMissing.package"><code class="docutils literal notranslate"><span class="pre">EngineMissing.package</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.EngineMissing.detail"><code class="docutils literal notranslate"><span class="pre">EngineMissing.detail</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sn.model.reasoner.engineInstalled"><code class="docutils literal notranslate"><span class="pre">engineInstalled()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner._lookOutside"><code class="docutils literal notranslate"><span class="pre">_lookOutside()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner._importEngine"><code class="docutils literal notranslate"><span class="pre">_importEngine()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.installedEngines"><code class="docutils literal notranslate"><span class="pre">installedEngines()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.explainingEngine"><code class="docutils literal notranslate"><span class="pre">explainingEngine()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.Reasoner"><code class="docutils literal notranslate"><span class="pre">Reasoner</span></code></a><ul>
 <li><a class="reference internal" href="#sn.model.reasoner.Reasoner._abc_impl"><code class="docutils literal notranslate"><span class="pre">Reasoner._abc_impl</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.Reasoner.engines"><code class="docutils literal notranslate"><span class="pre">Reasoner.engines</span></code></a></li>
@@ -2530,6 +2883,8 @@ dirties the model, or is undone (see <em>Model.inferring()</em>). Each object’
 <li><a class="reference internal" href="#sn.model.reasoner.Reasoner._relationFacts"><code class="docutils literal notranslate"><span class="pre">Reasoner._relationFacts()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#sn.model.reasoner.defaultEngine"><code class="docutils literal notranslate"><span class="pre">defaultEngine()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.setDefaultEngine"><code class="docutils literal notranslate"><span class="pre">setDefaultEngine()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.reason"><code class="docutils literal notranslate"><span class="pre">reason()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.summary"><code class="docutils literal notranslate"><span class="pre">summary()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.clearReasoning"><code class="docutils literal notranslate"><span class="pre">clearReasoning()</span></code></a></li>
@@ -2541,6 +2896,7 @@ dirties the model, or is undone (see <em>Model.inferring()</em>). Each object’
 <li><a class="reference internal" href="#sn.model.reasoner._newObjectKey"><code class="docutils literal notranslate"><span class="pre">_newObjectKey()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner._newObjectName"><code class="docutils literal notranslate"><span class="pre">_newObjectName()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.inferredNodeFor"><code class="docutils literal notranslate"><span class="pre">inferredNodeFor()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner._retype"><code class="docutils literal notranslate"><span class="pre">_retype()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.materialize"><code class="docutils literal notranslate"><span class="pre">materialize()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.reasoningFor"><code class="docutils literal notranslate"><span class="pre">reasoningFor()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner._kind"><code class="docutils literal notranslate"><span class="pre">_kind()</span></code></a></li>
@@ -2557,7 +2913,7 @@ dirties the model, or is undone (see <em>Model.inferring()</em>). Each object’
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=292eb321"></script>
+</div><script src="../_static/documentation_options.js?v=56dcb7b8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

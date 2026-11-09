@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.__main__ module - Semantic Nets 1.0.1 documentation</title>
+        <title>sn.__main__ module - Semantic Nets 1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -238,12 +238,15 @@
 <li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html">sn.model.clipsReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html">sn.model.nemoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html">sn.model.prologReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
 </ul>
@@ -367,9 +370,11 @@
 also the entry point of the packaged app, and of the .pyz.</p>
 <p><code class="docutils literal notranslate"><span class="pre">--selftest</span></code> instead checks that the program’s parts are all there and work,
 without opening a window: it reasons over a copy of the bundled family example
-and checks the conclusions, and installs the bundled plugins (in a scratch
-folder), imports all their modules, and makes a model with each (see
-<em>selftestPlugins()</em>) – as the “app” and “pyz” ant targets do after a build.
+with each reasoner engine (in the apps, every one they include; else, every
+one installed) and checks the conclusions – and asks one that can explain why
+one holds – and installs the bundled plugins (in a scratch folder), imports
+all their modules, and makes a model with each (see <em>selftestPlugins()</em>) – as
+the “app” and “pyz” ant targets, and the Build workflow, do after a build.
 It exits with 0 if all’s well, and 1 if not.</p>
 <p><em>Code author: Rob Kremer &lt;<a class="reference external" href="mailto:robkremer&#37;&#52;&#48;me&#46;com">robkremer<span>&#64;</span>me<span>&#46;</span>com</a>&gt;</em></p>
 <dl class="py function">
@@ -477,7 +482,7 @@ pythonParser of its own parser.py. (Not registered: there’s no editor.)</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=292eb321"></script>
+</div><script src="../_static/documentation_options.js?v=56dcb7b8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

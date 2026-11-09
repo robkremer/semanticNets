@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.model.model module - Semantic Nets 1.0.1 documentation</title>
+        <title>sn.model.model module - Semantic Nets 1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -238,12 +238,15 @@
 <li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
 <li class="toctree-l2 current has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" checked="" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html">sn.model.clipsReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
 <li class="toctree-l3 current current-page"><a class="current reference internal" href="#">sn.model.model module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html">sn.model.nemoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html">sn.model.prologReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
 </ul>
@@ -801,10 +804,29 @@ can be made (see <em>parentProblem()</em>), but an old file may have.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="sn.model.model.GraphObject.isaLinksTo">
+<span class="sig-name descname"><span class="pre">isaLinksTo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.model.GraphObject.isaLinksTo" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parent</strong> (<a class="reference internal" href="#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>This object’s asserted (not inferred) isa links to <em>parent</em>:
+one at most – a second can’t be made (see <em>parentProblem()</em>), but an
+old file may have one.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="#sn.model.model.IsaIndividual" title="sn.model.model.IsaIndividual"><em>IsaIndividual</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="sn.model.model.GraphObject._validateSelfIsa">
 <span class="sig-name descname"><span class="pre">_validateSelfIsa</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.model.GraphObject._validateSelfIsa" title="Link to this definition">¶</a></dt>
-<dd><p>Report an isa link to itself (see <em>selfIsaLinks()</em>) in the status report,
-with an action that removes it.</p>
+<dd><p>Report an isa link to itself (see <em>selfIsaLinks()</em>), and a second isa
+link to the same parent (see <em>isaLinksTo()</em>), in the status report, with
+an action that removes it.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
@@ -814,16 +836,22 @@ with an action that removes it.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.model.model.GraphObject.parentProblem">
-<span class="sig-name descname"><span class="pre">parentProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.model.GraphObject.parentProblem" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">parentProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">except_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.model.GraphObject.parentProblem" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>parent</strong> (<a class="reference internal" href="#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em> | </em><em>None</em>) – A would-be new parent (type) of this object: the
-destination of a new isa link from it.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parent</strong> (<a class="reference internal" href="#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em> | </em><em>None</em>) – A would-be new parent (type) of this object: the
+destination of a new isa link from it.</p></li>
+<li><p><strong>except</strong> – The isa link being moved there, if it’s an existing one
+(eg: dragging its end): it doesn’t count as one already there.</p></li>
+<li><p><strong>except_</strong> (<a class="reference internal" href="#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Why it can’t be: it’s this object itself, or one of its own
 subtypes or instances (an isa cycle, which would make each its own
-ancestor); or None if it can.</p>
+ancestor), or it already has an isa link to <em>parent</em> (a second would
+list it twice, and removing one would change nothing); or None if it can.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>str | None</p>
@@ -837,11 +865,12 @@ ancestor); or None if it can.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<a class="reference internal" href="#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a><em> | </em><em>None</em>) – If this is given, the descendents are limited to those in the 
-model. This is necessary for things like the ISA type which may be stored
-in a super-model and could otherwise return every isa individual in all 
-the models. ISA will return [] if <em>model</em> is not given. By default, the 
-descendants are limited to the model of <em>self</em>.</p></li>
+<li><p><strong>model</strong> (<a class="reference internal" href="#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a><em> | </em><em>None</em>) – [default: the model of <em>self</em>] Used only for the ISA type,
+whose descendants are the isa links in <em>model</em> (ISA may be stored in a
+super-model, and would otherwise have every isa link in every model
+that builds on it). Other objects’ descendants aren’t limited to any
+model: they include those in the models open that build on this one
+(eg: the terminal’s “instances” lists them all).</p></li>
 <li><p><strong>asTree</strong> (<em>bool</em>)</p></li>
 <li><p><strong>rmDups</strong> (<em>bool</em>)</p></li>
 </ul>
@@ -862,6 +891,24 @@ descendants are limited to the model of <em>self</em>.</p></li>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The immediate isa-children of this object by iterating the <em>IsaIndividuals</em>
 in <em>self._getIncoming()</em>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[<a class="reference internal" href="#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.model.GraphObject.getSubs">
+<span class="sig-name descname"><span class="pre">getSubs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.model.GraphObject.getSubs" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The objects directly below this one, told when an attribute
+they inherit from it changes (see <em>AttributedObject._notifyAttributeInheritors()</em>):
+its isa-children (see <em>getChildren()</em>). (Not the isa links below the
+isa relation type, which have no isa links of their own – see
+<em>IsaIndividual.getParents()</em> – but it’s in the base rules, which
+can’t be changed here.)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>list[<a class="reference internal" href="#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>]</p>
@@ -1998,8 +2045,9 @@ file – or URL, for a model on the web – and are saved relative to it
 however far from it they are (see <em>PRDb.relativeSuperDBs</em>); others are
 saved as they are, unless they’re near it (see <em>PRDb.relativeURL()</em>).
 A super-model dropped that this model’s objects still refer to must have
-a copy among those added (eg: “pythonOntology.snm” beside it in place of
-the plugin’s): they’re made to refer to the copy’s objects instead (see
+a copy among its super-models – one added (eg: “pythonOntology.snm”
+beside it in place of the plugin’s), or one already there: they’re made
+to refer to the copy’s objects instead (see
 <em>replaceSuperModel()</em>), so the model never quietly depends on a file that
 isn’t one of its super-models. Nothing is changed unless all of them are
 fine.</p>
@@ -2829,12 +2877,39 @@ and/or destination of the Relation. This method ONLY applies to <em>Relations</e
 (contrast <a class="reference internal" href="#sn.model.model.GraphObject._disconnect" title="sn.model.model.GraphObject._disconnect"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GraphObject._disconnect()</span></code></a> and 
 <a class="reference internal" href="#sn.model.model.GraphObject._reconnect" title="sn.model.model.GraphObject._reconnect"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GraphObject._reconnect()</span></code></a>)</p>
 </div>
+<p>Observers are told of each end it changes (see <em>_endpointChanged()</em>), as
+the <em>src</em> and <em>dst</em> setters tell them – but not while the relation’s
+being made, or its model read.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>source</strong> (<a class="reference internal" href="#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em> | </em><em>None</em>) – The <a class="reference internal" href="#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">GraphObject</span></code></a> for the <em>src</em> link.</p></li>
 <li><p><strong>destination</strong> (<a class="reference internal" href="#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em> | </em><em>None</em>) – The <a class="reference internal" href="#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">GraphObject</span></code></a> for the <em>dst</em> link.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>PermissionError</strong> – If an end would be an inferred object, and this
+relation isn’t (see <em>GraphObject.inferred</em>): an asserted relation is saved,
+and an inferred object isn’t, so the saved relation would lead nowhere.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.model.Relation._endsConnected">
+<span class="sig-name descname"><span class="pre">_endsConnected</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">oldSrc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oldDst</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.model.Relation._endsConnected" title="Link to this definition">¶</a></dt>
+<dd><p><em>connect()</em> changed its ends from <em>oldSrc</em> and <em>oldDst</em>: tell its observers
+(and those below it that inherit an end), as the setters do (see
+<em>_endpointChanged()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>oldSrc</strong> (<a class="reference internal" href="#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>oldDst</strong> (<a class="reference internal" href="#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2957,12 +3032,106 @@ and/or destination of the Relation. This method ONLY applies to <em>Relations</e
 (contrast <a class="reference internal" href="#sn.model.model.GraphObject._disconnect" title="sn.model.model.GraphObject._disconnect"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GraphObject._disconnect()</span></code></a> and 
 <a class="reference internal" href="#sn.model.model.GraphObject._reconnect" title="sn.model.model.GraphObject._reconnect"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GraphObject._reconnect()</span></code></a>)</p>
 </div>
+<p>Observers are told of each end it changes (see <em>_endpointChanged()</em>), as
+the <em>src</em> and <em>dst</em> setters tell them – but not while the relation’s
+being made, or its model read.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>source</strong> (<a class="reference internal" href="#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em> | </em><em>None</em>) – The <a class="reference internal" href="#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">GraphObject</span></code></a> for the <em>src</em> link.</p></li>
 <li><p><strong>destination</strong> (<a class="reference internal" href="#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em> | </em><em>None</em>) – The <a class="reference internal" href="#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">GraphObject</span></code></a> for the <em>dst</em> link.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>PermissionError</strong> – If an end would be an inferred object, and this
+relation isn’t (see <em>GraphObject.inferred</em>): an asserted relation is saved,
+and an inferred object isn’t, so the saved relation would lead nowhere.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.model.IsaIndividual._endsConnected">
+<span class="sig-name descname"><span class="pre">_endsConnected</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">oldSrc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oldDst</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.model.IsaIndividual._endsConnected" title="Link to this definition">¶</a></dt>
+<dd><p>As <em>Relation</em>’s, but the source’s supertypes are said to have changed once,
+whichever ends moved (see <em>_endpointChanged()</em>, <em>_supersChanged()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>oldSrc</strong> (<a class="reference internal" href="#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>oldDst</strong> (<a class="reference internal" href="#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.model.IsaIndividual._disconnect">
+<span class="sig-name descname"><span class="pre">_disconnect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">keep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.model.IsaIndividual._disconnect" title="Link to this definition">¶</a></dt>
+<dd><p>Disconnect this object from it’s <em>Model</em> by:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>unregistering it with the <em>Model</em></p></li>
+<li><p>unregistering (from other objects) the far ends of the relations, but keeping the close 
+ends intact so that they may be later restored if necessary</p></li>
+<li><p>unregistering all the above relations with the <em>Model</em></p></li>
+</ul>
+</div></blockquote>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>User this method when deleting an object with the potential to undo the 
+deletion.  Keep a pointer to the object and undo the deletion by calling
+its _reconnect() method.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>keep</strong> (<a class="reference internal" href="#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em> | </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.model.IsaIndividual._reconnect">
+<span class="sig-name descname"><span class="pre">_reconnect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kept</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.model.IsaIndividual._reconnect" title="Link to this definition">¶</a></dt>
+<dd><p>Reconnect this disconnected object to it’s <em>Model</em> by:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>reregistering it to the <em>Model</em></p></li>
+<li><p>reregistering (to other objects) the far ends of the relations</p></li>
+<li><p>reregistering all the above relations with the <em>Model</em></p></li>
+</ul>
+</div></blockquote>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This method should only be used to undo a _disconnect() operation.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kept</strong> (<a class="reference internal" href="#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em> | </em><em>None</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.model.IsaIndividual._supersChanged">
+<span class="sig-name descname"><span class="pre">_supersChanged</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">objs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.model.IsaIndividual._supersChanged" title="Link to this definition">¶</a></dt>
+<dd><p>This isa link was made, moved, taken out or put back: the supertypes of
+<em>objs</em> (its source, before and after) changed. Their observers (eg: the
+view objects showing them), and those of the objects below them, are
+told (see <em>AttributedObject.notifySupersChanged()</em>): what they inherit
+(eg: their colours) may have changed. Not while the model is being read.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>objs</strong> (<a class="reference internal" href="#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em> | </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3056,10 +3225,12 @@ and/or destination of the Relation. This method ONLY applies to <em>Relations</e
 <li><a class="reference internal" href="#sn.model.model.GraphObject.isa"><code class="docutils literal notranslate"><span class="pre">GraphObject.isa()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.GraphObject.getParents"><code class="docutils literal notranslate"><span class="pre">GraphObject.getParents()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.GraphObject.selfIsaLinks"><code class="docutils literal notranslate"><span class="pre">GraphObject.selfIsaLinks()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.model.GraphObject.isaLinksTo"><code class="docutils literal notranslate"><span class="pre">GraphObject.isaLinksTo()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.GraphObject._validateSelfIsa"><code class="docutils literal notranslate"><span class="pre">GraphObject._validateSelfIsa()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.GraphObject.parentProblem"><code class="docutils literal notranslate"><span class="pre">GraphObject.parentProblem()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.GraphObject.getDescendants"><code class="docutils literal notranslate"><span class="pre">GraphObject.getDescendants()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.GraphObject.getChildren"><code class="docutils literal notranslate"><span class="pre">GraphObject.getChildren()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.model.GraphObject.getSubs"><code class="docutils literal notranslate"><span class="pre">GraphObject.getSubs()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.GraphObject.variableKind"><code class="docutils literal notranslate"><span class="pre">GraphObject.variableKind()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.GraphObject.isVariable"><code class="docutils literal notranslate"><span class="pre">GraphObject.isVariable()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.GraphObject.isAnyVariable"><code class="docutils literal notranslate"><span class="pre">GraphObject.isAnyVariable()</span></code></a></li>
@@ -3209,6 +3380,7 @@ and/or destination of the Relation. This method ONLY applies to <em>Relations</e
 <li><a class="reference internal" href="#sn.model.model.Relation.getParents"><code class="docutils literal notranslate"><span class="pre">Relation.getParents()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.Relation.tostring"><code class="docutils literal notranslate"><span class="pre">Relation.tostring()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.Relation.connect"><code class="docutils literal notranslate"><span class="pre">Relation.connect()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.model.Relation._endsConnected"><code class="docutils literal notranslate"><span class="pre">Relation._endsConnected()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#sn.model.model.IsaIndividual"><code class="docutils literal notranslate"><span class="pre">IsaIndividual</span></code></a><ul>
@@ -3218,6 +3390,10 @@ and/or destination of the Relation. This method ONLY applies to <em>Relations</e
 <li><a class="reference internal" href="#sn.model.model.IsaIndividual.getParents"><code class="docutils literal notranslate"><span class="pre">IsaIndividual.getParents()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.IsaIndividual._endpointChanged"><code class="docutils literal notranslate"><span class="pre">IsaIndividual._endpointChanged()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.IsaIndividual.connect"><code class="docutils literal notranslate"><span class="pre">IsaIndividual.connect()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.model.IsaIndividual._endsConnected"><code class="docutils literal notranslate"><span class="pre">IsaIndividual._endsConnected()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.model.IsaIndividual._disconnect"><code class="docutils literal notranslate"><span class="pre">IsaIndividual._disconnect()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.model.IsaIndividual._reconnect"><code class="docutils literal notranslate"><span class="pre">IsaIndividual._reconnect()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.model.IsaIndividual._supersChanged"><code class="docutils literal notranslate"><span class="pre">IsaIndividual._supersChanged()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -3231,7 +3407,7 @@ and/or destination of the Relation. This method ONLY applies to <em>Relations</e
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=292eb321"></script>
+</div><script src="../_static/documentation_options.js?v=56dcb7b8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

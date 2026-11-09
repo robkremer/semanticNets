@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.view.graphics.connectors module - Semantic Nets 1.0.1 documentation</title>
+        <title>sn.view.graphics.connectors module - Semantic Nets 1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -238,12 +238,15 @@
 <li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html">sn.model.clipsReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html">sn.model.nemoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html">sn.model.prologReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
 </ul>
@@ -363,7 +366,7 @@
         <article role="main" id="furo-main-content">
           <section id="module-sn.view.graphics.connectors">
 <span id="sn-view-graphics-connectors-module"></span><h1>sn.view.graphics.connectors module<a class="headerlink" href="#module-sn.view.graphics.connectors" title="Link to this heading">¶</a></h1>
-<div class="graphviz"><object data="../_images/inheritance-9ff49bb2f20864a2794ba3945fb3ad7f469ca1af.svg" type="image/svg+xml" class="inheritance graphviz">
+<div class="graphviz"><object data="../_images/inheritance-753c8c3f8985b8c395f8c19665bda107f79960dc.svg" type="image/svg+xml" class="inheritance graphviz">
 <p class="warning">Inheritance diagram of ConnectorTerminators, ConnectorIDs</p></object></div>
 <p>Draws a source/label/destination connector: two lines (source-to-label,
 label-to-destination) that terminate at the edges of their respective
@@ -392,27 +395,23 @@ when the connector itself is going away for good.</p>
 <hr class="docutils" />
 <dl class="py class">
 <dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorTerminators">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">ConnectorTerminators</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelNear</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelFar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destination</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorTerminators" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">ConnectorTerminators</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelNear</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelFar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destination</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">middle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorTerminators" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>The four terminator specs for a connector, one per line end.</p>
-<p>Each is either None/”” (no terminator) or a string —
-“arrow(width, length, thickness)” or “circle(diameter)”, with the
-parenthesized args optional and defaulted if omitted (see
-parseTerminatorSpec()). Provisional: the terminator
-spec format itself is still being designed — this just needs to accept
-something for source/labelNear/labelFar/destination now. “arrow” and
-“circle” are implemented below; add more kinds in parseTerminatorSpec()/
-_drawEndTerminator() as they’re defined.</p>
+<p>The marks on a connector: a mark spec (see <em>util.lineMarks</em>) for each of
+its four line ends, and one for its middle – eg “arrow”, “o&gt;” (a circle
+behind an arrowhead), “&gt;&gt;”, “|||”. Each is None/”” for none. A spec that
+can’t be read is logged and draws nothing.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>source</strong> (<em>str</em><em> | </em><em>None</em>) – Terminator at the source end of the source→label line.</p></li>
-<li><p><strong>labelNear</strong> (<em>str</em><em> | </em><em>None</em>) – Terminator at the label end of the source→label line
+<li><p><strong>source</strong> (<em>str</em><em> | </em><em>None</em>) – At the source end of the source→label line.</p></li>
+<li><p><strong>labelNear</strong> (<em>str</em><em> | </em><em>None</em>) – At the label end of the source→label line
 (the side facing source).</p></li>
-<li><p><strong>labelFar</strong> (<em>str</em><em> | </em><em>None</em>) – Terminator at the label end of the label→destination line
+<li><p><strong>labelFar</strong> (<em>str</em><em> | </em><em>None</em>) – At the label end of the label→destination line
 (the side facing destination).</p></li>
-<li><p><strong>destination</strong> (<em>str</em><em> | </em><em>None</em>) – Terminator at the destination end of the
+<li><p><strong>destination</strong> (<em>str</em><em> | </em><em>None</em>) – At the destination end of the
 label→destination line.</p></li>
+<li><p><strong>middle</strong> (<em>str</em><em> | </em><em>None</em>) – Centred on the label, turned to the line.</p></li>
 </ul>
 </dd>
 </dl>
@@ -436,9 +435,14 @@ label→destination line.</p></li>
 <span class="sig-name descname"><span class="pre">destination</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorTerminators.destination" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorTerminators.middle">
+<span class="sig-name descname"><span class="pre">middle</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorTerminators.middle" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorTerminators.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelNear</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelFar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destination</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorTerminators.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelNear</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelFar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destination</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">middle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorTerminators.__init__" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -446,6 +450,7 @@ label→destination line.</p></li>
 <li><p><strong>labelNear</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>labelFar</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>destination</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>middle</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -458,25 +463,32 @@ label→destination line.</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorIDs">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">ConnectorIDs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sourceLineID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destLineID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sourceTerminatorID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelNearTerminatorID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelFarTerminatorID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destTerminatorID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">ConnectorIDs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sourceLineID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destLineID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sourceTerminatorIDs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelNearTerminatorIDs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelFarTerminatorIDs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destTerminatorIDs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">middleIDs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sourceEnd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destEnd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Canvas item ids created by a connector-drawing function. Returned so the
 caller can track/delete them; pass a previous result back in via <em>ids</em> to
 have the next call update these items in place (coords()/itemconfigure())
 rather than delete-and-recreate them.</p>
+<p>Each line end’s marks (and the bits of line among them) are a list of
+items; so are the middle’s – when they’re drawn in the middle, that is,
+centred on the label: while the label shows text they go on the line just
+before it instead, as part of the label-near end’s stack (see
+<em>_labelNearMarks()</em>), and <em>middleIDs</em> is empty. <em>sourceEnd</em>/<em>destEnd</em> are
+where the connector meets its source and destination (view coordinates):
+its lines may stop short of there, for the marks.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>sourceLineID</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>destLineID</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>sourceTerminatorID</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>labelNearTerminatorID</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>labelFarTerminatorID</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>destTerminatorID</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>sourceTerminatorIDs</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>labelNearTerminatorIDs</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>labelFarTerminatorIDs</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>destTerminatorIDs</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>middleIDs</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>sourceEnd</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>destEnd</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -490,24 +502,87 @@ rather than delete-and-recreate them.</p>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorIDs.sourceTerminatorID">
-<span class="sig-name descname"><span class="pre">sourceTerminatorID</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs.sourceTerminatorID" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorIDs.sourceTerminatorIDs">
+<span class="sig-name descname"><span class="pre">sourceTerminatorIDs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs.sourceTerminatorIDs" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorIDs.labelNearTerminatorID">
-<span class="sig-name descname"><span class="pre">labelNearTerminatorID</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs.labelNearTerminatorID" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorIDs.labelNearTerminatorIDs">
+<span class="sig-name descname"><span class="pre">labelNearTerminatorIDs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs.labelNearTerminatorIDs" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorIDs.labelFarTerminatorID">
-<span class="sig-name descname"><span class="pre">labelFarTerminatorID</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs.labelFarTerminatorID" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorIDs.labelFarTerminatorIDs">
+<span class="sig-name descname"><span class="pre">labelFarTerminatorIDs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs.labelFarTerminatorIDs" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorIDs.destTerminatorID">
-<span class="sig-name descname"><span class="pre">destTerminatorID</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs.destTerminatorID" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorIDs.destTerminatorIDs">
+<span class="sig-name descname"><span class="pre">destTerminatorIDs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs.destTerminatorIDs" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorIDs.middleIDs">
+<span class="sig-name descname"><span class="pre">middleIDs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs.middleIDs" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorIDs.sourceEnd">
+<span class="sig-name descname"><span class="pre">sourceEnd</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs.sourceEnd" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorIDs.destEnd">
+<span class="sig-name descname"><span class="pre">destEnd</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs.destEnd" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorIDs.sourceIDs">
+<span class="sig-name descname"><span class="pre">sourceIDs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs.sourceIDs" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The source→label half’s items: its line and its marks.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorIDs.destIDs">
+<span class="sig-name descname"><span class="pre">destIDs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs.destIDs" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The label→destination half’s items: its line and its marks.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorIDs.clearSource">
+<span class="sig-name descname"><span class="pre">clearSource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">canvas</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs.clearSource" title="Link to this definition">¶</a></dt>
+<dd><p>Delete the source→label half’s items, and forget them.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorIDs.clearDest">
+<span class="sig-name descname"><span class="pre">clearDest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">canvas</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs.clearDest" title="Link to this definition">¶</a></dt>
+<dd><p>Delete the label→destination half’s items, and forget them.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorIDs.deleteAll">
@@ -525,16 +600,19 @@ rather than delete-and-recreate them.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.connectors.ConnectorIDs.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sourceLineID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destLineID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sourceTerminatorID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelNearTerminatorID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelFarTerminatorID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destTerminatorID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sourceLineID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destLineID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sourceTerminatorIDs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelNearTerminatorIDs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelFarTerminatorIDs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destTerminatorIDs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">middleIDs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sourceEnd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destEnd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors.ConnectorIDs.__init__" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>sourceLineID</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>destLineID</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>sourceTerminatorID</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>labelNearTerminatorID</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>labelFarTerminatorID</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>destTerminatorID</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>sourceTerminatorIDs</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>labelNearTerminatorIDs</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>labelFarTerminatorIDs</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>destTerminatorIDs</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>middleIDs</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>sourceEnd</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>destEnd</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -697,6 +775,28 @@ quadratic Bezier, b(x,y), evaluated at (ta,tb); b(t,t) == _bezierPoint(t).</p>
 </dl>
 </dd></dl>
 
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._BOUNDARY_TOLERANCE">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_BOUNDARY_TOLERANCE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.25</span></span><a class="headerlink" href="#sn.view.graphics.connectors._BOUNDARY_TOLERANCE" title="Link to this definition">¶</a></dt>
+<dd><p>How close (window units: pixels) _findBoundaryParam() pins a curve’s crossing of a shape’s edge down to (see _boundaryTolerance()).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._boundaryTolerance">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_boundaryTolerance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vobj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._boundaryTolerance" title="Link to this definition">¶</a></dt>
+<dd><p><em>_BOUNDARY_TOLERANCE</em> in view units, for <em>vobj</em>’s view: finer when it’s
+zoomed in, so a line still meets a node’s edge to within a fraction of a
+pixel (a fixed quarter of a view unit is a pixel short at 4x, two at 8x).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>vobj</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="sn.view.graphics.connectors._insideTest">
 <span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_insideTest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vobj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._insideTest" title="Link to this definition">¶</a></dt>
@@ -717,7 +817,7 @@ the time drawing them).</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="sn.view.graphics.connectors._findBoundaryParam">
-<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_findBoundaryParam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vobj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tInside</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tOutside</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">24</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._findBoundaryParam" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_findBoundaryParam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vobj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tInside</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tOutside</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">24</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.25</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._findBoundaryParam" title="Link to this definition">¶</a></dt>
 <dd><p>Bisect the Bezier’s parameter <em>t</em> between a point known to be inside
 <em>vobj</em> (tInside) and one known to be outside it (tOutside) to find where
 the curve [p0,p1,p2] crosses <em>vobj</em>’s boundary — the curved-path analogue
@@ -725,9 +825,10 @@ of VRelation.findIntersection()’s straight-line bisection, but operating
 directly on the curve’s parameter instead of on a straight line between
 two points, so the result is an exact point ON the curve rather than a
 straight-line approximation.</p>
-<p>24 iterations halves the search interval 24 times (~1 part in 16 million
-of the full curve) — comfortably sub-pixel for any on-screen curve length,
-so a fixed count is used rather than a pixel-distance stopping condition.</p>
+<p>Stops once the two bracketing points are within <em>tolerance</em> of each other
+(view units: a fraction of a pixel – see <em>_boundaryTolerance()</em>) – 9 to
+13 steps for a curve of ordinary length – or after <em>iterations</em> steps at
+most (24: ~1 part in 16 million of the curve, however long it is).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -735,6 +836,7 @@ so a fixed count is used rather than a pixel-distance stopping condition.</p>
 what tests whether a point’s in it (see <em>_insideTest()</em>).</p></li>
 <li><p><strong>tInside</strong> (<em>float</em>) – A parameter value where _bezierPoint(…) is inside vobj.</p></li>
 <li><p><strong>tOutside</strong> (<em>float</em>) – A parameter value where _bezierPoint(…) is outside vobj.</p></li>
+<li><p><strong>tolerance</strong> (<em>float</em>) – How close (view units) to pin the crossing down to.</p></li>
 <li><p><strong>p0</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
 <li><p><strong>p1</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
 <li><p><strong>p2</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
@@ -756,8 +858,8 @@ boundaries, returning the exact sub-arc’s own [Q0, Q1, Q2] control points
 (via _bezierBlossom) — ready to hand straight to a 3-point smooth Tk line.</p>
 <p>Assumes vobj0/vobj2 don’t overlap and each contains its own center (true
 for any reasonably-shaped, reasonably-separated pair of nodes); returns
-None — logging a warning — if that assumption looks violated, rather than
-producing a nonsensical clip.</p>
+None if that assumption looks violated, rather than producing a
+nonsensical clip.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -817,162 +919,40 @@ function so it doesn’t need a VRelation instance.</p>
 </dl>
 </dd></dl>
 
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._badSpecs">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_badSpecs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#sn.view.graphics.connectors._badSpecs" title="Link to this definition">¶</a></dt>
+<dd><p>Mark specs already warned about (see _marks()).</p>
+</dd></dl>
+
 <dl class="py function">
-<dt class="sig sig-object py" id="sn.view.graphics.connectors.parseTerminatorSpec">
-<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">parseTerminatorSpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spec</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors.parseTerminatorSpec" title="Link to this definition">¶</a></dt>
-<dd><p>Parse a terminator spec string (“arrow(8,10,3)”, “circle(5)”, “arrow”,
-None, “”) into (kind, args).</p>
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._marks">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_marks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spec</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._marks" title="Link to this definition">¶</a></dt>
+<dd><p>The marks <em>spec</em> says (see util.lineMarks.parseMarks()) – or none, with
+a warning the first time, if it can’t be read.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>spec</strong> (<em>str</em><em> | </em><em>None</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>tuple[str, list[float]] | None</p>
+<dd class="field-even"><p>tuple[<em>Mark</em>, …]</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="sn.view.graphics.connectors._arrowLineOptions">
-<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_arrowLineOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._arrowLineOptions" title="Link to this definition">¶</a></dt>
-<dd><p>If <em>spec</em> is an “arrow” terminator, the create_line() options
-(arrow=/arrowshape=) that draw it at line end <em>end</em> (“first” or “last”).
-Otherwise {}. Native Tk arrowheads are drawn as part of the line item
-itself — no separate canvas item needed, which is why this returns
-options to merge into the line’s own kwargs rather than an id.</p>
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._unit">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_unit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(1.0,</span> <span class="pre">0.0)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._unit" title="Link to this definition">¶</a></dt>
+<dd><p><em>v</em> scaled to length 1 (<em>default</em> if it has none).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>spec</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>end</strong> (<em>str</em>)</p></li>
+<li><p><strong>v</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>default</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>dict</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="sn.view.graphics.connectors._mergeArrowOptions">
-<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_mergeArrowOptions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nearSpec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">farSpec</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._mergeArrowOptions" title="Link to this definition">¶</a></dt>
-<dd><p>Combine a line’s two possible arrow terminators (at its “first”/near and
-“last”/far ends) into the single arrow=/arrowshape= pair create_line()
-takes — tk.BOTH if both ends want one (using the near end’s sizing;
-they’re expected to match), tk.FIRST/tk.LAST if only one does.</p>
-<p>Always returns an explicit ‘arrow’ key — tk.NONE (never a bare {}) when
-neither end wants one — because these options get re-applied via
-itemconfigure() on every redraw: an omitted key would leave a
-previously-set arrowhead in place instead of clearing it when a caller’s
-terminator spec changes to “no arrow” on a later call.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>nearSpec</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>farSpec</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>dict</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="sn.view.graphics.connectors._drawCircleTerminator">
-<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_drawCircleTerminator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atPt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">existingID</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lineColor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fillColor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._drawCircleTerminator" title="Link to this definition">¶</a></dt>
-<dd><p>Draw (or update, or remove) a “circle” terminator centered at <em>atPt</em>.
-Non-circle specs (arrow, None) are handled by the line itself, so this
-always deletes <em>existingID</em> and returns None for anything else.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>spec</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>atPt</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
-<li><p><strong>existingID</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>lineColor</strong> (<em>str</em>)</p></li>
-<li><p><strong>fillColor</strong> (<em>str</em>)</p></li>
-<li><p><strong>tags</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>int | None</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="sn.view.graphics.connectors._upsertLine">
-<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_upsertLine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">canvas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">existingID</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._upsertLine" title="Link to this definition">¶</a></dt>
-<dd><p>Create a line item, or update one in place if <em>existingID</em> is still a
-live “line” item — coords() to move/reshape it, itemconfigure() to apply
-every option in <em>opts</em> fresh (fill, width, arrow, arrowshape, smooth,
-dash, …), so nothing from a prior draw silently survives a redraw where
-the caller changed it. If <em>existingID</em> is set but isn’t a line any more
-(or doesn’t exist), it’s deleted first and a fresh item is created —
-should not normally happen, but is handled rather than raising.</p>
-<p>coords() and itemconfigure(smooth=…) both correctly handle the item’s
-point count changing between calls (verified empirically), so this also
-works when <em>existingID</em> is being handed between drawSmoothConnector’s
-3-point arcs and drawStraightConnector’s 2-point segments.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>canvas</strong> (<em>Canvas</em>) – The canvas the item lives (or will be created) on.</p></li>
-<li><p><strong>existingID</strong> (<em>int</em><em> | </em><em>None</em>) – A previous call’s item id for this line, or None to
-always create a new item.</p></li>
-<li><p><strong>coords</strong> (<em>Sequence</em><em>[</em><em>float</em><em>]</em>) – Coordinate sequence for canvas.coords()/create_line().</p></li>
-<li><p><strong>tags</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>) – Canvas tags to (re)apply.</p></li>
-<li><p><strong>opts</strong> (<em>dict</em>) – create_line()/itemconfigure() keyword options — fill, width,
-arrow, arrowshape, smooth, dash, etc. — re-specified in full every call.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>int</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="sn.view.graphics.connectors._drawSingleSegment">
-<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_drawSingleSegment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">otherIsSource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">terminators</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lineColor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fillColor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tagList</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lineOpts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._drawSingleSegment" title="Link to this definition">¶</a></dt>
-<dd><p>Draw (or update) the one straight segment from <em>label</em> to <em>other</em>, with
-its terminators, for when the connector’s other endpoint (source or
-destination) is missing entirely.</p>
-<p>With only two points there’s nothing left to curve, so this single-
-segment case is the same regardless of whether the caller wanted
-drawSmoothConnector() or drawStraightConnector() — both delegate here for
-it rather than duplicating the clip/line/terminator logic.</p>
-<p>The OTHER side of the connector — whichever of source/destination has no
-VObject at all this call — is left exactly as <em>prior</em> had it, the same
-“leave whatever was there before untouched” convention _clippedArc()’s
-failure path already uses above, rather than being deleted: a caller
-that flips back and forth between one- and two-endpoint calls doesn’t
-lose track of ids it may still want.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>label</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>) – One end of the single line actually drawn (the end both
-lines of a full connector would otherwise pass through).</p></li>
-<li><p><strong>other</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>) – The one present endpoint — whichever of source/destination
-isn’t <em>None</em>.</p></li>
-<li><p><strong>otherIsSource</strong> (<em>bool</em>) – <em>True</em> if <em>other</em> is standing in for <em>source</em> (so
-the terminators.source/labelNear slots, and the sourceLineID/
-sourceTerminatorID/labelNearTerminatorID result fields, apply); <em>False</em>
-if it’s standing in for <em>destination</em> (labelFar/destination slots and
-destLineID/labelFarTerminatorID/destTerminatorID fields).</p></li>
-<li><p><strong>terminators</strong> (<a class="reference internal" href="#sn.view.graphics.connectors.ConnectorTerminators" title="sn.view.graphics.connectors.ConnectorTerminators"><em>ConnectorTerminators</em></a>) – Same terminators the caller was given.</p></li>
-<li><p><strong>prior</strong> (<a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs" title="sn.view.graphics.connectors.ConnectorIDs"><em>ConnectorIDs</em></a>) – The caller’s <em>ids</em> (or an empty ConnectorIDs() if <em>ids</em>
-was <em>None</em>).</p></li>
-<li><p><strong>lineColor</strong> (<em>str</em>) – Same as drawSmoothConnector()’s <em>lineColor</em>.</p></li>
-<li><p><strong>fillColor</strong> (<em>str</em>) – Same as drawSmoothConnector()’s <em>fillColor</em>.</p></li>
-<li><p><strong>tagList</strong> (<em>list</em>) – Canvas tags, already coerced to a list by the caller.</p></li>
-<li><p><strong>lineOpts</strong> (<em>dict</em>) – The base <code class="docutils literal notranslate"><span class="pre">{'fill':</span> <span class="pre">lineColor,</span> <span class="pre">**lineKwargs}</span></code> dict the
-caller already built.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs" title="sn.view.graphics.connectors.ConnectorIDs"><em>ConnectorIDs</em></a></p>
+<dd class="field-even"><p>tuple[float | int, float | int]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -980,7 +960,8 @@ caller already built.</p></li>
 <dl class="py function">
 <dt class="sig sig-object py" id="sn.view.graphics.connectors._deleteItems">
 <span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_deleteItems</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">canvas</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">ids</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._deleteItems" title="Link to this definition">¶</a></dt>
-<dd><p>Delete canvas items: those that aren’t None.</p>
+<dd><p>Delete canvas items: those that aren’t None – and forget their types, as
+<em>util.lineMarks</em> remembers them (see its <em>deleteItem()</em>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -995,8 +976,293 @@ caller already built.</p></li>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.zoomedWidth">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">zoomedWidth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors.zoomedWidth" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>view</strong> – The view (its zoom: <em>_scale</em>).</p></li>
+<li><p><strong>width</strong> (<em>float</em>) – A line’s (or border’s) width, in view units.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Its width on the canvas, at the view’s zoom: as the marks, shapes
+and text are zoomed – but at least a pixel, so a line zoomed far out
+still shows.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._Style">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_Style</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lineColor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fillColor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lineKwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._Style" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>How a connector is drawn, from a drawing function’s arguments: its
+colours, its tags, its line’s width (given in view units, as the marks’
+sizes are; and as the canvas takes it, zoomed – but never under a pixel)
+and other line options (eg: dash).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lineColor</strong> (<em>str</em>)</p></li>
+<li><p><strong>fillColor</strong> (<em>str</em>)</p></li>
+<li><p><strong>tags</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>str</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>lineKwargs</strong> (<em>dict</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._Style.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lineColor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fillColor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lineKwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._Style.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lineColor</strong> (<em>str</em>)</p></li>
+<li><p><strong>fillColor</strong> (<em>str</em>)</p></li>
+<li><p><strong>tags</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>lineKwargs</strong> (<em>dict</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._Style.half">
+<span class="sig-name descname"><span class="pre">half</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">startMarks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endMarks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">priorLine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">priorStart</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">priorEnd</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._Style.half" title="Link to this definition">¶</a></dt>
+<dd><p>Draw (or update) one of the connector’s lines, <em>path</em> (2 points, or 3:
+a smooth arc), with the marks <em>startMarks</em> and <em>endMarks</em> (specs, or
+marks already read) at its ends.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<em>Sequence</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>startMarks</strong> (<em>str</em><em> | </em><em>None</em><em> | </em><em>Sequence</em><em>[</em><em>Mark</em><em>]</em>)</p></li>
+<li><p><strong>endMarks</strong> (<em>str</em><em> | </em><em>None</em><em> | </em><em>Sequence</em><em>[</em><em>Mark</em><em>]</em>)</p></li>
+<li><p><strong>priorLine</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>priorStart</strong> (<em>Sequence</em><em>[</em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>priorEnd</strong> (<em>Sequence</em><em>[</em><em>int</em><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>MarkedPathIDs</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._Style.middle">
+<span class="sig-name descname"><span class="pre">middle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layout</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">at</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">through</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._Style.middle" title="Link to this definition">¶</a></dt>
+<dd><p>Draw (or update, or remove) the middle’s marks: centred on <em>at</em>, turned
+to <em>direction</em> – only while the line runs <em>through</em> the label: otherwise
+they’re drawn at the label-near end instead (see <em>_labelNearMarks()</em>), and
+any drawn here before are removed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layout</strong> (<em>MarkLayout</em>)</p></li>
+<li><p><strong>at</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>direction</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>prior</strong> (<em>Sequence</em><em>[</em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>through</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors.MarksArg">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">MarksArg</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">str</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">|</span> <span class="pre">typing.Sequence[util.lineMarks.Mark]</span></span><a class="headerlink" href="#sn.view.graphics.connectors.MarksArg" title="Link to this definition">¶</a></dt>
+<dd><p>A mark spec (see <em>_marks()</em>), or marks already read from one.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._asMarks">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_asMarks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">marks</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._asMarks" title="Link to this definition">¶</a></dt>
+<dd><p><em>marks</em> as marks: read, if it’s a spec.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>marks</strong> (<em>str</em><em> | </em><em>None</em><em> | </em><em>Sequence</em><em>[</em><em>Mark</em><em>]</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[<em>Mark</em>, …]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._middleMarks">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_middleMarks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">middle</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._middleMarks" title="Link to this definition">¶</a></dt>
+<dd><p>The middle’s marks, each turned the way it’s laid out (see <em>layoutMarks()</em>):
+so moved to an end stack they still point the way they do in the middle –
+an “arrow” toward the destination, even at the start of a line, where an
+arrow would otherwise point back off it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>middle</strong> (<em>MarkLayout</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[<em>Mark</em>, …]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._labelNearMarks">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_labelNearMarks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">terminators</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">middle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">through</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._labelNearMarks" title="Link to this definition">¶</a></dt>
+<dd><p>The marks at the label end of the source→label line: its own
+(<em>terminators.labelNear</em>) – and, before them, the middle’s, while the label
+shows text (not <em>through</em>). Drawn centred on the label they’d cover the
+text, so they go on the line just before the label instead, on the source
+side (<code class="docutils literal notranslate"><span class="pre">--|||--[</span> <span class="pre">text</span> <span class="pre">]----</span></code>), laid out as an end stack with the label-near
+marks innermost. (With no source side at all, see <em>_labelFarMarks()</em>.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>terminators</strong> (<a class="reference internal" href="#sn.view.graphics.connectors.ConnectorTerminators" title="sn.view.graphics.connectors.ConnectorTerminators"><em>ConnectorTerminators</em></a>)</p></li>
+<li><p><strong>middle</strong> (<em>MarkLayout</em>)</p></li>
+<li><p><strong>through</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[<em>Mark</em>, …]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._labelFarMarks">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_labelFarMarks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">terminators</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">middle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">through</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._labelFarMarks" title="Link to this definition">¶</a></dt>
+<dd><p>The marks at the label end of the label→destination line: its own
+(<em>terminators.labelFar</em>) – followed by the middle’s, while the label shows
+text and there’s no source side to put them on (<code class="docutils literal notranslate"><span class="pre">[</span> <span class="pre">text</span> <span class="pre">]--|||----&gt;</span></code>; see
+<em>_labelNearMarks()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>terminators</strong> (<a class="reference internal" href="#sn.view.graphics.connectors.ConnectorTerminators" title="sn.view.graphics.connectors.ConnectorTerminators"><em>ConnectorTerminators</em></a>)</p></li>
+<li><p><strong>middle</strong> (<em>MarkLayout</em>)</p></li>
+<li><p><strong>through</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[<em>Mark</em>, …]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._middleStops">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_middleStops</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">middle</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._middleStops" title="Link to this definition">¶</a></dt>
+<dd><p>How far before and after the label’s centre the connector’s two lines
+stop, when they run through the label to its middle marks (see
+<em>throughLabel</em>): 0 if a line isn’t stopped (it meets the other at the centre).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>middle</strong> (<em>MarkLayout</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[float, float]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._clippedHalf">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_clippedHalf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vobj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodeAtStart</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stop</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._clippedHalf" title="Link to this definition">¶</a></dt>
+<dd><p>The half-arc [p0, p1, p2] clipped to <em>vobj</em>’s edge at one end (its start
+if <em>nodeAtStart</em>, else its end), and cut back <em>stop</em> from its other end –
+the label’s centre, when the line runs through the label (see
+<em>throughLabel</em>). None if nothing’s left (or <em>vobj</em> doesn’t contain its end).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vobj</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p></li>
+<li><p><strong>p0</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>p1</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>p2</strong> (<em>tuple</em><em>[</em><em>float</em><em> | </em><em>int</em><em>, </em><em>float</em><em> | </em><em>int</em><em>]</em>)</p></li>
+<li><p><strong>nodeAtStart</strong> (<em>bool</em>)</p></li>
+<li><p><strong>stop</strong> (<em>float</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[tuple[float | int, float | int], tuple[float | int, float | int], tuple[float | int, float | int]] | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._drawSingleSegment">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_drawSingleSegment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">otherIsSource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">terminators</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">middle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">through</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._drawSingleSegment" title="Link to this definition">¶</a></dt>
+<dd><p>Draw (or update) the one straight segment from <em>label</em> to <em>other</em>, with
+its terminators, for when the connector’s other endpoint (source or
+destination) is missing entirely – and the middle’s marks.</p>
+<p>With only two points there’s nothing left to curve, so this single-
+segment case is the same regardless of whether the caller wanted
+drawSmoothConnector() or drawStraightConnector() — both delegate here for
+it rather than duplicating the clip/line/terminator logic.</p>
+<p>The OTHER side of the connector — whichever of source/destination has no
+VObject at all this call — is left exactly as <em>prior</em> had it, rather than
+being deleted: a caller that flips back and forth between one- and
+two-endpoint calls doesn’t lose track of ids it may still want.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>label</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>) – One end of the single line actually drawn (the end both
+lines of a full connector would otherwise pass through).</p></li>
+<li><p><strong>other</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>) – The one present endpoint — whichever of source/destination
+isn’t <em>None</em>.</p></li>
+<li><p><strong>otherIsSource</strong> (<em>bool</em>) – <em>True</em> if <em>other</em> is standing in for <em>source</em> (so
+the terminators.source/labelNear slots, and the source-side result
+fields, apply); <em>False</em> if it’s standing in for <em>destination</em>.</p></li>
+<li><p><strong>terminators</strong> (<a class="reference internal" href="#sn.view.graphics.connectors.ConnectorTerminators" title="sn.view.graphics.connectors.ConnectorTerminators"><em>ConnectorTerminators</em></a>) – Same terminators the caller was given.</p></li>
+<li><p><strong>prior</strong> (<a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs" title="sn.view.graphics.connectors.ConnectorIDs"><em>ConnectorIDs</em></a>) – The caller’s <em>ids</em> (or an empty ConnectorIDs() if <em>ids</em>
+was <em>None</em>).</p></li>
+<li><p><strong>style</strong> (<a class="reference internal" href="#sn.view.graphics.connectors._Style" title="sn.view.graphics.connectors._Style"><em>_Style</em></a>) – How it’s drawn (from the caller’s arguments).</p></li>
+<li><p><strong>middle</strong> (<em>MarkLayout</em>) – The middle’s marks, laid out.</p></li>
+<li><p><strong>through</strong> (<em>bool</em>) – Whether the line runs through the label to its middle
+marks (see <em>throughLabel</em>), rather than stopping at its edge.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs" title="sn.view.graphics.connectors.ConnectorIDs"><em>ConnectorIDs</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.connectors._middleOnly">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">_middleOnly</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">middle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">through</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors._middleOnly" title="Link to this definition">¶</a></dt>
+<dd><p>For a connector with neither end to draw to (eg: a relation type with no
+ends of its own): just its middle’s marks, on its label, along the stubs’
+axis (see <em>VRelation._styleEnds()</em>) – where the label is now. The rest of
+<em>prior</em> is left as it is (its ends’ stubs are the relation’s).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>label</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p></li>
+<li><p><strong>prior</strong> (<a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs" title="sn.view.graphics.connectors.ConnectorIDs"><em>ConnectorIDs</em></a>)</p></li>
+<li><p><strong>style</strong> (<a class="reference internal" href="#sn.view.graphics.connectors._Style" title="sn.view.graphics.connectors._Style"><em>_Style</em></a>)</p></li>
+<li><p><strong>middle</strong> (<em>MarkLayout</em>)</p></li>
+<li><p><strong>through</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs" title="sn.view.graphics.connectors.ConnectorIDs"><em>ConnectorIDs</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="sn.view.graphics.connectors.drawSmoothConnector">
-<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">drawSmoothConnector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destination</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">terminators</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">lineColor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fillColor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">lineKwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors.drawSmoothConnector" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">drawSmoothConnector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destination</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">terminators</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">lineColor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fillColor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">throughLabel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">lineKwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors.drawSmoothConnector" title="Link to this definition">¶</a></dt>
 <dd><p>Draw source→label and label→destination as two lines that terminate at
 the edges of their respective VObjects and together trace ONE smooth
 quadratic-Bezier curve running from the center of source’s bounding box,
@@ -1012,6 +1278,15 @@ findIntersection()’s straight-line bisection) and rendered as a Tk
 create_line() with exactly 3 points and smooth=True — Tk’s documented
 control-point quadratic-bezier behaviour for a 3-point smoothed line,
 so the rendered curve matches this function’s own math exactly.</p>
+<p>The terminators are marks (see util.lineMarks) at each arc’s ends: an arc
+is cut back (exactly, along the curve) where its marks stop it. With
+<em>throughLabel</em> – the label shows no text – the middle’s marks are centred
+on Cl, turned to the curve’s direction there (exactly Cd - Cs, for this
+curve), and the two arcs aren’t clipped at the label’s edge: they run on to
+the middle marks (meeting at Cl if none of them stops the line, eg: bars –
+or there are none). Without <em>throughLabel</em> – the label shows text – the
+middle’s marks go on the source→label arc just before the label, where they
+don’t cover the text (see _labelNearMarks()).</p>
 <p>Assumes source, label and destination don’t overlap each other and share
 the same canvas (source.canvas is used).</p>
 <p>If <em>source is destination</em> (a self-loop – the same VObject on both ends),
@@ -1025,8 +1300,7 @@ of the two is actually present, complete with that segment’s own
 terminators – since a curve needs a third point to bend around; with
 only two points there’s nothing to smooth either way, so
 drawStraightConnector() behaves identically in this case. The OTHER
-side’s previous canvas items (if any) are left untouched, exactly as
-when a boundary clip fails elsewhere in this module – see
+side’s previous canvas items (if any) are left untouched – see
 _drawSingleSegment(). If <em>both</em> are <em>None</em> there’s nothing to connect to
 at all, so the call is a silent no-op: nothing is drawn or deleted, and
 <em>ids</em> (or an empty ConnectorIDs() if <em>ids</em> was also <em>None</em>) is returned
@@ -1039,17 +1313,23 @@ there is no source object.</p></li>
 <li><p><strong>label</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>) – The VObject both lines connect through.</p></li>
 <li><p><strong>destination</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em> | </em><em>None</em>) – The VObject the second line ends at, or <em>None</em> if
 there is no destination object.</p></li>
-<li><p><strong>terminators</strong> (<a class="reference internal" href="#sn.view.graphics.connectors.ConnectorTerminators" title="sn.view.graphics.connectors.ConnectorTerminators"><em>ConnectorTerminators</em></a><em> | </em><em>None</em>) – The four terminator specs (source/labelNear/labelFar/
-destination), or None for no terminators at all.</p></li>
+<li><p><strong>terminators</strong> (<a class="reference internal" href="#sn.view.graphics.connectors.ConnectorTerminators" title="sn.view.graphics.connectors.ConnectorTerminators"><em>ConnectorTerminators</em></a><em> | </em><em>None</em>) – The mark specs at the four line ends and the middle
+(see ConnectorTerminators), or None for none at all.</p></li>
 <li><p><strong>ids</strong> (<a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs" title="sn.view.graphics.connectors.ConnectorIDs"><em>ConnectorIDs</em></a><em> | </em><em>None</em>) – A previous call’s ConnectorIDs, to update those exact items in
 place instead of creating new ones. None (the default) draws fresh
 items. Every colour/terminator/line option is re-applied from this
 call’s arguments regardless — nothing is assumed to carry over from
 whatever <em>ids</em> was drawn with.</p></li>
-<li><p><strong>lineColor</strong> (<em>str</em>) – Passed as create_line()’s “fill” (and terminators’
-outline colour) unless overridden via <em>lineKwargs</em>.</p></li>
-<li><p><strong>fillColor</strong> (<em>str</em>) – Fill colour for “circle” terminators.</p></li>
+<li><p><strong>lineColor</strong> (<em>str</em>) – Passed as create_line()’s “fill” (and the marks’ line
+colour).</p></li>
+<li><p><strong>fillColor</strong> (<em>str</em>) – Fill colour for “circle” marks.</p></li>
 <li><p><strong>tags</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – Canvas tags applied to every item this call touches.</p></li>
+<li><p><strong>throughLabel</strong> (<em>bool</em>) – Whether the lines run through the label (eg: it shows
+no text) – to its middle marks, or meeting at its centre if it has none
+– rather than stopping at its edge, which would leave a gap in the line
+(and a kink, where the curve bends at the label) with nothing to show for
+it; and so whether the middle’s marks are drawn in the middle at all,
+rather than on the line just before the label.</p></li>
 <li><p><strong>lineKwargs</strong> – Extra options merged into both create_line() calls
 (width, dash, etc.).</p></li>
 </ul>
@@ -1066,7 +1346,7 @@ call (or deleting).</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="sn.view.graphics.connectors.drawStraightConnector">
-<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">drawStraightConnector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destination</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">terminators</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">lineColor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fillColor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">lineKwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors.drawStraightConnector" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.connectors.</span></span><span class="sig-name descname"><span class="pre">drawStraightConnector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destination</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">terminators</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">lineColor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fillColor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">throughLabel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">lineKwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.connectors.drawStraightConnector" title="Link to this definition">¶</a></dt>
 <dd><p>Same signature and result shape as drawSmoothConnector() — a drop-in
 “fast” alternative that draws two straight lines (source-to-label,
 label-to-destination) instead of a smooth curve. Intended for contexts
@@ -1078,6 +1358,11 @@ pointer and not care which one it has.</p>
 via <em>ids</em> updates those items in place (and works even if <em>ids</em> was last
 drawn by drawSmoothConnector() — the same items just get reshaped from a
 3-point smoothed arc to a 2-point straight segment).</p>
+<p>The middle’s marks are turned to the average of the two lines’ directions
+at the label; with <em>throughLabel</em>, the lines run on to them along that
+direction, instead of stopping at the label’s edge. Without it, they go on
+the source→label line just before the label, as drawSmoothConnector()
+puts them.</p>
 <p>Also like drawSmoothConnector(), <em>source is destination</em> (a self-loop) is
 special-cased – see its docstring and _selfLoopOffset() – so the two
 segments end up offset and roughly parallel instead of drawn one on top of
@@ -1098,6 +1383,7 @@ empty ConnectorIDs()) unchanged if both are.</p>
 <li><p><strong>lineColor</strong> (<em>str</em>)</p></li>
 <li><p><strong>fillColor</strong> (<em>str</em>)</p></li>
 <li><p><strong>tags</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>throughLabel</strong> (<em>bool</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1169,16 +1455,24 @@ empty ConnectorIDs()) unchanged if both are.</p>
 <li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorTerminators.labelNear"><code class="docutils literal notranslate"><span class="pre">ConnectorTerminators.labelNear</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorTerminators.labelFar"><code class="docutils literal notranslate"><span class="pre">ConnectorTerminators.labelFar</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorTerminators.destination"><code class="docutils literal notranslate"><span class="pre">ConnectorTerminators.destination</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorTerminators.middle"><code class="docutils literal notranslate"><span class="pre">ConnectorTerminators.middle</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorTerminators.__init__"><code class="docutils literal notranslate"><span class="pre">ConnectorTerminators.__init__()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs</span></code></a><ul>
 <li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs.sourceLineID"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs.sourceLineID</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs.destLineID"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs.destLineID</span></code></a></li>
-<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs.sourceTerminatorID"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs.sourceTerminatorID</span></code></a></li>
-<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs.labelNearTerminatorID"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs.labelNearTerminatorID</span></code></a></li>
-<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs.labelFarTerminatorID"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs.labelFarTerminatorID</span></code></a></li>
-<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs.destTerminatorID"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs.destTerminatorID</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs.sourceTerminatorIDs"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs.sourceTerminatorIDs</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs.labelNearTerminatorIDs"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs.labelNearTerminatorIDs</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs.labelFarTerminatorIDs"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs.labelFarTerminatorIDs</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs.destTerminatorIDs"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs.destTerminatorIDs</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs.middleIDs"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs.middleIDs</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs.sourceEnd"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs.sourceEnd</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs.destEnd"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs.destEnd</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs.sourceIDs"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs.sourceIDs()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs.destIDs"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs.destIDs()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs.clearSource"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs.clearSource()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs.clearDest"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs.clearDest()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs.deleteAll"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs.deleteAll()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.connectors.ConnectorIDs.__init__"><code class="docutils literal notranslate"><span class="pre">ConnectorIDs.__init__()</span></code></a></li>
 </ul>
@@ -1190,18 +1484,33 @@ empty ConnectorIDs()) unchanged if both are.</p>
 <li><a class="reference internal" href="#sn.view.graphics.connectors._labelControlPoint"><code class="docutils literal notranslate"><span class="pre">_labelControlPoint()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.connectors._bezierPoint"><code class="docutils literal notranslate"><span class="pre">_bezierPoint()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.connectors._bezierBlossom"><code class="docutils literal notranslate"><span class="pre">_bezierBlossom()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._BOUNDARY_TOLERANCE"><code class="docutils literal notranslate"><span class="pre">_BOUNDARY_TOLERANCE</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._boundaryTolerance"><code class="docutils literal notranslate"><span class="pre">_boundaryTolerance()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.connectors._insideTest"><code class="docutils literal notranslate"><span class="pre">_insideTest()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.connectors._findBoundaryParam"><code class="docutils literal notranslate"><span class="pre">_findBoundaryParam()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.connectors._clippedArc"><code class="docutils literal notranslate"><span class="pre">_clippedArc()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.connectors._farPointAlong"><code class="docutils literal notranslate"><span class="pre">_farPointAlong()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.connectors._clipToEdgeStraight"><code class="docutils literal notranslate"><span class="pre">_clipToEdgeStraight()</span></code></a></li>
-<li><a class="reference internal" href="#sn.view.graphics.connectors.parseTerminatorSpec"><code class="docutils literal notranslate"><span class="pre">parseTerminatorSpec()</span></code></a></li>
-<li><a class="reference internal" href="#sn.view.graphics.connectors._arrowLineOptions"><code class="docutils literal notranslate"><span class="pre">_arrowLineOptions()</span></code></a></li>
-<li><a class="reference internal" href="#sn.view.graphics.connectors._mergeArrowOptions"><code class="docutils literal notranslate"><span class="pre">_mergeArrowOptions()</span></code></a></li>
-<li><a class="reference internal" href="#sn.view.graphics.connectors._drawCircleTerminator"><code class="docutils literal notranslate"><span class="pre">_drawCircleTerminator()</span></code></a></li>
-<li><a class="reference internal" href="#sn.view.graphics.connectors._upsertLine"><code class="docutils literal notranslate"><span class="pre">_upsertLine()</span></code></a></li>
-<li><a class="reference internal" href="#sn.view.graphics.connectors._drawSingleSegment"><code class="docutils literal notranslate"><span class="pre">_drawSingleSegment()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._badSpecs"><code class="docutils literal notranslate"><span class="pre">_badSpecs</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._marks"><code class="docutils literal notranslate"><span class="pre">_marks()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._unit"><code class="docutils literal notranslate"><span class="pre">_unit()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.connectors._deleteItems"><code class="docutils literal notranslate"><span class="pre">_deleteItems()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.zoomedWidth"><code class="docutils literal notranslate"><span class="pre">zoomedWidth()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._Style"><code class="docutils literal notranslate"><span class="pre">_Style</span></code></a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._Style.__init__"><code class="docutils literal notranslate"><span class="pre">_Style.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._Style.half"><code class="docutils literal notranslate"><span class="pre">_Style.half()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._Style.middle"><code class="docutils literal notranslate"><span class="pre">_Style.middle()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors.MarksArg"><code class="docutils literal notranslate"><span class="pre">MarksArg</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._asMarks"><code class="docutils literal notranslate"><span class="pre">_asMarks()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._middleMarks"><code class="docutils literal notranslate"><span class="pre">_middleMarks()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._labelNearMarks"><code class="docutils literal notranslate"><span class="pre">_labelNearMarks()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._labelFarMarks"><code class="docutils literal notranslate"><span class="pre">_labelFarMarks()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._middleStops"><code class="docutils literal notranslate"><span class="pre">_middleStops()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._clippedHalf"><code class="docutils literal notranslate"><span class="pre">_clippedHalf()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._drawSingleSegment"><code class="docutils literal notranslate"><span class="pre">_drawSingleSegment()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.connectors._middleOnly"><code class="docutils literal notranslate"><span class="pre">_middleOnly()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.connectors.drawSmoothConnector"><code class="docutils literal notranslate"><span class="pre">drawSmoothConnector()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.connectors.drawStraightConnector"><code class="docutils literal notranslate"><span class="pre">drawStraightConnector()</span></code></a></li>
 </ul>
@@ -1215,7 +1524,7 @@ empty ConnectorIDs()) unchanged if both are.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=292eb321"></script>
+</div><script src="../_static/documentation_options.js?v=56dcb7b8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

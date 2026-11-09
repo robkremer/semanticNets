@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.view package - Semantic Nets 1.0.1 documentation</title>
+        <title>sn.view package - Semantic Nets 1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -238,12 +238,15 @@
 <li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html">sn.model.clipsReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html">sn.model.nemoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html">sn.model.prologReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
 </ul>
@@ -450,18 +453,28 @@
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._labelControlPoint"><code class="docutils literal notranslate"><span class="pre">_labelControlPoint()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._bezierPoint"><code class="docutils literal notranslate"><span class="pre">_bezierPoint()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._bezierBlossom"><code class="docutils literal notranslate"><span class="pre">_bezierBlossom()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._BOUNDARY_TOLERANCE"><code class="docutils literal notranslate"><span class="pre">_BOUNDARY_TOLERANCE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._boundaryTolerance"><code class="docutils literal notranslate"><span class="pre">_boundaryTolerance()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._insideTest"><code class="docutils literal notranslate"><span class="pre">_insideTest()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._findBoundaryParam"><code class="docutils literal notranslate"><span class="pre">_findBoundaryParam()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._clippedArc"><code class="docutils literal notranslate"><span class="pre">_clippedArc()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._farPointAlong"><code class="docutils literal notranslate"><span class="pre">_farPointAlong()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._clipToEdgeStraight"><code class="docutils literal notranslate"><span class="pre">_clipToEdgeStraight()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors.parseTerminatorSpec"><code class="docutils literal notranslate"><span class="pre">parseTerminatorSpec()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._arrowLineOptions"><code class="docutils literal notranslate"><span class="pre">_arrowLineOptions()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._mergeArrowOptions"><code class="docutils literal notranslate"><span class="pre">_mergeArrowOptions()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._drawCircleTerminator"><code class="docutils literal notranslate"><span class="pre">_drawCircleTerminator()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._upsertLine"><code class="docutils literal notranslate"><span class="pre">_upsertLine()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._drawSingleSegment"><code class="docutils literal notranslate"><span class="pre">_drawSingleSegment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._badSpecs"><code class="docutils literal notranslate"><span class="pre">_badSpecs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._marks"><code class="docutils literal notranslate"><span class="pre">_marks()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._unit"><code class="docutils literal notranslate"><span class="pre">_unit()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._deleteItems"><code class="docutils literal notranslate"><span class="pre">_deleteItems()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors.zoomedWidth"><code class="docutils literal notranslate"><span class="pre">zoomedWidth()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._Style"><code class="docutils literal notranslate"><span class="pre">_Style</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors.MarksArg"><code class="docutils literal notranslate"><span class="pre">MarksArg</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._asMarks"><code class="docutils literal notranslate"><span class="pre">_asMarks()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._middleMarks"><code class="docutils literal notranslate"><span class="pre">_middleMarks()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._labelNearMarks"><code class="docutils literal notranslate"><span class="pre">_labelNearMarks()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._labelFarMarks"><code class="docutils literal notranslate"><span class="pre">_labelFarMarks()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._middleStops"><code class="docutils literal notranslate"><span class="pre">_middleStops()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._clippedHalf"><code class="docutils literal notranslate"><span class="pre">_clippedHalf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._drawSingleSegment"><code class="docutils literal notranslate"><span class="pre">_drawSingleSegment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors._middleOnly"><code class="docutils literal notranslate"><span class="pre">_middleOnly()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors.drawSmoothConnector"><code class="docutils literal notranslate"><span class="pre">drawSmoothConnector()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.connectors.html#sn.view.graphics.connectors.drawStraightConnector"><code class="docutils literal notranslate"><span class="pre">drawStraightConnector()</span></code></a></li>
 </ul>
@@ -472,6 +485,8 @@
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators.NOMINAL_ASPECT"><code class="docutils literal notranslate"><span class="pre">NOMINAL_ASPECT</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators.BREAK_AFTER"><code class="docutils literal notranslate"><span class="pre">BREAK_AFTER</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators._font"><code class="docutils literal notranslate"><span class="pre">_font()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators._lineSpaces"><code class="docutils literal notranslate"><span class="pre">_lineSpaces</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators._lineSpace"><code class="docutils literal notranslate"><span class="pre">_lineSpace()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators.textPieces"><code class="docutils literal notranslate"><span class="pre">textPieces()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators.layoutText"><code class="docutils literal notranslate"><span class="pre">layoutText()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators.WrappingText"><code class="docutils literal notranslate"><span class="pre">WrappingText</span></code></a></li>
@@ -480,6 +495,9 @@
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators.ConstraintMarker"><code class="docutils literal notranslate"><span class="pre">ConstraintMarker</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators.MarkerContainer"><code class="docutils literal notranslate"><span class="pre">MarkerContainer</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators.Selected"><code class="docutils literal notranslate"><span class="pre">Selected</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators._fonts"><code class="docutils literal notranslate"><span class="pre">_fonts</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators._measure"><code class="docutils literal notranslate"><span class="pre">_measure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators._fitText"><code class="docutils literal notranslate"><span class="pre">_fitText()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators.ContextFrame"><code class="docutils literal notranslate"><span class="pre">ContextFrame</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators._blend"><code class="docutils literal notranslate"><span class="pre">_blend()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.decorators.html#sn.view.graphics.decorators.Highlight"><code class="docutils literal notranslate"><span class="pre">Highlight</span></code></a></li>
@@ -522,9 +540,11 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.guiApp.html">sn.view.graphics.guiApp module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.guiApp.html#sn.view.graphics.guiApp.UnexpectedObjectInFile"><code class="docutils literal notranslate"><span class="pre">UnexpectedObjectInFile</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.guiApp.html#sn.view.graphics.guiApp.showHelp"><code class="docutils literal notranslate"><span class="pre">showHelp()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.guiApp.html#sn.view.graphics.guiApp.Application"><code class="docutils literal notranslate"><span class="pre">Application</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.guiApp.html#sn.view.graphics.guiApp._filePath"><code class="docutils literal notranslate"><span class="pre">_filePath()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.guiApp.html#sn.view.graphics.guiApp._fileName"><code class="docutils literal notranslate"><span class="pre">_fileName()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.guiApp.html#sn.view.graphics.guiApp.windowTitle"><code class="docutils literal notranslate"><span class="pre">windowTitle()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.guiApp.html#sn.view.graphics.guiApp.AppWindow"><code class="docutils literal notranslate"><span class="pre">AppWindow</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.guiApp.html#sn.view.graphics.guiApp.AppPanedWidget"><code class="docutils literal notranslate"><span class="pre">AppPanedWidget</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.guiApp.html#sn.view.graphics.guiApp.SNGViewFrame"><code class="docutils literal notranslate"><span class="pre">SNGViewFrame</span></code></a></li>
@@ -543,7 +563,6 @@
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html#sn.view.graphics.imageExport._quad"><code class="docutils literal notranslate"><span class="pre">_quad()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html#sn.view.graphics.imageExport.splineSegments"><code class="docutils literal notranslate"><span class="pre">splineSegments()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html#sn.view.graphics.imageExport._ellipse"><code class="docutils literal notranslate"><span class="pre">_ellipse()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html#sn.view.graphics.imageExport.arrowHead"><code class="docutils literal notranslate"><span class="pre">arrowHead()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html#sn.view.graphics.imageExport.Renderer"><code class="docutils literal notranslate"><span class="pre">Renderer</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html#sn.view.graphics.imageExport.drawItems"><code class="docutils literal notranslate"><span class="pre">drawItems()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.imageExport.html#sn.view.graphics.imageExport.copyImage"><code class="docutils literal notranslate"><span class="pre">copyImage()</span></code></a></li>
@@ -558,6 +577,7 @@
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html#sn.view.graphics.labels._REF"><code class="docutils literal notranslate"><span class="pre">_REF</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html#sn.view.graphics.labels.TemplateError"><code class="docutils literal notranslate"><span class="pre">TemplateError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html#sn.view.graphics.labels.expand"><code class="docutils literal notranslate"><span class="pre">expand()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html#sn.view.graphics.labels.hasHookCall"><code class="docutils literal notranslate"><span class="pre">hasHookCall()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html#sn.view.graphics.labels._call"><code class="docutils literal notranslate"><span class="pre">_call()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html#sn.view.graphics.labels._expand"><code class="docutils literal notranslate"><span class="pre">_expand()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.labels.html#sn.view.graphics.labels._braced"><code class="docutils literal notranslate"><span class="pre">_braced()</span></code></a></li>
@@ -593,12 +613,14 @@
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout._moveAll"><code class="docutils literal notranslate"><span class="pre">_moveAll()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout._settled"><code class="docutils literal notranslate"><span class="pre">_settled()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout._Tween"><code class="docutils literal notranslate"><span class="pre">_Tween</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.pinnableLabel"><code class="docutils literal notranslate"><span class="pre">pinnableLabel()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.finishTween"><code class="docutils literal notranslate"><span class="pre">finishTween()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.tween"><code class="docutils literal notranslate"><span class="pre">tween()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutMoves"><code class="docutils literal notranslate"><span class="pre">LayoutMoves</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.UNBOUNDED"><code class="docutils literal notranslate"><span class="pre">UNBOUNDED</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout._BoxIndex"><code class="docutils literal notranslate"><span class="pre">_BoxIndex</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.shownBoxes"><code class="docutils literal notranslate"><span class="pre">shownBoxes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.otherLabelTargets"><code class="docutils literal notranslate"><span class="pre">otherLabelTargets()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.windowsOutOfTheWay"><code class="docutils literal notranslate"><span class="pre">windowsOutOfTheWay()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.clearBelow"><code class="docutils literal notranslate"><span class="pre">clearBelow()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.freeRingSpot"><code class="docutils literal notranslate"><span class="pre">freeRingSpot()</span></code></a></li>
@@ -642,6 +664,8 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.reasoningToolbar.html">sn.view.graphics.reasoningToolbar module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.reasoningToolbar.html#sn.view.graphics.reasoningToolbar.TIPS"><code class="docutils literal notranslate"><span class="pre">TIPS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.reasoningToolbar.html#sn.view.graphics.reasoningToolbar._toolbars"><code class="docutils literal notranslate"><span class="pre">_toolbars</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.reasoningToolbar.html#sn.view.graphics.reasoningToolbar.refreshEngines"><code class="docutils literal notranslate"><span class="pre">refreshEngines()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.reasoningToolbar.html#sn.view.graphics.reasoningToolbar.ReasoningToolbar"><code class="docutils literal notranslate"><span class="pre">ReasoningToolbar</span></code></a></li>
 </ul>
 </li>
@@ -720,6 +744,7 @@
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.nearestFree"><code class="docutils literal notranslate"><span class="pre">nearestFree()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.placeNear"><code class="docutils literal notranslate"><span class="pre">placeNear()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.isMember"><code class="docutils literal notranslate"><span class="pre">isMember()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.hasLabel"><code class="docutils literal notranslate"><span class="pre">hasLabel()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.isLink"><code class="docutils literal notranslate"><span class="pre">isLink()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.Terminal"><code class="docutils literal notranslate"><span class="pre">Terminal</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.treeLayout.html#sn.view.graphics.treeLayout.upgradeRelation"><code class="docutils literal notranslate"><span class="pre">upgradeRelation()</span></code></a></li>
@@ -772,10 +797,12 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.viewLayouts.html">sn.view.graphics.viewLayouts module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewLayouts.html#sn.view.graphics.viewLayouts.SwitchedLayout"><code class="docutils literal notranslate"><span class="pre">SwitchedLayout</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewLayouts.html#sn.view.graphics.viewLayouts.LayoutsMixin"><code class="docutils literal notranslate"><span class="pre">LayoutsMixin</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="sn.view.graphics.viewReasoning.html">sn.view.graphics.viewReasoning module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewReasoning.html#sn.view.graphics.viewReasoning.showEngineMissing"><code class="docutils literal notranslate"><span class="pre">showEngineMissing()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.viewReasoning.html#sn.view.graphics.viewReasoning.ReasoningMixin"><code class="docutils literal notranslate"><span class="pre">ReasoningMixin</span></code></a></li>
 </ul>
 </li>
@@ -851,6 +878,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.SNTerminalWidget"><code class="docutils literal notranslate"><span class="pre">SNTerminalWidget</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.SNTerminalWidget.__init__"><code class="docutils literal notranslate"><span class="pre">SNTerminalWidget.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.SNTerminalWidget._onLine"><code class="docutils literal notranslate"><span class="pre">SNTerminalWidget._onLine()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="sn.view.textUserInterface.html#sn.view.textUserInterface.SNPlainTextTerminal"><code class="docutils literal notranslate"><span class="pre">SNPlainTextTerminal</span></code></a><ul>
@@ -933,7 +961,7 @@
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=292eb321"></script>
+</div><script src="../_static/documentation_options.js?v=56dcb7b8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

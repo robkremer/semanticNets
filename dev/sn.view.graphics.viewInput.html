@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.view.graphics.viewInput module - Semantic Nets 1.0.1 documentation</title>
+        <title>sn.view.graphics.viewInput module - Semantic Nets 1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -238,12 +238,15 @@
 <li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html">sn.model.clipsReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html">sn.model.nemoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html">sn.model.prologReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
 </ul>
@@ -429,7 +432,7 @@ view’s pop-up menus.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ElasticLineChoiceData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">originNode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lineID</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">onEmpty</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ElasticLineChoiceData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">originNode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lineID</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">onEmpty</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">onEnd</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData._asdict">
@@ -439,12 +442,12 @@ view’s pop-up menus.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData._field_defaults">
-<span class="sig-name descname"><span class="pre">_field_defaults</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'onEmpty':</span> <span class="pre">None}</span></span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData._field_defaults" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">_field_defaults</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'onEmpty':</span> <span class="pre">None,</span> <span class="pre">'onEnd':</span> <span class="pre">None}</span></span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData._field_defaults" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData._fields">
-<span class="sig-name descname"><span class="pre">_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('originNode',</span> <span class="pre">'lineID',</span> <span class="pre">'filter',</span> <span class="pre">'callback',</span> <span class="pre">'onEmpty')</span></span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData._fields" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">_fields</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('originNode',</span> <span class="pre">'lineID',</span> <span class="pre">'filter',</span> <span class="pre">'callback',</span> <span class="pre">'onEmpty',</span> <span class="pre">'onEnd')</span></span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData._fields" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -484,11 +487,23 @@ view’s pop-up menus.</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData.onEnd">
+<span class="sig-name descname"><span class="pre">onEnd</span></span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData.onEnd" title="Link to this definition">¶</a></dt>
+<dd><p>Alias for field number 5</p>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData.originNode">
 <span class="sig-name descname"><span class="pre">originNode</span></span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData.originNode" title="Link to this definition">¶</a></dt>
 <dd><p>Alias for field number 0</p>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.RUBBER_BAND">
+<span class="sig-name descname"><span class="pre">RUBBER_BAND</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'dash':</span> <span class="pre">(6,</span> <span class="pre">4),</span> <span class="pre">'fill':</span> <span class="pre">'#2f6fd6',</span> <span class="pre">'width':</span> <span class="pre">2}</span></span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.RUBBER_BAND" title="Link to this definition">¶</a></dt>
+<dd><p>How the elastic line of a choice is drawn (see <em>elasticLineChoice()</em>): thin, dashed, and the same for every choice.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -759,7 +774,7 @@ using <em>self._selectionBoxInfo[3]</em> to note that the selection box is activ
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.viewInput.InputMixin.elasticLineChoice">
-<span class="sig-name descname"><span class="pre">elasticLineChoice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">originNode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;function</span> <span class="pre">InputMixin.&lt;lambda&gt;&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arrowHeads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cyan'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">onEmpty</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.elasticLineChoice" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">elasticLineChoice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">originNode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;function</span> <span class="pre">InputMixin.&lt;lambda&gt;&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arrowHeads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">onEmpty</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">onEnd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewInput.InputMixin.elasticLineChoice" title="Link to this definition">¶</a></dt>
 <dd><p>Animate an elastic line from the <em>originNode</em> to the cursor to select an
 object for which <em>filter</em> returns True, then call <em>callback</em> with the <em>originNode</em>
 and the selected object.</p>
@@ -774,10 +789,13 @@ parameter to <em>callback</em>.</p></li>
 <li><p><strong>arrowHeads</strong> (<em>int</em>) – 0=no arrowheads, 1=arrowhead at the origin, 2=arrowhead
 at the cursor, 3=arrowhead at both ends. For anything larger, just he lowest
 2 bits will be used. [Optional, default=2]</p></li>
+<li><p><strong>color</strong> (<em>str</em><em> | </em><em>None</em>) – The line’s colour: by default, the rubber band’s (see <em>RUBBER_BAND</em>).</p></li>
 <li><p><strong>onEmpty</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>]</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – If given, called with <em>originNode</em> when the line is dropped
 on empty space (no object at all under the cursor); otherwise that
 abandons the choice, as Escape always does (see <em>cancelElasticLine()</em>).</p></li>
-<li><p><strong>color</strong> (<em>str</em>)</p></li>
+<li><p><strong>onEnd</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – If given, called when the choice ends, however it ends –
+before <em>callback</em> or <em>onEmpty</em>: eg: to show again what was hidden
+while choosing (see <em>VRelation.chooseNewEndpoint()</em>).</p></li>
 </ul>
 </dd>
 </dl>
@@ -1105,9 +1123,11 @@ sizes; with their keys.</p>
 <li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData.filter"><code class="docutils literal notranslate"><span class="pre">InputMixin.ElasticLineChoiceData.filter</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData.lineID"><code class="docutils literal notranslate"><span class="pre">InputMixin.ElasticLineChoiceData.lineID</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData.onEmpty"><code class="docutils literal notranslate"><span class="pre">InputMixin.ElasticLineChoiceData.onEmpty</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData.onEnd"><code class="docutils literal notranslate"><span class="pre">InputMixin.ElasticLineChoiceData.onEnd</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.ElasticLineChoiceData.originNode"><code class="docutils literal notranslate"><span class="pre">InputMixin.ElasticLineChoiceData.originNode</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.RUBBER_BAND"><code class="docutils literal notranslate"><span class="pre">InputMixin.RUBBER_BAND</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.makeBindings"><code class="docutils literal notranslate"><span class="pre">InputMixin.makeBindings()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.onOptionKey"><code class="docutils literal notranslate"><span class="pre">InputMixin.onOptionKey()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewInput.InputMixin.onValidateKey"><code class="docutils literal notranslate"><span class="pre">InputMixin.onValidateKey()</span></code></a></li>
@@ -1151,7 +1171,7 @@ sizes; with their keys.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=292eb321"></script>
+</div><script src="../_static/documentation_options.js?v=56dcb7b8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

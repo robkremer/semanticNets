@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.view.graphics.viewEditing module - Semantic Nets 1.0.1 documentation</title>
+        <title>sn.view.graphics.viewEditing module - Semantic Nets 1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -238,12 +238,15 @@
 <li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html">sn.model.clipsReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html">sn.model.nemoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html">sn.model.prologReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
 </ul>
@@ -403,6 +406,26 @@ the menu on a rule’s window, to edit it in place.</p>
 <span class="sig-name descname"><span class="pre">_newAt</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><span class="pre">GraphObject</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin._newAt" title="Link to this definition">¶</a></dt>
 <dd><p>Where the background menu that’s making a node was asked for (view coords),
 and the type it’s making one of, until it’s made (see <em>makeMenu()</em>, <em>_newObjectLocation()</em>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin._cancelNew">
+<span class="sig-name descname"><span class="pre">_cancelNew</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objectID</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin._cancelNew" title="Link to this definition">¶</a></dt>
+<dd><p><em>mo</em> was left without a name when it was made (see <em>_askName()</em>): undo
+the command that made it – if that’s still the last thing done, and
+it’s still nameless – and forget it, so redo doesn’t make it again. (A
+window’s contents made with it go too: eg, its pane’s containment.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mo</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p></li>
+<li><p><strong>objectID</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -855,7 +878,9 @@ they’re wanted.</p>
 <dd><p>Highlight the nodes and relations in the view whose names match <em>pattern</em>
 (see <em>sn.model.model.nameMatcher()</em>) – not isa links, nor those not drawn
 just now (see <em>VObject.isHidden()</em>) – replacing any earlier highlights,
-and scroll to show them. With <em>wholeModel</em>, those in the model (and, with
+and scroll to show them: all of them, if they fit in the window; else the
+one nearest the middle of the window (see <em>showMatch()</em> for the others).
+With <em>wholeModel</em>, those in the model (and, with
 <em>superModels</em>, its super-models) that aren’t in the view are shown first
 (one undoable command: see <em>represent()</em>), even if they’re in a hidden or
 erased category; and so are any of those in the view in such a category.</p>
@@ -880,6 +905,38 @@ shown, whether to show them (eg: there are a lot); None: they are.</p></li>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>re.error</strong> – If <em>regex</em> and <em>pattern</em> isn’t a good regular expression.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin._liveMatches">
+<span class="sig-name descname"><span class="pre">_liveMatches</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin._liveMatches" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>What the last search highlighted (see <em>search()</em>) that’s still shown: in reading order (by rows, then across).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin.showMatch">
+<span class="sig-name descname"><span class="pre">showMatch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin.showMatch" title="Link to this definition">¶</a></dt>
+<dd><p>Scroll to the next (<em>step</em> 1) or previous (-1) of what the last search
+found (see <em>search()</em>), in reading order – round again after the last –
+and put it in the middle of the window.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>step</strong> (<em>int</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Which one it is (from 1), and how many there are: (0, 0) if none.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[int, int]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -928,12 +985,18 @@ or, if <em>toNode</em> is None, with no destination of its own (so it inherits
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.viewEditing.EditingMixin._askName">
-<span class="sig-name descname"><span class="pre">_askName</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mo</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin._askName" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">_askName</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objectID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewEditing.EditingMixin._askName" title="Link to this definition">¶</a></dt>
 <dd><p>Ask for a new object’s name (and anything else about it), in the
-attribute editor – unless it’s gone (eg: undone).</p>
+attribute editor – unless it’s gone (eg: undone). Left without a name
+(the editor cancelled, or the name left blank), it isn’t made after all
+(see <em>_cancelNew()</em>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>mo</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>objectID</strong> (<em>int</em><em> | </em><em>None</em>) – Its id in the model: unless the last command made it
+(see <em>ViewDoList.made()</em>), a nameless one is left.</p></li>
+<li><p><strong>mo</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p></li>
+</ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
@@ -1004,6 +1067,7 @@ attribute editor – unless it’s gone (eg: undone).</p>
 <li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin"><code class="docutils literal notranslate"><span class="pre">EditingMixin</span></code></a><ul>
 <li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.addNewObjectMenus"><code class="docutils literal notranslate"><span class="pre">EditingMixin.addNewObjectMenus()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin._newAt"><code class="docutils literal notranslate"><span class="pre">EditingMixin._newAt</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin._cancelNew"><code class="docutils literal notranslate"><span class="pre">EditingMixin._cancelNew()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin._placeNew"><code class="docutils literal notranslate"><span class="pre">EditingMixin._placeNew()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin._selectedModelObjects"><code class="docutils literal notranslate"><span class="pre">EditingMixin._selectedModelObjects()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin._shownObjects"><code class="docutils literal notranslate"><span class="pre">EditingMixin._shownObjects()</span></code></a></li>
@@ -1032,6 +1096,8 @@ attribute editor – unless it’s gone (eg: undone).</p>
 <li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.showAllModel"><code class="docutils literal notranslate"><span class="pre">EditingMixin.showAllModel()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.showTypes"><code class="docutils literal notranslate"><span class="pre">EditingMixin.showTypes()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.search"><code class="docutils literal notranslate"><span class="pre">EditingMixin.search()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin._liveMatches"><code class="docutils literal notranslate"><span class="pre">EditingMixin._liveMatches()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.showMatch"><code class="docutils literal notranslate"><span class="pre">EditingMixin.showMatch()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.openSearchDialog"><code class="docutils literal notranslate"><span class="pre">EditingMixin.openSearchDialog()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.makeRelationFrom"><code class="docutils literal notranslate"><span class="pre">EditingMixin.makeRelationFrom()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewEditing.EditingMixin.makeRelation"><code class="docutils literal notranslate"><span class="pre">EditingMixin.makeRelation()</span></code></a></li>
@@ -1049,7 +1115,7 @@ attribute editor – unless it’s gone (eg: undone).</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=292eb321"></script>
+</div><script src="../_static/documentation_options.js?v=56dcb7b8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

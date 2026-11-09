@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.view.graphics.viewContainment module - Semantic Nets 1.0.1 documentation</title>
+        <title>sn.view.graphics.viewContainment module - Semantic Nets 1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -238,12 +238,15 @@
 <li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html">sn.model.clipsReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html">sn.model.nemoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html">sn.model.prologReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
 </ul>
@@ -584,6 +587,26 @@ view or model changes (see <em>structureChanged()</em>).</p>
 <dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin.BOTH_PANES">
 <span class="sig-name descname"><span class="pre">BOTH_PANES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'both'</span></span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin.BOTH_PANES" title="Link to this definition">¶</a></dt>
 <dd><p>The pseudo-pane (see <em>containmentHomes()</em>) of something a rule or definition uses on both sides: astride the divider.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin._containmentMaps">
+<span class="sig-name descname"><span class="pre">_containmentMaps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin._containmentMaps" title="Link to this definition">¶</a></dt>
+<dd><p>What <em>containmentHomes()</em> works from, from the model: {id(contained model
+object): {window: its containments of it}} and {id(variable): {window:
+the panes of the contained relations using it}} – for every window, or
+just <em>window</em>. Asked for by every floating label as it’s placed (eg: each
+relation of a dragged node, every tick), so remembered until the view’s
+structure changes (see <em>structureChanged()</em>: objects added or deleted,
+retyped or renamed, or a relation’s end moved).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>window</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em> | </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[dict[int, dict[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, list[<a class="reference internal" href="sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a>]]], dict[int, dict[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, set[str | None]]]]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -1069,6 +1092,7 @@ after every command (see <em>ViewDoList</em>), with <em>bumpIntruders()</em>.</p
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin</span></code></a><ul>
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin.contextWindows"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin.contextWindows()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin.BOTH_PANES"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin.BOTH_PANES</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin._containmentMaps"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin._containmentMaps()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin.containmentHomes"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin.containmentHomes()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin.homeRect"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin.homeRect()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin.BUMP_GAP"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin.BUMP_GAP</span></code></a></li>
@@ -1102,7 +1126,7 @@ after every command (see <em>ViewDoList</em>), with <em>bumpIntruders()</em>.</p
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=292eb321"></script>
+</div><script src="../_static/documentation_options.js?v=56dcb7b8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

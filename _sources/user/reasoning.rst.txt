@@ -5,7 +5,11 @@ Reasoning
 The reasoner works out what follows from a model: what's inherited, what's
 implied by relations' properties, what rules and definitions conclude -- and
 what's wrong. It uses `clingo <https://potassco.org/clingo/>`_, an answer set
-programming system.
+programming system -- or, if you choose it, `Nemo
+<https://github.com/knowsys/nemo>`_, a Datalog engine that can also say *why* a
+conclusion holds, `CLIPS <https://www.clipsrules.net>`_, a production rule
+system, or `SWI-Prolog <https://www.swi-prolog.org>`_ (see `Engines and
+explanations`_ below).
 
 Reasoning
 ---------
@@ -16,8 +20,10 @@ model; **Retract** (↺) takes what it inferred back out again. **Reason
 silently** (▷, or **reasoning | reason silently**) reasons too, but doesn't
 add what it infers to the views -- only the problems are marked, and only a
 summary is printed: eg: so that queries find what the rules conclude without
-cluttering the canvas. (Hover over a button to see what it does.) The toolbar also
-says what the last reason found -- how many relations and new objects it
+cluttering the canvas. (Hover over a button to see what it does.) At the
+toolbar's left, a small box says which reasoner engine is used (see `Engines
+and explanations`_): click it to choose another, from a menu of the engines.
+The toolbar also says what the last reason found -- how many relations and new objects it
 inferred, and how many problems -- and, at its right, whether the model can
 be edited: a pencil, crossed out in red if it can't be here. Click the pencil
 (or choose **Edit | Lock view**) to lock the view, so it can't change the
@@ -85,6 +91,96 @@ still inferred (where you've put them), adds new ones, and removes the
 rest. Typing ``reason`` (or ``clear reasoning``) in the terminal does the
 same as the button.
 
+Engines and explanations
+------------------------
+
+The reasoner has four engines, which reach the same conclusions:
+**clingo** (the default), **Nemo**, **CLIPS** and **Prolog** (SWI-Prolog). The
+apps include clingo and Nemo; CLIPS and Prolog are installed separately (see
+`Installing an engine`_, which also covers the ``.pyz`` and the source). The ``reasoner/engine`` setting
+(**Settings...**, in the application menu, or the box at the left of the
+reasoning toolbar) says which one **reason**, queries and ``ask reasoner``
+use. (In the box's menu, an engine that isn't installed isn't chosen: it says
+how to install it instead.) ``reason --engine nemo`` picks one for a single run.
+``ask reasoner`` takes a question in the engine's own language: for clingo,
+``'ans(X) :- holds(T,F,X), name(T,"owns"), name(F,"fred").'``; for Nemo,
+``'ans(?X) :- holds(?T,?F,?X), name(?T,"owns"), name(?F,"fred").'``; for
+CLIPS, ``'(defrule q (holds ?t ?f ?x) (name ?t "owns") (name ?f "fred") =>
+(assert (ans ?x)))'``; for Prolog, ``'ans(X) :- name(T,"owns"), name(F,"fred"),
+holds(T,F,X).'`` (its goals run in the order they're written, so start with
+what narrows things down most).
+
+What Nemo adds is explanations. An inferred relation's menu has **explain
+(why it holds)**, which prints the steps to the terminal pane: the rules it
+follows by (yours, and the base rules: eg, *transitive*), down to what the
+model asserts. Eg::
+
+  ann -ancestorOf-> fred
+    ann -ancestorOf-> fred, by the rule "transitive"
+      ann -ancestorOf-> mary (asserted)
+      mary -ancestorOf-> fred (asserted)
+      ancestorOf is transitive
+
+The terminal's ``explain`` does the same for any relation, or any type and
+two objects: ``explain ancestorOf ann fred`` (``--full`` for every step the
+engine took). It uses Nemo whichever engine reasons.
+
+One difference: in a rule (not a constraint or a query), Nemo and CLIPS
+test a **not** attribute constraint (eg: ``not gender: female``) against the
+attributes the model gives, not those other rules conclude -- they need the
+rules in an order they can work through, one layer at a time.
+
+Installing an engine
+~~~~~~~~~~~~~~~~~~~~
+
+When an engine that isn't installed is wanted -- **reason** with the
+``reasoner/engine`` setting on it, **explain (why it holds)**, or the
+terminal's ``explain`` -- the program says so, with a link to here. If it's
+the one the setting picks, it also offers to reason with one that is
+installed: this time, or from now on.
+
+**In the apps**
+  clingo and Nemo are in them. An engine an app doesn't include -- CLIPS or
+  Prolog -- can be installed for a Python 3.14 on the computer -- the same
+  version as the app's own, for the same kind of processor (eg: Apple
+  silicon) -- and the app uses it from there::
+
+    python3.14 -m pip install clipspy
+
+  (on Windows, ``py -3.14 -m pip install clipspy``). For Prolog, first install
+  `SWI-Prolog <https://www.swi-prolog.org/download/stable>`__ itself (9.1.12 or
+  later: on a Mac, its app, or ``brew install swi-prolog``; on Windows, its
+  installer, letting it add ``swipl`` to the ``PATH``; on Linux, its PPA or
+  your distribution's package), then its Python interface::
+
+    python3.14 -m pip install janus-swi
+
+  (pip builds it against the ``swipl`` it finds on the ``PATH``, so open a new
+  terminal after installing SWI-Prolog. The Mac app's ``swipl`` isn't on the
+  ``PATH``: put it there for pip with ``PATH=/Applications/SWI-Prolog.app/Contents/MacOS:$PATH
+  python3.14 -m pip install janus-swi``.) The program finds SWI-Prolog's files
+  itself when it reasons, even when ``swipl`` isn't on the ``PATH``; if it
+  can't, set the ``SWI_HOME_DIR`` environment variable to the folder that
+  ``swipl --dump-runtime-variables`` gives as ``PLBASE``. If there's no Python
+  3.14 on the computer yet, install one from https://www.python.org first. The app looks for that
+  Python where its installers put it (python.org's, Homebrew's, ...) and on
+  the ``PATH``; if it's somewhere else (eg: a virtual environment), give its
+  executable as the ``reasoner/python`` setting (eg:
+  ``/Users/me/venvs/sn/bin/python``).
+
+**The** ``.pyz`` **or the source**
+  Install the engine for the Python that runs the program (see
+  :doc:`gettingStarted`): clingo with ``python3.14 -m pip install clingo``,
+  Nemo with ``python3.14 -m pip install nemo-python``, CLIPS with::
+
+    python3.14 -m pip install clipspy
+
+  and Prolog, once SWI-Prolog is installed (see above), with::
+
+    python3.14 -m pip install janus-swi
+
+Then start the program again.
+
 Switching rules off
 -------------------
 
@@ -112,9 +208,11 @@ It's worth keeping the two roles of a pattern straight:
   each match: its relations, its variables' types and its variables'
   constraints all become conclusions.
 
-None of the reasoner's conclusions are added to the model: they're shown, and
-reported, but the model still says only what you drew. (Use them as hints:
-draw the ones you want to keep.)
+The conclusions are added to the model, but as **inferred** objects and
+attributes (see above): faded, not saved, not editable, taken away by
+**Retract** (and by the next reason, once they're no longer concluded --
+those still concluded are kept). The model still says only what you drew,
+until you **mark as asserted** the ones you want to keep.
 
 Validation
 ----------

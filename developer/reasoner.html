@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>The Reasoner - Semantic Nets 1.0.1 documentation</title>
+        <title>The Reasoner - Semantic Nets 1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -238,12 +238,15 @@
 <li class="toctree-l2"><a class="reference internal" href="../dev/sn.examples.html">sn.examples package</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.clipsReasoner.html">sn.model.clipsReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.constraints.html">sn.model.constraints module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.copying.html">sn.model.copying module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.directory.html">sn.model.directory module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.model.html">sn.model.model module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.nemoReasoner.html">sn.model.nemoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.prologReasoner.html">sn.model.prologReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.reasoner.html">sn.model.reasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
 </ul>
@@ -378,10 +381,38 @@ system, with its rule base in <code class="docutils literal notranslate"><span c
 </dl>
 <p>Engines register themselves by name (<code class="docutils literal notranslate"><span class="pre">class</span> <span class="pre">ClingoReasoner(Reasoner,</span>
 <span class="pre">engine=&quot;clingo&quot;)</span></code>) and are made with
-<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.Reasoner.create" title="sn.model.reasoner.Reasoner.create"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Reasoner.create(model,</span> <span class="pre">engine)</span></code></a>.
-Another engine (eg: a description logic reasoner) would implement the same
-interface; <code class="docutils literal notranslate"><span class="pre">test/test_model/test_reasoner.py</span></code> pins down the semantics every
-engine must share.</p>
+<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.Reasoner.create" title="sn.model.reasoner.Reasoner.create"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Reasoner.create(model,</span> <span class="pre">engine)</span></code></a>
+(by default, the <code class="docutils literal notranslate"><span class="pre">reasoner/engine</span></code> preference’s: see
+<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.defaultEngine" title="sn.model.reasoner.defaultEngine"><code class="xref py py-func docutils literal notranslate"><span class="pre">defaultEngine()</span></code></a>). Another engine implements the
+same interface; <code class="docutils literal notranslate"><span class="pre">test/test_model/test_reasoner.py</span></code> pins down the semantics
+every engine must share (<em>ReasonerSpec</em>), and <code class="docutils literal notranslate"><span class="pre">test/test_model/test_rules.py</span></code>
+runs the rules tests by each engine. There are three more already: Nemo,
+CLIPS and SWI-Prolog (see <a class="reference internal" href="#the-nemo-engine">The Nemo engine</a>, <a class="reference internal" href="#the-clips-engine">The CLIPS engine</a> and <a class="reference internal" href="#the-prolog-engine">The
+Prolog engine</a> below).</p>
+<p>What the program knows about an engine before it’s imported is in
+<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.ENGINES" title="sn.model.reasoner.ENGINES"><code class="xref py py-data docutils literal notranslate"><span class="pre">ENGINES</span></code></a>: the Python module it needs, the package
+that provides it (and what must be installed before it, if anything: SWI-Prolog,
+for janus-swi), whether it can explain a conclusion, and whether the apps
+include it (their <code class="docutils literal notranslate"><span class="pre">--selftest</span></code> reasons, and explains, with each one they
+should have: see <code class="docutils literal notranslate"><span class="pre">sn/__main__.py</span></code>). So
+<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.engineInstalled" title="sn.model.reasoner.engineInstalled"><code class="xref py py-func docutils literal notranslate"><span class="pre">engineInstalled()</span></code></a> can tell whether one can be used
+without loading it, <em>Reasoner.create()</em> raises
+<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.EngineMissing" title="sn.model.reasoner.EngineMissing"><code class="xref py py-class docutils literal notranslate"><span class="pre">EngineMissing</span></code></a> (an <em>ImportError</em>) for one that
+isn’t installed – which the GUI shows with a link to the User Guide’s
+“Installing an engine” (<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.INSTALL_HELP" title="sn.model.reasoner.INSTALL_HELP"><code class="xref py py-data docutils literal notranslate"><span class="pre">INSTALL_HELP</span></code></a>, by
+<a class="reference internal" href="../dev/sn.view.graphics.viewReasoning.html#sn.view.graphics.viewReasoning.showEngineMissing" title="sn.view.graphics.viewReasoning.showEngineMissing"><code class="xref py py-func docutils literal notranslate"><span class="pre">showEngineMissing()</span></code></a>) – and
+<strong>explain</strong> uses <a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.explainingEngine" title="sn.model.reasoner.explainingEngine"><code class="xref py py-func docutils literal notranslate"><span class="pre">explainingEngine()</span></code></a>: the default
+engine if it can explain, or else an installed one that can. A new engine adds
+itself to <em>ENGINES</em>, to the <code class="docutils literal notranslate"><span class="pre">reasoner/engine</span></code> preference’s choices
+(<code class="docutils literal notranslate"><span class="pre">sn.PREFS</span></code>: a test checks the two agree), and to “Installing an engine”.</p>
+<p>The apps have their own Python, which pip can’t install into. So when an
+engine’s module isn’t in an app, it looks for it in the packages of a Python
+on the computer that can share them – the same version, build and processor
+as its own: the <code class="docutils literal notranslate"><span class="pre">reasoner/python</span></code> preference’s, or else one where installers
+put them – and puts their folders at the end of <em>sys.path</em> (see
+<code class="xref py py-mod docutils literal notranslate"><span class="pre">util.localPython</span></code>, in <em>pythonUtils</em>). The Mac app can load that
+Python’s compiled packages because it’s ad hoc signed, without the hardened
+runtime.</p>
 <section id="why-asp">
 <h2>Why ASP<a class="headerlink" href="#why-asp" title="Link to this heading">¶</a></h2>
 <p>A semantic network’s meaning – inheritance, relational properties,
@@ -637,6 +668,137 @@ objects aren’t facts, and their conclusions are reported as plain
 inferences, unless the <code class="docutils literal notranslate"><span class="pre">reasoner/showSysRules</span></code> preference (or the
 reasoner’s <em>showSysRules</em>) is on.</p>
 </section>
+<section id="the-nemo-engine">
+<h2>The Nemo engine<a class="headerlink" href="#the-nemo-engine" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt><a class="reference internal" href="../dev/sn.model.nemoReasoner.html#module-sn.model.nemoReasoner" title="sn.model.nemoReasoner"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sn.model.nemoReasoner</span></code></a></dt><dd><p><a class="reference internal" href="../dev/sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner" title="sn.model.nemoReasoner.NemoReasoner"><code class="xref py py-class docutils literal notranslate"><span class="pre">NemoReasoner</span></code></a> (<code class="docutils literal notranslate"><span class="pre">engine=&quot;nemo&quot;</span></code>), built
+on <a class="reference external" href="https://github.com/knowsys/nemo">Nemo</a>, a Datalog engine (stratified
+negation, aggregates) from TU Dresden, through its Python bindings
+(<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">nemo-python</span></code>, imported as <code class="docutils literal notranslate"><span class="pre">nmo_python</span></code>). The apps include
+it (Linux’s library stripped of its debugging symbols: 233 MB down to 17);
+for the <code class="docutils literal notranslate"><span class="pre">.pyz</span></code> and the source it’s optional: if it’s missing, the program
+says how to install it (see above), and the tests skip it.</p>
+</dd>
+</dl>
+<p>Its rule base, <code class="docutils literal notranslate"><span class="pre">nemoReasoner.rls</span></code>, is <code class="docutils literal notranslate"><span class="pre">clingoReasoner.lp</span></code> ported rule
+for rule, and <code class="docutils literal notranslate"><span class="pre">_rulesProgram()</span></code> compiles the user’s rules the same way, so
+the two give the same results. Where Nemo differs:</p>
+<ul class="simple">
+<li><p>Objects are constants <code class="docutils literal notranslate"><span class="pre">&lt;#N&gt;</span></code>. Nemo strings have no escapes, so strings
+are percent-encoded (<code class="docutils literal notranslate"><span class="pre">%22</span></code> for a quote, …), and decoded on the way back.</p></li>
+<li><p>There are no tuples or function terms: a violation with <em>N</em> arguments is
+<code class="docutils literal notranslate"><span class="pre">violation0_N</span></code>/<code class="docutils literal notranslate"><span class="pre">violation_N</span></code>; an object a rule creates is a string
+(<code class="docutils literal notranslate"><span class="pre">&quot;%new|K|#V0|...&quot;</span></code>, K saying which rule and variable) made with an
+f-string in the rule’s head.</p></li>
+<li><p>Nemo checks that the whole program is stratified before it runs. A rule’s
+negated attribute test can’t be on <code class="docutils literal notranslate"><span class="pre">attr/3</span></code> (which the rules feed), so it’s
+on <code class="docutils literal notranslate"><span class="pre">attr_base/3</span></code>, the attributes the model gives – a small difference in
+meaning from clingo’s, for rules only.</p></li>
+<li><p>Counting is an aggregate in a rule’s head, so “too few” has a rule for none
+at all.</p></li>
+<li><p>Nemo takes a moment for each fact it parses, so most facts go to it as
+tab-separated tables it imports (in a temporary folder).</p></li>
+</ul>
+<p>What it adds is <a class="reference internal" href="../dev/sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner.explain" title="sn.model.nemoReasoner.NemoReasoner.explain"><code class="xref py py-meth docutils literal notranslate"><span class="pre">explain()</span></code></a>: the
+derivation of a conclusion from Nemo’s trace, as
+<a class="reference internal" href="../dev/sn.model.nemoReasoner.html#sn.model.nemoReasoner.Step" title="sn.model.nemoReasoner.Step"><code class="xref py py-class docutils literal notranslate"><span class="pre">Step</span></code></a> objects, briefly (leaving out the
+bookkeeping: what’s data, a type, …) or in full. The terminal’s
+<code class="docutils literal notranslate"><span class="pre">explain</span></code> and an inferred relation’s <strong>explain (why it holds)</strong> use it.</p>
+</section>
+<section id="the-clips-engine">
+<h2>The CLIPS engine<a class="headerlink" href="#the-clips-engine" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt><a class="reference internal" href="../dev/sn.model.clipsReasoner.html#module-sn.model.clipsReasoner" title="sn.model.clipsReasoner"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sn.model.clipsReasoner</span></code></a></dt><dd><p><a class="reference internal" href="../dev/sn.model.clipsReasoner.html#sn.model.clipsReasoner.ClipsReasoner" title="sn.model.clipsReasoner.ClipsReasoner"><code class="xref py py-class docutils literal notranslate"><span class="pre">ClipsReasoner</span></code></a> (<code class="docutils literal notranslate"><span class="pre">engine=&quot;clips&quot;</span></code>),
+built on <a class="reference external" href="https://www.clipsrules.net">CLIPS</a>, a forward-chaining
+production rule system, through its Python bindings (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span>
+<span class="pre">clipspy</span></code>, imported as <code class="docutils literal notranslate"><span class="pre">clips</span></code>). The apps don’t include it: they use it
+from a Python on the computer (see above). For the <code class="docutils literal notranslate"><span class="pre">.pyz</span></code> and the source
+it’s optional, as Nemo is.</p>
+</dd>
+</dl>
+<p>Its rule base, <code class="docutils literal notranslate"><span class="pre">clipsReasoner.clp</span></code>, is <code class="docutils literal notranslate"><span class="pre">clingoReasoner.lp</span></code> ported rule
+for rule, as ordered facts (<code class="docutils literal notranslate"><span class="pre">(holds</span> <span class="pre">?t</span> <span class="pre">?s</span> <span class="pre">?d)</span></code>), and <code class="docutils literal notranslate"><span class="pre">_rulesProgram()</span></code>
+compiles the user’s rules the same way, so the engines give the same results.
+Where CLIPS differs:</p>
+<ul class="simple">
+<li><p>CLIPS fires a rule as soon as its conditions match, so a <code class="docutils literal notranslate"><span class="pre">(not</span> <span class="pre">...)</span></code> is
+only right once what it tests is complete. The engine reads the rules (the
+rule base’s, the model’s and a query’s: a small reader of CLIPS’s
+parentheses, <code class="docutils literal notranslate"><span class="pre">_read()</span></code>), sorts their predicates into strata
+(<code class="docutils literal notranslate"><span class="pre">_stratify()</span></code>: the groups that conclude each other, each after those it
+tests with <code class="docutils literal notranslate"><span class="pre">(not</span> <span class="pre">...)</span></code>), and gives each rule the salience of its stratum,
+so that it fires only once the strata below are done. A program that isn’t
+stratified is refused, as Nemo refuses one – so a rule’s negated attribute
+test is on <code class="docutils literal notranslate"><span class="pre">attr_base</span></code>, as Nemo’s is.</p></li>
+<li><p>CLIPS matches a rule’s conditions in order, keeping every partial match: a
+condition that shares no variable with those before it multiplies them. So
+the rule base’s conditions are written in a good order, and the engine
+orders a compiled rule’s (<code class="docutils literal notranslate"><span class="pre">_ordered()</span></code>): first a pattern with a constant,
+then each that shares the most with those before, each test or
+<code class="docutils literal notranslate"><span class="pre">(not</span> <span class="pre">...)</span></code> as soon as its variables are bound. (Before that, a
+transitive rule’s <code class="docutils literal notranslate"><span class="pre">(data</span> <span class="pre">?x)</span> <span class="pre">(data</span> <span class="pre">?y)</span> <span class="pre">(data</span> <span class="pre">?z)</span></code> took a minute.)</p></li>
+<li><p>Objects are symbols <code class="docutils literal notranslate"><span class="pre">#N</span></code>; an object a rule creates is a symbol
+(<code class="docutils literal notranslate"><span class="pre">%new:K:#V0:...</span></code>) made with <code class="docutils literal notranslate"><span class="pre">sym-cat</span></code> in the rule’s action.</p></li>
+<li><p>There are no aggregates: the cardinality violations that count (too many,
+too few) are counted in Python, from the <code class="docutils literal notranslate"><span class="pre">holds</span></code>, <code class="docutils literal notranslate"><span class="pre">card</span></code>, <code class="docutils literal notranslate"><span class="pre">card_of</span></code>
+and <code class="docutils literal notranslate"><span class="pre">card_counted</span></code> facts (<code class="docutils literal notranslate"><span class="pre">_counted()</span></code>).</p></li>
+</ul>
+</section>
+<section id="the-prolog-engine">
+<h2>The Prolog engine<a class="headerlink" href="#the-prolog-engine" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt><a class="reference internal" href="../dev/sn.model.prologReasoner.html#module-sn.model.prologReasoner" title="sn.model.prologReasoner"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sn.model.prologReasoner</span></code></a></dt><dd><p><a class="reference internal" href="../dev/sn.model.prologReasoner.html#sn.model.prologReasoner.PrologReasoner" title="sn.model.prologReasoner.PrologReasoner"><code class="xref py py-class docutils literal notranslate"><span class="pre">PrologReasoner</span></code></a> (<code class="docutils literal notranslate"><span class="pre">engine=&quot;prolog&quot;</span></code>),
+built on <a class="reference external" href="https://www.swi-prolog.org">SWI-Prolog</a> (9.1.12 or later)
+through its Python interface, janus (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">janus-swi</span></code>, imported as
+<code class="docutils literal notranslate"><span class="pre">janus_swi</span></code>; pip builds it against the <code class="docutils literal notranslate"><span class="pre">swipl</span></code> it finds, so SWI-Prolog
+comes first). The apps don’t include either: they use them from the
+computer (see above), as CLIPS. Before importing janus, the module tells
+SWI-Prolog where its home is (SWI_HOME_DIR: see
+<code class="xref py py-mod docutils literal notranslate"><span class="pre">pythonUtils:util.swiProlog</span></code>), from the library folder janus was
+built against, or else a <code class="docutils literal notranslate"><span class="pre">swipl</span></code> program’s: started from an IDE or the
+Finder, with no <code class="docutils literal notranslate"><span class="pre">swipl</span></code> on the <code class="docutils literal notranslate"><span class="pre">PATH</span></code>, SWI-Prolog otherwise may not find
+it, and stops the whole program (“FATAL: could not find SWI-Prolog home”).</p>
+</dd>
+</dl>
+<p>Its rule base, <code class="docutils literal notranslate"><span class="pre">prologReasoner.pl</span></code>, is <code class="docutils literal notranslate"><span class="pre">clingoReasoner.lp</span></code> ported rule
+for rule, and <code class="docutils literal notranslate"><span class="pre">_rulesProgram()</span></code> compiles the user’s rules as clingo’s does
+(Prolog’s syntax is close to ASP’s), so the engines give the same results.
+Each run loads the rule base, the facts and the rules, as one text, into a
+module of its own (<code class="docutils literal notranslate"><span class="pre">in_temporary_module/3</span></code>), which goes when it’s done; a
+small helper module (<code class="docutils literal notranslate"><span class="pre">_HELPER</span></code>, loaded once) does that, keeps the errors
+(to raise them in Python, saying whether the query or the rules have them),
+and gives the true answers back as Python values. Prolog runs on one thread
+(<code class="docutils literal notranslate"><span class="pre">_call()</span></code>), whichever thread asks. Where Prolog differs:</p>
+<ul class="simple">
+<li><p>It’s top-down: SWI-Prolog’s tabling, with the well-founded semantics, does
+what clingo’s grounding does – recursion ends, and a negation (<code class="docutils literal notranslate"><span class="pre">tnot/1</span></code>,
+<code class="docutils literal notranslate"><span class="pre">not_exists/1</span></code>) waits until what it tests is known. So a rule’s negated
+attribute test is about what the rules conclude too, as clingo’s is (Nemo
+and CLIPS need a stratified program). A loop through a negation leaves what
+depends on it undefined, and only true answers are read.</p></li>
+<li><p>It works in two steps. The closure – what the rules conclude, and what that
+depends on – is tabled, with <code class="docutils literal notranslate"><span class="pre">r_holds/3</span></code>, <code class="docutils literal notranslate"><span class="pre">r_isa_star/2</span></code> and
+<code class="docutils literal notranslate"><span class="pre">r_attr/3</span></code> for the rules to test. Then <code class="docutils literal notranslate"><span class="pre">sn_close/0</span></code> states its results
+as facts (<code class="docutils literal notranslate"><span class="pre">holds/3</span></code>, <code class="docutils literal notranslate"><span class="pre">isa_star/2</span></code>, <code class="docutils literal notranslate"><span class="pre">attr/3</span></code>), and the rest – what’s
+inferred, the violations, the constraints, queries – reads them with plain
+Prolog. A tabled call makes a table for each call pattern: asking about
+each triple that way worked each out again (a model of 3,000 objects took
+45 s); a fact is just looked up.</p></li>
+<li><p>Prolog runs a body in order, so a compiled rule’s literals are ordered as
+CLIPS’s conditions are (<code class="docutils literal notranslate"><span class="pre">_ordered()</span></code>): first one with a constant, then
+each sharing the most, each test or negation once what it tests is bound.</p></li>
+<li><p>Objects are atoms <code class="docutils literal notranslate"><span class="pre">'#N'</span></code>, not clingo’s <code class="docutils literal notranslate"><span class="pre">o(N)</span></code>: Prolog finds a fact by an
+atom argument, but not by the number inside a compound term (with <code class="docutils literal notranslate"><span class="pre">o(N)</span></code>,
+every <code class="docutils literal notranslate"><span class="pre">kind/2</span></code> lookup read every fact: 30 s of a 10,000-object model’s
+31). An object a rule creates is a term <code class="docutils literal notranslate"><span class="pre">new(Rule,Var,[[Name,Value],...])</span></code>
+– made last in a clause’s body, not in its head, where a call like
+<code class="docutils literal notranslate"><span class="pre">holds(T,S,S)</span></code> would unify a variable with a term holding it.</p></li>
+<li><p>The facts are grouped by predicate: SWI-Prolog warns of each clause that
+isn’t with the others of its predicate, slowly (8 s of a big model’s load).</p></li>
+</ul>
+<p>A 15,000-object model takes about as long as with clingo (most of it the
+shared export of the facts).</p>
+</section>
 <section id="queries">
 <h2>Queries<a class="headerlink" href="#queries" title="Link to this heading">¶</a></h2>
 <p><a class="reference internal" href="../dev/sn.model.clingoReasoner.html#sn.model.clingoReasoner.ClingoReasoner.answer" title="sn.model.clingoReasoner.ClingoReasoner.answer"><code class="xref py py-meth docutils literal notranslate"><span class="pre">answer()</span></code></a> compiles a
@@ -644,7 +806,12 @@ query’s pattern to an <code class="docutils literal notranslate"><span class="
 and the results of reasoning (a query’s variables <em>do</em> range over created
 objects), and returns one dict per match: variable to object.
 <a class="reference internal" href="../dev/sn.model.clingoReasoner.html#sn.model.clingoReasoner.ClingoReasoner.query" title="sn.model.clingoReasoner.ClingoReasoner.query"><code class="xref py py-meth docutils literal notranslate"><span class="pre">query()</span></code></a> takes clingo
-rules defining <code class="docutils literal notranslate"><span class="pre">ans</span></code> directly (the terminal’s <code class="docutils literal notranslate"><span class="pre">ask</span> <span class="pre">reasoner</span></code>).</p>
+rules defining <code class="docutils literal notranslate"><span class="pre">ans</span></code> directly (the terminal’s <code class="docutils literal notranslate"><span class="pre">ask</span> <span class="pre">reasoner</span></code>); Nemo’s
+takes Nemo rules (<code class="docutils literal notranslate"><span class="pre">ans(?X)</span> <span class="pre">:-</span> <span class="pre">holds(?T,?F,?X),</span> <span class="pre">name(?T,&quot;owns&quot;),</span> <span class="pre">...</span></code>),
+CLIPS’s CLIPS rules asserting <code class="docutils literal notranslate"><span class="pre">ans</span></code> facts (<code class="docutils literal notranslate"><span class="pre">(defrule</span> <span class="pre">q</span> <span class="pre">(holds</span> <span class="pre">?t</span> <span class="pre">?f</span> <span class="pre">?x)</span>
+<span class="pre">(name</span> <span class="pre">?t</span> <span class="pre">&quot;owns&quot;)</span> <span class="pre">...</span> <span class="pre">=&gt;</span> <span class="pre">(assert</span> <span class="pre">(ans</span> <span class="pre">?x)))</span></code>), and Prolog’s Prolog clauses
+(<code class="docutils literal notranslate"><span class="pre">ans(X)</span> <span class="pre">:-</span> <span class="pre">name(T,&quot;owns&quot;),</span> <span class="pre">name(F,&quot;fred&quot;),</span> <span class="pre">holds(T,F,X).</span></code>: they run in the
+order they’re written).</p>
 </section>
 </section>
 
@@ -715,6 +882,9 @@ rules defining <code class="docutils literal notranslate"><span class="pre">ans<
 <li><a class="reference internal" href="#constraints">Constraints</a></li>
 <li><a class="reference internal" href="#the-base-rules">The base rules</a></li>
 <li><a class="reference internal" href="#variable-names">Variable names</a></li>
+<li><a class="reference internal" href="#the-nemo-engine">The Nemo engine</a></li>
+<li><a class="reference internal" href="#the-clips-engine">The CLIPS engine</a></li>
+<li><a class="reference internal" href="#the-prolog-engine">The Prolog engine</a></li>
 <li><a class="reference internal" href="#queries">Queries</a></li>
 </ul>
 </li>
@@ -727,7 +897,7 @@ rules defining <code class="docutils literal notranslate"><span class="pre">ans<
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=292eb321"></script>
+</div><script src="../_static/documentation_options.js?v=56dcb7b8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

@@ -18,11 +18,14 @@ What's shown
 - **view | show | node** lists the model's objects that aren't in the view:
   choose one to bring it in.
 - **expand all** (on an object's menu; it says how many relations the object
-  has) brings in everything related to it, 1 to 4 levels out.
+  has -- and, if some are in the view already, how many of them are new, or
+  *all shown*) brings in everything related to it, 1 to 4 levels out. If
+  there's nothing new to bring in, the terminal says so.
 - **expand by relation...** asks which relations to follow: each type the
   object's relations are, each way round -- *has-mother →* (its mother) or
   *← has-mother* (its children) -- with how many there are; a type includes its
-  subtypes (*has-parent →* takes *has-father* and *has-mother* too). Or all
+  subtypes (*has-parent →* takes *has-father* and *has-mother* too), and how
+  many of those are new (those all in the view already are greyed). Or all
   relations, all outgoing, or all incoming (which, at every level, follow
   any relation that way). And how many **levels** out to go. Relations in a
   hidden or erased category (eg: isa links) are listed too, greyed and
@@ -78,6 +81,12 @@ out of the view. Unchecking it shows them again. Relations to or from hidden
 objects are hidden too. Either way, **expand** won't bring more of them in.
 The settings are saved with the view.
 
+What a rule (or other context window) shown says is shown whatever its
+category: its relations, and the variables they use -- and the ends of those
+relations: eg: with *types* hidden, a rule that concludes *?x isa person*
+still shows *person*, and the terminal says so. Collapsing a window hides
+all of that, and what's in the windows inside it.
+
 Hiding is *soft*: it applies to what's there when you check the category. An
 object you make (or ask for, with **show node**) that's in a hidden category
 is shown anyway, and a message in the terminal says so. To hide it too,
@@ -101,9 +110,12 @@ Finding things
 **Edit | Find...** (**Cmd-F**, or **view | find...**) opens a find dialog:
 type part of a name and press **Return** (or **Find**), and every node and
 relation in the view whose name has it in it is highlighted -- not isa
-links, nor anything hidden -- and the view scrolls to show them. The dialog
-stays open, to search again; **Escape** closes it, and in the window clears
-the highlights (as does **Clear highlights**).
+links, nor anything hidden -- and the view scrolls to show them (if they're
+too far apart to fit in the window, the one nearest its middle). The arrow
+buttons (or **Return** again, and **Shift-Return** back) go through them one
+by one, row by row, saying which of how many it is. The dialog stays open,
+to search again; **Escape** closes it, and in the window clears the
+highlights (as does **Clear highlights**).
 
 ==========================  ===================================================
 option                      finds
@@ -184,10 +196,13 @@ attribute                   controls
 ``vis/borderWidth``,
 ``vis/borderSmooth``
 ``vis/textColor``           its text
-``vis/shadowColor``         a type's shadow
 ``vis/lineColor``,          a relation's line
 ``vis/lineWidth``,
 ``vis/lineType``
+``vis/terminator1`` ..      a relation's marks: at the ends of its line, and
+``vis/terminator4``,        in its middle (below)
+``vis/midMarks``,
+``vis/lineFillColor``
 ``vis/minSize``,            its size limits, and the shape of its box
 ``vis/maxSize``,
 ``vis/aspectRatio``
@@ -199,6 +214,88 @@ attribute                   controls
 ``vis/tooltipWrap``         the width its tooltip wraps at, in pixels
                             (0: no wrapping)
 ==========================  =============================================
+
+Widths (``vis/borderWidth``, ``vis/lineWidth``) are in the view's units, as
+sizes are: they zoom with the view, as the shapes, marks and text do -- but a
+line is never drawn thinner than a pixel, however far out you zoom.
+
+Relation marks
+--------------
+
+A relation's line can carry marks -- arrowheads, circles, bars -- at its ends
+and in its middle, turned to follow the line. Each place takes a sequence of
+marks, written in order from the source end toward the destination end, so
+that what you type looks like what you get:
+
+=====================  ==============================================
+attribute              where its marks go
+=====================  ==============================================
+``vis/terminator1``    at the source end of the line
+``vis/terminator2``    where the line from the source meets the label
+``vis/terminator3``    where the line to the destination leaves the label
+``vis/terminator4``    at the destination end (``arrow``, by default)
+``vis/midMarks``       in the middle: on the label, or just before it (below)
+=====================  ==============================================
+
+========================  ====================================================
+mark                      is
+========================  ====================================================
+``>``, ``<``              an arrowhead pointing toward the destination, or
+                          toward the source
+``arrow``                 an arrowhead pointing off the end of the line it's at
+                          (toward the destination, in the middle)
+``o``, ``circle``         a circle, filled with ``vis/lineFillColor``
+``*``, ``dot``            a solid circle, in ``vis/lineColor``
+``@``, ``ring``           a hollow circle: outlined in ``vis/lineColor``, filled
+                          with the view's background, whatever
+                          ``vis/lineFillColor`` is
+``|``, ``bar``            a bar across the line (the line runs through it)
+``diamond``               a hollow diamond, its tip on the end of the line
+                          (UML's aggregation); ``fdiamond``, a filled one, in
+                          ``vis/lineColor`` (composition)
+``{``, ``}``, ``crow``    a crow's foot -- ER's "many": its toes spread toward
+                          the destination, or the source (the brace opens
+                          toward them, as text ER notations write it);
+                          ``crow``, toward the end of the line it's at
+========================  ====================================================
+
+For example:
+
+.. code-block:: none
+
+   vis/terminator4 = o>        ----o>
+   vis/terminator4 = >>        ---->>
+   vis/terminator1 = <o        <o----
+   vis/midMarks    = |||       --|||--
+   vis/midMarks    = <|>       --<|>--
+   vis/terminator4 = @>        ----@>      (a hollow circle behind the arrowhead)
+   vis/terminator1 = diamond   <>----      (UML aggregation: the diamond on the whole)
+   vis/terminator4 = @{        ----@{      (ER: zero or many)
+   vis/terminator4 = |{        ----|{      (ER: one or many)
+   vis/terminator1 = }|        }|----      (the same at the source end: the toes toward the source)
+
+A mark may be followed by its sizes in parentheses: ``arrow(8,10,3)`` (tip to
+neck, tip to trailing points, and how far the trailing points stand out from
+the line), ``circle(6)``, ``dot(6)`` and ``ring(6)`` (the diameter), ``bar(12)``
+(its length across the line), ``diamond(12,7)`` and ``crow(10,10)`` (along the
+line, and across it). Marks may be separated by spaces or commas:
+``circle(6) arrow(8,10,3)``. A circle (or dot, or ring) right at the end of a
+line is centred on the end, as circle terminators always were. Sizes are in
+the view's units, like the line's width: marks zoom with the view, so they
+stay in proportion to the line and the nodes at every zoom.
+
+``o`` and ``*`` look the same wherever ``vis/lineFillColor`` is the line's
+colour (as it is by default): use ``@`` for a circle that is always empty.
+
+A relation shown only by its marks has its label set to nothing
+(``vis/label`` = ``""``): the middle marks are then centred on the label, its
+line runs through the label to them, and the label's box is just big enough
+to hold them, to select and drag the relation by. If the label shows text,
+the middle marks go on the line just before the label, on the source side
+(``--|||--[ text ]----``), where they don't cover the text. A relation with an
+end it has nothing to draw to (a relation type with no ends of its own, or
+one whose end isn't shown) draws a short stub for it, with that end's marks;
+with no label text the stubs run through the label too, meeting at its centre.
 
 Labels
 ------
@@ -238,7 +335,7 @@ constraints in braces if there are any. ``$type${name:+: $name}`` gives the
 
 The template is the object's ``vis/label`` attribute, if it has one (set it
 on a type for all its instances); otherwise the ``gui/label`` setting
-(``gui/relationLabel`` for relations).
+(``gui/relationLabel`` for relations). A ``vis/label`` of ``""`` shows no label.
 
 Tooltips are templates too: the object's ``vis/tooltip`` attribute, or else the
 ``gui/tooltip`` setting -- by default, the name, and then the note if there is

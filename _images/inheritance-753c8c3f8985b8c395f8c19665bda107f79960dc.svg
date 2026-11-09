@@ -13,7 +13,7 @@
 
 <ns0:g id="node2" class="node">
 <ns0:title>connectors.ConnectorTerminators</ns0:title>
-<ns0:g id="a_node2"><ns0:a ns1:href="../dev/sn.view.graphics.connectors.html#sn.view.graphics.connectors.ConnectorTerminators" ns1:title="The four terminator specs for a connector, one per line end." target="_top">
+<ns0:g id="a_node2"><ns0:a ns1:href="../dev/sn.view.graphics.connectors.html#sn.view.graphics.connectors.ConnectorTerminators" ns1:title="The marks on a connector: a mark spec (see *util.lineMarks*) for each of" target="_top">
 <ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="163,-58 0,-58 0,-38 163,-38 163,-58" />
 <ns0:text xml:space="preserve" text-anchor="middle" x="81.5" y="-44.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">connectors.ConnectorTerminators</ns0:text>
 </ns0:a>

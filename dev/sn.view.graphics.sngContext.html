@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.view.graphics.sngContext module - Semantic Nets 1.0.1 documentation</title>
+        <title>sn.view.graphics.sngContext module - Semantic Nets 1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -238,12 +238,15 @@
 <li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html">sn.model.clipsReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html">sn.model.nemoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html">sn.model.prologReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
 </ul>
@@ -416,7 +419,7 @@ the “view”).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.sngContext.SNGContext.move">
-<span class="sig-name descname"><span class="pre">move</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_oldPos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adjustPos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_carry</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_wasFloating</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_drag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.sngContext.SNGContext.move" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">move</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_oldPos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adjustPos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_carry</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_wasFloating</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_drag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_group</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.sngContext.SNGContext.move" title="Link to this definition">¶</a></dt>
 <dd><p>This is a dummy graphic command.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -429,6 +432,7 @@ the “view”).</p>
 <li><p><strong>_carry</strong> (<em>bool</em>)</p></li>
 <li><p><strong>_wasFloating</strong> (<em>bool</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>_drag</strong> (<em>bool</em>)</p></li>
+<li><p><strong>_group</strong> (<em>list</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -436,7 +440,7 @@ the “view”).</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="sn.view.graphics.sngContext.SNGContext._Move">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">_Move</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_oldPos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adjustPos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_carry</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_wasFloating</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_drag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.sngContext.SNGContext._Move" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">_Move</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_oldPos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adjustPos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_carry</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_wasFloating</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_drag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_group</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.sngContext.SNGContext._Move" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.command.html#util.command.Command" title="(in pythonUtils)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Command</span></code></a></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -449,12 +453,13 @@ the “view”).</p>
 <li><p><strong>_carry</strong> (<em>bool</em>)</p></li>
 <li><p><strong>_wasFloating</strong> (<em>bool</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>_drag</strong> (<em>bool</em>)</p></li>
+<li><p><strong>_group</strong> (<em>list</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.sngContext.SNGContext._Move.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_oldPos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adjustPos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_carry</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_wasFloating</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_drag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.sngContext.SNGContext._Move.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_oldPos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adjustPos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_carry</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_wasFloating</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_drag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_group</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.sngContext.SNGContext._Move.__init__" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -487,6 +492,10 @@ no longer floats), and undoing it puts that back.</p></li>
 dragged (see <em>VObject.onB1_ButtonRelease()</em>), not a program moving it:
 eg: a tree layout pins a dragged node where it’s dropped (see
 <em>treeLayout.TreeLayout.adjust()</em>).</p></li>
+<li><p><strong>_group</strong> (<em>list</em><em> | </em><em>None</em>) – For a drop: everything dropped with it (eg: the rest of
+the selection): the dynamic layout leaves a dropped object where it’s
+dropped if it’s on nothing else, and doesn’t count those as things it’s
+on (see <em>layout.FindFree.placeNode()</em>).</p></li>
 <li><p><strong>obj</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p></li>
 <li><p><strong>x</strong> (<em>int</em><em> | </em><em>float</em>)</p></li>
 <li><p><strong>y</strong> (<em>int</em><em> | </em><em>float</em>)</p></li>
@@ -866,6 +875,17 @@ from <em>DoList</em> when new commands override the tail of the do-queue.</p>
 <span class="sig-name descname"><span class="pre">vobjects</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><span class="pre">VObject</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.sngContext.SNGContext._Represent.vobjects" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.sngContext.SNGContext._Represent.exempted">
+<span class="sig-name descname"><span class="pre">exempted</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><span class="pre">VObject</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.sngContext.SNGContext._Represent.exempted" title="Link to this definition">¶</a></dt>
+<dd><p>Objects already in the view, but hidden by their category, that this showed anyway: hidden again by an undo.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.sngContext.SNGContext._Represent.originalDo">
+<span class="sig-name descname"><span class="pre">originalDo</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#sn.view.graphics.sngContext.SNGContext._Represent.originalDo" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.sngContext.SNGContext._Represent.do">
 <span class="sig-name descname"><span class="pre">do</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.sngContext.SNGContext._Represent.do" title="Link to this definition">¶</a></dt>
@@ -1163,6 +1183,11 @@ won’t bring in more of them.</p>
 <span class="sig-name descname"><span class="pre">erased</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><span class="pre">VObject</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.sngContext.SNGContext._Visibility.erased" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.sngContext.SNGContext._Visibility.unexempted">
+<span class="sig-name descname"><span class="pre">unexempted</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><span class="pre">VObject</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.sngContext.SNGContext._Visibility.unexempted" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.sngContext.SNGContext._Visibility.do">
 <span class="sig-name descname"><span class="pre">do</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.sngContext.SNGContext._Visibility.do" title="Link to this definition">¶</a></dt>
@@ -1318,6 +1343,11 @@ twice in a row without an <em>undo()</em> in between (a problem in the code logi
 </dl>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.sngContext.SNGContext._Expand._abc_impl">
+<span class="sig-name descname"><span class="pre">_abc_impl</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;_abc._abc_data</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#sn.view.graphics.sngContext.SNGContext._Expand._abc_impl" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.sngContext.SNGContext._Expand.undo">
 <span class="sig-name descname"><span class="pre">undo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.sngContext.SNGContext._Expand.undo" title="Link to this definition">¶</a></dt>
@@ -1333,11 +1363,6 @@ twice in a row without an <em>do()</em> in between (a problem in the code logic?
 </dd>
 </dl>
 </dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sn.view.graphics.sngContext.SNGContext._Expand._abc_impl">
-<span class="sig-name descname"><span class="pre">_abc_impl</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;_abc._abc_data</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#sn.view.graphics.sngContext.SNGContext._Expand._abc_impl" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.sngContext.SNGContext._Expand.delete">
@@ -1466,6 +1491,8 @@ from <em>DoList</em> when new commands override the tail of the do-queue.</p>
 <li><a class="reference internal" href="#sn.view.graphics.sngContext.SNGContext._Represent.view"><code class="docutils literal notranslate"><span class="pre">SNGContext._Represent.view</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngContext.SNGContext._Represent.modelObjects"><code class="docutils literal notranslate"><span class="pre">SNGContext._Represent.modelObjects</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngContext.SNGContext._Represent.vobjects"><code class="docutils literal notranslate"><span class="pre">SNGContext._Represent.vobjects</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.sngContext.SNGContext._Represent.exempted"><code class="docutils literal notranslate"><span class="pre">SNGContext._Represent.exempted</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.sngContext.SNGContext._Represent.originalDo"><code class="docutils literal notranslate"><span class="pre">SNGContext._Represent.originalDo</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngContext.SNGContext._Represent.do"><code class="docutils literal notranslate"><span class="pre">SNGContext._Represent.do()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngContext.SNGContext._Represent.undo"><code class="docutils literal notranslate"><span class="pre">SNGContext._Represent.undo()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngContext.SNGContext._Represent.delete"><code class="docutils literal notranslate"><span class="pre">SNGContext._Represent.delete()</span></code></a></li>
@@ -1498,6 +1525,7 @@ from <em>DoList</em> when new commands override the tail of the do-queue.</p>
 <li><a class="reference internal" href="#sn.view.graphics.sngContext.SNGContext._Visibility.view"><code class="docutils literal notranslate"><span class="pre">SNGContext._Visibility.view</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngContext.SNGContext._Visibility.oldMode"><code class="docutils literal notranslate"><span class="pre">SNGContext._Visibility.oldMode</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngContext.SNGContext._Visibility.erased"><code class="docutils literal notranslate"><span class="pre">SNGContext._Visibility.erased</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.sngContext.SNGContext._Visibility.unexempted"><code class="docutils literal notranslate"><span class="pre">SNGContext._Visibility.unexempted</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngContext.SNGContext._Visibility.do"><code class="docutils literal notranslate"><span class="pre">SNGContext._Visibility.do()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngContext.SNGContext._Visibility.undo"><code class="docutils literal notranslate"><span class="pre">SNGContext._Visibility.undo()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngContext.SNGContext._Visibility.delete"><code class="docutils literal notranslate"><span class="pre">SNGContext._Visibility.delete()</span></code></a></li>
@@ -1516,8 +1544,8 @@ from <em>DoList</em> when new commands override the tail of the do-queue.</p>
 <li><a class="reference internal" href="#sn.view.graphics.sngContext.SNGContext._Expand.exempted"><code class="docutils literal notranslate"><span class="pre">SNGContext._Expand.exempted</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngContext.SNGContext._Expand.originalDo"><code class="docutils literal notranslate"><span class="pre">SNGContext._Expand.originalDo</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngContext.SNGContext._Expand.do"><code class="docutils literal notranslate"><span class="pre">SNGContext._Expand.do()</span></code></a></li>
-<li><a class="reference internal" href="#sn.view.graphics.sngContext.SNGContext._Expand.undo"><code class="docutils literal notranslate"><span class="pre">SNGContext._Expand.undo()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngContext.SNGContext._Expand._abc_impl"><code class="docutils literal notranslate"><span class="pre">SNGContext._Expand._abc_impl</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.sngContext.SNGContext._Expand.undo"><code class="docutils literal notranslate"><span class="pre">SNGContext._Expand.undo()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngContext.SNGContext._Expand.delete"><code class="docutils literal notranslate"><span class="pre">SNGContext._Expand.delete()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngContext.SNGContext._Expand.__str__"><code class="docutils literal notranslate"><span class="pre">SNGContext._Expand.__str__()</span></code></a></li>
 </ul>
@@ -1535,7 +1563,7 @@ from <em>DoList</em> when new commands override the tail of the do-queue.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=292eb321"></script>
+</div><script src="../_static/documentation_options.js?v=56dcb7b8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

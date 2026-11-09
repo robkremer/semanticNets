@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.view.graphics.viewFiles module - Semantic Nets 1.0.1 documentation</title>
+        <title>sn.view.graphics.viewFiles module - Semantic Nets 1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -238,12 +238,15 @@
 <li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html">sn.model.clipsReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html">sn.model.nemoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html">sn.model.prologReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
 </ul>
@@ -565,7 +568,16 @@ this view never added the item (e.g. its window was never focused) –
 <span class="sig-name descname"><span class="pre">SN_VIEW</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sn.snv'</span></span><a class="headerlink" href="#sn.view.graphics.viewFiles.FilesMixin.SN_VIEW" title="Link to this definition">¶</a></dt>
 <dd><p>The file name of the system model’s (sn’s) view, in the sn.model package’s
 folder: sn has no file of its own, so it’s taken to be there – with the base
-rules (see <em>superModelView()</em>).</p>
+rules (see <em>superModelView()</em>) – or, if the program’s folders can’t be
+written (eg: an installed app), in <em>SUPER_VIEWS_FOLDER</em>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewFiles.FilesMixin.SUPER_VIEWS_FOLDER">
+<span class="sig-name descname"><span class="pre">SUPER_VIEWS_FOLDER</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'views'</span></span><a class="headerlink" href="#sn.view.graphics.viewFiles.FilesMixin.SUPER_VIEWS_FOLDER" title="Link to this definition">¶</a></dt>
+<dd><p>Where the views of the system model and the base rules go (in <em>sn.SN_FOLDER</em>)
+if they can’t go next to them, in the program’s own folders: eg, an installed
+app’s, which can’t be written (see <em>superModelView()</em>).</p>
 </dd></dl>
 
 <dl class="py method">
@@ -589,7 +601,9 @@ view’s model’s super-models (see <em>superModelView()</em>), nearest first.<
 “.snv” – for the base rules, next to the file they come from (see
 <em>sn.model.reasoner.baseRulesSource()</em>), not the copy they’re read from; for
 the system model (sn), which has no file, in the sn.model package’s folder
-(see <em>SN_VIEW</em>).</p>
+(see <em>SN_VIEW</em>). If it’s not there, and can’t be written there (eg: the
+program’s folder, in an installed app), in <em>SUPER_VIEWS_FOLDER</em> in
+<em>sn.SN_FOLDER</em>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>model</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>) – A super-model.</p>
@@ -717,6 +731,14 @@ saved with the view. A write-locked model’s view can’t be unlocked.</p>
 while this view can’t change it (see <em>isModelEditor()</em>).</p>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewFiles.FilesMixin.WRITE_LOCKED_ITEMS">
+<span class="sig-name descname"><span class="pre">WRITE_LOCKED_ITEMS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('File|Save</span> <span class="pre">model',)</span></span><a class="headerlink" href="#sn.view.graphics.viewFiles.FilesMixin.WRITE_LOCKED_ITEMS" title="Link to this definition">¶</a></dt>
+<dd><p>The menu bar items that can’t be used on a write-locked model (eg: one opened
+read-only): greyed out while it is (see <em>refreshLock()</em>). (Not “Save model
+as…”: a copy can be saved.)</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.viewFiles.FilesMixin.refreshLock">
 <span class="sig-name descname"><span class="pre">refreshLock</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewFiles.FilesMixin.refreshLock" title="Link to this definition">¶</a></dt>
@@ -807,6 +829,7 @@ model’s write-locked: it can’t be unlocked.</p>
 <li><a class="reference internal" href="#sn.view.graphics.viewFiles.FilesMixin.onWindowFocusIn"><code class="docutils literal notranslate"><span class="pre">FilesMixin.onWindowFocusIn()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewFiles.FilesMixin.onWindowFocusOut"><code class="docutils literal notranslate"><span class="pre">FilesMixin.onWindowFocusOut()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewFiles.FilesMixin.SN_VIEW"><code class="docutils literal notranslate"><span class="pre">FilesMixin.SN_VIEW</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewFiles.FilesMixin.SUPER_VIEWS_FOLDER"><code class="docutils literal notranslate"><span class="pre">FilesMixin.SUPER_VIEWS_FOLDER</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewFiles.FilesMixin._superModelsMenu"><code class="docutils literal notranslate"><span class="pre">FilesMixin._superModelsMenu()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewFiles.FilesMixin.superModelView"><code class="docutils literal notranslate"><span class="pre">FilesMixin.superModelView()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewFiles.FilesMixin.openSuperModel"><code class="docutils literal notranslate"><span class="pre">FilesMixin.openSuperModel()</span></code></a></li>
@@ -817,6 +840,7 @@ model’s write-locked: it can’t be unlocked.</p>
 <li><a class="reference internal" href="#sn.view.graphics.viewFiles.FilesMixin._onLockViewItem"><code class="docutils literal notranslate"><span class="pre">FilesMixin._onLockViewItem()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewFiles.FilesMixin.setEditLocked"><code class="docutils literal notranslate"><span class="pre">FilesMixin.setEditLocked()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewFiles.FilesMixin.MODEL_EDIT_ITEMS"><code class="docutils literal notranslate"><span class="pre">FilesMixin.MODEL_EDIT_ITEMS</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewFiles.FilesMixin.WRITE_LOCKED_ITEMS"><code class="docutils literal notranslate"><span class="pre">FilesMixin.WRITE_LOCKED_ITEMS</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewFiles.FilesMixin.refreshLock"><code class="docutils literal notranslate"><span class="pre">FilesMixin.refreshLock()</span></code></a></li>
 </ul>
 </li>
@@ -831,7 +855,7 @@ model’s write-locked: it can’t be unlocked.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=292eb321"></script>
+</div><script src="../_static/documentation_options.js?v=56dcb7b8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

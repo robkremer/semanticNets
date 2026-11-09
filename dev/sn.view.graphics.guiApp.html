@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.view.graphics.guiApp module - Semantic Nets 1.0.1 documentation</title>
+        <title>sn.view.graphics.guiApp module - Semantic Nets 1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -238,12 +238,15 @@
 <li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html">sn.model.clipsReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html">sn.model.nemoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html">sn.model.prologReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
 </ul>
@@ -380,6 +383,25 @@
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.showHelp">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.guiApp.</span></span><span class="sig-name descname"><span class="pre">showHelp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">page</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.showHelp" title="Link to this definition">¶</a></dt>
+<dd><p>Show a page of the documentation in the web browser: the copy bundled
+in a packaged app, or else the project’s built documentation. It’s served
+from 127.0.0.1 (see <em>util.folderServer</em>), not opened as a file: URL,
+since Safari won’t load a file: page’s stylesheets from its parent
+folder (“../_static/”), so it would show unstyled.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>page</strong> (<em>str</em>) – The page, relative to the documentation’s top, eg:
+“user/index.html”, perhaps with a section: eg, “user/reasoning.html#installing-an-engine”.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.guiApp.</span></span><span class="sig-name descname"><span class="pre">Application</span></span><a class="headerlink" href="#sn.view.graphics.guiApp.Application" title="Link to this definition">¶</a></dt>
@@ -405,6 +427,18 @@ be created. BASENAME will be used for the identification of the profile file (se
 readprofile).
 It is constructed from sys.argv[0] without extensions if None is given. CLASSNAME
 is the name of the widget class.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.defaultChildLocation">
+<span class="sig-name descname"><span class="pre">defaultChildLocation</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.defaultChildLocation" title="Link to this definition">¶</a></dt>
+<dd><p>Where the next new window goes (see <em>nextWindowGeometry()</em>).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application._privacyExplained">
+<span class="sig-name descname"><span class="pre">_privacyExplained</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.guiApp.Application._privacyExplained" title="Link to this definition">¶</a></dt>
+<dd><p>When each folder was last said to be blocked by the Mac’s privacy protection (see <em>explainPrivacy()</em>).</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -491,6 +525,19 @@ command line. Each opens in a window, as with <em>Open…</em>.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application._showSomething">
+<span class="sig-name descname"><span class="pre">_showSomething</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application._showSomething" title="Link to this definition">¶</a></dt>
+<dd><p>If no window’s open (eg: none of the files asked for could be), show the
+model directory: the app mustn’t run with nothing on the screen (off the
+Mac, not even a menu bar).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.onOpenFromAnotherCopy">
 <span class="sig-name descname"><span class="pre">onOpenFromAnotherCopy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">paths</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.onOpenFromAnotherCopy" title="Link to this definition">¶</a></dt>
 <dd><p>Handle the editor being started again while it’s running (on Windows
@@ -545,14 +592,10 @@ to get that native content back.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.showHelp">
 <span class="sig-name descname"><span class="pre">showHelp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">page</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.showHelp" title="Link to this definition">¶</a></dt>
-<dd><p>Show a page of the documentation in the web browser: the copy bundled
-in a packaged app, or else the project’s built documentation. It’s served
-from 127.0.0.1 (see <em>util.folderServer</em>), not opened as a file: URL,
-since Safari won’t load a file: page’s stylesheets from its parent
-folder (“../_static/”), so it would show unstyled.</p>
+<dd><p>See the module’s <em>showHelp()</em>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>page</strong> (<em>str</em>) – The page, relative to the documentation’s top, eg: “user/index.html”.</p>
+<dd class="field-odd"><p><strong>page</strong> (<em>str</em>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
@@ -615,6 +658,43 @@ window), or a model’s or view’s file or URL.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>tk.Toplevel | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.NEW_WINDOW_SIZE">
+<span class="sig-name descname"><span class="pre">NEW_WINDOW_SIZE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(0.7,</span> <span class="pre">1100,</span> <span class="pre">800)</span></span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.NEW_WINDOW_SIZE" title="Link to this definition">¶</a></dt>
+<dd><p>A new view’s window: this much of the screen, but no wider or taller than this (see <em>nextWindowGeometry()</em>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application._dialogParent">
+<span class="sig-name descname"><span class="pre">_dialogParent</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application._dialogParent" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>What a message box should be over: the window with the focus (or
+another on screen – see <em>util.utils.dialogOwner()</em>), or the app (eg:
+the model directory) – so that on the Mac it can’t come up behind a view’s window.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Misc</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.nextWindowGeometry">
+<span class="sig-name descname"><span class="pre">nextWindowGeometry</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.nextWindowGeometry" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Where to put a new view’s window (one with no saved place: see
+<em>SNGView.__init__()</em>): most of the screen (see <em>NEW_WINDOW_SIZE</em>), each
+down and to the right of the last (back at the top left when they’d go
+off the screen) – not each on top of the last.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1053,8 +1133,111 @@ to (see <em>onInstallExamples()</em>).</p>
 <dd class="field-odd"><p><strong>replace</strong> (<em>bool</em>) – Whether to replace copies already there. If not (as on
 the first launch), an existing folder is left as it is.</p>
 </dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+<p>If they can’t be copied, the user’s told why (see <em>cantCopyExamples()</em>);
+on the first launch, that’s not tried again on the next.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>replace</strong> (<em>bool</em>)</p>
+</dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>True iff any were opened.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.cantCopyExamples">
+<span class="sig-name descname"><span class="pre">cantCopyExamples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ex</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.cantCopyExamples" title="Link to this definition">¶</a></dt>
+<dd><p>Tell the user the example models couldn’t be copied to <em>target</em> (see
+<em>installExamples()</em>), and why. If it’s the Mac’s privacy protection (eg:
+the app that started the program hasn’t been allowed to use the Documents
+folder: see <em>util.platformSupport.privacyBlocked()</em>), say which app to
+allow, and offer to open the settings for it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target</strong> (<em>str</em>) – The folder.</p></li>
+<li><p><strong>ex</strong> (<em>OSError</em>) – Why they couldn’t be.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.PRIVACY_QUIET">
+<span class="sig-name descname"><span class="pre">PRIVACY_QUIET</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">60.0</span></span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.PRIVACY_QUIET" title="Link to this definition">¶</a></dt>
+<dd><p>For how long (seconds) <em>explainPrivacy()</em> doesn’t say the same folder’s blocked again (eg: for each window reopened at start-up).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.explainPrivacy">
+<span class="sig-name descname"><span class="pre">explainPrivacy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ex</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">said</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">then</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">again</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.explainPrivacy" title="Link to this definition">¶</a></dt>
+<dd><p>If <em>ex</em> is (or was raised from) the Mac’s privacy protection stopping
+a file being used (see <em>util.platformSupport.privacyError()</em>) – eg: the
+app that started the program (Eclipse, or Terminal, …) hasn’t been
+allowed to use the Documents folder – tell the user which app to allow,
+and where, offering to open those settings. A folder that’s just been
+said to be blocked (within <em>PRIVACY_QUIET</em>) is only logged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ex</strong> (<em>BaseException</em>) – Why something failed.</p></li>
+<li><p><strong>said</strong> (<em>str</em>) – What failed, eg: ‘“animals.snv” couldn’t be opened’; by default, that the file couldn’t be read or written.</p></li>
+<li><p><strong>then</strong> (<em>str</em>) – What to do once it’s allowed, eg: “Then open it again.”</p></li>
+<li><p><strong>path</strong> (<em>str</em><em> | </em><em>None</em>) – The file (or folder) to name; by default, the one <em>ex</em> names.</p></li>
+<li><p><strong>again</strong> (<em>bool</em>) – Whether to say so even if it’s just been said.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether that’s what it was (and it’s been said, or logged).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.report_callback_exception">
+<span class="sig-name descname"><span class="pre">report_callback_exception</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tb</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.report_callback_exception" title="Link to this definition">¶</a></dt>
+<dd><p>An error in a menu item’s, button’s, … command (eg: File | Save
+view): if the Mac’s privacy protection stopped a file being used, say
+which app to allow (see <em>explainPrivacy()</em>) – as well as reporting it as
+usual.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>exc</strong> (<em>type</em><em>[</em><em>BaseException</em><em>]</em>)</p></li>
+<li><p><strong>val</strong> (<em>BaseException</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.examplesBlocked">
+<span class="sig-name descname"><span class="pre">examplesBlocked</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.examplesBlocked" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>target</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether the Mac’s privacy protection won’t let the example
+models be copied to <em>target</em> (see <em>installExamples()</em>) – having said
+so (see <em>cantCopyExamples()</em>) – found by trying to make a file there.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
@@ -1191,7 +1374,11 @@ changed. False when the user has already agreed to lose the changes
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.guiApp.Application.quit">
 <span class="sig-name descname"><span class="pre">quit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.Application.quit" title="Link to this definition">¶</a></dt>
-<dd><p>Tear down the entire application, including the hidden root.</p>
+<dd><p>Tear down the entire application, including the hidden root – first
+offering to save the modified models (and settings), while the windows
+can still ask (see <em>sn.saveAtExit()</em>): eg, when the last window’s closed.
+Left to the exit itself (atexit), with no root left, the question would
+be asked by a stray second Tk (or not at all), and the changes lost.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
@@ -1237,6 +1424,24 @@ changed. False when the user has already agreed to lose the changes
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Its name (eg: “family.snv”).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.guiApp.windowTitle">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.guiApp.</span></span><span class="sig-name descname"><span class="pre">windowTitle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.guiApp.windowTitle" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>url</strong> (<em>str</em>) – A view’s URL.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The title of its window: its file’s name, then the folder it’s in,
+as the user knows it (eg: “family.snv — ~/Documents/Models”); for one on
+the web, the folder’s URL.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>str</p>
@@ -1557,14 +1762,18 @@ editor’s already running, the files are handed to it instead (see
             <ul>
 <li><a class="reference internal" href="#">sn.view.graphics.guiApp module</a><ul>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.UnexpectedObjectInFile"><code class="docutils literal notranslate"><span class="pre">UnexpectedObjectInFile</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.showHelp"><code class="docutils literal notranslate"><span class="pre">showHelp()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application"><code class="docutils literal notranslate"><span class="pre">Application</span></code></a><ul>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.current"><code class="docutils literal notranslate"><span class="pre">Application.current</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.__init__"><code class="docutils literal notranslate"><span class="pre">Application.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.defaultChildLocation"><code class="docutils literal notranslate"><span class="pre">Application.defaultChildLocation</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application._privacyExplained"><code class="docutils literal notranslate"><span class="pre">Application._privacyExplained</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.directoryPane"><code class="docutils literal notranslate"><span class="pre">Application.directoryPane</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application._noOp"><code class="docutils literal notranslate"><span class="pre">Application._noOp()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application._installSettingsMenu"><code class="docutils literal notranslate"><span class="pre">Application._installSettingsMenu()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application._installQuitHandler"><code class="docutils literal notranslate"><span class="pre">Application._installQuitHandler()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.onOpenDocument"><code class="docutils literal notranslate"><span class="pre">Application.onOpenDocument()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application._showSomething"><code class="docutils literal notranslate"><span class="pre">Application._showSomething()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.onOpenFromAnotherCopy"><code class="docutils literal notranslate"><span class="pre">Application.onOpenFromAnotherCopy()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.onQuit"><code class="docutils literal notranslate"><span class="pre">Application.onQuit()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application._installMenubar"><code class="docutils literal notranslate"><span class="pre">Application._installMenubar()</span></code></a></li>
@@ -1574,6 +1783,9 @@ editor’s already running, the files are handed to it instead (see
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.doOpenURL"><code class="docutils literal notranslate"><span class="pre">Application.doOpenURL()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.doNew"><code class="docutils literal notranslate"><span class="pre">Application.doNew()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.openWindow"><code class="docutils literal notranslate"><span class="pre">Application.openWindow()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.NEW_WINDOW_SIZE"><code class="docutils literal notranslate"><span class="pre">Application.NEW_WINDOW_SIZE</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application._dialogParent"><code class="docutils literal notranslate"><span class="pre">Application._dialogParent()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.nextWindowGeometry"><code class="docutils literal notranslate"><span class="pre">Application.nextWindowGeometry()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.openViewOn"><code class="docutils literal notranslate"><span class="pre">Application.openViewOn()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.modelCopiesOf"><code class="docutils literal notranslate"><span class="pre">Application.modelCopiesOf()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.askForMissingModel"><code class="docutils literal notranslate"><span class="pre">Application.askForMissingModel()</span></code></a></li>
@@ -1606,6 +1818,11 @@ editor’s already running, the files are handed to it instead (see
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.EXAMPLES_PREF"><code class="docutils literal notranslate"><span class="pre">Application.EXAMPLES_PREF</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.EXAMPLES_FOLDER"><code class="docutils literal notranslate"><span class="pre">Application.EXAMPLES_FOLDER</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.installExamples"><code class="docutils literal notranslate"><span class="pre">Application.installExamples()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.cantCopyExamples"><code class="docutils literal notranslate"><span class="pre">Application.cantCopyExamples()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.PRIVACY_QUIET"><code class="docutils literal notranslate"><span class="pre">Application.PRIVACY_QUIET</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.explainPrivacy"><code class="docutils literal notranslate"><span class="pre">Application.explainPrivacy()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.report_callback_exception"><code class="docutils literal notranslate"><span class="pre">Application.report_callback_exception()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.examplesBlocked"><code class="docutils literal notranslate"><span class="pre">Application.examplesBlocked()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.onInstallExamples"><code class="docutils literal notranslate"><span class="pre">Application.onInstallExamples()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.closeModel"><code class="docutils literal notranslate"><span class="pre">Application.closeModel()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.Application.replacingModel"><code class="docutils literal notranslate"><span class="pre">Application.replacingModel()</span></code></a></li>
@@ -1618,6 +1835,7 @@ editor’s already running, the files are handed to it instead (see
 </li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp._filePath"><code class="docutils literal notranslate"><span class="pre">_filePath()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp._fileName"><code class="docutils literal notranslate"><span class="pre">_fileName()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.guiApp.windowTitle"><code class="docutils literal notranslate"><span class="pre">windowTitle()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.AppWindow"><code class="docutils literal notranslate"><span class="pre">AppWindow</span></code></a><ul>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.AppWindow.__init__"><code class="docutils literal notranslate"><span class="pre">AppWindow.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.guiApp.AppWindow.view"><code class="docutils literal notranslate"><span class="pre">AppWindow.view</span></code></a></li>
@@ -1652,7 +1870,7 @@ editor’s already running, the files are handed to it instead (see
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=292eb321"></script>
+</div><script src="../_static/documentation_options.js?v=56dcb7b8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

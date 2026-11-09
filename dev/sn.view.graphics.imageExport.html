@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.view.graphics.imageExport module - Semantic Nets 1.0.1 documentation</title>
+        <title>sn.view.graphics.imageExport module - Semantic Nets 1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -238,12 +238,15 @@
 <li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html">sn.model.clipsReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html">sn.model.nemoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html">sn.model.prologReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
 </ul>
@@ -393,8 +396,8 @@ dpi, so it’s shown the same size: sharp on a Retina screen) – by macOS’s
 
 <dl class="py data">
 <dt class="sig sig-object py" id="sn.view.graphics.imageExport.SYMBOLS">
-<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.imageExport.</span></span><span class="sig-name descname"><span class="pre">SYMBOLS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'×':</span> <span class="pre">180,</span> <span class="pre">'←':</span> <span class="pre">172,</span> <span class="pre">'↑':</span> <span class="pre">173,</span> <span class="pre">'→':</span> <span class="pre">174,</span> <span class="pre">'↓':</span> <span class="pre">175,</span> <span class="pre">'⇐':</span> <span class="pre">220,</span> <span class="pre">'⇒':</span> <span class="pre">222,</span> <span class="pre">'∀':</span> <span class="pre">34,</span> <span class="pre">'∃':</span> <span class="pre">36,</span> <span class="pre">'∈':</span> <span class="pre">206,</span> <span class="pre">'∞':</span> <span class="pre">165,</span> <span class="pre">'∧':</span> <span class="pre">217,</span> <span class="pre">'∨':</span> <span class="pre">218,</span> <span class="pre">'≠':</span> <span class="pre">185,</span> <span class="pre">'≤':</span> <span class="pre">163,</span> <span class="pre">'≥':</span> <span class="pre">179}</span></span><a class="headerlink" href="#sn.view.graphics.imageExport.SYMBOLS" title="Link to this definition">¶</a></dt>
-<dd><p>Characters not in Helvetica that PDF’s Symbol font has: its codes for them.</p>
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.imageExport.</span></span><span class="sig-name descname"><span class="pre">SYMBOLS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'×':</span> <span class="pre">180,</span> <span class="pre">'Α':</span> <span class="pre">65,</span> <span class="pre">'Β':</span> <span class="pre">66,</span> <span class="pre">'Γ':</span> <span class="pre">71,</span> <span class="pre">'Δ':</span> <span class="pre">68,</span> <span class="pre">'Ε':</span> <span class="pre">69,</span> <span class="pre">'Ζ':</span> <span class="pre">90,</span> <span class="pre">'Η':</span> <span class="pre">72,</span> <span class="pre">'Θ':</span> <span class="pre">81,</span> <span class="pre">'Ι':</span> <span class="pre">73,</span> <span class="pre">'Κ':</span> <span class="pre">75,</span> <span class="pre">'Λ':</span> <span class="pre">76,</span> <span class="pre">'Μ':</span> <span class="pre">77,</span> <span class="pre">'Ν':</span> <span class="pre">78,</span> <span class="pre">'Ξ':</span> <span class="pre">88,</span> <span class="pre">'Ο':</span> <span class="pre">79,</span> <span class="pre">'Π':</span> <span class="pre">80,</span> <span class="pre">'Ρ':</span> <span class="pre">82,</span> <span class="pre">'Σ':</span> <span class="pre">83,</span> <span class="pre">'Τ':</span> <span class="pre">84,</span> <span class="pre">'Υ':</span> <span class="pre">85,</span> <span class="pre">'Φ':</span> <span class="pre">70,</span> <span class="pre">'Χ':</span> <span class="pre">67,</span> <span class="pre">'Ψ':</span> <span class="pre">89,</span> <span class="pre">'Ω':</span> <span class="pre">87,</span> <span class="pre">'α':</span> <span class="pre">97,</span> <span class="pre">'β':</span> <span class="pre">98,</span> <span class="pre">'γ':</span> <span class="pre">103,</span> <span class="pre">'δ':</span> <span class="pre">100,</span> <span class="pre">'ε':</span> <span class="pre">101,</span> <span class="pre">'ζ':</span> <span class="pre">122,</span> <span class="pre">'η':</span> <span class="pre">104,</span> <span class="pre">'θ':</span> <span class="pre">113,</span> <span class="pre">'ι':</span> <span class="pre">105,</span> <span class="pre">'κ':</span> <span class="pre">107,</span> <span class="pre">'λ':</span> <span class="pre">108,</span> <span class="pre">'μ':</span> <span class="pre">109,</span> <span class="pre">'ν':</span> <span class="pre">110,</span> <span class="pre">'ξ':</span> <span class="pre">120,</span> <span class="pre">'ο':</span> <span class="pre">111,</span> <span class="pre">'π':</span> <span class="pre">112,</span> <span class="pre">'ρ':</span> <span class="pre">114,</span> <span class="pre">'ς':</span> <span class="pre">86,</span> <span class="pre">'σ':</span> <span class="pre">115,</span> <span class="pre">'τ':</span> <span class="pre">116,</span> <span class="pre">'υ':</span> <span class="pre">117,</span> <span class="pre">'φ':</span> <span class="pre">102,</span> <span class="pre">'χ':</span> <span class="pre">99,</span> <span class="pre">'ψ':</span> <span class="pre">121,</span> <span class="pre">'ω':</span> <span class="pre">119,</span> <span class="pre">'ϑ':</span> <span class="pre">74,</span> <span class="pre">'ϕ':</span> <span class="pre">106,</span> <span class="pre">'ϖ':</span> <span class="pre">118,</span> <span class="pre">'′':</span> <span class="pre">162,</span> <span class="pre">'″':</span> <span class="pre">178,</span> <span class="pre">'←':</span> <span class="pre">172,</span> <span class="pre">'↑':</span> <span class="pre">173,</span> <span class="pre">'→':</span> <span class="pre">174,</span> <span class="pre">'↓':</span> <span class="pre">175,</span> <span class="pre">'↔':</span> <span class="pre">171,</span> <span class="pre">'⇐':</span> <span class="pre">220,</span> <span class="pre">'⇑':</span> <span class="pre">221,</span> <span class="pre">'⇒':</span> <span class="pre">222,</span> <span class="pre">'⇓':</span> <span class="pre">223,</span> <span class="pre">'⇔':</span> <span class="pre">219,</span> <span class="pre">'∀':</span> <span class="pre">34,</span> <span class="pre">'∂':</span> <span class="pre">182,</span> <span class="pre">'∃':</span> <span class="pre">36,</span> <span class="pre">'∅':</span> <span class="pre">198,</span> <span class="pre">'∇':</span> <span class="pre">209,</span> <span class="pre">'∈':</span> <span class="pre">206,</span> <span class="pre">'∉':</span> <span class="pre">207,</span> <span class="pre">'∋':</span> <span class="pre">39,</span> <span class="pre">'∏':</span> <span class="pre">213,</span> <span class="pre">'∑':</span> <span class="pre">229,</span> <span class="pre">'−':</span> <span class="pre">45,</span> <span class="pre">'∗':</span> <span class="pre">42,</span> <span class="pre">'√':</span> <span class="pre">214,</span> <span class="pre">'∝':</span> <span class="pre">181,</span> <span class="pre">'∞':</span> <span class="pre">165,</span> <span class="pre">'∠':</span> <span class="pre">208,</span> <span class="pre">'∧':</span> <span class="pre">217,</span> <span class="pre">'∨':</span> <span class="pre">218,</span> <span class="pre">'∩':</span> <span class="pre">199,</span> <span class="pre">'∪':</span> <span class="pre">200,</span> <span class="pre">'∫':</span> <span class="pre">242,</span> <span class="pre">'∴':</span> <span class="pre">92,</span> <span class="pre">'∼':</span> <span class="pre">126,</span> <span class="pre">'≅':</span> <span class="pre">64,</span> <span class="pre">'≈':</span> <span class="pre">187,</span> <span class="pre">'≠':</span> <span class="pre">185,</span> <span class="pre">'≡':</span> <span class="pre">186,</span> <span class="pre">'≤':</span> <span class="pre">163,</span> <span class="pre">'≥':</span> <span class="pre">179,</span> <span class="pre">'⊂':</span> <span class="pre">204,</span> <span class="pre">'⊃':</span> <span class="pre">201,</span> <span class="pre">'⊄':</span> <span class="pre">203,</span> <span class="pre">'⊆':</span> <span class="pre">205,</span> <span class="pre">'⊇':</span> <span class="pre">202,</span> <span class="pre">'⊕':</span> <span class="pre">197,</span> <span class="pre">'⊗':</span> <span class="pre">196,</span> <span class="pre">'⊥':</span> <span class="pre">94,</span> <span class="pre">'⋅':</span> <span class="pre">215,</span> <span class="pre">'◊':</span> <span class="pre">224,</span> <span class="pre">'⟨':</span> <span class="pre">225,</span> <span class="pre">'⟩':</span> <span class="pre">241,</span> <span class="pre">'〈':</span> <span class="pre">225,</span> <span class="pre">'〉':</span> <span class="pre">241}</span></span><a class="headerlink" href="#sn.view.graphics.imageExport.SYMBOLS" title="Link to this definition">¶</a></dt>
+<dd><p>Characters not in Helvetica (as Windows-1252 has it) that PDF’s Symbol font has: its codes for them.</p>
 </dd></dl>
 
 <dl class="py data">
@@ -658,30 +661,6 @@ the end points) or not (straight lines).</p></li>
 </dl>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="sn.view.graphics.imageExport.arrowHead">
-<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.imageExport.</span></span><span class="sig-name descname"><span class="pre">arrowHead</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tip</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">toward</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.imageExport.arrowHead" title="Link to this definition">¶</a></dt>
-<dd><p>A Tk line’s arrowhead at <em>tip</em>, the line coming from <em>toward</em>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>shape</strong> (<em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>, </em><em>float</em><em>]</em>) – Its “arrowshape”: (d1, d2, d3) – as far along the line from
-the tip to the neck, and to the trailing points, and how far the trailing
-points are out from the line’s edge.</p></li>
-<li><p><strong>tip</strong> (<em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em>)</p></li>
-<li><p><strong>toward</strong> (<em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em>)</p></li>
-<li><p><strong>width</strong> (<em>float</em>)</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The head’s polygon, and where the line is to end (under the head).</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple[list[tuple[float, float]], tuple[float, float]]</p>
-</dd>
-</dl>
-</dd></dl>
-
 <dl class="py class">
 <dt class="sig sig-object py" id="sn.view.graphics.imageExport.Renderer">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.imageExport.</span></span><span class="sig-name descname"><span class="pre">Renderer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">canvas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdf</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.imageExport.Renderer" title="Link to this definition">¶</a></dt>
@@ -717,6 +696,12 @@ points are out from the line’s edge.</p></li>
 <dt class="sig sig-object py" id="sn.view.graphics.imageExport.Renderer._fonts">
 <span class="sig-name descname"><span class="pre">_fonts</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Font</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.imageExport.Renderer._fonts" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.imageExport.Renderer.missing">
+<span class="sig-name descname"><span class="pre">missing</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.imageExport.Renderer.missing" title="Link to this definition">¶</a></dt>
+<dd><p>The characters that couldn’t be drawn (they’re drawn as “?”): each with the items it’s in.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.imageExport.Renderer.rgb">
@@ -845,12 +830,14 @@ points are out from the line’s edge.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.imageExport.Renderer.drawRuns">
-<span class="sig-name descname"><span class="pre">drawRuns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ascent</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.imageExport.Renderer.drawRuns" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">drawRuns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ascent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.imageExport.Renderer.drawRuns" title="Link to this definition">¶</a></dt>
 <dd><p>Set <em>line</em> at (<em>x</em>, <em>y</em>) (its baseline): in runs of Helvetica, Symbol, and
-triangles (see <em>SYMBOLS</em>, <em>TRIANGLES</em>), each placed as the canvas places it.</p>
+triangles (see <em>SYMBOLS</em>, <em>TRIANGLES</em>), each placed as the canvas places it.
+A character none of those has is drawn as “?”, and noted (see <em>missing</em>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>item</strong> (<em>int</em>) – The text item it’s from (for <em>missing</em>).</p></li>
 <li><p><strong>line</strong> (<em>str</em>)</p></li>
 <li><p><strong>f</strong> (<em>Font</em>)</p></li>
 <li><p><strong>x</strong> (<em>float</em>)</p></li>
@@ -871,12 +858,14 @@ triangles (see <em>SYMBOLS</em>, <em>TRIANGLES</em>), each placed as the canvas 
 
 <dl class="py function">
 <dt class="sig sig-object py" id="sn.view.graphics.imageExport.drawItems">
-<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.imageExport.</span></span><span class="sig-name descname"><span class="pre">drawItems</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">canvas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">items</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.imageExport.drawItems" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.imageExport.</span></span><span class="sig-name descname"><span class="pre">drawItems</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">canvas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">items</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">missing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.imageExport.drawItems" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>items</strong> (<em>Iterable</em><em>[</em><em>int</em><em>]</em>) – Canvas item ids, bottom first.</p></li>
 <li><p><strong>scale</strong> (<em>float</em>) – Points per canvas pixel.</p></li>
+<li><p><strong>missing</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>set</em><em>[</em><em>int</em><em>]</em><em>] </em><em>| </em><em>None</em>) – If given, the characters that couldn’t be drawn (they’re
+drawn as “?”) are put in it: each with the items it’s in.</p></li>
 <li><p><strong>canvas</strong> (<em>Canvas</em>)</p></li>
 </ul>
 </dd>
@@ -892,11 +881,12 @@ big enough for them, or None if there’s nothing to draw.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="sn.view.graphics.imageExport.copyImage">
-<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.imageExport.</span></span><span class="sig-name descname"><span class="pre">copyImage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">canvas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.imageExport.copyImage" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.imageExport.</span></span><span class="sig-name descname"><span class="pre">copyImage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">canvas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">items</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">missing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.imageExport.copyImage" title="Link to this definition">¶</a></dt>
 <dd><p>Put a picture of canvas items <em>items</em> (bottom first) on the system clipboard, as a PNG.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>missing</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>set</em><em>[</em><em>int</em><em>]</em><em>] </em><em>| </em><em>None</em>) – See <em>drawItems()</em>.</p></li>
 <li><p><strong>canvas</strong> (<em>Canvas</em>)</p></li>
 <li><p><strong>items</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>)</p></li>
 </ul>
@@ -1011,11 +1001,11 @@ put on the clipboard (see <em>util.platformSupport.pdfToPNG()</em>, <em>copyPNG(
 <li><a class="reference internal" href="#sn.view.graphics.imageExport._quad"><code class="docutils literal notranslate"><span class="pre">_quad()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.imageExport.splineSegments"><code class="docutils literal notranslate"><span class="pre">splineSegments()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.imageExport._ellipse"><code class="docutils literal notranslate"><span class="pre">_ellipse()</span></code></a></li>
-<li><a class="reference internal" href="#sn.view.graphics.imageExport.arrowHead"><code class="docutils literal notranslate"><span class="pre">arrowHead()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.imageExport.Renderer"><code class="docutils literal notranslate"><span class="pre">Renderer</span></code></a><ul>
 <li><a class="reference internal" href="#sn.view.graphics.imageExport.Renderer.__init__"><code class="docutils literal notranslate"><span class="pre">Renderer.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.imageExport.Renderer._rgb"><code class="docutils literal notranslate"><span class="pre">Renderer._rgb</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.imageExport.Renderer._fonts"><code class="docutils literal notranslate"><span class="pre">Renderer._fonts</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.imageExport.Renderer.missing"><code class="docutils literal notranslate"><span class="pre">Renderer.missing</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.imageExport.Renderer.rgb"><code class="docutils literal notranslate"><span class="pre">Renderer.rgb()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.imageExport.Renderer.opt"><code class="docutils literal notranslate"><span class="pre">Renderer.opt()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.imageExport.Renderer.num"><code class="docutils literal notranslate"><span class="pre">Renderer.num()</span></code></a></li>
@@ -1041,7 +1031,7 @@ put on the clipboard (see <em>util.platformSupport.pdfToPNG()</em>, <em>copyPNG(
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=292eb321"></script>
+</div><script src="../_static/documentation_options.js?v=56dcb7b8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

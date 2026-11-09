@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>Files and Settings - Semantic Nets 1.0.1 documentation</title>
+        <title>Files and Settings - Semantic Nets 1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -238,12 +238,15 @@
 <li class="toctree-l2"><a class="reference internal" href="../dev/sn.examples.html">sn.examples package</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.clipsReasoner.html">sn.model.clipsReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.constraints.html">sn.model.constraints module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.copying.html">sn.model.copying module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.directory.html">sn.model.directory module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.model.html">sn.model.model module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.nemoReasoner.html">sn.model.nemoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.prologReasoner.html">sn.model.prologReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.reasoner.html">sn.model.reasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
 </ul>
@@ -405,7 +408,9 @@ super-models (they’re listed): its view – the file next to it with the
 same name, ending “.snv” – or, if there isn’t one, a new view that will be
 saved there. The base rules’ view is next to the file they come with; the
 system model, sn, has no file, so its view is taken to be there too
-(<code class="docutils literal notranslate"><span class="pre">sn.snv</span></code>). Both are read-only.</p></li>
+(<code class="docutils literal notranslate"><span class="pre">sn.snv</span></code>). Both are read-only. (Where those can’t be written – eg, an
+installed app’s own folders – their views are kept in the <code class="docutils literal notranslate"><span class="pre">views</span></code>
+folder of the program’s own folder, <code class="docutils literal notranslate"><span class="pre">~/.sn</span></code>, instead.)</p></li>
 <li><p><strong>File | New…</strong> makes a new view, of a new or existing model.</p></li>
 <li><p><strong>File | Save view</strong> saves the window’s view.</p></li>
 <li><p><strong>File | Save model</strong> saves the window’s model.</p></li>
@@ -617,6 +622,16 @@ relation’s label when placing it: 0 (not
 at all) to 10 (furthest; slow in a crowded
 view, as when showing a big model)</p></td>
 </tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">reasoner/engine</span></code></p></td>
+<td><p>the reasoner engine: clingo, nemo, clips or
+prolog (see <a class="reference internal" href="reasoning.html"><span class="doc">Reasoning</span></a>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">reasoner/python</span></code></p></td>
+<td><p>for the app: a Python 3.14 on the computer
+whose packages it may use, for an engine it
+doesn’t include (blank: it looks for one;
+see <a class="reference internal" href="reasoning.html"><span class="doc">Reasoning</span></a>)</p></td>
+</tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">loggingLevel</span></code></p></td>
 <td><p>how much detail the program’s messages go
 into</p></td>
@@ -701,7 +716,7 @@ into</p></td>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=292eb321"></script>
+</div><script src="../_static/documentation_options.js?v=56dcb7b8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

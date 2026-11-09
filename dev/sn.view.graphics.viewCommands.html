@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.view.graphics.viewCommands module - Semantic Nets 1.0.1 documentation</title>
+        <title>sn.view.graphics.viewCommands module - Semantic Nets 1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -238,12 +238,15 @@
 <li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html">sn.model.clipsReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html">sn.model.nemoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html">sn.model.prologReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
 </ul>
@@ -604,6 +607,11 @@ tweened move under way is finished first (see <em>layout.finishTween()</em>).</p
 <span class="sig-name descname"><span class="pre">view</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="sn.view.graphics.sngView.html#sn.view.graphics.sngView.SNGView" title="sn.view.graphics.sngView.SNGView"><span class="pre">SNGView</span></a></span><a class="headerlink" href="#sn.view.graphics.viewCommands.ViewDoList.view" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewCommands.ViewDoList._lastMade">
+<span class="sig-name descname"><span class="pre">_lastMade</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.command.html#util.command.Command" title="(in pythonUtils)"><span class="pre">Command</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">range</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.viewCommands.ViewDoList._lastMade" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.viewCommands.ViewDoList.adjustAgain">
 <span class="sig-name descname"><span class="pre">adjustAgain</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewCommands.ViewDoList.adjustAgain" title="Link to this definition">¶</a></dt>
@@ -615,6 +623,22 @@ Called for each new object: it adjusts once, when they all are.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewCommands.ViewDoList.made">
+<span class="sig-name descname"><span class="pre">made</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">objectID</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewCommands.ViewDoList.made" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the last thing done (and not undone) made the model object
+numbered <em>objectID</em> – whatever’s been added to its undo entry since (a
+layout’s adjustment, the bumping out of windows).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>objectID</strong> (<em>int</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
@@ -699,6 +723,27 @@ elsewhere (eg: by a program, or in another window).</p>
 </dd>
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>RedoError</strong> – if trying to redo past the end of the command queue.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewCommands.ViewDoList._said">
+<span class="sig-name descname"><span class="pre">_said</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">doing</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewCommands.ViewDoList._said" title="Link to this definition">¶</a></dt>
+<dd><p>Undo or redo (<em>run</em>), saying why if it can’t be (eg: the model’s
+write-locked, or what it changes is inferred): a message, not a traceback.
+It’s left where it was (see <em>DoList.undo()</em>): undoing (redoing) again
+tries it again.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>doing</strong> (<em>str</em>) – “undo” or “redo”, for the message.</p></li>
+<li><p><strong>c</strong> (<a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.command.html#util.command.Command" title="(in pythonUtils)"><em>Command</em></a><em> | </em><em>None</em>) – The command.</p></li>
+<li><p><strong>run</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>Any</em><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Any</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -900,12 +945,15 @@ be None: eg: a relation type’s, dangling); else None.</p></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewCommands.ViewDoList"><code class="docutils literal notranslate"><span class="pre">ViewDoList</span></code></a><ul>
 <li><a class="reference internal" href="#sn.view.graphics.viewCommands.ViewDoList.__init__"><code class="docutils literal notranslate"><span class="pre">ViewDoList.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewCommands.ViewDoList.view"><code class="docutils literal notranslate"><span class="pre">ViewDoList.view</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewCommands.ViewDoList._lastMade"><code class="docutils literal notranslate"><span class="pre">ViewDoList._lastMade</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewCommands.ViewDoList.adjustAgain"><code class="docutils literal notranslate"><span class="pre">ViewDoList.adjustAgain()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewCommands.ViewDoList.made"><code class="docutils literal notranslate"><span class="pre">ViewDoList.made()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewCommands.ViewDoList._refuses"><code class="docutils literal notranslate"><span class="pre">ViewDoList._refuses()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewCommands.ViewDoList.do"><code class="docutils literal notranslate"><span class="pre">ViewDoList.do()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewCommands.ViewDoList._bump"><code class="docutils literal notranslate"><span class="pre">ViewDoList._bump()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewCommands.ViewDoList.undo"><code class="docutils literal notranslate"><span class="pre">ViewDoList.undo()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewCommands.ViewDoList.redo"><code class="docutils literal notranslate"><span class="pre">ViewDoList.redo()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewCommands.ViewDoList._said"><code class="docutils literal notranslate"><span class="pre">ViewDoList._said()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#sn.view.graphics.viewCommands._ContainCreated"><code class="docutils literal notranslate"><span class="pre">_ContainCreated</span></code></a><ul>
@@ -928,7 +976,7 @@ be None: eg: a relation type’s, dangling); else None.</p></li>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=292eb321"></script>
+</div><script src="../_static/documentation_options.js?v=56dcb7b8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.model package - Semantic Nets 1.0.1 documentation</title>
+        <title>sn.model package - Semantic Nets 1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -238,12 +238,15 @@
 <li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
 <li class="toctree-l2 current has-children current-page"><a class="current reference internal" href="#">sn.model package</a><input aria-label="Toggle navigation of sn.model package" checked="" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html">sn.model.clipsReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html">sn.model.nemoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html">sn.model.prologReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
 </ul>
@@ -406,6 +409,18 @@ program to work.  Top model contains the following base objects:</p>
 </li>
 </ul>
 </div></blockquote>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.TerminatorType">
+<span class="sig-prename descclassname"><span class="pre">sn.model.</span></span><span class="sig-name descname"><span class="pre">TerminatorType</span></span><a class="headerlink" href="#sn.model.TerminatorType" title="Link to this definition">¶</a></dt>
+<dd><p>A relation’s marks: a mark spec (see <em>util.lineMarks</em>, and <em>MARKS_NOTE</em>).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.model.MARKS_NOTE">
+<span class="sig-prename descclassname"><span class="pre">sn.model.</span></span><span class="sig-name descname"><span class="pre">MARKS_NOTE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Marks</span> <span class="pre">are</span> <span class="pre">written</span> <span class="pre">in</span> <span class="pre">order</span> <span class="pre">from</span> <span class="pre">the</span> <span class="pre">source</span> <span class="pre">end</span> <span class="pre">toward</span> <span class="pre">the</span> <span class="pre">destination</span> <span class="pre">end:\n</span>&#160; <span class="pre">&gt;</span>&#160; <span class="pre">&lt;</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">an</span> <span class="pre">arrowhead</span> <span class="pre">pointing</span> <span class="pre">toward</span> <span class="pre">the</span> <span class="pre">destination</span> <span class="pre">/</span> <span class="pre">the</span> <span class="pre">source\n</span>&#160; <span class="pre">arrow</span>&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">an</span> <span class="pre">arrowhead</span> <span class="pre">pointing</span> <span class="pre">off</span> <span class="pre">this</span> <span class="pre">end</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">line</span> <span class="pre">(toward</span> <span class="pre">the</span> <span class="pre">destination,</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">middle)\n</span>&#160; <span class="pre">o</span>&#160; <span class="pre">circle</span>&#160;&#160; <span class="pre">a</span> <span class="pre">circle,</span> <span class="pre">filled</span> <span class="pre">with</span> <span class="pre">vis/lineFillColor\n</span>&#160; <span class="pre">*</span>&#160; <span class="pre">dot</span>&#160;&#160;&#160;&#160;&#160; <span class="pre">a</span> <span class="pre">solid</span> <span class="pre">circle,</span> <span class="pre">in</span> <span class="pre">vis/lineColor\n</span>&#160; <span class="pre">&#64;</span>&#160; <span class="pre">ring</span>&#160;&#160;&#160;&#160; <span class="pre">a</span> <span class="pre">hollow</span> <span class="pre">circle:</span> <span class="pre">outlined</span> <span class="pre">in</span> <span class="pre">vis/lineColor,</span> <span class="pre">filled</span> <span class="pre">with</span> <span class="pre">the</span> <span class="pre">view\'s</span> <span class="pre">background\n</span>&#160; <span class="pre">|</span>&#160; <span class="pre">bar</span>&#160;&#160;&#160;&#160;&#160; <span class="pre">a</span> <span class="pre">bar</span> <span class="pre">across</span> <span class="pre">the</span> <span class="pre">line</span> <span class="pre">(the</span> <span class="pre">line</span> <span class="pre">runs</span> <span class="pre">through</span> <span class="pre">it)\n</span>&#160; <span class="pre">diamond</span>&#160;&#160;&#160;&#160; <span class="pre">a</span> <span class="pre">hollow</span> <span class="pre">diamond,</span> <span class="pre">its</span> <span class="pre">tip</span> <span class="pre">on</span> <span class="pre">the</span> <span class="pre">end</span> <span class="pre">(UML</span> <span class="pre">aggregation);</span> <span class="pre">fdiamond:</span> <span class="pre">filled</span> <span class="pre">(composition)\n</span>&#160; <span class="pre">{</span>&#160; <span class="pre">}</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">a</span> <span class="pre">crow\'s</span> <span class="pre">foot,</span> <span class="pre">toes</span> <span class="pre">toward</span> <span class="pre">the</span> <span class="pre">destination</span> <span class="pre">/</span> <span class="pre">the</span> <span class="pre">source</span> <span class="pre">(ER</span> <span class="pre">&quot;many&quot;:</span> <span class="pre">&quot;|{&quot;</span> <span class="pre">one</span> <span class="pre">or</span> <span class="pre">many);</span> <span class="pre">crow:</span> <span class="pre">toward</span> <span class="pre">this</span> <span class="pre">end\nEach</span> <span class="pre">may</span> <span class="pre">be</span> <span class="pre">followed</span> <span class="pre">by</span> <span class="pre">its</span> <span class="pre">sizes</span> <span class="pre">in</span> <span class="pre">parentheses:</span> <span class="pre">arrow(&lt;tip-to-neck&gt;,&lt;tip-to-trailing-points&gt;,&lt;width&gt;),</span> <span class="pre">circle(&lt;diameter&gt;),</span> <span class="pre">dot(&lt;diameter&gt;),</span> <span class="pre">ring(&lt;diameter&gt;),</span> <span class="pre">bar(&lt;length&gt;),</span> <span class="pre">diamond(&lt;along&gt;,&lt;across&gt;),</span> <span class="pre">crow(&lt;along&gt;,&lt;across&gt;).</span> <span class="pre">Eg:</span> <span class="pre">&quot;o&gt;&quot;</span> <span class="pre">gives</span> <span class="pre">----o&gt;,</span> <span class="pre">&quot;&gt;&gt;&quot;</span> <span class="pre">----&gt;&gt;,</span> <span class="pre">&quot;|||&quot;</span> <span class="pre">--|||--,</span> <span class="pre">&quot;&#64;{&quot;</span> <span class="pre">----&#64;{</span> <span class="pre">(zero</span> <span class="pre">or</span> <span class="pre">many).'</span></span><a class="headerlink" href="#sn.model.MARKS_NOTE" title="Link to this definition">¶</a></dt>
+<dd><p>The part of the notes on a relation’s marks attributes (vis/terminator1..4, vis/midMarks) that says how they’re written.</p>
+</dd></dl>
+
 <dl class="py data">
 <dt class="sig sig-object py" id="sn.model.NAME_NOTE">
 <span class="sig-prename descclassname"><span class="pre">sn.model.</span></span><span class="sig-name descname"><span class="pre">NAME_NOTE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'The</span> <span class="pre">name</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">object.</span> <span class="pre">Can</span> <span class="pre">be</span> <span class="pre">used</span> <span class="pre">to</span> <span class="pre">access</span> <span class="pre">the</span> <span class="pre">object</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">model.\n\nIn</span> <span class="pre">a</span> <span class="pre">pattern</span> <span class="pre">(a</span> <span class="pre">rule,</span> <span class="pre">query,</span> <span class="pre">definition</span> <span class="pre">or</span> <span class="pre">constraint)</span> <span class="pre">a</span> <span class="pre">variable</span> <span class="pre">stands</span> <span class="pre">for</span> <span class="pre">whatever</span> <span class="pre">matches:</span> <span class="pre">a</span> <span class="pre">name</span> <span class="pre">starting</span> <span class="pre">with</span> <span class="pre">&quot;?&quot;</span> <span class="pre">is</span> <span class="pre">an</span> <span class="pre">individual</span> <span class="pre">variable</span> <span class="pre">(it</span> <span class="pre">matches</span> <span class="pre">individuals),</span> <span class="pre">with</span> <span class="pre">&quot;^&quot;</span> <span class="pre">a</span> <span class="pre">type</span> <span class="pre">variable</span> <span class="pre">(it</span> <span class="pre">matches</span> <span class="pre">types),</span> <span class="pre">and</span> <span class="pre">with</span> <span class="pre">&quot;!&quot;</span> <span class="pre">an</span> <span class="pre">&quot;any&quot;</span> <span class="pre">variable</span> <span class="pre">(it</span> <span class="pre">matches</span> <span class="pre">individuals</span> <span class="pre">and</span> <span class="pre">types</span> <span class="pre">alike);</span> <span class="pre">any</span> <span class="pre">other</span> <span class="pre">name</span> <span class="pre">is</span> <span class="pre">a</span> <span class="pre">constant.</span> <span class="pre">A</span> <span class="pre">variable</span> <span class="pre">whose</span> <span class="pre">name</span> <span class="pre">starts</span> <span class="pre">with</span> <span class="pre">&quot;_&quot;</span> <span class="pre">after</span> <span class="pre">that</span> <span class="pre">(eg:</span> <span class="pre">&quot;?_b&quot;)</span> <span class="pre">is</span> <span class="pre">hidden:</span> <span class="pre">it</span> <span class="pre">isn\'t</span> <span class="pre">reported</span> <span class="pre">in</span> <span class="pre">a</span> <span class="pre">query\'s</span> <span class="pre">answers.</span> <span class="pre">A</span> <span class="pre">variable\'s</span> <span class="pre">constraints</span> <span class="pre">--</span> <span class="pre">what</span> <span class="pre">what</span> <span class="pre">it</span> <span class="pre">matches</span> <span class="pre">must</span> <span class="pre">be</span> <span class="pre">like</span> <span class="pre">--</span> <span class="pre">are</span> <span class="pre">in</span> <span class="pre">its</span> <span class="pre">&quot;constraints&quot;</span> <span class="pre">attribute</span> <span class="pre">(see</span> <span class="pre">that</span> <span class="pre">attribute\'s</span> <span class="pre">note).</span> <span class="pre">They</span> <span class="pre">can</span> <span class="pre">also</span> <span class="pre">be</span> <span class="pre">typed</span> <span class="pre">here,</span> <span class="pre">after</span> <span class="pre">the</span> <span class="pre">name</span> <span class="pre">and</span> <span class="pre">&quot;:where:&quot;,</span> <span class="pre">eg:\n</span>&#160; <span class="pre">?p</span> <span class="pre">:where:</span> <span class="pre">alive,</span> <span class="pre">age:</span> <span class="pre">30\nand</span> <span class="pre">are</span> <span class="pre">then</span> <span class="pre">moved</span> <span class="pre">into</span> <span class="pre">that</span> <span class="pre">attribute.'</span></span><a class="headerlink" href="#sn.model.NAME_NOTE" title="Link to this definition">¶</a></dt>
@@ -567,8 +582,87 @@ forget to escape it on a command line as “$sn”</p>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="sn.model.clingoReasoner.html#sn.model.clingoReasoner._SYMBOL"><code class="docutils literal notranslate"><span class="pre">_SYMBOL</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.clingoReasoner.html#sn.model.clingoReasoner._KEYWORDS"><code class="docutils literal notranslate"><span class="pre">_KEYWORDS</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="sn.model.clingoReasoner.html#sn.model.clingoReasoner._str"><code class="docutils literal notranslate"><span class="pre">_str()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="sn.model.clingoReasoner.html#sn.model.clingoReasoner._arity"><code class="docutils literal notranslate"><span class="pre">_arity()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sn.model.clipsReasoner.html">sn.model.clipsReasoner module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner.RULES"><code class="docutils literal notranslate"><span class="pre">RULES</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._RENAMED"><code class="docutils literal notranslate"><span class="pre">_RENAMED</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner.RESULTS"><code class="docutils literal notranslate"><span class="pre">RESULTS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._NEW_RESULTS"><code class="docutils literal notranslate"><span class="pre">_NEW_RESULTS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._COUNTING"><code class="docutils literal notranslate"><span class="pre">_COUNTING</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._Form"><code class="docutils literal notranslate"><span class="pre">_Form</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._Form.items"><code class="docutils literal notranslate"><span class="pre">_Form.items</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._Form.start"><code class="docutils literal notranslate"><span class="pre">_Form.start</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._Form.end"><code class="docutils literal notranslate"><span class="pre">_Form.end</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._Form.starts"><code class="docutils literal notranslate"><span class="pre">_Form.starts</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._Form.head"><code class="docutils literal notranslate"><span class="pre">_Form.head()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._Form.__init__"><code class="docutils literal notranslate"><span class="pre">_Form.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._TOKEN"><code class="docutils literal notranslate"><span class="pre">_TOKEN</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._read"><code class="docutils literal notranslate"><span class="pre">_read()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._Rule"><code class="docutils literal notranslate"><span class="pre">_Rule</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._Rule.name"><code class="docutils literal notranslate"><span class="pre">_Rule.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._Rule.text"><code class="docutils literal notranslate"><span class="pre">_Rule.text</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._Rule.heads"><code class="docutils literal notranslate"><span class="pre">_Rule.heads</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._Rule.pos"><code class="docutils literal notranslate"><span class="pre">_Rule.pos</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._Rule.neg"><code class="docutils literal notranslate"><span class="pre">_Rule.neg</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._Rule.stratum"><code class="docutils literal notranslate"><span class="pre">_Rule.stratum</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._Rule.salient"><code class="docutils literal notranslate"><span class="pre">_Rule.salient()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._Rule.__init__"><code class="docutils literal notranslate"><span class="pre">_Rule.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._rule"><code class="docutils literal notranslate"><span class="pre">_rule()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._stratify"><code class="docutils literal notranslate"><span class="pre">_stratify()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._baseRules"><code class="docutils literal notranslate"><span class="pre">_baseRules</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._rulesOf"><code class="docutils literal notranslate"><span class="pre">_rulesOf()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._VARIABLE"><code class="docutils literal notranslate"><span class="pre">_VARIABLE</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._ordered"><code class="docutils literal notranslate"><span class="pre">_ordered()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._Quiet"><code class="docutils literal notranslate"><span class="pre">_Quiet</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._Quiet.__init__"><code class="docutils literal notranslate"><span class="pre">_Quiet.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._Quiet.messages"><code class="docutils literal notranslate"><span class="pre">_Quiet.messages</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._Quiet.query"><code class="docutils literal notranslate"><span class="pre">_Quiet.query()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._Quiet.write"><code class="docutils literal notranslate"><span class="pre">_Quiet.write()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._Program"><code class="docutils literal notranslate"><span class="pre">_Program</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._Program.rules"><code class="docutils literal notranslate"><span class="pre">_Program.rules</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._Program.facts"><code class="docutils literal notranslate"><span class="pre">_Program.facts</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._Program.__init__"><code class="docutils literal notranslate"><span class="pre">_Program.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner.ClipsReasoner"><code class="docutils literal notranslate"><span class="pre">ClipsReasoner</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner.ClipsReasoner.language"><code class="docutils literal notranslate"><span class="pre">ClipsReasoner.language</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner.ClipsReasoner.__init__"><code class="docutils literal notranslate"><span class="pre">ClipsReasoner.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner.ClipsReasoner.rules"><code class="docutils literal notranslate"><span class="pre">ClipsReasoner.rules</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner.ClipsReasoner._ids"><code class="docutils literal notranslate"><span class="pre">ClipsReasoner._ids</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner.ClipsReasoner._objs"><code class="docutils literal notranslate"><span class="pre">ClipsReasoner._objs</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner.ClipsReasoner._news"><code class="docutils literal notranslate"><span class="pre">ClipsReasoner._news</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner.ClipsReasoner._abc_impl"><code class="docutils literal notranslate"><span class="pre">ClipsReasoner._abc_impl</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner.ClipsReasoner._newIds"><code class="docutils literal notranslate"><span class="pre">ClipsReasoner._newIds</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner.ClipsReasoner._term"><code class="docutils literal notranslate"><span class="pre">ClipsReasoner._term()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner.ClipsReasoner._program"><code class="docutils literal notranslate"><span class="pre">ClipsReasoner._program()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner.ClipsReasoner._solve"><code class="docutils literal notranslate"><span class="pre">ClipsReasoner._solve()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner.ClipsReasoner._value"><code class="docutils literal notranslate"><span class="pre">ClipsReasoner._value()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner.ClipsReasoner._object"><code class="docutils literal notranslate"><span class="pre">ClipsReasoner._object()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner.ClipsReasoner._newObject"><code class="docutils literal notranslate"><span class="pre">ClipsReasoner._newObject()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner.ClipsReasoner._counted"><code class="docutils literal notranslate"><span class="pre">ClipsReasoner._counted()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner.ClipsReasoner.run"><code class="docutils literal notranslate"><span class="pre">ClipsReasoner.run()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner.ClipsReasoner._patternBody"><code class="docutils literal notranslate"><span class="pre">ClipsReasoner._patternBody()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner.ClipsReasoner._varNames"><code class="docutils literal notranslate"><span class="pre">ClipsReasoner._varNames()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner.ClipsReasoner.answer"><code class="docutils literal notranslate"><span class="pre">ClipsReasoner.answer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner.ClipsReasoner._newTerm"><code class="docutils literal notranslate"><span class="pre">ClipsReasoner._newTerm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner.ClipsReasoner._satisfied"><code class="docutils literal notranslate"><span class="pre">ClipsReasoner._satisfied()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner.ClipsReasoner._rulesProgram"><code class="docutils literal notranslate"><span class="pre">ClipsReasoner._rulesProgram()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner.ClipsReasoner.query"><code class="docutils literal notranslate"><span class="pre">ClipsReasoner.query()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._SYMBOL"><code class="docutils literal notranslate"><span class="pre">_SYMBOL</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._KEYWORDS"><code class="docutils literal notranslate"><span class="pre">_KEYWORDS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.clipsReasoner.html#sn.model.clipsReasoner._str"><code class="docutils literal notranslate"><span class="pre">_str()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a><ul>
@@ -743,10 +837,12 @@ forget to escape it on a command line as “$sn”</p>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject.isa"><code class="docutils literal notranslate"><span class="pre">GraphObject.isa()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject.getParents"><code class="docutils literal notranslate"><span class="pre">GraphObject.getParents()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject.selfIsaLinks"><code class="docutils literal notranslate"><span class="pre">GraphObject.selfIsaLinks()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject.isaLinksTo"><code class="docutils literal notranslate"><span class="pre">GraphObject.isaLinksTo()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject._validateSelfIsa"><code class="docutils literal notranslate"><span class="pre">GraphObject._validateSelfIsa()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject.parentProblem"><code class="docutils literal notranslate"><span class="pre">GraphObject.parentProblem()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject.getDescendants"><code class="docutils literal notranslate"><span class="pre">GraphObject.getDescendants()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject.getChildren"><code class="docutils literal notranslate"><span class="pre">GraphObject.getChildren()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject.getSubs"><code class="docutils literal notranslate"><span class="pre">GraphObject.getSubs()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject.variableKind"><code class="docutils literal notranslate"><span class="pre">GraphObject.variableKind()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject.isVariable"><code class="docutils literal notranslate"><span class="pre">GraphObject.isVariable()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject.isAnyVariable"><code class="docutils literal notranslate"><span class="pre">GraphObject.isAnyVariable()</span></code></a></li>
@@ -896,6 +992,7 @@ forget to escape it on a command line as “$sn”</p>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html#sn.model.model.Relation.getParents"><code class="docutils literal notranslate"><span class="pre">Relation.getParents()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html#sn.model.model.Relation.tostring"><code class="docutils literal notranslate"><span class="pre">Relation.tostring()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html#sn.model.model.Relation.connect"><code class="docutils literal notranslate"><span class="pre">Relation.connect()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.model.html#sn.model.model.Relation._endsConnected"><code class="docutils literal notranslate"><span class="pre">Relation._endsConnected()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="sn.model.model.html#sn.model.model.IsaIndividual"><code class="docutils literal notranslate"><span class="pre">IsaIndividual</span></code></a><ul>
@@ -905,6 +1002,10 @@ forget to escape it on a command line as “$sn”</p>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html#sn.model.model.IsaIndividual.getParents"><code class="docutils literal notranslate"><span class="pre">IsaIndividual.getParents()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html#sn.model.model.IsaIndividual._endpointChanged"><code class="docutils literal notranslate"><span class="pre">IsaIndividual._endpointChanged()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html#sn.model.model.IsaIndividual.connect"><code class="docutils literal notranslate"><span class="pre">IsaIndividual.connect()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.model.html#sn.model.model.IsaIndividual._endsConnected"><code class="docutils literal notranslate"><span class="pre">IsaIndividual._endsConnected()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.model.html#sn.model.model.IsaIndividual._disconnect"><code class="docutils literal notranslate"><span class="pre">IsaIndividual._disconnect()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.model.html#sn.model.model.IsaIndividual._reconnect"><code class="docutils literal notranslate"><span class="pre">IsaIndividual._reconnect()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.model.html#sn.model.model.IsaIndividual._supersChanged"><code class="docutils literal notranslate"><span class="pre">IsaIndividual._supersChanged()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -944,6 +1045,114 @@ forget to escape it on a command line as “$sn”</p>
 <li class="toctree-l2"><a class="reference internal" href="sn.model.names.html#sn.model.names.stem"><code class="docutils literal notranslate"><span class="pre">stem()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="sn.model.nemoReasoner.html">sn.model.nemoReasoner module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.RULES"><code class="docutils literal notranslate"><span class="pre">RULES</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner._RENAMED"><code class="docutils literal notranslate"><span class="pre">_RENAMED</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner._BASE_ARITIES"><code class="docutils literal notranslate"><span class="pre">_BASE_ARITIES</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner._Facts"><code class="docutils literal notranslate"><span class="pre">_Facts</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner._Facts.tables"><code class="docutils literal notranslate"><span class="pre">_Facts.tables</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner._Facts.text"><code class="docutils literal notranslate"><span class="pre">_Facts.text</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner._Facts.__init__"><code class="docutils literal notranslate"><span class="pre">_Facts.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.Step"><code class="docutils literal notranslate"><span class="pre">Step</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.Step.fact"><code class="docutils literal notranslate"><span class="pre">Step.fact</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.Step.predicate"><code class="docutils literal notranslate"><span class="pre">Step.predicate</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.Step.args"><code class="docutils literal notranslate"><span class="pre">Step.args</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.Step.rule"><code class="docutils literal notranslate"><span class="pre">Step.rule</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.Step.premises"><code class="docutils literal notranslate"><span class="pre">Step.premises</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.Step.trivial"><code class="docutils literal notranslate"><span class="pre">Step.trivial</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.Step.shown"><code class="docutils literal notranslate"><span class="pre">Step.shown()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.Step.lines"><code class="docutils literal notranslate"><span class="pre">Step.lines()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.Step.__str__"><code class="docutils literal notranslate"><span class="pre">Step.__str__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.Step.__init__"><code class="docutils literal notranslate"><span class="pre">Step.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner._HIDDEN"><code class="docutils literal notranslate"><span class="pre">_HIDDEN</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner._GIVEN"><code class="docutils literal notranslate"><span class="pre">_GIVEN</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner._REASONS"><code class="docutils literal notranslate"><span class="pre">_REASONS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner._FORMATS"><code class="docutils literal notranslate"><span class="pre">_FORMATS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner"><code class="docutils literal notranslate"><span class="pre">NemoReasoner</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner.language"><code class="docutils literal notranslate"><span class="pre">NemoReasoner.language</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner.__init__"><code class="docutils literal notranslate"><span class="pre">NemoReasoner.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner.rules"><code class="docutils literal notranslate"><span class="pre">NemoReasoner.rules</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner._ids"><code class="docutils literal notranslate"><span class="pre">NemoReasoner._ids</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner._objs"><code class="docutils literal notranslate"><span class="pre">NemoReasoner._objs</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner._news"><code class="docutils literal notranslate"><span class="pre">NemoReasoner._news</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner._newIds"><code class="docutils literal notranslate"><span class="pre">NemoReasoner._newIds</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner._engine"><code class="docutils literal notranslate"><span class="pre">NemoReasoner._engine</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner._term"><code class="docutils literal notranslate"><span class="pre">NemoReasoner._term()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner._field"><code class="docutils literal notranslate"><span class="pre">NemoReasoner._field()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner._program"><code class="docutils literal notranslate"><span class="pre">NemoReasoner._program()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner._solve"><code class="docutils literal notranslate"><span class="pre">NemoReasoner._solve()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner._value"><code class="docutils literal notranslate"><span class="pre">NemoReasoner._value()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner._object"><code class="docutils literal notranslate"><span class="pre">NemoReasoner._object()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner._newObject"><code class="docutils literal notranslate"><span class="pre">NemoReasoner._newObject()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner.run"><code class="docutils literal notranslate"><span class="pre">NemoReasoner.run()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner._abc_impl"><code class="docutils literal notranslate"><span class="pre">NemoReasoner._abc_impl</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner._patternBody"><code class="docutils literal notranslate"><span class="pre">NemoReasoner._patternBody()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner._varNames"><code class="docutils literal notranslate"><span class="pre">NemoReasoner._varNames()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner.answer"><code class="docutils literal notranslate"><span class="pre">NemoReasoner.answer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner._newTerm"><code class="docutils literal notranslate"><span class="pre">NemoReasoner._newTerm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner._satisfied"><code class="docutils literal notranslate"><span class="pre">NemoReasoner._satisfied()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner._violation"><code class="docutils literal notranslate"><span class="pre">NemoReasoner._violation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner._rulesProgram"><code class="docutils literal notranslate"><span class="pre">NemoReasoner._rulesProgram()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner.query"><code class="docutils literal notranslate"><span class="pre">NemoReasoner.query()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner.explain"><code class="docutils literal notranslate"><span class="pre">NemoReasoner.explain()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner._step"><code class="docutils literal notranslate"><span class="pre">NemoReasoner._step()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner.NemoReasoner._say"><code class="docutils literal notranslate"><span class="pre">NemoReasoner._say()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner._SYMBOL"><code class="docutils literal notranslate"><span class="pre">_SYMBOL</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner._KEYWORDS"><code class="docutils literal notranslate"><span class="pre">_KEYWORDS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner._UNSAFE"><code class="docutils literal notranslate"><span class="pre">_UNSAFE</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner._str"><code class="docutils literal notranslate"><span class="pre">_str()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner._unescape"><code class="docutils literal notranslate"><span class="pre">_unescape()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.nemoReasoner.html#sn.model.nemoReasoner._splitArgs"><code class="docutils literal notranslate"><span class="pre">_splitArgs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sn.model.prologReasoner.html">sn.model.prologReasoner module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner.RULES"><code class="docutils literal notranslate"><span class="pre">RULES</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner._RENAMED"><code class="docutils literal notranslate"><span class="pre">_RENAMED</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner.RESULTS"><code class="docutils literal notranslate"><span class="pre">RESULTS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner._NEW_RESULTS"><code class="docutils literal notranslate"><span class="pre">_NEW_RESULTS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner._HELPER"><code class="docutils literal notranslate"><span class="pre">_HELPER</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner._worker"><code class="docutils literal notranslate"><span class="pre">_worker</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner._call"><code class="docutils literal notranslate"><span class="pre">_call()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner._run"><code class="docutils literal notranslate"><span class="pre">_run()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner._QUOTED"><code class="docutils literal notranslate"><span class="pre">_QUOTED</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner._VARIABLE"><code class="docutils literal notranslate"><span class="pre">_VARIABLE</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner._FILTERS"><code class="docutils literal notranslate"><span class="pre">_FILTERS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner._variables"><code class="docutils literal notranslate"><span class="pre">_variables()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner._args"><code class="docutils literal notranslate"><span class="pre">_args()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner._ordered"><code class="docutils literal notranslate"><span class="pre">_ordered()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner.PrologReasoner"><code class="docutils literal notranslate"><span class="pre">PrologReasoner</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner.PrologReasoner.language"><code class="docutils literal notranslate"><span class="pre">PrologReasoner.language</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner.PrologReasoner.__init__"><code class="docutils literal notranslate"><span class="pre">PrologReasoner.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner.PrologReasoner.rules"><code class="docutils literal notranslate"><span class="pre">PrologReasoner.rules</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner.PrologReasoner._ids"><code class="docutils literal notranslate"><span class="pre">PrologReasoner._ids</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner.PrologReasoner._objs"><code class="docutils literal notranslate"><span class="pre">PrologReasoner._objs</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner.PrologReasoner._term"><code class="docutils literal notranslate"><span class="pre">PrologReasoner._term()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner.PrologReasoner._program"><code class="docutils literal notranslate"><span class="pre">PrologReasoner._program()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner.PrologReasoner._solve"><code class="docutils literal notranslate"><span class="pre">PrologReasoner._solve()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner.PrologReasoner._value"><code class="docutils literal notranslate"><span class="pre">PrologReasoner._value()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner.PrologReasoner.run"><code class="docutils literal notranslate"><span class="pre">PrologReasoner.run()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner.PrologReasoner._patternBody"><code class="docutils literal notranslate"><span class="pre">PrologReasoner._patternBody()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner.PrologReasoner._abc_impl"><code class="docutils literal notranslate"><span class="pre">PrologReasoner._abc_impl</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner.PrologReasoner._varNames"><code class="docutils literal notranslate"><span class="pre">PrologReasoner._varNames()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner.PrologReasoner.answer"><code class="docutils literal notranslate"><span class="pre">PrologReasoner.answer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner.PrologReasoner._newTerm"><code class="docutils literal notranslate"><span class="pre">PrologReasoner._newTerm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner.PrologReasoner._satisfied"><code class="docutils literal notranslate"><span class="pre">PrologReasoner._satisfied()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner.PrologReasoner._rulesProgram"><code class="docutils literal notranslate"><span class="pre">PrologReasoner._rulesProgram()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner.PrologReasoner.query"><code class="docutils literal notranslate"><span class="pre">PrologReasoner.query()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner._SYMBOL"><code class="docutils literal notranslate"><span class="pre">_SYMBOL</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner._str"><code class="docutils literal notranslate"><span class="pre">_str()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner._LOCATION"><code class="docutils literal notranslate"><span class="pre">_LOCATION</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.prologReasoner.html#sn.model.prologReasoner._where"><code class="docutils literal notranslate"><span class="pre">_where()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.PROPERTIES"><code class="docutils literal notranslate"><span class="pre">PROPERTIES</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.CARDINALITY"><code class="docutils literal notranslate"><span class="pre">CARDINALITY</span></code></a></li>
@@ -972,6 +1181,8 @@ forget to escape it on a command line as “$sn”</p>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.Violation.__init__"><code class="docutils literal notranslate"><span class="pre">Violation.__init__()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.assertedIsa"><code class="docutils literal notranslate"><span class="pre">assertedIsa()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner._assertedValue"><code class="docutils literal notranslate"><span class="pre">_assertedValue()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.Inferences"><code class="docutils literal notranslate"><span class="pre">Inferences</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.Inferences.holds"><code class="docutils literal notranslate"><span class="pre">Inferences.holds</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.Inferences.inferred"><code class="docutils literal notranslate"><span class="pre">Inferences.inferred</span></code></a></li>
@@ -1056,6 +1267,31 @@ forget to escape it on a command line as “$sn”</p>
 <li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner._baseURL"><code class="docutils literal notranslate"><span class="pre">_baseURL()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner._baseURLOfModel"><code class="docutils literal notranslate"><span class="pre">_baseURLOfModel()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.baseRuleModels"><code class="docutils literal notranslate"><span class="pre">baseRuleModels()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.EngineInfo"><code class="docutils literal notranslate"><span class="pre">EngineInfo</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.EngineInfo.name"><code class="docutils literal notranslate"><span class="pre">EngineInfo.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.EngineInfo.module"><code class="docutils literal notranslate"><span class="pre">EngineInfo.module</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.EngineInfo.package"><code class="docutils literal notranslate"><span class="pre">EngineInfo.package</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.EngineInfo.explains"><code class="docutils literal notranslate"><span class="pre">EngineInfo.explains</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.EngineInfo.bundled"><code class="docutils literal notranslate"><span class="pre">EngineInfo.bundled</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.EngineInfo.needs"><code class="docutils literal notranslate"><span class="pre">EngineInfo.needs</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.EngineInfo.__init__"><code class="docutils literal notranslate"><span class="pre">EngineInfo.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.ENGINES"><code class="docutils literal notranslate"><span class="pre">ENGINES</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.PIP"><code class="docutils literal notranslate"><span class="pre">PIP</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.INSTALL_HELP"><code class="docutils literal notranslate"><span class="pre">INSTALL_HELP</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.EngineMissing"><code class="docutils literal notranslate"><span class="pre">EngineMissing</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.EngineMissing.__init__"><code class="docutils literal notranslate"><span class="pre">EngineMissing.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.EngineMissing.engine"><code class="docutils literal notranslate"><span class="pre">EngineMissing.engine</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.EngineMissing.package"><code class="docutils literal notranslate"><span class="pre">EngineMissing.package</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.EngineMissing.detail"><code class="docutils literal notranslate"><span class="pre">EngineMissing.detail</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.engineInstalled"><code class="docutils literal notranslate"><span class="pre">engineInstalled()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner._lookOutside"><code class="docutils literal notranslate"><span class="pre">_lookOutside()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner._importEngine"><code class="docutils literal notranslate"><span class="pre">_importEngine()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.installedEngines"><code class="docutils literal notranslate"><span class="pre">installedEngines()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.explainingEngine"><code class="docutils literal notranslate"><span class="pre">explainingEngine()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.Reasoner"><code class="docutils literal notranslate"><span class="pre">Reasoner</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.Reasoner._abc_impl"><code class="docutils literal notranslate"><span class="pre">Reasoner._abc_impl</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.Reasoner.engines"><code class="docutils literal notranslate"><span class="pre">Reasoner.engines</span></code></a></li>
@@ -1082,6 +1318,8 @@ forget to escape it on a command line as “$sn”</p>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.Reasoner._relationFacts"><code class="docutils literal notranslate"><span class="pre">Reasoner._relationFacts()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.defaultEngine"><code class="docutils literal notranslate"><span class="pre">defaultEngine()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.setDefaultEngine"><code class="docutils literal notranslate"><span class="pre">setDefaultEngine()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.reason"><code class="docutils literal notranslate"><span class="pre">reason()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.summary"><code class="docutils literal notranslate"><span class="pre">summary()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.clearReasoning"><code class="docutils literal notranslate"><span class="pre">clearReasoning()</span></code></a></li>
@@ -1093,6 +1331,7 @@ forget to escape it on a command line as “$sn”</p>
 <li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner._newObjectKey"><code class="docutils literal notranslate"><span class="pre">_newObjectKey()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner._newObjectName"><code class="docutils literal notranslate"><span class="pre">_newObjectName()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.inferredNodeFor"><code class="docutils literal notranslate"><span class="pre">inferredNodeFor()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner._retype"><code class="docutils literal notranslate"><span class="pre">_retype()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.materialize"><code class="docutils literal notranslate"><span class="pre">materialize()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.reasoningFor"><code class="docutils literal notranslate"><span class="pre">reasoningFor()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner._kind"><code class="docutils literal notranslate"><span class="pre">_kind()</span></code></a></li>
@@ -1101,7 +1340,9 @@ forget to escape it on a command line as “$sn”</p>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sn.model.snAttribute.html#sn.model.snAttribute.MARKS_ATTRS"><code class="docutils literal notranslate"><span class="pre">MARKS_ATTRS</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="sn.model.snAttribute.html#sn.model.snAttribute.SNAttributedObject"><code class="docutils literal notranslate"><span class="pre">SNAttributedObject</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html#sn.model.snAttribute.SNAttributedObject._validateOverride"><code class="docutils literal notranslate"><span class="pre">SNAttributedObject._validateOverride()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html#sn.model.snAttribute.SNAttributedObject.__setitem__"><code class="docutils literal notranslate"><span class="pre">SNAttributedObject.__setitem__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html#sn.model.snAttribute.SNAttributedObject.setAttr"><code class="docutils literal notranslate"><span class="pre">SNAttributedObject.setAttr()</span></code></a></li>
 </ul>
@@ -1169,6 +1410,8 @@ forget to escape it on a command line as “$sn”</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">sn.model package</a><ul>
+<li><a class="reference internal" href="#sn.model.TerminatorType"><code class="docutils literal notranslate"><span class="pre">TerminatorType</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.MARKS_NOTE"><code class="docutils literal notranslate"><span class="pre">MARKS_NOTE</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.NAME_NOTE"><code class="docutils literal notranslate"><span class="pre">NAME_NOTE</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.TopModel"><code class="docutils literal notranslate"><span class="pre">TopModel</span></code></a><ul>
 <li><a class="reference internal" href="#sn.model.TopModel.__init__"><code class="docutils literal notranslate"><span class="pre">TopModel.__init__()</span></code></a></li>
@@ -1205,7 +1448,7 @@ forget to escape it on a command line as “$sn”</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=292eb321"></script>
+</div><script src="../_static/documentation_options.js?v=56dcb7b8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

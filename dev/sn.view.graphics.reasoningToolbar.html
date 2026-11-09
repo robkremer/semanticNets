@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.view.graphics.reasoningToolbar module - Semantic Nets 1.0.1 documentation</title>
+        <title>sn.view.graphics.reasoningToolbar module - Semantic Nets 1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -238,12 +238,15 @@
 <li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html">sn.model.clipsReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html">sn.model.nemoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html">sn.model.prologReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
 </ul>
@@ -363,7 +366,10 @@
         <article role="main" id="furo-main-content">
           <section id="module-sn.view.graphics.reasoningToolbar">
 <span id="sn-view-graphics-reasoningtoolbar-module"></span><h1>sn.view.graphics.reasoningToolbar module<a class="headerlink" href="#module-sn.view.graphics.reasoningToolbar" title="Link to this heading">¶</a></h1>
-<p>The reasoning toolbar: a strip across the bottom of a view’s window with
+<p>The reasoning toolbar: a strip across the bottom of a view’s window. At its
+left, a box says which reasoner engine reasoning uses (the “reasoner/engine”
+setting: see <em>sn.model.reasoner.defaultEngine()</em>); clicking it gives a menu of
+the engines, to choose another (see <em>ReasoningToolbar.chooseEngine()</em>). Then
 small icon buttons (each with a tooltip) to <em>Reason</em> (run the reasoner over
 the view’s model: see <em>sn.model.reasoner.reason()</em>), <em>Reason silently</em> (the
 same, without adding what it infers to the views: see
@@ -381,8 +387,31 @@ the view’s zoom (see <em>SNGView.zoom()</em>). Shown and hidden with
 <p><em>Code author: Rob Kremer &lt;<a class="reference external" href="mailto:robkremer&#37;&#52;&#48;me&#46;com">robkremer<span>&#64;</span>me<span>&#46;</span>com</a>&gt;</em></p>
 <dl class="py data">
 <dt class="sig sig-object py" id="sn.view.graphics.reasoningToolbar.TIPS">
-<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.reasoningToolbar.</span></span><span class="sig-name descname"><span class="pre">TIPS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'locked':</span> <span class="pre">&quot;The</span> <span class="pre">model</span> <span class="pre">is</span> <span class="pre">read-only:</span> <span class="pre">it</span> <span class="pre">can't</span> <span class="pre">be</span> <span class="pre">changed</span> <span class="pre">here</span> <span class="pre">(eg:</span> <span class="pre">the</span> <span class="pre">system</span> <span class="pre">model,</span> <span class="pre">or</span> <span class="pre">the</span> <span class="pre">base</span> <span class="pre">rules).</span> <span class="pre">Its</span> <span class="pre">views</span> <span class="pre">can</span> <span class="pre">still</span> <span class="pre">be</span> <span class="pre">arranged</span> <span class="pre">and</span> <span class="pre">saved.&quot;,</span> <span class="pre">'reason':</span> <span class="pre">&quot;Reason:</span> <span class="pre">run</span> <span class="pre">the</span> <span class="pre">reasoner</span> <span class="pre">over</span> <span class="pre">the</span> <span class="pre">model.</span> <span class="pre">What</span> <span class="pre">it</span> <span class="pre">infers</span> <span class="pre">is</span> <span class="pre">shown</span> <span class="pre">(faded)</span> <span class="pre">in</span> <span class="pre">every</span> <span class="pre">view</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">model,</span> <span class="pre">and</span> <span class="pre">its</span> <span class="pre">report</span> <span class="pre">goes</span> <span class="pre">to</span> <span class="pre">the</span> <span class="pre">terminal.</span> <span class="pre">It</span> <span class="pre">isn't</span> <span class="pre">redone</span> <span class="pre">as</span> <span class="pre">you</span> <span class="pre">edit:</span> <span class="pre">click</span> <span class="pre">again</span> <span class="pre">after</span> <span class="pre">changes.&quot;,</span> <span class="pre">'reasonSilently':</span> <span class="pre">&quot;Reason</span> <span class="pre">silently:</span> <span class="pre">run</span> <span class="pre">the</span> <span class="pre">reasoner,</span> <span class="pre">but</span> <span class="pre">don't</span> <span class="pre">add</span> <span class="pre">what</span> <span class="pre">it</span> <span class="pre">infers</span> <span class="pre">to</span> <span class="pre">the</span> <span class="pre">views</span> <span class="pre">(only</span> <span class="pre">the</span> <span class="pre">problems</span> <span class="pre">are</span> <span class="pre">marked),</span> <span class="pre">and</span> <span class="pre">print</span> <span class="pre">just</span> <span class="pre">a</span> <span class="pre">summary</span> <span class="pre">--</span> <span class="pre">eg:</span> <span class="pre">so</span> <span class="pre">that</span> <span class="pre">queries</span> <span class="pre">find</span> <span class="pre">what</span> <span class="pre">the</span> <span class="pre">rules</span> <span class="pre">conclude.&quot;,</span> <span class="pre">'retract':</span> <span class="pre">'Retract:</span> <span class="pre">take</span> <span class="pre">what</span> <span class="pre">the</span> <span class="pre">reasoner</span> <span class="pre">inferred</span> <span class="pre">back</span> <span class="pre">out</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">model</span> <span class="pre">(and</span> <span class="pre">its</span> <span class="pre">views).',</span> <span class="pre">'status':</span> <span class="pre">'What</span> <span class="pre">the</span> <span class="pre">last</span> <span class="pre">&quot;reason&quot;</span> <span class="pre">found:</span> <span class="pre">the</span> <span class="pre">objects</span> <span class="pre">it</span> <span class="pre">inferred,</span> <span class="pre">and</span> <span class="pre">the</span> <span class="pre">problems</span> <span class="pre">(violations)</span> <span class="pre">it</span> <span class="pre">found.',</span> <span class="pre">'viewLocked':</span> <span class="pre">&quot;This</span> <span class="pre">view</span> <span class="pre">is</span> <span class="pre">locked:</span> <span class="pre">it</span> <span class="pre">can't</span> <span class="pre">change</span> <span class="pre">the</span> <span class="pre">model,</span> <span class="pre">though</span> <span class="pre">it</span> <span class="pre">can</span> <span class="pre">still</span> <span class="pre">be</span> <span class="pre">arranged</span> <span class="pre">and</span> <span class="pre">saved.</span> <span class="pre">Click</span> <span class="pre">to</span> <span class="pre">unlock</span> <span class="pre">it.&quot;,</span> <span class="pre">'writable':</span> <span class="pre">&quot;The</span> <span class="pre">model</span> <span class="pre">can</span> <span class="pre">be</span> <span class="pre">edited</span> <span class="pre">in</span> <span class="pre">this</span> <span class="pre">view</span> <span class="pre">(and</span> <span class="pre">saved).</span> <span class="pre">Click</span> <span class="pre">to</span> <span class="pre">lock</span> <span class="pre">the</span> <span class="pre">view,</span> <span class="pre">so</span> <span class="pre">it</span> <span class="pre">can't</span> <span class="pre">change</span> <span class="pre">the</span> <span class="pre">model</span> <span class="pre">(it</span> <span class="pre">can</span> <span class="pre">still</span> <span class="pre">be</span> <span class="pre">arranged).&quot;,</span> <span class="pre">'zoom':</span> <span class="pre">&quot;The</span> <span class="pre">view's</span> <span class="pre">zoom</span> <span class="pre">(View</span> <span class="pre">|</span> <span class="pre">Zoom).&quot;}</span></span><a class="headerlink" href="#sn.view.graphics.reasoningToolbar.TIPS" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.reasoningToolbar.</span></span><span class="sig-name descname"><span class="pre">TIPS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'engine':</span> <span class="pre">'The</span> <span class="pre">reasoner</span> <span class="pre">engine</span> <span class="pre">that</span> <span class="pre">Reason,</span> <span class="pre">queries</span> <span class="pre">and</span> <span class="pre">&quot;ask</span> <span class="pre">reasoner&quot;</span> <span class="pre">use</span> <span class="pre">(the</span> <span class="pre">reasoner/engine</span> <span class="pre">setting).</span> <span class="pre">Click</span> <span class="pre">to</span> <span class="pre">choose</span> <span class="pre">another.',</span> <span class="pre">'locked':</span> <span class="pre">&quot;The</span> <span class="pre">model</span> <span class="pre">is</span> <span class="pre">read-only:</span> <span class="pre">it</span> <span class="pre">can't</span> <span class="pre">be</span> <span class="pre">changed</span> <span class="pre">here</span> <span class="pre">(eg:</span> <span class="pre">the</span> <span class="pre">system</span> <span class="pre">model,</span> <span class="pre">or</span> <span class="pre">the</span> <span class="pre">base</span> <span class="pre">rules).</span> <span class="pre">Its</span> <span class="pre">views</span> <span class="pre">can</span> <span class="pre">still</span> <span class="pre">be</span> <span class="pre">arranged</span> <span class="pre">and</span> <span class="pre">saved.&quot;,</span> <span class="pre">'reason':</span> <span class="pre">&quot;Reason:</span> <span class="pre">run</span> <span class="pre">the</span> <span class="pre">reasoner</span> <span class="pre">over</span> <span class="pre">the</span> <span class="pre">model.</span> <span class="pre">What</span> <span class="pre">it</span> <span class="pre">infers</span> <span class="pre">is</span> <span class="pre">shown</span> <span class="pre">(faded)</span> <span class="pre">in</span> <span class="pre">every</span> <span class="pre">view</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">model,</span> <span class="pre">and</span> <span class="pre">its</span> <span class="pre">report</span> <span class="pre">goes</span> <span class="pre">to</span> <span class="pre">the</span> <span class="pre">terminal.</span> <span class="pre">It</span> <span class="pre">isn't</span> <span class="pre">redone</span> <span class="pre">as</span> <span class="pre">you</span> <span class="pre">edit:</span> <span class="pre">click</span> <span class="pre">again</span> <span class="pre">after</span> <span class="pre">changes.&quot;,</span> <span class="pre">'reasonSilently':</span> <span class="pre">&quot;Reason</span> <span class="pre">silently:</span> <span class="pre">run</span> <span class="pre">the</span> <span class="pre">reasoner,</span> <span class="pre">but</span> <span class="pre">don't</span> <span class="pre">add</span> <span class="pre">what</span> <span class="pre">it</span> <span class="pre">infers</span> <span class="pre">to</span> <span class="pre">the</span> <span class="pre">views</span> <span class="pre">(only</span> <span class="pre">the</span> <span class="pre">problems</span> <span class="pre">are</span> <span class="pre">marked),</span> <span class="pre">and</span> <span class="pre">print</span> <span class="pre">just</span> <span class="pre">a</span> <span class="pre">summary</span> <span class="pre">--</span> <span class="pre">eg:</span> <span class="pre">so</span> <span class="pre">that</span> <span class="pre">queries</span> <span class="pre">find</span> <span class="pre">what</span> <span class="pre">the</span> <span class="pre">rules</span> <span class="pre">conclude.&quot;,</span> <span class="pre">'retract':</span> <span class="pre">'Retract:</span> <span class="pre">take</span> <span class="pre">what</span> <span class="pre">the</span> <span class="pre">reasoner</span> <span class="pre">inferred</span> <span class="pre">back</span> <span class="pre">out</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">model</span> <span class="pre">(and</span> <span class="pre">its</span> <span class="pre">views).',</span> <span class="pre">'status':</span> <span class="pre">'What</span> <span class="pre">the</span> <span class="pre">last</span> <span class="pre">&quot;reason&quot;</span> <span class="pre">found:</span> <span class="pre">the</span> <span class="pre">objects</span> <span class="pre">it</span> <span class="pre">inferred,</span> <span class="pre">and</span> <span class="pre">the</span> <span class="pre">problems</span> <span class="pre">(violations)</span> <span class="pre">it</span> <span class="pre">found.',</span> <span class="pre">'viewLocked':</span> <span class="pre">&quot;This</span> <span class="pre">view</span> <span class="pre">is</span> <span class="pre">locked:</span> <span class="pre">it</span> <span class="pre">can't</span> <span class="pre">change</span> <span class="pre">the</span> <span class="pre">model,</span> <span class="pre">though</span> <span class="pre">it</span> <span class="pre">can</span> <span class="pre">still</span> <span class="pre">be</span> <span class="pre">arranged</span> <span class="pre">and</span> <span class="pre">saved.</span> <span class="pre">Click</span> <span class="pre">to</span> <span class="pre">unlock</span> <span class="pre">it.&quot;,</span> <span class="pre">'writable':</span> <span class="pre">&quot;The</span> <span class="pre">model</span> <span class="pre">can</span> <span class="pre">be</span> <span class="pre">edited</span> <span class="pre">in</span> <span class="pre">this</span> <span class="pre">view</span> <span class="pre">(and</span> <span class="pre">saved).</span> <span class="pre">Click</span> <span class="pre">to</span> <span class="pre">lock</span> <span class="pre">the</span> <span class="pre">view,</span> <span class="pre">so</span> <span class="pre">it</span> <span class="pre">can't</span> <span class="pre">change</span> <span class="pre">the</span> <span class="pre">model</span> <span class="pre">(it</span> <span class="pre">can</span> <span class="pre">still</span> <span class="pre">be</span> <span class="pre">arranged).&quot;,</span> <span class="pre">'zoom':</span> <span class="pre">&quot;The</span> <span class="pre">view's</span> <span class="pre">zoom</span> <span class="pre">(View</span> <span class="pre">|</span> <span class="pre">Zoom).&quot;}</span></span><a class="headerlink" href="#sn.view.graphics.reasoningToolbar.TIPS" title="Link to this definition">¶</a></dt>
 <dd><p>Tooltips for the toolbar’s controls.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.view.graphics.reasoningToolbar._toolbars">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.reasoningToolbar.</span></span><span class="sig-name descname"><span class="pre">_toolbars</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">WeakSet</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">set()</span></span><a class="headerlink" href="#sn.view.graphics.reasoningToolbar._toolbars" title="Link to this definition">¶</a></dt>
+<dd><p>Every view’s reasoning toolbar: see <em>refreshEngines()</em>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.reasoningToolbar.refreshEngines">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.reasoningToolbar.</span></span><span class="sig-name descname"><span class="pre">refreshEngines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">_args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.reasoningToolbar.refreshEngines" title="Link to this definition">¶</a></dt>
+<dd><p>Show the reasoner engine now chosen (see <em>sn.model.reasoner.defaultEngine()</em>)
+in every view’s reasoning toolbar: called when the “reasoner/engine” setting
+changes (as a callback of <em>sn.snPrefs</em>, and by <em>guiApp.Application.openSettings()</em>,
+whose changes don’t call those).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>_args</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py class">
@@ -437,6 +466,61 @@ and enable <em>Retract</em> only if there’s something to retract.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.reasoningToolbar.ReasoningToolbar.refreshEngine">
+<span class="sig-name descname"><span class="pre">refreshEngine</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.reasoningToolbar.ReasoningToolbar.refreshEngine" title="Link to this definition">¶</a></dt>
+<dd><p>Show the reasoner engine that reasoning uses (see <em>sn.model.reasoner.defaultEngine()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.reasoningToolbar.ReasoningToolbar.engineMenuItems">
+<span class="sig-name descname"><span class="pre">engineMenuItems</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.reasoningToolbar.ReasoningToolbar.engineMenuItems" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The engine menu’s engines (see <em>showEngineMenu()</em>): each one’s
+name and label, which says if it isn’t installed.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[tuple[str, str]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.reasoningToolbar.ReasoningToolbar.showEngineMenu">
+<span class="sig-name descname"><span class="pre">showEngineMenu</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.reasoningToolbar.ReasoningToolbar.showEngineMenu" title="Link to this definition">¶</a></dt>
+<dd><p>The engine box is clicked: show a menu of the reasoner engines, the one
+used now checked, to choose another (see <em>chooseEngine()</em>) – and how to
+install one, in the User Guide.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.reasoningToolbar.ReasoningToolbar.chooseEngine">
+<span class="sig-name descname"><span class="pre">chooseEngine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">engine</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.reasoningToolbar.ReasoningToolbar.chooseEngine" title="Link to this definition">¶</a></dt>
+<dd><p>Reason with <em>engine</em> from now on: the “reasoner/engine” setting (see
+<em>sn.model.reasoner.setDefaultEngine()</em>), which every view’s toolbar shows. If it
+isn’t installed, it’s not chosen: a dialog says how to install it (see
+<em>sn.view.graphics.viewReasoning.showEngineMissing()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>engine</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -538,12 +622,18 @@ unlock it (see <em>SNGView.setEditLocked()</em>) – not a write-locked model’
             <ul>
 <li><a class="reference internal" href="#">sn.view.graphics.reasoningToolbar module</a><ul>
 <li><a class="reference internal" href="#sn.view.graphics.reasoningToolbar.TIPS"><code class="docutils literal notranslate"><span class="pre">TIPS</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.reasoningToolbar._toolbars"><code class="docutils literal notranslate"><span class="pre">_toolbars</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.reasoningToolbar.refreshEngines"><code class="docutils literal notranslate"><span class="pre">refreshEngines()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.reasoningToolbar.ReasoningToolbar"><code class="docutils literal notranslate"><span class="pre">ReasoningToolbar</span></code></a><ul>
 <li><a class="reference internal" href="#sn.view.graphics.reasoningToolbar.ReasoningToolbar.PADDING"><code class="docutils literal notranslate"><span class="pre">ReasoningToolbar.PADDING</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.reasoningToolbar.ReasoningToolbar.ICON_WIDTH"><code class="docutils literal notranslate"><span class="pre">ReasoningToolbar.ICON_WIDTH</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.reasoningToolbar.ReasoningToolbar.LOCK_SIZE"><code class="docutils literal notranslate"><span class="pre">ReasoningToolbar.LOCK_SIZE</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.reasoningToolbar.ReasoningToolbar.__init__"><code class="docutils literal notranslate"><span class="pre">ReasoningToolbar.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.reasoningToolbar.ReasoningToolbar.refresh"><code class="docutils literal notranslate"><span class="pre">ReasoningToolbar.refresh()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.reasoningToolbar.ReasoningToolbar.refreshEngine"><code class="docutils literal notranslate"><span class="pre">ReasoningToolbar.refreshEngine()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.reasoningToolbar.ReasoningToolbar.engineMenuItems"><code class="docutils literal notranslate"><span class="pre">ReasoningToolbar.engineMenuItems()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.reasoningToolbar.ReasoningToolbar.showEngineMenu"><code class="docutils literal notranslate"><span class="pre">ReasoningToolbar.showEngineMenu()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.reasoningToolbar.ReasoningToolbar.chooseEngine"><code class="docutils literal notranslate"><span class="pre">ReasoningToolbar.chooseEngine()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.reasoningToolbar.ReasoningToolbar.refreshLock"><code class="docutils literal notranslate"><span class="pre">ReasoningToolbar.refreshLock()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.reasoningToolbar.ReasoningToolbar.toggleLock"><code class="docutils literal notranslate"><span class="pre">ReasoningToolbar.toggleLock()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.reasoningToolbar.ReasoningToolbar.refreshZoom"><code class="docutils literal notranslate"><span class="pre">ReasoningToolbar.refreshZoom()</span></code></a></li>
@@ -560,7 +650,7 @@ unlock it (see <em>SNGView.setEditLocked()</em>) – not a write-locked model’
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=292eb321"></script>
+</div><script src="../_static/documentation_options.js?v=56dcb7b8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

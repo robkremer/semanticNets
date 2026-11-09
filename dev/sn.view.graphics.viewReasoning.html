@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.view.graphics.viewReasoning module - Semantic Nets 1.0.1 documentation</title>
+        <title>sn.view.graphics.viewReasoning module - Semantic Nets 1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -238,12 +238,15 @@
 <li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html">sn.model.clipsReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html">sn.model.nemoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html">sn.model.prologReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
 </ul>
@@ -367,6 +370,33 @@
 of <em>sn.view.graphics.sngView.SNGView</em> (see <em>viewBase</em>).</p>
 <p>Created on Oct 18, 2026 (from sngView.py)</p>
 <p><em>Code author: Rob Kremer &lt;<a class="reference external" href="mailto:robkremer&#37;&#52;&#48;me&#46;com">robkremer<span>&#64;</span>me<span>&#46;</span>com</a>&gt;</em></p>
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.viewReasoning.showEngineMissing">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewReasoning.</span></span><span class="sig-name descname"><span class="pre">showEngineMissing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">missing</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">purpose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chosen</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">instead</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewReasoning.showEngineMissing" title="Link to this definition">¶</a></dt>
+<dd><p>Say that a reasoner engine isn’t installed (or won’t load), in a dialog with a
+link to how to install it (<em>sn.model.reasoner.INSTALL_HELP</em>, in the User
+Guide) – and, if it’s the one the “reasoner/engine” setting picks, links to
+pick an installed one instead.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parent</strong> (<em>tk.Misc</em>) – What it’s shown over.</p></li>
+<li><p><strong>missing</strong> (<em>str</em><em> | </em><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.EngineMissing" title="sn.model.reasoner.EngineMissing"><em>EngineMissing</em></a>) – The engine’s name, or the error saying it’s missing (see <em>sn.model.reasoner.Reasoner.create()</em>).</p></li>
+<li><p><strong>purpose</strong> (<em>str</em>) – What it was wanted for, as a sentence: eg, “Explaining a conclusion needs it.”</p></li>
+<li><p><strong>chosen</strong> (<em>bool</em>) – It was just chosen in Settings.</p></li>
+<li><p><strong>instead</strong> (<em>Callable</em><em>[</em><em>[</em><em>str</em><em>]</em><em>, </em><em>None</em><em>] </em><em>| </em><em>None</em>) – Called with an installed engine’s name to use it this time
+(eg: to reason with it): if given, there’s a link for each.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The dialog.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ActionDialog</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="sn.view.graphics.viewReasoning.ReasoningMixin">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewReasoning.</span></span><span class="sig-name descname"><span class="pre">ReasoningMixin</span></span><a class="headerlink" href="#sn.view.graphics.viewReasoning.ReasoningMixin" title="Link to this definition">¶</a></dt>
@@ -431,7 +461,7 @@ or the command line (see <em>sn.model.reasoner.reason()</em>) – or None.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.viewReasoning.ReasoningMixin.reason">
-<span class="sig-name descname"><span class="pre">reason</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'clingo'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewReasoning.ReasoningMixin.reason" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">reason</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewReasoning.ReasoningMixin.reason" title="Link to this definition">¶</a></dt>
 <dd><p>Run the reasoner over this view’s model and print the report to this
 window’s terminal. The results are kept with the model, so this and every
 other view of it show them (see <em>_showReasoning()</em>), as they do when
@@ -439,8 +469,8 @@ other view of it show them (see <em>_showReasoning()</em>), as they do when
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>engine</strong> (<em>str</em><em> | </em><em>None</em>) – The reasoner engine; by default the preference’s (see <em>sn.model.reasoner.defaultEngine()</em>).</p></li>
 <li><p><strong>silent</strong> (<em>bool</em>) – See <em>reasonSilently()</em>.</p></li>
-<li><p><strong>engine</strong> (<em>str</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -582,6 +612,7 @@ saved with it.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">sn.view.graphics.viewReasoning module</a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.viewReasoning.showEngineMissing"><code class="docutils literal notranslate"><span class="pre">showEngineMissing()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewReasoning.ReasoningMixin"><code class="docutils literal notranslate"><span class="pre">ReasoningMixin</span></code></a><ul>
 <li><a class="reference internal" href="#sn.view.graphics.viewReasoning.ReasoningMixin._reasoningToolbarShown"><code class="docutils literal notranslate"><span class="pre">ReasoningMixin._reasoningToolbarShown()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewReasoning.ReasoningMixin.showReasoningToolbar"><code class="docutils literal notranslate"><span class="pre">ReasoningMixin.showReasoningToolbar()</span></code></a></li>
@@ -606,7 +637,7 @@ saved with it.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=292eb321"></script>
+</div><script src="../_static/documentation_options.js?v=56dcb7b8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.view.graphics.balloonLayout module - Semantic Nets 1.0.1 documentation</title>
+        <title>sn.view.graphics.balloonLayout module - Semantic Nets 1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -238,12 +238,15 @@
 <li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html">sn.model.clipsReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html">sn.model.nemoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html">sn.model.prologReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
 </ul>
@@ -1060,7 +1063,10 @@ the user drags (and drops) that isn’t a group’s root (or its only hub) is
 pinned there, as the root (only hub) of a group of its own, with what’s
 under it, until the next static round layout; dropping a root moves its
 group. The nodes in no group are put as by the static layout, each time –
-except those the user drops somewhere, which are pinned there.</p>
+except those the user drops somewhere, which are pinned there. The label of
+a relation between nodes arranged that isn’t a group’s floats between its
+ends, unless there’s more than one between the same two: those are put
+side by side (but not one the user drops somewhere: see <em>labelled</em>).</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sn.view.graphics.balloonLayout._RoundLayout.CATEGORIES">
 <span class="sig-name descname"><span class="pre">CATEGORIES</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('static',</span> <span class="pre">'dynamic')</span></span><a class="headerlink" href="#sn.view.graphics.balloonLayout._RoundLayout.CATEGORIES" title="Link to this definition">¶</a></dt>
@@ -1093,6 +1099,13 @@ except those the user drops somewhere, which are pinned there.</p>
 <dt class="sig sig-object py" id="sn.view.graphics.balloonLayout._RoundLayout.known">
 <span class="sig-name descname"><span class="pre">known</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.balloonLayout._RoundLayout.known" title="Link to this definition">¶</a></dt>
 <dd><p>The ids of the nodes it laid out last time (None: all those there are): a new one doesn’t anchor its group.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.balloonLayout._RoundLayout.labelled">
+<span class="sig-name descname"><span class="pre">labelled</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.balloonLayout._RoundLayout.labelled" title="Link to this definition">¶</a></dt>
+<dd><p>The ids of the relations whose labels it placed last time: one it no longer places floats between its
+ends again; a pinned label not among them (eg: dropped by the user) is left where it is.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -1170,10 +1183,11 @@ nodes roots of their own (see <em>pins</em>).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.balloonLayout._RoundLayout._withLabels">
-<span class="sig-name descname"><span class="pre">_withLabels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edges</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.balloonLayout._RoundLayout._withLabels" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">_withLabels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edges</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.balloonLayout._RoundLayout._withLabels" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>dynamic</strong> (<em>bool</em>) – Whether it’s for keeping things arranged (see <em>_otherLabels()</em>).</p></li>
 <li><p><strong>positions</strong> (<em>dict</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>)</p></li>
 <li><p><strong>sizes</strong> (<em>dict</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>)</p></li>
 <li><p><strong>edges</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>Any</em><em>]</em><em>]</em>)</p></li>
@@ -1259,17 +1273,19 @@ nearest free place (see <em>FindFree</em>).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.balloonLayout._RoundLayout._adjustment">
-<span class="sig-name descname"><span class="pre">_adjustment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pinned</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.balloonLayout._RoundLayout._adjustment" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">_adjustment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pinned</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropped</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.balloonLayout._RoundLayout._adjustment" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> (<em>str</em>) – What the undo menu calls it.</p></li>
 <li><p><strong>pinned</strong> (<em>set</em><em>[</em><em>int</em><em>]</em>) – Ids of nodes to pin now (see <em>pins</em>).</p></li>
+<li><p><strong>dropped</strong> (<em>set</em><em>[</em><em>int</em><em>]</em>) – Ids of relations whose labels the user just dropped: left where they are (see <em>labelled</em>).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The moves that keep things arranged (see <em>compute()</em>), with
-<em>pinned</em> pinned, and what it knows updated: not done yet.</p>
+<em>pinned</em> pinned, the labels it no longer places made to float, and
+what it knows updated: not done yet.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutMoves" title="sn.view.graphics.layout.LayoutMoves"><em>LayoutMoves</em></a></p>
@@ -1380,20 +1396,24 @@ between their circles (see <em>radius()</em>).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.balloonLayout._RoundLayout._otherLabels">
-<span class="sig-name descname"><span class="pre">_otherLabels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edges</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.balloonLayout._RoundLayout._otherLabels" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">_otherLabels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edges</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.balloonLayout._RoundLayout._otherLabels" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>edges</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>Any</em><em>]</em><em>]</em>) – The relations whose labels are put already (see <em>_labelTargets()</em>).</p></li>
+<li><p><strong>dynamic</strong> (<em>bool</em>) – Whether it’s for keeping things arranged: a label pinned
+that it didn’t place last time (eg: the user dropped it somewhere: see
+<em>labelled</em>) is left out.</p></li>
 <li><p><strong>positions</strong> (<em>dict</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>)</p></li>
 <li><p><strong>sizes</strong> (<em>dict</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Where the label of each other relation shown between the nodes
-arranged goes (its top left): midway between its ends’ centres – or,
-for more than one between the same two, side by side across the line
-between them, round the middle.</p>
+arranged goes (its top left), for more than one between the same two:
+side by side across the line between them, round the middle. (Not a
+label alone between its ends: it floats there anyway, so it keeps
+following its ends.)</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>dict[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, tuple[float, float]]</p>
@@ -1939,6 +1959,7 @@ nodes roots of their own (see <em>pins</em>).</p>
 <li><a class="reference internal" href="#sn.view.graphics.balloonLayout._RoundLayout.__init__"><code class="docutils literal notranslate"><span class="pre">_RoundLayout.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.balloonLayout._RoundLayout.pins"><code class="docutils literal notranslate"><span class="pre">_RoundLayout.pins</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.balloonLayout._RoundLayout.known"><code class="docutils literal notranslate"><span class="pre">_RoundLayout.known</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.balloonLayout._RoundLayout.labelled"><code class="docutils literal notranslate"><span class="pre">_RoundLayout.labelled</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.balloonLayout._RoundLayout._fallback"><code class="docutils literal notranslate"><span class="pre">_RoundLayout._fallback</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.balloonLayout._RoundLayout._treeLayout"><code class="docutils literal notranslate"><span class="pre">_RoundLayout._treeLayout</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.balloonLayout._RoundLayout._tree"><code class="docutils literal notranslate"><span class="pre">_RoundLayout._tree()</span></code></a></li>
@@ -2010,7 +2031,7 @@ nodes roots of their own (see <em>pins</em>).</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=292eb321"></script>
+</div><script src="../_static/documentation_options.js?v=56dcb7b8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

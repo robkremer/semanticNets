@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>Reasoning - Semantic Nets 1.0.1 documentation</title>
+        <title>Reasoning - Semantic Nets 1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -238,12 +238,15 @@
 <li class="toctree-l2"><a class="reference internal" href="../dev/sn.examples.html">sn.examples package</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.clipsReasoner.html">sn.model.clipsReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.constraints.html">sn.model.constraints module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.copying.html">sn.model.copying module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.directory.html">sn.model.directory module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.model.html">sn.model.model module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.nemoReasoner.html">sn.model.nemoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.prologReasoner.html">sn.model.prologReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.reasoner.html">sn.model.reasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
 </ul>
@@ -366,7 +369,10 @@
 <p>The reasoner works out what follows from a model: what’s inherited, what’s
 implied by relations’ properties, what rules and definitions conclude – and
 what’s wrong. It uses <a class="reference external" href="https://potassco.org/clingo/">clingo</a>, an answer set
-programming system.</p>
+programming system – or, if you choose it, <a class="reference external" href="https://github.com/knowsys/nemo">Nemo</a>, a Datalog engine that can also say <em>why</em> a
+conclusion holds, <a class="reference external" href="https://www.clipsrules.net">CLIPS</a>, a production rule
+system, or <a class="reference external" href="https://www.swi-prolog.org">SWI-Prolog</a> (see <a class="reference internal" href="#engines-and-explanations">Engines and
+explanations</a> below).</p>
 <section id="id1">
 <h2>Reasoning<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h2>
 <p><strong>Reason</strong> (▶, on the reasoning toolbar along the bottom of the window, or
@@ -375,8 +381,10 @@ model; <strong>Retract</strong> (↺) takes what it inferred back out again. <st
 silently</strong> (▷, or <strong>reasoning | reason silently</strong>) reasons too, but doesn’t
 add what it infers to the views – only the problems are marked, and only a
 summary is printed: eg: so that queries find what the rules conclude without
-cluttering the canvas. (Hover over a button to see what it does.) The toolbar also
-says what the last reason found – how many relations and new objects it
+cluttering the canvas. (Hover over a button to see what it does.) At the
+toolbar’s left, a small box says which reasoner engine is used (see <a class="reference internal" href="#engines-and-explanations">Engines
+and explanations</a>): click it to choose another, from a menu of the engines.
+The toolbar also says what the last reason found – how many relations and new objects it
 inferred, and how many problems – and, at its right, whether the model can
 be edited: a pencil, crossed out in red if it can’t be here. Click the pencil
 (or choose <strong>Edit | Lock view</strong>) to lock the view, so it can’t change the
@@ -440,6 +448,92 @@ still inferred (where you’ve put them), adds new ones, and removes the
 rest. Typing <code class="docutils literal notranslate"><span class="pre">reason</span></code> (or <code class="docutils literal notranslate"><span class="pre">clear</span> <span class="pre">reasoning</span></code>) in the terminal does the
 same as the button.</p>
 </section>
+<section id="engines-and-explanations">
+<h2>Engines and explanations<a class="headerlink" href="#engines-and-explanations" title="Link to this heading">¶</a></h2>
+<p>The reasoner has four engines, which reach the same conclusions:
+<strong>clingo</strong> (the default), <strong>Nemo</strong>, <strong>CLIPS</strong> and <strong>Prolog</strong> (SWI-Prolog). The
+apps include clingo and Nemo; CLIPS and Prolog are installed separately (see
+<a class="reference internal" href="#installing-an-engine">Installing an engine</a>, which also covers the <code class="docutils literal notranslate"><span class="pre">.pyz</span></code> and the source). The <code class="docutils literal notranslate"><span class="pre">reasoner/engine</span></code> setting
+(<strong>Settings…</strong>, in the application menu, or the box at the left of the
+reasoning toolbar) says which one <strong>reason</strong>, queries and <code class="docutils literal notranslate"><span class="pre">ask</span> <span class="pre">reasoner</span></code>
+use. (In the box’s menu, an engine that isn’t installed isn’t chosen: it says
+how to install it instead.) <code class="docutils literal notranslate"><span class="pre">reason</span> <span class="pre">--engine</span> <span class="pre">nemo</span></code> picks one for a single run.
+<code class="docutils literal notranslate"><span class="pre">ask</span> <span class="pre">reasoner</span></code> takes a question in the engine’s own language: for clingo,
+<code class="docutils literal notranslate"><span class="pre">'ans(X)</span> <span class="pre">:-</span> <span class="pre">holds(T,F,X),</span> <span class="pre">name(T,&quot;owns&quot;),</span> <span class="pre">name(F,&quot;fred&quot;).'</span></code>; for Nemo,
+<code class="docutils literal notranslate"><span class="pre">'ans(?X)</span> <span class="pre">:-</span> <span class="pre">holds(?T,?F,?X),</span> <span class="pre">name(?T,&quot;owns&quot;),</span> <span class="pre">name(?F,&quot;fred&quot;).'</span></code>; for
+CLIPS, <code class="docutils literal notranslate"><span class="pre">'(defrule</span> <span class="pre">q</span> <span class="pre">(holds</span> <span class="pre">?t</span> <span class="pre">?f</span> <span class="pre">?x)</span> <span class="pre">(name</span> <span class="pre">?t</span> <span class="pre">&quot;owns&quot;)</span> <span class="pre">(name</span> <span class="pre">?f</span> <span class="pre">&quot;fred&quot;)</span> <span class="pre">=&gt;</span>
+<span class="pre">(assert</span> <span class="pre">(ans</span> <span class="pre">?x)))'</span></code>; for Prolog, <code class="docutils literal notranslate"><span class="pre">'ans(X)</span> <span class="pre">:-</span> <span class="pre">name(T,&quot;owns&quot;),</span> <span class="pre">name(F,&quot;fred&quot;),</span>
+<span class="pre">holds(T,F,X).'</span></code> (its goals run in the order they’re written, so start with
+what narrows things down most).</p>
+<p>What Nemo adds is explanations. An inferred relation’s menu has <strong>explain
+(why it holds)</strong>, which prints the steps to the terminal pane: the rules it
+follows by (yours, and the base rules: eg, <em>transitive</em>), down to what the
+model asserts. Eg:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ann</span> <span class="o">-</span><span class="n">ancestorOf</span><span class="o">-&gt;</span> <span class="n">fred</span>
+  <span class="n">ann</span> <span class="o">-</span><span class="n">ancestorOf</span><span class="o">-&gt;</span> <span class="n">fred</span><span class="p">,</span> <span class="n">by</span> <span class="n">the</span> <span class="n">rule</span> <span class="s2">&quot;transitive&quot;</span>
+    <span class="n">ann</span> <span class="o">-</span><span class="n">ancestorOf</span><span class="o">-&gt;</span> <span class="n">mary</span> <span class="p">(</span><span class="n">asserted</span><span class="p">)</span>
+    <span class="n">mary</span> <span class="o">-</span><span class="n">ancestorOf</span><span class="o">-&gt;</span> <span class="n">fred</span> <span class="p">(</span><span class="n">asserted</span><span class="p">)</span>
+    <span class="n">ancestorOf</span> <span class="ow">is</span> <span class="n">transitive</span>
+</pre></div>
+</div>
+<p>The terminal’s <code class="docutils literal notranslate"><span class="pre">explain</span></code> does the same for any relation, or any type and
+two objects: <code class="docutils literal notranslate"><span class="pre">explain</span> <span class="pre">ancestorOf</span> <span class="pre">ann</span> <span class="pre">fred</span></code> (<code class="docutils literal notranslate"><span class="pre">--full</span></code> for every step the
+engine took). It uses Nemo whichever engine reasons.</p>
+<p>One difference: in a rule (not a constraint or a query), Nemo and CLIPS
+test a <strong>not</strong> attribute constraint (eg: <code class="docutils literal notranslate"><span class="pre">not</span> <span class="pre">gender:</span> <span class="pre">female</span></code>) against the
+attributes the model gives, not those other rules conclude – they need the
+rules in an order they can work through, one layer at a time.</p>
+<section id="installing-an-engine">
+<h3>Installing an engine<a class="headerlink" href="#installing-an-engine" title="Link to this heading">¶</a></h3>
+<p>When an engine that isn’t installed is wanted – <strong>reason</strong> with the
+<code class="docutils literal notranslate"><span class="pre">reasoner/engine</span></code> setting on it, <strong>explain (why it holds)</strong>, or the
+terminal’s <code class="docutils literal notranslate"><span class="pre">explain</span></code> – the program says so, with a link to here. If it’s
+the one the setting picks, it also offers to reason with one that is
+installed: this time, or from now on.</p>
+<dl>
+<dt><strong>In the apps</strong></dt><dd><p>clingo and Nemo are in them. An engine an app doesn’t include – CLIPS or
+Prolog – can be installed for a Python 3.14 on the computer – the same
+version as the app’s own, for the same kind of processor (eg: Apple
+silicon) – and the app uses it from there:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span><span class="mf">.14</span> <span class="o">-</span><span class="n">m</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">clipspy</span>
+</pre></div>
+</div>
+<p>(on Windows, <code class="docutils literal notranslate"><span class="pre">py</span> <span class="pre">-3.14</span> <span class="pre">-m</span> <span class="pre">pip</span> <span class="pre">install</span> <span class="pre">clipspy</span></code>). For Prolog, first install
+<a class="reference external" href="https://www.swi-prolog.org/download/stable">SWI-Prolog</a> itself (9.1.12 or
+later: on a Mac, its app, or <code class="docutils literal notranslate"><span class="pre">brew</span> <span class="pre">install</span> <span class="pre">swi-prolog</span></code>; on Windows, its
+installer, letting it add <code class="docutils literal notranslate"><span class="pre">swipl</span></code> to the <code class="docutils literal notranslate"><span class="pre">PATH</span></code>; on Linux, its PPA or
+your distribution’s package), then its Python interface:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span><span class="mf">.14</span> <span class="o">-</span><span class="n">m</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">janus</span><span class="o">-</span><span class="n">swi</span>
+</pre></div>
+</div>
+<p>(pip builds it against the <code class="docutils literal notranslate"><span class="pre">swipl</span></code> it finds on the <code class="docutils literal notranslate"><span class="pre">PATH</span></code>, so open a new
+terminal after installing SWI-Prolog. The Mac app’s <code class="docutils literal notranslate"><span class="pre">swipl</span></code> isn’t on the
+<code class="docutils literal notranslate"><span class="pre">PATH</span></code>: put it there for pip with <code class="docutils literal notranslate"><span class="pre">PATH=/Applications/SWI-Prolog.app/Contents/MacOS:$PATH</span>
+<span class="pre">python3.14</span> <span class="pre">-m</span> <span class="pre">pip</span> <span class="pre">install</span> <span class="pre">janus-swi</span></code>.) The program finds SWI-Prolog’s files
+itself when it reasons, even when <code class="docutils literal notranslate"><span class="pre">swipl</span></code> isn’t on the <code class="docutils literal notranslate"><span class="pre">PATH</span></code>; if it
+can’t, set the <code class="docutils literal notranslate"><span class="pre">SWI_HOME_DIR</span></code> environment variable to the folder that
+<code class="docutils literal notranslate"><span class="pre">swipl</span> <span class="pre">--dump-runtime-variables</span></code> gives as <code class="docutils literal notranslate"><span class="pre">PLBASE</span></code>. If there’s no Python
+3.14 on the computer yet, install one from <a class="reference external" href="https://www.python.org">https://www.python.org</a> first. The app looks for that
+Python where its installers put it (python.org’s, Homebrew’s, …) and on
+the <code class="docutils literal notranslate"><span class="pre">PATH</span></code>; if it’s somewhere else (eg: a virtual environment), give its
+executable as the <code class="docutils literal notranslate"><span class="pre">reasoner/python</span></code> setting (eg:
+<code class="docutils literal notranslate"><span class="pre">/Users/me/venvs/sn/bin/python</span></code>).</p>
+</dd>
+<dt><strong>The</strong> <code class="docutils literal notranslate"><span class="pre">.pyz</span></code> <strong>or the source</strong></dt><dd><p>Install the engine for the Python that runs the program (see
+<a class="reference internal" href="gettingStarted.html"><span class="doc">Getting Started</span></a>): clingo with <code class="docutils literal notranslate"><span class="pre">python3.14</span> <span class="pre">-m</span> <span class="pre">pip</span> <span class="pre">install</span> <span class="pre">clingo</span></code>,
+Nemo with <code class="docutils literal notranslate"><span class="pre">python3.14</span> <span class="pre">-m</span> <span class="pre">pip</span> <span class="pre">install</span> <span class="pre">nemo-python</span></code>, CLIPS with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span><span class="mf">.14</span> <span class="o">-</span><span class="n">m</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">clipspy</span>
+</pre></div>
+</div>
+<p>and Prolog, once SWI-Prolog is installed (see above), with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span><span class="mf">.14</span> <span class="o">-</span><span class="n">m</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">janus</span><span class="o">-</span><span class="n">swi</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>Then start the program again.</p>
+</section>
+</section>
 <section id="switching-rules-off">
 <h2>Switching rules off<a class="headerlink" href="#switching-rules-off" title="Link to this heading">¶</a></h2>
 <p>To try a model without one of its rules, definitions, constraints or
@@ -464,9 +558,11 @@ when it’s being <em>matched</em>, only test the model: nothing in them is asse
 each match: its relations, its variables’ types and its variables’
 constraints all become conclusions.</p></li>
 </ul>
-<p>None of the reasoner’s conclusions are added to the model: they’re shown, and
-reported, but the model still says only what you drew. (Use them as hints:
-draw the ones you want to keep.)</p>
+<p>The conclusions are added to the model, but as <strong>inferred</strong> objects and
+attributes (see above): faded, not saved, not editable, taken away by
+<strong>Retract</strong> (and by the next reason, once they’re no longer concluded –
+those still concluded are kept). The model still says only what you drew,
+until you <strong>mark as asserted</strong> the ones you want to keep.</p>
 </section>
 <section id="validation">
 <h2>Validation<a class="headerlink" href="#validation" title="Link to this heading">¶</a></h2>
@@ -534,6 +630,10 @@ markers.</p>
             <ul>
 <li><a class="reference internal" href="#">Reasoning</a><ul>
 <li><a class="reference internal" href="#id1">Reasoning</a></li>
+<li><a class="reference internal" href="#engines-and-explanations">Engines and explanations</a><ul>
+<li><a class="reference internal" href="#installing-an-engine">Installing an engine</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#switching-rules-off">Switching rules off</a></li>
 <li><a class="reference internal" href="#highlights">Highlights</a></li>
 <li><a class="reference internal" href="#tests-and-conclusions">Tests and conclusions</a></li>
@@ -549,7 +649,7 @@ markers.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=292eb321"></script>
+</div><script src="../_static/documentation_options.js?v=56dcb7b8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

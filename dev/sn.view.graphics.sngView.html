@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.view.graphics.sngView module - Semantic Nets 1.0.1 documentation</title>
+        <title>sn.view.graphics.sngView module - Semantic Nets 1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -238,12 +238,15 @@
 <li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html">sn.model.clipsReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html">sn.model.nemoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html">sn.model.prologReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
 </ul>
@@ -387,7 +390,7 @@ mixins it inherits (see <em>viewBase</em>):</p>
 <p><em>Code author: Rob Kremer &lt;<a class="reference external" href="mailto:robkremer&#37;&#52;&#48;me&#46;com">robkremer<span>&#64;</span>me<span>&#46;</span>com</a>&gt;</em></p>
 <dl class="py class">
 <dt class="sig sig-object py" id="sn.view.graphics.sngView.SNGView">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.sngView.</span></span><span class="sig-name descname"><span class="pre">SNGView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'w'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometry</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'300x400+20+20'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_reading</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.sngView.SNGView" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.sngView.</span></span><span class="sig-name descname"><span class="pre">SNGView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'w'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometry</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_reading</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.sngView.SNGView" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="sn.view.graphics.viewViewport.html#sn.view.graphics.viewViewport.ViewportMixin" title="sn.view.graphics.viewViewport.ViewportMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">ViewportMixin</span></code></a>, <a class="reference internal" href="sn.view.graphics.viewReasoning.html#sn.view.graphics.viewReasoning.ReasoningMixin" title="sn.view.graphics.viewReasoning.ReasoningMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReasoningMixin</span></code></a>, <a class="reference internal" href="sn.view.graphics.viewLayouts.html#sn.view.graphics.viewLayouts.LayoutsMixin" title="sn.view.graphics.viewLayouts.LayoutsMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">LayoutsMixin</span></code></a>, <a class="reference internal" href="sn.view.graphics.viewFiles.html#sn.view.graphics.viewFiles.FilesMixin" title="sn.view.graphics.viewFiles.FilesMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">FilesMixin</span></code></a>, <a class="reference internal" href="sn.view.graphics.viewVisibility.html#sn.view.graphics.viewVisibility.VisibilityMixin" title="sn.view.graphics.viewVisibility.VisibilityMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">VisibilityMixin</span></code></a>, <a class="reference internal" href="sn.view.graphics.viewContainment.html#sn.view.graphics.viewContainment.ContainmentMixin" title="sn.view.graphics.viewContainment.ContainmentMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">ContainmentMixin</span></code></a>, <a class="reference internal" href="sn.view.graphics.viewEditing.html#sn.view.graphics.viewEditing.EditingMixin" title="sn.view.graphics.viewEditing.EditingMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">EditingMixin</span></code></a>, <a class="reference internal" href="sn.view.graphics.viewInput.html#sn.view.graphics.viewInput.InputMixin" title="sn.view.graphics.viewInput.InputMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">InputMixin</span></code></a>, <a class="reference internal" href="sn.view.graphics.viewBase.html#sn.view.graphics.viewBase.ViewBase" title="sn.view.graphics.viewBase.ViewBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">ViewBase</span></code></a>, <a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.abstractGraph.html#util.abstractGraph.AbstractGraph" title="(in pythonUtils)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AbstractGraph</span></code></a>[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">VObject</span></code></a>, <a class="reference internal" href="sn.view.graphics.vrelations.html#sn.view.graphics.vrelations.VRelation" title="sn.view.graphics.vrelations.VRelation"><code class="xref py py-class docutils literal notranslate"><span class="pre">VRelation</span></code></a>], <a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.observer.html#util.observer.Observer" title="(in pythonUtils)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Observer</span></code></a>, <a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.dirtyable.html#util.dirtyable.Dirtyable" title="(in pythonUtils)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dirtyable</span></code></a></p>
 <p>The persistent container of VObjects.</p>
 <dl class="field-list simple">
@@ -395,7 +398,7 @@ mixins it inherits (see <em>viewBase</em>):</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>url</strong> (<em>str</em>)</p></li>
 <li><p><strong>model</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>)</p></li>
-<li><p><strong>geometry</strong> (<em>str</em>)</p></li>
+<li><p><strong>geometry</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>_reading</strong> (<em>bool</em>)</p></li>
 </ul>
 </dd>
@@ -427,15 +430,16 @@ there, as it would be without it. Set by the app (see
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.sngView.SNGView.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'w'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometry</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'300x400+20+20'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_reading</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.sngView.SNGView.__init__" title="Link to this definition">¶</a></dt>
-<dd><p>A view of <em>model</em>, saved at <em>url</em>, in a new window (at <em>geometry</em>) – unless it’s one in memory already
-(see <em>__new__()</em>).</p>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'w'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometry</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_reading</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.sngView.SNGView.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>A view of <em>model</em>, saved at <em>url</em>, in a new window (at <em>geometry</em>: by default, for a new view, where the
+app puts the next new window – see <em>Application.nextWindowGeometry()</em>) – unless it’s one in memory
+already (see <em>__new__()</em>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>url</strong> (<em>str</em>)</p></li>
 <li><p><strong>model</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>)</p></li>
-<li><p><strong>geometry</strong> (<em>str</em>)</p></li>
+<li><p><strong>geometry</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>_reading</strong> (<em>bool</em>)</p></li>
 </ul>
 </dd>
@@ -904,13 +908,27 @@ logging what’s found (and repainting, if <em>refresh</em>): how many faults.</
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.sngView.SNGView.structureChanged">
-<span class="sig-name descname"><span class="pre">structureChanged</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.sngView.SNGView.structureChanged" title="Link to this definition">¶</a></dt>
-<dd><p>Note that what’s in the view, or the model, has changed: an object was
-added to or taken out of the view, or the model changed. What’s worked out
-from that and remembered (see <em>contextWindows()</em>) is worked out afresh.</p>
+<span class="sig-name descname"><span class="pre">structureChanged</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">added</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">removed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.sngView.SNGView.structureChanged" title="Link to this definition">¶</a></dt>
+<dd><p>Note that what’s in the view, or the model’s structure, has changed: an
+object was added to or taken out of the view or the model, or one was
+retyped or renamed, or a relation’s end moved (see <em>VObject.update()</em> and
+<em>VRelation.update()</em>). What’s worked out from that and remembered (see
+<em>contextWindows()</em>, <em>_containmentMaps()</em>, and each object’s label, shape
+options and constraint marker) is worked out afresh – except the list of
+context windows, when all that’s changed is that one object, <em>added</em>
+(put back in the view) or <em>removed</em> (taken out of it): that’s just
+updated, not worked out again from every object in the view (which,
+for each of thousands of objects erased together, or put back by an
+undo, took the square of the time).</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>None</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>added</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>removed</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1060,7 +1078,7 @@ time the work actually produces output.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=292eb321"></script>
+</div><script src="../_static/documentation_options.js?v=56dcb7b8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

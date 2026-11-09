@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.view.graphics.viewLayouts module - Semantic Nets 1.0.1 documentation</title>
+        <title>sn.view.graphics.viewLayouts module - Semantic Nets 1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -238,12 +238,15 @@
 <li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html">sn.model.clipsReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html">sn.model.nemoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html">sn.model.prologReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
 </ul>
@@ -367,6 +370,95 @@
 <em>sn.view.graphics.sngView.SNGView</em> (see <em>viewBase</em>).</p>
 <p>Created on Oct 18, 2026 (from sngView.py)</p>
 <p><em>Code author: Rob Kremer &lt;<a class="reference external" href="mailto:robkremer&#37;&#52;&#48;me&#46;com">robkremer<span>&#64;</span>me<span>&#46;</span>com</a>&gt;</em></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sn.view.graphics.viewLayouts.SwitchedLayout">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewLayouts.</span></span><span class="sig-name descname"><span class="pre">SwitchedLayout</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewLayouts.SwitchedLayout" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.command.html#util.command.Command" title="(in pythonUtils)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Command</span></code></a></p>
+<p>The view’s dynamic layout switched (eg: by starting the animation layout:
+see <em>LayoutsMixin.toggleAnimationLayout()</em>), as part of an undoable
+command: undone, the old one is put back as it was (with its pins: see
+<em>treeLayout.TreeLayout.pins</em>), and redone, the new one – neither arranging
+anything (see <em>LayoutsMixin._putDynamicLayout()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>old</strong> (<a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutHeuristic" title="sn.view.graphics.layout.LayoutHeuristic"><em>LayoutHeuristic</em></a>)</p></li>
+<li><p><strong>new</strong> (<a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutHeuristic" title="sn.view.graphics.layout.LayoutHeuristic"><em>LayoutHeuristic</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewLayouts.SwitchedLayout.isLayout">
+<span class="sig-name descname"><span class="pre">isLayout</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></span><a class="headerlink" href="#sn.view.graphics.viewLayouts.SwitchedLayout.isLayout" title="Link to this definition">¶</a></dt>
+<dd><p>So the view’s dynamic layout doesn’t adjust after it (see <em>viewCommands.ViewDoList</em>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewLayouts.SwitchedLayout.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewLayouts.SwitchedLayout.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Constructor</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>)</p></li>
+<li><p><strong>old</strong> (<a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutHeuristic" title="sn.view.graphics.layout.LayoutHeuristic"><em>LayoutHeuristic</em></a>)</p></li>
+<li><p><strong>new</strong> (<a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutHeuristic" title="sn.view.graphics.layout.LayoutHeuristic"><em>LayoutHeuristic</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewLayouts.SwitchedLayout.do">
+<span class="sig-name descname"><span class="pre">do</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewLayouts.SwitchedLayout.do" title="Link to this definition">¶</a></dt>
+<dd><p>The execution of this command. This isn’t really abstract in the you can (should?) call this
+method as the first instruction of your <em>do()</em> method to check that the <em>do()</em> isn’t being called
+twice in a row without an <em>undo()</em> in between (a problem in the code logic?).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Any</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewLayouts.SwitchedLayout.undo">
+<span class="sig-name descname"><span class="pre">undo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewLayouts.SwitchedLayout.undo" title="Link to this definition">¶</a></dt>
+<dd><p>The undoing of this command. This isn’t really abstract in the you can (should?) call this
+method as the first instruction of your <em>undo()</em> method to check that the <em>undo()</em> isn’t being called
+twice in a row without an <em>do()</em> in between (a problem in the code logic?).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Any</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewLayouts.SwitchedLayout.delete">
+<span class="sig-name descname"><span class="pre">delete</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewLayouts.SwitchedLayout.delete" title="Link to this definition">¶</a></dt>
+<dd><p>Override to destroy any data when the the command becomes unreachable. Called
+from <em>DoList</em> when new commands override the tail of the do-queue.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewLayouts.SwitchedLayout._abc_impl">
+<span class="sig-name descname"><span class="pre">_abc_impl</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;_abc._abc_data</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#sn.view.graphics.viewLayouts.SwitchedLayout._abc_impl" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="sn.view.graphics.viewLayouts.LayoutsMixin">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewLayouts.</span></span><span class="sig-name descname"><span class="pre">LayoutsMixin</span></span><a class="headerlink" href="#sn.view.graphics.viewLayouts.LayoutsMixin" title="Link to this definition">¶</a></dt>
@@ -601,10 +693,28 @@ it flows in (or none), its strength, and the relation type it lines up
 repel one another and relations pull them together, until things settle
 (see <em>animatedLayouts.FieldsLayout</em>). The whole run is one undoable command.
 A dynamic layout that arranges things itself (eg: a tree) would undo what
-it does, so the view’s dynamic layout becomes “avoid overlaps” first.</p>
+it does, so the view’s dynamic layout becomes “avoid overlaps” first –
+and stays so, though undoing the run puts the old one back, as it was
+(see <em>SwitchedLayout</em>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewLayouts.LayoutsMixin._putDynamicLayout">
+<span class="sig-name descname"><span class="pre">_putDynamicLayout</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layout</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewLayouts.LayoutsMixin._putDynamicLayout" title="Link to this definition">¶</a></dt>
+<dd><p>Make <em>layout</em> the view’s dynamic layout, as it is – without it arranging
+anything (see <em>setDynamicLayout()</em>): eg: putting back the one there was
+(see <em>SwitchedLayout</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>layout</strong> (<a class="reference internal" href="sn.view.graphics.layout.html#sn.view.graphics.layout.LayoutHeuristic" title="sn.view.graphics.layout.LayoutHeuristic"><em>LayoutHeuristic</em></a>) – A dynamic layout of this view.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -853,6 +963,15 @@ in its pane if it isn’t there (see <em>containmentHomes()</em>).</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">sn.view.graphics.viewLayouts module</a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.viewLayouts.SwitchedLayout"><code class="docutils literal notranslate"><span class="pre">SwitchedLayout</span></code></a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.viewLayouts.SwitchedLayout.isLayout"><code class="docutils literal notranslate"><span class="pre">SwitchedLayout.isLayout</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewLayouts.SwitchedLayout.__init__"><code class="docutils literal notranslate"><span class="pre">SwitchedLayout.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewLayouts.SwitchedLayout.do"><code class="docutils literal notranslate"><span class="pre">SwitchedLayout.do()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewLayouts.SwitchedLayout.undo"><code class="docutils literal notranslate"><span class="pre">SwitchedLayout.undo()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewLayouts.SwitchedLayout.delete"><code class="docutils literal notranslate"><span class="pre">SwitchedLayout.delete()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewLayouts.SwitchedLayout._abc_impl"><code class="docutils literal notranslate"><span class="pre">SwitchedLayout._abc_impl</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#sn.view.graphics.viewLayouts.LayoutsMixin"><code class="docutils literal notranslate"><span class="pre">LayoutsMixin</span></code></a><ul>
 <li><a class="reference internal" href="#sn.view.graphics.viewLayouts.LayoutsMixin.ANIMATION_SETTINGS"><code class="docutils literal notranslate"><span class="pre">LayoutsMixin.ANIMATION_SETTINGS</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewLayouts.LayoutsMixin._animationState"><code class="docutils literal notranslate"><span class="pre">LayoutsMixin._animationState()</span></code></a></li>
@@ -870,6 +989,7 @@ in its pane if it isn’t there (see <em>containmentHomes()</em>).</p>
 <li><a class="reference internal" href="#sn.view.graphics.viewLayouts.LayoutsMixin.animationLayout"><code class="docutils literal notranslate"><span class="pre">LayoutsMixin.animationLayout()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewLayouts.LayoutsMixin._animationLayoutMenu"><code class="docutils literal notranslate"><span class="pre">LayoutsMixin._animationLayoutMenu()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewLayouts.LayoutsMixin.toggleAnimationLayout"><code class="docutils literal notranslate"><span class="pre">LayoutsMixin.toggleAnimationLayout()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewLayouts.LayoutsMixin._putDynamicLayout"><code class="docutils literal notranslate"><span class="pre">LayoutsMixin._putDynamicLayout()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewLayouts.LayoutsMixin._layoutMenu"><code class="docutils literal notranslate"><span class="pre">LayoutsMixin._layoutMenu()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewLayouts.LayoutsMixin.lastLayoutParameters"><code class="docutils literal notranslate"><span class="pre">LayoutsMixin.lastLayoutParameters()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewLayouts.LayoutsMixin.rememberLayoutParameters"><code class="docutils literal notranslate"><span class="pre">LayoutsMixin.rememberLayoutParameters()</span></code></a></li>
@@ -894,7 +1014,7 @@ in its pane if it isn’t there (see <em>containmentHomes()</em>).</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=292eb321"></script>
+</div><script src="../_static/documentation_options.js?v=56dcb7b8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

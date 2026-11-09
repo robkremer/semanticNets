@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>sn.view.graphics.expandDialog module - Semantic Nets 1.0.1 documentation</title>
+        <title>sn.view.graphics.expandDialog module - Semantic Nets 1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.0.1 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.0.1 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -238,12 +238,15 @@
 <li class="toctree-l2"><a class="reference internal" href="sn.examples.html">sn.examples package</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.clipsReasoner.html">sn.model.clipsReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.constraints.html">sn.model.constraints module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.copying.html">sn.model.copying module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.directory.html">sn.model.directory module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.model.html">sn.model.model module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.nemoReasoner.html">sn.model.nemoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sn.model.prologReasoner.html">sn.model.prologReasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.reasoner.html">sn.model.reasoner module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
 </ul>
@@ -411,7 +414,7 @@ asked for by name. “All”, “all outgoing” and “all incoming” leave th
 
 <dl class="py class">
 <dt class="sig sig-object py" id="sn.view.graphics.expandDialog.Choice">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.expandDialog.</span></span><span class="sig-name descname"><span class="pre">Choice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.expandDialog.Choice" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.expandDialog.</span></span><span class="sig-name descname"><span class="pre">Choice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shown</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.expandDialog.Choice" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>One way of following relations: those of type <em>type</em> (or a subtype), going
 <em>direction</em> (out from the object, in to it, or – symmetric – both).</p>
@@ -422,6 +425,7 @@ asked for by name. “All”, “all outgoing” and “all incoming” leave th
 <li><p><strong>direction</strong> (<em>str</em>)</p></li>
 <li><p><strong>count</strong> (<em>int</em>)</p></li>
 <li><p><strong>hidden</strong> (<em>int</em>)</p></li>
+<li><p><strong>shown</strong> (<em>int</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -447,19 +451,43 @@ asked for by name. “All”, “all outgoing” and “all incoming” leave th
 <dd><p>How many of those are in a hidden or erased category (or lead to something that is).</p>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.expandDialog.Choice.shown">
+<span class="sig-name descname"><span class="pre">shown</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="headerlink" href="#sn.view.graphics.expandDialog.Choice.shown" title="Link to this definition">¶</a></dt>
+<dd><p>How many of those are in the view already, with what they lead to: following them brings in nothing new.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.expandDialog.Choice.label">
 <span class="sig-name descname"><span class="pre">label</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.expandDialog.Choice.label" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Eg: “has-parent → (3)”; “(3, 1 new)” if the rest are in the view
+already, “(3, all shown)” if they all are; “(3; 1 hidden)”, or “(3, hidden)”,
+for those in a hidden or erased category.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.expandDialog.Choice.nothingNew">
+<span class="sig-name descname"><span class="pre">nothingNew</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.expandDialog.Choice.nothingNew" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Whether following it brings in nothing (see <em>shown</em>, <em>hidden</em>): it’s greyed.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.expandDialog.Choice.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.expandDialog.Choice.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shown</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.expandDialog.Choice.__init__" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -467,6 +495,7 @@ asked for by name. “All”, “all outgoing” and “all incoming” leave th
 <li><p><strong>direction</strong> (<em>str</em>)</p></li>
 <li><p><strong>count</strong> (<em>int</em>)</p></li>
 <li><p><strong>hidden</strong> (<em>int</em>)</p></li>
+<li><p><strong>shown</strong> (<em>int</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -535,13 +564,14 @@ asked for by name. “All”, “all outgoing” and “all incoming” leave th
 
 <dl class="py function">
 <dt class="sig sig-object py" id="sn.view.graphics.expandDialog.relationChoices">
-<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.expandDialog.</span></span><span class="sig-name descname"><span class="pre">relationChoices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;function</span> <span class="pre">&lt;lambda&gt;&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.expandDialog.relationChoices" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.expandDialog.</span></span><span class="sig-name descname"><span class="pre">relationChoices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;function</span> <span class="pre">&lt;lambda&gt;&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shown</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;function</span> <span class="pre">&lt;lambda&gt;&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.expandDialog.relationChoices" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>mo</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>) – The object being expanded.</p></li>
 <li><p><strong>rels</strong> (<em>list</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a><em>]</em>) – Its relations (eg: those the view would follow: see <em>VObject.expandableRelations()</em>).</p></li>
 <li><p><strong>hidden</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a><em>]</em><em>, </em><em>bool</em><em>]</em>) – Whether a relation is in a hidden or erased category, or leads to something that is (see <em>Choice.hidden</em>).</p></li>
+<li><p><strong>shown</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a><em>]</em><em>, </em><em>bool</em><em>]</em>) – Whether a relation is in the view already, with what it leads to (see <em>Choice.shown</em>).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -715,7 +745,9 @@ levels) if OK’d (see <em>choiceFilter()</em>), else None.</p>
 <li><a class="reference internal" href="#sn.view.graphics.expandDialog.Choice.direction"><code class="docutils literal notranslate"><span class="pre">Choice.direction</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.expandDialog.Choice.count"><code class="docutils literal notranslate"><span class="pre">Choice.count</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.expandDialog.Choice.hidden"><code class="docutils literal notranslate"><span class="pre">Choice.hidden</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.expandDialog.Choice.shown"><code class="docutils literal notranslate"><span class="pre">Choice.shown</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.expandDialog.Choice.label"><code class="docutils literal notranslate"><span class="pre">Choice.label()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.expandDialog.Choice.nothingNew"><code class="docutils literal notranslate"><span class="pre">Choice.nothingNew()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.expandDialog.Choice.__init__"><code class="docutils literal notranslate"><span class="pre">Choice.__init__()</span></code></a></li>
 </ul>
 </li>
@@ -743,7 +775,7 @@ levels) if OK’d (see <em>choiceFilter()</em>), else None.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=292eb321"></script>
+</div><script src="../_static/documentation_options.js?v=56dcb7b8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
