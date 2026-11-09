@@ -70,10 +70,11 @@ def resource(*parts:str) -> Optional[bytes]:
 def licence(name:str) -> Optional[str]:
   '''
   :param name: A licence's file in sn/about/licences/ (eg: "python.txt").
-  :returns: Its text, if it's there.
+  :returns: Its text, if it's there, its lines ending with just a line feed
+    (a Windows checkout's copy ends them with a carriage return too).
   '''
   data = resource("licences", name)
-  return data.decode("utf-8") if data is not None else None
+  return data.decode("utf-8").replace("\r\n", "\n") if data is not None else None
 
 def tkVersion(root:Optional[tk.Misc]=None) -> str:
   '''
