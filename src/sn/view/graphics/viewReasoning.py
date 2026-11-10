@@ -43,6 +43,15 @@ if TYPE_CHECKING:
 
 logger:sn.SNLogger = sn.getLogger(__name__)
 
+def _names(objects:list[GraphObject]) -> str:
+  '''
+  :returns: *objects*, for a message: eg: "carol", "carol and bob", "carol, bob and alice", or "5 objects".
+  '''
+  names = [o.name for o in objects]
+  if len(names) > 3:
+    return f"{len(names)} objects"
+  return " and ".join([", ".join(names[:-1]), names[-1]] if len(names) > 1 else names)
+
 def showEngineMissing(parent:tk.Misc, missing:str|EngineMissing, *, purpose:str="", chosen:bool=False,
                       instead:Callable[[str], None]|None=None) -> ActionDialog:
   '''
@@ -148,7 +157,7 @@ class ReasoningMixin(ViewBase):
     from sn.model.reasoner import reasoningFor
     return reasoningFor(self.model)
 
-  def reason(self, engine:str|None=None, silent:bool=False) -> None:
+  def reason(self, engine:str|None=None, silent:bool=False, about:list[GraphObject]|None=None) -> None:
     '''
     Run the reasoner over this view's model and print the report to this
     window's terminal. The results are kept with the model, so this and every
@@ -157,60 +166,81 @@ class ReasoningMixin(ViewBase):
 
     :param engine: The reasoner engine; by default the preference's (see *sn.model.reasoner.defaultEngine()*).
     :param silent: See *reasonSilently()*.
+    :param about: Objects to reason about (eg: the selection: see
+      *VObject.reasonAbout()*): only what's inferred about them is added to
+      what's shown, and only their problems to what's marked; the report is
+      about them. By default, the whole model. See *sn.model.reasoner.reason()*.
     '''
     from sn.model.reasoner import reason, summary, defaultEngine, EngineMissing
     if engine is None:
       engine = defaultEngine()
     try:
-      result = reason(self.model, engine, silent=silent)
+      result = reason(self.model, engine, silent=silent, about=about)
     except EngineMissing as ex: # (said, with a link to how to install it -- or to use another this time)
       logger.error(str(ex))
-      showEngineMissing(self.canvas, ex, instead=lambda other: self.reason(other, silent=silent))
+      showEngineMissing(self.canvas, ex, instead=lambda other: self.reason(other, silent=silent, about=about))
       return
     except RuntimeError as ex: # (eg: rules that can't be compiled: said, not a traceback -- and the summary's left as it was)
       logger.error(f'Couldn\'t reason over {self.model.name}: {ex}')
       return
+    what = self.model.name if about is None else f'{_names(about)} in {self.model.name}'
     if silent:
-      print(f'Reasoned over {self.model.name} (silently): {summary(self.model)}')
+      print(f'Reasoned {"over" if about is None else "about"} {what} (silently): {summary(self.model)}')
       return
-    print(f'Reasoning over {self.model.name}:')
-    print(result.report(self.model))
+    print(f'Reasoning {"over" if about is None else "about"} {what}:')
+    print((result if about is None else result.about(about)).report(self.model))
 
-  def reasonSilently(self) -> None:
+  def reasonSilently(self, about:list[GraphObject]|None=None) -> None:
     '''
     Reason (see *reason()*) without cluttering the views: what's inferred
     isn't added to them (those already shown stay), and only a summary is
     printed -- the problems are still marked. Eg: so that queries find what
     the rules conclude (and show those they find: see *VObject.answerQuery()*).
+
+    :param about: Objects to reason about (see *reason()*); by default, the whole model.
     '''
-    self.reason(silent=True)
+    self.reason(silent=True, about=about)
+
+  def retractReasoning(self, about:list[GraphObject]) -> None:
+    '''
+    Take back what the model's reasoning results say about *about* (eg: the
+    selection: see *VObject.retractAbout()*), in every view of the model: the
+    inferred objects about them go, and their problems aren't marked. (See
+    *sn.model.reasoner.retractReasoning()*; *clearReasoning()* takes back everything.)
+    '''
+    from sn.model.reasoner import retractReasoning
+    retractReasoning(self.model, about)
 
   def clearReasoning(self) -> None:
     'Forget the last "reason" results for this view\'s model (in every view of it).'
     from sn.model.reasoner import clearReasoning
     clearReasoning(self.model)
 
-  def _showReasoning(self, showInferred:bool=True) -> None:
+  def _showReasoning(self, showInferred:bool=True, only:list[GraphObject]|None=None) -> None:
     '''
     Show the model's current reasoning results (or their absence): violations
     in the objects' status reports (their error markers and "show error
     report"), and the inferred objects (see *_showInferred()*) -- unless
     *showInferred* is False (eg: it was reasoned over silently: see
     *reasonSilently()*), when only those already shown stay.
-    Called when the model reports a "reasoned" or "reasoning cleared" topic.
-    Not a change to the view: it's left as clean (or dirty) as it was.
+    Called when the model reports a "reasoned", "reasoning retracted" or
+    "reasoning cleared" topic. Not a change to the view: it's left as clean
+    (or dirty) as it was.
+
+    :param only: If given, show just these of the inferred objects (eg: those
+      about the objects reasoned about: see *reason()*'s *about*).
     '''
     dirty = self.isDirty()
     self._refreshStatusReports()
     if showInferred:
-      self._showInferred()
+      self._showInferred(only)
     bar = self.__dict__.get("_reasoningToolbar")
     if bar is not None:
       bar.refresh()
     if not dirty:
       self.setDirty(False)
 
-  def _showInferred(self) -> None:
+  def _showInferred(self, only:list[GraphObject]|None=None) -> None:
     '''
     Show what the model's last "reason" inferred (see *GraphObject.inferred*),
     for what this view shows: each object a rule concluded exists that's
@@ -220,6 +250,9 @@ class ReasoningMixin(ViewBase):
     with dashed lines (dotted if inherited). Those no longer inferred go when
     the model removes them. None of this makes the view dirty: they aren't
     saved with it.
+
+    :param only: If given, show just these of the inferred objects (and a new
+      object's isa links, with it).
     '''
     from sn.model.reasoner import _inferredRelations
     if not self.canvas:
@@ -240,6 +273,11 @@ class ReasoningMixin(ViewBase):
       except Exception:
         logger.exception(f"Couldn't show the inferred {o.name}")
     inferred = [o for o in self.model.inferredObjects() if o._isConnected()]
+    if only is not None:
+      ids = {id(o) for o in only}
+      ids |= {id(r) for o in only if getattr(o, "inferredKind", None) == "new"
+                    for r, _ in o._getOutgoing(lambda r: isinstance(r, IsaIndividual) and r.inferred)}
+      inferred = [o for o in inferred if id(o) in ids]
     for node in [o for o in inferred if getattr(o, "inferredKind", None) == "new" and not shown(o)]:
       for r, other in [*node._getOutgoing(lambda r: r.inferred and not isinstance(r, IsaIndividual)),
                        *node._getIncoming(lambda r: r.inferred and not isinstance(r, IsaIndividual))]:
@@ -247,7 +285,7 @@ class ReasoningMixin(ViewBase):
           x1, y1, x2, y2 = self.findViewObjectForGraphObject(other).boundingBox() # type: ignore[union-attr, arg-type]
           show(node, (x2 + 60, y1))
           break
-    rels = list(_inferredRelations(self.model).values()) \
+    rels = [r for r in _inferredRelations(self.model).values() if only is None or id(r) in ids] \
          + [r for o in inferred if getattr(o, "inferredKind", None) == "new"
               for r, _ in o._getOutgoing(lambda r: isinstance(r, IsaIndividual) and r.inferred)] # (a new object's types)
     for rel in rels:

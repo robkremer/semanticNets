@@ -991,6 +991,128 @@ class TestRules(unittest.TestCase):
     rows = self.ENGINE(m).answer(q)
     self.assertEqual(len([r for r in rows if r[X] is self.p["alice"]]), 1)
 
+  # ---- reasoning about some objects (see ReasoningScope) ---------------------
+
+  def inferredPairs(self, typ):
+    'The (src, dst) names of the model\'s inferred relations of *typ*.'
+    from sn.model.reasoner import _inferredRelations
+    return {(r.localSrc.name, r.localDst.name) for (t, _, _), r in _inferredRelations(self.m).items() if t == id(typ)}
+
+  def test1800reasonAbout(self):
+    'Reasoning about some objects puts just what\'s about them in the model; retracting takes it back: the last say wins.'
+    from sn.model.reasoner import reason, retractReasoning, summary, clearReasoning
+    m, p = self.m, self.p
+    self.anc["transitive"] = True
+    for a, b in (("alice", "bob"), ("bob", "carol"), ("carol", "dave")):
+      self.rel(self.anc, p[a], p[b])
+    try:
+      res = reason(m, self.ENGINE_NAME, about=[p["dave"]])
+      self.assertEqual(self.inferredPairs(self.anc), {("alice", "dave"), ("bob", "dave")}) # (needs carol's, which aren't shown)
+      self.assertEqual(self.pairs(res.inferred, self.anc), {("alice", "dave"), ("bob", "dave")})
+      self.assertEqual(self.pairs(res.full.inferred, self.anc), {("alice", "carol"), ("alice", "dave"), ("bob", "dave")})
+      self.assertIn(("alice", "bob"), self.pairs(res.holds, self.anc))          # (holds: the asserted pairs stay...)
+      self.assertNotIn(("alice", "carol"), self.pairs(res.holds, self.anc))     # (... and the inferred ones shown)
+      self.assertIn(("alice", "carol"), self.pairs(res.full.holds, self.anc))
+      self.assertTrue(summary(m).startswith("about dave: inferred: 2 relations"), summary(m))
+      reason(m, self.ENGINE_NAME, about=[p["alice"]])                          # (adds up)
+      self.assertEqual(self.inferredPairs(self.anc), {("alice", "carol"), ("alice", "dave"), ("bob", "dave")})
+      self.assertTrue(summary(m).startswith("about dave and alice:"), summary(m))
+      retractReasoning(m, [p["dave"]])                                         # (after alice: alice -> dave goes too)
+      self.assertEqual(self.inferredPairs(self.anc), {("alice", "carol")})
+      reason(m, self.ENGINE_NAME, about=[p["alice"]])                          # (after dave's retracted: back)
+      self.assertEqual(self.inferredPairs(self.anc), {("alice", "carol"), ("alice", "dave")})
+      reason(m, self.ENGINE_NAME)                                              # the whole model: everything
+      self.assertEqual(self.inferredPairs(self.anc), {("alice", "carol"), ("alice", "dave"), ("bob", "dave")})
+      self.assertTrue(summary(m).startswith("inferred:"), summary(m))
+      retractReasoning(m, [p["alice"]])
+      self.assertEqual(self.inferredPairs(self.anc), {("bob", "dave")})
+      self.assertTrue(summary(m).startswith("all but alice:"), summary(m))
+      reason(m, self.ENGINE_NAME, about=[self.anc])                            # a relation type: its relations
+      self.assertEqual(self.inferredPairs(self.anc), {("alice", "carol"), ("alice", "dave"), ("bob", "dave")})
+    finally:
+      clearReasoning(m)
+    self.assertEqual(self.inferredPairs(self.anc), set())
+
+  def test1810reasonAboutRelation(self):
+    'Reasoning about an individual relation: what\'s inferred between its two ends.'
+    from sn.model.reasoner import reason, clearReasoning
+    m, p = self.m, self.p
+    self.anc["transitive"] = True
+    r = self.rel(self.sib, p["bob"], p["fred"])
+    self.rel(self.anc, p["alice"], p["bob"]); self.rel(self.anc, p["bob"], p["carol"])
+    try:
+      res = reason(m, self.ENGINE_NAME, about=[r])
+      self.assertEqual(self.inferredPairs(self.sib), {("fred", "bob")})
+      self.assertEqual(self.inferredPairs(self.anc), set())
+      self.assertEqual(self.pairs(res.about([r]).inferred, self.sib), {("fred", "bob")})
+    finally:
+      clearReasoning(m)
+
+  def test1820reasonAboutNewObjects(self):
+    'A new object is about its match (and what it\'s related to): only those for the objects reasoned about are made.'
+    from sn.model.reasoner import reason, retractReasoning, clearReasoning
+    m = self.m
+    mother = Relation(m, [m.RELATION], self.person, self.person, name="mother")
+    P, P2, M = self.var("?p", self.person), self.var("?p"), self.var("?m", self.person)
+    M["constraints"] = "alive"
+    rule = self.rule("everyone has a mother", [P], [self.rel(mother, P2, M)])
+    news = lambda: sorted(o.name for o in m.inferredObjects() if isinstance(o, Node) and o._isConnected())
+    try:
+      reason(m, self.ENGINE_NAME, about=[self.p["alice"], self.p["bob"]])
+      self.assertEqual(news(), ["(m for alice)", "(m for bob)"])
+      am = next(o for o in m.inferredObjects() if o.name == "(m for alice)")
+      self.assertTrue(am.isa(self.person))
+      self.assertIs(am.get("alive", None), True)
+      self.assertIn(am, self.p["alice"].getRelatedTo(mother))
+      retractReasoning(m, [self.p["bob"]])
+      self.assertEqual(news(), ["(m for alice)"])
+      self.assertTrue(am._isConnected())                                       # (the same one: kept)
+      reason(m, self.ENGINE_NAME, about=[rule])                                # a rule: what it concludes
+      self.assertEqual(len(news()), 5)
+    finally:
+      clearReasoning(m)
+
+  def test1830reasonAboutViolations(self):
+    'Only the violations about the objects reasoned about are kept: those whose objects they\'re among.'
+    from sn.model.reasoner import reason, retractReasoning, reasoningFor, clearReasoning
+    m, p = self.m, self.p
+    father = Relation(m, [self.parent], self.person, self.person, name="father")
+    father["cardinality"] = "0..1"
+    self.rel(father, p["fred"], p["bob"]); self.rel(father, p["fred"], p["dave"])  # two named fathers: fred's error
+    subjects = lambda: {v.subject.name for v in reasoningFor(m).violations if v.code == "cardinality_max"}
+    try:
+      res = reason(m, self.ENGINE_NAME, about=[p["alice"]])
+      self.assertEqual(subjects(), set())
+      self.assertIn("fred", {v.subject.name for v in res.full.violations if v.code == "cardinality_max"})
+      reason(m, self.ENGINE_NAME, about=[p["fred"]])
+      self.assertEqual(subjects(), {"fred"})
+      retractReasoning(m, [p["fred"]])
+      self.assertEqual(subjects(), set())
+    finally:
+      clearReasoning(m)
+
+  def test1840reasonAboutCommands(self):
+    'The terminal\'s "reason" takes objects to reason about, and "retract" takes back what\'s about some.'
+    from sn.controller.modelInterface import ModelContext
+    from sn.model.reasoner import clearReasoning, reasoningFor
+    m, p = self.m, self.p
+    self.anc["transitive"] = True
+    for a, b in (("alice", "bob"), ("bob", "carol"), ("carol", "dave")):
+      self.rel(self.anc, p[a], p[b])
+    c = ModelContext(m)
+    try:
+      self.assertIn("nothing to retract", c.retract(["dave"]))
+      report = c.reason(["dave"], engine=self.ENGINE_NAME)
+      self.assertIn("Inferred relations: 2", report)
+      self.assertEqual(self.inferredPairs(self.anc), {("alice", "dave"), ("bob", "dave")})
+      self.assertTrue(c.reason(["alice"], engine=self.ENGINE_NAME, silent=True).startswith("about dave and alice:"))
+      self.assertTrue(c.retract(["dave"]).startswith("about alice:"))
+      self.assertEqual(self.inferredPairs(self.anc), {("alice", "carol")})
+      c.retract()                                                              # (everything)
+      self.assertIsNone(reasoningFor(m))
+    finally:
+      clearReasoning(m)
+
 
 @unittest.skipIf(NemoReasoner is None, "the Nemo engine isn't installed (pip install nemo-python)")
 class TestRulesNemo(TestRules):

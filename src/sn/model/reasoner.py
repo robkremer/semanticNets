@@ -76,7 +76,7 @@ Created on Sep 24, 2026
 #################################################################################
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from importlib import import_module
 import importlib.resources
 import importlib.util
@@ -87,7 +87,7 @@ import sys
 from pathlib import Path
 import shutil
 import tempfile
-from typing import Any, ClassVar, Iterator
+from typing import Any, ClassVar, Iterable, Iterator
 from contextlib import contextmanager, ExitStack
 from util.observer import Subject
 from util.persistence.pRef import PRDb
@@ -291,6 +291,132 @@ def _assertedValue(x:GraphObject, key:str, value:Any) -> bool:
     return not local.inferred and local.value == value
   return x.get(key, None) == value
 
+class ReasoningScope:
+  '''
+  Which of a model's reasoning results are shown -- put in the model (see
+  *materialize()*), marked on its objects and reported: everything, after a
+  whole "reason"; or what's about the objects reasoned about (see *reason()*'s
+  *about*), less what's about those retracted (see *retractReasoning()*).
+
+  Something is about an object (see *Inferences.restricted()*) if the object
+  takes part in it: a relation's ends and type, the rules that concluded it, a
+  violation's objects, a new object's match, types and relations -- or, for an
+  individual relation, if it's between the same two objects (eg: reasoning
+  about ann -has-parent-> bob shows ann -has-ancestor-> bob, and bob
+  -has-child-> ann).
+
+  The last say wins: something about two objects, one reasoned about and the
+  other retracted, is shown if the first was reasoned about after the other
+  was retracted, and not if it was before. Reasoning about the whole model
+  again starts afresh: everything's shown.
+  '''
+
+  def __init__(self, everything:bool=False):
+    '''
+    :param everything: Whether everything's shown (as after a whole "reason"); otherwise nothing is, yet.
+    '''
+    self._seq:int = 0
+    self._everything:int|None = None
+    "When the whole model was last reasoned about (see *_seq*), or None."
+    self._stamps:dict[int, tuple[int, bool, GraphObject]] = {}
+    "id(object) -> (when, whether it was reasoned about, not retracted, the object), since *_everything*."
+    self._relations:list[tuple[Relation, tuple[int, bool]]]|None = None
+    "The individual relations among *_stamps*, with their stamps (see *_stamped()*)."
+    if everything:
+      self.add(None)
+
+  def copy(self) -> ReasoningScope:
+    '''
+    :returns: A copy, to change (results restricted to this one keep it: see *Inferences.scope*).
+    '''
+    ret = ReasoningScope()
+    ret._seq, ret._everything, ret._stamps = self._seq, self._everything, dict(self._stamps)
+    return ret
+
+  def add(self, objects:Iterable[GraphObject]|None) -> None:
+    '''
+    Show what's about *objects* (or about anything: everything, if *objects* is None).
+    '''
+    self._seq += 1
+    if objects is None:
+      self._everything, self._stamps = self._seq, {}
+    else:
+      self._stamps.update({id(o): (self._seq, True, o) for o in objects})
+    self._relations = None
+
+  def remove(self, objects:Iterable[GraphObject]) -> None:
+    '''
+    Stop showing what's about *objects*.
+    '''
+    self._seq += 1
+    self._stamps.update({id(o): (self._seq, False, o) for o in objects})
+    self._relations = None
+
+  def isEverything(self) -> bool:
+    '''
+    :returns: Whether everything's shown: the whole model was reasoned about, and nothing's been retracted since.
+    '''
+    return self._everything is not None and all(shown for _, shown, _ in self._stamps.values())
+
+  def objects(self, shown:bool=True) -> list[GraphObject]:
+    '''
+    :returns: The objects reasoned about (or, if not *shown*, retracted) since the whole model was last, oldest first.
+    '''
+    return [o for _, s, o in sorted(self._stamps.values(), key=lambda x: x[0]) if s == shown]
+
+  def _stamped(self) -> list[tuple[Relation, tuple[int, bool]]]:
+    '''
+    :returns: The individual relations reasoned about or retracted, with when, and which.
+    '''
+    if self._relations is None:
+      self._relations = [(o, (when, shown)) for when, shown, o in self._stamps.values()
+                         if isinstance(o, Relation) and o.isIndividual()]
+    return self._relations
+
+  def shows(self, objects:Iterable[Any], ends:tuple[Any, Any]|None=None, among:bool=False) -> bool:
+    '''
+    :param objects: What a conclusion (or violation) is about (see *Inferences.restricted()*): anything
+      that isn't a *GraphObject* is ignored.
+    :param ends: For a relation, its ends: it's about an individual relation between the same two.
+    :param among: Instead of *ends*: whether it's about an individual relation whose two (different) ends are
+      both among *objects* (eg: a violation about a, b and their relation type, for a -r-> b).
+    :returns: Whether it's shown: by the last say about any of them.
+    '''
+    best:tuple[int, bool]|None = (self._everything, True) if self._everything is not None else None
+    def consider(stamp:tuple[int, bool]|None) -> None:
+      nonlocal best
+      if stamp is not None and (best is None or stamp[0] > best[0]):
+        best = stamp
+    ids:set[int] = set()
+    for o in objects:
+      if isinstance(o, GraphObject):
+        ids.add(id(o))
+        stamp = self._stamps.get(id(o))
+        consider(None if stamp is None else stamp[:2])
+    if ends is not None or among:
+      pair = {id(ends[0]), id(ends[1])} if ends is not None else None
+      for rel, stamp in self._stamped():
+        s, d = rel.src, rel.dst
+        if s is None or d is None:
+          continue
+        if (pair is not None and {id(s), id(d)} == pair) or (among and s is not d and id(s) in ids and id(d) in ids):
+          consider(stamp)
+    return best is not None and best[1]
+
+  def describe(self) -> str:
+    '''
+    :returns: What's shown, for a summary: "" (everything), eg: "about carol", "about carol and bob",
+      "about 4 objects"; or, after a whole "reason", eg: "all but carol".
+    '''
+    def objs(os:list[GraphObject]) -> str:
+      return (os[0].name if len(os) == 1 else f"{os[0].name} and {os[1].name}" if len(os) == 2 else f"{len(os)} objects")
+    if self.isEverything():
+      return ""
+    if self._everything is not None:
+      return f"all but {objs(self.objects(shown=False))}"
+    shown = self.objects()
+    return f"about {objs(shown)}" if shown else "about nothing"
+
 @dataclass
 class Inferences:
   '''
@@ -327,6 +453,69 @@ class Inferences:
   The objects the rules concluded exist. Relations involving them are only in
   *fired* (not *holds*, *inferred*, ...: those are about the model's objects).
   '''
+  full:Inferences|None = field(default=None, repr=False, compare=False)
+  "If these are restricted to a scope (see *restricted()*), everything the reasoner found."
+  scope:ReasoningScope|None = field(default=None, repr=False, compare=False)
+  "The scope these are restricted to (see *restricted()*), or None: everything the reasoner found."
+
+  def restricted(self, scope:ReasoningScope) -> Inferences:
+    '''
+    :param scope: What to show.
+    :returns: What *scope* shows of everything the reasoner found (*full*, if these are restricted
+      already): see *ReasoningScope* for what each conclusion and violation is about. *holds* keeps
+      every pair that isn't inferred or inherited, and *isa* stays whole: they answer queries.
+    '''
+    src = self.full if self.full is not None else self
+    if scope.isEverything():
+      return replace(src, full=src, scope=scope)
+    rulesOf:dict[tuple[int, int, int], list[GraphObject]] = {}
+    for r, t, s, d in src.fired:
+      if isinstance(s, GraphObject) and isinstance(d, GraphObject):
+        rulesOf.setdefault((id(t), id(s), id(d)), []).append(r)
+    # what each new object is about: its rule and match, its types, and what it's related to
+    about:dict[tuple, list[Any]] = {_newObjectKey(n): [n.rule, *(v for _, v in n.bindings)] for n in src.newObjects}
+    for r, x, typ in src.ruleIsa:
+      if isinstance(x, NewObject) and (k := _newObjectKey(x)) in about:
+        about[k].append(typ)
+    for r, t, s, d in src.fired:
+      for a, b in ((s, d), (d, s)):
+        if isinstance(a, NewObject) and (k := _newObjectKey(a)) in about and isinstance(b, GraphObject):
+          about[k].append(b)
+    newOnes = [n for n in src.newObjects if scope.shows(about[_newObjectKey(n)])]
+    kept = {_newObjectKey(n) for n in newOnes}
+    isNew = lambda x: isinstance(x, NewObject)
+    def triple(t:Any, s:Any, d:Any) -> bool:
+      return scope.shows([t, s, d, *rulesOf.get((id(t), id(s), id(d)), [])], (s, d))
+    def fired(r:Any, t:Any, s:Any, d:Any) -> bool:
+      ends = [x for x in (s, d) if isNew(x)]
+      if not ends:
+        return triple(t, s, d)
+      if any(_newObjectKey(x) not in kept for x in ends): # (not without the new object it's about)
+        return False
+      return scope.shows([t, r, s, d, *(y for x in ends for y in about[_newObjectKey(x)])], (s, d))
+    shownTriples = lambda rows: [(t, s, d) for t, s, d in rows if triple(t, s, d)]
+    new = {(id(t), id(s), id(d)) for t, s, d in src.inferred + src.inherited}
+    return replace(src,
+      holds=[(t, s, d) for t, s, d in src.holds if (id(t), id(s), id(d)) not in new or triple(t, s, d)],
+      inferred=shownTriples(src.inferred),
+      inherited=shownTriples(src.inherited),
+      classify=[(x, c) for x, c in src.classify if scope.shows([x, c], (x, c))],
+      violations=[v for v in src.violations if scope.shows([v.subject, *v.args], among=True)],
+      fired=[row for row in src.fired if fired(*row)],
+      ruleAttrs=[(r, x, k, v) for r, x, k, v in src.ruleAttrs
+                 if (_newObjectKey(x) in kept if isNew(x) else scope.shows([x, r]))],
+      ruleIsa=[(r, x, typ) for r, x, typ in src.ruleIsa
+               if (_newObjectKey(x) in kept if isNew(x) else scope.shows([x, typ, r], (x, typ)))],
+      newObjects=newOnes,
+      full=src, scope=scope)
+
+  def about(self, objects:Iterable[GraphObject]) -> Inferences:
+    '''
+    :returns: What's about *objects*, of everything the reasoner found (see *restricted()*).
+    '''
+    scope = ReasoningScope()
+    scope.add(objects)
+    return self.restricted(scope)
 
   def _index(self) -> tuple[dict, dict]:
     '''
@@ -1279,15 +1468,7 @@ class Reasoner(ABC):
     :returns: The model and (transitively) its super-models -- but not the base
       rules (see *BASE_RULES*), unless it's one of them (see *objects()*).
     '''
-    base = [m for m in baseRuleModels() if m is not self.model]
-    models:list[Model] = []
-    pending = [self.model]
-    while pending:
-      m = pending.pop()
-      if m not in models and not any(m is b for b in base):
-        models.append(m)
-        pending.extend(m.superDBs) #type: ignore[arg-type]
-    return models
+    return dataModelsOf(self.model)
 
   def ruleObjects(self) -> list[GraphObject]:
     '''
@@ -1486,6 +1667,22 @@ class Reasoner(ABC):
 
 # ── Shared results ────────────────────────────────────────────────────────
 
+def dataModelsOf(model:Model) -> list[Model]:
+  '''
+  :returns: *model* and (transitively) its super-models -- but not the base
+    rules (see *BASE_RULES*), unless it's one of them: what a reasoner over
+    *model* reasons over (see *Reasoner.dataModels()*).
+  '''
+  base = [m for m in baseRuleModels() if m is not model]
+  models:list[Model] = []
+  pending = [model]
+  while pending:
+    m = pending.pop()
+    if m not in models and not any(m is b for b in base):
+      models.append(m)
+      pending.extend(m.superDBs) #type: ignore[arg-type]
+  return models
+
 def defaultEngine() -> str:
   '''
   :returns: The name of the reasoner engine to use when none is given: the
@@ -1502,31 +1699,92 @@ def setDefaultEngine(engine:str) -> None:
   typ, _default, note = sn.PREFS["reasoner/engine"]
   sn.snPrefs["reasoner/engine"] = Attribute(engine, typ, VAR_DEFAULTED, note)
 
-def reason(model:Model, engine:str|None=None, silent:bool=False) -> Inferences:
+def reason(model:Model, engine:str|None=None, silent:bool=False, about:Iterable[GraphObject]|None=None) -> Inferences:
   '''
   Run the reasoner over *model* and keep the results on the model (see
   *reasoningFor()*), where everything using the model -- the command line,
   every view -- finds the same ones. Observers of the model are told with a
-  ("reasoned", (inferences, silent)) topic. The results aren't saved with the model,
+  ("reasoned", (inferences, silent, shown)) topic: *shown* is None, or (when
+  reasoning *about* some objects) the inferred objects about them, for views to
+  show (see *inferredObjectsFor()*). The results aren't saved with the model,
   and aren't updated as it's edited: they're a snapshot until the next
-  *reason()* or *clearReasoning()*.
+  *reason()*, *retractReasoning()* or *clearReasoning()*.
 
   :param engine: The reasoner engine; by default the preference's (see *defaultEngine()*).
   :param silent: True if views shouldn't show what's inferred (eg: just so
     that queries find it): they show only the problems (see *SNGView._showReasoning()*).
+  :param about: Objects to reason about (eg: those selected in a view): the
+    reasoner still reasons over the whole model -- what holds of an object can
+    depend on any of it -- but only what's about these (see *ReasoningScope*) is
+    added to what the model's results show: to its inferred objects, and the
+    violations marked. By default, the whole model: all of it is shown.
+  :returns: What the model's results show now (see *Inferences.restricted()*):
+    with *about*, what's about them and what was shown before (where it still
+    holds); *full* has everything the reasoner found.
   '''
   reasoner = Reasoner.create(model, engine)
-  ret = reasoner.run()
+  full = reasoner.run()
+  objects = None if about is None else list(about)
+  prev = reasoningFor(model)
+  scope = prev.scope.copy() if objects is not None and prev is not None and prev.scope is not None else ReasoningScope()
+  scope.add(objects)
+  ret = full.restricted(scope)
   materialize(model, ret, reasoner.dataModels())
   model.reasoning = ret #type: ignore[attr-defined]
-  model.notify(("reasoned", (ret, silent)))
+  shown = None if objects is None else inferredObjectsFor(model, full.about(objects))
+  model.notify(("reasoned", (ret, silent, shown)))
   return ret
+
+def retractReasoning(model:Model, objects:Iterable[GraphObject]) -> Inferences|None:
+  '''
+  Take back what *model*'s reasoning results (see *reason()*) say about
+  *objects* (see *ReasoningScope*): the inferred objects about them go from
+  the model (and so from its views), and the violations about them aren't
+  marked. The rest stay, and nothing's reasoned again. Observers are told with
+  a ("reasoning retracted", (inferences, objects)) topic.
+
+  :returns: What the results show now, or None if there are none (nothing to take back).
+  '''
+  r = reasoningFor(model)
+  if r is None:
+    return None
+  objects = list(objects)
+  scope = r.scope.copy() if r.scope is not None else ReasoningScope(everything=True)
+  scope.remove(objects)
+  ret = r.restricted(scope)
+  materialize(model, ret, dataModelsOf(model), add=False) # (what's left is there already: the model may have changed since)
+  model.reasoning = ret #type: ignore[attr-defined]
+  model.notify(("reasoning retracted", (ret, objects)))
+  return ret
+
+def inferredObjectsFor(model:Model, inferences:Inferences) -> list[GraphObject]:
+  '''
+  :param model: A model whose results have been put in it (see *materialize()*).
+  :param inferences: Some of them: eg, what's about some objects (see *Inferences.about()*).
+  :returns: *model*'s inferred objects for *inferences*' conclusions: the
+    relations and isa links (not a new object's own isa links, which go with it)
+    and the new objects (see *GraphObject.inferred*).
+  '''
+  rels = _inferredRelations(model)
+  nodes = {o.inferredKey: o for o in model.inferredObjects()
+           if not isinstance(o, Relation) and getattr(o, "inferredKey", None) is not None and o._isConnected()}
+  keys = {(id(t), id(s), id(d)) for t, s, d in inferences.newFacts()}
+  keys |= {(id(model.ISA), id(x), id(typ)) for _, x, typ in inferences.ruleIsa if isinstance(x, GraphObject)}
+  real = lambda o: nodes.get(_newObjectKey(o)) if isinstance(o, NewObject) else o
+  for _, t, s, d in inferences.fired:
+    if isinstance(s, NewObject) or isinstance(d, NewObject):
+      rs, rd = real(s), real(d)
+      if rs is not None and rd is not None:
+        keys.add((id(t), id(rs), id(rd)))
+  ret:list[GraphObject] = [n for n in (nodes.get(_newObjectKey(x)) for x in inferences.newObjects) if n is not None]
+  return ret + [r for k, r in rels.items() if k in keys and r._isConnected()]
 
 def summary(model:Model) -> str:
   '''
   :returns: What *model*'s last "reason" found, in a line -- eg: "inferred:
-    3 relations, 4 new objects; 1 error, 2 warnings" -- or "" if it hasn't
-    been reasoned over (or that's been retracted).
+    3 relations, 4 new objects; 1 error, 2 warnings", or (if only some of it's
+    shown: see *ReasoningScope*) eg: "about carol: inferred: 1 relation; no
+    problems" -- or "" if it hasn't been reasoned over (or that's been retracted).
   '''
   r = reasoningFor(model)
   if r is None:
@@ -1538,7 +1796,8 @@ def summary(model:Model) -> str:
   errors = sum(1 for v in r.violations if v.severity == "error")
   warnings = len(r.violations) - errors
   problems = ", ".join([plural(errors, "error")] * bool(errors) + [plural(warnings, "warning")] * bool(warnings)) or "no problems"
-  return f"inferred: {', '.join(found)}; {problems}"
+  scope = r.scope.describe() if r.scope is not None else ""
+  return f"{scope + ': ' if scope else ''}inferred: {', '.join(found)}; {problems}"
 
 def clearReasoning(model:Model) -> None:
   '''
@@ -1746,7 +2005,7 @@ def _retype(node:GraphObject, types:list[GraphObject]) -> None:
     if not any(r.localDst is t and r._isConnected() for r in links):
       IsaIndividual(node.model, node, t, inferred=True)
 
-def materialize(model:Model, inferences:Inferences, models:list[Model]) -> None:
+def materialize(model:Model, inferences:Inferences, models:list[Model], add:bool=True) -> None:
   '''
   Bring *model*'s inferred objects (see *GraphObject.inferred*) into line with
   *inferences*:
@@ -1767,6 +2026,9 @@ def materialize(model:Model, inferences:Inferences, models:list[Model]) -> None:
   :param model: The model reasoned over.
   :param inferences: What the reasoner concluded.
   :param models: *model* and its super-models.
+  :param add: False to only remove those no longer inferred: none are made,
+    and none are changed (eg: to take back some of the results, which may
+    be about a model that's changed since).
   '''
   want:dict[tuple[int, int, int], tuple[GraphObject, Any, Any]] = {}
   kinds:dict[tuple[int, int, int], str] = {}
@@ -1791,13 +2053,15 @@ def materialize(model:Model, inferences:Inferences, models:list[Model]) -> None:
       node = haveNodes.get(key)
       types = [t for _, x, t in inferences.ruleIsa if isinstance(x, NewObject) and _newObjectKey(x) == key and isinstance(t, GraphObject)]
       if node is None or not node._isConnected():
+        if not add:
+          continue
         try:
           node = Node(model, types or [model.NODE], individual=True, name=_newObjectName(n, model), inferred=True)
         except Exception as ex:
           logger.warning(f"Couldn't add the new object {n}: {type(ex).__name__}: {ex}")
           continue
         node.inferredKey, node.inferredKind = key, "new"
-      else: # (kept: but the rule may say something else about it now -- its types as it says now)
+      elif add: # (kept: but the rule may say something else about it now -- its types as it says now)
         _retype(node, types or [model.NODE])
       nodes[key] = node
     wantNew:dict[int, set[str]] = {id(node): set() for node in nodes.values()}
@@ -1805,7 +2069,7 @@ def materialize(model:Model, inferences:Inferences, models:list[Model]) -> None:
       node = nodes.get(_newObjectKey(x)) if isinstance(x, NewObject) else None
       if node is not None:
         wantNew[id(node)].add(k)
-        if node.get(k, None) != v:
+        if add and node.get(k, None) != v:
           try:
             node[k] = v
           except Exception as ex:
@@ -1822,7 +2086,7 @@ def materialize(model:Model, inferences:Inferences, models:list[Model]) -> None:
     for o, k, a in _inferredAttributes(models):
       if (id(o), k) not in wantAttrs:
         del o[k]
-    for x, k, v in wantAttrs.values():
+    for x, k, v in wantAttrs.values() if add else ():
       local = x.getLocalAttr(k)
       try:
         inh = x._getSuperAttr(k)
@@ -1856,6 +2120,8 @@ def materialize(model:Model, inferences:Inferences, models:list[Model]) -> None:
       try:
         obj = have.get(key)
         if obj is None or not obj._isConnected():
+          if not add:
+            continue
           if rt is model.ISA and (problem := s.parentProblem(d)) is not None: # (a rule concluded an isa cycle -- or one that's asserted)
             if not s.isaLinksTo(d):
               logger.warning(f"Not adding the inferred isa from {s.name} to {d.name}: {problem}")

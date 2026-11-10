@@ -91,6 +91,40 @@ still inferred (where you've put them), adds new ones, and removes the
 rest. Typing ``reason`` (or ``clear reasoning``) in the terminal does the
 same as the button.
 
+.. _reasoning-about:
+
+Reasoning about some objects
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+An object's menu has **reason**, **reason silently** and **retract** too:
+they're about just that object -- or, if it's selected, everything selected.
+
+- **reason** adds (and draws) what the reasoner concludes about it, and marks
+  its problems; the report in the terminal pane is about it too. What's
+  about an object is what it takes part in: the relations inferred to or
+  from it, the types and attribute values the rules conclude for it, the new
+  objects a rule makes for it (with their types and relations), and the
+  violations that name it. For a relation, it's also what's inferred between
+  its two ends (eg: for *bob has-sibling alice*: *alice has-sibling bob*);
+  for a relation type, the relations of that type; for a rule, what it
+  concludes.
+- **reason silently** adds the same to the model, without drawing it, and
+  marks its problems.
+- **retract** takes back what's about it -- even what reasoning about
+  something else brought in (eg: a relation to it) -- and its problems'
+  markers. The rest stays.
+
+The reasoner still reasons over the whole model -- what holds of one object
+can depend on any of it: eg: *carol has-uncle bob* follows from *carol
+has-parent alice* and *alice has-brother bob*, which is itself inferred --
+it's just what's added that's chosen. Each one adds to what's there (where
+it still holds: what's no longer concluded goes), and the last say wins: an
+object reasoned about after another was retracted gets back what's between
+them. The reasoning toolbar's summary says what's shown: eg, "about carol and
+bob: inferred: 3 relations; 1 warning". A whole **reason** shows everything
+again; **Retract** (↺) and **clear reasoning** take everything back. In the
+terminal: ``reason carol bob`` (``--silent`` too), and ``retract carol``.
+
 Engines and explanations
 ------------------------
 
