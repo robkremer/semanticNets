@@ -7,7 +7,8 @@ without opening a window: it reasons over a copy of the bundled family example
 with each reasoner engine (in the apps, every one they include; else, every
 one installed) and checks the conclusions -- and asks one that can explain why
 one holds -- and installs the bundled plugins (in a scratch folder), imports
-all their modules, and makes a model with each (see *selftestPlugins()*) -- as
+all their modules, and makes a model with each (see *selftestPlugins()*), and
+checks the About box has its icon and licences (see *selftestAbout()*) -- as
 the "app" and "pyz" ant targets, and the Build workflow, do after a build.
 It exits with 0 if all's well, and 1 if not.
 
@@ -56,11 +57,40 @@ def selftest() -> int:
         traceback.print_exc()
         missing.append(f"the {engine} reasoner engine ({ex})")
     missing += selftestPlugins(folder)
+    missing += selftestAbout()
     import platform
     print("selftest:", ("FAILED: missing " + ", ".join(missing)) if missing else "ok", f"({platform.machine()})")
     return 1 if missing else 0
   finally:
     shutil.rmtree(folder, ignore_errors=True)
+
+def selftestAbout() -> list[str]:
+  '''
+  Check the About box has what it shows (see *sn.view.graphics.aboutBox*):
+  its icon and the licences that come with the program (package data); and,
+  in the apps, every library they include (each credit with a Python
+  distribution, but the engines they use from the computer), with its
+  licence's text -- from its metadata, which the build must include (see
+  packaging/semanticNets.spec).
+
+  :returns: What's wrong: empty if nothing is.
+  '''
+  from sn.view.graphics import aboutBox
+  from sn.model.reasoner import ENGINES
+  from util.aboutDialog import installed, licenceTexts
+  missing = [] if aboutBox.resource("icon.png") else ["the About box's icon"]
+  missing += [f"the licence {name}" for name in ("semanticNets.txt", "python.txt", "tcl-tk.txt", "nemo.txt")
+              if not aboutBox.licence(name)]
+  if getattr(sys, "frozen", False):
+    external = {e.package for e in ENGINES.values() if not e.bundled}
+    for _heading, credits in aboutBox.credits():
+      for c in credits:
+        if c.dist and c.dist not in external:
+          if not installed(c):
+            missing.append(f"{c.dist}'s metadata (the app should include it)")
+          elif not licenceTexts(c):
+            missing.append(f"{c.dist}'s licence")
+  return missing
 
 def selftestPlugins(folder:str) -> list[str]:
   '''

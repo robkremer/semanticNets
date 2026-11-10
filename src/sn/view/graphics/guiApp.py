@@ -69,6 +69,7 @@ from util.platformSupport import MAC, shortcut, openFile, setUpLook, setDPIAware
   privacyError, privacyHelp, openPrivacySettings
 from util.singleInstance import SingleInstance
 from util.choiceDialog import askChoice
+from util.aboutDialog import installAbout
 from util.terminal import terminalRegistry, installGlobalIORouting,\
   TerminalWidget, TerminalRegistry
 from sn.model.model import Model
@@ -255,7 +256,8 @@ class Application(tk.Tk):
     Creates the menu bar. Tk *will*
     keep auto-populating a cascade we create under one of its reserved
     names ("apple", "window", "help"), so recreate "window" and "help" here
-    to get that native content back. 
+    to get that native content back -- and "apple", the app's own menu, for
+    "About Semantic Nets" (see *showAbout()*).
 
     Called once, from __init__, alongside _installSettingsMenu().
 
@@ -293,6 +295,11 @@ class Application(tk.Tk):
     self.helpmenu.add_separator()
     self.helpmenu.add_command(label="Install Example Models", command=afterMenu(self.onInstallExamples))
     self.helpmenu.add_command(label="Reveal Plugins Folder", command=afterMenu(self.revealPlugins))
+    # "About Semantic Nets": on the Mac, first in the app's own menu (by the
+    # Apple menu) -- so before the menu bar's the root's, below -- in place of
+    # Tk's, which would show Python's About panel when it's run from source;
+    # elsewhere, last in the Help menu (see util.aboutDialog.installAbout())
+    installAbout(menubar, sn.NAME, self.showAbout, self.helpmenu)
 
     if not MAC:
       # (on the Mac, Settings and Quit are in the app's own menu: see
@@ -312,6 +319,11 @@ class Application(tk.Tk):
   def showHelp(self, page:str) -> None:
     'See the module\'s *showHelp()*.'
     showHelp(page)
+
+  def showAbout(self) -> None:
+    'Show the About box (see *aboutBox.showAbout()*).'
+    from sn.view.graphics.aboutBox import showAbout
+    showAbout(self) # (over the window in front: see util.utils.dialogOwner())
 
   def openSettings(self) -> None:
     """Show the app-wide Settings dialog: an attribute editor on *sn.snPrefs*,

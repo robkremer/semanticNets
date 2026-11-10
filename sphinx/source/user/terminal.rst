@@ -86,7 +86,11 @@ Reasoning (see :doc:`reasoning`):
 =====================  =======================================================
 ``reason``             reason over the model, and report; ``reason
                        --silent``: without adding what's inferred to the
-                       views, and report just a summary
+                       views, and report just a summary; ``reason carol
+                       bob``: add just what's about them (see
+                       :ref:`reasoning-about`)
+``retract``            take back what the results say about some objects:
+                       ``retract carol``; without objects, all of it
 ``clear reasoning``    forget the last results
 ``answer query``       answer a query (or any context): ``answer query
                        ?likes-fred``

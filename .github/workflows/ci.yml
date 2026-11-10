@@ -40,6 +40,7 @@ jobs:
           uv venv --python 3.14 --managed-python venv
           uv pip install --python venv -r semanticNets/packaging/requirements.txt
           uv pip install --python venv -r semanticNets/packaging/requirements-nemo.txt -r semanticNets/packaging/requirements-clips.txt # (the optional engines: so their tests run too)
+          uv pip install --python venv packaging # (test_aboutBox reads the requirements with it, as PyInstaller does)
           if [ "$RUNNER_OS" = Windows ]; then echo "$PWD/venv/Scripts" >> "$GITHUB_PATH"; else echo "$PWD/venv/bin" >> "$GITHUB_PATH"; fi
 
       - name: SWI-Prolog (the prolog engine's, 9.1.12 or later), and janus-swi, its Python interface

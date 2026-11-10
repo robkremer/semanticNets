@@ -565,7 +565,10 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
   
         # elif topicName == 'del GraphObject':
         case ["reasoned", data]:
-          self._showReasoning(showInferred=not (len(data) > 1 and data[1])) # (not if it was reasoned silently)
+          self._showReasoning(showInferred=not (len(data) > 1 and data[1]), # (not if it was reasoned silently)
+                              only=data[2] if len(data) > 2 else None) # (just those about the objects reasoned about, if it was)
+        case ["reasoning retracted", _]: # (what's taken back goes as the model removes it: just the markers, and the toolbar)
+          self._showReasoning(showInferred=False)
         case ["reasoning cleared", _]: # (nothing's inferred -- or, if this is heard late, what's inferred now is a later reason's, which says itself whether to show it)
           self._showReasoning(showInferred=False)
 

@@ -20,6 +20,9 @@ need the com.apple.security.cs.disable-library-validation entitlement. It bundle
                 sn.plugins), copied to ~/.sn/plugins when the app starts;
   - help/       the HTML documentation (built by the "doc" target), for the Help menu.
 
+and the metadata of the libraries it includes (for the About box: their
+versions and licences).
+
 .. codeauthor:: Rob Kremer <robkremer@me.com>
 '''
 import os
@@ -53,7 +56,29 @@ datas = [
   (os.path.join(SRC, "sn", "model", "prologReasoner.pl"), os.path.join("sn", "model")), # (SWI-Prolog's: it, and janus-swi, come from the computer -- see util.localPython)
   (os.path.join(SRC, "sn", "model", "baseRules.snm"), os.path.join("sn", "model")),
   (os.path.join(SRC, "sn", "examples"), os.path.join("sn", "examples")),
+  (os.path.join(SRC, "sn", "about"), os.path.join("sn", "about")), # (the About box's icon, and the licences that aren't in the libraries' metadata: see sn.view.graphics.aboutBox)
 ]
+
+# The bundled libraries' metadata (and their dependencies'), for the About box:
+# their versions, and their licences' texts (see util.aboutDialog.licenceFiles()).
+# They're the ones requirements.txt and requirements-nemo.txt name for this
+# platform (eg: not Pillow on the Mac).
+from PyInstaller.utils.hooks import copy_metadata
+from packaging.requirements import Requirement
+def _requirements(*names:str) -> list[str]:
+  ret = []
+  for name in names:
+    with open(os.path.join(SPECPATH, name), encoding="utf-8") as f:
+      for line in f:
+        line = line.split("#", 1)[0].strip()
+        if line and not line.startswith("-"):
+          r = Requirement(line)
+          if r.marker is None or r.marker.evaluate():
+            ret.append(r.name)
+  return ret
+for dist in _requirements("requirements.txt", "requirements-nemo.txt"):
+  datas += copy_metadata(dist, recursive=True)
+
 # The bundled plugins: as files (they're imported from their installed copies,
 # in ~/.sn/plugins, not from the app): see bundledPlugins.py.
 sys.path.insert(0, SPECPATH)
