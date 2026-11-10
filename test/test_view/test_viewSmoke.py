@@ -212,6 +212,41 @@ class Test(unittest.TestCase):
     self.pump()
     self.assertIsNotNone(v.reasoning)
 
+  def test0305reasonAbout(self):
+    'An object\'s (or the selection\'s) "reason", "reason silently" and "retract": just what\'s about them.'
+    v = self.view
+    inferred = lambda: sorted(f"{o.modelObject.localSrc.name} {o.modelObject.localDst.name}" for o in v.values()
+                              if o is not None and o._isConnected() and o.isInferred() and isinstance(o.modelObject, Relation)
+                              and not isinstance(o.modelObject, IsaIndividual))
+    marked = lambda name: [m for m in self.vo(name).statusReport() if "reasoner:" in str(m)]
+    def invoke(vo, label:str) -> None:
+      menu = vo.makeMenu()
+      try:
+        labels = [menu.entrycget(i, "label") if menu.type(i) == "command" else None for i in range(menu.index("end") + 1)] # type: ignore[operator]
+        self.assertIn(label, labels)
+        menu.invoke(labels.index(label))
+      finally:
+        menu.destroy()
+      self.pump()
+    carol = self.vo("carol")
+    invoke(carol, "reason")                                       # carol -has-uncle-> bob (through alice's inferred sibling)
+    self.assertEqual(inferred(), ["carol bob"])
+    self.assertEqual(marked("bob"), [])                           # (bob's warning isn't about carol)
+    self.assertTrue(v.reasoningSummary().startswith("about carol:"), v.reasoningSummary())
+    invoke(self.vo("bob"), "reason silently")                     # (bob's: in the model, not drawn -- but marked)
+    self.assertEqual(inferred(), ["carol bob"])
+    self.assertTrue(marked("bob"))
+    self.vo("alice").selected(True)
+    self.vo("bob").selected(True, _multi=True)
+    invoke(self.vo("alice"), "reason (2 selected)")                # (both: one run)
+    self.assertEqual(inferred(), ["alice bob", "alice bob", "carol bob"])
+    self.vo("alice").selected(False); self.vo("bob").selected(False)
+    invoke(carol, "retract")
+    self.assertNotIn("carol bob", inferred())
+    v.clearReasoning()
+    self.pump()
+    self.assertEqual(inferred(), [])
+
   def test0310engineMissing(self):
     'A missing reasoner engine is said in a dialog, with a link to how to install it, and to the installed ones.'
     from sn.model.reasoner import EngineMissing, INSTALL_HELP
@@ -224,7 +259,7 @@ class Test(unittest.TestCase):
     instead = shown.call_args[1]["instead"]
     with mock.patch.object(type(v), "reason") as reasoned:
       instead("clingo") # (its "Use clingo this time")
-    reasoned.assert_called_once_with("clingo", silent=False)
+    reasoned.assert_called_once_with("clingo", silent=False, about=None)
 
     with mock.patch("sn.model.reasoner.defaultEngine", return_value="nemo"), \
          mock.patch("sn.model.reasoner.installedEngines", return_value=["clingo"]), \

@@ -360,13 +360,18 @@ class ModelContext(CommandContext):
     return ret
 
 
-  def reason(self, /, model:Model|None=None, engine:str|None=None, silent:bool=False) -> str:
+  def reason(self, about:list[str|GraphObject]|None=None, /, model:Model|None=None, engine:str|None=None, silent:bool=False) -> str:
     '''
     Run the reasoner over a model: report rule violations, relations inferred
     or inherited down the isa hierarchy, and suggested classifications. The
     results are kept with the model (not saved), so views of it show them
-    too, until the next "reason" or "clear reasoning".
+    too, until the next "reason", "retract" or "clear reasoning".
 
+    :param about: Objects to reason about (eg: carol bob): the reasoner still
+      reasons over the whole model, but only what it concludes about these --
+      relations to or from them, their types and attributes, new objects made
+      for them, their problems -- is added to the results (and what's already
+      there stays), and the report is about them. By default, the whole model.
     :param model: The model to reason over. By default, the default model.
     :param engine: The reasoner engine: clingo, nemo, clips or prolog. By default, the "reasoner/engine" preference's.
     :param silent: Don't add what's inferred to the views of the model (they
@@ -377,8 +382,30 @@ class ModelContext(CommandContext):
     if model is None:
       model = self.defaults["model"]
     assert model is not None
-    result = reason(model, engine, silent=silent) # kept on the model: views show them too (unless silent)
-    return summary(model) if silent else result.report(model)
+    objects = _decodeObjects(about, model) if about else None
+    result = reason(model, engine, silent=silent, about=objects) # kept on the model: views show them too (unless silent)
+    return summary(model) if silent else (result if objects is None else result.about(objects)).report(model)
+
+  def retract(self, about:list[str|GraphObject]|None=None, /, model:Model|None=None) -> str:
+    '''
+    Take back what the last "reason" over a model concluded about some
+    objects (eg: carol bob): what it inferred about them goes from the model
+    (and its views), and their problems aren't marked; the rest stays. Without
+    objects, everything (as "clear reasoning").
+
+    :param about: The objects. By default, all of them.
+    :param model: The model. By default, the default model.
+    '''
+    from sn.model.reasoner import retractReasoning, reasoningFor, summary
+    if model is None:
+      model = self.defaults["model"]
+    assert model is not None
+    if not about:
+      return self.clear_reasoning(model=model)
+    if reasoningFor(model) is None:
+      return f'{model.name} hasn\'t been reasoned over: there\'s nothing to retract.'
+    retractReasoning(model, _decodeObjects(about, model))
+    return summary(model)
 
   def clear_reasoning(self, /, model:Model|None=None) -> str:
     '''

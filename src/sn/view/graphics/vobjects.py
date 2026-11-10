@@ -989,7 +989,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         except Exception as ex:
           logger.error(f'{mo.name}: {ex}')
           return
-        self.view.reasonSilently()
+        r = self.view.reasoning # (again as it was: the whole model, or just what was reasoned about -- and this)
+        self.view.reasonSilently(about=None if r is None or r.scope is None or r.scope.isEverything() else [mo])
       return go
     if mo.individualChangeProblem(namedIndividual) is None:
       ret[f'make it {"an individual" if namedIndividual else "a type"}'] = \
@@ -1580,6 +1581,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     reasoning = self.view.reasoning
     if reasoning is None:
       return
+    if reasoning.full is not None: # (all of them, even if only some are shown: see SNGView.reason()'s about)
+      reasoning = reasoning.full
     lines = reasoning.ruleConclusions(self.modelObject, model=self.view.model)
     print(f'{self.name}: {len(lines)} conclusion(s)' + "".join("\n  " + l for l in lines))
     problems = [v for v in reasoning.violationsFor(self.modelObject) if v.code.startswith("rule")]
@@ -1657,6 +1660,13 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     menu.add_command(label="erase everything else" + (" (keep the selection)" if n > 1 else ""),
                      command=lambda: self.view.doEraseOthers(self.selectionOrSelf()))
     mo = self.modelObject
+    if mo is not None and not self.isInferred():
+      about = self._reasoningTargets()
+      count = f" ({len(about)} selected)" if len(about) > 1 else ""
+      menu.add_command(label="reason" + count, command=lambda: self.view.reason(about=about))
+      menu.add_command(label="reason silently" + count, command=lambda: self.view.reasonSilently(about=about))
+      menu.add_command(label="retract" + count, command=lambda: self.view.retractReasoning(about),
+                       state=tk.NORMAL if self.view.reasoning is not None else tk.DISABLED)
     if mo is not None and mo.isa(mo.model.CONTEXT) and mo is not mo.model.CONTEXT:
       menu.add_command(label="answer query", command=self.answerQuery)
     if mo is not None and mo.isIndividual() and (mo.isa(mo.model.RULE) or mo.isa(mo.model.DEFINITION)):
@@ -1672,6 +1682,15 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       menu.add_command(label="fit to text", command=self.fitToText,
                        state=tk.NORMAL if self.userSized else tk.DISABLED)
          
+  def _reasoningTargets(self) -> list[GraphObject]:
+    '''
+    :returns: What its "reason", "reason silently" and "retract" are about
+      (see *SNGView.reason()*'s *about*): the model objects of the selection
+      (or just this), leaving out what's inferred -- the reasoner's own.
+    '''
+    return removeDuplicateObjects([vo.modelObject for vo in self.selectionOrSelf()
+                                   if vo.modelObject is not None and not vo.isInferred()])
+
   def onEditAttributes(self, disabled:bool=False):
     '''
     Show its model object's attributes in an editor (*disabled*: just to look), and make the changes made
