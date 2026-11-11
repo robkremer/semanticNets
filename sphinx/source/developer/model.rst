@@ -101,6 +101,47 @@ Attributes are used for:
 - how it's drawn: the ``vis/`` attributes, read by the view (see
   :doc:`view`). These are inherited, so a type sets them for its instances.
 
+Parts: what a rule's graphs are in
+----------------------------------
+
+A rule, definition or requirement holds its graphs in **parts**: plain
+contexts it holds by *antecedent*, *consequent*, *definiendum*,
+*definiens*, *condition* or *required* relations -- SN subtypes of
+*contains* -- each holding its graph by plain *contains*. The relation's SN
+type says what the part is to its box
+(:py:meth:`~sn.model.model.Relation.partType`); the part itself is just a
+context. A relation is a part relation
+(:py:meth:`~sn.model.model.Relation.isPartRelation`) if it's an individual
+of an SN subtype of *contains* (not plain *contains*) and leads to a
+collection that isn't a variable (a variable over contexts is a pattern's).
+
+:py:class:`~sn.model.model.Node` has the API:
+:py:meth:`~sn.model.model.Node.parts` (optionally of one SN type),
+:py:meth:`~sn.model.model.Node.partRelations`,
+:py:meth:`~sn.model.model.Node.partFor` (finds or makes the part of an SN
+type), :py:meth:`~sn.model.model.Node.partOwners` and
+:py:meth:`~sn.model.model.Node.isPart`, and
+:py:meth:`~sn.model.model.Node.partTypes`: the SN types of part a box can
+have, from the *contains* relation types whose source is its SN type (or an
+ancestor of it) -- so a new SN subtype of *rule* gets a new kind of part by
+defining a relation type, not by changing the code. A box's
+``vis/tileParts`` attribute (:py:meth:`~sn.model.model.GraphObject.tilesParts`:
+true on the SN types *rule*, *definition* and *requirement*) says whether
+views draw its parts as panes.
+``Node._validateParts()`` warns (in the status report)
+about a part that's another box's too, one that doesn't quote what it
+holds, and one the box's SN type doesn't have.
+
+Models written before parts (``rule -antecedent-> ?x``) are converted as
+they're read (``Model._migrateRuleParts``, calling
+:py:meth:`~sn.model.model.Model.convertToParts` for each box): each such
+relation's source becomes the part, and its isa link's destination
+*contains* -- the same relation object, with its id, so views that show it
+needn't change. The model is marked dirty, with a warning. Write-locked
+models and the packaged base rules aren't converted; the reasoner still
+reads the old shape (what a box holds directly counts as in its first part
+of that SN type).
+
 Patterns: variables, contexts and constraints
 ---------------------------------------------
 

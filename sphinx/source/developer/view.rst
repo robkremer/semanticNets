@@ -126,10 +126,21 @@ Context windows
 
 A VObject whose GraphObject is a context (a rule, query, definition, ...) is
 drawn as a window (:py:meth:`~sn.view.graphics.vobjects.VObject.isContextWindow`).
-The window has *panes*, one per kind of containment it has
-(:py:meth:`~sn.view.graphics.vobjects.VObject.panes`): a rule's antecedent
-and consequent, a definition's definiendum and definiens, or a single
-*contains* pane.
+The window has *panes* (:py:meth:`~sn.view.graphics.vobjects.VObject.panes`,
+from :py:meth:`~sn.view.graphics.vobjects.VObject.paneSpecs`): for a box
+that tiles its parts (``tilesParts()``: a rule, definition or requirement,
+by default), one per part -- a rule's antecedent and consequent, a second
+antecedent as "antecedent 2" -- and one for each SN type of part it can
+have but hasn't yet (the part is made when something goes in the pane, by
+``_ContainCreated`` in the same command); for any other box, a single
+*contains* pane. A tiled part's own VObject is hidden
+(:py:meth:`~sn.view.graphics.vobjects.VObject.isTiledPart`) and isn't a
+context window: its pane stands for it, and
+:py:meth:`~sn.view.graphics.vobjects.VObject.paneContents` and
+:py:meth:`~sn.view.graphics.vobjects.VObject.containmentOf` see through it
+to what the part contains. **show parts as boxes**
+(:py:meth:`~sn.view.graphics.vobjects.VObject.setTiled`) turns tiling off:
+the parts are then windows nested in the box.
 
 Containment is in the model -- relations from the context, of type
 *contains* or a subtype -- and the window keeps it in step with position:

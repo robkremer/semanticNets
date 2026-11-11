@@ -62,6 +62,7 @@ Created on Apr 21, 2026
 #################################################################################
 from __future__ import annotations
 from collections import deque
+import sys
 from contextlib import contextmanager
 from util.persistence.pRef import PRObject, PRDb, PReference, PRDbContainer
 from util.persistence.serialize import InstantiationInfo, ParamInfo, PropertyInfo,\
@@ -170,6 +171,15 @@ _isaGeneration:int = 0
 '''Bumped whenever a relation is connected, disconnected or reconnected, or has an
 end changed (see *isaStructureChanged()*): an object's cached parents (see
 *GraphObject.getParents()*) are good only for the generation they were found in.'''
+
+_partTypesCache:dict[tuple, list] = {}
+"The SN types of the relations holding parts, by the parents of a box and the isa generation: see *Node.partTypes()*."
+
+def isaGeneration() -> int:
+  '''
+  :returns: How many times relations have changed (see *isaStructureChanged()*): for caches of what's worked out from them.
+  '''
+  return _isaGeneration
 
 def isaStructureChanged() -> None:
   '''
@@ -357,6 +367,8 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
       self.assertToStatusReport(False,
             f'Unknown subtype of GraphObject: {self.__class__.__name__}', 'W')
     self._validateSelfIsa()
+    if isinstance(self, Node) and self.isIndividual():
+      self._validateParts()
     return self.statusReport()
   
   def _isConnected(self):
@@ -969,6 +981,35 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     except ValueError:
       return True
 
+  TILE_PARTS = "vis/tileParts"
+  "The attribute that says whether a box's parts are drawn as its panes, side by side: see *tilesParts()*."
+
+  def isPartRelation(self) -> bool:
+    '''
+    :returns: True iff this is a relation that holds a part (see
+      *Node.parts()*). Not for a GraphObject that isn't a relation.
+    '''
+    return False
+
+  def tilesParts(self) -> bool:
+    '''
+    :returns: True iff this box's parts (see *Node.parts()*) are drawn as its
+      panes, side by side (eg: a rule's antecedent on the left and its
+      consequent on the right), rather than each as a box of its own inside
+      it: its "vis/tileParts" attribute (its own, or inherited from its SN
+      type: true for the SN types rule, definition and requirement).
+    '''
+    try:
+      value = self.get(self.TILE_PARTS, False)
+    except Exception:
+      return False
+    if value is None or value is NOVALUE:
+      return False
+    try:
+      return bool(coerceValue(bool, value))
+    except ValueError:
+      return False
+
   def isDisabled(self) -> bool:
     '''
     :returns: True iff this has a "disabled" attribute (its own, or inherited)
@@ -1472,6 +1513,69 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     for msg in migrateConstraints(self):
       logger.warning(f'{self.name}: {msg}')
     self._migrateMemberLists()
+    self._migrateRuleParts()
+
+  def convertToParts(self, owner:GraphObject) -> int:
+    '''
+    Move what *owner* holds directly by relations of an SN subtype of
+    contains other than contains itself (eg: a rule's antecedent: rule
+    -antecedent-> ?x, as files written before parts had it) into its parts
+    (see *Node.parts()*): into the first part it holds by that SN type, made
+    if need be. Each relation is kept (with its id: a view of it still shows
+    it), as the part's "contains" relation: part -contains-> ?x.
+
+    :returns: How many relations were moved.
+    '''
+    if not isinstance(owner, Node) or not owner.isCollection():
+      return 0
+    contains = self.CONTAINS
+    moved = 0
+    for r in [r for r in owner._outgoing if isinstance(r, Relation)]:
+      if r.localSrc is not owner or not r.isIndividual() or r.model is not self or r.localDst is None or r.isPartRelation():
+        continue
+      try:
+        typ = next((p for p in r.getParents() if p is not contains and p.isa(contains)), None)
+      except Exception:
+        continue
+      if typ is None:
+        continue
+      part = owner.partFor(cast(Relation, typ))
+      r.src = part
+      for link in r.isaLinksTo(typ):
+        link.dst = contains
+      moved += 1
+    if moved:
+      isaStructureChanged()
+    return moved
+
+  def _migrateRuleParts(self) -> None:
+    '''
+    Put what the rules, definitions, requirements, ... of a file written
+    before there were parts held directly into their parts (see
+    *convertToParts()*). Not in a model that can't be changed: the reasoner
+    and the views still read the old shape.
+    '''
+    reasoner = sys.modules.get("sn.model.reasoner")
+    if getattr(self, "_writeLocked", False) or _isPackagedBaseRules(self.url) or getattr(reasoner, "_readingBase", None):
+      return # (the base rules: read-only)
+    boxes = moved = 0
+    for obj in list(self._db.values()):
+      if obj is None or not isinstance(obj, Node) or not obj.isIndividual():
+        continue
+      try:
+        n = self.convertToParts(obj)
+      except Exception as ex:
+        obj.assertToStatusReport(False, f'Its contents couldn\'t be put in parts: {ex}', "W")
+        continue
+      if n:
+        boxes += 1
+        moved += n
+    if boxes:
+      logger.warning(f'{self.name}: {boxes} rule{"s" if boxes > 1 else ""} (or definitions, requirements, ...) held '
+                     f'{"their" if boxes > 1 else "its"} antecedent, consequent, ... directly: {moved} relation'
+                     f'{"s were" if moved > 1 else " was"} moved into parts -- plain contexts the rule holds (it\'s '
+                     'marked changed: save it to keep it so).')
+      self.setDirty()
 
   def _migrateMemberLists(self) -> None:
     '''
@@ -1936,7 +2040,130 @@ class Node(GraphObject):
     How many members it has (see *getMembers()*).
     '''
     return sum(1 for _ in self.getMembers())
-    
+
+  # ---- Parts: the plain contexts a rule, definition, requirement, ... holds its graphs in ----------------------
+
+  def partRelations(self, relationType:Relation|None=None) -> list[Relation]:
+    '''
+    :param relationType: Just those of this SN type (or its SN subtypes).
+    :returns: The relations by which this holds its parts (see *parts()*), in
+      the order they were made.
+    '''
+    return [r for r in self._outgoing if isinstance(r, Relation) and r.localSrc is self and r.isPartRelation()
+            and (relationType is None or r.isa(relationType))]
+
+  def parts(self, relationType:Relation|None=None) -> list[Node]:
+    '''
+    A part is a plain context (an individual of the SN type context) that a
+    box holds by a relation of an SN subtype of contains other than contains
+    itself -- antecedent, consequent, definiendum, definiens, condition or
+    required (or an SN subtype of one of those, or another such relation
+    type): what the part holds is the graph, and the relation's SN type says
+    what the graph is to the box. Eg: a rule holds a context by an
+    "antecedent" relation, and the context holds the antecedent's nodes and
+    relations by "contains" relations. A rule may have several antecedents:
+    it then fires when any one of them matches (see
+    *sn.model.reasoner.ruleSpecsOf()*).
+
+    (Files written before parts held what's in them directly: rule
+    -antecedent-> ?x. They're converted as they're read: see
+    *Model._migrateRuleParts()*. The reasoner still reads that shape, eg: in
+    a model that can't be changed, as part of the first part of that SN type.)
+
+    :param relationType: Just those held by this SN type (or its SN subtypes).
+    :returns: Its parts, in the order they were added.
+    '''
+    return [cast(Node, r.localDst) for r in self.partRelations(relationType)]
+
+  def partOwners(self) -> list[GraphObject]:
+    '''
+    :returns: What holds this as a part (see *parts()*): one box, normally;
+      none if it isn't a part.
+    '''
+    return list({id(r.localSrc): r.localSrc for r in self._incoming
+                 if isinstance(r, Relation) and r.localDst is self and r.localSrc is not None and r.isPartRelation()}.values())
+
+  def isPart(self) -> bool:
+    '''
+    :returns: True iff something holds this as a part (see *parts()*).
+    '''
+    return any(isinstance(r, Relation) and r.localDst is self and r.isPartRelation() for r in self._incoming)
+
+  def partTypes(self) -> list[Relation]:
+    '''
+    :returns: The SN types of the relations by which a box of this one's SN
+      type holds its parts (see *parts()*): those SN subtypes of contains
+      (not contains itself) whose source is this one's SN type or one of its
+      ancestors -- eg: for a rule, antecedent and consequent; for a
+      definition, definiendum and definiens; for a requirement, condition and
+      required -- from the most general ancestor's to its own, each in the
+      order they were made. What its panes are, if it tiles its parts (see
+      *tilesParts()*).
+    '''
+    contains = getattr(self.model, "CONTAINS", None)
+    if contains is None:
+      return []
+    key = (tuple(id(p) for p in self.getParents()), _isaGeneration)
+    cached = _partTypesCache.get(key)
+    if cached is not None:
+      return list(cached)
+    ret:list[Relation] = []
+    collection = getattr(self.model, "COLLECTION", None)
+    try:
+      ancestors = [a for a in self.getSupers() if a is not self and collection is not None and a.isa(collection)]
+    except Exception:
+      return []
+    for a in reversed(ancestors):
+      for t in a._outgoing:
+        if (isinstance(t, Relation) and t.localSrc is a and not t.isIndividual() and t is not contains
+            and t.isa(contains) and not t.isVariable() and t not in ret):
+          ret.append(t)
+    if len(_partTypesCache) > 256:
+      _partTypesCache.clear()
+    _partTypesCache[key] = list(ret)
+    return ret
+
+  def _validateParts(self) -> None:
+    '''
+    Report (as warnings, in its status report) what's amiss with its parts
+    (see *parts()*) -- as can happen while a rule (say) is being made: a part
+    that's another box's too (a part should belong to just one); one that
+    doesn't quote what it holds (eg: a plain collection, whose contents are
+    facts); and one its SN type doesn't have parts of (eg: a rule's
+    "condition": a requirement's part).
+    '''
+    rels = self.partRelations()
+    if not rels:
+      return
+    own = self.partTypes()
+    for r in rels:
+      part = cast(Node, r.localDst)
+      typ = r.partType()
+      kind = typ.name if typ is not None else "part"
+      others = [o for o in part.partOwners() if o is not self]
+      if others:
+        self.assertToStatusReport(False, f'Its {kind} "{part.name}" is also a part of '
+                                  f'{", ".join(chr(34) + str(o.name) + chr(34) for o in others)}: a part should belong to just one box.', "W")
+      if not part.quotesContents():
+        self.assertToStatusReport(False, f'Its {kind} "{part.name}" doesn\'t quote what it holds (it\'s a plain collection, '
+                                  'not a context): what\'s in it is taken as facts too.', "W")
+      if typ is not None and own and not any(typ.isa(t) for t in own):
+        self.assertToStatusReport(False, f'Its {kind} "{part.name}": a {self.getParents()[0].name}\'s parts are '
+                                  f'{", ".join(t.name for t in own)}.', "W")
+
+  def partFor(self, relationType:Relation) -> Node:
+    '''
+    :returns: The (first) part this holds by *relationType* (see *parts()*):
+      eg, a rule's antecedent -- made, a context named after the relation's
+      SN type, if it has none.
+    '''
+    have = self.partRelations(relationType)
+    if have:
+      return cast(Node, have[0].localDst)
+    part = Node(self.model, [self.model.CONTEXT], individual=True, name=relationType.name)
+    Relation(self.model, [relationType], self, part, individual=True)
+    return part
+
     
 class Collection(Node):
   '''
@@ -2166,6 +2393,39 @@ class Relation(GraphObject, AGRelation[Model, GraphObject]): #type: ignore[misc]
         return "?"
     other = name(self.localDst if isSource else self.localSrc)
     return f'{ref} \u2192 {name(self, 1)} \u2192 {other}' if isSource else f'{other} {name(self, 1)} \u2192 {ref}'
+
+  @override
+  def isPartRelation(self) -> bool:
+    '''
+    :returns: True iff this holds a part (see *Node.parts()*): it's an
+      individual relation of an SN subtype of contains other than contains
+      itself (eg: antecedent), to a collection that isn't a variable.
+    '''
+    d = self.localDst
+    if d is None or not isinstance(d, Node) or isinstance(d, AllModelCollection) or not self.isIndividual():
+      return False
+    m = self.model
+    contains = getattr(m, "CONTAINS", None)
+    if contains is None:
+      return False
+    try:
+      parents = self.getParents()
+      if all(p is contains for p in parents) or not any(p.isa(contains) for p in parents):
+        return False
+      return d.isCollection() and not d.isVariable()
+    except Exception: # (eg: half-built)
+      return False
+
+  def partType(self) -> Relation|None:
+    '''
+    :returns: If this holds a part (see *isPartRelation()*), the SN type that
+      says what the part is to its box: its SN type that's an SN subtype of
+      contains (eg: antecedent). Else None.
+    '''
+    if not self.isPartRelation():
+      return None
+    contains = self.model.CONTAINS
+    return next((cast(Relation, p) for p in self.getParents() if p is not contains and p.isa(contains)), None)
 
   @property
   def dst(self) -> GraphObject|None:

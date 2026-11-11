@@ -54,6 +54,8 @@ class TestRules(unittest.TestCase):
   '''
   ENGINE:type[Reasoner] = ClingoReasoner
   ENGINE_NAME = "clingo"
+  PARTS = False
+  "Whether the rules, definitions and requirements made hold their graphs in parts (see *Node.parts()*), as made now -- or directly, as in files written before parts."
 
   def setUp(self):
     Path("temp_rules.xml").unlink(missing_ok=True) # (saved at exit by an earlier run)
@@ -88,7 +90,15 @@ class TestRules(unittest.TestCase):
       self.rel(self.m.ANTECEDENT, r, x)
     for x in consequent:
       self.rel(self.m.CONSEQUENT, r, x)
-    return r
+    return self.parted(r)
+
+  def parted(self, box):
+    '''
+    :returns: *box*: with *PARTS*, what it holds by antecedent, consequent, ... moved into parts (see *Model.convertToParts()*).
+    '''
+    if self.PARTS:
+      self.m.convertToParts(box)
+    return box
 
   def symmetryRule(self, tag, copies=False):
     'B -R-> A :- A -R-> B, R {tag}  (with *copies*: the consequent has its own ?A, ?B, ?R)'
@@ -141,6 +151,95 @@ class TestRules(unittest.TestCase):
     self.assertIn(("bob", "alice"), self.pairs(res.inferred, self.likes))
     self.assertNotIn(("dave", "carol"), self.pairs(res.holds, self.likes))
     self.assertNotIn(("carol", "dave"), self.pairs(res.holds, self.likes))
+
+  def inParts(self, owner, *parts):
+    '''
+    Give *owner* parts (see *Node.parts()*): for each (relation type, its
+    contents) in *parts*, a new context it holds by that relation type, which
+    contains the contents.
+
+    :returns: The parts.
+    '''
+    ret = []
+    for typ, contents in parts:
+      part = Node(self.m, [self.m.CONTEXT], individual=True, name=typ.name)
+      self.rel(typ, owner, part)
+      for x in contents:
+        self.rel(self.m.CONTAINS, part, x)
+      ret.append(part)
+    return ret
+
+  def test0106severalAntecedents(self):
+    'A rule with two antecedents fires when either matches: one rule for each, with the whole consequent.'
+    m, p = self.m, self.p
+    friend = Relation(m, [m.RELATION], self.person, self.person, name="friend")
+    self.rel(self.likes, p["alice"], p["bob"])
+    self.rel(self.parent, p["carol"], p["dave"])
+    r = Node(m, [m.RULE], individual=True, name="friends")
+    X, Y, X2, Y2, X3, Y3 = (self.var(n) for n in ("?x", "?y", "?x", "?y", "?x", "?y"))
+    self.inParts(r, (m.ANTECEDENT, [X, Y, self.rel(self.likes, X, Y)]),
+                    (m.ANTECEDENT, [X2, Y2, self.rel(self.parent, X2, Y2)]),
+                    (m.CONSEQUENT, [X3, Y3, self.rel(friend, X3, Y3)]))
+    from sn.model.reasoner import ruleSpecsOf
+    self.assertEqual(len(ruleSpecsOf(r)), 2)
+    res = self.reason()
+    self.assertEqual(self.pairs(res.inferred, friend), {("alice", "bob"), ("carol", "dave")})
+    self.assertEqual([v for v in res.violations if v.subject is r], [])
+    # what a rule holds directly (as files written before parts had it) goes with its first antecedent
+    Z = self.var("?y"); Z["constraints"] = "gender: male"
+    self.rel(m.ANTECEDENT, r, Z)
+    p["bob"]["gender"] = "male"
+    self.assertEqual(self.pairs(self.reason().inferred, friend), {("alice", "bob"), ("carol", "dave")})
+    p["bob"]["gender"] = "female"
+    self.assertEqual(self.pairs(self.reason().inferred, friend), {("carol", "dave")})
+
+  def test0107severalMeanings(self):
+    'A definition with two meanings (definiens parts): the term from either, but not back -- with a warning.'
+    m, p = self.m, self.p
+    kin = Relation(m, [m.RELATION], self.person, self.person, name="kin")
+    self.rel(self.parent, p["alice"], p["bob"])
+    self.rel(self.sib, p["carol"], p["dave"])
+    self.rel(kin, p["fred"], p["alice"])
+    d = Node(m, [m.DEFINITION], individual=True, name="kin")
+    X, Y, X2, Y2, X3, Y3 = (self.var(n) for n in ("?x", "?y", "?x", "?y", "?x", "?y"))
+    self.inParts(d, (m.DEFINIENDUM, [X, Y, self.rel(kin, X, Y)]),
+                    (m.DEFINIENS, [X2, Y2, self.rel(self.parent, X2, Y2)]),
+                    (m.DEFINIENS, [X3, Y3, self.rel(self.sib, X3, Y3)]))
+    res = self.reason()
+    self.assertTrue({("alice", "bob"), ("carol", "dave")} <= self.pairs(res.holds, kin))
+    self.assertNotIn(("fred", "alice"), self.pairs(res.holds, self.parent) | self.pairs(res.holds, self.sib)) # (not back)
+    self.assertEqual([v.code for v in res.violations if v.subject is d], ["definition_one_way"])
+
+  def test0108sharedPart(self):
+    'A part held by two rules is used by both, with a warning on each: a part should belong to one box.'
+    m, p = self.m, self.p
+    self.rel(self.likes, p["alice"], p["bob"])
+    friend = Relation(m, [m.RELATION], self.person, self.person, name="friend")
+    X, Y, X2, Y2 = (self.var(n) for n in ("?x", "?y", "?x", "?y"))
+    r1, r2 = (Node(m, [m.RULE], individual=True, name=n) for n in ("one", "two"))
+    [ante] = self.inParts(r1, (m.ANTECEDENT, [X, Y, self.rel(self.likes, X, Y)]))
+    self.rel(m.ANTECEDENT, r2, ante)
+    for r in (r1, r2):
+      self.inParts(r, (m.CONSEQUENT, [X2, Y2, self.rel(friend, X2, Y2)] if r is r1 else [X2, Y2]))
+    res = self.reason()
+    self.assertIn(("alice", "bob"), self.pairs(res.inferred, friend))
+    shared = {v.subject.name: v.args for v in res.violations if v.code == "part_shared"}
+    self.assertEqual(shared, {"one": ("antecedent", "two"), "two": ("antecedent", "one")})
+
+  def test0109severalConditions(self):
+    'A requirement with two condition parts applies where either matches.'
+    m, p = self.m, self.p
+    self.rel(self.likes, p["alice"], p["bob"])
+    self.rel(self.sib, p["carol"], p["dave"])
+    q = Node(m, [m.REQUIREMENT], individual=True, name="known")
+    q["report"] = "?x"
+    X, Y, X2, Y2, X3 = (self.var(n) for n in ("?x", "?y", "?x", "?y", "?x"))
+    X3["constraints"] = "known"
+    self.inParts(q, (m.CONDITION, [X, Y, self.rel(self.likes, X, Y)]),
+                    (m.CONDITION, [X2, Y2, self.rel(self.sib, X2, Y2)]),
+                    (m.REQUIRED, [X3]))
+    p["carol"]["known"] = True
+    self.assertEqual(self.violations("known"), {("alice",), ("dave",)}) # (fullSibling is symmetric: dave too)
 
   def test0110symmetryNeedsTheTag(self):
     self.rel(self.likes, self.p["alice"], self.p["bob"]) # likes isn't "mirrored"
@@ -338,7 +437,7 @@ class TestRules(unittest.TestCase):
       self.rel(self.m.DEFINIENDUM, d, x)
     for x in definiens:
       self.rel(self.m.DEFINIENS, d, x)
-    return d
+    return self.parted(d)
 
   def concluded(self, res, d):
     return {(t.name, s.name, x.name) for r, t, s, x in res.fired if r is d and hasattr(s, "name") and hasattr(x, "name")}
@@ -656,7 +755,7 @@ class TestRules(unittest.TestCase):
       self.rel(self.m.CONDITION, q, x)
     for x in required:
       self.rel(self.m.REQUIRED, q, x)
-    return q
+    return self.parted(q)
 
   def violations(self, code):
     return {tuple(x.name for x in (v.subject, *v.args)) for v in self.reason().violations if v.code == code}
@@ -1163,6 +1262,39 @@ class TestRulesProlog(TestRules):
   ENGINE_NAME = "prolog"
   BAD_QUERY = "ans(X) :- not not not."
   SYNTAX_ERROR = "Syntax error"
+
+
+class TestRulesParts(TestRules):
+  '''
+  The rules, with their graphs in parts (see *Node.parts()*): eg, a rule
+  holding a context by "antecedent", which holds the antecedent's nodes and
+  relations by "contains".
+  '''
+  PARTS = True
+
+
+@unittest.skipIf(NemoReasoner is None, "the Nemo engine isn't installed (pip install nemo-python)")
+class TestRulesNemoParts(TestRulesNemo):
+  '''
+  The rules, in parts, by the Nemo engine.
+  '''
+  PARTS = True
+
+
+@unittest.skipIf(ClipsReasoner is None, "the CLIPS engine isn't installed (pip install clipspy)")
+class TestRulesClipsParts(TestRulesClips):
+  '''
+  The rules, in parts, by the CLIPS engine.
+  '''
+  PARTS = True
+
+
+@unittest.skipIf(PrologReasoner is None, "the Prolog engine isn't installed (SWI-Prolog, and pip install janus-swi)")
+class TestRulesPrologParts(TestRulesProlog):
+  '''
+  The rules, in parts, by the SWI-Prolog engine.
+  '''
+  PARTS = True
 
 
 if __name__ == "__main__":

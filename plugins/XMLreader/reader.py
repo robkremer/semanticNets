@@ -290,11 +290,12 @@ def makePartOf(o:Model, hasPart:Relation) -> Relation:
   def var(name:str) -> Node:
     return Node(o, [o.NODE], individual=True, name=name)
   A, B = var("?a"), var("?b")
+  term, meaning = d.partFor(o.DEFINIENDUM), d.partFor(o.DEFINIENS) # (its parts: plain contexts it holds)
   for x in (A, B, Relation(o, [partOf], A, B, individual=True)):
-    Relation(o, [o.DEFINIENDUM], d, x, individual=True)
+    Relation(o, [o.CONTAINS], term, x, individual=True)
   A2, B2 = var("?a"), var("?b")
   for x in (A2, B2, Relation(o, [hasPart], B2, A2, individual=True)):
-    Relation(o, [o.DEFINIENS], d, x, individual=True)
+    Relation(o, [o.CONTAINS], meaning, x, individual=True)
   return partOf
 
 def typesByName(o:Model) -> tuple[dict[str, list[Node]], dict[str, list[Relation]]]:

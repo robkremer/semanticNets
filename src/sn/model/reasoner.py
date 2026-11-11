@@ -89,7 +89,7 @@ import sys
 from pathlib import Path
 import shutil
 import tempfile
-from typing import Any, ClassVar, Iterable, Iterator
+from typing import Any, Callable, ClassVar, Iterable, Iterator, cast
 from contextlib import contextmanager, ExitStack
 from util.observer import Subject
 from util.persistence.pRef import PRDb
@@ -174,6 +174,9 @@ _MESSAGES:dict[str,str] = {
   "cardinality_min":       "{0}: {2} by {1}, but it needs at least {3}",
   "cardinality_min_in":    "{0}: {2} have it by {1}, but it needs at least {3}",
   "bad_cardinality":       "{0}: its {1} can't be read: {2}",
+  "part_shared":           "{0}: its {1} is also a part of {2}: a part should belong to just one box",
+  "part_unquoted":         "{0}: its {1} doesn't quote what it holds (it's a plain collection, not a context): what's in it is taken as facts too",
+  "definition_one_way":    "definition {0}: it has {1} definiens parts (meanings), so it's used one way only: each meaning gives the term defined, but the term can't say which meaning holds",
   "unused_variable":       "{0} is a variable (by its name), but isn't in any query, rule, definition, constraint or requirement: it, and its relations, are ignored -- to stand for someone unknown, give it an ordinary name",
   }
 "Message templates for violation codes: {0} is the subject, {1}... are the args."
@@ -661,6 +664,63 @@ class Pattern:
   errors:list[tuple[GraphObject, str]] = field(default_factory=list)
   "(variable, message): constraints that can't be parsed (see *GraphObject.constraintsError()*)."
 
+def _holds(context:GraphObject, parts:tuple[GraphObject, ...]|None) -> Callable[[Relation], bool]:
+  '''
+  :returns: Which of *context*'s "contains"-family relations hold what *parts*
+    says (see *patternOf()*).
+  '''
+  m = context.model
+  if parts is not None:
+    return lambda r: any(r.isa(p) for p in parts)
+  return lambda r: r.isa(m.CONTAINS) and not r.isa(m.CONSEQUENT) and not r.isa(m.DEFINIENDUM) and not r.isa(m.REQUIRED)
+
+def heldParts(context:GraphObject, parts:tuple[GraphObject, ...]|None=None) -> list[GraphObject]:
+  '''
+  :param parts: As for *patternOf()*.
+  :returns: The parts (see *Node.parts()*) *context* holds by those relation
+    types, in the order they were added.
+  '''
+  holds = _holds(context, parts)
+  return [cast(GraphObject, r.localDst) for r in context._outgoing
+          if isinstance(r, Relation) and r.localSrc is context and r.isPartRelation() and holds(r)]
+
+def _alternatives(context:GraphObject, parts:tuple[GraphObject, ...]|None) -> list[list[GraphObject]]:
+  '''
+  What *context* holds through *parts* (see *patternOf()*), one list for each
+  of its parts held by those relation types (see *Node.parts()*): what the
+  part contains. What *context* holds directly by them -- not in a part, as
+  in files written before there were parts, or in a plain context (eg: a
+  query) -- goes with the first part's (or is the one list, if it has none).
+
+  :returns: The lists: at least one (perhaps empty).
+  '''
+  holds = _holds(context, parts)
+  direct:list[GraphObject] = []
+  held:list[list[GraphObject]] = []
+  for r, _ in context._getOutgoing(lambda r: r.isIndividual() and holds(r)):
+    d = r.localDst
+    if d is None:
+      continue
+    if r.isPartRelation():
+      contains = context.model.CONTAINS
+      held.append([x.localDst for x, _ in d._getOutgoing(lambda x: x.isIndividual() and x.isa(contains))
+                   if x.localDst is not None and x.localDst is not d])
+    else:
+      direct.append(d)
+  if not held:
+    return [direct]
+  held[0] = direct + held[0]
+  return held
+
+def patternsOf(context:GraphObject, parts:tuple[GraphObject, ...]|None=None, outer:Pattern|None=None) -> list[Pattern]:
+  '''
+  The patterns of *context*: one for each of its parts held by *parts* --
+  eg: for a rule with two antecedents, one for each (it fires when either
+  matches: see *ruleSpecsOf()*) -- or the one, if it has none (eg: a query).
+  See *patternOf()*.
+  '''
+  return [_patternOfElements(context, elements, outer) for elements in _alternatives(context, parts)]
+
 def patternOf(context:GraphObject, parts:tuple[GraphObject, ...]|None=None, outer:Pattern|None=None) -> Pattern:
   '''
   :param parts: The "contains"-family relation types to read the pattern from.
@@ -670,8 +730,12 @@ def patternOf(context:GraphObject, parts:tuple[GraphObject, ...]|None=None, oute
   :param outer: The pattern this one's evaluated within, if any (eg: a
     requirement's condition, for its required part): its value variables have
     values here too.
-  :returns: The *Pattern* of *context*: everything it contains (through
-    *parts*).
+  :returns: The *Pattern* of *context*: everything it holds through *parts*
+    -- in the parts it holds by them (see *Node.parts()*: eg, a rule's
+    antecedent, a context that contains the antecedent's graph), all of them
+    together; and anything it holds by them directly (as in a query, or a
+    file written before there were parts). For each one separately, see
+    *patternsOf()*.
 
     - A contained relation must hold, between its (local) ends, for each of its
       types; an end it doesn't have is "something".
@@ -682,6 +746,12 @@ def patternOf(context:GraphObject, parts:tuple[GraphObject, ...]|None=None, oute
       (the usual "for all x, y: x != y, ..."), rather than a relation to find.
     - A variable's own attributes are constraints on what it matches (see
       *GraphObject.constraints()*).
+  '''
+  return _patternOfElements(context, [e for alt in _alternatives(context, parts) for e in alt], outer)
+
+def _patternOfElements(context:GraphObject, contained:list[GraphObject], outer:Pattern|None) -> Pattern:
+  '''
+  The *Pattern* of *contained*: what *context* holds (see *patternOf()*).
   '''
   m = context.model
   ret = Pattern(context)
@@ -695,10 +765,6 @@ def patternOf(context:GraphObject, parts:tuple[GraphObject, ...]|None=None, oute
       for p in x.getParents():
         if p not in (m.NODE, m.RELATION, m.TOP) and not isinstance(x, IsaIndividual):
           ret.types.append((x, p))
-  inPattern = (lambda r: any(r.isa(p) for p in parts)) if parts is not None else \
-              (lambda r: r.isa(m.CONTAINS) and not r.isa(m.CONSEQUENT) and not r.isa(m.DEFINIENDUM) and not r.isa(m.REQUIRED))
-  contained = [r.localDst for r, _ in context._getOutgoing(lambda r: r.isIndividual() and inPattern(r))
-               if r.localDst is not None]
   for e in contained:
     if isinstance(e, IsaIndividual):
       if e.localSrc is not None and e.localDst is not None:
@@ -860,10 +926,12 @@ class RuleSpec:
   warnings:list[tuple[str, tuple[Any, ...]]] = field(default_factory=list)
   "(violation code, args): what may not be meant, reported as warnings -- the rule's still used (see *patternWarnings()*)."
 
-def ruleOf(rule:GraphObject) -> RuleSpec:
+def ruleSpecsOf(rule:GraphObject) -> list[RuleSpec]:
   '''
-  :returns: The *RuleSpec* of *rule*: its antecedent is *patternOf(rule)*; its
-    consequent is what it contains through "consequent" relations:
+  :returns: The *RuleSpec* objects of *rule*: one for each of its antecedents
+    (see *patternsOf()*: a rule with several fires when any one of them
+    matches), each with all of its consequent -- what it holds through
+    "consequent" relations (in its consequent parts: see *Node.parts()*):
 
     - A relation concludes a relation, between its (local) ends, for each of
       its types -- which may be variables.
@@ -879,11 +947,17 @@ def ruleOf(rule:GraphObject) -> RuleSpec:
     - "distinct", and relations or isa links with a missing end, aren't
       supported: they're reported as problems, and the rule isn't used.
   '''
-  return _spec(rule, None, rule.model.CONSEQUENT)
+  return _specs(rule, None, rule.model.CONSEQUENT)
+
+def ruleOf(rule:GraphObject) -> RuleSpec:
+  '''
+  :returns: The (first, if it has several antecedents) *RuleSpec* of *rule*: see *ruleSpecsOf()*.
+  '''
+  return ruleSpecsOf(rule)[0]
 
 def definitionSpecs(definition:GraphObject) -> list[RuleSpec]:
   '''
-  :returns: The two rules a definition amounts to: its definiens (the meaning)
+  :returns: The rules a definition amounts to: its definiens (the meaning)
     implies its definiendum (the term defined), and its definiendum implies its
     definiens -- each part of it. Eg: defining ?X -brother-> ?Y as ?X
     -full-sibling-> ?Y, ?Y {gender: male} concludes brothers from full siblings
@@ -897,28 +971,70 @@ def definitionSpecs(definition:GraphObject) -> list[RuleSpec]:
       concluded;
     - its variables the definiendum doesn't bind are new objects (eg:
       grandparent defined through an intermediate parent).
+
+    A definition with several definiens parts (meanings: see *Node.parts()*)
+    says the term holds when any one of them does: one rule each, and no
+    second direction (the term can't say which meaning holds) -- with a
+    "definition_one_way" warning.
   '''
   m = definition.model
-  return [_spec(definition, (m.DEFINIENS,), m.DEFINIENDUM),
-          _spec(definition, (m.DEFINIENDUM,), m.DEFINIENS, meaning=True)]
+  forward = _specs(definition, (m.DEFINIENS,), m.DEFINIENDUM)
+  meanings = len(heldParts(definition, (m.DEFINIENS,)))
+  if meanings > 1:
+    forward[0].warnings.append(("definition_one_way", (Sym(str(meanings)),)))
+    return forward
+  return forward + _specs(definition, (m.DEFINIENDUM,), m.DEFINIENS, meaning=True, checkParts=False)
 
-def _spec(rule:GraphObject, parts:tuple[GraphObject, ...]|None, consequentType:GraphObject, meaning:bool=False) -> RuleSpec:
+def partWarnings(owner:GraphObject) -> list[tuple[str, tuple[Any, ...]]]:
   '''
-  The *RuleSpec* for *rule*, with the pattern from its *parts* (see
-  *patternOf()*) as the antecedent and what it contains through
-  *consequentType* as the consequent (see *ruleOf()*). With *meaning* (the
-  consequent is a definiens: see *definitionSpecs()*), the consequent's
-  variables' types are concluded too, and its "distinct"s are left out.
+  :returns: What's wrong with *owner*'s parts (see *Node.parts()*), as
+    warnings (violation code, args): a part that's also another box's
+    ("part_shared"), or that doesn't quote what it holds ("part_unquoted").
+  '''
+  ret:list[tuple[str, tuple[Any, ...]]] = []
+  if not isinstance(owner, Node):
+    return ret
+  for r in owner.partRelations():
+    part = cast(Node, r.localDst)
+    kind = Sym(r.partType().name if r.partType() is not None else "part") #type: ignore[union-attr]
+    others = [o for o in part.partOwners() if o is not owner]
+    if others:
+      ret.append(("part_shared", (kind, Sym(", ".join(str(o.name) for o in others)))))
+    if not part.quotesContents():
+      ret.append(("part_unquoted", (kind,)))
+  return ret
+
+def _specs(rule:GraphObject, parts:tuple[GraphObject, ...]|None, consequentType:GraphObject, meaning:bool=False,
+           checkParts:bool=True) -> list[RuleSpec]:
+  '''
+  The *RuleSpec* objects for *rule*: one for each of the patterns from its
+  *parts* (see *patternsOf()*) as the antecedent, each with all it holds
+  through *consequentType* as the consequent (see *ruleSpecsOf()*). With
+  *checkParts*, the first carries *partWarnings()*.
+  '''
+  consequent = [e for alt in _alternatives(rule, (consequentType,)) for e in alt]
+  label = "antecedent" if parts is None else " and ".join(p.name for p in parts)
+  pats = patternsOf(rule, parts)
+  ret = [_spec(rule, pat, label if i == 0 else f"{label} {i + 1}", consequent, meaning) for i, pat in enumerate(pats)]
+  if checkParts:
+    ret[0].warnings += partWarnings(rule)
+  return ret
+
+def _spec(rule:GraphObject, pattern:Pattern, label:str, consequent:list[GraphObject], meaning:bool=False) -> RuleSpec:
+  '''
+  The *RuleSpec* for *rule* with *pattern* (one of its antecedents: *label*,
+  for warnings) and *consequent*, what it concludes (see *ruleSpecsOf()*). With
+  *meaning* (the consequent is a definiens: see *definitionSpecs()*), the
+  consequent's variables' types are concluded too, and its "distinct"s are
+  left out.
   '''
   m = rule.model
-  spec = RuleSpec(rule, patternOf(rule, parts))
-  spec.warnings += patternWarnings(spec.pattern, "antecedent" if parts is None else " and ".join(p.name for p in parts))
+  spec = RuleSpec(rule, pattern)
+  spec.warnings += patternWarnings(spec.pattern, label)
   anteObjs = {id(v) for v in spec.pattern.variables}
   bound = {v.name for v in spec.pattern.variables}
   bound |= {v for _, _, v in spec.pattern.constraints if isinstance(v, ValueVar)}
   spec.problems += [("bad_constraints", (x, err)) for x, err in spec.pattern.errors]
-  consequent = [r.localDst for r, _ in rule._getOutgoing(lambda r: r.isIndividual() and r.isa(consequentType))
-                if r.localDst is not None]
   own:dict[int, GraphObject] = {} # the consequent's own variables
   new:dict[str, GraphObject] = {}  # the new ones, by name
   def use(x:GraphObject|None, relType:bool=False) -> None:
@@ -1033,16 +1149,32 @@ CONSTRAINT_ATTRIBUTES:dict[str, str] = {
   }
 "The attributes a constraint is read from: key -> note (see *constraintOf()*)."
 
-def constraintOf(constraint:GraphObject) -> ConstraintSpec:
+def constraintSpecsOf(constraint:GraphObject) -> list[ConstraintSpec]:
   '''
-  :returns: The *ConstraintSpec* of *constraint*: its pattern is what it
-    contains (see *patternOf()*) -- for a requirement, its condition, and its
-    *required* what's in its required pane -- and the rest is from its attributes (see
+  :returns: The *ConstraintSpec* objects of *constraint*: its pattern is what
+    it contains (see *patternOf()*) -- for a requirement, its condition, and
+    its *required* what's in its required part (all of them, if it has
+    several) -- and the rest is from its attributes (see
     *CONSTRAINT_ATTRIBUTES*). Eg: a constraint named "irreflexive" containing
     ?a -^r-> ?a, with ^r {irreflexive} and report "^r, ?a", reports each
-    irreflexive relation type relating something to itself.
+    irreflexive relation type relating something to itself. One for each of
+    its patterns (see *patternsOf()*): eg, a requirement with two condition
+    parts applies when either matches.
   '''
-  pat = patternOf(constraint) # (a requirement's condition: not its "required" pane, which isa consequent)
+  ret = [_constraintSpec(constraint, pat) for pat in patternsOf(constraint)] # (a requirement's condition: not its "required" part)
+  ret[0].warnings += partWarnings(constraint)
+  return ret
+
+def constraintOf(constraint:GraphObject) -> ConstraintSpec:
+  '''
+  :returns: The (first, if it has several patterns) *ConstraintSpec* of *constraint*: see *constraintSpecsOf()*.
+  '''
+  return constraintSpecsOf(constraint)[0]
+
+def _constraintSpec(constraint:GraphObject, pat:Pattern) -> ConstraintSpec:
+  '''
+  The *ConstraintSpec* of *constraint* with pattern *pat* (see *constraintSpecsOf()*).
+  '''
   def attr(key:str) -> str|None:
     try:
       v = constraint.get(key, None)
@@ -1091,13 +1223,13 @@ def constraintSpecs(objects:list[GraphObject]) -> list[ConstraintSpec]:
   '''
   :returns: The constraints among *objects*, as *ConstraintSpec* objects.
   '''
-  return [constraintOf(c) for c in rules(objects, "CONSTRAINT")]
+  return [spec for c in rules(objects, "CONSTRAINT") for spec in constraintSpecsOf(c)]
 
 def ruleSpecs(objects:list[GraphObject]) -> list[RuleSpec]:
   '''
   :returns: Everything the rules and definitions among *objects* amount to, as *RuleSpec* objects.
   '''
-  return [ruleOf(r) for r in rules(objects)] + [s for d in rules(objects, "DEFINITION") for s in definitionSpecs(d)]
+  return [s for r in rules(objects) for s in ruleSpecsOf(r)] + [s for d in rules(objects, "DEFINITION") for s in definitionSpecs(d)]
 
 # ── Base rules ────────────────────────────────────────────────────────────
 
@@ -1490,8 +1622,8 @@ class Reasoner(ABC):
     objs = self.objects()
     have = {id(o.model) for o in objs}
     found = _contexts(objs)
-    rs = [ruleOf(r) for r in found.get("RULE", [])] + [s for d in found.get("DEFINITION", []) for s in definitionSpecs(d)]
-    cs = [constraintOf(c) for c in found.get("CONSTRAINT", [])]
+    rs = [s for r in found.get("RULE", []) for s in ruleSpecsOf(r)] + [s for d in found.get("DEFINITION", []) for s in definitionSpecs(d)]
+    cs = [s for c in found.get("CONSTRAINT", []) for s in constraintSpecsOf(c)]
     for m in baseRuleModels():
       if id(m) not in have:
         cached = _baseSpecs.get(id(m))

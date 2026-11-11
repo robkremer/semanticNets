@@ -58,7 +58,8 @@ objects it contains.
 - A rule's window is split into two **panes**, *antecedent* on the left and
   *consequent* on the right; a definition's into *definiendum* and
   *definiens*; a requirement's into *condition* and *required*. A query, a
-  constraint (or a plain context) has a single pane.
+  constraint (or a plain context) has a single pane. Each pane is one of the
+  box's **parts** (see :ref:`parts`, below).
 - The **triangle** at the left of the title bar collapses the window to its
   title bar (and expands it again). The contents of a collapsed window are
   hidden.
@@ -101,16 +102,19 @@ Putting things into a window
   A contained relation's label, while it floats (follows its ends), stays in
   its pane, even if one of its ends is moved outside the window. To take the
   relation out of the context, drag its label out.
-- You can also say it explicitly: draw a *contains* (or *antecedent*,
-  *consequent*, *definiendum*, *definiens*) relation from the window to an
-  object. This is the way to put an object in *both* of a rule's panes, or to
-  have a context contain something that stays outside its window (its arc is
-  then drawn).
+- You can also say it explicitly: draw a *contains* relation from the window
+  to an object (or, for one of a rule's panes, an *antecedent*, *consequent*,
+  *definiendum*, *definiens*, ... relation from the rule: it works at once,
+  and is moved into the part the next time the model is read -- see
+  :ref:`parts`). This is the way to put an object in *both* of a rule's
+  panes, or to have a context contain something that stays outside its
+  window (its arc is then drawn).
 
 Windows can be nested: an object dropped where windows overlap goes into the
 innermost one. A window goes only into a one-pane window (a plain context, a
-query, a constraint or a collection), though: one dropped on a rule,
-definition or requirement isn't put in it, but pushed off it.
+query, a constraint or a collection -- or a rule, definition or requirement
+showing its parts as boxes), though: one dropped on a rule's panes isn't put
+in it, but pushed off it.
 
 A window holds only what its context contains -- and the relations between
 things it holds (eg: a pattern relation's isa link to its type variable),
@@ -131,6 +135,56 @@ if there's no room.
 The layouts (arranged now, or kept arranged) don't arrange what's in
 windows, and don't put anything on a window: a window that what they arrange
 would land on is moved aside, the least it takes, carrying its contents.
+
+.. _parts:
+
+Parts: antecedent, consequent, ...
+----------------------------------
+
+A rule's antecedent and its consequent are each a **part**: a plain context
+of its own, holding its graph by *contains* relations. The rule holds the
+part by an *antecedent* or *consequent* relation (a definition by
+*definiendum* and *definiens*, a requirement by *condition* and *required*):
+these are SN subtypes of *contains*, and the relation's SN type is what says
+what the part is to its box -- the part itself is just a context, named for
+what it is ("antecedent", ...). A part is made when it's first needed: the
+first time you put something in that pane.
+
+- **show parts as boxes** (on the window's menu) draws each part as a window
+  of its own, inside its box, where its pane was, carrying what's in it: it
+  can be moved, resized, collapsed and nested like any window, and has its
+  own menu. **show parts as panes** puts them back. This is the box's
+  ``vis/tileParts`` attribute: true on the SN types *rule*, *definition* and
+  *requirement*, false on everything else, so your own SN subtypes of them
+  start as panes too -- and it's saved with the model, and undone like any
+  change.
+- A rule with **more than one antecedent** means "or": it concludes its
+  consequent wherever *any* of its antecedents matches. Each antecedent has
+  a pane of its own ("antecedent", "antecedent 2", ...). To add one, make a
+  context and draw an *antecedent* relation from the rule to it.
+- A requirement with more than one condition likewise requires what it
+  requires wherever any of its conditions matches.
+- A definition with more than one definiens (meaning) is used one way only:
+  each meaning gives the term defined, but the term can't say which meaning
+  holds. The reasoner warns about it.
+- A part should belong to just one box, and should quote what it holds: a
+  part that's another box's too, or that's a plain collection (whose
+  contents are facts), or a part the box's SN type doesn't have (eg: a
+  rule's *condition*) is warned about, in its box's error report. Such
+  things can happen while a rule is being made, so they're warnings, not
+  errors.
+- A SN subtype of *rule* (say) can have parts of its own: a *contains*
+  relation type whose source is the new SN type (eg: *unless*, for a rule
+  with exceptions) gives it a pane of that name. (What the reasoner makes of
+  it is up to you: it reads only antecedents and consequents.)
+
+A model saved before there were parts (its rules held their graphs directly,
+by *antecedent*, *consequent*, ... relations) is **converted** when it's
+read: each of those relations becomes a *contains* relation from the new
+part -- the same relation, with the same id, so views of it still show it.
+The terminal says so, and the model is marked as changed: save it to keep
+the new form. (A model you can't save is left as it is, and still works:
+what a rule holds directly counts as in its part.)
 
 Variables
 ---------

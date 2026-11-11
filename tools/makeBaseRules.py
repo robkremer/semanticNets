@@ -71,10 +71,9 @@ def makeBaseRules(path:str) -> None:
   def rule(name, antecedent, consequent, note):
     r = Node(m, [m.RULE], individual=True, name=name)
     r["note"] = note
-    for x in antecedent:
-      rel(m.ANTECEDENT, r, x)
-    for x in consequent:
-      rel(m.CONSEQUENT, r, x)
+    for part, xs in ((r.partFor(m.ANTECEDENT), antecedent), (r.partFor(m.CONSEQUENT), consequent)): # (its parts: plain contexts)
+      for x in xs:
+        rel(m.CONTAINS, part, x)
   def constraint(name, pattern, report, note, message=None):
     c = Node(m, [m.CONSTRAINT], individual=True, name=name)
     c["note"] = note
@@ -94,8 +93,9 @@ def makeBaseRules(path:str) -> None:
   # contradictory. So such a type's transitivity skips the diagonal. (A
   # transitive, irreflexive type that ISN'T symmetric keeps the plain rule:
   # there a self-pair can only come from a cycle -- a real error the
-  # irreflexive constraint should catch.) Without "or" in a rule, that takes
-  # three: plain transitivity unless it's symmetric, plain transitivity unless
+  # irreflexive constraint should catch.) That takes three rules (one with
+  # three antecedents would do too, but these are each named for what they
+  # cover): plain transitivity unless it's symmetric, plain transitivity unless
   # it's irreflexive, and transitivity off the diagonal regardless.
   for name, tags, distinct in (("transitive", "transitive, symmetric: false", False),
                                ("transitive (not irreflexive)", "transitive, irreflexive: false", False),

@@ -123,11 +123,14 @@ class VisibilityMixin(ViewBase):
     Whether *vo* shouldn't be drawn just now: it's in a hidden category; or
     it's a relation to or from something hidden (it would lead nowhere), or a
     containment drawn as being inside its window (see *VRelation.inWindow()*);
-    or it's inside a hidden context's window.
+    or it's inside a hidden context's window; or it's a part its box's window
+    shows as a pane (see *VObject.isTiledPart()*).
     '''
     mo = vo.modelObject
     if mo is None:
       return False
+    if vo.isTiledPart(): # (its box's window shows it, as a pane)
+      return True
     if self._inCollapsedWindow(vo):
       return True
     if self.isFiltered(mo, ("hide",)) and not vo.categoryExempt and not self._inShownContext(vo):

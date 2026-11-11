@@ -181,16 +181,27 @@ Rules and definitions
 ---------------------
 
 :py:func:`~sn.model.reasoner.patternOf` reads a context (or some of its
-panes) into a :py:class:`~sn.model.reasoner.Pattern`: its variables,
-constants, relations, isa links and constraints.
-:py:func:`~sn.model.reasoner.ruleOf` reads a rule into a
-:py:class:`~sn.model.reasoner.RuleSpec`: the antecedent's pattern, and the
-consequent's conclusions -- relations (``heads``), attribute values
-(``assertions``), types (``isas``), and the variables that only the
-consequent has (``new``: objects to create). A definition is two RuleSpecs,
-one each way (:py:func:`~sn.model.reasoner.definitionSpecs`). Problems found
-on the way (eg: a consequent relation with no end) are recorded in the
-spec, and reported instead of compiling the rule.
+parts: see :doc:`model`) into a :py:class:`~sn.model.reasoner.Pattern`: its
+variables, constants, relations, isa links and constraints;
+:py:func:`~sn.model.reasoner.patternsOf` reads it into one pattern per
+alternative (one per antecedent part, say).
+:py:func:`~sn.model.reasoner.ruleSpecsOf` reads a rule into
+:py:class:`~sn.model.reasoner.RuleSpec` objects, one per antecedent part
+(several antecedents are a disjunction): the antecedent's pattern, and the
+consequent's conclusions (all its consequent parts together) -- relations
+(``heads``), attribute values (``assertions``), types (``isas``), and the
+variables that only the consequent has (``new``: objects to create).
+(:py:func:`~sn.model.reasoner.ruleOf` reads it as one, the antecedents
+merged.) A definition is two RuleSpecs, one each way
+(:py:func:`~sn.model.reasoner.definitionSpecs`) -- or, with several
+definiens parts, just the RuleSpecs from each to the definiendum, with a
+``definition_one_way`` warning. A requirement is one
+:py:class:`~sn.model.reasoner.ConstraintSpec` per condition part
+(:py:func:`~sn.model.reasoner.constraintSpecsOf`). Problems found on the
+way (eg: a consequent relation with no end; a part shared by two boxes,
+``part_shared``, or not quoted, ``part_unquoted``) are recorded in the
+spec, and reported instead of compiling the rule (or, for warnings, with
+it).
 
 ``ClingoReasoner._rulesProgram`` then compiles each spec to one clingo rule
 per conclusion, the antecedent as the body (``_patternBody``):

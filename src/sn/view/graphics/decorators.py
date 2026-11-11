@@ -823,19 +823,20 @@ class ContextFrame(Decorator):
                text=title, anchor="w", fill=o.cache["vis/textColor"] or "black", font=titleFont)
     self._item("kind", lambda c, **k: canvas.create_text(*c, **k), view.viewToWindow([x2 - 6, y1 + bh / 2]),
                text=kinds, anchor="e", fill="gray35", font=kindFont)
-    # a rule's (or definition's) two panes, left and right
-    panes = o.panes()
-    if len(panes) == 2 and not o.collapsed:
-      left, right = panes
-      mid = panes[right][0]
-      self._item("divider", canvas.create_line, view.viewToWindow([mid, y1 + bh, mid, y2]), fill=border, dash=(4, 3))
-      font = (view._fontFace, max(5, int(view._fontSize * 0.8 * scale)), "italic")
-      for key, pane in (("anteLabel", left), ("consLabel", right)):
-        px, py = panes[pane][0], panes[pane][1]
-        self._item(key, lambda c, **k: canvas.create_text(*c, **k), view.viewToWindow([px + 4, py + 2]),
-                   text=pane, anchor="nw", fill="gray50", font=font)
-    else:
-      for key in ("divider", "anteLabel", "consLabel"):
+    # a box's parts, side by side (eg: a rule's antecedent and consequent: see VObject.paneSpecs()), each
+    # titled with what it is
+    panes = o.panes() if not o.collapsed else {}
+    names = list(panes) if len(panes) > 1 else []
+    font = (view._fontFace, max(5, int(view._fontSize * 0.8 * scale)), "italic")
+    for i, pane in enumerate(names):
+      px, py = panes[pane][0], panes[pane][1]
+      if i > 0:
+        self._item(f"divider{i}", canvas.create_line, view.viewToWindow([px, y1 + bh, px, y2]), fill=border, dash=(4, 3))
+      self._item(f"paneLabel{i}", lambda c, **k: canvas.create_text(*c, **k), view.viewToWindow([px + 4, py + 2]),
+                 text=pane, anchor="nw", fill="gray50", font=font)
+    for key in [k for k in self.ids if k.startswith(("divider", "paneLabel"))]:
+      i = int(key.removeprefix("divider").removeprefix("paneLabel") or 0)
+      if i >= len(names) or (key.startswith("divider") and i == 0):
         self._drop(key)
     # the body isn't an obstacle for overlap avoidance, and the whole window is
     # beneath everything -- but above any window it's on (see SNGView.restackWindows())

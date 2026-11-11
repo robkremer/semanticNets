@@ -96,18 +96,18 @@ def makeFamily(folder:str) -> None:
   r = Node(m, [m.RULE], individual=True, name="uncle rule")
   X, Y, Z = var("?x"), var("?y"), var("?z")
   for x in (X, Y, Z, rel(hasParent, X, Y), rel(hasBrother, Y, Z)):
-    rel(m.ANTECEDENT, r, x)
+    rel(m.CONTAINS, r.partFor(m.ANTECEDENT), x) # (its antecedent: a plain context the rule holds)
   X2, Z2 = var("?x"), var("?z")
   for x in (X2, Z2, rel(hasUncle, X2, Z2)):
-    rel(m.CONSEQUENT, r, x)
+    rel(m.CONTAINS, r.partFor(m.CONSEQUENT), x)
   # the brother definition: ?a has-brother ?b means ?a has-sibling ?b, and ?b is male
   d = Node(m, [m.DEFINITION], individual=True, name="brother def")
   A, B = var("?a"), var("?b")
   for x in (A, B, rel(hasBrother, A, B)):
-    rel(m.DEFINIENDUM, d, x)
+    rel(m.CONTAINS, d.partFor(m.DEFINIENDUM), x)
   A2, B2 = var("?a"), var("?b", gender="male")
   for x in (A2, B2, rel(hasSibling, A2, B2)):
-    rel(m.DEFINIENS, d, x)
+    rel(m.CONTAINS, d.partFor(m.DEFINIENS), x)
   # the query
   q = Node(m, [m.QUERY], individual=True, name="who likes dave?")
   W = var("?who")
@@ -120,10 +120,10 @@ def makeFamily(folder:str) -> None:
   req["message"] = "{0} has a sibling, but no parent"
   S, T = var("?s"), var("?t")
   for x in (S, T, rel(hasSibling, S, T)):
-    rel(m.CONDITION, req, x)
+    rel(m.CONTAINS, req.partFor(m.CONDITION), x)
   S2, P = var("?s"), var("?p")
   for x in (S2, P, rel(hasParent, S2, P)):
-    rel(m.REQUIRED, req, x)
+    rel(m.CONTAINS, req.partFor(m.REQUIRED), x)
   m.save()
 
 def makeAnimals(folder:str) -> None:
