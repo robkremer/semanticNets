@@ -213,6 +213,12 @@ attribute                   controls
 ``vis/tooltipFont``         its tooltip's font (eg: ``TkFixedFont``, for code)
 ``vis/tooltipWrap``         the width its tooltip wraps at, in pixels
                             (0: no wrapping)
+``vis/hideImplied``         whether a relation type's inferred relations
+                            are left out of views when they say what's
+                            shown already: a loop from an object to
+                            itself, or one beside a relation of its type
+                            (or a subtype) the same way round -- or
+                            either way, if either is symmetric
 ==========================  =============================================
 
 Widths (``vis/borderWidth``, ``vis/lineWidth``) are in the view's units, as

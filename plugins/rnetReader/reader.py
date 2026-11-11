@@ -1,6 +1,7 @@
 '''
 Make a Semantic Nets model of a Rep Plus net (see *rnet*), for *view* to
-show (see *buildModel()*):
+show (see *buildModel()*), built on *ONTOLOGY* (the kernel of Gaines's
+protologic, so that the reasoners draw KNet's inferences):
 
   - Each node type (section ``T``) becomes a node type (an SN subtype of
     node) of the same name, with its shape and colours (see *NODE_SHAPES* and
@@ -14,8 +15,13 @@ show (see *buildModel()*):
   - Each link type (section ``A``) becomes a relation type of the same name,
     drawn with its arrowheads, bars and middle symbol as relation marks (see
     *endMarks()* and *MID_MARKS*), in its colour (see *LINK_COLORS*), as a
-    straight line, with no label: a derived one's colours are faded (CNet
-    draws it dashed).
+    straight line, with no label: a dashed one's colours are faded. It's an
+    SN subtype of the kernel relation type its look says it is (see
+    *kernelKind()*: eg, an arrow is includes, an arrow with a bar excludes),
+    if any. One drawn backwards -- its arrow at its tail (eg: "Includes
+    reverse") -- is drawn the other way round instead: its arrow at its
+    destination, and its links from the file's destination to its source
+    (see *isReversed()*), so that it means what it shows.
   - Each node (section ``N``) becomes an individual of its type, named by its
     label (its line breaks and all; one with no label has no name). Its mark,
     if it has one, becomes attributes -- "mark" (T, F or TF: true, false, or
@@ -25,9 +31,13 @@ show (see *buildModel()*):
     drawn as Rep Plus draws it (see *rnet.NetNode*): filled with the mark
     kind's background colour, and its outline in the kind's colour, if the
     mark says so. Pictures and drawings aren't made (they aren't concepts).
-  - Each link (section ``L``) becomes a relation of each of its types from its
-    source to its destination. Any more fields it has (eg: a weight) are in its
-    "values" attribute.
+  - Each link (section ``L``) becomes a relation of its type from its source
+    to its destination -- and one of its second type, if it has one, back
+    from its destination to its source (see *rnet.Link*) -- or the other way,
+    for a reversed type (as it's drawn). Any more fields it has (eg: a weight)
+    are in its "values" attribute. Derived links (CNet's or KNet's
+    inferences: see *rnet.LinkType.derived*) are made as they are: they're
+    what the reasoners infer anyway.
   - Each box (a node of an enclosure type) contains -- by "contains"
     relations -- the nodes whose centres are inside it, and the smaller boxes
     that are: each in the smallest box it's in (CNet lists them nowhere: it's
@@ -73,6 +83,32 @@ from pathlib import Path
 from sn.model.model import GraphObject, Model, Node, Relation
 from util.attribute import Attribute, VAR_DEFAULTED
 from .rnet import Net, NetNode, NodeType, LinkType
+
+ONTOLOGY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "knet.snm")
+'''The model the models made build on: the kernel of Gaines's protologic -- its
+relation types (*KERNEL*) and inference patterns, as rules (made by
+tools/makeKnetRules.py, whose doc says what they are).'''
+
+INCLUDES, EQUIVALENT, EXCLUDES, COEXCLUDES, NEGATES, INCONSISTENT = \
+  "includes", "equivalent", "excludes", "coexcludes", "negates", "inconsistent"
+KERNEL = (INCLUDES, EQUIVALENT, EXCLUDES, COEXCLUDES, NEGATES, INCONSISTENT)
+"The kernel relation types' names, in *ONTOLOGY*."
+
+ARROWHEADS = (1, 2, 3)
+'''The ends (*rnet.LinkType.head*, *tail*) that are arrowheads: plain, heavy
+(a conjunction's) and double (a disjunction's) -- each an ordinary link, as
+far as the kernel goes (Gaines: their connective's iterative clause comes on
+top).'''
+
+BY_BARS = {0: INCLUDES, 1: EXCLUDES, 2: COEXCLUDES, 3: NEGATES}
+"An arrowhead's bars (or a line's middle symbol: *rnet.LinkType.mid*) -> the kernel relation type it is."
+
+NOT_KERNEL = ("generic", "etc", "prefer", "preferred", "prohibited", "forbidden", "defeasible", "conjecture",
+              "possible", "particular")
+'''Words in a link type's name that say it isn't the kernel link it looks
+like: generic links stand for any of them (Gaines, section 2.7); "Etc" links
+for more of the same, in pictures; preferences and defaults are defeasible;
+the rest are prohibitions and modalities.'''
 
 NODE_SHAPES = {0: "Rectangle", 1: "Rectangle", 2: "Oval", 3: "Rectangle"}
 '''A node type's shape (*rnet.NodeType.shape*) -> its shape here (\"vis/shape\"). A grid's (\"rgrid\") is a
@@ -142,6 +178,52 @@ def endMarks(shape:int, bars:int, atSource:bool) -> str:
   parts = [head, "|" * bars] if atSource else ["|" * bars, head] # (written from the source toward the destination)
   return " ".join(p for p in parts if p)
 
+def kernelKind(t:LinkType) -> str|None:
+  '''
+  :returns: The kernel relation type (*KERNEL*) that links of *t* are, as its
+    look says (Gaines's notation): an arrow is includes, and one with one,
+    two or three bars at its head excludes, coexcludes or negates (a heavy or
+    a double arrowhead -- a conjunction's or a disjunction's -- is still an
+    arrow); a line with one, two or three bars across its middle (and no
+    arrowheads, or one at each end) is the symmetric exclusion, coexclusion or
+    negation; an arrow at each end is equivalent, and so is a plain line
+    named so. None for anything else -- generic links, preferences,
+    prohibitions, lines -- and for a type whose name says it isn't (see
+    *NOT_KERNEL*).
+  '''
+  words = t.name.lower().replace("-", " ").split()
+  if any(w in NOT_KERNEL for w in words) or t.mid > 3:
+    return None
+  ends = [bars for shape, bars in ((t.head, t.headBars), (t.tail, t.tailBars)) if shape in ARROWHEADS]
+  if any(b not in BY_BARS for b in ends) or (len(ends) == 2 and ends[0] != ends[1]) \
+     or 6 in (t.head, t.tail): # (generic)
+    return None
+  if ends and ends[0]:
+    return BY_BARS[ends[0]]
+  if t.mid:
+    return BY_BARS[t.mid]
+  if len(ends) == 2 or (not ends and "equivalent" in words):
+    return EQUIVALENT
+  return INCLUDES if ends else None
+
+def isReversed(t:LinkType) -> bool:
+  '''
+  :returns: Whether *t* is drawn backwards: an arrowhead (or a generic one) at
+    its tail, and none at its head (eg: "Includes reverse").
+  '''
+  return t.tail in (*ARROWHEADS, 6) and t.head == 0
+
+def kernelTypes(m:Model) -> dict[str, Relation]:
+  '''
+  :param m: A model built on *ONTOLOGY*.
+  :returns: The kernel relation types (*KERNEL*), by name.
+  '''
+  from util.utils import urlPath
+  onto = next(db for db in m.superDBs if isinstance(db, Model) and db.url.startswith("file:")
+              and os.path.realpath(urlPath(db.url) or "") == os.path.realpath(ONTOLOGY))
+  return {str(o.name): o for o in onto.values()
+          if o.model is onto and isinstance(o, Relation) and o.isType() and str(o.name) in KERNEL}
+
 def fade(color:str, amount:float=DERIVED_FADE) -> str:
   '''
   :param color: "#rrggbb".
@@ -155,6 +237,16 @@ def fade(color:str, amount:float=DERIVED_FADE) -> str:
 def note(text:str) -> Attribute:
   return Attribute(text, "text", VAR_DEFAULTED)
 
+def setNote(obj:GraphObject, text:str) -> None:
+  '''
+  Give *obj* the note *text*: a new attribute (see *note()*), unless it
+  inherits one (eg: a kernel type's), whose kind it then has.
+  '''
+  if any("note" in p for p in obj.getParents()):
+    obj["note"] = text
+  else:
+    obj.setAttr("note", note(text))
+
 @dataclass
 class Built:
   '''
@@ -166,6 +258,8 @@ class Built:
   "Each node type's place in the net -> its type (-1: *UNTYPED*, -2: *POINT*, if they were needed)."
   linkTypes:dict[int, Relation] = field(default_factory=dict)
   "Each link type's place in the net -> its relation type."
+  kernel:dict[str, Relation] = field(default_factory=dict)
+  "The kernel relation types (see *KERNEL*), by name."
   nodes:dict[int, Node] = field(default_factory=dict)
   "Each node's place in the net -> its individual (not the pictures and drawings)."
   relations:list[tuple[Relation, int]] = field(default_factory=list)
@@ -186,6 +280,9 @@ class Built:
     contained = sum(len(v) for v in self.members.values())
     s = (f"{len(self.nodes)} nodes ({len(self.boxes)} of them boxes, holding {contained}) and {len(self.relations)} "
          f"relations, of {len(self.nodeTypes)} node types and {len(self.linkTypes)} relation types")
+    kernel = sum(1 for t in self.linkTypes.values() if any(p in self.kernel.values() for p in t.getParents()))
+    if kernel:
+      s += f" ({kernel} of them KNet's kernel links: includes, excludes, ...)"
     if self.derived:
       s += f"; {len(self.derived)} exclusions between construct poles were added"
     marked = sum(1 for n in self.net.nodes if n.marks and n.index in self.nodes)
@@ -247,13 +344,21 @@ def makePoint(m:Model, file:str) -> Node:
                          "(eg: in a drawing). Their own types' names are their rnetType attributes."))
   return n
 
-def makeLinkType(m:Model, t:LinkType, file:str) -> Relation:
+def makeLinkType(m:Model, t:LinkType, file:str, kernel:dict[str, Relation]|None=None) -> Relation:
   '''
+  :param kernel: The kernel relation types (see *kernelTypes()*): it's an SN
+    subtype of the one it is (see *kernelKind()*), if any.
   :returns: A new relation type in *m* for the net's link type *t* (see the module doc).
   '''
-  r = Relation(m, [m.RELATION], None, None, name=t.name or f"link type {t.index}")
-  r["vis/terminator1"] = endMarks(t.tail, t.tailBars, atSource=True)
-  r["vis/terminator4"] = endMarks(t.head, t.headBars, atSource=False)
+  kind = kernelKind(t)
+  parent = (kernel or {}).get(kind or "")
+  r = Relation(m, [parent if parent is not None else m.RELATION], None, None, name=t.name or f"link type {t.index}")
+  if isReversed(t): # (its links go the other way: see buildModel())
+    r["vis/terminator1"] = endMarks(t.head, t.headBars, atSource=True)
+    r["vis/terminator4"] = endMarks(t.tail, t.tailBars, atSource=False)
+  else:
+    r["vis/terminator1"] = endMarks(t.tail, t.tailBars, atSource=True)
+    r["vis/terminator4"] = endMarks(t.head, t.headBars, atSource=False)
   r["vis/midMarks"] = MID_MARKS.get(t.mid, "") if t.mid else ""
   r["vis/label"] = ""
   r["vis/lineType"] = "straight"
@@ -262,14 +367,17 @@ def makeLinkType(m:Model, t:LinkType, file:str) -> Relation:
   else:
     i = LINK_COLORS["vis/lineColor"]
     color = (t.colors[i] if i < len(t.colors) else "") or (t.colors[0] if t.colors else "") or "#000000"
-    if t.derived:
+    if t.dashed:
       color = fade(color)
   r["vis/lineColor"] = color
   r["vis/lineFillColor"] = color
   how = (f"bits {t.bits}" if t.bits is not None else
          f"head {t.head} with {t.headBars} bars, tail {t.tail} with {t.tailBars} bars, line {t.lineFlags}, middle {t.mid}")
-  r.setAttr("note", note(f"A link type of {file}: {how}; colours {', '.join(c or '-' for c in t.colors)}"
-                         + ("; derived (drawn dashed in CNet, faded here)" if t.derived else "") + "."))
+  setNote(r, (f"A link type of {file}: {how}; colours {', '.join(c or '-' for c in t.colors)}"
+                         + ("; derived (CNet's or KNet's inferences)" if t.derived else "")
+                         + ("; drawn dashed (faded here)" if t.dashed and t.bits is None else "")
+                         + ("; drawn backwards in the file (its links go the other way here)" if isReversed(t) else "")
+                         + (f"; it means {kind} (the kernel's)" if parent is not None else "") + "."))
   return r
 
 def nodeName(n:NetNode) -> str:
@@ -314,11 +422,12 @@ def buildModel(net:Net, modelPath:str) -> Built:
   '''
   file = os.path.basename(net.path) or "the net"
   m = Model(Path(modelPath).resolve().as_uri())
-  b = Built(net, m)
+  m.setSuperModels([ONTOLOGY])
+  b = Built(net, m, kernel=kernelTypes(m))
   for t in net.nodeTypes:
     b.nodeTypes[t.index] = makeNodeType(m, t, file)
   for t in net.linkTypes:
-    b.linkTypes[t.index] = makeLinkType(m, t, file)
+    b.linkTypes[t.index] = makeLinkType(m, t, file, b.kernel)
   pictures = 0
   for n in net.nodes:
     if n.kind != "node":
@@ -346,11 +455,12 @@ def buildModel(net:Net, modelPath:str) -> Built:
     if src is None or dst is None:
       missing += 1
       continue
-    for t in dict.fromkeys(l.types): # (once each: some links list a type twice)
+    for slot, t in enumerate(l.types):
       typ = b.linkTypes.get(t)
       if typ is None:
         continue
-      r = Relation(m, [typ], src, dst, individual=True)
+      backwards = l.backwards(slot) != (0 <= t < len(net.linkTypes) and isReversed(net.linkTypes[t])) # (as it's drawn)
+      r = Relation(m, [typ], dst if backwards else src, src if backwards else dst, individual=True)
       if l.extra:
         r["values"] = " ".join(l.extra)
       b.relations.append((r, l.index))
@@ -451,14 +561,15 @@ def _constructExcludes(b:Built) -> Relation:
   m = b.model
   base = next((b.linkTypes[t.index] for t in b.net.linkTypes if _isSymmetricExclusion(t) and t.index in b.linkTypes), None)
   if base is None:
-    base = Relation(m, [m.RELATION], None, None, name="Excludes symmetric")
+    kernel = b.kernel.get(EXCLUDES)
+    base = Relation(m, [kernel if kernel is not None else m.RELATION], None, None, name="Excludes symmetric")
     base["vis/terminator4"] = ""
     base["vis/midMarks"] = MID_MARKS[1]
     base["vis/label"] = ""
     base["vis/lineType"] = "straight"
     base["vis/lineColor"] = "#00a000"
     base["vis/lineFillColor"] = "#00a000"
-    base.setAttr("note", note("The symmetric exclusion (made for the exclusions between construct poles: the net has none)."))
+    setNote(base, "The symmetric exclusion (made for the exclusions between construct poles: the net has none).")
   ret = Relation(m, [base], None, None, name=CONSTRUCT_EXCLUDES)
   color = base.get("vis/lineColor", "#000000")
   if isinstance(color, str) and color.startswith("#"):

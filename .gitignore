@@ -32,6 +32,8 @@ src/sn/help/
 !src/sn/examples/*.snv
 # --- The base rules (package data, made by tools/makeBaseRules.py) ---
 !src/sn/model/baseRules.snm
+# --- KNet's kernel rules (plugin data, made by tools/makeKnetRules.py) ---
+!plugins/rnetReader/knet.snm
 
 # --- Packaging (ant: app, dmg, pyz) ---
 /build/

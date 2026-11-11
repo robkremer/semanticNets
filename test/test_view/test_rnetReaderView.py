@@ -159,6 +159,36 @@ class TestNetView(unittest.TestCase):
     self.assertAlmostEqual(nx, ax + 50, delta=1); self.assertAlmostEqual(ny, ay + 400, delta=1)
     self.assertTrue(all(box.paneAt(shown[n].centerPt()) is not None for n in ("A", "B")))
 
+  def test_reasoned(self):
+    '''
+    After reasoning, the kernel's inferences are drawn -- but not what's
+    implied by what's drawn ("vis/hideImplied"): no loops (from cycles, or an
+    inconsistent node), each symmetric one once (not again the other way
+    round, nor beside an asserted one), and no includes beside an equivalent.
+    '''
+    from sn.view.graphics.sngView import SNGView
+    from test_sn.test_knetRules import KERNEL
+    path = self.folder / "kernel.rnet"
+    path.write_text(KERNEL, encoding="utf-8")
+    built = self.reader.buildModel(self.rnet.parse(str(path)), str(self.folder / "kernel.snm"))
+    v = SNGView(fixURL(built.model.url, ".snv", replaceExt=True, mode="w")[0], model=built.model)
+    self.views.append(v)
+    v.window.withdraw()
+    v.context.visibility("system objects", "hide")
+    self.netView.showNet(v, built)
+    v.reason("clingo")
+    self.app.update()
+    inferred = [r for r in self.relations(v) if r.isInferred()]
+    self.assertTrue(inferred)
+    self.assertFalse([r for r in inferred if r.src is r.dst])
+    between = lambda a, b: sorted(str(r.modelObject.getParents()[0].name) for r in self.relations(v)
+                                  if {str(r.src.modelObject.name), str(r.dst.modelObject.name)} == {a, b})
+    self.assertEqual(between("dog", "plant"), ["excludes"])           # (once, not both ways)
+    self.assertEqual(between("animal", "plant"), ["Excludes"])        # (the asserted one: not again, inferred, the other way)
+    self.assertEqual(between("on", "lit"), ["equivalent"])            # (not includes, both ways, beside it)
+    self.assertEqual(between("on", "off"), ["Negates symmetric"])     # (nor its excludes and coexcludes)
+    self.assertEqual(between("three", "odd"), ["includes"])
+
   def test_convert(self):
     'The files are made, the view opened; made again, it asks first -- and does nothing if told not to.'
     model, view = str(self.folder / "out" / "net.snm"), str(self.folder / "out" / "net.snv")

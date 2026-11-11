@@ -297,20 +297,32 @@ What's in the net becomes:
   its arrowheads (heavy for a conjunction, double for a disjunction), the
   bars before them (one for an exclusion, two for a coexclusion, three for a
   negation), and a mark in the middle of a symmetric one -- in its colour,
-  straight, with no label. A derived one's colour is faded (CNet draws it
-  dashed).
+  straight, with no label. A dashed one's colour is faded. It's a subtype of
+  the KNet kernel's relation type that its look says it is (see `KNet's
+  kernel`_): an arrow is *includes*, an arrow with one, two or three bars
+  *excludes*, *coexcludes* or *negates* (a heavy or double arrowhead is still
+  an arrow), a line with one, two or three bars across its middle the
+  symmetric ones, and an arrow at each end (or a plain line named so)
+  *equivalent*. Generic links, preferences, prohibitions and "Etc" links
+  aren't. One drawn backwards -- its arrow at its tail, eg *Includes
+  reverse* -- is turned round: its arrow is at its destination, and its
+  links go the other way, so it means what it shows.
 - **Nodes**: each node is an individual of its type, named by its label (a
   node with no label has no name). Pictures and drawings in the net are left
   out.
 - **Marks**: a node's mark (true, false, or both) is its ``mark`` attribute
   (``T``, ``F`` or ``TF``), with the kind of mark (``markKind``: *Asserted*,
-  *Included*, *Excluded*, ...) and whether it was derived (``markDerived``).
-  A shown mark draws the node's outline thick, in the mark kind's colour, and
-  its label adds the mark (its type's ``vis/label`` is
-  ``$name${mark:+ $mark}``).
-- **Links**: each link is a relation of its type (a link of several types,
-  drawn as one line in CNet, a relation of each). Any numbers it carries (eg:
-  a weight) are its ``values`` attribute.
+  *Included*, *Excluded*, ...), whether it was derived (``markDerived``), and
+  the number the file has (``marks``). It's drawn as Rep Plus draws it: the
+  node filled with the mark kind's background colour, and its outline in
+  the kind's colour, if the mark says so -- and its label adds the mark (its
+  type's ``vis/label`` is ``$name${mark:+ $mark}``).
+- **Links**: each link is a relation of its type. A line with a second type
+  (CNet draws two lines side by side) is a link and a link back: the second
+  type's relation goes from the link's destination to its source. Any
+  numbers it carries (eg: a weight) are its ``values`` attribute. Derived
+  links (CNet's or KNet's inferences, their types named so: eg *Includes
+  derived*) are made as they are.
 - **Boxes**: a node of an enclosure type is drawn as a window, the size CNet
   drew it, and contains (by *contains* relations) the nodes inside it -- each
   in the smallest box it's in, so boxes can be nested. As in CNet, dragging
@@ -325,6 +337,53 @@ What's in the net becomes:
 
 The terminal pane says what was made, and anything in the file that didn't
 fit (eg: a link to a node that isn't there).
+
+KNet's kernel
+~~~~~~~~~~~~~
+
+The models the reader makes build on the plugin's *knet.snm* (made by
+``tools/makeKnetRules.py``): the kernel of Brian Gaines's protologic
+(*Universal Logic as a Science of Patterns*, 2015), as relation types and
+rules that every reasoner engine applies. X *includes* Y means whatever is X
+is Y (dog includes animal):
+
+==================  =========================================================
+relation type       means
+==================  =========================================================
+*includes*          whatever is X is Y. Transitive.
+*equivalent*        X and Y include each other (a subtype of *includes*).
+                    Symmetric.
+*excludes*          nothing is both. Symmetric.
+*coexcludes*        everything is one or the other. Symmetric.
+*negates*           X is everything Y isn't (a subtype of *excludes* and
+                    *coexcludes*). Symmetric.
+*inconsistent*      X both includes and excludes Y: X can only be empty (a
+                    subtype of *includes* and *excludes*).
+==================  =========================================================
+
+Its rules are Gaines's inference patterns: whatever includes the tail of an
+exclusion excludes its head; whatever excludes the head of a coexclusion
+includes its tail; a coexclusion is inherited by what its tail includes; an
+exclusion and a coexclusion together are a negation (so two negations of
+one node are equivalent); a cycle of inclusions makes its nodes equivalent;
+and including what it excludes makes a node inconsistent -- a warning, not
+an error: the inconsistency stays where it is. **Reason** (see
+:doc:`reasoning`) draws KNet's conclusions over the net: on the inference
+pattern nets of Gaines's paper, they're the derived links KNet saved.
+
+A view leaves out the inferences that say what it already shows (the kernel
+types' ``vis/hideImplied``: see :doc:`viewing`) -- a node's loop to itself,
+a symmetric one again the other way round, an *includes* beside an
+*equivalent* -- else they'd swamp the picture.
+
+The kernel works in models of your own too: build one on *knet.snm* (see
+:doc:`files`). Between types, an isa link is an inclusion if the types are
+under *knode*: dog isa animal isa knode gives dog *includes* animal, so a
+type that *excludes* animal excludes dog.
+
+Not yet: the structural connectives (heavy and double arrowheads: their
+"for every defining link" clause), truth marks' propagation, preferences and
+defaults, and probes.
 
 Menus, tooltips and double-clicks from programs
 -----------------------------------------------
