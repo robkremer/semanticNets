@@ -38,7 +38,7 @@ src/sn/help/
 /dist/
 /.venv-build/
 /archive/
-/notes/
+
 
 # Claude Code per-user settings
 .claude/settings.local.json
