@@ -263,6 +263,24 @@ base (``clingoReasoner.lp``, "Cardinality") gives them their meaning:
 The relation triples in the results are sorted into the models' order (see
 *Reasoner._finish()*), so they don't depend on the engine's.
 
+Defining links
+~~~~~~~~~~~~~~
+
+A relation type tagged ``meet`` or ``join`` (:py:data:`~sn.model.reasoner.DEFINING`:
+Gaines's structural connectives) makes its links define a node. Its
+"for every defining link" clause has no negation (which would loop through
+``holds``): :py:meth:`~sn.model.reasoner.Reasoner._definingFacts` numbers
+each node's defining links (``def_part(C, D, I, A, P, Pol)``, ``def_last(C,
+D, N, Q, R)``), and the rule base (``clingoReasoner.lp``, "Nodes defined by
+their links") chains along them: ``def_ok(C, D, X, I)`` says X stands as
+required to links 1..I, so at N, X has the order Q to C (C to X, for a
+join), as a ``fired`` conclusion of the tagged type R. With truth attributes
+(``def_marks``), prefix and suffix chains of the links that hold (or fail)
+give "all of them" and "all but one", as ``rule_attr`` conclusions. A node
+one of whose links' ends has both marks locally (``def_mixed``, a fact)
+blocks "all but one" -- negation of a fact, so the program stays
+stratified. Each engine's rule base has the same rules.
+
 Constraints
 -----------
 

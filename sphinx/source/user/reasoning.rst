@@ -42,7 +42,8 @@ shows it again.) The report goes to the terminal pane, in sections:
 
 **Inferred relations**
   Relations implied by the relational properties (symmetric, transitive,
-  ...) of their types.
+  ...) of their types, and by nodes their links define (see
+  :ref:`defining-links`).
 
 **Rule conclusions**
   What the rules and definitions concluded: relations, attribute values,

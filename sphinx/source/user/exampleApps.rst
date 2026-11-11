@@ -303,7 +303,9 @@ What's in the net becomes:
   *excludes*, *coexcludes* or *negates* (a heavy or double arrowhead is still
   an arrow), a line with one, two or three bars across its middle the
   symmetric ones, and an arrow at each end (or a plain line named so)
-  *equivalent*. Generic links, preferences, prohibitions and "Etc" links
+  *equivalent*; and a heavy arrowhead (or a double one) a conjunction's
+  link (a disjunction's: see `Conjunctions and disjunctions`_). Generic
+  links, preferences, prohibitions and "Etc" links
   aren't. One drawn backwards -- its arrow at its tail, eg *Includes
   reverse* -- is turned round: its arrow is at its destination, and its
   links go the other way, so it means what it shows.
@@ -402,6 +404,8 @@ excluded          green        false: it excludes something true
 irrelevant        grey         false: it includes something false (Rep Plus's name)
 necessary         red          false because it's inconsistent (it excludes
                                itself) -- or true because it coexcludes itself
+definition        red          by a conjunction or a disjunction (see
+                               `Conjunctions and disjunctions`_)
 ================  ===========  ==================================================
 
 A node's menu has **Mark** ▸ **True**, **False** and **Clear** (for the
@@ -417,10 +421,44 @@ nodes KNet did.
 The bars are a view feature anything can use: a node's ``vis/sideBars`` (see
 :doc:`viewing`).
 
-Not yet: the structural connectives (heavy and double arrowheads: their
-"for every defining link" clause, and the marks through them), preferences
-and defaults, and probes. And KNet can treat nodes with the same label as
-one node (when its script says so); the reader keeps them apart.
+Conjunctions and disjunctions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Gaines's structural connectives are ordinary links with a clause of their
+own: "for every defining link". A conjunction has heavy arrows to its
+conjuncts (a conjunct includes; one with a bar, a conjunct excludes: "and
+not"), and a disjunction has double arrows from its disjuncts (a disjunct
+includes; one with two bars, a disjunct coexcludes: "or not"). The links are
+what they look like -- a conjunction includes its conjuncts, and each
+disjunct includes the disjunction -- and the clause adds the rest:
+
+- whatever includes every conjunct (and excludes every excluded one)
+  includes the conjunction; and dually, a disjunction includes whatever
+  every disjunct includes (and every coexcluded one coexcludes).
+- a conjunction is true when its conjuncts are (true, or false for an
+  excluded one), and a disjunction false when its disjuncts are false.
+- a false conjunction whose conjuncts but one are true makes that one false;
+  a true disjunction whose disjuncts but one are false makes that one true
+  (disjunctive syllogism) -- but, as in KNet, not if one of them is marked
+  both: that would be reasoning from a contradiction. One that's only false
+  because of a contradiction elsewhere doesn't stop it (Gaines's "principle
+  of explosion" net).
+
+The four link types are *knet.snm*'s *conjunct includes*, *conjunct
+excludes*, *disjunct includes* and *disjunct coexcludes*, SN subtypes of
+the kernel's, which the reader's heavy and double arrowhead link types are
+SN subtypes of (a derived one isn't: it's an inference, not a definition).
+The clause is the reasoners' own (see :ref:`defining-links`), so it works in
+any model, on every engine. On the paper's connective nets, the reasoners
+mark the nodes KNet did, and infer the links CNet derived through them.
+KNet says how it got every mark after the first step "Definition"; here a
+mark the connectives made is *definition*, and one the links made on from
+it is *included*, *excluded* and so on, as before.
+
+Not yet: preferences and defaults, and probes (which find more: eg, that
+what includes A and excludes "A and B" excludes B). And KNet can treat
+nodes with the same label as one node (when its script says so); the
+reader keeps them apart.
 
 Menus, tooltips and double-clicks from programs
 -----------------------------------------------

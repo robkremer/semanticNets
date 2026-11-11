@@ -77,6 +77,28 @@ same mark only says so.
 *KNODE*'s nodes show their marks as bars beside them (vis/sideBars: see
 rnetReader.hooks.markBars()), and have menu items to assert and clear them.
 
+The structural connectives (the paper's section 5), as relation types
+(*CONNECTIVES*: see *connectives()*) tagged so that the reasoners draw
+Gaines's iterative clause (see sn.model.reasoner.DEFINING):
+
+- conjunct includes (heavy arrowheads), an SN subtype of includes, and
+  conjunct excludes (with a bar), of excludes: C is the conjunction of the
+  nodes it has them to -- whatever includes each of those (and excludes
+  each it conjunct excludes) includes C.
+- disjunct includes (double arrowheads), of includes, and disjunct
+  coexcludes (with two bars), of coexcludes: D is the disjunction of the
+  nodes that have them to it -- D includes whatever each of those includes
+  (and each that disjunct coexcludes it coexcludes).
+
+And their marks ("definition"): a conjunction is true when its conjuncts all
+are (and those it excludes false), and a disjunction false when its
+disjuncts all are (and those that coexclude it true); a false conjunction
+whose conjuncts but one are true makes that one false, and a true
+disjunction whose disjuncts but one are false makes that one true -- unless
+one of them is marked both (as KNet doesn't: disjunctive syllogism from a
+contradiction). (That a false conjunct makes its conjunction false, and a
+true disjunct its disjunction true, is what includes says already.)
+
 And one constraint, a warning: an inconsistent node (one that excludes
 itself: see self-inconsistency) -- Rep Plus marks it "E". Inconsistency stays
 where it is (Gaines's paraconsistency): it propagates only through the
@@ -104,6 +126,17 @@ eg, dog isa animal isa knode gives dog includes animal.'''
 
 MARK_TRUE, MARK_FALSE = "markTrue", "markFalse"
 "The attributes that mark a node true or false (see *rnetReader.hooks*, which must agree)."
+
+DEFINITION = "definition"
+"How a node got a mark through a connective (Rep Plus's mark kind: see *rnetReader.hooks.MARK_COLORS*)."
+
+CONJUNCT_INCLUDES, CONJUNCT_EXCLUDES, DISJUNCT_INCLUDES, DISJUNCT_COEXCLUDES = \
+  "conjunct includes", "conjunct excludes", "disjunct includes", "disjunct coexcludes"
+CONNECTIVES = (CONJUNCT_INCLUDES, CONJUNCT_EXCLUDES, DISJUNCT_INCLUDES, DISJUNCT_COEXCLUDES)
+"The connectives' relation types' names (see *connectives()*, and *rnetReader.reader.CONNECTIVES*, which must agree)."
+
+HEAVY_ARROW = "arrow(11,13,6)"
+"A heavy arrowhead (a conjunction's: see *rnetReader.reader.HEAVY_ARROW*)."
 
 HOOKS = "snplugins.rnetReader.hooks"
 "The module of the hooks *KNODE* names (see *rnetReader.hooks*): the plugin's, once it's loaded."
@@ -166,6 +199,7 @@ def makeKnetRules(path:str) -> None:
                 mid="|||", symmetric=True)
   inco = relType(INCONSISTENT, [inc, exc], "X both includes and excludes Y (Gaines's inconsistent link): X can only be empty.",
                  terminator="| arrow", color="#d00000")
+  connectives(m, relType, inc, exc, coe)
   def rel(typ, src, dst):
     return Relation(m, [typ], src, dst, individual=True)
   def var(name, constraints=None):
@@ -259,6 +293,34 @@ def makeKnetRules(path:str) -> None:
              "(It's a warning: the inconsistency stays local -- Gaines's paraconsistency.)",
              "{0} is inconsistent: it includes something it excludes (Rep Plus's E)")
   m.save()
+
+def connectives(m, relType, inc, exc, coe) -> None:
+  '''
+  Add *CONNECTIVES*: the links that define Gaines's structural conjunctions
+  and disjunctions (the paper's section 5), tagged so that the reasoners
+  draw his iterative clause (see *sn.model.reasoner.DEFINING*), in the
+  order includes, with the truth marks: a conjunction (heavy arrowheads)
+  is what includes each of its conjuncts (and excludes each it excludes), a
+  disjunction (double arrowheads) what each of its disjuncts includes (and
+  what each that coexcludes it doesn't).
+  '''
+  for name, parent, key, requires, terminator, color, note in (
+      (CONJUNCT_INCLUDES, inc, "meet", INCLUDES, HEAVY_ARROW, "#000000",
+       "C conjunct includes A: C is the conjunction (the meet) of what it conjunct includes, and excludes by conjunct "
+       "excludes -- an includes, and whatever includes all of them (and excludes those) includes C. C is true when "
+       "they all are (and those false); false C, all of them but one true: that one's false (unless one is marked both)."),
+      (CONJUNCT_EXCLUDES, exc, "meet", EXCLUDES, f"| {HEAVY_ARROW}", "#008a00",
+       "C conjunct excludes B: B's negation is one of C's conjuncts (see conjunct includes) -- an excludes."),
+      (DISJUNCT_INCLUDES, inc, "join", INCLUDES, ">>", "#000000",
+       "A disjunct includes D: D is the disjunction (the join) of what disjunct includes it, and coexcludes it by "
+       "disjunct coexcludes -- an includes, and D includes whatever all of them include (and those coexclude). D is "
+       "false when they all are (and those true); true D, all of them but one false: that one's true (unless one is marked both)."),
+      (DISJUNCT_COEXCLUDES, coe, "join", COEXCLUDES, "|| >>", "#0000c0",
+       "B disjunct coexcludes D: B's negation is one of D's disjuncts (see disjunct includes) -- a coexcludes.")):
+    r = relType(name, [parent], note, terminator=terminator, color=color)
+    r[key] = requires
+    r["order"] = INCLUDES
+    r["trueMark"], r["falseMark"], r["markValue"] = MARK_TRUE, MARK_FALSE, DEFINITION
 
 def typeNote(text:str):
   '''

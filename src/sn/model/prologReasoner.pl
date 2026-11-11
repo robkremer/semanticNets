@@ -138,6 +138,41 @@ r_attr(X,K,V) :- attr_base(X,K,V).
 r_attr(X,K,V) :- rule_attr(_,X,K,V).
 r_attr(Y,K,V) :- same(X,Y), r_attr(X,K,V).
 
+%%% Nodes defined by their links (Gaines's structural connectives): see clingoReasoner.lp
+
+:- dynamic def_part/6, def_last/5, def_marks/5, def_mixed/2.
+:- table def_ok/4, def_holds/3, def_fails/3, def_hpre/3, def_hsuf/3, def_fpre/3, def_fsuf/3.
+
+def_ok(C,meet,X,1) :- def_part(C,meet,1,A,P,_), r_holds(P,X,A).
+def_ok(C,meet,A,1) :- def_part(C,meet,1,A,_,pos).
+def_ok(C,meet,X,J) :- def_ok(C,meet,X,I), J is I+1, def_part(C,meet,J,A,P,_), r_holds(P,X,A).
+def_ok(C,meet,A,J) :- def_ok(C,meet,A,I), J is I+1, def_part(C,meet,J,A,_,pos).
+def_ok(C,join,X,1) :- def_part(C,join,1,A,P,_), r_holds(P,A,X).
+def_ok(C,join,A,1) :- def_part(C,join,1,A,_,pos).
+def_ok(C,join,X,J) :- def_ok(C,join,X,I), J is I+1, def_part(C,join,J,A,P,_), r_holds(P,A,X).
+def_ok(C,join,A,J) :- def_ok(C,join,A,I), J is I+1, def_part(C,join,J,A,_,pos).
+fired(R,Q,X,C) :- def_last(C,meet,N,Q,R), def_ok(C,meet,X,N), X \== C.
+fired(R,Q,C,X) :- def_last(C,join,N,Q,R), def_ok(C,join,X,N), X \== C.
+
+def_key(C,D,I,A,TK,FK) :- def_part(C,D,I,A,_,pos), def_marks(C,D,TK,FK,_).
+def_key(C,D,I,A,FK,TK) :- def_part(C,D,I,A,_,neg), def_marks(C,D,TK,FK,_).
+def_holds(C,D,I) :- def_key(C,D,I,A,Y,_), r_attr(A,Y,_).
+def_fails(C,D,I) :- def_key(C,D,I,A,_,N), r_attr(A,N,_).
+def_hpre(C,D,0) :- def_marks(C,D,_,_,_).
+def_hpre(C,D,I) :- def_hpre(C,D,H), I is H+1, def_holds(C,D,I).
+def_hsuf(C,D,M) :- def_marks(C,D,_,_,_), def_last(C,D,N,_,_), M is N+1.
+def_hsuf(C,D,I) :- def_hsuf(C,D,H), I is H-1, def_holds(C,D,I).
+def_fpre(C,D,0) :- def_marks(C,D,_,_,_).
+def_fpre(C,D,I) :- def_fpre(C,D,H), I is H+1, def_fails(C,D,I).
+def_fsuf(C,D,M) :- def_marks(C,D,_,_,_), def_last(C,D,N,_,_), M is N+1.
+def_fsuf(C,D,I) :- def_fsuf(C,D,H), I is H-1, def_fails(C,D,I).
+rule_attr(R,C,TK,V) :- def_last(C,meet,N,_,R), def_hpre(C,meet,N), def_marks(C,meet,TK,_,V).
+rule_attr(R,C,FK,V) :- def_last(C,join,N,_,R), def_fpre(C,join,N), def_marks(C,join,_,FK,V).
+rule_attr(R,A,N,V) :- def_marks(C,meet,_,FK,V), r_attr(C,FK,_), def_key(C,meet,I,A,_,N), \+ def_mixed(C,meet),
+    H is I-1, def_hpre(C,meet,H), L is I+1, def_hsuf(C,meet,L), def_last(C,meet,_,_,R).
+rule_attr(R,A,Y,V) :- def_marks(C,join,TK,_,V), r_attr(C,TK,_), def_key(C,join,I,A,Y,_), \+ def_mixed(C,join),
+    H is I-1, def_fpre(C,join,H), L is I+1, def_fsuf(C,join,L), def_last(C,join,_,_,R).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% The closure's results, as facts (PrologReasoner runs sn_close/0 before it
 %%% reads anything) -----------------------------------------------------------

@@ -106,6 +106,42 @@ The reasoner uses them:
   ``1..1``, a person with no father gets "(has-father for alice)", a person
   -- which needs no "every person has a father" rule.
 
+.. _defining-links:
+
+Defining links
+--------------
+
+A relation type can make its links *define* a node, as a conjunction is
+defined by its conjuncts (Brian Gaines's structural connectives: see
+:doc:`exampleApps`). Tag it ``meet`` (the node's own links define it) or
+``join`` (the links to it do), with the name of the relation its links
+require, *P*; and, if that isn't it, ``order``: the relation the node is
+defined in, *Q*. Then:
+
+- a node C with **meet** links to A1 ... An is their meet: whatever has P
+  to every Ai has Q to C. With *includes* for both: whatever includes every
+  conjunct includes the conjunction.
+- a node D with **join** links from A1 ... An is their join: D has Q to
+  whatever every Ai has P to. Whatever every disjunct includes, the
+  disjunction includes.
+
+Each link requires its own type's P, so one node can mix them: a link whose
+P is the order is positive (its end counts as having Q to itself); any other
+is negative (eg: a conjunct that's excluded, whose P is *excludes*: whatever
+includes A and excludes B includes "A and not B"). Unlike the relational
+properties, these tags are inherited: a subtype of a conjunct link is one.
+
+With truth attributes too -- ``trueMark`` and ``falseMark``, the names of
+the attributes that say a node is true or false (both, for Belnap's
+"both"), and ``markValue``, the value concluded (``true`` if it hasn't one)
+-- a link holds when its end is true (false, for a negative one) and fails
+when it's the other. A meet is true when all its links hold, and a join
+false when they all fail; a false meet all of whose links but one hold makes
+that one fail, and a true join all of whose links but one fail makes that
+one hold -- unless one of the links' ends is marked both (only by its own
+marks: not the concluded ones), which would be reasoning from a
+contradiction.
+
 Naming relations
 ----------------
 

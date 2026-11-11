@@ -257,6 +257,43 @@ class ReasonerSpec(_SpecBase):
     self.assertEqual([str(x) for x in conflict[0].args], ["reflexive", "irreflexive"])
     self.assertFalse(any(v.code == "irreflexive" and v.subject is bad for v in vs)) # (bad relates nothing)
 
+  def test0295definingLinks(self):
+    '''
+    A relation type tagged *meet* or *join* (see sn.model.reasoner.DEFINING)
+    makes its links define a node: whatever stands as required to every one
+    of the meet's links has the order to it, and the join has the order to
+    whatever every one of its links' ends has the required relation to. The
+    tags are inherited (sub part is a part), and a link's end counts as
+    having the order to itself (a positive link); with truth attributes, a
+    meet is true when all its links hold.
+    '''
+    m, person = self._fresh("defining")
+    le = Relation(m, [m.RELATION], name="le")
+    apart = Relation(m, [m.RELATION], name="apart")
+    part = Relation(m, [le], name="part"); part["meet"] = "le"
+    part["trueMark"] = "t"; part["falseMark"] = "f"
+    sub = Relation(m, [part], name="sub part")
+    notPart = Relation(m, [apart], name="not part"); notPart["meet"] = "apart"; notPart["order"] = "le"
+    alt = Relation(m, [le], name="alt"); alt["join"] = "le"
+    a, b, k, c, x, y, d, e, z, p, q, pq = (Node(m, [person], individual=True, name=n)
+                                         for n in ("a", "b", "k", "c", "x", "y", "d", "e", "z", "p", "q", "pq"))
+    for t, s_, d_ in ((part, c, a), (sub, c, b), (notPart, c, k),  # c: a and b, and not k
+                      (le, x, a), (le, x, b), (apart, x, k),       # x: all three, so le c
+                      (le, y, a), (le, y, b),                      # y: not apart from k
+                      (alt, a, d), (alt, e, d),                    # d: a or e
+                      (le, a, z), (le, e, z),                      # both le z, so d le z
+                      (part, pq, p), (part, pq, q)):               # pq: p and q
+      Relation(m, [t], s_, d_, individual=True)
+    p["t"] = "yes"; q["t"] = "yes"
+    r = self.ENGINE(m).run()
+    self.assertIn(c, r.related(x, le))
+    self.assertNotIn(c, r.related(y, le))
+    self.assertNotIn(c, r.related(a, le)) # (a is a, but not b)
+    self.assertNotIn(c, r.related(c, le)) # (nothing about the node itself)
+    self.assertIn(z, r.related(d, le))
+    self.assertTrue(any(t is le and s_ is x and d_ is c for t, s_, d_ in r.inferred))
+    self.assertEqual([(rule, key, value) for rule, obj, key, value in r.ruleAttrs if obj is pq], [(part, "t", "true")])
+
   def test0290noSystemNoise(self):
     'The results are about the model (and its super-models), with no trace of how the reasoner works.'
     m, person = self._fresh("noise")
