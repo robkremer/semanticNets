@@ -90,6 +90,24 @@ class Test(unittest.TestCase):
     self.assertEqual(sorted(o.name for o in cpy), sorted(o.name for o in old))
     self.assertEqual(rule2.model, m)
 
+  def test0110copyRuleWithParts(self): # (a rule whose graphs are in parts: the parts are copied, with what's in them)
+    m, c = self.m, self.c
+    self.assertEqual(m.convertToParts(self.rule), 6)
+    ante, cons = self.rule.parts()
+    c.copy([self.rule])
+    rule2 = c.paste()[0]
+    ante2, cons2 = rule2.parts()
+    self.assertEqual([p.name for p in (ante2, cons2)], ["antecedent", "consequent"])
+    self.assertEqual([p.partOwners() for p in (ante2, cons2)], [[rule2], [rule2]]) # (its own parts: not the original's)
+    self.assertEqual(ante.partOwners(), [self.rule])
+    self.assertEqual(sorted(o.name for o in ante2.getMembers()), sorted(o.name for o in ante.getMembers()))
+    self.assertFalse(any(a is b for a in ante.getMembers() for b in ante2.getMembers()))
+    rel = next(o for o in cons2.getMembers() if isinstance(o, Relation))
+    self.assertTrue(rel.isa(self.brother) and rel.isPatternElement())
+    c.cut([rule2])                                               # (and cut, its parts go with it)
+    self.assertFalse(any(o._isConnected() for o in (rule2, ante2, cons2, rel)))
+    self.assertTrue(ante._isConnected())
+
   def test0200modifyTheCopy(self): # (the use case: copy the brother rule, make it a sister rule)
     c = self.c
     c.copy([self.rule])
