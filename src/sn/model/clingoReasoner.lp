@@ -233,6 +233,50 @@ violation0(bad_cardinality, warning, T, (K,M)) :- card_error(T,K,M).
 
 attr(X,K,V) :- rule_attr(_,X,K,V).
 
+%%% Nodes defined by their links (Gaines's structural connectives) --------------
+% See sn.model.reasoner.DEFINING. "For every defining link" without negation
+% (which would make a loop through holds/3): the links are numbered 1..N
+% (def_part/6), and def_ok(C,D,X,I) says X stands as required to C's links
+% 1..I -- so to all of them at N. A positive link's other end stands as
+% required to it (the order is reflexive).
+
+def_ok(C,meet,X,1) :- def_part(C,meet,1,A,P,_), holds(P,X,A).
+def_ok(C,meet,A,1) :- def_part(C,meet,1,A,_,pos).
+def_ok(C,meet,X,I+1) :- def_ok(C,meet,X,I), def_part(C,meet,I+1,A,P,_), holds(P,X,A).
+def_ok(C,meet,A,I+1) :- def_ok(C,meet,A,I), def_part(C,meet,I+1,A,_,pos).
+def_ok(C,join,X,1) :- def_part(C,join,1,A,P,_), holds(P,A,X).
+def_ok(C,join,A,1) :- def_part(C,join,1,A,_,pos).
+def_ok(C,join,X,I+1) :- def_ok(C,join,X,I), def_part(C,join,I+1,A,P,_), holds(P,A,X).
+def_ok(C,join,A,I+1) :- def_ok(C,join,A,I), def_part(C,join,I+1,A,_,pos).
+fired(R,Q,X,C) :- def_ok(C,meet,X,N), def_last(C,meet,N,Q,R), X != C.
+fired(R,Q,C,X) :- def_ok(C,join,X,N), def_last(C,join,N,Q,R), X != C.
+
+% Truth attributes: def_key(C,D,I,A,Y,N) -- link I holds if A has Y, fails if
+% it has N; and the links 1..I (def_*pre) or I..N (def_*suf) all hold (h) or
+% all fail (f).
+def_key(C,D,I,A,TK,FK) :- def_part(C,D,I,A,_,pos), def_marks(C,D,TK,FK,_).
+def_key(C,D,I,A,FK,TK) :- def_part(C,D,I,A,_,neg), def_marks(C,D,TK,FK,_).
+def_holds(C,D,I) :- def_key(C,D,I,A,Y,_), attr(A,Y,_).
+def_fails(C,D,I) :- def_key(C,D,I,A,_,N), attr(A,N,_).
+def_hpre(C,D,0) :- def_marks(C,D,_,_,_).
+def_hpre(C,D,I) :- def_hpre(C,D,I-1), def_holds(C,D,I).
+def_hsuf(C,D,N+1) :- def_marks(C,D,_,_,_), def_last(C,D,N,_,_).
+def_hsuf(C,D,I) :- def_hsuf(C,D,I+1), def_holds(C,D,I).
+def_fpre(C,D,0) :- def_marks(C,D,_,_,_).
+def_fpre(C,D,I) :- def_fpre(C,D,I-1), def_fails(C,D,I).
+def_fsuf(C,D,N+1) :- def_marks(C,D,_,_,_), def_last(C,D,N,_,_).
+def_fsuf(C,D,I) :- def_fsuf(C,D,I+1), def_fails(C,D,I).
+% A meet is true when all its links hold, a join false when they all fail; a
+% false meet whose links but one hold makes that one fail, and a true join
+% whose links but one fail makes that one hold -- unless one of them was
+% given both marks (def_mixed/2: as KNet does, an inconsistent part blocks it).
+rule_attr(R,C,TK,V) :- def_hpre(C,meet,N), def_last(C,meet,N,_,R), def_marks(C,meet,TK,_,V).
+rule_attr(R,C,FK,V) :- def_fpre(C,join,N), def_last(C,join,N,_,R), def_marks(C,join,_,FK,V).
+rule_attr(R,A,N,V) :- def_marks(C,meet,_,FK,V), attr(C,FK,_), def_key(C,meet,I,A,_,N), not def_mixed(C,meet),
+                      def_hpre(C,meet,I-1), def_hsuf(C,meet,I+1), def_last(C,meet,_,_,R).
+rule_attr(R,A,Y,V) :- def_marks(C,join,TK,_,V), attr(C,TK,_), def_key(C,join,I,A,Y,_), not def_mixed(C,join),
+                      def_fpre(C,join,I-1), def_fsuf(C,join,I+1), def_last(C,join,_,_,R).
+
 % Report only violations about the data (not about pattern elements).
 violation(C,S,X,A) :- violation0(C,S,X,A), data(X).
 

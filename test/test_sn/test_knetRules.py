@@ -10,11 +10,12 @@ a warning), symmetry between types too, and isa as inclusion for types under
 knode -- and nothing from links that aren't kernel links (preferences,
 generic links). And Gaines's truth marks: a net's asserted ones, the menu
 items' (see the plugin's *hooks*), and the marks the reasoners propagate from
-them, as KNet does (*TestMarks*).
+them, as KNet does (*TestMarks*). And his structural connectives (*TestConnectives*):
+conjunctions and disjunctions, by their links and their marks.
 
 If the environment variable REP_PLUS_DATA names the folder of Rep Plus 2's
 test data (Brian Gaines's), the reasoners must also infer every derived link
-that KNet saved in some of its nets (see *TestRepPlusData*).
+that KNet saved in some of its nets, and mark the nodes it marked (see *TestRepPlusData*).
 
 The nets here are made up, small, in the files' format.
 
@@ -125,6 +126,44 @@ MARKS = net(
 )
 "Gaines's mark propagation figure (KNet's net of it: Logic Paper 2024/mark propagation.rnet), and necessary marks."
 
+CONNECTIVES = net(
+  "|C|9|FFFFFF||32",
+  "T|1",
+  "2|0|Arial|9|1|0|000000|FFFFFF|000000|008A00|0|0|0||Concept",
+  "A|7",
+  "1|0|0|0|1|0|000000|000000|000000|000000|Includes",            # 0
+  "1|1|0|0|1|0|000000|000000|000000|000000|Excludes",            # 1
+  "1|2|0|0|1|0|000000|000000|000000|000000|Coexcludes",          # 2
+  "2|0|0|0|1|0|000000|000000|000000|000000|Conjunct includes",   # 3 (a heavy arrowhead)
+  "2|1|0|0|1|0|00A000|00A000|00A000|00A000|Conjunct excludes",   # 4
+  "3|0|0|0|1|0|000000|000000|000000|000000|Disjunct includes",   # 5 (a double one)
+  "3|2|0|0|1|0|0000FF|0000FF|0000FF|0000FF|Disjunct coexcludes", # 6
+  "M|1", "693804|FFCD7D|Asserted",
+  "N|38|0|-1",
+  *[f"0|{mark}|0|0|30|20|{name}|" for name, mark in (
+    ("a", 0), ("b", 0), ("c", 0), ("x", 0), ("z", 0),        # 0-4: c is a and b; x includes both, z only a
+    ("h", 0), ("k", 0), ("g", 0), ("l", 0),                  # 5-8: g is h and not k; l includes h, excludes k
+    ("e", 0), ("f", 0), ("d", 0), ("y", 0),                  # 9-12: d is e or f; both include y
+    ("e2", 0), ("f2", 0), ("d2", 0), ("y2", 0),              # 13-16: d2 is e2 or not f2; e2 includes y2, f2 coexcludes it
+    ("p", 81), ("q", 81), ("pq", 0),                         # 17-19: p and q true: so pq
+    ("r", 81), ("s", 0), ("rs", 82),                         # 20-22: rs false, r true: so s false
+    ("t", 82), ("u", 82), ("tu", 0),                         # 23-25: t or u, both false: so false
+    ("v", 82), ("w", 0), ("vw", 81),                         # 26-28: vw true, v false: so w true
+    ("m", 83), ("n", 0), ("mn", 81),                         # 29-31: mn true, m false -- and true: n stays
+    ("h3", 81), ("k3", 82), ("g3", 0),                       # 32-34: g3 is h3 and not k3: true
+    ("e4", 0), ("f4", 81), ("d4", 81))],                     # 35-37: d4 is e4 or not f4, true, and f4 true: so e4 true
+  "L|31|0",
+  "2|0|3", "2|1|3", "3|0|0", "3|1|0", "4|0|0",
+  "7|5|3", "7|6|4", "8|5|0", "8|6|1",
+  "9|11|5", "10|11|5", "9|12|0", "10|12|0",
+  "13|15|5", "14|15|6", "13|16|0", "14|16|2",
+  "19|17|3", "19|18|3", "22|20|3", "22|21|3",
+  "23|25|5", "24|25|5", "26|28|5", "27|28|5", "29|31|5", "30|31|5",
+  "34|32|3", "34|33|4", "35|37|5", "36|37|6",
+  "G|0",
+)
+"Conjunctions and disjunctions (Gaines, sections 2.4 and 4.2): their links, and their marks."
+
 class TestKernelKinds(unittest.TestCase):
 
   @classmethod
@@ -163,6 +202,26 @@ class TestKernelKinds(unittest.TestCase):
       with self.subTest(name):
         self.assertIsNone(self.kind(name, **look))
 
+  def test_connectives(self):
+    '''
+    A heavy arrowhead is a conjunction's link (a conjunct includes, or with a
+    bar, excludes), a double one a disjunction's (a disjunct includes, or
+    with two bars, coexcludes) -- not if it's derived, generic or "Etc", nor
+    with an arrowhead at the other end too, or a symbol in the middle.
+    '''
+    r = self.reader
+    ck = lambda name, **k: r.connectiveKind(self.rnet.LinkType(0, name, **k))
+    self.assertEqual(ck("Conjunct includes", head=2), r.CONJUNCT_INCLUDES)
+    self.assertEqual(ck("Conjunct excludes", head=2, headBars=1), r.CONJUNCT_EXCLUDES)
+    self.assertEqual(ck("Disjunct includes", head=3), r.DISJUNCT_INCLUDES)
+    self.assertEqual(ck("Disjunct Coexcludes", head=3, headBars=2), r.DISJUNCT_COEXCLUDES)
+    self.assertEqual(ck("Conjunct includes reverse", tail=2), r.CONJUNCT_INCLUDES)
+    for name, look in (("Disjunct includes derived", dict(head=3)), ("Generic conjunct", dict(head=2)),
+                       ("Etc Conjunct", dict(head=2)), ("Includes", dict(head=1)), ("Odd", dict(head=2, tail=2)),
+                       ("Odd", dict(head=2, mid=1)), ("Disjunct negates", dict(head=3, headBars=3))):
+      with self.subTest(name, **look):
+        self.assertIsNone(ck(name, **look))
+
   def test_reversed(self):
     'Drawn backwards: an arrowhead at the tail only.'
     lt = lambda **k: self.rnet.LinkType(0, "x", **k)
@@ -195,7 +254,7 @@ class TestKernelInference(unittest.TestCase):
     backwards one turned round, its links too.
     '''
     b = self.reader.buildModel(self.rnet.parseText(KERNEL, "kernel.rnet"), str(self.folder / "kernel.snm"))
-    self.assertEqual(sorted(b.kernel), sorted(self.reader.KERNEL))
+    self.assertEqual(sorted(b.kernel), sorted([*self.reader.KERNEL, *self.reader.CONNECTIVES.values()]))
     parents = {str(t.name): [str(p.name) for p in t.getParents()] for t in b.linkTypes.values()}
     self.assertEqual(parents, {"Includes": ["includes"], "Excludes": ["excludes"], "Coexcludes symmetric": ["coexcludes"],
                                "Negates symmetric": ["negates"], "Includes reverse": ["includes"],
@@ -363,6 +422,86 @@ class TestMarks(unittest.TestCase):
     self.assertEqual(hooks.markBars(node, ctx), "top:#00a000")
     self.assertFalse(hooks._canMark(b.nodeTypes[0], ctx)) # (a type: its instances are marked)
 
+class TestConnectives(unittest.TestCase):
+  '''
+  Gaines's structural connectives (see *CONNECTIVES*): the reader's link
+  types with heavy and double arrowheads are the KNet rules model's
+  conjunct and disjunct types, which define a node by its links (see
+  *sn.model.reasoner.DEFINING*) -- by the links, and by the marks.
+  '''
+  @classmethod
+  def setUpClass(cls):
+    cls.rnet = importBundled("rnetReader", "rnet")
+    cls.reader = importBundled("rnetReader", "reader")
+
+  def setUp(self):
+    Model._initCache()
+    self.tmp = tempfile.TemporaryDirectory()
+    self.folder = Path(self.tmp.name).resolve()
+
+  def tearDown(self):
+    Model._initCache()
+    self.tmp.cleanup()
+
+  def build(self, name:str):
+    return self.reader.buildModel(self.rnet.parseText(CONNECTIVES, f"{name}.rnet"), str(self.folder / f"{name}.snm"))
+
+  def test_types(self):
+    'Each connective link type is an SN subtype of its connective type, and that of its kernel type.'
+    b = self.build("types")
+    parents = {str(t.name): [str(p.name) for p in t.getParents()] for t in b.linkTypes.values()}
+    self.assertEqual(parents, {"Includes": ["includes"], "Excludes": ["excludes"], "Coexcludes": ["coexcludes"],
+                               "Conjunct includes": ["conjunct includes"], "Conjunct excludes": ["conjunct excludes"],
+                               "Disjunct includes": ["disjunct includes"], "Disjunct coexcludes": ["disjunct coexcludes"]})
+    kinds = {name: [str(p.name) for p in t.getParents()] for name, t in b.kernel.items() if name in self.reader.CONNECTIVES.values()}
+    self.assertEqual(kinds, {"conjunct includes": ["includes"], "conjunct excludes": ["excludes"],
+                             "disjunct includes": ["includes"], "disjunct coexcludes": ["coexcludes"]})
+
+  def test_links(self):
+    '''
+    Each installed engine draws the connectives' inferences: whatever
+    includes every conjunct (and excludes every excluded one) includes the
+    conjunction; a disjunction includes whatever every disjunct includes
+    (and every coexcluded one coexcludes) -- and nothing from only some of them.
+    '''
+    for engine in installedEngines():
+      with self.subTest(engine):
+        Model._initCache()
+        b = self.build(engine)
+        res = Reasoner.create(b.model, engine).run()
+        names = {t: name for name, t in b.kernel.items()}
+        holds = {(names[t], str(s.name), str(d.name)) for t, s, d in res.holds
+                 if t in names and s is not None and d is not None and s.model is b.model and d.model is b.model}
+        for fact in [("includes", "x", "c"), ("includes", "l", "g"), ("includes", "d", "y"), ("includes", "d2", "y2")]:
+          self.assertIn(fact, holds)
+        for fact in [("includes", "z", "c"), ("includes", "c", "x"), ("includes", "y", "d"), ("includes", "c", "c")]:
+          self.assertNotIn(fact, holds)
+
+  EXPECTED = {"pq": {"markTrue": "definition"}, "s": {"markFalse": "definition"}, "tu": {"markFalse": "definition"},
+              "w": {"markTrue": "definition"}, "g3": {"markTrue": "definition"}, "e4": {"markTrue": "definition"}}
+  '''A conjunction is true when its conjuncts are (true, or false for an
+  excluded one), and a disjunction false when its disjuncts are; a false
+  conjunction whose conjuncts but one are true makes that one false, and a
+  true disjunction whose disjuncts but one are false makes that one true --
+  but not when one of them is both (n: as KNet doesn't: that would be
+  disjunctive syllogism from a contradiction).'''
+
+  def test_marks(self):
+    'Each installed engine marks the nodes *EXPECTED* says, and no others.'
+    for engine in installedEngines():
+      with self.subTest(engine):
+        Model._initCache()
+        b = self.build(f"marks-{engine}")
+        res = Reasoner.create(b.model, engine).run()
+        got:dict[str, dict[str, set]] = {}
+        for _, x, k, v in res.ruleAttrs:
+          if k in ("markTrue", "markFalse") and getattr(x, "model", None) is b.model and x.getLocalAttr(k) is None:
+            got.setdefault(str(x.name), {}).setdefault(k, set()).add(v)
+        self.assertEqual({n: sorted(ms) for n, ms in got.items()}, {n: sorted(ms) for n, ms in self.EXPECTED.items()})
+        for n, ms in self.EXPECTED.items():
+          for k, how in ms.items():
+            self.assertIn(how, got[n][k], f"{n} {k}")
+
 @unittest.skipUnless(os.environ.get("REP_PLUS_DATA"), "set REP_PLUS_DATA to Rep Plus 2's test data folder to run these")
 class TestRepPlusData(unittest.TestCase):
   '''
@@ -376,11 +515,22 @@ class TestRepPlusData(unittest.TestCase):
   NETS = ["Nets-CNet-Dev/knets/paper/paper1/coexclusion squares.rnet",
           "Nets-CNet-Dev/knets/paper/paper1/inclusion patterns.rnet",
           "Nets-CNet-Dev/knets/paper/paper1/dynamics.rnet",
-          "Nets-CNet-Dev/knets/paper/paper1/states of affairs/platodivision.rnet"]
+          "Nets-CNet-Dev/knets/paper/paper1/states of affairs/platodivision.rnet",
+          "Nets-CNet-Dev/knets/paper/paper1/Hertz.rnet",
+          "Nets-CNet-Dev/knets/paper/structural/induction.rnet",
+          "Nets-CNet-Dev/knets/paper/structural/matimpeuler.rnet"]
+  "The last three with conjunctions and disjunctions."
 
   MARK_NETS = ["Logic Paper 2024/mark propagation.rnet", "Nets-CNet-Dev/CNet tests/proper part 1.rnet",
-               "Nets-CNet-Dev/knets/paper/Inference Process.rnet"]
-  "Nets with marks KNet propagated (and, in proper part 1, a necessary one)."
+               "Nets-CNet-Dev/knets/paper/Inference Process.rnet",
+               "Nets-CNet-Dev/knets/paper/paper1/Syllogisms/conjunction.rnet",
+               "Nets-CNet-Dev/knets/paper/paper1/Syllogisms/disjunction.rnet",
+               "Nets-CNet-Dev/knets/paper/paper1/testing/disj.rnet",
+               "Nets-CNet-Dev/knets/paper/paper1/testing/principle of explosion.rnet"]
+  '''Nets with marks KNet propagated (and, in proper part 1, a necessary one;
+  the last four, through conjunctions and disjunctions: in disj, a disjunct
+  that's both blocks disjunctive syllogism -- and in principle of explosion,
+  one that's only false because of a contradiction doesn't).'''
 
   @classmethod
   def setUpClass(cls):

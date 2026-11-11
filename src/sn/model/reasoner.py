@@ -35,6 +35,16 @@ A reasoner engine subclasses :py:class:`Reasoner` (see
                               (see GraphObject.isPatternElement())
   ``var_kind(X,K)``           X is a variable over K: individual, type or any
                               (see GraphObject.variableKind() and sn.model.names)
+  ``def_part(C,D,I,A,P,Pol)`` node C is defined by its links (see *DEFINING*):
+                              D is *meet* or *join*; its Ith (from 1) defining
+                              link is to A (from A, for a join); P is the
+                              relation it requires; Pol *pos* if P is the
+                              order (*neg* if not)
+  ``def_last(C,D,N,Q,R)``     C has N such links; Q is the order; R the tagged
+                              relation type (the first link's)
+  ``def_marks(C,D,TK,FK,V)``  their truth attributes: true's and false's keys,
+                              and the value concluded
+  ``def_mixed(C,D)``          one of the links' other ends has both (locally)
   ==========================  ================================================
 
 - :py:class:`Inferences` and :py:class:`Violation` are what every engine
@@ -118,6 +128,52 @@ they mean: too many different (named) objects is an error and too few (for
 the domain's individuals: the range's, for "in") a warning; at most one makes
 the objects the rules invent the same object (as each other, or as a named
 one); and exactly one invents one where the model has none.
+'''
+
+DEFINING = {"meet": "out", "join": "in"}
+'''
+The attributes of a relation type that make its links define a node (Gaines's
+structural connectives: his iterative clause), and which of the node's links
+they are: its own (*out*), or those to it (*in*). Unlike the relational
+properties, they're inherited by the type's subtypes (a subtype of a
+conjunct link is one). The value is the name of a relation type, P (the
+relation its links require); and the type can also have:
+
+  - ``order``: the name of the order relation (Q) the node is defined in (P if
+    it hasn't): taken to be reflexive -- everything is ordered before itself.
+  - ``trueMark``, ``falseMark``, ``markValue``: truth attributes' keys, and
+    the value to conclude (see below).
+
+A node C with (asserted) *meet* links to A1..An is their meet: whatever has P
+to each Ai (Pi, each link's own) has Q to C -- eg, with P and Q includes,
+whatever includes every conjunct includes the conjunction. A link whose P is
+Q is positive (C -Q-> Ai: the link is a Q, as a conjunct includes), and its
+Ai counts as having Q to itself; any other is negative (eg: a conjunct
+excludes, whose P is excludes). And dually, a node D with *join* links from
+A1..An is their join: D has Q to whatever each Ai has Pi to. (A node that has
+no such links isn't defined: nothing is concluded about it.)
+
+With truth attributes (*trueMark*, *falseMark*: eg, the KNet rules model's
+markTrue and markFalse), a defining link holds when its other end has
+*trueMark* (or *falseMark*, if it's negative), and fails when it has the
+other; and so (Belnap's four values: a node may have both):
+
+  - a meet has *trueMark* (the value *markValue*) when all its links hold,
+    and a join *falseMark* when all of them fail;
+  - a meet that has *falseMark*, all of whose links but one hold, makes that
+    one fail (its end gets the mark that does that); and a join that has
+    *trueMark*, all of whose links but one fail, makes that one hold --
+    unless one of its links' other ends was given both marks (it's
+    inconsistent: as KNet does, that blocks disjunctive syllogism, and its
+    dual). That's the asserted (local) marks: one that both its marks were
+    concluded for doesn't block it (it would take negation through the
+    marks' own propagation).
+
+(That a link's failing makes a meet false, and its holding a join true, is
+just what the links themselves are: eg: a conjunct includes is an includes.)
+The engines conclude these as the tagged relation type's: *fired* and
+*rule_attr* with it as the "rule". See *Reasoner._definingFacts()* for the
+facts they get.
 '''
 
 def parseCardinality(text:Any) -> tuple[int, int|None]:
@@ -1755,6 +1811,64 @@ class Reasoner(ABC):
           continue
         if isinstance(value, (bool, int, float, str)):
           out.append(("attr", (obj, key, value)))
+    out += self._definingFacts(queue)
+    return out
+
+  def _definingFacts(self, objects:list[GraphObject]) -> list[Fact]:
+    '''
+    :param objects: The objects the facts are about (see *_facts()*).
+    :returns: The facts about the nodes their links define (see *DEFINING*):
+      def_part/6, def_last/5, def_marks/5 and def_mixed/2 (see the module
+      doc). A node's defining links are its asserted individual relations
+      whose type is (an SN subtype of) one tagged *meet* (its own) or *join*
+      (those to it), numbered in the order they're in the models. A tag
+      naming no relation type among *objects* is left out.
+    '''
+    types:dict[str, Relation] = {}
+    for o in objects:
+      if isinstance(o, Relation) and o.isType():
+        types.setdefault(str(o.name), o)
+    tags:dict[int, tuple[Relation, str]|None] = {}
+    def tagged(t:GraphObject) -> tuple[Relation, str]|None: # (the nearest type, itself or above, with a tag; and which)
+      if id(t) not in tags:
+        tags[id(t)] = None # (in case of a cycle)
+        found = next(((cast(Relation, t), key) for key in DEFINING if isinstance(t, Relation) and dict.__contains__(t, key)), None)
+        if found is None:
+          try:
+            found = next((f for p in t.getParents() if (f := tagged(p)) is not None), None)
+          except (RecursionError, LookupError):
+            found = None
+        tags[id(t)] = found
+      return tags[id(t)]
+    groups:dict[tuple[int, str], tuple[GraphObject, list[tuple[GraphObject, Relation, Relation]]]] = {}
+    for rel in objects:
+      if not isinstance(rel, Relation) or not rel.isIndividual() or isinstance(rel, IsaIndividual) or rel.isPatternElement():
+        continue
+      src, dst = rel.src, rel.dst
+      if src is None or dst is None:
+        continue
+      for t in rel.getParents():
+        found = tagged(t)
+        if found is None:
+          continue
+        tag, key = found
+        p = types.get(str(tag.getLocal(key, "")))
+        if p is not None:
+          defined, other = (src, dst) if DEFINING[key] == "out" else (dst, src)
+          groups.setdefault((id(defined), key), (defined, []))[1].append((other, p, tag))
+          break
+    out:list[Fact] = []
+    for (_, key), (defined, parts) in groups.items():
+      tag = parts[0][2]
+      order = types.get(str(tag.getLocal("order", "")), parts[0][1])
+      for i, (other, p, _) in enumerate(parts, 1):
+        out.append(("def_part", (defined, Sym(key), i, other, p, Sym("pos" if p is order else "neg"))))
+      out.append(("def_last", (defined, Sym(key), len(parts), order, tag)))
+      true, false = tag.getLocal("trueMark", None), tag.getLocal("falseMark", None)
+      if true and false:
+        out.append(("def_marks", (defined, Sym(key), str(true), str(false), str(tag.getLocal("markValue", "")) or "true")))
+        if any(dict.__contains__(other, str(true)) and dict.__contains__(other, str(false)) for other, _, _ in parts):
+          out.append(("def_mixed", (defined, Sym(key))))
     return out
 
   def _relationFacts(self, rel:Relation, ref) -> list[Fact]:
@@ -1999,12 +2113,15 @@ def _ruleOrder(models:list[Model]) -> dict[int, int]:
     own first, in the order they're in it, then each super-model's -- so that
     where rules conclude different values of an attribute for an object, the
     first rule's is the one it gets, whichever engine reasoned (eg: the KNet
-    rules model's marks: true by inclusion before true by coexclusion).
+    rules model's marks: true by inclusion before true by coexclusion). Not
+    relation types': one is the "rule" of what a node's defining links
+    conclude (see *DEFINING*), which comes after every rule's.
   '''
   ret:dict[int, int] = {}
   for m in models:
     for o in m.values():
-      ret.setdefault(id(o), len(ret))
+      if not isinstance(o, Relation):
+        ret.setdefault(id(o), len(ret))
   return ret
 
 def _inferredAttributes(models:list[Model]) -> list[tuple[GraphObject, str, Attribute]]:

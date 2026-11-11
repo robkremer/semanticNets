@@ -19,7 +19,10 @@ protologic, so that the reasoners draw KNet's inferences):
     straight line, with no label: a dashed one's colours are faded. It's an
     SN subtype of the kernel relation type its look says it is (see
     *kernelKind()*: eg, an arrow is includes, an arrow with a bar excludes),
-    if any. One drawn backwards -- its arrow at its tail (eg: "Includes
+    if any -- or of the connective's, if it has a heavy or a double
+    arrowhead (see *connectiveKind()*: eg, "Conjunct includes"), whose links
+    define a conjunction or a disjunction (Gaines's structural
+    connectives). One drawn backwards -- its arrow at its tail (eg: "Includes
     reverse") -- is drawn the other way round instead: its arrow at its
     destination, and its links from the file's destination to its source
     (see *isReversed()*), so that it means what it shows.
@@ -99,6 +102,14 @@ INCLUDES, EQUIVALENT, EXCLUDES, COEXCLUDES, NEGATES, INCONSISTENT = \
   "includes", "equivalent", "excludes", "coexcludes", "negates", "inconsistent"
 KERNEL = (INCLUDES, EQUIVALENT, EXCLUDES, COEXCLUDES, NEGATES, INCONSISTENT)
 "The kernel relation types' names, in *ONTOLOGY*."
+
+CONJUNCT_INCLUDES, CONJUNCT_EXCLUDES, DISJUNCT_INCLUDES, DISJUNCT_COEXCLUDES = \
+  "conjunct includes", "conjunct excludes", "disjunct includes", "disjunct coexcludes"
+CONNECTIVES = {(2, 0): CONJUNCT_INCLUDES, (2, 1): CONJUNCT_EXCLUDES, (3, 0): DISJUNCT_INCLUDES, (3, 2): DISJUNCT_COEXCLUDES}
+'''The structural connectives' relation types, in *ONTOLOGY* (SN subtypes of
+the kernel's: see tools/makeKnetRules.py), by the arrowhead (a heavy one, a
+conjunction's; a double one, a disjunction's: *rnet.LinkType.head*) and its
+bars: see *connectiveKind()*.'''
 
 KNODE = "knode"
 "The SN type of a KNet net's nodes, in *ONTOLOGY*: the net's node types are its SN subtypes."
@@ -215,6 +226,20 @@ def kernelKind(t:LinkType) -> str|None:
     return EQUIVALENT
   return INCLUDES if ends else None
 
+def connectiveKind(t:LinkType) -> str|None:
+  '''
+  :returns: The connective relation type (see *CONNECTIVES*) that links of
+    *t* are: a kernel link (see *kernelKind()*) with a heavy or a double
+    arrowhead at one end (and nothing at the other), with the bars that one
+    has (none or one for a conjunction's, none or two for a disjunction's) --
+    unless it's derived (KNet's inferences aren't definitions). None for
+    anything else.
+  '''
+  if t.derived or kernelKind(t) is None:
+    return None
+  ends = [(shape, bars) for shape, bars in ((t.head, t.headBars), (t.tail, t.tailBars)) if shape]
+  return CONNECTIVES.get(ends[0]) if len(ends) == 1 and not t.mid else None
+
 def isReversed(t:LinkType) -> bool:
   '''
   :returns: Whether *t* is drawn backwards: an arrowhead (or a generic one) at
@@ -234,11 +259,12 @@ def ontology(m:Model) -> Model:
 def kernelTypes(m:Model) -> dict[str, Relation]:
   '''
   :param m: A model built on *ONTOLOGY*.
-  :returns: The kernel relation types (*KERNEL*), by name.
+  :returns: The kernel relation types (*KERNEL*), and the connectives' (*CONNECTIVES*), by name.
   '''
   onto = ontology(m)
+  names = {*KERNEL, *CONNECTIVES.values()}
   return {str(o.name): o for o in onto.values()
-          if o.model is onto and isinstance(o, Relation) and o.isType() and str(o.name) in KERNEL}
+          if o.model is onto and isinstance(o, Relation) and o.isType() and str(o.name) in names}
 
 def knodeType(m:Model) -> Node:
   '''
@@ -283,7 +309,7 @@ class Built:
   linkTypes:dict[int, Relation] = field(default_factory=dict)
   "Each link type's place in the net -> its relation type."
   kernel:dict[str, Relation] = field(default_factory=dict)
-  "The kernel relation types (see *KERNEL*), by name."
+  "The kernel relation types (see *KERNEL*), and the connectives' (*CONNECTIVES*), by name."
   nodes:dict[int, Node] = field(default_factory=dict)
   "Each node's place in the net -> its individual (not the pictures and drawings)."
   relations:list[tuple[Relation, int]] = field(default_factory=list)
@@ -372,10 +398,10 @@ def makePoint(m:Model, file:str) -> Node:
 def makeLinkType(m:Model, t:LinkType, file:str, kernel:dict[str, Relation]|None=None) -> Relation:
   '''
   :param kernel: The kernel relation types (see *kernelTypes()*): it's an SN
-    subtype of the one it is (see *kernelKind()*), if any.
+    subtype of the one it is (see *connectiveKind()* and *kernelKind()*), if any.
   :returns: A new relation type in *m* for the net's link type *t* (see the module doc).
   '''
-  kind = kernelKind(t)
+  kind = connectiveKind(t) or kernelKind(t)
   parent = (kernel or {}).get(kind or "")
   r = Relation(m, [parent if parent is not None else m.RELATION], None, None, name=t.name or f"link type {t.index}")
   if isReversed(t): # (its links go the other way: see buildModel())

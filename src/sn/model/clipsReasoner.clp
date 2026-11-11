@@ -172,6 +172,47 @@
 (defrule attr (attr_base ?o ?k ?v) => (assert (attr ?o ?k ?v)))
 (defrule attr-rule (rule_attr ? ?x ?k ?v) => (assert (attr ?x ?k ?v)))
 
+;;; Nodes defined by their links (Gaines's structural connectives) --------------
+; See clingoReasoner.lp.
+
+(defrule def_ok-meet (def_part ?c meet 1 ?a ?p ?) (holds ?p ?x ?a) => (assert (def_ok ?c meet ?x 1)))
+(defrule def_ok-meet-self (def_part ?c meet 1 ?a ? pos) => (assert (def_ok ?c meet ?a 1)))
+(defrule def_ok-meet-next (def_ok ?c meet ?x ?i) (def_part ?c meet =(+ ?i 1) ?a ?p ?) (holds ?p ?x ?a)
+  => (assert (def_ok ?c meet ?x (+ ?i 1))))
+(defrule def_ok-meet-next-self (def_ok ?c meet ?a ?i) (def_part ?c meet =(+ ?i 1) ?a ? pos)
+  => (assert (def_ok ?c meet ?a (+ ?i 1))))
+(defrule def_ok-join (def_part ?c join 1 ?a ?p ?) (holds ?p ?a ?x) => (assert (def_ok ?c join ?x 1)))
+(defrule def_ok-join-self (def_part ?c join 1 ?a ? pos) => (assert (def_ok ?c join ?a 1)))
+(defrule def_ok-join-next (def_ok ?c join ?x ?i) (def_part ?c join =(+ ?i 1) ?a ?p ?) (holds ?p ?a ?x)
+  => (assert (def_ok ?c join ?x (+ ?i 1))))
+(defrule def_ok-join-next-self (def_ok ?c join ?a ?i) (def_part ?c join =(+ ?i 1) ?a ? pos)
+  => (assert (def_ok ?c join ?a (+ ?i 1))))
+(defrule def-meet (def_last ?c meet ?n ?q ?r) (def_ok ?c meet ?x&~?c ?n) => (assert (fired ?r ?q ?x ?c)))
+(defrule def-join (def_last ?c join ?n ?q ?r) (def_ok ?c join ?x&~?c ?n) => (assert (fired ?r ?q ?c ?x)))
+
+(defrule def_key-pos (def_part ?c ?d ?i ?a ? pos) (def_marks ?c ?d ?tk ?fk ?) => (assert (def_key ?c ?d ?i ?a ?tk ?fk)))
+(defrule def_key-neg (def_part ?c ?d ?i ?a ? neg) (def_marks ?c ?d ?tk ?fk ?) => (assert (def_key ?c ?d ?i ?a ?fk ?tk)))
+(defrule def_holds (def_key ?c ?d ?i ?a ?y ?) (attr ?a ?y ?) => (assert (def_holds ?c ?d ?i)))
+(defrule def_fails (def_key ?c ?d ?i ?a ? ?n) (attr ?a ?n ?) => (assert (def_fails ?c ?d ?i)))
+(defrule def_hpre-0 (def_marks ?c ?d ? ? ?) => (assert (def_hpre ?c ?d 0)))
+(defrule def_hpre (def_hpre ?c ?d ?h) (def_holds ?c ?d =(+ ?h 1)) => (assert (def_hpre ?c ?d (+ ?h 1))))
+(defrule def_hsuf-0 (def_marks ?c ?d ? ? ?) (def_last ?c ?d ?n ? ?) => (assert (def_hsuf ?c ?d (+ ?n 1))))
+(defrule def_hsuf (def_hsuf ?c ?d ?h) (def_holds ?c ?d =(- ?h 1)) => (assert (def_hsuf ?c ?d (- ?h 1))))
+(defrule def_fpre-0 (def_marks ?c ?d ? ? ?) => (assert (def_fpre ?c ?d 0)))
+(defrule def_fpre (def_fpre ?c ?d ?h) (def_fails ?c ?d =(+ ?h 1)) => (assert (def_fpre ?c ?d (+ ?h 1))))
+(defrule def_fsuf-0 (def_marks ?c ?d ? ? ?) (def_last ?c ?d ?n ? ?) => (assert (def_fsuf ?c ?d (+ ?n 1))))
+(defrule def_fsuf (def_fsuf ?c ?d ?h) (def_fails ?c ?d =(- ?h 1)) => (assert (def_fsuf ?c ?d (- ?h 1))))
+(defrule def-meet-true (def_last ?c meet ?n ? ?r) (def_hpre ?c meet ?n) (def_marks ?c meet ?tk ? ?v)
+  => (assert (rule_attr ?r ?c ?tk ?v)))
+(defrule def-join-false (def_last ?c join ?n ? ?r) (def_fpre ?c join ?n) (def_marks ?c join ? ?fk ?v)
+  => (assert (rule_attr ?r ?c ?fk ?v)))
+(defrule def-meet-fails (def_marks ?c meet ? ?fk ?v) (attr ?c ?fk ?) (def_key ?c meet ?i ?a ? ?n) (not (def_mixed ?c meet))
+    (def_hpre ?c meet =(- ?i 1)) (def_hsuf ?c meet =(+ ?i 1)) (def_last ?c meet ? ? ?r)
+  => (assert (rule_attr ?r ?a ?n ?v)))
+(defrule def-join-holds (def_marks ?c join ?tk ? ?v) (attr ?c ?tk ?) (def_key ?c join ?i ?a ?y ?) (not (def_mixed ?c join))
+    (def_fpre ?c join =(- ?i 1)) (def_fsuf ?c join =(+ ?i 1)) (def_last ?c join ? ? ?r)
+  => (assert (rule_attr ?r ?a ?y ?v)))
+
 ; Report only violations about the data.
 (defrule violation (violation0 ?c ?s ?x $?args) (data ?x) => (assert (violation ?c ?s ?x $?args)))
 
