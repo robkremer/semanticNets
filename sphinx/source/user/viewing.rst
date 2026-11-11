@@ -196,6 +196,12 @@ attribute                   controls
 ``vis/borderWidth``,
 ``vis/borderSmooth``
 ``vis/textColor``           its text
+``vis/sideBars``            bars along a node's sides, just outside it: eg
+                            ``right:#000000 top:green`` (left, right, top,
+                            bottom, each with its colour; black if none).
+                            A template, as ``vis/label`` is, so it can say
+                            what the node's attributes do: eg, a KNet
+                            node's truth marks (see :doc:`exampleApps`)
 ``vis/lineColor``,          a relation's line
 ``vis/lineWidth``,
 ``vis/lineType``

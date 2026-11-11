@@ -70,7 +70,10 @@ The results are also shown on the canvas, in every view of the model:
 - attribute values rules conclude for the model's own objects (eg: from a
   definition's constraints) are added as **inferred** attributes: they're
   used like any other value, but aren't saved, and an object's own (given)
-  value always wins over one inferred. The attribute editor shows an
+  value always wins over one inferred. If rules conclude different values
+  of one attribute for an object, it gets the first rule's (in the order
+  they're in the model, and then its super-models), whichever engine
+  reasoned. The attribute editor shows an
   inferred value greyed out, marked **I**, with an **assert** button: press
   it, then **Save Changes**, to make it an ordinary value;
 - objects with violations get a red **E** marker: hover over it for the

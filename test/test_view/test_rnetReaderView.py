@@ -189,6 +189,57 @@ class TestNetView(unittest.TestCase):
     self.assertEqual(between("on", "off"), ["Negates symmetric"])     # (nor its excludes and coexcludes)
     self.assertEqual(between("three", "odd"), ["includes"])
 
+  def test_marks(self):
+    '''
+    A node's truth marks are bars (see the plugin's *hooks.markBars()* and
+    *decorators.SideBars*): asserted true, a brown one beside it; after
+    reasoning, the marks the reasoner concluded too (eg: black beside, for
+    true by inclusion; both bars, for both) -- and they go when the
+    assertion's taken back and it's reasoned again.
+    '''
+    from sn.view.graphics.sngView import SNGView
+    from sn.hooks import HookContext
+    from test_sn.test_knetRules import MARKS
+    hooks = importBundled("rnetReader", "hooks")
+    path = self.folder / "marks.rnet"
+    path.write_text(MARKS, encoding="utf-8")
+    built = self.reader.buildModel(self.rnet.parse(str(path)), str(self.folder / "marks.snm"))
+    v = SNGView(fixURL(built.model.url, ".snv", replaceExt=True, mode="w")[0], model=built.model)
+    self.views.append(v)
+    v.window.withdraw()
+    v.context.visibility("system objects", "hide")
+    self.netView.showNet(v, built)
+    self.app.update()
+    shown = self.shown(v)
+    def bars(name:str) -> list[tuple[str, str]]: # (each bar's colour, and where: right of the node, or above it)
+      vo = shown[name]
+      deco = vo.decorators.get("sideBars")
+      x1, y1, x2, y2 = v.viewToWindow(vo.boundingBox())
+      ret = []
+      for i in deco.ids if deco is not None else []:
+        bx1, by1, bx2, by2 = v.canvas.coords(i)
+        ret.append(("right" if bx1 >= x2 else "top" if by2 <= y1 else "?", v.canvas.itemcget(i, "fill")))
+      return sorted(ret)
+    self.assertEqual(bars("a0"), [("right", "#693804")])
+    self.assertEqual(bars("a2"), [("right", "#693804"), ("top", "#693804")])
+    self.assertEqual(bars("c0"), [])
+    v.reason("clingo")
+    self.app.update()
+    self.assertEqual(bars("c0"), [("right", "#000000")])                   # (true by inclusion)
+    self.assertEqual(bars("f0"), [("top", "#00a000")] if shown["f0"].modelObject["markFalse"] == "excluded"
+                     else [("top", "#a9a9a9")])                            # (false by exclusion, or by inclusion)
+    self.assertEqual([c for _, c in bars("d2")], ["#0000ff", "#00a000"])  # (both)
+    hooks.clearMarks(shown["a0"].modelObject, HookContext(view=v, selection=[shown["a0"]]))
+    self.app.update()
+    self.assertIsNone(shown["a0"].modelObject.getLocalAttr("markTrue"))
+    self.assertEqual(bars("a0"), [])
+    v.reason("clingo")
+    self.app.update()
+    self.assertEqual(bars("c0"), [])
+    v.context.undo()
+    self.app.update()
+    self.assertEqual(bars("a0"), [("right", "#693804")])
+
   def test_convert(self):
     'The files are made, the view opened; made again, it asks first -- and does nothing if told not to.'
     model, view = str(self.folder / "out" / "net.snm"), str(self.folder / "out" / "net.snv")

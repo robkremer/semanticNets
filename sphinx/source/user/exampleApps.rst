@@ -316,7 +316,9 @@ What's in the net becomes:
   the number the file has (``marks``). It's drawn as Rep Plus draws it: the
   node filled with the mark kind's background colour, and its outline in
   the kind's colour, if the mark says so -- and its label adds the mark (its
-  type's ``vis/label`` is ``$name${mark:+ $mark}``).
+  type's ``vis/label`` is ``$name${mark:+ $mark}``). An asserted mark is
+  also the node's truth mark, which the reasoners propagate (see `Truth
+  marks`_).
 - **Links**: each link is a relation of its type. A line with a second type
   (CNet draws two lines side by side) is a link and a link back: the second
   type's relation goes from the link's destination to its source. Any
@@ -381,9 +383,44 @@ The kernel works in models of your own too: build one on *knet.snm* (see
 under *knode*: dog isa animal isa knode gives dog *includes* animal, so a
 type that *excludes* animal excludes dog.
 
+Truth marks
+~~~~~~~~~~~
+
+Gaines marks a node true (a vertical bar beside it: there's something it
+stands for) or false (a horizontal bar over it: it's empty), or both
+(Belnap's "both": inconsistent). A KNet node -- an instance of *knode*, as
+the reader's nodes are -- shows its marks as those bars, in Rep Plus's
+colours for how it got them:
+
+================  ===========  ==================================================
+how               colour       why
+================  ===========  ==================================================
+asserted          brown        it's marked so (in the net's file, or by you)
+included          black        true: something true includes it
+coexcluded        blue         true: it coexcludes something false
+excluded          green        false: it excludes something true
+irrelevant        grey         false: it includes something false (Rep Plus's name)
+necessary         red          false because it's inconsistent (it excludes
+                               itself) -- or true because it coexcludes itself
+================  ===========  ==================================================
+
+A node's menu has **Mark** ▸ **True**, **False** and **Clear** (for the
+selected nodes, undone in one go); **Reason** propagates the marks (reason
+again after changing them). The marks are two attributes,
+``markTrue`` and ``markFalse``, whose values say how (eg: ``asserted``): the
+reasoners' are inferred values, and an asserted one always stands. A net's
+file's asserted marks are asserted ones; the marks KNet propagated (and saved)
+are left to the reasoners -- the file's look of them, its fill and outline,
+stays. On KNet's net of the paper's figure, the reasoners mark exactly the
+nodes KNet did.
+
+The bars are a view feature anything can use: a node's ``vis/sideBars`` (see
+:doc:`viewing`).
+
 Not yet: the structural connectives (heavy and double arrowheads: their
-"for every defining link" clause), truth marks' propagation, preferences and
-defaults, and probes.
+"for every defining link" clause, and the marks through them), preferences
+and defaults, and probes. And KNet can treat nodes with the same label as
+one node (when its script says so); the reader keeps them apart.
 
 Menus, tooltips and double-clicks from programs
 -----------------------------------------------

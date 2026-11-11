@@ -4,7 +4,8 @@ show (see *buildModel()*), built on *ONTOLOGY* (the kernel of Gaines's
 protologic, so that the reasoners draw KNet's inferences):
 
   - Each node type (section ``T``) becomes a node type (an SN subtype of
-    node) of the same name, with its shape and colours (see *NODE_SHAPES* and
+    *KNODE*: a KNet node, with its truth marks' bars and menu items -- see
+    *hooks*) of the same name, with its shape and colours (see *NODE_SHAPES* and
     *NODE_COLORS*); one that's just its text (eg: "Title", "Note") has no
     outline or fill. A node with no type gets *UNTYPED*. One with the
     enclosure shape (*ENCLOSURE*: eg, "construct", "frame", "rules") becomes
@@ -30,7 +31,11 @@ protologic, so that the reasoners draw KNet's inferences):
     has it (in hexadecimal), and its label says the mark (see *LABEL*). It's
     drawn as Rep Plus draws it (see *rnet.NetNode*): filled with the mark
     kind's background colour, and its outline in the kind's colour, if the
-    mark says so. Pictures and drawings aren't made (they aren't concepts).
+    mark says so. An asserted mark is the node's truth mark, too, which the
+    reasoners propagate: *hooks.MARK_TRUE* and/or *hooks.MARK_FALSE*, saying
+    its kind (eg: "asserted"), shown as Gaines's bars. (A derived one isn't:
+    it's what the reasoners conclude again.) Pictures and drawings aren't
+    made (they aren't concepts).
   - Each link (section ``L``) becomes a relation of its type from its source
     to its destination -- and one of its second type, if it has one, back
     from its destination to its source (see *rnet.Link*) -- or the other way,
@@ -83,6 +88,7 @@ from pathlib import Path
 from sn.model.model import GraphObject, Model, Node, Relation
 from util.attribute import Attribute, VAR_DEFAULTED
 from .rnet import Net, NetNode, NodeType, LinkType
+from .hooks import MARK_TRUE, MARK_FALSE, ASSERTED
 
 ONTOLOGY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "knet.snm")
 '''The model the models made build on: the kernel of Gaines's protologic -- its
@@ -93,6 +99,9 @@ INCLUDES, EQUIVALENT, EXCLUDES, COEXCLUDES, NEGATES, INCONSISTENT = \
   "includes", "equivalent", "excludes", "coexcludes", "negates", "inconsistent"
 KERNEL = (INCLUDES, EQUIVALENT, EXCLUDES, COEXCLUDES, NEGATES, INCONSISTENT)
 "The kernel relation types' names, in *ONTOLOGY*."
+
+KNODE = "knode"
+"The SN type of a KNet net's nodes, in *ONTOLOGY*: the net's node types are its SN subtypes."
 
 ARROWHEADS = (1, 2, 3)
 '''The ends (*rnet.LinkType.head*, *tail*) that are arrowheads: plain, heavy
@@ -213,16 +222,31 @@ def isReversed(t:LinkType) -> bool:
   '''
   return t.tail in (*ARROWHEADS, 6) and t.head == 0
 
+def ontology(m:Model) -> Model:
+  '''
+  :param m: A model built on *ONTOLOGY*.
+  :returns: *ONTOLOGY*'s model.
+  '''
+  from util.utils import urlPath
+  return next(db for db in m.superDBs if isinstance(db, Model) and db.url.startswith("file:")
+              and os.path.realpath(urlPath(db.url) or "") == os.path.realpath(ONTOLOGY))
+
 def kernelTypes(m:Model) -> dict[str, Relation]:
   '''
   :param m: A model built on *ONTOLOGY*.
   :returns: The kernel relation types (*KERNEL*), by name.
   '''
-  from util.utils import urlPath
-  onto = next(db for db in m.superDBs if isinstance(db, Model) and db.url.startswith("file:")
-              and os.path.realpath(urlPath(db.url) or "") == os.path.realpath(ONTOLOGY))
+  onto = ontology(m)
   return {str(o.name): o for o in onto.values()
           if o.model is onto and isinstance(o, Relation) and o.isType() and str(o.name) in KERNEL}
+
+def knodeType(m:Model) -> Node:
+  '''
+  :param m: A model built on *ONTOLOGY*.
+  :returns: *KNODE*: the SN type of a KNet net's nodes.
+  '''
+  onto = ontology(m)
+  return next(o for o in onto.values() if o.model is onto and isinstance(o, Node) and o.isType() and o.name == KNODE)
 
 def fade(color:str, amount:float=DERIVED_FADE) -> str:
   '''
@@ -292,12 +316,13 @@ class Built:
       s += f". Left out: {'; '.join(self.skipped)}"
     return s + "."
 
-def makeNodeType(m:Model, t:NodeType, file:str) -> Node:
+def makeNodeType(m:Model, t:NodeType, file:str, knode:Node|None=None) -> Node:
   '''
+  :param knode: *KNODE*, if *m*'s built on *ONTOLOGY*: the parent of a type that isn't a box's.
   :returns: A new node type in *m* for the net's node type *t* (see the module doc).
   '''
   box = t.shape == ENCLOSURE
-  n = Node(m, [m.CONTEXT if box else m.NODE], name=t.name or f"node type {t.index}")
+  n = Node(m, [m.CONTEXT if box else knode if knode is not None else m.NODE], name=t.name or f"node type {t.index}")
   if box: # (a box of facts: see GraphObject.quotesContents())
     n[GraphObject.QUOTED] = False
   n["vis/shape"] = "FileFolder" if t.extra == "rgrid" else "Rectangle" if box else NODE_SHAPES.get(t.shape, "Rectangle")
@@ -315,10 +340,10 @@ def makeNodeType(m:Model, t:NodeType, file:str) -> Node:
     if isinstance(outline, str) and outline.startswith("#"):
       n["vis/titlebarColor"] = fade(outline, TITLEBAR_TINT)
   n["vis/label"] = LABEL
-  n.setAttr("note", note(f"A node type of {file}: shape {t.shape} (variant {t.variant}), {t.font} {t.size} point, "
-                         f"flags {t.flags}, colours {', '.join(c or '-' for c in t.colors)}"
-                         + (f', for "{t.extra}" files' if t.extra else "")
-                         + ("; an enclosure: a box that holds the nodes inside it" if box else "") + "."))
+  setNote(n, f"A node type of {file}: shape {t.shape} (variant {t.variant}), {t.font} {t.size} point, "
+             f"flags {t.flags}, colours {', '.join(c or '-' for c in t.colors)}"
+             + (f', for "{t.extra}" files' if t.extra else "")
+             + ("; an enclosure: a box that holds the nodes inside it" if box else "") + ".")
   return n
 
 def makeUntyped(m:Model, file:str) -> Node:
@@ -400,6 +425,11 @@ def markNode(node:Node, n:NetNode, net:Net) -> None:
     node["markKind"] = kind.name
   if n.derived:
     node["markDerived"] = True
+  else: # (its truth mark: see the module doc)
+    how = kind.name.lower() if kind is not None and kind.name else ASSERTED
+    for letter, key in (("T", MARK_TRUE), ("F", MARK_FALSE)):
+      if letter in (n.truth or ""):
+        node[key] = how
   if kind is None:
     return
   color, background = (kind.colors + ["", ""])[:2]
@@ -424,8 +454,9 @@ def buildModel(net:Net, modelPath:str) -> Built:
   m = Model(Path(modelPath).resolve().as_uri())
   m.setSuperModels([ONTOLOGY])
   b = Built(net, m, kernel=kernelTypes(m))
+  knode = knodeType(m)
   for t in net.nodeTypes:
-    b.nodeTypes[t.index] = makeNodeType(m, t, file)
+    b.nodeTypes[t.index] = makeNodeType(m, t, file, knode)
   for t in net.linkTypes:
     b.linkTypes[t.index] = makeLinkType(m, t, file, b.kernel)
   pictures = 0

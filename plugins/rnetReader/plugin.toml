@@ -1,4 +1,4 @@
 name = "Rep Plus Net Reader"
-version = "1.1"
-description = "A model and view of a Rep Plus net (a CNet or KNet .rnet file, Brian Gaines's): its node and link types, nodes, links and marks, drawn as CNet drew them, built on the kernel of Gaines's protologic so the reasoners draw KNet's inferences."
+version = "1.2"
+description = "A model and view of a Rep Plus net (a CNet or KNet .rnet file, Brian Gaines's): its node and link types, nodes, links and marks, drawn as CNet drew them, built on the kernel of Gaines's protologic so the reasoners draw KNet's inferences and propagate its truth marks."
 sn-version = "1.1"

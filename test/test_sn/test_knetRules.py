@@ -8,7 +8,9 @@ links -- exclusion and coexclusion (and its inheritance), negation and double
 negation, equivalence from a cycle of inclusions, inconsistency (local, with
 a warning), symmetry between types too, and isa as inclusion for types under
 knode -- and nothing from links that aren't kernel links (preferences,
-generic links).
+generic links). And Gaines's truth marks: a net's asserted ones, the menu
+items' (see the plugin's *hooks*), and the marks the reasoners propagate from
+them, as KNet does (*TestMarks*).
 
 If the environment variable REP_PLUS_DATA names the folder of Rep Plus 2's
 test data (Brian Gaines's), the reasoners must also infer every derived link
@@ -81,6 +83,47 @@ KERNEL = net(
   "19|20|7",  # z generic w: nor is this
   "G|0",
 )
+
+def _panel(i:int, mark:str) -> list[str]:
+  '''
+  The nodes of one of KNet's mark propagation panels (Gaines, section 4.2):
+  a, marked *mark* (hex: 81 true, 82 false, 83 both, asserted), and b to g
+  around it (see *_panelLinks()*), named with *i*.
+  '''
+  return [f"0|{mark if n == 'a' else 0}|0|0|30|20|{n}{i}|" for n in "abcdefg"]
+
+def _panelLinks(i:int) -> list[str]:
+  '''
+  The links of panel *i* (its nodes from 7*i): a coexcludes b, f excludes
+  a, a includes c, e includes a, a negates d, and g is equivalent to a.
+  '''
+  a, b, c, d, e, f, g = range(7 * i, 7 * i + 7)
+  return [f"{a}|{b}|3", f"{f}|{a}|2", f"{a}|{c}|0", f"{e}|{a}|0", f"{a}|{d}|4", f"{g}|{a}|1"]
+
+MARKS = net(
+  "|C|9|FFFFFF||32",
+  "T|1",
+  "2|0|Arial|9|1|0|000000|FFFFFF|000000|008A00|0|0|0||Concept",
+  "A|5",
+  "1|0|0|0|1|0|000000|000000|000000|000000|Includes",
+  "1|0|1|0|1|0|000000|000000|000000|000000|Equivalent",
+  "0|0|0|0|1|1|000000|000000|000000|000000|Excludes symmetric",
+  "0|0|0|0|1|2|000000|000000|000000|000000|Coexcludes symmetric",
+  "0|0|0|0|1|3|000000|000000|000000|000000|Negates symmetric",
+  "M|2", "693804|FFCD7D|Asserted", "000000|A6A6A6|Included",
+  "N|26|0|-1",
+  *_panel(0, "81"), *_panel(1, "82"), *_panel(2, "83"),
+  "0|0|0|0|30|20|s|",     # 21: s includes t, and excludes it: necessarily false
+  "0|0|0|0|30|20|t|",     # 22
+  "0|0|0|0|30|20|v|",     # 23: w includes v, and v coexcludes w: necessarily true
+  "0|0|0|0|30|20|w|",     # 24
+  "0|1E1|0|0|30|20|h|",   # 25: a derived mark (KNet's): not asserted
+  "L|22|0",
+  *_panelLinks(0), *_panelLinks(1), *_panelLinks(2),
+  "21|22|0 2", "24|23|0 3",
+  "G|0",
+)
+"Gaines's mark propagation figure (KNet's net of it: Logic Paper 2024/mark propagation.rnet), and necessary marks."
 
 class TestKernelKinds(unittest.TestCase):
 
@@ -165,6 +208,7 @@ class TestKernelInference(unittest.TestCase):
     self.assertEqual(back, {("p", "q", "Includes"), ("q", "p", "Includes"),                     # (a link's second type: back)
                             ("square circle", "round", "Includes"), ("round", "square circle", "Excludes symmetric")})
     self.assertIn("of them KNet's kernel links", b.report())
+    self.assertEqual([str(p.name) for p in b.nodeTypes[0].getParents()], ["knode"]) # (a KNet node: its marks' bars and menu)
 
   def test_inferences(self):
     '''
@@ -202,7 +246,7 @@ class TestKernelInference(unittest.TestCase):
     '''
     Between types too: the kernel's symmetric types are symmetric, and isa is
     inclusion for types under knode (dog isa animal isa knode) -- not
-    others' (cat isa pet), nor SN's own (node, top).
+    others' (cat isa pet), nor knode's own (animal isa knode), nor SN's (node, top).
     '''
     reader = self.reader
     m = Model((self.folder / "types.snm").as_uri())
@@ -225,7 +269,99 @@ class TestKernelInference(unittest.TestCase):
                      ("excludes", "plant", "dog")]:
           self.assertIn(fact, holds)
         self.assertNotIn(("includes", "cat", "pet"), holds)
-        self.assertFalse({h for h in holds if h[0] == "includes" and h[2] in ("node", "top")})
+        self.assertFalse({h for h in holds if h[0] == "includes" and h[2] in ("node", "top", "knode")})
+
+class TestMarks(unittest.TestCase):
+  '''
+  Gaines's truth marks (section 4.2): asserted ones, from a net's file or
+  the menu items (see *hooks*), and those the reasoners conclude -- as KNet
+  does (as its net of the paper's figure has them: see *MARKS*).
+  '''
+  @classmethod
+  def setUpClass(cls):
+    cls.rnet = importBundled("rnetReader", "rnet")
+    cls.reader = importBundled("rnetReader", "reader")
+    cls.hooks = importBundled("rnetReader", "hooks")
+
+  def setUp(self):
+    Model._initCache()
+    self.tmp = tempfile.TemporaryDirectory()
+    self.folder = Path(self.tmp.name).resolve()
+
+  def tearDown(self):
+    Model._initCache()
+    self.tmp.cleanup()
+
+  def build(self, name:str="marks"):
+    return self.reader.buildModel(self.rnet.parseText(MARKS, f"{name}.rnet"), str(self.folder / f"{name}.snm"))
+
+  def test_asserted(self):
+    'A net\'s asserted marks are the nodes\' truth marks; a derived one isn\'t (the reasoners conclude it again).'
+    b = self.build()
+    marks = {str(n.name): self.hooks.marks(n) for n in b.nodes.values() if self.hooks.marks(n)}
+    self.assertEqual(marks, {"a0": {"markTrue": "asserted"}, "a1": {"markFalse": "asserted"},
+                             "a2": {"markTrue": "asserted", "markFalse": "asserted"}})
+    h = b.nodes[25]
+    self.assertEqual((h["mark"], h["markDerived"]), ("T", True))
+
+  EXPECTED = {
+    "c0": {"markTrue": "included"}, "f0": {"markFalse": "excluded"}, "d0": {"markFalse": "excluded"},
+    "g0": {"markTrue": "included"},
+    "b1": {"markTrue": "coexcluded"}, "e1": {"markFalse": "irrelevant"}, "d1": {"markTrue": "coexcluded"},
+    "g1": {"markFalse": "irrelevant"},
+    "b2": {"markTrue": "coexcluded"}, "f2": {"markFalse": "excluded"}, "c2": {"markTrue": "included"},
+    "e2": {"markFalse": "irrelevant"}, "d2": {"markTrue": "coexcluded", "markFalse": "excluded"},
+    "g2": {"markTrue": "included", "markFalse": "irrelevant"},
+    "s": {"markFalse": "necessary"}, "v": {"markTrue": "necessary"}}
+  "What KNet marks (as its net of the figure has it), and how (one of the ways, where there are more)."
+
+  def test_propagated(self):
+    '''
+    Each installed engine marks the nodes KNet does, and no others -- true
+    by inclusion and coexclusion, false by exclusion and (backwards)
+    inclusion, both, and necessarily (an inconsistent node is false; its
+    dual true) -- each in one of the ways KNet says it got it.
+    '''
+    for engine in installedEngines():
+      with self.subTest(engine):
+        Model._initCache()
+        b = self.build(engine)
+        res = Reasoner.create(b.model, engine).run()
+        got:dict[str, dict[str, set]] = {}
+        for _, x, k, v in res.ruleAttrs:
+          if k in ("markTrue", "markFalse") and getattr(x, "model", None) is b.model and x.getLocalAttr(k) is None:
+            got.setdefault(str(x.name), {}).setdefault(k, set()).add(v)
+        self.assertEqual({n: sorted(ms) for n, ms in got.items()}, {n: sorted(ms) for n, ms in self.EXPECTED.items()})
+        for n, ms in self.EXPECTED.items():
+          for k, how in ms.items():
+            self.assertIn(how, got[n][k], f"{n} {k}")
+
+  def test_menu(self):
+    '''
+    The menu items (see *hooks*) assert a mark, both, and take back the
+    asserted ones; and a node's marks are its bars: true's beside it, false's
+    over it, in the colour of how it got it.
+    '''
+    from sn.hooks import HookContext, call, reference
+    hooks = self.hooks
+    b = self.build()
+    node = b.nodes[22] # (t)
+    self.assertEqual(node["vis/sideBars"], f"$({hooks.__name__}:markBars)") # (from knode: its bars, by the hook)
+    self.assertEqual(hooks.markBars(node, HookContext()), "")
+    ctx = HookContext()
+    self.assertTrue(hooks._canMark(node, ctx))
+    self.assertFalse(hooks._hasAsserted(node, ctx))
+    call(reference(hooks.markTrue), node, ctx)
+    self.assertEqual(hooks.marks(node), {"markTrue": "asserted"})
+    self.assertEqual(hooks.markBars(node, ctx), "right:#693804")
+    call(reference(hooks.markFalse), node, ctx)
+    self.assertEqual(hooks.marks(node), {"markTrue": "asserted", "markFalse": "asserted"})
+    self.assertTrue(hooks._hasAsserted(node, ctx))
+    call(reference(hooks.clearMarks), node, ctx)
+    self.assertEqual(hooks.marks(node), {})
+    node["markFalse"] = "excluded"
+    self.assertEqual(hooks.markBars(node, ctx), "top:#00a000")
+    self.assertFalse(hooks._canMark(b.nodeTypes[0], ctx)) # (a type: its instances are marked)
 
 @unittest.skipUnless(os.environ.get("REP_PLUS_DATA"), "set REP_PLUS_DATA to Rep Plus 2's test data folder to run these")
 class TestRepPlusData(unittest.TestCase):
@@ -235,11 +371,16 @@ class TestRepPlusData(unittest.TestCase):
   those (that's a kernel link: not a preference's or a generic link's).
   "taxonomy merge" isn't here: some of its derived links join separate nodes
   that only share a label (its query panels), which says nothing about the rules.
+  And the reasoners mark the nodes KNet marked, from the asserted marks.
   '''
   NETS = ["Nets-CNet-Dev/knets/paper/paper1/coexclusion squares.rnet",
           "Nets-CNet-Dev/knets/paper/paper1/inclusion patterns.rnet",
           "Nets-CNet-Dev/knets/paper/paper1/dynamics.rnet",
           "Nets-CNet-Dev/knets/paper/paper1/states of affairs/platodivision.rnet"]
+
+  MARK_NETS = ["Logic Paper 2024/mark propagation.rnet", "Nets-CNet-Dev/CNet tests/proper part 1.rnet",
+               "Nets-CNet-Dev/knets/paper/Inference Process.rnet"]
+  "Nets with marks KNet propagated (and, in proper part 1, a necessary one)."
 
   @classmethod
   def setUpClass(cls):
@@ -254,6 +395,24 @@ class TestRepPlusData(unittest.TestCase):
   def tearDown(self):
     Model._initCache()
     self.tmp.cleanup()
+
+  def test_derivedMarks(self):
+    '''
+    From the nets' asserted marks, the reasoners mark true and false the
+    nodes KNet did (its derived marks), and no others.
+    '''
+    for engine in installedEngines():
+      for path in self.MARK_NETS:
+        with self.subTest(engine=engine, net=path):
+          Model._initCache()
+          n = self.rnet.parse(os.path.join(os.environ["REP_PLUS_DATA"], path))
+          b = self.reader.buildModel(n, str(self.folder / f"{engine}-{os.path.basename(path)}.snm"))
+          res = Reasoner.create(b.model, engine).run()
+          got = {(id(x), k) for _, x, k, _ in res.ruleAttrs if k in ("markTrue", "markFalse") and x.getLocalAttr(k) is None}
+          expected = {(id(b.nodes[nn.index]), "markTrue" if c == "T" else "markFalse")
+                      for nn in n.nodes if nn.marks and nn.derived and nn.index in b.nodes for c in (nn.truth or "")}
+          self.assertTrue(expected)
+          self.assertEqual(got, expected)
 
   def test_derivedLinks(self):
     for engine in installedEngines():

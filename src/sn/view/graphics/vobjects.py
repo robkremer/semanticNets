@@ -76,7 +76,7 @@ from sn.model import names
 from sn.model.constraints import WHERE, CONSTRAINTS, CONSTRAINTS_NOTE, splitWhere, mergeConstraints, ConstraintError
 from util.attribute import Attribute, VAR
 from sn.view.graphics.decorators import WrappingText, Selected, Highlight, ContextFrame, MarkerContainer, NOMINAL_ASPECT,\
-  Decorator, ShadowDecorator, DisabledSlash
+  Decorator, ShadowDecorator, DisabledSlash, SideBars
 
 if TYPE_CHECKING:
   from sn.view.graphics.sngView import SNGView
@@ -97,6 +97,7 @@ VATTRIBUTES:dict[str,Any] = {
                     'vis/textColor'      : 'black', 
                     'vis/textModifiesBB' : False,
                     'vis/titlebarColor'  : '', # (a context window's title bar; "": a tint of its border colour)
+                    'vis/sideBars'       : '', # (a node's: see decorators.SideBars)
                     }
 VREL_ATTRIBUTES:dict[str,Any] = VATTRIBUTES | \
                   { 
@@ -1969,6 +1970,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         ret["disabled"] = DisabledSlash
     except Exception: # (eg: half-built)
       pass
+    if isinstance(mo, Node) and notIsIsa: # (drawn only while its "vis/sideBars" says there are any)
+      ret["sideBars"] = SideBars
     # shadow types only. The decorator is also drawn only while "gui/shadowTypes" is on (see ShadowDecorator.draw())
     if notIsIsa and self.modelObject is not None and self.modelObject.isType() and \
         snPrefs.get("gui/shadowTypes", storeDefault=True, storeType=bool): # (its note: see sn.PREFS)

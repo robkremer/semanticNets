@@ -50,10 +50,32 @@ tools/makeBaseRules.py):
 - symmetric (types too): A excludes B => B excludes A, and likewise for
   coexcludes and equivalent (and so negates), whether A and B are individuals
   or types: the base rules' symmetric only concludes it toward an individual.
-- isa: ^A isa ^B (SN types), ^B isa knode => ^A includes ^B: every isa link
-  is an inclusion (not the other way round), so the kernel's inferences run
-  over ordinary type hierarchies too -- those under *KNODE*, an SN subtype of
-  node (see *isaRule()*).
+- isa: ^A isa ^B (SN types), ^B isa knode (but isn't it) => ^A includes ^B:
+  every isa link is an inclusion (not the other way round), so the kernel's
+  inferences run over ordinary type hierarchies too -- those under *KNODE*,
+  an SN subtype of node (see *isaRule()*).
+
+Truth marks (the paper's section 4.2): a node marked true (T) or false (F)
+-- its *MARK_TRUE* or *MARK_FALSE* attribute, whose value says how it got it
+(see rnetReader.hooks): "asserted", or one of these rules' (Rep Plus's mark
+kinds, which say how):
+
+- true by inclusion: A is true, A includes B => B is true ("included").
+- false by exclusion: A is true, A excludes B => B is false ("excluded").
+- false by inclusion: A is false, B includes A => B is false ("irrelevant",
+  Rep Plus calls it).
+- true by coexclusion: A is false, A coexcludes B => B is true ("coexcluded").
+- false by inconsistency: A excludes A => A is false ("necessary": an
+  inconsistent node can only be empty) -- and its dual, true by coexclusion
+  with itself: A coexcludes A => A is true ("necessary": everything is A).
+
+(Equivalence and negation follow: they're includes, and excludes and
+coexcludes.) A node can be both (Belnap's "both": inconsistent), as asserted
+or as concluded. What a node has asserted stands: a rule's conclusion of the
+same mark only says so.
+
+*KNODE*'s nodes show their marks as bars beside them (vis/sideBars: see
+rnetReader.hooks.markBars()), and have menu items to assert and clear them.
 
 And one constraint, a warning: an inconsistent node (one that excludes
 itself: see self-inconsistency) -- Rep Plus marks it "E". Inconsistency stays
@@ -79,6 +101,12 @@ INCLUDES, EQUIVALENT, EXCLUDES, COEXCLUDES, NEGATES, INCONSISTENT = \
 KNODE = "knode"
 '''The SN type of the types whose isa links are inclusions (see *isaRule()*):
 eg, dog isa animal isa knode gives dog includes animal.'''
+
+MARK_TRUE, MARK_FALSE = "markTrue", "markFalse"
+"The attributes that mark a node true or false (see *rnetReader.hooks*, which must agree)."
+
+HOOKS = "snplugins.rnetReader.hooks"
+"The module of the hooks *KNODE* names (see *rnetReader.hooks*): the plugin's, once it's loaded."
 
 INCONSISTENT_NODE = "inconsistent node"
 "The constraint (and its violations' code) that reports an inconsistent node."
@@ -140,8 +168,11 @@ def makeKnetRules(path:str) -> None:
                  terminator="| arrow", color="#d00000")
   def rel(typ, src, dst):
     return Relation(m, [typ], src, dst, individual=True)
-  def var(name):
-    return Node(m, [m.NODE], individual=True, name=name)
+  def var(name, constraints=None):
+    ret = Node(m, [m.NODE], individual=True, name=name)
+    if constraints:
+      ret["constraints"] = constraints
+    return ret
   def rule(name, antecedent, consequent, note):
     r = Node(m, [m.RULE], individual=True, name=name)
     r["note"] = note
@@ -194,6 +225,33 @@ def makeKnetRules(path:str) -> None:
          "rules' symmetric only concludes it toward an individual.")
   isaRule(m, inc, rule)
 
+  # ---- marks ----------------------------------------------------------------------
+  # (Each concludes the mark on its own copy of the variable: a consequent's
+  # variable's constraints are what the rule concludes of it.)
+  # (In this order: where rules conclude different values of a mark, a node gets the first's -- see
+  # sn.model.reasoner.materialize() -- so an inconsistent node is false necessarily, and the others' as
+  # KNet has them: eg, true by inclusion rather than by coexclusion.)
+  for name, typ, concluded, note in (
+      ("false by inconsistency", exc, MARK_FALSE,
+       "a excludes a => a is false, necessarily: an inconsistent node can only be empty."),
+      ("true by coexclusion with itself", coe, MARK_TRUE,
+       "a coexcludes a => a is true, necessarily: everything is a (the dual of false by inconsistency).")):
+    a = var("!a")
+    rule(name, [rel(typ, a, a)], [var("!a", f"{concluded}: necessary")], note)
+  for name, mark, typ, forward, concluded, how, note in (
+      ("true by inclusion", MARK_TRUE, inc, True, MARK_TRUE, "included",
+       "a is true, a includes b => b is true: what something true includes is true."),
+      ("false by exclusion", MARK_TRUE, exc, True, MARK_FALSE, "excluded",
+       "a is true, a excludes b => b is false."),
+      ("false by inclusion", MARK_FALSE, inc, False, MARK_FALSE, "irrelevant",
+       "a is false, b includes a => b is false: whatever includes something false is false (Rep Plus calls the "
+       "mark \"irrelevant\")."),
+      ("true by coexclusion", MARK_FALSE, coe, True, MARK_TRUE, "coexcluded",
+       "a is false, a coexcludes b => b is true.")):
+    a, b = var("!a", mark), var("!b")
+    rule(name, [rel(typ, a, b) if forward else rel(typ, b, a), rel(m.DISTINCT, a, b)], # (not from itself: a node
+         [var("!b", f"{concluded}: {how}")], note)                                     # includes itself, too)
+
   # ---- violations ---------------------------------------------------------------
   a = var("!a")
   constraint(INCONSISTENT_NODE, [rel(exc, a, a)], "!a",
@@ -212,8 +270,9 @@ def typeNote(text:str):
 
 def isaRule(m, inc, rule) -> None:
   '''
-  Add *KNODE*, and the rule that an isa link between SN types under it is an
-  inclusion: ^a isa ^b, ^b isa knode => ^a includes ^b. Type variables (^a),
+  Add *KNODE* -- with its marks' bars and menu items (see *rnetReader.hooks*)
+  -- and the rule that an isa link between SN types under it is an
+  inclusion: ^a isa ^b, ^b isa knode (and isn't it) => ^a includes ^b. Type variables (^a),
   so it's about type hierarchies -- not an individual and its types (the
   reader's models' individuals are of drawing types, eg: "Concept", which
   aren't concepts of the net). And only those under *KNODE*, not every type:
@@ -223,13 +282,19 @@ def isaRule(m, inc, rule) -> None:
   '''
   from sn.model.model import Node, Relation, IsaIndividual
   knode = Node(m, [m.NODE], name=KNODE)
-  knode.setAttr("note", typeNote("The SN type of the types whose isa links are inclusions: eg, dog isa animal isa knode gives dog "
-                   "includes animal (so a type that excludes animal excludes dog)."))
+  knode.setAttr("note", typeNote("A node of a KNet net: its instances are (eg: the reader's nodes), and so are the SN types under "
+                   "it, whose isa links are inclusions: eg, dog isa animal isa knode gives dog includes animal (so a type "
+                   "that excludes animal excludes dog). They show their truth marks as bars (markTrue: beside them; "
+                   "markFalse: over them), and their menus mark them."))
+  knode["vis/sideBars"] = f"$({HOOKS}:markBars)"
+  for item, fn in (("Mark/True", "markTrue"), ("Mark/False", "markFalse"), ("Mark/Clear", "clearMarks")):
+    knode[f".menu/{item}"] = f"{HOOKS}:{fn}"
   a, b = Node(m, [m.NODE], name="^a"), Node(m, [m.NODE], name="^b")
-  rule("isa", [IsaIndividual(m, a, b), IsaIndividual(m, b, knode), Relation(m, [m.DISTINCT], a, b, individual=True)],
+  rule("isa", [IsaIndividual(m, a, b), IsaIndividual(m, b, knode), Relation(m, [m.DISTINCT], a, b, individual=True),
+               Relation(m, [m.DISTINCT], b, knode, individual=True)],
        [Relation(m, [inc], a, b, individual=True)],
-       "^a isa ^b => ^a includes ^b, for types under knode: every isa link is an inclusion (but not every inclusion "
-       "is an isa link).")
+       "^a isa ^b => ^a includes ^b, for types under knode (not knode itself): every isa link is an inclusion (but "
+       "not every inclusion is an isa link).")
 
 def install(folder:str) -> None:
   '''
