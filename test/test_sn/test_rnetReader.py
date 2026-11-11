@@ -42,9 +42,9 @@ V9 = net(
   "M|2", "693804|FFCD7D|Asserted", "000000|A6A6A6|Included",
   "N|7|0|-1",
   "0|81|10|20|19|19|A|",
-  "0|1A1|50|20|19|19|B|",
+  "0|1E1|50|20|19|19|B|",
   "0|0|90|20|19|19||",
-  "1|0|10|60|80|14|Two�lines�|",
+  "1|C1|10|60|80|14|Two�lines�|",
   "G7|0|130|20|40|40|drawing|",
   "R|0|0|10|10",
   "T|9|37|text in the drawing",
@@ -176,10 +176,10 @@ class TestParse(unittest.TestCase):
                      [("node", "A"), ("node", "B"), ("node", ""), ("node", "Two\nlines"), ("drawing", "drawing"),
                       ("node", "C"), ("node", "by the program")])
     a, b, anon, note, drawing, c, untyped = n.nodes
-    self.assertEqual((a.truth, a.marked, a.derived, a.markKind), ("T", True, False, 0))
-    self.assertEqual((b.truth, b.marked, b.derived, b.markKind), ("T", True, True, 1))
+    self.assertEqual((a.truth, a.symbols, a.filled, a.outlined, a.derived, a.markKind), ("T", 1, True, False, False, 0)) # (asserted)
+    self.assertEqual((b.truth, b.symbols, b.filled, b.outlined, b.derived, b.markKind), ("T", 33, True, True, True, 1)) # (inferred: a ring too)
     self.assertEqual((c.truth, c.markKind), ("F", 3))
-    self.assertEqual((anon.truth, anon.marked), ("", False))
+    self.assertEqual((anon.truth, anon.symbols, anon.filled), ("", 0, False))
     self.assertEqual((note.type, note.x, note.y, note.w, note.h), (1, 10, 60, 80, 14))
     self.assertEqual((drawing.type, untyped.type), (7, -1))
     self.assertEqual([(l.source, l.destination, l.types, l.extra) for l in n.links],
@@ -278,9 +278,12 @@ class TestBuild(unittest.TestCase):
     self.assertEqual(sorted(b.nodes), [0, 1, 2, 3, 5, 6])
     a, nb, anon, note, c = (b.nodes[i] for i in (0, 1, 2, 3, 5))
     self.assertEqual((a.name, anon.name, note.name), ("A", "", "Two\nlines"))
-    self.assertEqual((a["mark"], a["markKind"], a["vis/borderColor"], a["vis/borderWidth"]), ("T", "Asserted", "#693804", 3))
-    self.assertEqual((nb["mark"], nb["markKind"], nb["markDerived"], nb["marks"]), ("T", "Included", True, "1A1"))
-    self.assertEqual(c["mark"], "F") # (its kind isn't there)
+    self.assertEqual((a["mark"], a["markKind"], a["vis/fillColor"], a["vis/borderColor"]), ("T", "Asserted", "#ffcd7d", "#008a00")) # (filled; its type's outline)
+    self.assertIsNone(a.get("markDerived", None))
+    self.assertEqual((nb["mark"], nb["markKind"], nb["markDerived"], nb["marks"]), ("T", "Included", True, "1E1"))
+    self.assertEqual((nb["vis/fillColor"], nb["vis/borderColor"]), ("#a6a6a6", "#000000")) # (filled, outlined in its kind's colours)
+    self.assertEqual((note["vis/borderColor"], note["vis/borderWidth"]), ("#693804", self.reader.MARK_WIDTH)) # (a title has no outline of its own)
+    self.assertEqual((c["mark"], c["vis/fillColor"]), ("F", "#ffffff")) # (its kind isn't there: its type's fill)
     self.assertIsNone(anon.get("mark", None))
     self.assertIn(b.nodeTypes[0], a.getParents())
     rels = [(r.src.name, r.dst.name, r.getParents()[0].name) for r, _ in b.relations]
@@ -349,7 +352,7 @@ class TestBuild(unittest.TestCase):
     self.assertFalse(found["size"].quotesContents())
     m = Model.getDB(url)
     marked = sorted((str(o.name), o["mark"]) for o in m.values() if isinstance(o, Node) and o.model is m and o.get("mark", None))
-    self.assertEqual(marked, [("A", "T"), ("B", "T"), ("C", "F")])
+    self.assertEqual(marked, [("A", "T"), ("B", "T"), ("C", "F"), ("Two\nlines", "T")])
     self.assertEqual(sum(1 for o in m.values() if isinstance(o, Relation) and o.model is m and o.isIndividual()
                          and not type(o).__name__ == "IsaIndividual"), 5)
 

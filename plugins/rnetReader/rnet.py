@@ -198,7 +198,8 @@ class MarkKind:
   index:int
   name:str
   colors:list[str]
-  "Two colours, as \"#rrggbb\": the mark's, and a lighter one."
+  '''Two colours, as "#rrggbb": the mark's -- its symbols' and its outline's
+  (see *NetNode.marks*) -- and its background, a lighter one, the fill's.'''
 
 @dataclass
 class NetNode:
@@ -213,7 +214,7 @@ class NetNode:
   flags:int
   "The bits above the type's (its type field's, from 1024 up)."
   marks:int
-  "Its marks, as a number (0: none): see *truth*, *marked*, *derived* and *markKind*."
+  "Its marks, as a number (0: none): see *truth*, *symbols*, *outlined*, *filled*, *derived* and *markKind*."
   x:int
   y:int
   w:int
@@ -224,17 +225,32 @@ class NetNode:
 
   @property
   def truth(self) -> str:
-    "Its mark's truth value: \"T\" (true), \"F\" (false), \"TF\" (both) or \"\" (neither: not marked)."
+    '''Its mark's truth value: "T" (true: a vertical bar), "F" (false: a
+    horizontal bar), "TF" (both) or "" (neither).'''
     return ("", "T", "F", "TF")[self.marks & 3]
 
   @property
-  def marked(self) -> bool:
-    "Whether it's marked (with *truth*)."
+  def symbols(self) -> int:
+    '''The symbols Rep Plus draws on it, in its mark kind's colour (its
+    Node.PaintMark): 1, a vertical bar (true); 2, a horizontal bar (false); 4
+    and 8, the two diagonals; 16, a dot in the middle; 32, a ring round it.'''
+    return self.marks & 0x3F
+
+  @property
+  def outlined(self) -> bool:
+    "Whether its outline is drawn in its mark kind's colour."
+    return bool(self.marks & 0x40)
+
+  @property
+  def filled(self) -> bool:
+    "Whether it's filled with its mark kind's background colour."
     return bool(self.marks & 0x80)
 
   @property
   def derived(self) -> bool:
-    "Whether its mark was derived (propagated), rather than asserted."
+    '''Whether its mark was inferred, rather than asserted: it has the ring
+    (*symbols* 32), as KNet's inferences (0xE0: ring, outline and fill) and
+    CNet's (0xA0) have, and its assertions (0x80) don't.'''
     return bool(self.marks & 0x20)
 
   @property
@@ -294,7 +310,7 @@ class Net:
     for n in self.nodes:
       if n.kind == "node" and not -1 <= n.type < len(self.nodeTypes): # (-1: no type -- eg: text the program wrote)
         self.problems.append(f"node {n.index} ({n.label!r}) has type {n.type}, which isn't there")
-      if n.marked and n.markKind >= len(self.markKinds):
+      if n.marks & 0xFF and n.markKind >= len(self.markKinds): # (drawn in its kind's colours)
         self.problems.append(f"node {n.index} ({n.label!r}) has mark kind {n.markKind}, which isn't there")
     for l in self.links:
       for end in (l.source, l.destination):
