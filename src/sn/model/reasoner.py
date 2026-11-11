@@ -45,6 +45,14 @@ A reasoner engine subclasses :py:class:`Reasoner` (see
   ``def_marks(C,D,TK,FK,V)``  their truth attributes: true's and false's keys,
                               and the value concluded
   ``def_mixed(C,D)``          one of the links' other ends has both (locally)
+  ``def_world(C,D,NV,DV)``    C's links are explored, in worlds (see
+                              *DEFINING*): NV is the value of the marks every
+                              world has, DV the value of those every
+                              preferred world has
+  ``def_prefer(C,D,P)``       ... and their ends are preferred by P (a
+                              relation type: A -P-> B, A yields to B)
+  ``def_rank(C,D,K)``         ... and C's preferences come Kth from last
+                              (the highest K first: see *DEFAULT_ORDER*)
   ==========================  ================================================
 
 - :py:class:`Inferences` and :py:class:`Violation` are what every engine
@@ -143,6 +151,11 @@ relation its links require); and the type can also have:
     it hasn't): taken to be reflexive -- everything is ordered before itself.
   - ``trueMark``, ``falseMark``, ``markValue``: truth attributes' keys, and
     the value to conclude (see below).
+  - ``necessaryValue``, ``defaultValue``, ``prefer``: with the truth
+    attributes, explore the node's cases (see below): the values to conclude
+    for what every world has, and for what every preferred world has
+    (*necessaryValue*, if it hasn't); and the name of the relation type that
+    says which of its links' other ends are preferred.
 
 A node C with (asserted) *meet* links to A1..An is their meet: whatever has P
 to each Ai (Pi, each link's own) has Q to C -- eg, with P and Q includes,
@@ -171,9 +184,34 @@ other; and so (Belnap's four values: a node may have both):
 
 (That a link's failing makes a meet false, and its holding a join true, is
 just what the links themselves are: eg: a conjunct includes is an includes.)
+
+With *necessaryValue* too, a true join none of whose links hold (and a false
+meet none of whose links fail) is explored, as KNet's Explore does: each of
+its links that doesn't fail (doesn't hold) is a case -- a world in which it
+holds (fails) -- and so is each case of the nodes that makes true (false),
+and so on; a world in which a node gets both marks that didn't have them
+both already is incoherent, and isn't one. What every world has, the node
+has: with *necessaryValue* (eg: a join of A and B, each of which includes C,
+makes C true). And with *prefer*, the links' ends are preferred (Gaines's
+preferences, KNet's normal defaults): in each world, a link whose end yields
+to (has *prefer* to) one that doesn't fail fails itself, and (dually) one
+that yields to one that doesn't hold, in an explored meet, holds -- and the
+preferred worlds are those whose preferred ends fail (hold) least, node by
+node, in the order of *DEFAULT_ORDER*, the first first. What every preferred
+world has, the node has: with *defaultValue*. (What every world has isn't
+the default too: it's necessary.) So far just the clingo engine explores.
+
 The engines conclude these as the tagged relation type's: *fired* and
 *rule_attr* with it as the "rule". See *Reasoner._definingFacts()* for the
 facts they get.
+'''
+
+DEFAULT_ORDER = "defaultOrder"
+'''
+The attribute of a defined node (see *DEFINING*) that says when its
+preferences come: those whose value is less first (the value is a number:
+none is 0), and otherwise in the order the nodes are in the models -- as KNet
+takes them in the order they're in the net (the user can sort them).
 '''
 
 def parseCardinality(text:Any) -> tuple[int, int|None]:
@@ -1818,8 +1856,8 @@ class Reasoner(ABC):
     '''
     :param objects: The objects the facts are about (see *_facts()*).
     :returns: The facts about the nodes their links define (see *DEFINING*):
-      def_part/6, def_last/5, def_marks/5 and def_mixed/2 (see the module
-      doc). A node's defining links are its asserted individual relations
+      def_part/6, def_last/5, def_marks/5, def_mixed/2, def_world/4,
+      def_prefer/3 and def_rank/3 (see the module doc). A node's defining links are its asserted individual relations
       whose type is (an SN subtype of) one tagged *meet* (its own) or *join*
       (those to it), numbered in the order they're in the models. A tag
       naming no relation type among *objects* is left out.
@@ -1858,6 +1896,7 @@ class Reasoner(ABC):
           groups.setdefault((id(defined), key), (defined, []))[1].append((other, p, tag))
           break
     out:list[Fact] = []
+    preferring:list[tuple[GraphObject, str, Relation]] = []
     for (_, key), (defined, parts) in groups.items():
       tag = parts[0][2]
       order = types.get(str(tag.getLocal("order", "")), parts[0][1])
@@ -1869,6 +1908,23 @@ class Reasoner(ABC):
         out.append(("def_marks", (defined, Sym(key), str(true), str(false), str(tag.getLocal("markValue", "")) or "true")))
         if any(dict.__contains__(other, str(true)) and dict.__contains__(other, str(false)) for other, _, _ in parts):
           out.append(("def_mixed", (defined, Sym(key))))
+        necessary = tag.getLocal("necessaryValue", None)
+        if necessary:
+          out.append(("def_world", (defined, Sym(key), str(necessary), str(tag.getLocal("defaultValue", "")) or str(necessary))))
+          prefer = types.get(str(tag.getLocal("prefer", "")))
+          if prefer is not None:
+            preferring.append((defined, key, prefer))
+    place = {id(o): i for i, o in enumerate(objects)}
+    def when(x:tuple[GraphObject, str, Relation]) -> tuple[float, int]:
+      try:
+        first = float(x[0].get(DEFAULT_ORDER, 0) or 0)
+      except (TypeError, ValueError):
+        first = 0.0
+      return (first, place.get(id(x[0]), len(place)))
+    preferring.sort(key=when)
+    for k, (defined, key, prefer) in enumerate(preferring):
+      out.append(("def_prefer", (defined, Sym(key), prefer)))
+      out.append(("def_rank", (defined, Sym(key), len(preferring) - k)))
     return out
 
   def _relationFacts(self, rel:Relation, ref) -> list[Fact]:

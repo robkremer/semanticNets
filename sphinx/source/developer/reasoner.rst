@@ -281,6 +281,30 @@ one of whose links' ends has both marks locally (``def_mixed``, a fact)
 blocks "all but one" -- negation of a fact, so the program stays
 stratified. Each engine's rule base has the same rules.
 
+Exploring (``necessaryValue``: ``def_world(C, D, NV, DV)``) needs choice,
+so it's clingo's alone, in three solves of the same ground program
+(:py:meth:`~sn.model.clingoReasoner.ClingoReasoner._explore`), each adding
+a ``#program`` part of ``clingoReasoner.lp``:
+
+1. ``marks``, with the rest: ``world_mark0`` (the marks before exploring)
+   and ``world_open0`` (the open connectives: a true join with no link
+   holding, a false meet with none failing). If there are none, that's all.
+2. ``explored``, solved cautiously (the intersection of the answer sets):
+   one case (``world_pick``) for each open connective still open
+   (``world_need``), among its links that didn't fail; a world that gives a
+   node both marks it hadn't both of is dropped. The marks every world
+   adds are the necessary ones.
+3. ``preferred``, if there are ``def_prefer`` facts: as (2), plus a default
+   rule (A's link fails while B's might hold, for each ``world_pref`` --
+   the prefer relation's ``holds`` among one connective's ends) and a weak
+   constraint per connective, at the priority ``def_rank`` gives it (from
+   *DEFAULT_ORDER*, then the model's order), counting the preferred ends
+   that fail; solved for the optimal answer sets, cautiously. What they
+   add beyond the necessary marks are the defaults.
+
+The new marks are ``rule_attr`` conclusions of the first ``def_world``'s
+tagged type, as the other connectives' are.
+
 Constraints
 -----------
 

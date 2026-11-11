@@ -14,7 +14,6 @@ Submodules
    :maxdepth: 4
 
    snplugins.rnetReader.hooks
-   snplugins.rnetReader.hooks
    snplugins.rnetReader.rnet
    snplugins.rnetReader.reader
    snplugins.rnetReader.view

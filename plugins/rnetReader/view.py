@@ -108,7 +108,8 @@ def showNet(view:SNGView, built:Built, scale:float=SCALE, fit:bool=False) -> Non
   finally:
     view.localLayout = localLayout
 
-def convert(app:Application, rnetPath:str, modelPath:str, viewPath:str, parent:tk.Misc|None=None) -> tuple[Built, SNGView]|None:
+def convert(app:Application, rnetPath:str, modelPath:str, viewPath:str, parent:tk.Misc|None=None,
+            sameLabels:bool=True) -> tuple[Built, SNGView]|None:
   '''
   Make the model and view of the net *rnetPath*, save them, and open the
   view. If the model or view are there already, it asks first, and replaces
@@ -119,6 +120,8 @@ def convert(app:Application, rnetPath:str, modelPath:str, viewPath:str, parent:t
   :param modelPath: The model's file (".snm").
   :param viewPath: The view's file (".snv").
   :param parent: The window any messages are about (eg: the dialog), if any.
+  :param sameLabels: Whether nodes with the same label are the same node, as
+    KNet takes them (see *reader.addSameLabels()*).
   :returns: What was made, and the view, if it was.
   '''
   where:dict[str, Any] = {"parent": parent} if parent is not None else {}
@@ -148,7 +151,7 @@ def convert(app:Application, rnetPath:str, modelPath:str, viewPath:str, parent:t
     return None
   for p in existing:
     os.remove(p)
-  built = buildModel(net, modelPath)
+  built = buildModel(net, modelPath, sameLabels=sameLabels)
   built.model.save()
   view = SNGView(fixURL(viewPath, None, replaceExt=None, mode="w")[0], model=built.model, mode="w")
   window = app.openWindow(view)
@@ -167,7 +170,9 @@ class ReaderDialog(tk.Toplevel):
   The front end: the net file to read, and the model and view files to make
   of it (each with "Choose..."), which follow the net file (see
   *defaultPaths()*) -- the view following the model -- until they're changed
-  by hand; and "Go" (see *convert()*), which, when it's done, closes it.
+  by hand; whether nodes with the same label are one node (as KNet takes
+  them: on at first); and "Go" (see *convert()*), which, when it's done,
+  closes it.
   '''
   def __init__(self, app:Application, rnetPath:str|None=None, folder:str|None=None, outputFolder:str|None=None,
                onChosen:Callable[[str], None]|None=None, onGo:Callable[[str, str, str], None]|None=None,
@@ -202,8 +207,11 @@ class ReaderDialog(tk.Toplevel):
       self.vars[key].trace_add("write", lambda *_a, key=key: self.changed(key))
     ttk.Label(frame, text="A Rep Plus net (CNet, KNet): its node and link types, nodes, links, marks and groups.",
               foreground="gray40", wraplength=520).grid(row=3, column=1, columnspan=2, sticky=tk.W, padx=6)
+    self.sameLabels = tk.BooleanVar(value=True)
+    ttk.Checkbutton(frame, text="Nodes with the same label are one node (as KNet takes them: not for a figure of "
+                    "several copies of a net)", variable=self.sameLabels).grid(row=4, column=1, columnspan=2, sticky=tk.W, **pad)
     bottom = ttk.Frame(frame)
-    bottom.grid(row=4, column=0, columnspan=3, sticky=tk.EW, pady=(10, 0))
+    bottom.grid(row=5, column=0, columnspan=3, sticky=tk.EW, pady=(10, 0))
     self.goButton = ttk.Button(bottom, text="Go", command=self.go, default="active")
     self.goButton.pack(side=tk.RIGHT, padx=6)
     ttk.Button(bottom, text="Cancel", command=self.cancel).pack(side=tk.RIGHT, padx=6)
@@ -291,7 +299,7 @@ class ReaderDialog(tk.Toplevel):
     self.configure(cursor="watch")
     self.update_idletasks()
     try:
-      done = convert(self.app, v["rnet"], v["model"], v["view"], parent=self)
+      done = convert(self.app, v["rnet"], v["model"], v["view"], parent=self, sameLabels=self.sameLabels.get())
     finally:
       if self.winfo_exists():
         self.configure(cursor="")

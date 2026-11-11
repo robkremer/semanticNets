@@ -318,6 +318,82 @@ class ReasonerSpec(_SpecBase):
 class TestClingo(ReasonerSpec, unittest.TestCase):
   ENGINE = ClingoReasoner
 
+  def _connectives(self, name):
+    '''
+    :returns: A fresh model with a meet type (*part*: links from the node to
+      its parts) and a join type (*alt*: from its parts to the node), with
+      truth attributes t and f, explored (see sn.model.reasoner.DEFINING:
+      necessary "nec", default "dflt"), preferences by *pref*; and *mark*,
+      which makes nodes of the SN type person, and gives them t or f.
+    '''
+    m, person = self._fresh(name)
+    le = Relation(m, [m.RELATION], name="le")
+    pref = Relation(m, [m.RELATION], name="pref")
+    pref["transitive"] = True
+    part = Relation(m, [le], name="part"); part["meet"] = "le"
+    alt = Relation(m, [le], name="alt"); alt["join"] = "le"
+    for t in (part, alt):
+      t["trueMark"], t["falseMark"], t["markValue"] = "t", "f", "def"
+      t["necessaryValue"], t["defaultValue"], t["prefer"] = "nec", "dflt", "pref"
+    nodes = {}
+    def node(name, mark=None):
+      if name not in nodes:
+        nodes[name] = Node(m, [person], individual=True, name=name)
+      if mark:
+        nodes[name][mark] = "yes"
+      return nodes[name]
+    def link(t, s_, d_):
+      Relation(m, [{"part": part, "alt": alt, "pref": pref}[t]], node(s_), node(d_), individual=True)
+    return m, node, link
+
+  def _marks(self, m, nodes) -> dict[str, dict[str, str]]:
+    '''
+    :returns: The marks (t and f) the engine concludes for *nodes*, by name, with their values.
+    '''
+    ret:dict[str, dict[str, str]] = {}
+    for _, x, k, v in self.ENGINE(m).run().ruleAttrs:
+      if k in ("t", "f") and x in nodes:
+        ret.setdefault(str(x.name), {})[k] = v
+    return ret
+
+  def test0895exploredDefinitions(self):
+    '''
+    With *necessaryValue* (see sn.model.reasoner.DEFINING), a true join none
+    of whose links hold is explored: in each world one of them holds -- and
+    what every world has, its node has. Here d is a or b, and c (false) is a
+    and z, and c2 (false) is b and z: either way z is false. And with
+    preferences, what every preferred world has: a yields to b, so b is true
+    and a false, by default.
+    '''
+    m, node, link = self._connectives("explored")
+    node("d", "t"); node("c", "f"); node("c2", "f")
+    for t, s_, d_ in (("alt", "a", "d"), ("alt", "b", "d"), ("part", "c", "a"), ("part", "c", "z"),
+                      ("part", "c2", "b"), ("part", "c2", "z")):
+      link(t, s_, d_)
+    names = [node(n) for n in ("a", "b", "z")]
+    self.assertEqual(self._marks(m, names), {"z": {"f": "nec"}})
+    link("pref", "a", "b")
+    self.assertEqual(self._marks(m, names), {"z": {"f": "nec"}, "a": {"f": "dflt"}, "b": {"t": "dflt"}})
+
+  def test0896preferencesInOrder(self):
+    '''
+    Preferences that conflict are taken in the order of their nodes (see
+    sn.model.reasoner.DEFAULT_ORDER): d1 (a or b, a yields to b) and d2 (x or
+    y, x yields to y) can't have both b and y (c, false, is b and y). The
+    first node's preference wins -- unless its defaultOrder puts it after
+    the other's.
+    '''
+    m, node, link = self._connectives("ordered")
+    node("d1", "t"); node("d2", "t"); node("c", "f")
+    for t, s_, d_ in (("alt", "a", "d1"), ("alt", "b", "d1"), ("pref", "a", "b"),
+                      ("alt", "x", "d2"), ("alt", "y", "d2"), ("pref", "x", "y"),
+                      ("part", "c", "b"), ("part", "c", "y")):
+      link(t, s_, d_)
+    names = [node(n) for n in ("a", "b", "x", "y")]
+    self.assertEqual(self._marks(m, names), {"a": {"f": "dflt"}, "b": {"t": "dflt"}, "x": {"t": "dflt"}, "y": {"f": "dflt"}})
+    node("d1")["defaultOrder"] = 1
+    self.assertEqual(self._marks(m, names), {"a": {"t": "dflt"}, "b": {"f": "dflt"}, "x": {"f": "dflt"}, "y": {"t": "dflt"}})
+
   def test0890finishFindsTheBaseRulesOnce(self):
     '_finish() leaves out the base rules\' conclusions, finding the base rules once -- not once per conclusion.'
     import sn.model.reasoner as reasoner

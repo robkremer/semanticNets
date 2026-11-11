@@ -23,6 +23,7 @@ Created on Nov 11, 2026
 
 @author: robkremer
 '''
+import dataclasses
 import os
 import tempfile
 import unittest
@@ -164,6 +165,31 @@ CONNECTIVES = net(
 )
 "Conjunctions and disjunctions (Gaines, sections 2.4 and 4.2): their links, and their marks."
 
+DEFAULTS = net(
+  "|C|9|FFFFFF||32",
+  "T|1",
+  "2|0|Arial|9|1|0|000000|FFFFFF|000000|008A00|0|0|0||Concept",
+  "A|4",
+  "1|0|0|0|1|0|000000|000000|000000|000000|Includes",            # 0
+  "0|0|0|0|1|1|00A000|00A000|00A000|00A000|Excludes symmetric",  # 1
+  "3|0|0|0|1|0|000000|000000|000000|000000|Disjunct includes",   # 2
+  "0|0|0|0|1|6|000000|000000|FF6CFE|3B003A|Prefer",              # 3
+  "M|1", "693804|FFCD7D|Asserted",
+  "N|12|0|-1",
+  *[f"0|{mark}|0|0|30|20|{name}|" for name, mark in (
+    ("2", 0), ("3", 0), ("can fly", 0), ("5", 0),           # 0-3: a bird can fly (2 or 3: 3 can fly), and can't
+    ("bird can't fly", 81), ("6", 0), ("can fly", 0),       # 4-6:  (5 or 6: 6 can't fly) -- one "can fly", in two places;
+    ("bird can fly", 81),                                   # 7:    2 yields to 3, 5 to 6
+    ("d", 81), ("a", 0), ("b", 0), ("c", 0))],              # 8-11: d is a or b, both of which exclude c
+  "L|12|0",
+  "0|7|2", "1|7|2", "1|2|0", "3|4|2", "5|4|2", "5|6|1", "0|1|3", "3|5|3",
+  "9|8|2", "10|8|2", "9|11|1", "10|11|1",
+  "G|0",
+)
+'''Exploring (Gaines's normal defaults, KNet's Explore): the cases of a true
+disjunction, and preferences between them -- that conflict (as in KNet's
+"Conflict States": bird can't fly comes first).'''
+
 class TestKernelKinds(unittest.TestCase):
 
   @classmethod
@@ -254,11 +280,11 @@ class TestKernelInference(unittest.TestCase):
     backwards one turned round, its links too.
     '''
     b = self.reader.buildModel(self.rnet.parseText(KERNEL, "kernel.rnet"), str(self.folder / "kernel.snm"))
-    self.assertEqual(sorted(b.kernel), sorted([*self.reader.KERNEL, *self.reader.CONNECTIVES.values()]))
+    self.assertEqual(sorted(b.kernel), sorted([*self.reader.KERNEL, *self.reader.CONNECTIVES.values(), self.reader.PREFER]))
     parents = {str(t.name): [str(p.name) for p in t.getParents()] for t in b.linkTypes.values()}
     self.assertEqual(parents, {"Includes": ["includes"], "Excludes": ["excludes"], "Coexcludes symmetric": ["coexcludes"],
                                "Negates symmetric": ["negates"], "Includes reverse": ["includes"],
-                               "Excludes symmetric": ["excludes"], "Prefer": ["relation"], "Generic": ["relation"]})
+                               "Excludes symmetric": ["excludes"], "Prefer": ["prefer"], "Generic": ["relation"]})
     rev = b.linkTypes[4]
     self.assertEqual((rev["vis/terminator1"], rev["vis/terminator4"]), ("", "arrow")) # (its arrow: at its destination)
     rels = {(str(r.src.name), str(r.dst.name)) for r, _ in b.relations if r.getParents()[0] is rev}
@@ -281,7 +307,7 @@ class TestKernelInference(unittest.TestCase):
         Model._initCache()
         b = self.reader.buildModel(self.rnet.parseText(KERNEL, f"{engine}.rnet"), str(self.folder / f"{engine}.snm"))
         res = Reasoner.create(b.model, engine).run()
-        kinds = {t: name for name, t in b.kernel.items()}
+        kinds = {t: name for name, t in b.kernel.items() if name != self.reader.PREFER}
         holds = {(kinds[t], str(s.name), str(d.name)) for t, s, d in res.holds
                  if t in kinds and s is not None and d is not None and s.model is b.model and d.model is b.model}
         for fact in [("excludes", "dog", "plant"), ("excludes", "plant", "dog"),       # exclusion (and symmetry)
@@ -502,6 +528,63 @@ class TestConnectives(unittest.TestCase):
           for k, how in ms.items():
             self.assertIn(how, got[n][k], f"{n} {k}")
 
+class TestDefaults(unittest.TestCase):
+  '''
+  Exploring (see *sn.model.reasoner.DEFINING*: the KNet rules model's
+  connectives say to): the cases of a true disjunction -- what every one has
+  is necessary -- and the preferences between them (the reader's Prefer
+  links are the KNet rules model's prefer): what every preferred case has is
+  the default. And nodes with the same label are one (as KNet takes them),
+  unless the reader's told they aren't. So far just clingo explores.
+  '''
+  @classmethod
+  def setUpClass(cls):
+    cls.rnet = importBundled("rnetReader", "rnet")
+    cls.reader = importBundled("rnetReader", "reader")
+
+  def setUp(self):
+    Model._initCache()
+    self.tmp = tempfile.TemporaryDirectory()
+    self.folder = Path(self.tmp.name).resolve()
+
+  def tearDown(self):
+    Model._initCache()
+    self.tmp.cleanup()
+
+  def marks(self, name:str, sameLabels:bool=True) -> dict[int, dict[str, str]]:
+    ''':returns: The marks clingo concludes for the nodes of *DEFAULTS*, by their places in it.'''
+    b = self.reader.buildModel(self.rnet.parseText(DEFAULTS, f"{name}.rnet"), str(self.folder / f"{name}.snm"),
+                               sameLabels=sameLabels)
+    places = {id(node): i for i, node in b.nodes.items()}
+    ret:dict[int, dict[str, str]] = {}
+    for _, x, k, v in Reasoner.create(b.model, "clingo").run().ruleAttrs:
+      if k in ("markTrue", "markFalse") and id(x) in places and x.getLocalAttr(k) is None:
+        ret.setdefault(places[id(x)], {})[k] = v
+    return ret
+
+  def test_types(self):
+    '''The Prefer links are the KNet rules model's prefer's, and the nodes with the same label are equivalent.'''
+    b = self.reader.buildModel(self.rnet.parseText(DEFAULTS, "types.rnet"), str(self.folder / "types.snm"))
+    self.assertEqual([str(p.name) for p in b.linkTypes[3].getParents()], [self.reader.PREFER])
+    same = [(r.src, r.dst) for r in b.derived if str(r.getParents()[0].name) == self.reader.SAME_LABEL]
+    self.assertEqual(same, [(b.nodes[6], b.nodes[2])])
+    self.assertEqual([str(p.name) for p in b.derived[0].getParents()[0].getParents()], [self.reader.EQUIVALENT])
+    b = self.reader.buildModel(self.rnet.parseText(DEFAULTS, "apart.rnet"), str(self.folder / "apart.snm"), sameLabels=False)
+    self.assertEqual(b.derived, [])
+
+  def test_marks(self):
+    '''
+    c is false in every case of d (necessary); and bird can't fly's
+    preference comes first: 6 rather than 5, so it can't fly -- and so 3
+    (which can) is false, and 2 true, by default.
+    '''
+    false, true = {"markFalse": "default"}, {"markTrue": "default"}
+    self.assertEqual(self.marks("marks"), {11: {"markFalse": "necessary"}, 3: false, 5: true, 2: false, 6: false,
+                                           1: false, 0: true})
+    # (two "can fly"s: each preference has its way)
+    self.assertEqual(self.marks("apart", sameLabels=False), {11: {"markFalse": "necessary"}, 3: false, 5: true, 6: false,
+                                                             0: false, 1: true, 2: true})
+
 @unittest.skipUnless(os.environ.get("REP_PLUS_DATA"), "set REP_PLUS_DATA to Rep Plus 2's test data folder to run these")
 class TestRepPlusData(unittest.TestCase):
   '''
@@ -520,6 +603,11 @@ class TestRepPlusData(unittest.TestCase):
           "Nets-CNet-Dev/knets/paper/structural/induction.rnet",
           "Nets-CNet-Dev/knets/paper/structural/matimpeuler.rnet"]
   "The last three with conjunctions and disjunctions."
+
+  FIGURES = {"Nets-CNet-Dev/knets/paper/Inference Process.rnet", "Nets-CNet-Dev/knets/paper/paper1/Syllogisms/conjunction.rnet",
+             "Nets-CNet-Dev/knets/paper/paper1/Syllogisms/disjunction.rnet"}
+  '''Nets that are figures of several copies of a net (or with labels that
+  aren't names): read with the nodes that have the same label apart.'''
 
   MARK_NETS = ["Logic Paper 2024/mark propagation.rnet", "Nets-CNet-Dev/CNet tests/proper part 1.rnet",
                "Nets-CNet-Dev/knets/paper/Inference Process.rnet",
@@ -556,8 +644,45 @@ class TestRepPlusData(unittest.TestCase):
         with self.subTest(engine=engine, net=path):
           Model._initCache()
           n = self.rnet.parse(os.path.join(os.environ["REP_PLUS_DATA"], path))
-          b = self.reader.buildModel(n, str(self.folder / f"{engine}-{os.path.basename(path)}.snm"))
+          b = self.reader.buildModel(n, str(self.folder / f"{engine}-{os.path.basename(path)}.snm"),
+                                     sameLabels=path not in self.FIGURES)
           res = Reasoner.create(b.model, engine).run()
+          got = {(id(x), k) for _, x, k, _ in res.ruleAttrs if k in ("markTrue", "markFalse") and x.getLocalAttr(k) is None}
+          expected = {(id(b.nodes[nn.index]), "markTrue" if c == "T" else "markFalse")
+                      for nn in n.nodes if nn.marks and nn.derived and nn.index in b.nodes for c in (nn.truth or "")}
+          self.assertTrue(expected)
+          self.assertEqual(got, expected)
+
+  DEFAULT_NETS = [
+    ("Nets-CNet-Dev/knets/paper/paper1/default/normal defaults.rnet", [(27, 33), (34, 40), (41, 47), (48, 54)], []),
+    ("Nets-CNet-Dev/knets/paper/paper1/art/art-small.rnet", None, [5]),
+    ("Test explore & defaults/Conflict States.rnet", [(0, 7), (8, 15)], []),
+    ("Test explore & defaults/P Q.rnet", None, []),
+    ("Test explore & defaults/Concessive conditional linear states.rnet", [(14, 27), (28, 41), (42, 55)], [])]
+  '''Nets with marks KNet found by exploring, and by default: each panel (the
+  places of its nodes, from and to), or the whole net -- and the nodes whose
+  preferences come last (art-small's art object: KNet's user sorted them).
+  "Chess 3 cases no frame" isn't here: older than the KNet whose source
+  these follow, it marks one of the cases false by default, but not what
+  the rest have in common (safe).'''
+
+  def test_defaultMarks(self):
+    '''
+    From the nets' asserted marks, clingo marks true and false the nodes
+    KNet did (its derived marks, necessary and default ones too), and no
+    others -- each panel of a figure by itself.
+    '''
+    for path, panels, last in self.DEFAULT_NETS:
+      for panel in panels or [None]:
+        with self.subTest(net=path, panel=panel):
+          Model._initCache()
+          n = self.rnet.parse(os.path.join(os.environ["REP_PLUS_DATA"], path))
+          if panel is not None: # (the rest left out: as if they were drawings)
+            n.nodes = [nn if panel[0] <= nn.index <= panel[1] else dataclasses.replace(nn, kind="drawing") for nn in n.nodes]
+          b = self.reader.buildModel(n, str(self.folder / f"{os.path.basename(path)}-{panel}.snm"))
+          for i in last:
+            b.nodes[i]["defaultOrder"] = 1
+          res = Reasoner.create(b.model, "clingo").run()
           got = {(id(x), k) for _, x, k, _ in res.ruleAttrs if k in ("markTrue", "markFalse") and x.getLocalAttr(k) is None}
           expected = {(id(b.nodes[nn.index]), "markTrue" if c == "T" else "markFalse")
                       for nn in n.nodes if nn.marks and nn.derived and nn.index in b.nodes for c in (nn.truth or "")}

@@ -99,6 +99,18 @@ one of them is marked both (as KNet doesn't: disjunctive syllogism from a
 contradiction). (That a false conjunct makes its conjunction false, and a
 true disjunct its disjunction true, is what includes says already.)
 
+Exploring and defaults (the paper's section 4.3): a true disjunction none of
+whose disjuncts is true yet, or a false conjunction none of whose conjuncts
+is false yet, has cases -- each disjunct that may be true (conjunct that may
+be false) -- and a case that would make a node both true and false (where
+it wasn't already) is impossible. What holds in every possible case is
+"necessary". And *PREFER* links (A prefer B: of the cases, A yields to B,
+transitively) pick the preferred cases: what holds in every one of those is
+the "default" -- in a true disjunction, A is false while B may be true; in a
+false conjunction, A is true while B may be false. A net's preferences apply
+in the order of their connectives (see sn.model.reasoner.DEFAULT_ORDER).
+(For now, only the clingo engine explores.)
+
 And one constraint, a warning: an inconsistent node (one that excludes
 itself: see self-inconsistency) -- Rep Plus marks it "E". Inconsistency stays
 where it is (Gaines's paraconsistency): it propagates only through the
@@ -127,8 +139,12 @@ eg, dog isa animal isa knode gives dog includes animal.'''
 MARK_TRUE, MARK_FALSE = "markTrue", "markFalse"
 "The attributes that mark a node true or false (see *rnetReader.hooks*, which must agree)."
 
-DEFINITION = "definition"
-"How a node got a mark through a connective (Rep Plus's mark kind: see *rnetReader.hooks.MARK_COLORS*)."
+DEFINITION, NECESSARY, DEFAULT = "definition", "necessary", "default"
+'''How a node got a mark through a connective, by exploring its cases, and by
+the preferences (Rep Plus's mark kinds: see *rnetReader.hooks.MARK_COLORS*).'''
+
+PREFER = "prefer"
+"The preference relation type's name (see *connectives()*, and *rnetReader.reader.PREFER*, which must agree)."
 
 CONJUNCT_INCLUDES, CONJUNCT_EXCLUDES, DISJUNCT_INCLUDES, DISJUNCT_COEXCLUDES = \
   "conjunct includes", "conjunct excludes", "disjunct includes", "disjunct coexcludes"
@@ -304,6 +320,10 @@ def connectives(m, relType, inc, exc, coe) -> None:
   disjunction (double arrowheads) what each of its disjuncts includes (and
   what each that coexcludes it doesn't).
   '''
+  prefer = relType(PREFER, None,
+                   "A prefer B: of the cases of a conjunction or disjunction (its conjuncts or disjuncts), A yields to B -- "
+                   "while B may be true (a disjunct; false, a conjunct) A isn't, by default (Gaines's preferences: KNet's "
+                   "normal defaults). Transitive.", mid=">", color="#800080", transitive=True)
   for name, parent, key, requires, terminator, color, note in (
       (CONJUNCT_INCLUDES, inc, "meet", INCLUDES, HEAVY_ARROW, "#000000",
        "C conjunct includes A: C is the conjunction (the meet) of what it conjunct includes, and excludes by conjunct "
@@ -321,6 +341,7 @@ def connectives(m, relType, inc, exc, coe) -> None:
     r[key] = requires
     r["order"] = INCLUDES
     r["trueMark"], r["falseMark"], r["markValue"] = MARK_TRUE, MARK_FALSE, DEFINITION
+    r["necessaryValue"], r["defaultValue"], r["prefer"] = NECESSARY, DEFAULT, prefer.name
 
 def typeNote(text:str):
   '''

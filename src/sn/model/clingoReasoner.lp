@@ -301,3 +301,67 @@ isa_data(X,T) :- isa_star(X,T), data(X).
 #show rule_isa/3.
 #show rule_new/1.
 #show same/2.
+
+%%% Worlds: exploring the cases of defined nodes (see sn.model.reasoner.DEFINING) --
+% Solved after the program above (ClingoReasoner._explore()), with its marks
+% as facts: world_mark0(X,K), X has the truth attribute K. The parts below are
+% grounded only then: "explored" for the worlds -- the marks every one has are
+% necessary -- and "preferred" too for the defaults (the marks every preferred
+% one has).
+
+#program marks.
+% (with the program above: what the worlds start from)
+def_mark_key(K) :- def_world(C,D,_,_), def_marks(C,D,K,_,_).
+def_mark_key(K) :- def_world(C,D,_,_), def_marks(C,D,_,K,_).
+world_mark0(X,K) :- attr(X,K,_), def_mark_key(K).
+% (and whether there's anything to explore: a true join none of whose links
+% hold, or a false meet none of whose fail -- not both)
+world_open0(C,join) :- def_world(C,join,_,_), def_marks(C,join,TK,FK,_), attr(C,TK,_), not attr(C,FK,_),
+                       not world_held0(C,join).
+world_open0(C,meet) :- def_world(C,meet,_,_), def_marks(C,meet,TK,FK,_), attr(C,FK,_), not attr(C,TK,_),
+                       not world_failed0(C,meet).
+world_held0(C,D) :- def_holds(C,D,_).
+world_failed0(C,D) :- def_fails(C,D,_).
+#show world_mark0/2.
+#show world_open0/2.
+
+#program explored.
+% A true join none of whose links hold (a false meet none of whose fail) --
+% unless it was both -- is a choice of one of its links that didn't fail
+% (didn't hold): it holds (fails) in that world, with the definition's
+% necessaryValue. A world in which something gets both marks that didn't have
+% them both isn't one.
+def_mark_key(K) :- def_world(C,D,_,_), def_marks(C,D,K,_,_).
+def_mark_key(K) :- def_world(C,D,_,_), def_marks(C,D,_,K,_).
+world_both0(X) :- world_mark0(X,TK), world_mark0(X,FK), def_marks(_,_,TK,FK,_).
+world_sat0(C,join) :- def_key(C,join,_,A,Y,_), world_mark0(A,Y).
+world_sat0(C,meet) :- def_key(C,meet,_,A,_,N), world_mark0(A,N).
+world_need(C,join) :- def_world(C,join,_,_), def_marks(C,join,TK,_,_), attr(C,TK,_),
+                      not world_both0(C), not world_sat0(C,join).
+world_need(C,meet) :- def_world(C,meet,_,_), def_marks(C,meet,_,FK,_), attr(C,FK,_),
+                      not world_both0(C), not world_sat0(C,meet).
+world_case(C,join,I) :- def_world(C,join,_,_), def_key(C,join,I,A,_,N), not world_mark0(A,N).
+world_case(C,meet,I) :- def_world(C,meet,_,_), def_key(C,meet,I,A,Y,_), not world_mark0(A,Y).
+1 { world_pick(C,D,I) : world_case(C,D,I) } 1 :- world_need(C,D).
+rule_attr(R,A,Y,V) :- world_pick(C,join,I), def_key(C,join,I,A,Y,_), def_last(C,join,_,_,R), def_world(C,join,V,_).
+rule_attr(R,A,N,V) :- world_pick(C,meet,I), def_key(C,meet,I,A,_,N), def_last(C,meet,_,_,R), def_world(C,meet,V,_).
+:- def_marks(_,_,TK,FK,_), attr(X,TK,_), attr(X,FK,_), not world_both0(X).
+world_mark(X,K) :- attr(X,K,_), def_mark_key(K), not world_mark0(X,K).
+#show world_mark/2.
+
+#program preferred.
+% Preferences (KNet's normal defaults): in an explored join, a link whose end
+% A yields to an end B (A -P-> B, for its def_prefer P) fails while B doesn't
+% fail (B hasn't the mark A gets) -- and in an explored meet, holds while B
+% doesn't hold. The preferred worlds are those in which the preferred ends
+% that didn't fail (hold) already fail (hold) least: each node's preferences
+% (def_rank: the highest first) before the next's.
+world_pref(C,D,A,B) :- def_prefer(C,D,P), def_part(C,D,_,A,_,_), holds(P,A,B), A != B.
+rule_attr(R,A,N,V) :- world_need(C,join), def_key(C,join,_,A,_,N), world_pref(C,join,A,B), not attr(B,N,_),
+                      def_last(C,join,_,_,R), def_world(C,join,_,V).
+rule_attr(R,A,Y,V) :- world_need(C,meet), def_key(C,meet,_,A,Y,_), world_pref(C,meet,A,B), not attr(B,Y,_),
+                      def_last(C,meet,_,_,R), def_world(C,meet,_,V).
+:~ world_need(C,join), def_key(C,join,_,A,_,N), world_pref(C,join,A,B), attr(B,N,_), not world_mark0(B,N),
+   def_rank(C,join,K). [1@K,C,join,B]
+:~ world_need(C,meet), def_key(C,meet,_,A,Y,_), world_pref(C,meet,A,B), attr(B,Y,_), not world_mark0(B,Y),
+   def_rank(C,meet,K). [1@K,C,meet,B]
