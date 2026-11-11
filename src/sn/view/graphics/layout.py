@@ -450,7 +450,7 @@ class LayoutHeuristic(ABC):
     finishTween(self.view) # (an earlier arrangement under way: from where it ends, as the command's undo puts it back there)
     targets = self.targets()
     targets.update(otherLabelTargets(self.view, targets))
-    cmd = LayoutMoves(self.view, f"arrange: {self.NAME}", targets, animate=animate)
+    cmd = LayoutMoves(self.view, f"arrange: {self.NAME}", targets, animate=animate, loose=True)
     self.arranged(cmd)
     if cmd.isEmpty():
       return None
@@ -818,7 +818,7 @@ class LayoutMoves(Command):
   isLayout = True
   "So the view's dynamic layout doesn't adjust after it (see *viewCommands.ViewDoList*)."
 
-  def __init__(self, view, name:str, targets:dict[VObject, tuple[float, float]], animate:bool=True):
+  def __init__(self, view, name:str, targets:dict[VObject, tuple[float, float]], animate:bool=True, loose:bool=False):
     '''
     :param view:
     :type view: SNGView
@@ -827,6 +827,8 @@ class LayoutMoves(Command):
       context window they'd land on is moved out of their way, with its contents (see
       *windowsOutOfTheWay()*).
     :param animate: Whether to move them smoothly when it's first done.
+    :param loose: Whether a node they'd land on, that they leave where it is, is moved out of their way
+      too (see *windowsOutOfTheWay()*): for "arrange now", not a dynamic layout's adjustments.
     '''
     super().__init__(name)
     self.view = view
@@ -835,7 +837,7 @@ class LayoutMoves(Command):
     self.moves:list[tuple[VObject, tuple[float, float], tuple[float, float], bool|None]] = []
     "(object, from, to, whether it floated: for a relation's label)"
     if targets and getattr(view, "contextWindows", None) is not None:
-      targets = {**targets, **windowsOutOfTheWay(view, targets)}
+      targets = {**targets, **windowsOutOfTheWay(view, targets, loose=loose)}
     for vo, (x, y) in targets.items():
       if isinstance(vo, VRelation) and not pinnableLabel(vo):
         continue
@@ -986,7 +988,8 @@ def otherLabelTargets(view, targets:dict[VObject, tuple[float, float]]) -> dict[
     index.add(rect)
   return ret
 
-def windowsOutOfTheWay(view, targets:dict[VObject, tuple[float, float]], gap:float=20.0) -> dict[VObject, tuple[float, float]]:
+def windowsOutOfTheWay(view, targets:dict[VObject, tuple[float, float]], gap:float=20.0,
+                       loose:bool=False) -> dict[VObject, tuple[float, float]]:
   '''
   Where to put the context windows that what a layout arranges would land
   on: each is moved whole -- with what it carries (see
@@ -996,21 +999,25 @@ def windowsOutOfTheWay(view, targets:dict[VObject, tuple[float, float]], gap:flo
   it. (A layout moves things without carrying: see *LayoutMoves*.) Windows
   inside another window, and what *targets* moves itself, are left be. So
   is a node the layout leaves where it is (eg: a type only a rule's box is
-  linked to) -- unless what it arranges would land on it: then it's moved
-  out of the way too, so no label is put on it.
+  linked to) -- unless *loose*, and what it arranges would land on it: then
+  it's moved out of the way too, so no label is put on it.
 
   :param view: A view.
   :type view: SNGView
   :param targets: Where the layout puts things (their top left).
   :param gap: The clearance.
+  :param loose: Whether to move nodes the layout leaves where they are, too:
+    for "arrange now" -- not for a dynamic layout's adjustments, which leave
+    a node be because it's pinned there (eg: dropped).
   :returns: Where the windows moved, and what they carry, go (their top left).
   '''
   if not targets:
     return {}
   homes = view.containmentHomes()
   windows = [w for w in view.contextWindows() if not w.isHidden() and w not in targets]
-  windows += [vo for vo in view.values() if isinstance(vo, VObject) and not isinstance(vo, VRelation) and vo not in targets
-              and vo._isConnected() and not vo.isHidden() and not vo.isContextWindow() and vo not in homes] # (left alone: see above)
+  if loose:
+    windows += [vo for vo in view.values() if isinstance(vo, VObject) and not isinstance(vo, VRelation) and vo not in targets
+                and vo._isConnected() and not vo.isHidden() and not vo.isContextWindow() and vo not in homes] # (left alone: see above)
   if not windows:
     return {}
   arranged:list[list[float]] = []
