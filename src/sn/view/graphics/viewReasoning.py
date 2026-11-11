@@ -31,7 +31,7 @@ from __future__ import annotations
 import sys
 import tkinter as tk
 import sn
-from sn.model.model import IsaIndividual, GraphObject
+from sn.model.model import IsaIndividual, GraphObject, Relation
 from typing import Any, Callable, cast, TYPE_CHECKING
 from functools import partial
 from html import escape
@@ -42,6 +42,24 @@ if TYPE_CHECKING:
   from util.actionDialog import ActionDialog
 
 logger:sn.SNLogger = sn.getLogger(__name__)
+
+def _hidesImplied(rel:GraphObject) -> bool:
+  "Whether *rel*'s type says to leave it out of a view when it's implied by what's shown (\"vis/hideImplied\")."
+  try:
+    return bool(rel.get("vis/hideImplied", False))
+  except Exception: # (eg: a half-built object)
+    return False
+
+def _typeDepth(rel:GraphObject) -> int:
+  ":returns: How deep *rel*'s type is in the isa hierarchy (its own types: 1)."
+  depth, todo, seen = 0, [(t, 1) for t in rel.getParents()], set()
+  while todo:
+    t, d = todo.pop()
+    if id(t) not in seen:
+      seen.add(id(t))
+      depth = max(depth, d)
+      todo += [(p, d + 1) for p in t.getParents()]
+  return depth
 
 def _names(objects:list[GraphObject]) -> str:
   '''
@@ -288,11 +306,37 @@ class ReasoningMixin(ViewBase):
     rels = [r for r in _inferredRelations(self.model).values() if only is None or id(r) in ids] \
          + [r for o in inferred if getattr(o, "inferredKind", None) == "new"
               for r, _ in o._getOutgoing(lambda r: isinstance(r, IsaIndividual) and r.inferred)] # (a new object's types)
+    rels.sort(key=lambda r: -_typeDepth(r) if _hidesImplied(r) else 0) # (subtypes' first: they imply their types')
     for rel in rels:
-      if rel._isConnected() and not shown(rel) and shown(rel.localSrc) and shown(rel.localDst):
+      if rel._isConnected() and not shown(rel) and shown(rel.localSrc) and shown(rel.localDst) and not self._impliedByShown(rel):
         show(rel)
     if not dirty:
       self.setDirty(False)
+
+  def _impliedByShown(self, rel:GraphObject) -> bool:
+    '''
+    :returns: Whether the inferred relation *rel* says what this view already
+      shows, and its type says to leave such out ("vis/hideImplied"): it's
+      from an object to itself, or a relation of its type (or a subtype)
+      joins the same two objects here, the same way round -- or either way
+      round, if either type is symmetric. (Eg: the KNet kernel's: cycles of
+      inclusions would loop every node in them, and every exclusion would
+      be drawn twice.)
+    '''
+    if not _hidesImplied(rel):
+      return False
+    src, dst = rel.localSrc, rel.localDst
+    if src is dst:
+      return True
+    types = [t for t in rel.getParents() if isinstance(t, Relation)]
+    symmetric = any(t._hasRelationalProperty("symmetric") for t in types)
+    for end, other, sameWay in ((src, dst, True), (dst, src, False)):
+      for r, o in end._getOutgoing(lambda r: r is not rel and not isinstance(r, IsaIndividual)):
+        if o is other and self.findViewObjectForGraphObject(r) is not None \
+           and any(r.isa(t) for t in types) \
+           and (sameWay or symmetric or any(p._hasRelationalProperty("symmetric") for p in r.getParents() if isinstance(p, Relation))):
+          return True
+    return False
 
   def _refreshStatusReports(self) -> None:
     for vo in list(self._db.values()):

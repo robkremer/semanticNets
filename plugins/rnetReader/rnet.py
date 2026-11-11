@@ -25,9 +25,11 @@ lines it has, and then those lines:
          prefixed by "P" or "G" is a picture or a drawing: a drawing's records
          (rectangles, lines, text...) follow it, in lines of their own.
   ``L``  the links: source and destination nodes (by their place in ``N``,
-         from 0), the link types (by their place in ``A``; several, separated by
-         spaces, for one line drawn for several links), and, in some files, more
-         fields (eg: a weight).
+         from 0), the link types (by their place in ``A``): the link's from the
+         source to the destination, and, if there's a second (after a space),
+         the type of a link back, from the destination to the source -- Rep
+         Plus's Link.Type(0) and Type(1), drawn side by side -- and, in some
+         files, more fields (its flags, and a label: eg, a weight).
   ``G``  the groups (panels: parts of the net that go together): the nodes in
          each, and in a second field (if any) the groups in it.
 
@@ -155,7 +157,7 @@ class LinkType:
   the arrowheads' and bars' (as CNet's SVG pictures show). Version 9 gives
   the head's shape (*head*: 0 none, 1 an arrowhead, 2 a heavy one, 3 a double
   one) and bars (*headBars*: 0 to 3), the same at the tail, the line's flags
-  (4: derived, drawn dashed), a symbol in the middle (*mid*), and four colours.
+  (4: drawn dashed: see *dashed*), a symbol in the middle (*mid*), and four colours.
   For version 6, which has no link types, they're made from the codes its
   links have, which are the bits.
   '''
@@ -186,8 +188,17 @@ class LinkType:
 
   @property
   def derived(self) -> bool:
-    "Whether its links were derived (inferred), rather than drawn: drawn dashed."
-    return bool(self.lineFlags & 4) or (self.bits is not None and "derived" in self.name.lower())
+    '''Whether its links were derived (inferred by CNet or KNet), rather than
+    drawn: its name says so (eg: "Includes derived"), as every one of the test
+    nets' do -- in version 9, most of them are drawn in their own colour (a
+    light blue), some *dashed*.'''
+    return "derived" in self.name.lower()
+
+  @property
+  def dashed(self) -> bool:
+    '''Whether its links are drawn dashed (its line's flag 4: eg, some derived
+    ones, and "Etc" ones, which stand for more of the same).'''
+    return bool(self.lineFlags & 4)
 
 @dataclass
 class MarkKind:
@@ -261,16 +272,30 @@ class NetNode:
 @dataclass
 class Link:
   '''
-  A line drawn from one node to another (a line of section ``L``): a link of
-  each of its *types*.
+  A line drawn between two nodes (a line of section ``L``): a link of its
+  first type from its *source* to its *destination*, and one of its second
+  type, if it has one, back from its destination to its source (Rep Plus
+  draws the two side by side, the second one backwards: see *backwards()*).
   '''
   index:int
   source:int
   destination:int
   types:list[int]
-  "Its link types' places in section ``A`` (in version 6: their codes)."
+  '''Its link types' places in section ``A`` (in version 6: their codes): the
+  first is the link's from *source* to *destination*, the second (if any) the
+  one back.'''
   extra:list[str] = field(default_factory=list)
-  "Any more fields (eg: a weight)."
+  "Any more fields (eg: its flags, and a weight)."
+
+  @staticmethod
+  def backwards(slot:int) -> bool:
+    '''
+    :param slot: A place in *types*.
+    :returns: Whether the link of the type there goes from *destination* to
+      *source*: the second does (KNet takes it so -- KNet.InitLinks -- and
+      Rep Plus draws it so, from the destination's end).
+    '''
+    return slot == 1
 
 @dataclass
 class Group:

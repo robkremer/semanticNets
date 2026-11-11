@@ -4,11 +4,13 @@ files (9, with link types by their heads and bars; 8 and some 9s, by their
 bits; 7, with a "PS:" line; 6, with no link types and no marks), skipping the
 records of a drawing, wherever it is; and *reader.buildModel()* makes the
 node and relation types, with their looks, the nodes (and their marks), the
-relations (one of each type a link has), and the boxes (nodes of an
-enclosure type: SN subtypes of context that don't quote what they contain),
-each containing the nodes inside it -- a construct's poles excluding each
-other unless an includes link joins them -- which they keep when the
-model's saved and read again. Groups aren't made: they mean nothing.
+relations (of a link's type, and of its second, if any, back the other way),
+and the boxes (nodes of an enclosure type: SN subtypes of context that don't
+quote what they contain), each containing the nodes inside it -- a
+construct's poles excluding each other unless an includes link joins them --
+which they keep when the model's saved and read again. Groups aren't made:
+they mean nothing. (What the relation types mean, and what the reasoners
+infer from them: see test_knetRules.)
 
 The nets here are made up, small, in the files' formats.
 
@@ -287,8 +289,8 @@ class TestBuild(unittest.TestCase):
     self.assertIsNone(anon.get("mark", None))
     self.assertIn(b.nodeTypes[0], a.getParents())
     rels = [(r.src.name, r.dst.name, r.getParents()[0].name) for r, _ in b.relations]
-    self.assertEqual(rels, [("A", "B", "Includes"), ("B", "", "Excludes"), ("B", "", "Includes"), ("", "A", "Includes"),
-                            ("C", "B", "Odd")]) # (not "Includes" twice; nor the link from the drawing)
+    self.assertEqual(rels, [("A", "B", "Includes"), ("B", "", "Excludes"), ("", "B", "Includes"), ("", "A", "Includes"),
+                            ("A", "", "Includes"), ("C", "B", "Odd")]) # (a second type: the link back; not the link from the drawing)
     self.assertEqual(b.relations[3][0]["values"], "1 57.86")
     self.assertIn("1 pictures and drawings", b.report())
     self.assertIn("3 groups", b.report()) # (not made: they mean nothing)
@@ -354,7 +356,7 @@ class TestBuild(unittest.TestCase):
     marked = sorted((str(o.name), o["mark"]) for o in m.values() if isinstance(o, Node) and o.model is m and o.get("mark", None))
     self.assertEqual(marked, [("A", "T"), ("B", "T"), ("C", "F"), ("Two\nlines", "T")])
     self.assertEqual(sum(1 for o in m.values() if isinstance(o, Relation) and o.model is m and o.isIndividual()
-                         and not type(o).__name__ == "IsaIndividual"), 5)
+                         and not type(o).__name__ == "IsaIndividual"), 6)
 
 if __name__ == "__main__":
   unittest.main()

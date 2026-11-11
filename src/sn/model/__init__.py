@@ -191,6 +191,7 @@ class TopModel(Model):
     self.RELATION['vis/lineFillColor'] = Attribute("black", "color", VAR_DEFAULTED, "The terminal's fill color of the relation connector in the GUI.")
     self.RELATION['vis/lineType']    = Attribute("smooth", LineType, VAR_DEFAULTED, "The curve type of the line of the relation connector in the GUI.\n  smooth | straight")
     self.RELATION['vis/lineWidth']   = Attribute(1, int, VAR_DEFAULTED, "The line width of the relation connector in the GUI.")
+    self.RELATION['vis/hideImplied'] = Attribute(False, bool, VAR_DEFAULTED, "Whether a view leaves out the reasoner's inferred relations of this type that say what it already shows: one from an object to itself, or one between two objects already joined by a relation of this type (or a subtype of it), the same way round -- or either way round, if either type is symmetric.")
     self.RELATION['vis/shape']       = "Rectangle"
     self.RELATION['vis/borderColor'] = ""
     self.RELATION['vis/minSize']     = 10 
