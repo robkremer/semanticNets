@@ -175,6 +175,12 @@ end changed (see *isaStructureChanged()*): an object's cached parents (see
 _partTypesCache:dict[tuple, list] = {}
 "The SN types of the relations holding parts, by the parents of a box and the isa generation: see *Node.partTypes()*."
 
+def isaGeneration() -> int:
+  '''
+  :returns: How many times relations have changed (see *isaStructureChanged()*): for caches of what's worked out from them.
+  '''
+  return _isaGeneration
+
 def isaStructureChanged() -> None:
   '''
   Say that relations -- perhaps isa links -- have changed: every object's
@@ -361,6 +367,8 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
       self.assertToStatusReport(False,
             f'Unknown subtype of GraphObject: {self.__class__.__name__}', 'W')
     self._validateSelfIsa()
+    if isinstance(self, Node) and self.isIndividual():
+      self._validateParts()
     return self.statusReport()
   
   def _isConnected(self):
@@ -2114,6 +2122,34 @@ class Node(GraphObject):
       _partTypesCache.clear()
     _partTypesCache[key] = list(ret)
     return ret
+
+  def _validateParts(self) -> None:
+    '''
+    Report (as warnings, in its status report) what's amiss with its parts
+    (see *parts()*) -- as can happen while a rule (say) is being made: a part
+    that's another box's too (a part should belong to just one); one that
+    doesn't quote what it holds (eg: a plain collection, whose contents are
+    facts); and one its SN type doesn't have parts of (eg: a rule's
+    "condition": a requirement's part).
+    '''
+    rels = self.partRelations()
+    if not rels:
+      return
+    own = self.partTypes()
+    for r in rels:
+      part = cast(Node, r.localDst)
+      typ = r.partType()
+      kind = typ.name if typ is not None else "part"
+      others = [o for o in part.partOwners() if o is not self]
+      if others:
+        self.assertToStatusReport(False, f'Its {kind} "{part.name}" is also a part of '
+                                  f'{", ".join(chr(34) + str(o.name) + chr(34) for o in others)}: a part should belong to just one box.', "W")
+      if not part.quotesContents():
+        self.assertToStatusReport(False, f'Its {kind} "{part.name}" doesn\'t quote what it holds (it\'s a plain collection, '
+                                  'not a context): what\'s in it is taken as facts too.', "W")
+      if typ is not None and own and not any(typ.isa(t) for t in own):
+        self.assertToStatusReport(False, f'Its {kind} "{part.name}": a {self.getParents()[0].name}\'s parts are '
+                                  f'{", ".join(t.name for t in own)}.', "W")
 
   def partFor(self, relationType:Relation) -> Node:
     '''

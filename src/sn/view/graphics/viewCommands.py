@@ -306,28 +306,45 @@ class ViewDoList(DoList):
 
 class _ContainCreated(Command):
   '''
-  Contains, in *context*, the relation (or node) that the command *creator*
-  creates -- *creator* being queued earlier in the same composite command, so
-  it doesn't exist yet when this is made. See *SNGView._containNewRelation()*
-  and *SNGView.addNewObjectMenus()*.
+  Contains, in *context*, *target* -- or the relation (or node) that the
+  command *creator* creates, *creator* being queued earlier in the same
+  composite command, so it doesn't exist yet when this is made. See
+  *SNGView._containNewRelation()*, *SNGView.addNewObjectMenus()* and
+  *SNGView._updateContainment()*.
+
+  With *partOf* (box, part relation type) instead of *context*, the context
+  is the box's (first) part of that SN type (see *Node.parts()*: eg, a rule's
+  antecedent), made the first time it's done if the box has none yet -- and
+  taken away again by an undo.
   '''
-  def __init__(self, model:Model, typ:Relation, context:GraphObject, creator:Command):
+  def __init__(self, model:Model, typ:Relation, context:GraphObject|None, creator:Command|None=None, *,
+               target:GraphObject|None=None, partOf:tuple[GraphObject, Relation]|None=None):
     '''
-    A command to make *context* contain (by *typ*) what *creator* makes, once it's made.
+    A command to make *context* (or the part *partOf* says) contain (by *typ*) *target*, or what *creator* makes, once it's made.
     '''
     super().__init__("contain")
-    self.model, self.typ, self.context, self.creator = model, typ, context, creator
+    self.model, self.typ, self.context, self.creator, self.target, self.partOf = model, typ, context, creator, target, partOf
     self.relation:Relation|None = None
+    self.madePart:list[GraphObject] = [] # (the part and its relation, if this made them)
 
   @override
   def do(self) -> Relation|None:
     super().do()
     if self.relation is None:
-      created = getattr(self.creator, "relation", None) or getattr(self.creator, "node", None)
+      created = self.target or getattr(self.creator, "relation", None) or getattr(self.creator, "node", None)
       if created is None:
         return None
-      self.relation = Relation(db=self.model, parents=[self.typ], src=self.context, dst=created, individual=True)
+      context = self.context
+      if context is None and self.partOf is not None:
+        owner, partType = self.partOf
+        had = owner.partRelations(partType) # type: ignore[attr-defined]
+        context = owner.partFor(partType) # type: ignore[attr-defined]
+        if not had:
+          self.madePart = [context, *owner.partRelations(partType)] # type: ignore[attr-defined]
+      self.relation = Relation(db=self.model, parents=[self.typ], src=context, dst=created, individual=True)
     else:
+      for x in self.madePart:
+        x._reconnect()
       self.relation._reconnect()
     return self.relation
 
@@ -336,7 +353,32 @@ class _ContainCreated(Command):
     super().undo()
     if self.relation is not None:
       self.relation._disconnect()
+    for x in reversed(self.madePart):
+      if x._isConnected():
+        x._disconnect()
     return self.relation
+
+class _Refresh(Command):
+  '''
+  Bring what a view has worked out from the model up to date (by calling
+  *refresh*), when it's done and when it's undone -- in a composite command,
+  as soon as the commands before it have done (or undone) their changes,
+  rather than when the model's notifications of them arrive (see
+  *Model.notifyLater()*), after the view has tidied up (see *ViewDoList*).
+  '''
+  def __init__(self, refresh:Callable[[], None]):
+    super().__init__("refresh")
+    self.refresh = refresh
+
+  @override
+  def do(self):
+    super().do()
+    self.refresh()
+
+  @override
+  def undo(self):
+    super().undo()
+    self.refresh()
 
 def keptWith[T](keep:Iterable[T], objects:Iterable[T], ends:Callable[[T], tuple[T|None, T|None]|None],
                 contents:Callable[[T], Iterable[T]]) -> list[T]:

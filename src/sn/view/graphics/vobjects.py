@@ -71,7 +71,7 @@ from util.errorReportingObject import ErrorReportingObject
 import sn
 from sn import snPrefs
 from sn.model import GraphObject, Relation
-from sn.model.model import UP_ARROW, IsaIndividual, Node, removeDuplicateObjects
+from sn.model.model import UP_ARROW, IsaIndividual, Node, removeDuplicateObjects, isaGeneration
 from sn.model import names
 from sn.model.constraints import WHERE, CONSTRAINTS, CONSTRAINTS_NOTE, splitWhere, mergeConstraints, ConstraintError
 from util.attribute import Attribute, VAR
@@ -111,6 +111,26 @@ VREL_ATTRIBUTES:dict[str,Any] = VATTRIBUTES | \
                     'vis/lineWidth'      : 1,
                     }
                     
+def partShownByItsBox(mo:GraphObject|None) -> bool:
+  '''
+  :returns: True iff *mo* is shown by the window of a box that tiles its
+    parts (see *GraphObject.tilesParts()*) as part of a pane, so it needs no
+    view object of its own: the part itself (see *Node.parts()*), its isa
+    link, the box's relation to it, or one of the part's "contains"
+    relations (or the isa link of one of those).
+  '''
+  try:
+    tiled = lambda part: isinstance(part, Node) and any(o.tilesParts() for o in part.partOwners())
+    if isinstance(mo, IsaIndividual):
+      return tiled(mo.localSrc) or (isinstance(mo.localSrc, Relation) and partShownByItsBox(mo.localSrc))
+    if isinstance(mo, Relation):
+      if mo.isPartRelation():
+        return mo.localSrc is not None and mo.localSrc.tilesParts()
+      return mo.isIndividual() and mo.isa(mo.model.CONTAINS) and tiled(mo.localSrc)
+    return tiled(mo)
+  except Exception: # (eg: half-built)
+    return False
+
 class Cache(dict[str,Any]):
   '''
   An empty class to stuff cached attributes in. Keys are restricted to all the 
@@ -726,30 +746,87 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     except Exception: # (eg: during construction)
       return False
 
+  def isTiledPart(self) -> bool:
+    '''
+    True iff this shows a part (see *Node.parts()*: eg, a rule's antecedent)
+    of a box this view shows that tiles its parts (see
+    *GraphObject.tilesParts()*): the box's window shows the part as one of its
+    panes (see *paneSpecs()*), so it isn't drawn itself, nor is it a window.
+    '''
+    mo = self.modelObject
+    if mo is None or not isinstance(mo, Node):
+      return False
+    try:
+      return any(o.tilesParts() and self.view.findViewObjectForGraphObject(o) is not None for o in mo.partOwners())
+    except Exception: # (eg: during construction)
+      return False
+
   def bannerHeight(self) -> float:
     '''
     How tall a context window's banner (its title bar) is.
     '''
     return self.BANNER
 
+  def paneSpecs(self) -> list[tuple[str, GraphObject, GraphObject|None]]:
+    '''
+    What a context window's panes (see *panes()*) stand for, left to right:
+    (the pane's name, the SN type of relation it stands for, the part it
+    shows -- or None, if the box has no part of that SN type yet: it's made
+    when something goes in the pane).
+
+    A box that tiles its parts (see *GraphObject.tilesParts()*: eg, a rule)
+    has a pane for each part (see *Node.parts()*), and one for each SN type of
+    part it can have but hasn't (see *Node.partTypes()*): a rule's
+    "antecedent" (left) and "consequent" (right); a definition's
+    "definiendum" (the term defined) and "definiens" (its meaning); a
+    requirement's "condition" and "required". A second part of the same SN
+    type (eg: a rule's second antecedent) is "antecedent 2", beside the first.
+    Any other box (eg: a query, a Rep Plus box, a rule that doesn't tile its
+    parts) has a single "contains" pane -- its parts, if it has any, are boxes
+    of their own inside it.
+
+    Remembered until the view's structure, or the model's relations, change.
+    '''
+    mo = self.modelObject
+    key = (self.view.__dict__.get("_structureVersion", 0), isaGeneration(), id(mo), mo is not None and mo.tilesParts())
+    cached = self.__dict__.get("_paneSpecsCache")
+    if cached is not None and cached[0] == key:
+      return cached[1]
+    ret:list[tuple[str, GraphObject, GraphObject|None]] = []
+    try:
+      if mo is not None and isinstance(mo, Node) and mo.isCollection() and mo.tilesParts():
+        held = mo.partRelations()
+        types = list(mo.partTypes())
+        for r in held: # (and the SN types of the parts it has that aren't of its own SN type's: after them)
+          t = r.partType()
+          if t is not None and not any(t is u for u in types):
+            types.append(t)
+        for t in types:
+          mine = [r.localDst for r in held if r.partType() is t]
+          if not mine:
+            ret.append((t.name, t, None))
+          for i, part in enumerate(mine):
+            ret.append((t.name if i == 0 else f"{t.name} {i + 1}", t, part))
+    except Exception: # (eg: half-built)
+      ret = []
+    if not ret:
+      ret = [("contains", mo.model.CONTAINS if mo is not None else None, None)] # type: ignore[list-item]
+    self.__dict__["_paneSpecsCache"] = (key, ret)
+    return ret
+
   def panes(self) -> dict[str, list[float]]:
     '''
-    A context window's content areas (view coords), below its banner, by the
-    containment relation they stand for: a rule's "antecedent" (left) and
-    "consequent" (right); a definition's "definiendum" (left: the term
-    defined) and "definiens" (right: its meaning); a requirement's
-    "condition" (left) and "required" (right); any other collection's single
-    "contains" area (eg: a query's, or a Rep Plus box's).
+    A context window's content areas (view coords), below its banner, by
+    name, left to right, side by side and equally wide (see *paneSpecs()*):
+    eg, a rule's "antecedent" and "consequent"; a query's (or a Rep Plus
+    box's) single "contains" area.
     '''
     x1, y1, x2, y2 = self.fullBoundingBox() # (a collapsed window's contents are still in it)
     top = y1 + self.bannerHeight()
-    mo = self.modelObject
-    for kind, (left, right) in (("RULE", ("antecedent", "consequent")), ("DEFINITION", ("definiendum", "definiens")),
-                                ("REQUIREMENT", ("condition", "required"))):
-      if mo is not None and mo.isa(getattr(mo.model, kind)):
-        mid = (x1 + x2) / 2
-        return {left: [x1, top, mid, y2], right: [mid, top, x2, y2]}
-    return {"contains": [x1, top, x2, y2]}
+    specs = self.paneSpecs()
+    n = len(specs)
+    width = (x2 - x1) / n
+    return {name: [x1 + i * width, top, x2 if i == n - 1 else x1 + (i + 1) * width, y2] for i, (name, _, _) in enumerate(specs)}
 
   def paneAt(self, pt) -> str|None:
     '''
@@ -760,27 +837,88 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         return name
     return None
 
-  def containmentOf(self, obj) -> list:
+  def paneContents(self) -> list[tuple[str|None, Relation, GraphObject]]:
     '''
-    The model relations by which this context contains *obj* (a model object).
+    What this context window holds, pane by pane (see *paneSpecs()*): (the
+    pane, the relation that holds it, it). In a box that tiles its parts (eg:
+    a rule), what each part contains is in the part's pane -- the part itself
+    isn't drawn -- and what the box holds directly is in the first pane of its
+    relation's SN type (as files written before parts had it: rule
+    -antecedent-> ?x), or, for a plain "contains", in whichever pane it's in
+    (None). In any other box, everything it holds by "contains" (or an SN
+    subtype of it) is in its one pane, "contains": parts too, as boxes in it.
+
+    Remembered until the view's structure, or the model's relations, change.
     '''
     mo = self.modelObject
-    if mo is None or obj is None:
-      return []
+    key = (self.view.__dict__.get("_structureVersion", 0), isaGeneration(), id(mo), mo is not None and mo.tilesParts())
+    cached = self.__dict__.get("_paneContentsCache")
+    if cached is not None and cached[0] == key:
+      return cached[1]
+    ret:list[tuple[str|None, Relation, GraphObject]] = []
+    if mo is not None:
+      contains = mo.model.CONTAINS
+      specs = self.paneSpecs()
+      held = lambda box: [(r, r.localDst) for r, _ in box._getOutgoing(lambda r: r.isIndividual() and r.isa(contains))
+                          if r.localSrc is box and r.localDst is not None and r.localDst is not box]
+      if len(specs) == 1 and specs[0][0] == "contains":
+        ret = [("contains", r, d) for r, d in held(mo)]
+      else:
+        shown = {id(part): name for name, _, part in specs if part is not None}
+        for name, _, part in specs:
+          if part is not None:
+            ret += [(name, r, d) for r, d in held(part)]
+        for r, d in held(mo):
+          if id(d) in shown and r.isPartRelation():
+            continue # (the part: its pane shows it)
+          pane = next((name for name, t, _ in specs if r.isa(t)), None) if not r.getParents() == [contains] else None
+          ret.append((pane, r, d))
+    self.__dict__["_paneContentsCache"] = (key, ret)
+    return ret
+
+  def paneOfRelation(self, r:Relation) -> str|None:
+    '''
+    :param r: One of this context window's containments (see *paneContents()*).
+    :returns: The pane it puts what it holds in, or None if that's whichever
+      it's in (or *r* isn't one of them).
+    '''
+    return next((pane for pane, x, _ in self.paneContents() if x is r), None)
+
+  def paneHolder(self, pane:str) -> tuple[GraphObject|None, GraphObject, GraphObject|None]:
+    '''
+    What holds what's put in *pane* (see *paneSpecs()*): (the box -- this
+    window's own, or the part the pane shows; None if it's a part still to be
+    made --, the SN type of relation to hold it by, and the SN type of the
+    part's relation: to make the part by, if it's still to be made).
+    '''
+    mo = self.modelObject
+    assert mo is not None
     contains = mo.model.CONTAINS
-    return [r for r, _ in mo._getOutgoing(lambda r: r.isIndividual() and r.isa(contains) and r.localDst is obj)]
+    for name, typ, part in self.paneSpecs():
+      if name == pane:
+        if name == "contains" and part is None and typ is contains:
+          return mo, contains, None
+        return part, contains, typ
+    return mo, contains, None
+
+  def containmentOf(self, obj) -> list:
+    '''
+    The model relations by which this context holds *obj* (a model object):
+    directly, or in a part it tiles (see *paneContents()*).
+    '''
+    if obj is None or self.modelObject is None:
+      return []
+    return [r for _, r, d in self.paneContents() if d is obj]
 
   def windowContents(self) -> list[VObject]:
     '''
-    The view objects this context contains that sit inside its window.
+    The view objects this context holds (see *paneContents()*) that sit inside its window.
     '''
-    mo = self.modelObject
-    if mo is None or not self.isContextWindow():
+    if self.modelObject is None or not self.isContextWindow():
       return []
-    contains = mo.model.CONTAINS
     ret:list[VObject] = []
-    for r, _ in mo._getOutgoing(lambda r: r.isIndividual() and r.isa(contains)):
-      vo = self.view.findViewObjectForGraphObject(r.localDst) if r.localDst is not None else None
+    for _, _, d in self.paneContents():
+      vo = self.view.findViewObjectForGraphObject(d)
       if vo is not None and vo is not self and vo not in ret and vo._isConnected() and self.paneAt(vo.centerPt()) is not None:
         ret.append(vo)
     return ret
@@ -872,10 +1010,14 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       # object a variable, which changes what a context window uses: see containmentHomes()) forget
       # what the whole view has worked out too. Not everything for every change: one change can reach
       # hundreds of objects (eg: a type's look, told to all its instances), each drawn in turn.
-      if any(t[0] in ("mod individual", "mod supers") or (t[0] in ("new attribute", "mod attribute", "del attribute") and t[1][0] == "name") for t in topics):
+      retiled = any(t[0] in ("new attribute", "mod attribute", "del attribute", "mod inherited attribute") and t[1][0] == GraphObject.TILE_PARTS
+                    for t in topics) # (its parts are now its panes, or boxes of their own: see paneSpecs())
+      if retiled or any(t[0] in ("mod individual", "mod supers") or (t[0] in ("new attribute", "mod attribute", "del attribute") and t[1][0] == "name") for t in topics):
         self.view.structureChanged()
       else:
         self._forgetRemembered()
+      if retiled:
+        self._retiled()
       vChanged = childrenChanged = False
       for topic in topics:
         topicName = topic[0]
@@ -925,6 +1067,57 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
             vo._forgetRemembered()
             vo.view.freshPaint()
             vo.draw()
+
+  def _retiled(self) -> None:
+    '''
+    Its box was switched between drawing its parts as its panes and as boxes
+    of their own (see *GraphObject.tilesParts()*): show or hide the parts'
+    view objects (see *isTiledPart()*), and so what's to or from them.
+    '''
+    mo = self.modelObject
+    if not isinstance(mo, Node) or self.canvas is None:
+      return
+    for part in mo.parts():
+      for vo in self.view.viewObjectsFor(part):
+        if vo._isConnected():
+          vo._forgetRemembered()
+          vo._applyHidden()
+          vo.view.freshPaint()
+          vo.draw()
+
+  def setTiled(self, tiled:bool) -> None:
+    '''
+    Draw this box's parts (see *Node.parts()*) as its panes, side by side
+    (*tiled*), or each as a box of its own inside it, where its pane was --
+    one undo. (See *GraphObject.tilesParts()*: it's the box's "vis/tileParts"
+    attribute.)
+    '''
+    mo = self.modelObject
+    if not isinstance(mo, Node) or tiled == mo.tilesParts():
+      return
+    places:list[tuple[VObject, list[float]]] = []
+    if not tiled: # (each part's box where its pane is, a little in from its edges: its title bar where the pane's label was)
+      panes = self.panes()
+      for name, _, part in self.paneSpecs():
+        if part is None or name not in panes:
+          continue
+        x1, y1, x2, y2 = panes[name]
+        vo = self.view.findViewObjectForGraphObject(part) or self.view.makeViewObjectForGraphObject(part, atPoint=(x1 + 4, y1 + 2))
+        places.append((vo, [x1 + 4, y1 + 2, x2 - 4, y2 - 4]))
+    from util.commandParser import CompositeCommandMgr
+    from sn.view.graphics.viewCommands import _Refresh
+    refresh = lambda: (self.view.structureChanged(), self._retiled()) # (before the view tidies up: see _Refresh)
+    with CompositeCommandMgr(self.view.context) as mgr:
+      mgr._addCommand(_Refresh(refresh)) # (for an undo: after the attribute's put back)
+      if dict.__contains__(mo, GraphObject.TILE_PARTS) and any(p.tilesParts() for p in mo.getParents()) == tiled:
+        self.view.context.delete_attribute(mo, GraphObject.TILE_PARTS) # (back to its SN type's)
+      else:
+        self.view.context.set_attribute(mo, GraphObject.TILE_PARTS, tiled)
+      for vo, box in places:
+        self.view.context.resize(vo, box[0], box[1], box[2], box[3])
+      mgr._addCommand(_Refresh(refresh))
+    self.view.freshPaint()
+    self.draw()
 
   def validate(self) -> list[str]:
     '''
@@ -1684,6 +1877,11 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
                        command=lambda: self.view.context.set_attribute(mo, GraphObject.DISABLED, not disabled))
     if self.isContextWindow():
       menu.add_command(label="gather", command=lambda: self.view.gatherIntoWindow(self))
+      if isinstance(mo, Node) and (mo.partRelations() or mo.partTypes()):
+        tiled = mo.tilesParts()
+        menu.add_command(label="show parts as boxes" if tiled else "show parts as panes",
+                         state=tk.NORMAL if self.view.isModelEditor() and mo.model is self.view.model else tk.DISABLED,
+                         command=lambda: self.setTiled(not tiled))
     if isinstance(self.decorators.get("text"), WrappingText):
       menu.add_command(label="fit to text", command=self.fitToText,
                        state=tk.NORMAL if self.userSized else tk.DISABLED)
@@ -2107,7 +2305,12 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         return False
       other = rel.localDst if rel.localSrc is mo else rel.localSrc
       return not (other is not None and self.view.isFiltered(other)) and filter(self, rel)
-    return removeDuplicateObjects([r for r, _ in mo._getIncoming(filtr=ok)] + [r for r, _ in mo._getOutgoing(filtr=ok)])
+    ret = [r for r, _ in mo._getIncoming(filtr=ok)] + [r for r, _ in mo._getOutgoing(filtr=ok)]
+    if isinstance(mo, Node) and mo.isCollection() and mo.tilesParts(): # (its parts are its panes: what they hold is its own)
+      contains = mo.model.CONTAINS
+      for part in mo.parts():
+        ret += [r for r, _ in part._getOutgoing(filtr=lambda r: r.isIndividual() and r.isa(contains) and ok(r))]
+    return removeDuplicateObjects(ret)
 
   def expandByRelation(self) -> None:
     '''

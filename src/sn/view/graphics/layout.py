@@ -994,7 +994,10 @@ def windowsOutOfTheWay(view, targets:dict[VObject, tuple[float, float]], gap:flo
   what's arranged, and off everything else (other windows too), so nothing
   ends up in a window it doesn't belong in, and a window's contents stay in
   it. (A layout moves things without carrying: see *LayoutMoves*.) Windows
-  inside another window, and what *targets* moves itself, are left be.
+  inside another window, and what *targets* moves itself, are left be. So
+  is a node the layout leaves where it is (eg: a type only a rule's box is
+  linked to) -- unless what it arranges would land on it: then it's moved
+  out of the way too, so no label is put on it.
 
   :param view: A view.
   :type view: SNGView
@@ -1002,10 +1005,14 @@ def windowsOutOfTheWay(view, targets:dict[VObject, tuple[float, float]], gap:flo
   :param gap: The clearance.
   :returns: Where the windows moved, and what they carry, go (their top left).
   '''
-  windows = [w for w in view.contextWindows() if not w.isHidden() and w not in targets]
-  if not windows or not targets:
+  if not targets:
     return {}
   homes = view.containmentHomes()
+  windows = [w for w in view.contextWindows() if not w.isHidden() and w not in targets]
+  windows += [vo for vo in view.values() if isinstance(vo, VObject) and not isinstance(vo, VRelation) and vo not in targets
+              and vo._isConnected() and not vo.isHidden() and not vo.isContextWindow() and vo not in homes] # (left alone: see above)
+  if not windows:
+    return {}
   arranged:list[list[float]] = []
   for vo, (x, y) in targets.items():
     if vo in homes or (not isinstance(vo, VRelation) and vo.isContextWindow()): # (what moves with a window)
@@ -1019,7 +1026,7 @@ def windowsOutOfTheWay(view, targets:dict[VObject, tuple[float, float]], gap:flo
                   key=lambda w: (w.boundingBox()[1], w.boundingBox()[0]))
   if not moving:
     return {}
-  carried = {w: [vo for vo in w.carriedContents() if vo not in targets] for w in moving}
+  carried = {w: [vo for vo in w.carriedContents() if vo not in targets] if w.isContextWindow() else [] for w in moving}
   skip = {id(vo) for w in moving for vo in [w, *carried[w]]} | {id(vo) for vo in targets}
   floats = lambda vo: isinstance(vo, VRelation) and vo.floating()
   others = [list(vo.boundingBox()) for vo in view.values()

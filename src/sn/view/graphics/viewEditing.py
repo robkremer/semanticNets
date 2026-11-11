@@ -35,7 +35,7 @@ from sn.model.constraints import WHERE
 from sn.model.model import Node, Relation, SN_URL, IsaIndividual, GraphObject, Model
 from typing import Optional, cast, Any, Callable, Iterable, TYPE_CHECKING
 from util.attributeEditor import applyEditAttrsBox
-from sn.view.graphics.vobjects import VObject
+from sn.view.graphics.vobjects import VObject, partShownByItsBox
 from sn.view.graphics.vrelations import VRelation
 from sn.view.graphics.layout import Direction
 from util.commandParser import CompositeCommandMgr
@@ -79,7 +79,7 @@ class EditingMixin(ViewBase):
       with CompositeCommandMgr(self.context) as mgr:
         new(t, name="", individual=individual, type=not individual) # type: ignore[arg-type]
         if mgr.commands and win.modelObject is not None:
-          mgr._addCommand(_ContainCreated(self.model, self._paneType(pane), win.modelObject, mgr.commands[-1]))
+          mgr._addCommand(self._containCommand(win, pane, creator=mgr.commands[-1]))
     def typesMenu(individual:bool, ptype:type) -> tk.Menu:
       ret = tk.Menu(self.canvas)
       # this model's types, then its super-models' (nearest first), then sn's
@@ -603,6 +603,11 @@ class EditingMixin(ViewBase):
           r.draw()
       except Exception:
         logger.exception(f"_attachDanglingEnds(): attaching {r} to {vo}:")
+    if isinstance(mo, Node) and mo.isCollection() and mo.tilesParts(): # (its parts, shown already, are its panes now: see VObject.isTiledPart())
+      for part in mo.parts():
+        for pvo in self.viewObjectsFor(part):
+          if pvo._isConnected():
+            pvo._applyHidden()
 
   SHOW_ALL_MAX = 2000
   '''The most objects *showAllModel()* shows (by default: see the "gui/ShowAllMax"
@@ -652,7 +657,7 @@ class EditingMixin(ViewBase):
     self.__dict__["_nextGridPoint"] = nextPoint
     try:
       for mnode in self.model.values():
-        if self.isFiltered(mnode):
+        if self.isFiltered(mnode) or partShownByItsBox(mnode):
           continue
         vObj = self.findViewObjectForGraphObject(mnode)
         if vObj is None:

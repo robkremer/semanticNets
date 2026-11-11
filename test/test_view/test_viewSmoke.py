@@ -53,7 +53,7 @@ import tkinter as tk
 import sn
 from util import terminal
 from util.utils import fixURL
-from sn.model.model import Model, Relation, IsaIndividual
+from sn.model.model import Model, Node, Relation, IsaIndividual
 from util.commandParser import CompositeCommandMgr
 
 class Test(unittest.TestCase):
@@ -1312,6 +1312,95 @@ class Test(unittest.TestCase):
     self.assertNotEqual(vb.containmentOf(rule.modelObject), [])
     self.assertTrue(box.isMember(rule.modelObject) and box.isMember(alice.modelObject))
 
+  def dropInto(self, vo, w, pane):
+    'Drag *vo* into context window *w*\'s *pane* (one undo), as a drop there does.'
+    from util.commandParser import CompositeCommandMgr
+    v = self.view
+    x1, y1, x2, y2 = w.panes()[pane]
+    bb = list(vo.boundingBox())
+    old = {vo: vo.centerPt()}
+    x, y = (x1 + x2) / 2 - (bb[2] - bb[0]) / 2, y2 - (bb[3] - bb[1]) - 8
+    vo.moveTo(x, y, adjustPos=False)
+    with CompositeCommandMgr(v.context):
+      v.context.move(vo, x, y, _oldPos=bb, _drag=True)
+      v._updateContainment(old)
+    self.pump()
+
+  def test0898partsArePanes(self):
+    '''
+    A rule's parts (plain contexts it holds by antecedent and consequent) are
+    its panes: not drawn themselves. Something dropped in a pane goes in
+    that part -- made then, for a rule that has none yet (and taken away
+    again by an undo). A second antecedent is a pane of its own.
+    '''
+    v, m = self.view, self.model
+    uncle = self.vo("uncle rule")
+    rule = uncle.modelObject
+    self.assertEqual([p.name for p in rule.parts()], ["antecedent", "consequent"]) # (the example, converted as it was read)
+    self.assertEqual(list(uncle.panes()), ["antecedent", "consequent"])
+    for part in rule.parts():
+      pvo = v.findViewObjectForGraphObject(part)
+      self.assertTrue(pvo is None or (pvo.isTiledPart() and pvo.isHidden()), part.name)
+    self.assertNotIn("antecedent", {w.modelObject.name for w in v.contextWindows()})
+    x = next(o for o in rule.parts(m.ANTECEDENT)[0].getMembers() if o.name == "?x")
+    self.assertEqual(uncle.containmentOf(x), [next(r for r in x._incoming if r.localSrc is rule.parts(m.ANTECEDENT)[0])])
+    # a new rule: its panes, before it has parts; a drop makes the part
+    new = v.context.new_node("rule", name="new rule", individual=True)
+    self.pump()
+    nw = self.vo("new rule")
+    big = list(nw.boundingBox())
+    nw.boundingBox([big[0], big[1], big[0] + 400, big[1] + 260]); v.freshPaint(); nw.draw()
+    self.assertEqual([(n, p) for n, _, p in nw.paneSpecs()], [("antecedent", None), ("consequent", None)])
+    alice = self.vo("alice")
+    self.dropInto(alice, nw, "consequent")
+    [cons] = new.parts(m.CONSEQUENT)
+    self.assertTrue(cons.isMember(alice.modelObject))
+    self.assertEqual(nw.paneOfRelation(nw.containmentOf(alice.modelObject)[0]), "consequent")
+    self.dropInto(alice, nw, "antecedent")                       # (switching panes: out of one part, into the other)
+    [ante] = new.parts(m.ANTECEDENT)
+    self.assertTrue(ante.isMember(alice.modelObject))
+    self.assertFalse(cons.isMember(alice.modelObject))
+    v.context.undo()
+    self.pump()
+    self.assertEqual(new.parts(), [cons])                        # (the antecedent made by the drop: gone again)
+    self.assertTrue(cons.isMember(alice.modelObject))
+    # a second antecedent: a pane of its own, beside the first
+    second = Node(m, [m.CONTEXT], individual=True, name="antecedent")
+    Relation(m, [m.ANTECEDENT], rule, second, individual=True)
+    self.pump()
+    self.assertEqual(list(uncle.panes()), ["antecedent", "antecedent 2", "consequent"])
+    bob = self.vo("bob")
+    self.dropInto(bob, uncle, "antecedent 2")
+    self.assertTrue(second.isMember(bob.modelObject))
+
+  def test0899partsAsBoxes(self):
+    '''
+    "show parts as boxes": a rule's parts drawn each as a box of its own, in
+    the rule's box where its pane was, carrying what's in it; and back.
+    '''
+    v, m = self.view, self.model
+    uncle = self.vo("uncle rule")
+    rule = uncle.modelObject
+    v.gatherIntoWindow(uncle)
+    self.pump()
+    ante, cons = rule.parts()
+    x = v.findViewObjectForGraphObject(next(o for o in ante.getMembers() if o.name == "?x"))
+    uncle.setTiled(False)
+    self.pump()
+    self.assertFalse(rule.tilesParts())
+    self.assertEqual(list(uncle.panes()), ["contains"])
+    va = v.findViewObjectForGraphObject(ante)
+    self.assertFalse(va.isHidden())
+    self.assertIn(va, v.contextWindows())
+    self.assertIs(v.containmentHomes()[va][0], uncle)            # (the part's box is in the rule's)
+    self.assertIs(v.containmentHomes()[x][0], va)                # (and ?x in it)
+    self.assertIsNotNone(va.paneAt(x.centerPt()))
+    v.context.undo()
+    self.pump()
+    self.assertTrue(rule.tilesParts())
+    self.assertTrue(va.isHidden())
+    self.assertEqual(list(uncle.panes()), ["antecedent", "consequent"])
+
   def test0850danglingEnds(self):
     # a relation whose own end is top, while top isn't shown, is left dangling there (see
     # VRelation._resolveEnd()): showing top attaches it (see _attachDanglingEnds())
@@ -1506,7 +1595,8 @@ class Test(unittest.TestCase):
     v.context.undo()
     self.pump()
     self.assertIn(query, v.contextWindows())
-    self.assertEqual(v.contextWindows(), [w for w in v.values() if w is not None and not isinstance(w, VRelation) and w._isConnected() and w.isContextWindow()])
+    self.assertEqual(v.contextWindows(), [w for w in v.values() if w is not None and not isinstance(w, VRelation) and w._isConnected() and w.isContextWindow()
+                                          and not w.isTiledPart()])
     self.assertFalse(r.selected())
     self.assertEqual(width(), before)
 

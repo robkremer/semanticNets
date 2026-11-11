@@ -807,7 +807,7 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
     if removed is not None:
       windows = [w for w in windows if w is not removed]
     if added is not None and not isinstance(added, VRelation) and added._isConnected() and added.isContextWindow() \
-       and not any(w is added for w in windows):
+       and not added.isTiledPart() and not any(w is added for w in windows):
       windows = [*windows, added] # (where a fresh list would have it: put back in the view, it's last in it)
     self.__dict__["_contextWindowsCache"] = (version + 1, windows)
 

@@ -141,8 +141,8 @@ def homeRect(panes:Mapping[str, Sequence[float]], pane:str) -> list[float]:
   '''
   if pane != BOTH_PANES:
     return list(panes[pane])
-  left, right = panes.values()
-  half = (right[2] - left[0]) / 6
+  left, right = list(panes.values())[-2:] # (astride the last divider: eg, between a rule's antecedents and its consequent)
+  half = (right[2] - list(panes.values())[0][0]) / 6
   return [left[2] - half, left[1], left[2] + half, left[3]]
 
 def containmentMove(panes:Mapping[str, Sequence[float]], old:Sequence[float]|None, *, target:bool, contained:bool,
@@ -206,7 +206,8 @@ class ContainmentMixin(ViewBase):
     cached = self.__dict__.get("_contextWindowsCache")
     if cached is not None and cached[0] == version:
       return cached[1]
-    ret = [w for w in self.values() if w is not None and not isinstance(w, VRelation) and w._isConnected() and w.isContextWindow()]
+    ret = [w for w in self.values() if w is not None and not isinstance(w, VRelation) and w._isConnected() and w.isContextWindow()
+           and not w.isTiledPart()] # (a pane of its box's window)
     self.__dict__["_contextWindowsCache"] = (version, ret)
     return ret
 
@@ -238,14 +239,11 @@ class ContainmentMixin(ViewBase):
       mo = w.modelObject
       if mo is None:
         continue
-      panes = w.panes()
-      for r, _ in mo._getOutgoing(lambda r: r.isIndividual() and r.isa(m.CONTAINS)):
-        d = r.localDst
-        if d is None or d is mo:
+      for pane, r, d in w.paneContents(): # (what its parts contain, if it tiles them: see VObject.paneContents())
+        if d is mo:
           continue
         byObj.setdefault(id(d), {}).setdefault(w, []).append(r)
         if isinstance(d, Relation) and d.isIndividual():
-          pane = "contains" if "contains" in panes else next((p for p in panes if r.isa(self._paneType(p))), None)
           for e in (d.localSrc, d.localDst, *d.getParents()):
             if e is not None and e is not mo and e.isVariable():
               uses.setdefault(id(e), {}).setdefault(w, set()).add(pane)
@@ -329,7 +327,7 @@ class ContainmentMixin(ViewBase):
       if w is None:
         return None
       if direct:
-        return w, homePane(w.panes(), center, says=lambda p: any(r.isa(self._paneType(p)) for r in cands[w]))
+        return w, homePane(w.panes(), center, says=lambda p: any(w.paneOfRelation(r) == p for r in cands[w]))
       return w, homePane(w.panes(), center, used=cands[w]) # (used, not contained: on the side it's used on, or astride the divider)
     ret:dict[VObject, tuple[VObject, str]] = {}
     for vo in (self.values() if among is None else among):
@@ -545,13 +543,29 @@ class ContainmentMixin(ViewBase):
     return windowAt(pt, {w: (w.boundingBox(), w.panes()) for w in self.contextWindows()
                          if w not in exclude and not w.collapsed}) # (not a collapsed one: what's dropped there couldn't be seen)
 
-  def _paneType(self, pane:str) -> Relation:
+  def _containCommand(self, w:VObject, pane:str, target:GraphObject|None=None, creator:Command|None=None) -> _ContainCreated:
     '''
-    The containment relation type a pane stands for (eg: "antecedent": antecedent).
+    A command that puts *target* (or what the queued command *creator*
+    makes) in context window *w*'s *pane* (see *VObject.paneHolder()*): a
+    "contains" relation from the window's box, or from the part the pane
+    shows -- made first (a context, held by the pane's relation type), if
+    the box has no part of that SN type yet.
     '''
-    m = self.model
-    return {"contains": m.CONTAINS, "antecedent": m.ANTECEDENT, "consequent": m.CONSEQUENT,
-            "definiendum": m.DEFINIENDUM, "definiens": m.DEFINIENS, "condition": m.CONDITION, "required": m.REQUIRED}[pane]
+    holder, typ, partType = w.paneHolder(pane)
+    owner = w.modelObject
+    assert owner is not None
+    return _ContainCreated(self.model, typ, holder, creator, target=target, # type: ignore[arg-type]
+                           partOf=(owner, partType) if holder is None else None) # type: ignore[arg-type]
+
+  def _queue(self, command:Command) -> None:
+    '''
+    Do *command* -- queued in the composite command being made, if there is one (see *CompositeCommandMgr*).
+    '''
+    capture = getattr(self.context, "_capture", None)
+    if capture is not None:
+      capture._addCommand(command)
+    else:
+      self.context.doList.do(command)
 
   def _containNewRelation(self, mgr:CompositeCommandMgr, creator:Command, typ:Relation, fromNode:VObject, toNode:VObject) -> None:
     '''
@@ -573,7 +587,7 @@ class ContainmentMixin(ViewBase):
     pt = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
     w = self._windowAt(pt)
     if w is not None:
-      mgr._addCommand(_ContainCreated(self.model, self._paneType(w.paneAt(pt)), w.modelObject, creator)) #type: ignore[arg-type]
+      mgr._addCommand(self._containCommand(w, cast(str, w.paneAt(pt)), creator=creator))
 
   def _updateContainment(self, oldCenters:dict[VObject, tuple[float,float]|None],
                          draggedAlong:Iterable[VObject]=()) -> None:
@@ -613,8 +627,7 @@ class ContainmentMixin(ViewBase):
       if not mo.isVariable() or w.modelObject is None:
         return []
       ret = []
-      for r, _ in w.modelObject._getOutgoing(lambda r: r.isIndividual() and r.isa(m.CONTAINS)):
-        d = r.localDst
+      for _, _, d in w.paneContents():
         if isinstance(d, Relation) and d.isIndividual() and any(e is mo for e in (d.localSrc, d.localDst, *d.getParents())):
           ret += [vo for vo in self.viewObjectsFor(d) if vo._isConnected()]
       return ret
@@ -637,15 +650,15 @@ class ContainmentMixin(ViewBase):
         move = containmentMove(w.panes(), old, target=w is target, contained=bool(rels),
                                windowMove=(wOld, w.centerPt()) if wOld is not None else None, endCentres=ends)
         if move == "in":
-          want = self._paneType(w.paneAt(new)) #type: ignore[arg-type]
-          if any(r.isa(want) for r in rels):
+          want = cast(str, w.paneAt(new))
+          if any(w.paneOfRelation(r) in (want, None) for r in rels): # (None: a plain "contains", in whichever pane it's in)
             continue
-          others = [r for r in rels if any(r.isa(t) for t in (m.ANTECEDENT, m.CONSEQUENT, m.DEFINIENDUM, m.DEFINIENS, m.CONDITION, m.REQUIRED))]
-          if len(others) > 1: # in both panes: leave it be
+          others = [r for r in rels if w.paneOfRelation(r) not in (want, None)]
+          if len(others) > 1: # in more than one pane: leave it be
             continue
           for r in others:    # switched panes
             self.context.remove(r)
-          self.context.new_relation([want], individual=True, source=w.modelObject, destination=mo, model=self.model)
+          self._queue(self._containCommand(w, want, target=mo))
           changed = True
         elif move == "out":
           users = usedBy(w, mo)
