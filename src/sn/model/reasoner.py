@@ -22,7 +22,9 @@ A reasoner engine subclasses :py:class:`Reasoner` (see
   ``link(R,S,D)``             individual, non-isa relation R with both endpoints
   ``prop(T,P)``               relation type T is tagged with P (reflexive,
                               irreflexive, symmetric, asymmetric, transitive)
-  ``member(C,M)``             Collection membership
+  ``member(C,M)``             M is a member of box C: a collection (of any Python
+                              class) that doesn't quote what it contains (see
+                              GraphObject.isCollection(), quotesContents())
   ``attr(O,K,V)``             effective non-"vis/" scalar attributes
   ``lattr(O,K)``              O has attribute K locally
   ``card(T,Dir,Min,Max)``     relation type T's cardinality: each source (Dir
@@ -809,7 +811,7 @@ def unusedVariables(objects:list[GraphObject]) -> list[GraphObject]:
       pending.append(x)
   for c in objects:
     try:
-      if not (isinstance(c, Node) and c.isa(c.model.CONTEXT)): # (as GraphObject.isPatternElement(): an individual context or not)
+      if not (isinstance(c, Node) and c.isa(c.model.COLLECTION) and c.quotesContents()): # (as GraphObject.isPatternElement(): an individual context or not)
         continue
       for _r, e in c._getOutgoing(lambda r: r.isIndividual() and r.isa(c.model.CONTAINS)):
         use(e)
@@ -1606,8 +1608,8 @@ class Reasoner(ABC):
         out.append(("parent", (obj, obj)))
       if isinstance(obj, Collection):
         out.append(("collection", (obj,)))
-        if type(obj) is Collection: # AllModelCollection would just list the model
-          out += [("member", (obj, ref(m))) for m in obj.getMembers()]
+      if obj.isCollection() and not obj.quotesContents(): # (a box of facts, whatever its Python class: not AllModelCollection,
+        out += [("member", (obj, ref(m))) for m in obj.getMembers()] # which would just list the model; nor a rule's patterns)
       if isinstance(obj, Relation):
         out += self._relationFacts(obj, ref)
       for key in obj: # local and inherited keys

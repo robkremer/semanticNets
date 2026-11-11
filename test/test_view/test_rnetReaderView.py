@@ -1,7 +1,9 @@
 '''
 The rnetReader plugin's view and front end: *view.showNet()* puts each node
 where CNet drew it, the size it was (scaled by *view.SCALE*), with its
-relations between them, each label on its line; *view.convert()* makes the
+relations between them, each label on its line -- a box (a node of an
+enclosure type) as a window, the size it was, that carries what's in it
+when it's moved; *view.convert()* makes the
 model and view files, opens the view, and asks before replacing them; the
 saved view opens again as it was. The dialog's model and view follow the
 net file (in the folder they were last made in, if it's given), until
@@ -31,18 +33,20 @@ from sn.plugins import importBundled
 
 NET = "﻿" + "\r".join(l.replace("|", "\t") for l in (
   "|C|9|FFFFE1||40",
-  "T|2",
+  "T|3",
   "2|0|Arial|9|1|0|000000|FFFFFF|000000|008A00|0|0|0||Concept",
   "0|0|Arial|11|0|20|000000|FFFFFF|000080|000080|0|0|0||Title",
+  "3|0|Arial|9|1|8200|000000|FFFFFF|000000|B10000|0|0|0||frame",
   "A|2",
   "1|0|0|0|1|0|000000|000000|000000|000000|Includes",
   "0|0|0|0|1|1|00A000|00A000|00A000|00A000|Excludes symmetric",
   "M|1", "693804|FFCD7D|Asserted",
-  "N|4|0|-1",
+  "N|5|0|-1",
   "0|81|10|20|19|19|A|",
   "0|0|200|20|19|19|B|",
   "0|0|100|150|19|19||",
   "1|0|10|200|120|14|A title|",
+  "2|0|0|0|240|60|a box|", # (holding A and B)
   "L|3|0",
   "0|1|0",
   "2|0|1",
@@ -121,7 +125,7 @@ class TestNetView(unittest.TestCase):
     return [vo for vo in view.values() if isinstance(vo, VRelation) and vo._isConnected() and not vo.isHidden()]
 
   def test_showNet(self):
-    'Each node where CNet drew it, its size, kept; the relations between them, each label on its line; no types, no group.'
+    'Each node where CNet drew it, its size, kept; the relations between them, each label on its line; no types.'
     from sn.view.graphics.sngView import SNGView
     built = self.reader.buildModel(self.rnet.parse(str(self.rnetPath)), str(self.folder / "net.snm"))
     v = SNGView(fixURL(built.model.url, ".snv", replaceExt=True, mode="w")[0], model=built.model)
@@ -130,9 +134,10 @@ class TestNetView(unittest.TestCase):
     v.context.visibility("system objects", "hide")
     self.netView.showNet(v, built)
     shown = self.shown(v)
-    self.assertEqual(set(shown), {"A", "B", "", "A title"})
+    self.assertEqual(set(shown), {"A", "B", "", "A title", "a box"})
     s, m = self.netView.SCALE, self.netView.MARGIN
-    for name, (x, y, w, h) in {"A": (10, 20, 19, 19), "": (100, 150, 19, 19), "A title": (10, 200, 120, 14)}.items():
+    for name, (x, y, w, h) in {"A": (10, 20, 19, 19), "": (100, 150, 19, 19), "A title": (10, 200, 120, 14),
+                               "a box": (0, 0, 240, 60)}.items():
       box, cnet = shown[name].boundingBox(), [int(m + x * s), int(m + y * s), int(m + (x + w) * s), int(m + (y + h) * s)]
       self.assertEqual(box[:2], cnet[:2], name)
       self.assertTrue(all(c <= b <= c + 2 for b, c in zip(box[2:], cnet[2:])), f"{name}: {box} {cnet}") # (or a little bigger, if its text needs it)
@@ -142,6 +147,17 @@ class TestNetView(unittest.TestCase):
     for r in rels:
       (ax, ay), (bx, by), (cx, cy) = r.src.centerPt(), r.dst.centerPt(), r.centerPt()
       self.assertLess(abs((bx - ax) * (cy - ay) - (by - ay) * (cx - ax)) / max(1.0, ((bx - ax) ** 2 + (by - ay) ** 2) ** 0.5), 3.0) # (on the line)
+    # the box: a window holding A and B (its "contains" arcs aren't drawn), that carries them when it's moved
+    box = shown["a box"]
+    self.assertTrue(box.isContextWindow())
+    self.assertEqual(sorted(str(vo.modelObject.name) for vo in box.carriedContents()), ["A", "B", "Includes"]) # (A -> B too: its ends are in it)
+    self.assertTrue(all(box.paneAt(shown[n].centerPt()) is not None for n in ("A", "B")))
+    (ax, ay), bb = shown["A"].centerPt(), box.boundingBox()
+    v.context.move(box, bb[0] + 50, bb[1] + 400, _oldPos=list(bb))
+    self.app.update()
+    nx, ny = shown["A"].centerPt()
+    self.assertAlmostEqual(nx, ax + 50, delta=1); self.assertAlmostEqual(ny, ay + 400, delta=1)
+    self.assertTrue(all(box.paneAt(shown[n].centerPt()) is not None for n in ("A", "B")))
 
   def test_convert(self):
     'The files are made, the view opened; made again, it asks first -- and does nothing if told not to.'
@@ -153,15 +169,15 @@ class TestNetView(unittest.TestCase):
       built, v = made
       self.assertFalse(ask.called)
     self.assertTrue(os.path.isfile(model) and os.path.isfile(view))
-    self.assertEqual(len(self.shown(v)), 4)
-    self.assertEqual(len(built.groups), 1)
+    self.assertEqual(len(self.shown(v)), 5)
+    self.assertEqual(len(built.boxes), 1)
+    self.assertIn("1 groups", built.report()) # (not made)
     with mock.patch.object(self.netView.messagebox, "askokcancel", return_value=False) as ask:
       self.assertIsNone(self.netView.convert(self.app, str(self.rnetPath), model, view))
       self.assertTrue(ask.called)
 
   def test_reopened(self):
-    'The saved view opens again with the nodes where they were, and the group\'s members.'
-    from sn.model.model import Collection
+    'The saved view opens again with the nodes where they were, and the box\'s members.'
     model, view = str(self.folder / "net.snm"), str(self.folder / "net.snv")
     with mock.patch("tkinter.Toplevel.deiconify"): # (not shown)
       built, v = self.netView.convert(self.app, str(self.rnetPath), model, view)
@@ -178,8 +194,9 @@ class TestNetView(unittest.TestCase):
     self.assertEqual({name: vo.boundingBox() for name, vo in self.shown(v2).items()}, boxes)
     self.assertEqual(len(self.relations(v2)), 3)
     m = v2.model
-    group, = (o for o in m.values() if isinstance(o, Collection) and o.model is m and o.isIndividual())
-    self.assertEqual(sorted(str(x.name) for x in group.getMembers()), ["", "A", "B"])
+    box, = (o for o in m.values() if o is not None and o.model is m and o.isCollection())
+    self.assertEqual(sorted(str(x.name) for x in box.getMembers()), ["A", "B"])
+    self.assertTrue(self.shown(v2)["a box"].isContextWindow())
 
 class TestDialog(unittest.TestCase):
 

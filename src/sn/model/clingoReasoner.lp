@@ -23,7 +23,7 @@
 %   link(R,S,D).              individual, non-isa relation R with both endpoints
 %   prop(T,P).                relation type T is tagged with P (reflexive,
 %                             irreflexive, symmetric, asymmetric, transitive)
-%   member(C,M).              Collection membership
+%   member(C,M).              M is a member of box C (a collection that doesn't quote what it contains)
 %   pattern(X).               X is a pattern element (see GraphObject.isPatternElement())
 %   var_kind(X,K).            X is a variable over K: individual, type or any (see
 %                             GraphObject.variableKind() and sn.model.names)

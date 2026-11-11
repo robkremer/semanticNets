@@ -682,7 +682,11 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     self.view.applyVisibility()
 
   WINDOW_MIN = (160, 100)
-  "The smallest a context window may be (view units)."
+  "The smallest a context window may be made by hand, or drawn when it's first a window (view units)."
+  SIZED_WINDOW_MIN = (40, 30)
+  '''The smallest a context window sized some other way (*userSized*: eg, a
+  box from a Rep Plus net, as CNet drew it) is drawn: room for its title bar
+  and a little more (view units).'''
   WINDOW_DEFAULT = (320, 200)
   "A context window's size when it's first drawn (as a window)."
   BANNER = 18
@@ -698,9 +702,11 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
 
   def isContextWindow(self) -> bool:
     '''
-    True iff this is drawn as a window: an individual context -- a rule,
-    query, ... (not the context/rule/query types themselves). See
-    *decorators.ContextFrame*.
+    True iff this is drawn as a window (a box that carries what it contains):
+    an individual collection -- of the SN type collection or one of its SN
+    subtypes: context, rule, query, a Rep Plus box, ... (not the SN types
+    themselves) -- whatever its Python class (see *GraphObject.isCollection()*).
+    See *decorators.ContextFrame*.
     '''
     mo = self.modelObject
     try:
@@ -714,7 +720,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       cached = self.__dict__.get("_contextWindowCache")
       if cached is not None and cached[0] == key:
         return cached[1]
-      ret = mo.isa(mo.model.CONTEXT)
+      ret = mo.isCollection()
       self.__dict__["_contextWindowCache"] = (key, ret)
       return ret
     except Exception: # (eg: during construction)
@@ -732,8 +738,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     containment relation they stand for: a rule's "antecedent" (left) and
     "consequent" (right); a definition's "definiendum" (left: the term
     defined) and "definiens" (right: its meaning); a requirement's
-    "condition" (left) and "required" (right); any other context's single
-    "contains" area.
+    "condition" (left) and "required" (right); any other collection's single
+    "contains" area (eg: a query's, or a Rep Plus box's).
     '''
     x1, y1, x2, y2 = self.fullBoundingBox() # (a collapsed window's contents are still in it)
     top = y1 + self.bannerHeight()
@@ -1667,7 +1673,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       menu.add_command(label="reason silently" + count, command=lambda: self.view.reasonSilently(about=about))
       menu.add_command(label="retract" + count, command=lambda: self.view.retractReasoning(about),
                        state=tk.NORMAL if self.view.reasoning is not None else tk.DISABLED)
-    if mo is not None and mo.isa(mo.model.CONTEXT) and mo is not mo.model.CONTEXT:
+    if mo is not None and mo.isa(mo.model.CONTEXT) and mo is not mo.model.CONTEXT and mo.quotesContents(): # (not a box of facts)
       menu.add_command(label="answer query", command=self.answerQuery)
     if mo is not None and mo.isIndividual() and (mo.isa(mo.model.RULE) or mo.isa(mo.model.DEFINITION)):
       menu.add_command(label="show conclusions", command=self.showConclusions)
@@ -1818,16 +1824,18 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       return
     else: 
       self._drawVersion = self.view._drawVersion
-    # a window is at least WINDOW_MIN (eg: when first drawn, or from an older view)
+    # a window is at least WINDOW_MIN (eg: when first drawn, or from an older view) -- or, if it was sized
+    # some other way (eg: as CNet drew a Rep Plus box), SIZED_WINDOW_MIN
     if not fast and self.isContextWindow():
       x1, y1, x2, y2 = self.boundingBox()
+      mw, mh = self.SIZED_WINDOW_MIN if self.userSized else self.WINDOW_MIN
       if self.collapsed: # (just the title bar -- eg: as saved)
-        if y2 - y1 != self.bannerHeight() or x2 - x1 < self.WINDOW_MIN[0]:
-          self.boundingBox([x1, y1, x1 + max(x2 - x1, self.WINDOW_MIN[0]), y1 + self.bannerHeight()])
-      elif x2 - x1 < self.WINDOW_MIN[0] and y2 - y1 < self.WINDOW_MIN[1]: # (never been a window: eg: new)
+        if y2 - y1 != self.bannerHeight() or x2 - x1 < mw:
+          self.boundingBox([x1, y1, x1 + max(x2 - x1, mw), y1 + self.bannerHeight()])
+      elif not self.userSized and x2 - x1 < mw and y2 - y1 < mh: # (never been a window: eg: new)
         self.boundingBox([x1, y1, x1 + self.WINDOW_DEFAULT[0], y1 + self.WINDOW_DEFAULT[1]])
-      elif x2 - x1 < self.WINDOW_MIN[0] or y2 - y1 < self.WINDOW_MIN[1]:
-        self.boundingBox([x1, y1, x1 + max(x2 - x1, self.WINDOW_MIN[0]), y1 + max(y2 - y1, self.WINDOW_MIN[1])])
+      elif x2 - x1 < mw or y2 - y1 < mh:
+        self.boundingBox([x1, y1, x1 + max(x2 - x1, mw), y1 + max(y2 - y1, mh)])
     # size the box to its text first, so the shape is drawn at the new size -- for the shape it'll be
     # drawn as (the room for the text depends on it): eg: its type's "vis/shape", when it's first drawn
     text = self.decorators.get("text")

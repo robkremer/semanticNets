@@ -26,7 +26,7 @@ Created on Sep 28, 2026
 '''
 import unittest
 from pathlib import Path
-from sn.model.model import Model, Node, Relation, IsaIndividual
+from sn.model.model import Model, GraphObject, Node, Relation, IsaIndividual
 from sn.model.clingoReasoner import ClingoReasoner
 
 
@@ -71,8 +71,10 @@ class Test(unittest.TestCase):
   def test0100systemTypes(self):
     m = self.m
     self.assertTrue(m.RULE.isa(m.CONTEXT))
+    self.assertTrue(m.CONTEXT.isa(m.COLLECTION)) # every context is a collection: a box
+    self.assertEqual([p.name for p in m.CONTEXT.getParents()], ["collection"])
     self.assertTrue(m.ANTECEDENT.isa(m.CONTAINS) and m.CONSEQUENT.isa(m.CONTAINS))
-    self.assertIs(m.CONTAINS.domain, m.CONTEXT)
+    self.assertIs(m.CONTAINS.domain, m.COLLECTION) # (any collection holds its members by "contains")
     self.assertIs(m.ANTECEDENT.domain, m.RULE)
     self.assertIs(m.CONSEQUENT.range, m.TOP)
 
@@ -82,6 +84,42 @@ class Test(unittest.TestCase):
       self.assertTrue(o.isPatternElement(), o)
     for o in (self.fred, self.mary, self.real, self.rule, self.person, self.parent, isaLink(self.fred), *self.containers):
       self.assertFalse(o.isPatternElement(), o)
+
+  def test0250quotingBySNType(self):
+    '''
+    Whether what a box contains is quoted comes from its SN type: a context's
+    (eg: a rule's) contents are patterns; a plain collection's are facts, and
+    so are those of an SN subtype of context that says it doesn't quote (eg:
+    a Rep Plus box) -- or of one box that says so itself.
+    '''
+    Path("temp_context_boxes.xml").unlink(missing_ok=True)
+    m = Model("temp_context_boxes.xml") # (its own model: the facts mustn't disturb the other tests)
+    person = Node(m, [m.NODE], name="person")
+    parent = Relation(m, [m.RELATION], person, person, name="parent")
+    a, b = (Node(m, [person], individual=True, name=n) for n in "ab")
+    rule = Node(m, [m.RULE], individual=True, name="rule")
+    self.assertTrue(rule.quotesContents())
+    self.assertFalse(m.COLLECTION.quotesContents())
+    self.assertTrue(m.CONTEXT.quotesContents() and m.QUERY.quotesContents())
+    box = Node(m, [m.COLLECTION], individual=True, name="box")
+    plainContext = Node(m, [m.CONTEXT], individual=True, name="plain context")
+    repBox = Node(m, [m.CONTEXT], name="rep box"); repBox[GraphObject.QUOTED] = False
+    inRepBox = Node(m, [repBox], individual=True, name="a rep box")
+    quotingBox = Node(m, [m.COLLECTION], individual=True, name="quoting box"); quotingBox[GraphObject.QUOTED] = True
+    facts = {c: Relation(m, [parent], a, b, individual=True) for c in (rule, box, plainContext, inRepBox, quotingBox)}
+    for c, f in facts.items():
+      self.assertTrue(c.isCollection(), c)
+      Relation(m, [m.CONTAINS if c is not rule else m.ANTECEDENT], c, f, individual=True)
+    self.assertFalse(facts[box].isPatternElement())
+    self.assertFalse(facts[inRepBox].isPatternElement())
+    self.assertTrue(facts[plainContext].isPatternElement())
+    self.assertTrue(facts[quotingBox].isPatternElement())
+    self.assertTrue(facts[rule].isPatternElement())
+    self.assertFalse(m.COLLECTION.isCollection()) # (a type: not a box)
+    self.assertFalse(a.isCollection())
+    self.assertEqual(a.getRelatedTo(parent), [b]) # (from the facts in the box and the Rep Plus box)
+    facts[box]._disconnect(); facts[inRepBox]._disconnect()
+    self.assertEqual(a.getRelatedTo(parent), []) # (only the patterns are left)
 
   def test0300getRelatedTo(self):
     self.assertEqual(self.fred.getRelatedTo(self.parent), [self.mary])  # not ?z

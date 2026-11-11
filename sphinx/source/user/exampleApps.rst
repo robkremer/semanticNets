@@ -287,7 +287,10 @@ What's in the net becomes:
   *Note*, ...) becomes a type of the same name, with its shape and colours:
   the second of its four colours is its fill, the third its text's, and the
   fourth its outline. One that's just its text (a title, a note) has no
-  outline or fill. A grid's node is a file folder.
+  outline or fill. A grid's node is a file folder. A type with Rep Plus's
+  enclosure shape (*construct*, *frame*, *rules*, *cases*, ...) becomes a
+  subtype of *context* that doesn't quote what it contains (see
+  :doc:`contexts`): its nodes are boxes of facts.
 - **Link types**: each of the net's link types (*Includes*, *Excludes*,
   *Coexcludes symmetric*, *Prefer*, ...) becomes a relation type of the same
   name, drawn as CNet draws it, with relation marks (see :doc:`viewing`):
@@ -308,9 +311,17 @@ What's in the net becomes:
 - **Links**: each link is a relation of its type (a link of several types,
   drawn as one line in CNet, a relation of each). Any numbers it carries (eg:
   a weight) are its ``values`` attribute.
-- **Groups**: each group of nodes (a panel of the net) is a collection,
-  *group 1*, *group 2*, ..., whose members are its nodes and the groups in
-  it. (Collections aren't drawn in views.)
+- **Boxes**: a node of an enclosure type is drawn as a window, the size CNet
+  drew it, and contains (by *contains* relations) the nodes inside it -- each
+  in the smallest box it's in, so boxes can be nested. As in CNet, dragging
+  a box carries what's in it.
+- **Constructs**: the poles in a *construct* box (the nodes it contains)
+  exclude each other, as CNet's construct macro says, unless an includes
+  link (or a chain of them) joins them. Each such pair gets a *construct
+  excludes* relation, a subtype of the net's own symmetric exclusion, faded
+  as derived links are: hide them, or take them out, by that type.
+- **Groups** aren't made: in Rep Plus they're only a way to select and drag
+  nodes together, and mean nothing.
 
 The terminal pane says what was made, and anything in the file that didn't
 fit (eg: a link to a node that isn't there).

@@ -27,6 +27,27 @@ To make one, use **model | new instance of Node** on the background menu and
 choose *query*, *rule*, *definition*, *constraint* or *requirement* (or a
 subtype of one of them).
 
+Collections: boxes of facts
+---------------------------
+
+Every context is a **collection**: the SN type *context* is a subtype of the
+SN type *collection*. A collection holds its members by *contains* relations,
+and is drawn as a window, as a context is. The difference is what the
+contents mean: what a context contains is **quoted** -- a pattern, not facts
+-- while what a plain collection contains is facts like any others, which
+the reasoner reasons on. A collection is just a box that keeps things
+together (eg: a Rep Plus net's boxes: see :doc:`exampleApps`).
+
+Whether a box quotes what it contains is its **quoted** attribute: false on
+the SN type *collection*, true on *context* (and so on *rule*, *query*,
+...). Your own subtypes can set it either way -- eg: a subtype of *context*
+whose boxes hold facts (as the Rep Plus net reader makes) -- and so can a
+single box.
+
+To make a plain collection, choose *collection* from **model | new instance
+of Node**. It has one pane, like a query, and any window can go into it
+(eg: a "rules" box holding rules).
+
 Context windows
 ---------------
 
@@ -87,8 +108,9 @@ Putting things into a window
   then drawn).
 
 Windows can be nested: an object dropped where windows overlap goes into the
-innermost one. A window goes only into a plain context, though: one dropped on
-a rule, definition or requirement isn't put in it, but pushed off it.
+innermost one. A window goes only into a one-pane window (a plain context, a
+query, a constraint or a collection), though: one dropped on a rule,
+definition or requirement isn't put in it, but pushed off it.
 
 A window holds only what its context contains -- and the relations between
 things it holds (eg: a pattern relation's isa link to its type variable),

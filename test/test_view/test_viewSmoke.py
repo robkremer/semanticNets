@@ -1268,6 +1268,50 @@ class Test(unittest.TestCase):
     x1, y1, x2, y2 = vx.boundingBox()
     self.assertLess(x2 - x1, vx.WINDOW_MIN[0]) # (as big as its text again)
 
+  def test0897collectionIsABox(self):
+    '''
+    A plain collection (an individual of the SN type collection) is drawn as a
+    box with one pane, like a query: it carries what it contains when it's
+    moved, and a rule can go in it. What it contains is a fact, not a pattern.
+    '''
+    from util.commandParser import CompositeCommandMgr
+    v, m = self.view, self.model
+    box = v.context.new_node("collection", name="box", individual=True)
+    self.pump()
+    vb = self.vo("box")
+    self.assertTrue(vb.isContextWindow())
+    self.assertIn("frame", vb.decorators)
+    self.assertEqual(list(vb.panes()), ["contains"])
+    alice = self.vo("alice")
+    v.context.new_relation("contains", individual=True, source=box, destination=alice.modelObject)
+    self.pump()
+    v.gatherIntoWindow(vb)
+    self.pump()
+    self.assertIsNotNone(vb.paneAt(alice.centerPt()))
+    self.assertIn(alice, vb.carriedContents())
+    (ax, ay), bb = alice.centerPt(), vb.boundingBox()
+    v.context.move(vb, bb[0] + 300, bb[1] + 40, _oldPos=list(bb))
+    self.pump()
+    nx, ny = alice.centerPt()
+    self.assertAlmostEqual(nx - ax, 300, delta=1); self.assertAlmostEqual(ny - ay, 40, delta=1)
+    self.assertIsNotNone(vb.paneAt(alice.centerPt()))
+    # a rule dropped in it goes in it (it's a one-pane box)
+    rule = self.vo("uncle rule")
+    rb = vb.boundingBox()
+    big = rule.boundingBox()
+    vb.boundingBox([rb[0], rb[1], rb[0] + (big[2] - big[0]) + 200, rb[1] + (big[3] - big[1]) + 200])
+    v.freshPaint(); vb.draw()
+    old = {rule: rule.centerPt()}
+    px1, py1, px2, py2 = vb.panes()["contains"]
+    x, y = px2 - (big[2] - big[0]) - 10, py2 - (big[3] - big[1]) - 10
+    rule.moveTo(x, y, adjustPos=False)
+    with CompositeCommandMgr(v.context):
+      v.context.move(rule, x, y, _oldPos=list(big), _drag=True)
+      v._updateContainment(old)
+    self.pump()
+    self.assertNotEqual(vb.containmentOf(rule.modelObject), [])
+    self.assertTrue(box.isMember(rule.modelObject) and box.isMember(alice.modelObject))
+
   def test0850danglingEnds(self):
     # a relation whose own end is top, while top isn't shown, is left dangling there (see
     # VRelation._resolveEnd()): showing top attaches it (see _attachDanglingEnds())

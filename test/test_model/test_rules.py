@@ -124,6 +124,24 @@ class TestRules(unittest.TestCase):
     self.assertIn(("bob", "alice"), self.pairs(res.inferred, self.likes)) # (drawn as an inferred relation)
     self.assertEqual([v for v in res.violations if v.code.startswith("rule")], [])
 
+  def test0105factsInBoxes(self):
+    '''
+    A fact in a plain collection (a box: eg, from a Rep Plus net) is reasoned
+    on like any other; one in a context isn't: a context quotes what it
+    contains (see GraphObject.quotesContents()).
+    '''
+    m = self.m
+    self.likes["mirrored"] = True
+    box = Node(m, [m.COLLECTION], individual=True, name="box")
+    context = Node(m, [m.CONTEXT], individual=True, name="context")
+    box.addMember(self.rel(self.likes, self.p["alice"], self.p["bob"]))
+    context.addMember(self.rel(self.likes, self.p["carol"], self.p["dave"]))
+    self.symmetryRule("mirrored")
+    res = self.reason()
+    self.assertIn(("bob", "alice"), self.pairs(res.inferred, self.likes))
+    self.assertNotIn(("dave", "carol"), self.pairs(res.holds, self.likes))
+    self.assertNotIn(("carol", "dave"), self.pairs(res.holds, self.likes))
+
   def test0110symmetryNeedsTheTag(self):
     self.rel(self.likes, self.p["alice"], self.p["bob"]) # likes isn't "mirrored"
     self.symmetryRule("mirrored")

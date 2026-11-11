@@ -685,14 +685,17 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
       *getRelatedTo()* etc. leave it out. That is:
 
       - a variable (see *isVariable()*), or
-      - a relation contained by a context -- the target of a relation that isa
-        "contains" (eg: a rule's antecedent or consequent) -- or
+      - a relation contained by a collection that quotes what it contains (see
+        *quotesContents()*: a context, eg: a rule, query or constraint) -- the
+        target of a relation that isa "contains" (eg: a rule's antecedent or
+        consequent) -- or
       - a relation with a pattern element at either end (eg: ?x -parent-> ?y,
         or ?x's isa link).
 
       The "contains" relations themselves are real ("this rule contains that"),
       unless contained in turn. Constants in a pattern (eg: fred) are real too:
-      they're just what its relations connect.
+      they're just what its relations connect. So is what a plain collection
+      contains (eg: a Rep Plus box): it's a box of facts, not of patterns.
     '''
     if self.isVariable():
       return True
@@ -705,7 +708,7 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
     contains = getattr(self.model, "CONTAINS", None)
     if contains is not None:
       for r in self._incoming:
-        if r.dst is self and r.isIndividual() and r.isa(contains): # contained by a context
+        if r.dst is self and r.isIndividual() and r.isa(contains) and (r.src is None or r.src.quotesContents()): # contained by a context
           return True
       if self.isa(contains): # a containment relation itself is real
         return False
@@ -924,6 +927,47 @@ class GraphObject(AGObject["Model", "Relation"], SNAttributedObject, ErrorReport
 
   DISABLED = "disabled"
   "The attribute that switches a context (a rule, definition, constraint, ...) off: see *isDisabled()*."
+
+  QUOTED = "quoted"
+  "The attribute that says whether what a collection contains is quoted: see *quotesContents()*."
+
+  def isCollection(self) -> bool:
+    '''
+    :returns: True iff this is an individual of the SN type collection, or one
+      of its SN subtypes (eg: context, rule, query, a Rep Plus box), whatever
+      its Python class (a rule is of Python class *Node*): a box that holds its
+      members by "contains" relations (see *Node.getMembers()*). Not a model's
+      "all objects" collection (see *AllModelCollection*).
+    '''
+    if not isinstance(self, Node) or isinstance(self, AllModelCollection) or not self.isIndividual():
+      return False
+    collection = getattr(self.model, "COLLECTION", None)
+    try:
+      return collection is not None and self.isa(collection)
+    except Exception: # (eg: half-built)
+      return False
+
+  def quotesContents(self) -> bool:
+    '''
+    :returns: True iff what this collection contains is quoted (see
+      *isPatternElement()*): patterns, as in a rule, query or constraint, not
+      statements about the world. That's its "quoted" attribute (its own, or
+      inherited from its SN type: true for the SN type context and its SN
+      subtypes, false for a plain collection, eg: a Rep Plus box). Something
+      without the attribute (not a collection, but at the source of a
+      "contains" relation all the same) is taken to quote, as every container
+      did before collections were boxes too.
+    '''
+    try:
+      value = self.get(self.QUOTED, True)
+    except Exception:
+      return True
+    if value is None or value is NOVALUE:
+      return True
+    try:
+      return bool(coerceValue(bool, value))
+    except ValueError:
+      return True
 
   def isDisabled(self) -> bool:
     '''
@@ -1427,6 +1471,31 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     from sn.model.constraints import migrateConstraints
     for msg in migrateConstraints(self):
       logger.warning(f'{self.name}: {msg}')
+    self._migrateMemberLists()
+
+  def _migrateMemberLists(self) -> None:
+    '''
+    Make the members of collections read from a file written while they kept
+    them in a list of their own (see *Collection.getInstantiationInfo()*)
+    into "contains" relations, as every collection's are now.
+    '''
+    converted = 0
+    for obj in list(self._db.values()):
+      old = obj.__dict__.pop("_oldMembers", None) if obj is not None else None
+      if not old:
+        continue
+      for m in old:
+        try:
+          if not obj.isMember(m):
+            obj.addMember(m)
+        except Exception as ex:
+          obj.assertToStatusReport(False, f'Its member "{getattr(m, "name", m)}" couldn\'t be kept: {ex}', "W")
+      converted += 1
+    if converted:
+      logger.warning(f'{self.name}: {converted} collection{"s" if converted > 1 else ""} kept {"their" if converted > 1 else "its"} '
+                     'members in a list of their own: they\'re "contains" relations now (it\'s marked changed: save it '
+                     'to keep it so).')
+      self.setDirty()
 
   @override
   @classmethod
@@ -1794,75 +1863,122 @@ class Node(GraphObject):
       if self is self.model.NODE:
         return [self.model.TOP]
       return [self.model.NODE]
+
+  # ---- Membership: for an individual of the SN type collection or one of its SN subtypes (eg: a rule) -----------
+
+  def _memberRelations(self, member:GraphObject|None=None) -> list[Relation]:
+    '''
+    :returns: Its "contains" relations (of the SN type contains, or one of its
+      SN subtypes: eg, antecedent): to *member*, if it's given.
+    '''
+    contains = getattr(self.model, "CONTAINS", None)
+    if contains is None:
+      return []
+    return [r for r, _ in self._getOutgoing(lambda r: r.localSrc is self and r.isIndividual() and r.isa(contains)
+                                            and (member is None or r.localDst is member))]
+
+  def addMember(self, member:GraphObject, relationType:Relation|None=None) -> Relation|None:
+    '''
+    Make *member* one of this collection's members (if it isn't already): by
+    a "contains" relation from this collection to it (see *isCollection()*).
+
+    :param relationType: The SN type of that relation: contains (the default),
+      or one of its SN subtypes (eg: a rule's antecedent).
+    :returns: The relation made, or None if it was a member already (by
+      a relation of that SN type).
+    :raises TypeError: If this isn't a collection, or *relationType* isn't
+      (an SN subtype of) contains.
+    '''
+    if not self.isCollection():
+      raise TypeError(f'"{self.name}" isn\'t a collection (an individual of the SN type collection, or one of its SN '
+                      'subtypes): it can\'t have members.')
+    typ = relationType or self.model.CONTAINS
+    if not typ.isa(self.model.CONTAINS):
+      raise TypeError(f'A member\'s relation must be "contains" or one of its SN subtypes, not "{typ.name}".')
+    if any(r.isa(typ) for r in self._memberRelations(member)):
+      return None
+    return Relation(self.model, [typ], self, member, individual=True)
+
+  def removeMember(self, member:GraphObject) -> None:
+    '''
+    Take *member* out of this collection: remove its "contains" relations to it.
+
+    :raises ValueError: If it isn't a member.
+    '''
+    rels = self._memberRelations(member)
+    if not rels:
+      raise ValueError(f'"{getattr(member, "name", member)}" isn\'t a member of "{self.name}".')
+    for r in rels:
+      if r._isConnected():
+        r._disconnect()
+
+  def getMembers(self) -> Iterator[GraphObject]:
+    '''
+    Its members -- what its "contains" relations (and those of their SN
+    subtypes: eg, a rule's antecedent) lead to -- each once, in the order they
+    were added. None if it isn't a collection.
+    '''
+    seen:set[int] = set()
+    for r in self._memberRelations():
+      m = r.localDst
+      if m is not None and id(m) not in seen:
+        seen.add(id(m))
+        yield m
+
+  def isMember(self, obj:GraphObject) -> bool:
+    '''
+    Whether *obj* is one of its members (see *getMembers()*).
+    '''
+    return bool(self._memberRelations(obj))
+
+  def countMembers(self) -> int:
+    '''
+    How many members it has (see *getMembers()*).
+    '''
+    return sum(1 for _ in self.getMembers())
     
     
 class Collection(Node):
+  '''
+  An object of the Python class used for individuals made of the SN type
+  collection (and its SN subtypes that aren't contexts: their individuals
+  are of Python class *Node*). What makes something a collection is its SN
+  type (see *GraphObject.isCollection()*), not its Python class: its members
+  are held by "contains" relations, for every collection alike (see
+  *Node.getMembers()*).
+  '''
   
   def __init__(self, db:Model, parents:Iterable[GraphObject]=[], members:Iterable[GraphObject]=[], individual:bool=False, name:Optional[str]=None):
     '''
     A collection in *db*, of types *parents*, holding *members* (see *GraphObject.__init__()*).
     '''
     super().__init__(db, parents, individual=individual, name=name)
-    self.members:list[GraphObject] = list(members)
-    
-  def addMember(self, member:GraphObject):
-    '''
-    Add *member* (if it isn't already a member).
-    '''
-    if member not in self.members:
-      self.members.append(member)
-      self.setDirty()
-      
-  def removeMember(self, member:GraphObject):
-    '''
-    Remove *member* (a ValueError if it isn't one).
-    '''
-    self.members.remove(member)
-    self.setDirty()
-    
-  def getMembers(self) -> Iterator[GraphObject]:
-    '''
-    The members, in the order they were added.
-    '''
-    for member in self.members:
-      yield member
-
-  def isMember(self, obj:GraphObject) -> bool:
-    '''
-    Whether *obj* is a member.
-    '''
-    return obj in self.members
-  
-  def countMembers(self) -> int:
-    '''
-    How many members there are.
-    '''
-    return len(self.members)
+    for m in members:
+      self.addMember(m)
 
   @classmethod
   @override
   def getInstantiationInfo(cls) -> InstantiationInfo:
     '''
-    As a node's, and its members: references to them (eg: "#12", or
-    "http://.../ontology.snm#256"), in order, set once everything in the
-    file is made. (Files written before collections kept their members
-    have none: the members are left empty.) A member that's been taken out
-    of its model (eg: deleted) isn't written; one that can't be found when
-    it's read is reported, and left out.
+    As a node's. (Its members are its "contains" relations, saved like any
+    others. Files written while collections kept their members in a list of
+    their own have it as "members": references to them, eg "#12", or
+    "http://.../ontology.snm#256". They're kept until the whole model's read,
+    then made into "contains" relations -- see *Model._migrate()*. One that
+    can't be found is reported, and left out.)
     '''
-    def live(m:GraphObject) -> bool:
-      db = getattr(m, "db", None)
-      return db is not None and db._db.get(m._id) is m
     def setMembers(slf:Collection, refs:list[str]|None) -> None:
-      slf.members = []
+      found:list[GraphObject] = []
       for ref in refs or ():
         try:
           obj = GORef.eval(ref, slf.db)
           assert isinstance(obj, GraphObject), f"it isn't an object of a model (it's a {type(obj).__name__})"
-          slf.members.append(obj)
+          found.append(obj)
         except Exception as ex:
           slf.assertToStatusReport(False, f'Its member {ref} couldn\'t be found: '
                                    f'{ex if isinstance(ex, AssertionError) else unresolvedReason(ref, ex)}.', "W")
+      if found:
+        slf.__dict__["_oldMembers"] = found
     ret = Node.getInstantiationInfo()
     return InstantiationInfo(
             cls,
@@ -1870,9 +1986,7 @@ class Collection(Node):
             conKWArgs=ret.conKWArgs,
             postconSetters=ret.postconSetters,
             finalSetters=ret.finalSetters +
-              [PropertyInfo("members", list,
-                            lambda slf: [GORef.formatForURL(m, slf.db) for m in cast(Collection, slf).members if live(m)], #type: ignore[attr-defined]
-                            setMembers, optional=True)]) #type: ignore[arg-type]
+              [PropertyInfo("members", list, lambda slf: None, setMembers, optional=True, omitIfNone=True)]) #type: ignore[arg-type]
 
   def getParents(self)->list[GraphObject]:
     '''
@@ -1919,14 +2033,14 @@ class AllModelCollection(Collection, PRDbContainer):
     super().__init__(model, [Model.getDB("$sn").COLLECTION], individual=True, name=model.name)
   
   @override
-  def addMember(self, member:GraphObject):
+  def addMember(self, member:GraphObject, relationType:Relation|None=None) -> Relation|None:
     '''
     Not allowed (a PermissionError): what's in the model is added to the model.
     '''
     raise PermissionError("Cannot add members to an AllModelCollection. To add an object, add it to the Model.")
       
   @override
-  def removeMember(self, member:GraphObject):
+  def removeMember(self, member:GraphObject) -> None:
     '''
     Not allowed (a PermissionError): what's in the model is removed from the model.
     '''
