@@ -46,7 +46,7 @@ Created on Aug 21, 2026
 from __future__ import annotations
 from sn import snPrefs
 import sn
-from sn.model.model import Model, Node, Relation, Collection, IsaIndividual, GraphObject
+from sn.model.model import Model, Node, Relation, Collection, AllModelCollection, IsaIndividual, GraphObject
 
 from typing import cast, override, Any, Iterable, Callable, Optional
 from util.utils import fixURL, urlExists
@@ -529,9 +529,9 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
             self._askName(modelObj, modelID)
           typ:type = type(modelObj)
           newObj:VObject|None = None
-          if typ is Collection:
+          if typ is AllModelCollection: # (the model's "all objects" collection: not drawn)
             pass
-          elif typ is Node:
+          elif typ is Node or typ is Collection: # (a collection is drawn as a box: see VObject.isContextWindow())
             # findViewObjectForGraphObject() first: a VObject for modelObj may
             # already exist even though this is the FIRST time this method is
             # hearing about it. A Relation's endpoints get resolved eagerly

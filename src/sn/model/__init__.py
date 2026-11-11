@@ -123,12 +123,14 @@ class TopModel(Model):
 
     self[0] # causes the "all model" collection to be instantiated.
 
-    # Contexts (rules, and later definitions and queries): what a context
-    # "contains" is quoted -- a pattern, not a statement about the world (see
-    # GraphObject.isPatternElement()). Added after everything above so existing
-    # ids don't change.
-    self.CONTEXT:Node = Node(self, [self.NODE], individual=False, name="context")
-    self.CONTAINS:Relation = Relation(self, [self.RELATION], self.CONTEXT, self.TOP, individual=False, name="contains")
+    # Contexts (rules, queries, definitions, constraints): collections whose
+    # contents are quoted -- patterns, not statements about the world (see
+    # GraphObject.quotesContents() and isPatternElement()). Every collection
+    # (a context or not) holds its members by "contains" relations, and is drawn
+    # as a box that carries them. Added after everything above so existing ids
+    # don't change.
+    self.CONTEXT:Node = Node(self, [self.COLLECTION], individual=False, name="context")
+    self.CONTAINS:Relation = Relation(self, [self.RELATION], self.COLLECTION, self.TOP, individual=False, name="contains")
     self.RULE:Node = Node(self, [self.CONTEXT], individual=False, name="rule")
     self.ANTECEDENT:Relation = Relation(self, [self.CONTAINS], self.RULE, self.TOP, individual=False, name="antecedent")
     self.CONSEQUENT:Relation = Relation(self, [self.CONTAINS], self.RULE, self.TOP, individual=False, name="consequent")
@@ -207,7 +209,13 @@ class TopModel(Model):
 
     self.NODE['vis/fillColor']      = "snow"
     
-    self.CONTEXT['vis/titlebarColor'] = Attribute("grey", "color", VAR_DEFAULTED, "The background color of the title bar of contexts")
+    self.COLLECTION['vis/titlebarColor'] = Attribute("grey", "color", VAR_DEFAULTED,
+      "The background color of the title bar of a box: a collection or context (eg: a rule).")
+    self.COLLECTION[GraphObject.QUOTED] = Attribute(False, bool, VAR_DEFAULTED,
+      "Whether what it contains is quoted: patterns (as in a rule, query or constraint) rather than statements "
+      "about the world, which the reasoner leaves out as facts. False for a plain collection (its contents are "
+      "facts like any others: eg, a Rep Plus box); true for a context and its subtypes (rule, query, ...).")
+    self.CONTEXT[GraphObject.QUOTED] = True
     self.CONTEXT[GraphObject.DISABLED] = Attribute(False, bool, VAR_DEFAULTED,
       "Switch it off: the reasoner ignores a disabled rule, definition, constraint or requirement (and it's "
       "drawn with a red slash through it). Eg: to try a model without it, while experimenting.")

@@ -58,7 +58,7 @@ from dataclasses import dataclass, field
 from typing import Any, Iterable
 from util.attribute import Attribute
 from util.observer import Subject
-from sn.model.model import GraphObject, Model, Node, Collection, Relation, IsaIndividual
+from sn.model.model import GraphObject, Model, Node, AllModelCollection, Relation, IsaIndividual
 
 Ref = int|GraphObject|None
 '''
@@ -181,7 +181,7 @@ def _kind(o:GraphObject) -> str|None:
     return "isa"
   if isinstance(o, Relation):
     return "relation"
-  if isinstance(o, Node) and not isinstance(o, Collection):
+  if isinstance(o, Node) and not isinstance(o, AllModelCollection): # (a collection's copy is a node of its SN types: see GraphObject.isCollection())
     return "node"
   return None
 

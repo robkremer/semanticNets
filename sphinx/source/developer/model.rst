@@ -35,7 +35,15 @@ Objects
   drawn, selected and deleted -- and are what makes an object's types.
 
 :py:class:`~sn.model.model.Collection`
-  A node with members (not currently offered in the GUI).
+  The Python class of an individual made of the SN type *collection* by the
+  command line. What makes something a collection (a box) is its SN type,
+  not its Python class: any individual of the SN type *collection* or one of
+  its SN subtypes -- *context*, *rule*, *query*, ... are subtypes -- is one
+  (:py:meth:`~sn.model.model.GraphObject.isCollection`), whatever its Python
+  class (a rule is a :py:class:`~sn.model.model.Node`). Its members are what
+  its *contains* relations lead to (:py:meth:`~sn.model.model.Node.getMembers`,
+  ``addMember()``, ...), and whether they're quoted (patterns) is its
+  *quoted* attribute (:py:meth:`~sn.model.model.GraphObject.quotesContents`).
 
 The graph structure (objects, incoming and outgoing relations) comes from
 pythonUtils' :py:mod:`util.abstractGraph`.

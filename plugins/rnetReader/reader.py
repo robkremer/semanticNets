@@ -2,10 +2,15 @@
 Make a Semantic Nets model of a Rep Plus net (see *rnet*), for *view* to
 show (see *buildModel()*):
 
-  - Each node type (section ``T``) becomes a node type (a kind of *node*) of
-    the same name, with its shape and colours (see *NODE_SHAPES* and
+  - Each node type (section ``T``) becomes a node type (an SN subtype of
+    node) of the same name, with its shape and colours (see *NODE_SHAPES* and
     *NODE_COLORS*); one that's just its text (eg: "Title", "Note") has no
-    outline or fill. A node with no type gets *UNTYPED*.
+    outline or fill. A node with no type gets *UNTYPED*. One with the
+    enclosure shape (*ENCLOSURE*: eg, "construct", "frame", "rules") becomes
+    an SN subtype of context instead, that doesn't quote what it contains (see
+    *GraphObject.quotesContents()*): its nodes are boxes of facts -- but one
+    of no size (an invisible end of links CNet draws, eg: in a drawing) is a
+    *POINT*, with its type's name in its "rnetType" attribute.
   - Each link type (section ``A``) becomes a relation type of the same name,
     drawn with its arrowheads, bars and middle symbol as relation marks (see
     *endMarks()* and *MID_MARKS*), in its colour (see *LINK_COLORS*), as a
@@ -22,9 +27,18 @@ show (see *buildModel()*):
   - Each link (section ``L``) becomes a relation of each of its types from its
     source to its destination. Any more fields it has (eg: a weight) are in its
     "values" attribute.
-  - Each group (section ``G``) becomes a collection, "group <n>" (numbered
-    from 1, as they are in the file), whose members are its nodes and the
-    groups in it.
+  - Each box (a node of an enclosure type) contains -- by "contains"
+    relations -- the nodes whose centres are inside it, and the smaller boxes
+    that are: each in the smallest box it's in (CNet lists them nowhere: it's
+    where they are).
+  - A construct box's poles (the nodes it contains) exclude each other, as
+    CNet's construct macro says, unless an includes link (or a chain of them)
+    joins them: each pair gets a relation of *CONSTRUCT_EXCLUDES*, an SN
+    subtype of the net's own symmetric exclusion, faded as derived links are
+    (see *addConstructMeaning()*).
+  - Groups (section ``G``) aren't made: in Rep Plus they're only a way to
+    select and drag nodes together, with no meaning (and they'd fight the
+    layouts).
 
 Created on Nov 11, 2026
 
@@ -55,12 +69,13 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from sn.model.model import Collection, Model, Node, Relation
+from sn.model.model import GraphObject, Model, Node, Relation
 from util.attribute import Attribute, VAR_DEFAULTED
 from .rnet import Net, NetNode, NodeType, LinkType
 
-NODE_SHAPES = {0: "Rectangle", 1: "Rectangle", 2: "Oval", 3: "RoundedRectangle"}
-"A node type's shape (*rnet.NodeType.shape*) -> its shape here (\"vis/shape\"). A grid's (\"rgrid\") is a FileFolder."
+NODE_SHAPES = {0: "Rectangle", 1: "Rectangle", 2: "Oval", 3: "Rectangle"}
+'''A node type's shape (*rnet.NodeType.shape*) -> its shape here (\"vis/shape\"). A grid's (\"rgrid\") is a
+FileFolder. An enclosure's (see *ENCLOSURE*) is a box, drawn as a window.'''
 
 NODE_COLORS = {"vis/fillColor": 1, "vis/textColor": 2, "vis/borderColor": 3}
 '''Where a node type's colours go (which of its four, from 0): the second is
@@ -96,6 +111,24 @@ LABEL = "$name${mark:+ $mark}"
 UNTYPED = "text"
 "The node type made for nodes with none (eg: text the program wrote): just its text."
 
+POINT = "point"
+"The node type made for nodes of an enclosure type that have no size: invisible ends of links (eg: in a drawing)."
+
+ENCLOSURE = 3
+'''A node type's shape (*rnet.NodeType.shape*) that's an enclosure: a box that
+holds the nodes inside it (RepNet manual, sections 3.7 and 6.2). Every node
+type of the test nets named for a box ("collection", "frame", "context",
+"construct", "cases", "rules", "Context:", "Cluster") has it.'''
+
+TITLEBAR_TINT = 0.8
+"How far a box's title bar is faded from its outline colour toward white."
+
+CONSTRUCT = "construct"
+"The name (any case; it may go on: eg, \"Construct:\") of the enclosure type whose boxes are Kelly constructs."
+
+CONSTRUCT_EXCLUDES = "construct excludes"
+"The relation type of the exclusions a construct box's poles get (see *addConstructMeaning()*)."
+
 def endMarks(shape:int, bars:int, atSource:bool) -> str:
   '''
   :param shape: The end's head (see *rnet.LinkType.head*): 0 none, 1 an arrowhead, 2 a heavy one, 3 a double one.
@@ -128,15 +161,19 @@ class Built:
   net:Net
   model:Model
   nodeTypes:dict[int, Node] = field(default_factory=dict)
-  "Each node type's place in the net -> its type (-1: *UNTYPED*, if it was needed)."
+  "Each node type's place in the net -> its type (-1: *UNTYPED*, -2: *POINT*, if they were needed)."
   linkTypes:dict[int, Relation] = field(default_factory=dict)
   "Each link type's place in the net -> its relation type."
   nodes:dict[int, Node] = field(default_factory=dict)
   "Each node's place in the net -> its individual (not the pictures and drawings)."
   relations:list[tuple[Relation, int]] = field(default_factory=list)
   "Each relation, and the place in the net of the link it's of."
-  groups:dict[int, Collection] = field(default_factory=dict)
-  "Each group's place in the net -> its collection."
+  boxes:dict[int, Node] = field(default_factory=dict)
+  "Each box's place in the net -> its individual (a node of an enclosure type: see *ENCLOSURE*)."
+  members:dict[int, list[int]] = field(default_factory=dict)
+  "Each box's place in the net -> the places of the nodes (and boxes) it contains, in order."
+  derived:list[Relation] = field(default_factory=list)
+  "The relations added for what the boxes mean (eg: a construct's poles' exclusions: see *addConstructMeaning()*)."
   skipped:list[str] = field(default_factory=list)
   "What wasn't made, and why."
 
@@ -144,8 +181,11 @@ class Built:
     '''
     :returns: What was made, in a sentence or two.
     '''
-    s = (f"{len(self.nodes)} nodes, {len(self.relations)} relations and {len(self.groups)} groups, of "
-         f"{len(self.nodeTypes)} node types and {len(self.linkTypes)} relation types")
+    contained = sum(len(v) for v in self.members.values())
+    s = (f"{len(self.nodes)} nodes ({len(self.boxes)} of them boxes, holding {contained}) and {len(self.relations)} "
+         f"relations, of {len(self.nodeTypes)} node types and {len(self.linkTypes)} relation types")
+    if self.derived:
+      s += f"; {len(self.derived)} exclusions between construct poles were added"
     marked = sum(1 for n in self.net.nodes if n.marks and n.index in self.nodes)
     if marked:
       s += f"; {marked} nodes have marks"
@@ -157,8 +197,11 @@ def makeNodeType(m:Model, t:NodeType, file:str) -> Node:
   '''
   :returns: A new node type in *m* for the net's node type *t* (see the module doc).
   '''
-  n = Node(m, [m.NODE], name=t.name or f"node type {t.index}")
-  n["vis/shape"] = "FileFolder" if t.extra == "rgrid" else NODE_SHAPES.get(t.shape, "Rectangle")
+  box = t.shape == ENCLOSURE
+  n = Node(m, [m.CONTEXT if box else m.NODE], name=t.name or f"node type {t.index}")
+  if box: # (a box of facts: see GraphObject.quotesContents())
+    n[GraphObject.QUOTED] = False
+  n["vis/shape"] = "FileFolder" if t.extra == "rgrid" else "Rectangle" if box else NODE_SHAPES.get(t.shape, "Rectangle")
   for key, i in NODE_COLORS.items():
     c = t.colors[i] if i < len(t.colors) and t.colors[i] else ""
     if key == "vis/borderColor" and not c and t.colors:
@@ -168,10 +211,15 @@ def makeNodeType(m:Model, t:NodeType, file:str) -> Node:
   if t.frameless:
     n["vis/fillColor"] = ""
     n["vis/borderColor"] = ""
+  if box:
+    outline = n.get("vis/borderColor", "")
+    if isinstance(outline, str) and outline.startswith("#"):
+      n["vis/titlebarColor"] = fade(outline, TITLEBAR_TINT)
   n["vis/label"] = LABEL
   n.setAttr("note", note(f"A node type of {file}: shape {t.shape} (variant {t.variant}), {t.font} {t.size} point, "
                          f"flags {t.flags}, colours {', '.join(c or '-' for c in t.colors)}"
-                         + (f', for "{t.extra}" files' if t.extra else "") + "."))
+                         + (f', for "{t.extra}" files' if t.extra else "")
+                         + ("; an enclosure: a box that holds the nodes inside it" if box else "") + "."))
   return n
 
 def makeUntyped(m:Model, file:str) -> Node:
@@ -183,6 +231,18 @@ def makeUntyped(m:Model, file:str) -> Node:
   n["vis/borderColor"] = ""
   n["vis/label"] = LABEL
   n.setAttr("note", note(f"The nodes of {file} that have no type (eg: text the program wrote)."))
+  return n
+
+def makePoint(m:Model, file:str) -> Node:
+  '''
+  :returns: A new *POINT* type in *m*: nothing drawn.
+  '''
+  n = Node(m, [m.NODE], name=POINT)
+  n["vis/fillColor"] = ""
+  n["vis/borderColor"] = ""
+  n["vis/label"] = LABEL
+  n.setAttr("note", note(f"The nodes of {file} of box types that have no size: invisible ends of the links CNet draws "
+                         "(eg: in a drawing). Their own types' names are their rnetType attributes."))
   return n
 
 def makeLinkType(m:Model, t:LinkType, file:str) -> Relation:
@@ -257,11 +317,15 @@ def buildModel(net:Net, modelPath:str) -> Built:
       pictures += 1
       continue
     t = b.nodeTypes.get(n.type)
-    if t is None:
-      if -1 not in b.nodeTypes:
-        b.nodeTypes[-1] = makeUntyped(m, file)
-      t = b.nodeTypes[-1]
+    point = t is not None and t.isa(m.CONTEXT) and (n.w <= 0 or n.h <= 0) # (a box of no size: an invisible end of links)
+    if t is None or point:
+      key = -2 if point else -1
+      if key not in b.nodeTypes:
+        b.nodeTypes[key] = makePoint(m, file) if point else makeUntyped(m, file)
+      t, was = b.nodeTypes[key], t
     node = Node(m, [t], individual=True, name=nodeName(n))
+    if point:
+      node["rnetType"] = str(was.name)
     if n.extra.strip():
       node["extra"] = n.extra
     markNode(node, n, net)
@@ -284,14 +348,114 @@ def buildModel(net:Net, modelPath:str) -> Built:
       b.relations.append((r, l.index))
   if missing:
     b.skipped.append(f"{missing} links to pictures, drawings or nodes that aren't there")
-  for g in net.groups:
-    b.groups[g.index] = Collection(m, [m.COLLECTION], [], individual=True, name=f"group {g.index + 1}")
-  for g in net.groups:
-    c = b.groups[g.index]
-    for i in g.nodes:
-      if i in b.nodes:
-        c.addMember(b.nodes[i])
-    for i in g.groups:
-      if i in b.groups and i != g.index:
-        c.addMember(b.groups[i])
+  if net.groups:
+    b.skipped.append(f"{len(net.groups)} groups (Rep Plus's way to drag nodes together: they mean nothing)")
+  b.boxes = {i: node for i, node in b.nodes.items() if node.isCollection()}
+  b.members = enclosed(net, set(b.boxes))
+  for i, inside in b.members.items():
+    for j in inside:
+      if j in b.nodes:
+        b.boxes[i].addMember(b.nodes[j])
+  addConstructMeaning(b)
   return b
+
+def enclosed(net:Net, boxes:set[int]) -> dict[int, list[int]]:
+  '''
+  :param boxes: The places in *net* of its boxes (its nodes of enclosure types).
+  :returns: Each box's place -> the places of the nodes it holds, in order:
+    those whose centres are inside it -- the smaller boxes too -- each in the
+    smallest box it's in (CNet lists them nowhere: it's where they are).
+  '''
+  rect = {n.index: (n.x, n.y, n.x + n.w, n.y + n.h) for n in net.nodes if n.kind == "node"}
+  area = lambda i: (rect[i][2] - rect[i][0]) * (rect[i][3] - rect[i][1])
+  ret:dict[int, list[int]] = {}
+  for n in net.nodes:
+    if n.index not in rect:
+      continue
+    cx, cy = n.x + n.w / 2, n.y + n.h / 2
+    around = [i for i in boxes if i != n.index and i in rect and area(i) > area(n.index)
+              and rect[i][0] <= cx <= rect[i][2] and rect[i][1] <= cy <= rect[i][3]]
+    if around:
+      ret.setdefault(min(around, key=area), []).append(n.index)
+  return ret
+
+def _isIncludes(t:LinkType) -> bool:
+  "Whether links of *t* are includes (ordination): a plain arrow, with no bars or other marks."
+  return t.head == 1 and t.headBars == 0 and t.tail == 0 and t.tailBars == 0 and t.mid == 0
+
+def _isSymmetricExclusion(t:LinkType) -> bool:
+  "Whether *t* is the symmetric exclusion: a line with one bar across its middle, and no arrowheads."
+  return t.mid == 1 and t.head == 0 and t.tail == 0 and t.headBars == 0 and t.tailBars == 0
+
+def addConstructMeaning(b:Built) -> None:
+  '''
+  Add what CNet's construct macro means (RepNet manual, section 3.7): the
+  poles of a construct box (the nodes it holds: see *enclosed()*) are linked
+  by mutual opposition, unless that conflicts with an ordination link -- an
+  includes link (see *_isIncludes()*), or a chain of them, from one pole to
+  the other. Each pair that's opposed, and isn't linked so already, gets a
+  relation of *CONSTRUCT_EXCLUDES* (an SN subtype of the net's symmetric
+  exclusion, or of a new one if it has none), drawn faded as CNet's derived
+  links are, and noted as added by the reader -- so it can be hidden, or
+  taken out, by its type.
+  '''
+  net, m = b.net, b.model
+  constructs = [i for i, box in b.boxes.items()
+                if any(p.name and str(p.name).strip().lower().startswith(CONSTRUCT) for p in box.getParents())]
+  if not constructs:
+    return
+  includes:dict[int, set[int]] = {}
+  excluded:set[tuple[int, int]] = set()
+  for l in net.links:
+    kinds = [net.linkTypes[t] for t in l.types if 0 <= t < len(net.linkTypes)]
+    if any(_isIncludes(t) for t in kinds):
+      includes.setdefault(l.source, set()).add(l.destination)
+    if any(_isSymmetricExclusion(t) for t in kinds):
+      excluded.add((min(l.source, l.destination), max(l.source, l.destination)))
+  def reaches(a:int, z:int) -> bool:
+    seen, todo = {a}, [a]
+    while todo:
+      for n in includes.get(todo.pop(), ()):
+        if n == z:
+          return True
+        if n not in seen:
+          seen.add(n)
+          todo.append(n)
+    return False
+  typ:Relation|None = None
+  for i in constructs:
+    poles = [j for j in b.members.get(i, []) if j not in b.boxes]
+    for x in range(len(poles)):
+      for y in range(x + 1, len(poles)):
+        p, q = poles[x], poles[y]
+        if (min(p, q), max(p, q)) in excluded or reaches(p, q) or reaches(q, p):
+          continue
+        if typ is None:
+          typ = _constructExcludes(b)
+        b.derived.append(Relation(m, [typ], b.nodes[p], b.nodes[q], individual=True))
+
+def _constructExcludes(b:Built) -> Relation:
+  '''
+  :returns: A new *CONSTRUCT_EXCLUDES* relation type in *b*'s model: an SN
+    subtype of the net's symmetric exclusion (or of a new "Excludes
+    symmetric", if it has none), faded.
+  '''
+  m = b.model
+  base = next((b.linkTypes[t.index] for t in b.net.linkTypes if _isSymmetricExclusion(t) and t.index in b.linkTypes), None)
+  if base is None:
+    base = Relation(m, [m.RELATION], None, None, name="Excludes symmetric")
+    base["vis/terminator4"] = ""
+    base["vis/midMarks"] = MID_MARKS[1]
+    base["vis/label"] = ""
+    base["vis/lineType"] = "straight"
+    base["vis/lineColor"] = "#00a000"
+    base["vis/lineFillColor"] = "#00a000"
+    base.setAttr("note", note("The symmetric exclusion (made for the exclusions between construct poles: the net has none)."))
+  ret = Relation(m, [base], None, None, name=CONSTRUCT_EXCLUDES)
+  color = base.get("vis/lineColor", "#000000")
+  if isinstance(color, str) and color.startswith("#"):
+    ret["vis/lineColor"] = fade(color)
+    ret["vis/lineFillColor"] = fade(color)
+  ret["note"] = ("Added by the Rep Plus Net Reader: the poles of a construct box exclude each other (CNet's construct "
+                 "macro), unless an includes link, or a chain of them, joins them.") # (its base's note's kind: see note())
+  return ret

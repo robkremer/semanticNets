@@ -4,8 +4,11 @@ files (9, with link types by their heads and bars; 8 and some 9s, by their
 bits; 7, with a "PS:" line; 6, with no link types and no marks), skipping the
 records of a drawing, wherever it is; and *reader.buildModel()* makes the
 node and relation types, with their looks, the nodes (and their marks), the
-relations (one of each type a link has), and the groups, as collections,
-which keep their members when the model's saved and read again.
+relations (one of each type a link has), and the boxes (nodes of an
+enclosure type: SN subtypes of context that don't quote what they contain),
+each containing the nodes inside it -- a construct's poles excluding each
+other unless an includes link joins them -- which they keep when the
+model's saved and read again. Groups aren't made: they mean nothing.
 
 The nets here are made up, small, in the files' formats.
 
@@ -16,7 +19,7 @@ Created on Nov 11, 2026
 import tempfile
 import unittest
 from pathlib import Path
-from sn.model.model import Collection, Model, Node, Relation
+from sn.model.model import Collection, GraphObject, Model, Node, Relation
 from sn.plugins import importBundled
 
 def net(*lines:str) -> str:
@@ -108,6 +111,33 @@ TRAILING_DRAWING = net(
   "R|0|-2|1|272|148",
   "L|0|0",
   "G|0",
+)
+
+BOXES = net(
+  "|C|9|FFFFFF||32",
+  "T|3",
+  "2|0|Arial|9|1|0|000000|FFFFFF|000000|000000|0|0|0||Concept",
+  "3|0|Arial|9|1|8200|000000|FFFFFF|000000|008A00|0|0|0||construct",
+  "3|0|Arial|9|1|8200|000000|FFFFFF|000000|B10000|0|0|0||rules",
+  "A|2",
+  "1|0|0|0|1|0|000000|000000|000000|000000|includes",
+  "0|0|0|0|1|1|00A000|00A000|00A000|00A000|Excludes symmetric",
+  "N|9|0|-1",
+  "2|0|0|0|300|200|client|",   # (a box, holding size and thing)
+  "1|0|10|20|200|60|size|",    # (a construct box, inside client: holding its poles)
+  "0|0|20|40|30|20|small|",
+  "0|0|60|40|30|20|medium|",
+  "0|0|100|40|30|20|large|",
+  "0|0|140|40|30|20|huge|",
+  "0|0|50|120|40|20|thing|",
+  "0|0|400|50|40|20|outside|",
+  "1025|0|500|50|0|0||",       # (a box of no size: an invisible end of links, not a box)
+  "L|3|0",
+  "3|4|0",  # medium includes large,
+  "4|5|0",  # and large huge: they're not opposed, nor are medium and huge
+  "2|3|1",  # small excludes medium already
+  "G|1",
+  "2 3 4|",
 )
 
 class TestParse(unittest.TestCase):
@@ -258,22 +288,66 @@ class TestBuild(unittest.TestCase):
                             ("C", "B", "Odd")]) # (not "Includes" twice; nor the link from the drawing)
     self.assertEqual(b.relations[3][0]["values"], "1 57.86")
     self.assertIn("1 pictures and drawings", b.report())
-    g1, g2, g3 = (b.groups[i] for i in range(3))
-    self.assertEqual([g.name for g in (g1, g2, g3)], ["group 1", "group 2", "group 3"])
-    self.assertEqual(list(g1.getMembers()), [a, nb, anon])
-    self.assertEqual(list(g2.getMembers()), [note, g1])
-    self.assertEqual(list(g3.getMembers()), [c, b.nodes[6], g2]) # (not itself)
+    self.assertIn("3 groups", b.report()) # (not made: they mean nothing)
+    self.assertFalse([o for o in b.model.values() if o is not None and o.model is b.model and o.isCollection()])
+    self.assertEqual(b.boxes, {})
+
+  def test_boxes(self):
+    '''
+    A node type with the enclosure shape is an SN subtype of context that
+    doesn't quote what it contains; each box contains the nodes inside it,
+    each in the smallest box it's in.
+    '''
+    b = self.build(BOXES, "boxes")
+    m = b.model
+    concept, construct, rules = (b.nodeTypes[i] for i in range(3))
+    self.assertFalse(concept.isa(m.CONTEXT))
+    for t in (construct, rules):
+      self.assertEqual(t.getParents(), [m.CONTEXT])
+      self.assertFalse(t.quotesContents())
+      self.assertEqual(t["vis/titlebarColor"], self.reader.fade(t["vis/borderColor"], self.reader.TITLEBAR_TINT))
+    client, size = b.nodes[0], b.nodes[1]
+    self.assertEqual(sorted(b.boxes), [0, 1])
+    self.assertEqual([x.name for x in client.getMembers()], ["size", "thing"])
+    self.assertEqual([x.name for x in size.getMembers()], ["small", "medium", "large", "huge"])
+    self.assertFalse(any(r.isPatternElement() for r, _ in b.relations)) # (a box of facts)
+    self.assertIn("2 of them boxes, holding 6", b.report())
+    point = b.nodes[8]
+    self.assertFalse(point.isCollection())
+    self.assertEqual((point.getParents()[0].name, point["rnetType"]), (self.reader.POINT, "construct"))
+
+  def test_constructMeaning(self):
+    '''
+    A construct box's poles exclude each other, unless an includes link (or a
+    chain of them) joins them, or they're linked by an exclusion already: by
+    a relation type of their own, an SN subtype of the net's symmetric
+    exclusion, faded.
+    '''
+    b = self.build(BOXES, "boxes")
+    pairs = sorted(tuple(sorted((str(r.src.name), str(r.dst.name)))) for r in b.derived)
+    self.assertEqual(pairs, [("huge", "small"), ("large", "small")])
+    typ = b.derived[0].getParents()[0]
+    self.assertEqual(typ.name, self.reader.CONSTRUCT_EXCLUDES)
+    self.assertEqual(typ.getParents(), [b.linkTypes[1]])
+    self.assertEqual(typ["vis/lineColor"], self.reader.fade("#00a000"))
+    self.assertEqual(typ["vis/midMarks"], "|") # (inherited)
+    self.assertIn("2 exclusions between construct poles", b.report())
+    self.assertEqual(self.build(V9).derived, []) # (no constructs)
 
   def test_savedAndRead(self):
-    'Saved and read again: the groups keep their members, and the marks are there.'
+    'Saved and read again: the boxes keep their members, and the marks are there.'
+    boxes = self.build(BOXES, "boxes")
+    boxes.model.save()
     b = self.build(V9)
     b.model.save()
     url = b.model.url
     Model._initCache()
+    m = Model.getDB(boxes.model.url)
+    found = {str(o.name): o for o in m.values() if o is not None and o.model is m and o.isCollection()}
+    self.assertEqual(sorted(found), ["client", "size"])
+    self.assertEqual([str(x.name) for x in found["size"].getMembers()], ["small", "medium", "large", "huge"])
+    self.assertFalse(found["size"].quotesContents())
     m = Model.getDB(url)
-    groups = {o.name: o for o in m.values() if isinstance(o, Collection) and o.model is m and o.isIndividual()}
-    self.assertEqual([str(x.name) for x in groups["group 2"].getMembers()], ["Two\nlines", "group 1"])
-    self.assertEqual([str(x.name) for x in groups["group 1"].getMembers()], ["A", "B", ""])
     marked = sorted((str(o.name), o["mark"]) for o in m.values() if isinstance(o, Node) and o.model is m and o.get("mark", None))
     self.assertEqual(marked, [("A", "T"), ("B", "T"), ("C", "F")])
     self.assertEqual(sum(1 for o in m.values() if isinstance(o, Relation) and o.model is m and o.isIndividual()

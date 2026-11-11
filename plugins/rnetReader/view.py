@@ -69,7 +69,11 @@ def showNet(view:SNGView, built:Built, scale:float=SCALE, fit:bool=False) -> Non
   Fill *view* with the net *built* was made from, as CNet drew it: each node
   where it was, the size it was (scaled by *scale*) -- or, if its text is
   bigger here, as big as that, about the same centre -- and the relations
-  between them. (Not the types, nor the groups: collections aren't shown.)
+  between them. A box (see *reader.ENCLOSURE*) is drawn as a window, the
+  size it was, holding what it contains (its "contains" relations are drawn
+  only when what they hold is outside it); and the relations added for what
+  the boxes mean (see *reader.addConstructMeaning()*) are drawn too. (Not
+  the types.)
 
   Nothing is placed meanwhile (see *SNGView.localLayout*): everything's put
   where it was.
@@ -95,7 +99,8 @@ def showNet(view:SNGView, built:Built, scale:float=SCALE, fit:bool=False) -> Non
         vo.userSized = True # (as CNet sized it: not refitted to its text)
         vo.boundingBox([int(x0), int(y0), int(x1), int(y1)])
         vo.moveTo(int(x0), int(y0), adjustPos=False)
-    relations = [view.makeViewObjectForGraphObject(r) for r, _ in built.relations]
+    containment = [r for box in built.boxes.values() for r in box._memberRelations()]
+    relations = [view.makeViewObjectForGraphObject(r) for r in [*(r for r, _ in built.relations), *built.derived, *containment]]
     view.canvas.update() # (what's put off till idle)
     for vr in relations: # (each label on its line, between its ends: not moved off anything it's on)
       vr.reposition(adjustPos=False)
