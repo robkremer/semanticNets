@@ -1061,3 +1061,120 @@ class ShadowDecorator(Decorator):
     self._erase()
     self.kwargs = None #type: ignore[assignment]
 
+
+
+SIDES = ("left", "right", "top", "bottom")
+"The sides a node's side bars can be on (see *SideBars*)."
+
+def parseSideBars(text:str) -> tuple[list[tuple[str, str]], list[str]]:
+  '''
+  :param text: Side bars (see *SideBars*): eg: "right:#000000 top:green",
+    "left". Separated by spaces or commas.
+  :returns: (side, colour) for each bar, in order ("" for no colour: the
+    default); and the items that aren't one (eg: "middle").
+  '''
+  bars:list[tuple[str, str]] = []
+  bad:list[str] = []
+  for item in text.replace(",", " ").split():
+    side, _, color = item.partition(":")
+    if side.lower() in SIDES:
+      bars.append((side.lower(), color.strip()))
+    else:
+      bad.append(item)
+  return bars, bad
+
+class SideBars(Decorator):
+  '''
+  Bars along the sides of a node, just outside it, as its "vis/sideBars"
+  attribute says: a template, as labels are (see *labels*: so it can show the
+  node's attributes, or what a hook says), whose text lists the sides --
+  left, right, top, bottom -- each with its colour after a colon, eg:
+  "right:#000000 top:green" (black if it has none). Two on one side go one
+  outside the other. Eg: Gaines's truth marks -- a vertical bar beside a node
+  for true, a horizontal one over it for false (see the rnetReader plugin).
+  Drawn, at the view's zoom, only while there are any.
+  '''
+  WIDTH = 4
+  "A bar's thickness (view units: zoomed)."
+  GAP = 3
+  "The space between a node and its bars, and between two bars on a side (view units: zoomed)."
+  COLOR = "black"
+  "A bar's colour when it's given none."
+
+  def __init__(self, owner):
+    super().__init__(owner, priority=15) # (over the shape and text: before the slash)
+    self.ids:list[int] = []
+    self._bad:set[str] = set()
+
+  def bars(self) -> list[tuple[str, str]]:
+    '''
+    :returns: The bars the owner has now: (side, colour) -- from its
+      "vis/sideBars" (see the class doc).
+    '''
+    from sn.view.graphics.labels import expand, labelLookup, TemplateError
+    owner = self.owner
+    mo = owner.modelObject
+    template = owner.cache["vis/sideBars"] if mo is not None else ""
+    if not template or not isinstance(template, str):
+      return []
+    try:
+      text = expand(template, labelLookup(mo), owner.templateCall("vis/sideBars"))
+    except TemplateError as ex:
+      self._warn(f'{mo.name}: bad vis/sideBars template: {ex}')
+      return []
+    bars, bad = parseSideBars(text)
+    if bad:
+      self._warn(f'{mo.name}: vis/sideBars: {", ".join(bad)} isn\'t a side (left, right, top or bottom, eg: "right:green")')
+    return bars
+
+  def _warn(self, message:str) -> None:
+    if message not in self._bad: # (once each: it's drawn often)
+      self._bad.add(message)
+      logger.warning(message)
+
+  @override
+  def draw(self, fast=False, **kwargs):
+    if self.deleted:
+      return
+    bars = self.bars()
+    if not bars:
+      self._erase()
+      return
+    from sn.view.graphics.connectors import zoomedWidth
+    view, canvas = self.owner.view, self.owner.canvas
+    x1, y1, x2, y2 = view.viewToWindow(self.owner.boundingBox(fast=fast))
+    w = zoomedWidth(view, self.WIDTH)
+    g = self.GAP * float(getattr(view, "_scale", 1.0) or 1.0)
+    out = {side: g for side in SIDES} # (how far out the next bar on each side goes)
+    rects = []
+    for side, color in bars:
+      d = out[side]
+      out[side] = d + w + g
+      rects.append(({"left": [x1 - d - w, y1, x1 - d, y2], "right": [x2 + d, y1, x2 + d + w, y2],
+                     "top": [x1, y1 - d - w, x2, y1 - d], "bottom": [x1, y2 + d, x2, y2 + d + w]}[side], color or self.COLOR))
+    while len(self.ids) > len(rects):
+      canvas.delete(self.ids.pop())
+    for i, (rect, color) in enumerate(rects):
+      try:
+        if i < len(self.ids):
+          canvas.coords(self.ids[i], rect)
+          canvas.itemconfigure(self.ids[i], fill=color, outline=color)
+        else:
+          self.ids.append(canvas.create_rectangle(rect, fill=color, outline=color, width=0, state="disabled",
+                                                  tags=[self.owner.tag, "sidebar"]))
+      except Exception as ex: # (eg: a colour Tk doesn't know)
+        self._warn(f'{self.owner.modelObject.name}: vis/sideBars: {type(ex).__name__}: {ex}')
+        if i < len(self.ids):
+          canvas.delete(self.ids.pop(i))
+        break
+
+  def _erase(self):
+    for i in self.ids:
+      self.owner.canvas.delete(i)
+    self.ids = []
+
+  @override
+  def delete(self):
+    if self.deleted: return
+    super().delete()
+    self._erase()

@@ -1992,6 +1992,21 @@ def withoutInferences(models:list[Model]) -> Iterator[None]:
       for o, k, a in attrs:
         dict.__setitem__(o, k, a)
 
+def _ruleOrder(models:list[Model]) -> dict[int, int]:
+  '''
+  :param models: A model and its super-models (see *materialize()*).
+  :returns: The place of each of their objects (by id) in them: the model's
+    own first, in the order they're in it, then each super-model's -- so that
+    where rules conclude different values of an attribute for an object, the
+    first rule's is the one it gets, whichever engine reasoned (eg: the KNet
+    rules model's marks: true by inclusion before true by coexclusion).
+  '''
+  ret:dict[int, int] = {}
+  for m in models:
+    for o in m.values():
+      ret.setdefault(id(o), len(ret))
+  return ret
+
 def _inferredAttributes(models:list[Model]) -> list[tuple[GraphObject, str, Attribute]]:
   '''
   :param models: Some models.
@@ -2149,7 +2164,10 @@ def materialize(model:Model, inferences:Inferences, models:list[Model], add:bool
     its super-models (*models*);
   - a node for each object the rules concluded exists (*NewObject*), of the
     types they said (or just a node), with the attributes they gave it, and
-    the relations they gave it.
+    the relations they gave it;
+  - an inferred attribute for each value the rules concluded for one of the
+    model's objects, unless it has its own -- the first rule's (in the
+    models' order: see *_ruleOrder()*), if they concluded different ones.
 
   Those already there are kept (the same objects, so the views keep them where
   they are); those no longer inferred are removed. None of this is saved,
@@ -2212,11 +2230,13 @@ def materialize(model:Model, inferences:Inferences, models:list[Model], add:bool
       for k in [k for k in dict.keys(node) if k != "name" and k not in wantNew[id(node)]]:
         del node[k]
     # the attribute values the rules concluded for the model's own objects: inferred attributes
-    # (not where the object has a value of its own -- given beats inferred)
+    # (not where the object has a value of its own -- given beats inferred; and where rules
+    # conclude different values, the first rule's -- see _ruleOrder())
     wantAttrs:dict[tuple[int, str], tuple[GraphObject, str, Any]] = {}
-    for _, x, k, v in inferences.ruleAttrs:
+    order = _ruleOrder(models)
+    for _, x, k, v in sorted(inferences.ruleAttrs, key=lambda c: order.get(id(c[0]), len(order))):
       if isinstance(x, GraphObject) and not getattr(x, "inferred", False):
-        wantAttrs[(id(x), k)] = (x, k, v)
+        wantAttrs.setdefault((id(x), k), (x, k, v))
     for o, k, a in _inferredAttributes(models):
       if (id(o), k) not in wantAttrs:
         del o[k]
