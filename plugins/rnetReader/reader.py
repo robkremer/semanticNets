@@ -20,10 +20,11 @@ show (see *buildModel()*):
     label (its line breaks and all; one with no label has no name). Its mark,
     if it has one, becomes attributes -- "mark" (T, F or TF: true, false, or
     both), "markKind" (eg: "Asserted"), and "markDerived" (if it was
-    propagated, rather than asserted) -- with "marks", the number as the file
-    has it (in hexadecimal); and if it's shown (see *rnet.NetNode.marked*), its outline is
-    thick, in the mark kind's colour, and its label says the mark (see
-    *LABEL*). Pictures and drawings aren't made (they aren't concepts).
+    inferred, rather than asserted) -- with "marks", the number as the file
+    has it (in hexadecimal), and its label says the mark (see *LABEL*). It's
+    drawn as Rep Plus draws it (see *rnet.NetNode*): filled with the mark
+    kind's background colour, and its outline in the kind's colour, if the
+    mark says so. Pictures and drawings aren't made (they aren't concepts).
   - Each link (section ``L``) becomes a relation of each of its types from its
     source to its destination. Any more fields it has (eg: a weight) are in its
     "values" attribute.
@@ -102,8 +103,9 @@ bars, as their arrows have at the head), prohibited, preferred.'''
 DERIVED_FADE = 0.5
 "How far a derived link type's colour is faded toward white (CNet draws them dashed)."
 
-MARK_WIDTH = 3
-"The width of a marked node's outline (in its mark kind's colour)."
+MARK_WIDTH = 2
+'''The width of the outline a mark draws (in its kind's colour) on a node
+whose type has none (as Rep Plus does).'''
 
 LABEL = "$name${mark:+ $mark}"
 "Each node type's label template: the name, and the mark, if there is one (see the module doc)."
@@ -286,14 +288,20 @@ def markNode(node:Node, n:NetNode, net:Net) -> None:
   if n.truth:
     node["mark"] = n.truth
   kind = net.markKinds[n.markKind] if n.markKind < len(net.markKinds) else None
-  if kind is not None and (n.truth or n.marked):
+  if kind is not None and n.marks & 0xFF:
     node["markKind"] = kind.name
   if n.derived:
     node["markDerived"] = True
-  if n.marked:
-    node["vis/borderWidth"] = MARK_WIDTH
-    if kind is not None and kind.colors and kind.colors[0]:
-      node["vis/borderColor"] = kind.colors[0]
+  if kind is None:
+    return
+  color, background = (kind.colors + ["", ""])[:2]
+  if n.filled and background:
+    node["vis/fillColor"] = background
+  if n.outlined and color:
+    frameless = not node.get("vis/borderColor", "") # (its type's: eg, a title)
+    node["vis/borderColor"] = color
+    if frameless:
+      node["vis/borderWidth"] = MARK_WIDTH
 
 def buildModel(net:Net, modelPath:str) -> Built:
   '''
