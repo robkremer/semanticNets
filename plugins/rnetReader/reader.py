@@ -22,7 +22,9 @@ protologic, so that the reasoners draw KNet's inferences):
     if any -- or of the connective's, if it has a heavy or a double
     arrowhead (see *connectiveKind()*: eg, "Conjunct includes"), whose links
     define a conjunction or a disjunction (Gaines's structural
-    connectives). One drawn backwards -- its arrow at its tail (eg: "Includes
+    connectives) -- or of *PREFER*, if it's a plain line with a ">" in
+    the middle (see *preferenceKind()*: a preference among a
+    connective's cases, for its defaults). One drawn backwards -- its arrow at its tail (eg: "Includes
     reverse") -- is drawn the other way round instead: its arrow at its
     destination, and its links from the file's destination to its source
     (see *isReversed()*), so that it means what it shows.
@@ -55,6 +57,11 @@ protologic, so that the reasoners draw KNet's inferences):
     joins them: each pair gets a relation of *CONSTRUCT_EXCLUDES*, an SN
     subtype of the net's own symmetric exclusion, faded as derived links are
     (see *addConstructMeaning()*).
+  - Nodes with the same label are one node, as KNet takes them (a net can
+    draw a node again, elsewhere, to keep its links short): each copy
+    after the first gets a relation of *SAME_LABEL*, an equivalence, to the
+    first (see *addSameLabels()*) -- unless *buildModel()* is told not to
+    (a figure of several copies of one net, side by side).
   - Groups (section ``G``) aren't made: in Rep Plus they're only a way to
     select and drag nodes together, with no meaning (and they'd fight the
     layouts).
@@ -187,6 +194,18 @@ CONSTRUCT = "construct"
 CONSTRUCT_EXCLUDES = "construct excludes"
 "The relation type of the exclusions a construct box's poles get (see *addConstructMeaning()*)."
 
+PREFER = "prefer"
+'''The preferences' relation type, in *ONTOLOGY*: links of a line with the
+preference symbol in its middle (*rnet.LinkType.mid* 6), and no arrowheads,
+are SN subtypes of it (see *preferenceKind()*).'''
+
+SAME_LABEL = "same label"
+"The relation type of the equivalences between nodes with the same label (see *addSameLabels()*)."
+
+KNET_NODE_TYPES = ("concept", "context", "disjoint", "construct", "cases", "rules", "collection")
+'''The node types (their names, in any case) of the nodes KNet reasons about:
+it leaves out the others (eg: titles, notes, grids, frames).'''
+
 def endMarks(shape:int, bars:int, atSource:bool) -> str:
   '''
   :param shape: The end's head (see *rnet.LinkType.head*): 0 none, 1 an arrowhead, 2 a heavy one, 3 a double one.
@@ -240,6 +259,15 @@ def connectiveKind(t:LinkType) -> str|None:
   ends = [(shape, bars) for shape, bars in ((t.head, t.headBars), (t.tail, t.tailBars)) if shape]
   return CONNECTIVES.get(ends[0]) if len(ends) == 1 and not t.mid else None
 
+def preferenceKind(t:LinkType) -> str|None:
+  '''
+  :returns: *PREFER*, for a link type that's a preference: a line with the
+    preference symbol in its middle (*rnet.LinkType.mid* 6), and no
+    arrowheads (eg: "Prefer", and "Prefer derived": KNet's transitive closure
+    of them, which follows anyway). None for anything else.
+  '''
+  return PREFER if t.mid == 6 and t.head == 0 and t.tail == 0 else None
+
 def isReversed(t:LinkType) -> bool:
   '''
   :returns: Whether *t* is drawn backwards: an arrowhead (or a generic one) at
@@ -259,10 +287,10 @@ def ontology(m:Model) -> Model:
 def kernelTypes(m:Model) -> dict[str, Relation]:
   '''
   :param m: A model built on *ONTOLOGY*.
-  :returns: The kernel relation types (*KERNEL*), and the connectives' (*CONNECTIVES*), by name.
+  :returns: The kernel relation types (*KERNEL*), and the connectives' (*CONNECTIVES*) and the preferences' (*PREFER*), by name.
   '''
   onto = ontology(m)
-  names = {*KERNEL, *CONNECTIVES.values()}
+  names = {*KERNEL, *CONNECTIVES.values(), PREFER}
   return {str(o.name): o for o in onto.values()
           if o.model is onto and isinstance(o, Relation) and o.isType() and str(o.name) in names}
 
@@ -398,10 +426,11 @@ def makePoint(m:Model, file:str) -> Node:
 def makeLinkType(m:Model, t:LinkType, file:str, kernel:dict[str, Relation]|None=None) -> Relation:
   '''
   :param kernel: The kernel relation types (see *kernelTypes()*): it's an SN
-    subtype of the one it is (see *connectiveKind()* and *kernelKind()*), if any.
+    subtype of the one it is (see *connectiveKind()*, *kernelKind()* and
+    *preferenceKind()*), if any.
   :returns: A new relation type in *m* for the net's link type *t* (see the module doc).
   '''
-  kind = connectiveKind(t) or kernelKind(t)
+  kind = connectiveKind(t) or kernelKind(t) or preferenceKind(t)
   parent = (kernel or {}).get(kind or "")
   r = Relation(m, [parent if parent is not None else m.RELATION], None, None, name=t.name or f"link type {t.index}")
   if isReversed(t): # (its links go the other way: see buildModel())
@@ -467,13 +496,15 @@ def markNode(node:Node, n:NetNode, net:Net) -> None:
     if frameless:
       node["vis/borderWidth"] = MARK_WIDTH
 
-def buildModel(net:Net, modelPath:str) -> Built:
+def buildModel(net:Net, modelPath:str, sameLabels:bool=True) -> Built:
   '''
   Make a model of *net* (as the module doc says), as a new model file
   *modelPath* (not saved: call its *save()*).
 
   :param net: A net (see *rnet.parse()*).
   :param modelPath: The model's file: it mustn't be open (nor, if it's there, in memory).
+  :param sameLabels: Whether nodes with the same label are the same node, as
+    KNet takes them (see *addSameLabels()*).
   :returns: What was made.
   '''
   file = os.path.basename(net.path) or "the net"
@@ -532,7 +563,62 @@ def buildModel(net:Net, modelPath:str) -> Built:
       if j in b.nodes:
         b.boxes[i].addMember(b.nodes[j])
   addConstructMeaning(b)
+  if sameLabels:
+    addSameLabels(b)
   return b
+
+def sameLabel(n:NetNode) -> str:
+  '''
+  :returns: *n*'s label as KNet compares them (see *addSameLabels()*): its
+    line breaks spaces, and no spaces at its end.
+  '''
+  return " ".join(n.label.splitlines()).rstrip()
+
+def addSameLabels(b:Built) -> None:
+  '''
+  Make the nodes with the same label (see *sameLabel()*) equivalent: KNet
+  takes them to be one node (eg: a net that shows a node in two places, to
+  keep its links short). Each after the first gets a relation of *SAME_LABEL*
+  (an SN subtype of the kernel's equivalent, faded as derived links are, and
+  noted as added by the reader) to the first. Just the nodes KNet reasons
+  about (see *KNET_NODE_TYPES*), and not those with no label. (KNet's one
+  node is a little more than equivalent ones: the defining links of each are
+  all one definition -- see sn.model.reasoner.DEFINING.)
+  '''
+  net = b.net
+  first:dict[str, int] = {}
+  typ:Relation|None = None
+  for n in net.nodes:
+    if n.kind != "node" or n.index not in b.nodes or not 0 <= n.type < len(net.nodeTypes) \
+       or net.nodeTypes[n.type].name.strip().lower() not in KNET_NODE_TYPES:
+      continue
+    label = sameLabel(n)
+    if not label:
+      continue
+    if label not in first:
+      first[label] = n.index
+      continue
+    if typ is None:
+      typ = _sameLabelType(b)
+    b.derived.append(Relation(b.model, [typ], b.nodes[n.index], b.nodes[first[label]], individual=True))
+
+def _sameLabelType(b:Built) -> Relation:
+  '''
+  :returns: A new *SAME_LABEL* relation type in *b*'s model: an SN subtype of
+    the kernel's equivalent, drawn as a faded grey line.
+  '''
+  kernel = b.kernel.get(EQUIVALENT)
+  ret = Relation(b.model, [kernel if kernel is not None else b.model.RELATION], None, None, name=SAME_LABEL)
+  ret["vis/terminator1"] = ""
+  ret["vis/terminator4"] = ""
+  ret["vis/midMarks"] = ""
+  ret["vis/label"] = ""
+  ret["vis/lineType"] = "straight"
+  ret["vis/lineColor"] = fade("#808080")
+  ret["vis/lineFillColor"] = fade("#808080")
+  ret["note"] = ("Added by the Rep Plus Net Reader: nodes with the same label are the same node (as KNet takes them), "
+                 "so they're equivalent.")
+  return ret
 
 def enclosed(net:Net, boxes:set[int]) -> dict[int, list[int]]:
   '''

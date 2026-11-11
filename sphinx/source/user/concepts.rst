@@ -142,6 +142,19 @@ one hold -- unless one of the links' ends is marked both (only by its own
 marks: not the concluded ones), which would be reasoning from a
 contradiction.
 
+With ``necessaryValue`` too, a reasoner explores: a true join none of whose
+links holds yet (a false meet none of whose links fails) has a case for each
+link that might, and a case that would give a node both marks (where it
+hadn't them already) is impossible. What every possible case concludes is
+concluded, with that value. And with ``prefer``, the name of a relation
+among the links' ends (A *prefer* B: A yields to B), and ``defaultValue``,
+the reasoner keeps the cases that make the fewest preferred ends fail, and
+what every one of those concludes is concluded with the default value (A's
+link fails while B's might hold): the defaults. Competing preferences apply
+in the order of the nodes they define: a node's ``defaultOrder`` (a number;
+lower first, none is 0), then the model's order. So far only the clingo
+engine explores.
+
 Naming relations
 ----------------
 

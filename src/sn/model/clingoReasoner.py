@@ -107,27 +107,65 @@ class ClingoReasoner(Reasoner, engine="clingo"):
 
   # ── Solving ──────────────────────────────────────────────────────────────
 
-  def _solve(self, program:str="", facts:str|None=None) -> list[clingo.Symbol]:
+  def _solve(self, program:str="", facts:str|None=None, parts:tuple[str, ...]=(), cautious:bool=False,
+             best:bool=False) -> list[clingo.Symbol]|None:
     '''
     :param facts: The model's facts, already rendered (see *_program()*) -- for
       a *program* that refers to objects by their o(N) terms, which must come
       from the same rendering. Rendered afresh if None.
+    :param parts: The rule base's other parts to ground with it (eg:
+      "explored": see *_explore()*).
+    :param cautious: What every model has (the rule base alone is stratified:
+      it has just one), or None if there's none.
+    :param best: What every optimal model has.
     '''
     messages:list[str] = []
-    ctl = clingo.Control(["--warn=none"], logger=lambda _code, msg: messages.append(msg.strip()), message_limit=10)
+    options = ["--warn=none"] + (["0", "--enum-mode=cautious"] if cautious or best else []) + (["--opt-mode=optN"] if best else [])
+    ctl = clingo.Control(options, logger=lambda _code, msg: messages.append(msg.strip()), message_limit=10)
     try:
       ctl.add("base", [], self.rules.read_text(encoding="utf-8"))
       ctl.add("base", [], self._program(self.facts()) if facts is None else facts)
       if program:
         ctl.add("base", [], program)
-      ctl.ground([("base", [])])
+      ctl.ground([("base", []), *((part, []) for part in parts)])
     except RuntimeError as ex: # (eg: a native query with a syntax error: clingo's own message says where)
       raise RuntimeError(f"The rules couldn't be compiled: {'; '.join(messages) or ex}") from ex
-    symbols:list[clingo.Symbol] = []
+    symbols:list[clingo.Symbol]|None = None if cautious or best else []
     with ctl.solve(yield_=True) as handle:
-      for m in handle: # the rule base is stratified, so exactly one model
-        symbols = list(m.symbols(shown=True))
+      for m in handle: # (the rule base alone is stratified, so exactly one model; cautiously, the last is what they all have)
+        if not best or m.optimality_proven or not m.cost:
+          symbols = list(m.symbols(shown=True))
     return symbols
+
+  def _explore(self, rules:str, facts:str, given:list[Fact], marks:list[clingo.Symbol]) -> list[tuple[Any, ...]]:
+    '''
+    Explore the cases of the defined nodes that say to (see *DEFINING*:
+    *necessaryValue*): the marks every world has, and with preferences, every
+    preferred world.
+
+    :param rules: The rules program (see *_rulesProgram()*).
+    :param facts: The model's facts, rendered (see *_program()*).
+    :param given: ... as they were (see *facts()*).
+    :param marks: What the program alone concluded (with its "marks" part):
+      world_mark0/2 and world_open0/2.
+    :returns: Rule attributes (rule, object, key, value): each mark (not one
+      the program alone concluded) with the first explored definition's tag
+      as its "rule", and its value.
+    '''
+    if not any(m.name == "world_open0" for m in marks):
+      return []
+    first = next((args for pred, args in given if pred == "def_world"), None)
+    if first is None:
+      return []
+    tag = next(args[4] for pred, args in given if pred == "def_last" and args[:2] == first[:2])
+    start = "".join(f"{m}." for m in marks if m.name == "world_mark0")
+    def found(symbols:list[clingo.Symbol]|None) -> set[tuple[GraphObject, str]]:
+      return {(self._value(m.arguments[0]), self._value(m.arguments[1])) for m in symbols or () if m.name == "world_mark"}
+    necessary = found(self._solve(rules + start, facts, ("explored",), cautious=True))
+    ret:list[tuple[Any, ...]] = [(tag, x, k, first[2]) for x, k in necessary]
+    if any(pred == "def_prefer" for pred, _ in given):
+      ret += [(tag, x, k, first[3]) for x, k in found(self._solve(rules + start, facts, ("explored", "preferred"), best=True)) - necessary]
+    return ret
 
   def _value(self, sym:clingo.Symbol) -> Any:
     '''
@@ -152,8 +190,14 @@ class ClingoReasoner(Reasoner, engine="clingo"):
   @override
   def run(self) -> Inferences:
     ret = Inferences()
-    facts = self._program(self.facts()) # (numbers the objects the rules refer to)
-    for sym in self._solve(self._rulesProgram(), facts):
+    given = self.facts()
+    facts = self._program(given) # (numbers the objects the rules refer to)
+    rules = self._rulesProgram()
+    explore = any(pred == "def_world" for pred, _ in given)
+    symbols = self._solve(rules, facts, ("marks",) if explore else ()) or []
+    if explore:
+      ret.ruleAttrs += self._explore(rules, facts, given, [s for s in symbols if s.name in ("world_mark0", "world_open0")])
+    for sym in symbols:
       args = [self._value(a) for a in sym.arguments]
       if sym.name not in ("fired", "rule_attr", "rule_isa", "rule_new", "same") and any(isinstance(a, NewObject) for a in args):
         continue # (the general results are about the model's objects: see Inferences.newObjects)

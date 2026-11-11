@@ -42,7 +42,8 @@ shows it again.) The report goes to the terminal pane, in sections:
 
 **Inferred relations**
   Relations implied by the relational properties (symmetric, transitive,
-  ...) of their types, and by nodes their links define (see
+  ...) of their types, and by nodes their links define -- and, on the
+  clingo engine, what the cases of those definitions conclude (see
   :ref:`defining-links`).
 
 **Rule conclusions**

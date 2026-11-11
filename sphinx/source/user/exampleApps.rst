@@ -277,7 +277,10 @@ The Rep Plus net reader
 *patterns.snm* and *patterns.snv*, in the folder you last made them in (the
 first time, next to the net). Change either, by typing or with
 **Choose...**: until you do, they follow the net file (and the view follows
-the model). **Go** makes them, asking first if they're there already, and
+the model). **Nodes with the same label are one node** (on unless you turn
+it off) takes them as KNet does: a net may draw a node again, elsewhere, to
+keep its links short (turn it off for a figure that's several copies of a
+net side by side, as some of Gaines's are). **Go** makes them, asking first if they're there already, and
 opens the view: the net as CNet drew it, each node where it was (half as big
 again, as the editor's text is bigger), with its links between them.
 
@@ -303,15 +306,17 @@ What's in the net becomes:
   *excludes*, *coexcludes* or *negates* (a heavy or double arrowhead is still
   an arrow), a line with one, two or three bars across its middle the
   symmetric ones, and an arrow at each end (or a plain line named so)
-  *equivalent*; and a heavy arrowhead (or a double one) a conjunction's
-  link (a disjunction's: see `Conjunctions and disjunctions`_). Generic
-  links, preferences, prohibitions and "Etc" links
-  aren't. One drawn backwards -- its arrow at its tail, eg *Includes
+  *equivalent*; a heavy arrowhead (or a double one) a conjunction's
+  link (a disjunction's: see `Conjunctions and disjunctions`_); and a plain
+  line with a ">" in its middle a preference (see `Exploring and
+  defaults`_). Generic links, prohibitions and "Etc" links aren't. One drawn backwards -- its arrow at its tail, eg *Includes
   reverse* -- is turned round: its arrow is at its destination, and its
   links go the other way, so it means what it shows.
 - **Nodes**: each node is an individual of its type, named by its label (a
   node with no label has no name). Pictures and drawings in the net are left
-  out.
+  out. Nodes with the same label (if the dialog says they're one node) are
+  joined by *same label* links, faded grey equivalences from each copy to
+  the first.
 - **Marks**: a node's mark (true, false, or both) is its ``mark`` attribute
   (``T``, ``F`` or ``TF``), with the kind of mark (``markKind``: *Asserted*,
   *Included*, *Excluded*, ...), whether it was derived (``markDerived``), and
@@ -403,9 +408,13 @@ coexcluded        blue         true: it coexcludes something false
 excluded          green        false: it excludes something true
 irrelevant        grey         false: it includes something false (Rep Plus's name)
 necessary         red          false because it's inconsistent (it excludes
-                               itself) -- or true because it coexcludes itself
+                               itself) -- or true because it coexcludes itself;
+                               or so in every case of an open connective (see
+                               `Exploring and defaults`_)
 definition        red          by a conjunction or a disjunction (see
                                `Conjunctions and disjunctions`_)
+default           purple       in every preferred case (see `Exploring and
+                               defaults`_)
 ================  ===========  ==================================================
 
 A node's menu has **Mark** ▸ **True**, **False** and **Clear** (for the
@@ -455,10 +464,34 @@ KNet says how it got every mark after the first step "Definition"; here a
 mark the connectives made is *definition*, and one the links made on from
 it is *included*, *excluded* and so on, as before.
 
-Not yet: preferences and defaults, and probes (which find more: eg, that
-what includes A and excludes "A and B" excludes B). And KNet can treat
-nodes with the same label as one node (when its script says so); the
-reader keeps them apart.
+Exploring and defaults
+~~~~~~~~~~~~~~~~~~~~~~
+
+A true disjunction none of whose disjuncts is true yet is open: one of them
+must be, but which? Each disjunct that isn't false is a case (and dually,
+each conjunct of a false conjunction that isn't true). The reasoners try
+each case, and drop one that would make a node both true and false (where
+it wasn't already): what holds in every case that's left is *necessary* --
+eg, if every disjunct is part of a false conjunction with Z, Z is false.
+
+A **Prefer** link (a plain line with a ">" in its middle) from A to B, among
+a connective's cases, says A yields to B: in a true disjunction, A is false
+while B may be true; in a false conjunction, A is true while B may be false.
+Preferences are transitive. The reasoners keep the cases that break the
+fewest preferences, and what holds in every one of those is the *default*:
+the "normal defaults" of Gaines's paper (birds fly, but penguins don't).
+When a net's preferences compete, they apply in the order of their
+connectives: a connective's ``defaultOrder`` attribute (a number: lower
+first, none is 0) puts it before the rest, as re-sorting KNet's preferences
+does.
+
+On the paper's default nets (normal defaults, Conflict States, P Q,
+Concessive conditionals, art), the reasoners make the necessary and default
+marks KNet saved. For now only the clingo engine explores: the other
+engines give the marks before it.
+
+Not yet: probes, which find more (eg, that what includes A and excludes "A
+and B" excludes B).
 
 Menus, tooltips and double-clicks from programs
 -----------------------------------------------
