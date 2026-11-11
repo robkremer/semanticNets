@@ -6,7 +6,7 @@ model of something -- a file, a program, a database -- and opens a view of it
 in the editor, where you can look round it, arrange it, ask about it and
 reason over it as you would any model. Such a program can be a **plugin**:
 it's loaded when the editor starts, and adds itself to the menu bar -- most
-often to the **Tools** menu. Two come with *Semantic Nets*, as examples:
+often to the **Tools** menu. Three come with *Semantic Nets*:
 
 **Tools | XML Reader...**
   makes a model of an XML file (see `The XML reader`_).
@@ -14,7 +14,11 @@ often to the **Tools** menu. Two come with *Semantic Nets*, as examples:
 **Tools | Python Parser...**
   makes a model of a Python program (see `The Python parser`_).
 
-Both save what they make as an ordinary model and view (``.snm`` and
+**Tools | Rep Plus Net Reader...**
+  makes a model of a net drawn in Brian Gaines's Rep Plus (CNet, KNet) (see
+  `The Rep Plus net reader`_).
+
+They all save what they make as an ordinary model and view (``.snm`` and
 ``.snv``), so you can open them again later from **File | Open...** or the
 model directory, like any other.
 
@@ -263,6 +267,53 @@ Things to try:
   they're related (eg: *inherits-from*).
 - **view | layout | arrange now | hubs**, with all the imports shown: the
   modules most imported, in the middle of their groups.
+
+The Rep Plus net reader
+-----------------------
+
+**Tools | Rep Plus Net Reader...** opens a dialog: the **net file** to read
+(a ``.rnet`` file, made by Rep Plus's CNet or KNet, in any of its versions:
+6 to 9), and the **model** and **view** to make of it -- for *patterns.rnet*,
+*patterns.snm* and *patterns.snv*, in the folder you last made them in (the
+first time, next to the net). Change either, by typing or with
+**Choose...**: until you do, they follow the net file (and the view follows
+the model). **Go** makes them, asking first if they're there already, and
+opens the view: the net as CNet drew it, each node where it was (half as big
+again, as the editor's text is bigger), with its links between them.
+
+What's in the net becomes:
+
+- **Node types**: each of the net's node types (*Concept*, *Title*,
+  *Note*, ...) becomes a type of the same name, with its shape and colours:
+  the second of its four colours is its fill, the third its text's, and the
+  fourth its outline. One that's just its text (a title, a note) has no
+  outline or fill. A grid's node is a file folder.
+- **Link types**: each of the net's link types (*Includes*, *Excludes*,
+  *Coexcludes symmetric*, *Prefer*, ...) becomes a relation type of the same
+  name, drawn as CNet draws it, with relation marks (see :doc:`viewing`):
+  its arrowheads (heavy for a conjunction, double for a disjunction), the
+  bars before them (one for an exclusion, two for a coexclusion, three for a
+  negation), and a mark in the middle of a symmetric one -- in its colour,
+  straight, with no label. A derived one's colour is faded (CNet draws it
+  dashed).
+- **Nodes**: each node is an individual of its type, named by its label (a
+  node with no label has no name). Pictures and drawings in the net are left
+  out.
+- **Marks**: a node's mark (true, false, or both) is its ``mark`` attribute
+  (``T``, ``F`` or ``TF``), with the kind of mark (``markKind``: *Asserted*,
+  *Included*, *Excluded*, ...) and whether it was derived (``markDerived``).
+  A shown mark draws the node's outline thick, in the mark kind's colour, and
+  its label adds the mark (its type's ``vis/label`` is
+  ``$name${mark:+ $mark}``).
+- **Links**: each link is a relation of its type (a link of several types,
+  drawn as one line in CNet, a relation of each). Any numbers it carries (eg:
+  a weight) are its ``values`` attribute.
+- **Groups**: each group of nodes (a panel of the net) is a collection,
+  *group 1*, *group 2*, ..., whose members are its nodes and the groups in
+  it. (Collections aren't drawn in views.)
+
+The terminal pane says what was made, and anything in the file that didn't
+fit (eg: a link to a node that isn't there).
 
 Menus, tooltips and double-clicks from programs
 -----------------------------------------------

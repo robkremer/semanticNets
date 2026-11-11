@@ -1839,6 +1839,41 @@ class Collection(Node):
     '''
     return len(self.members)
 
+  @classmethod
+  @override
+  def getInstantiationInfo(cls) -> InstantiationInfo:
+    '''
+    As a node's, and its members: references to them (eg: "#12", or
+    "http://.../ontology.snm#256"), in order, set once everything in the
+    file is made. (Files written before collections kept their members
+    have none: the members are left empty.) A member that's been taken out
+    of its model (eg: deleted) isn't written; one that can't be found when
+    it's read is reported, and left out.
+    '''
+    def live(m:GraphObject) -> bool:
+      db = getattr(m, "db", None)
+      return db is not None and db._db.get(m._id) is m
+    def setMembers(slf:Collection, refs:list[str]|None) -> None:
+      slf.members = []
+      for ref in refs or ():
+        try:
+          obj = GORef.eval(ref, slf.db)
+          assert isinstance(obj, GraphObject), f"it isn't an object of a model (it's a {type(obj).__name__})"
+          slf.members.append(obj)
+        except Exception as ex:
+          slf.assertToStatusReport(False, f'Its member {ref} couldn\'t be found: '
+                                   f'{ex if isinstance(ex, AssertionError) else unresolvedReason(ref, ex)}.', "W")
+    ret = Node.getInstantiationInfo()
+    return InstantiationInfo(
+            cls,
+            conArgs=ret.conArgs,
+            conKWArgs=ret.conKWArgs,
+            postconSetters=ret.postconSetters,
+            finalSetters=ret.finalSetters +
+              [PropertyInfo("members", list,
+                            lambda slf: [GORef.formatForURL(m, slf.db) for m in cast(Collection, slf).members if live(m)], #type: ignore[attr-defined]
+                            setMembers, optional=True)]) #type: ignore[arg-type]
+
   def getParents(self)->list[GraphObject]:
     '''
     :returns: The immediate parents of this object by iterating the *IsaIndividuals*

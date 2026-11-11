@@ -1,0 +1,4 @@
+name = "Rep Plus Net Reader"
+version = "1.0"
+description = "A model and view of a Rep Plus net (a CNet or KNet .rnet file, Brian Gaines's): its node and link types, nodes, links, marks and groups, drawn as CNet drew them."
+sn-version = "1.1"
