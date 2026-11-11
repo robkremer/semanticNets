@@ -97,7 +97,8 @@ def selftestPlugins(folder:str) -> list[str]:
   Install the bundled plugins in *folder* (see *sn.plugins.installBundled()*),
   import every module in them -- catching any standard library module the
   build left out -- and make a model with each: XMLreader of its books.xml,
-  pythonParser of its own parser.py. (Not registered: there's no editor.)
+  pythonParser of its own parser.py, rnetReader of a small net. (Not
+  registered: there's no editor.)
 
   :param folder: A scratch folder.
   :returns: What's wrong: empty if nothing is.
@@ -108,7 +109,7 @@ def selftestPlugins(folder:str) -> list[str]:
   try:
     plugins.installBundled(target=target)
     found = [m.id for m in plugins.manifests(target)]
-    problems = [f"the {p} plugin" for p in ("XMLreader", "pythonParser") if p not in found]
+    problems = [f"the {p} plugin" for p in ("XMLreader", "pythonParser", "rnetReader") if p not in found]
     plugins.namespace(target)
     for id in found:
       for dirpath, dirs, files in os.walk(os.path.join(target, id)):
@@ -125,6 +126,14 @@ def selftestPlugins(folder:str) -> list[str]:
       parser = importlib.import_module(f"{plugins.NAMESPACE}.pythonParser.parser")
       code = parser.buildModel(os.path.join(folder, "parser_py.snm"), parser.readModules([parser.__file__]))
       print(f"pythonParser: {len(list(code.values()))} objects")
+    if "rnetReader" in found:
+      rnet = importlib.import_module(f"{plugins.NAMESPACE}.rnetReader.rnet")
+      reader = importlib.import_module(f"{plugins.NAMESPACE}.rnetReader.reader")
+      net = rnet.parseText("\ufeff\tC\t9\r" "T\t1\r" "2\t0\tArial\t9\t1\t0\t000000\tFFFFFF\t000000\t008A00\t0\t0\t0\t\tConcept\r"
+                           "A\t1\r" "1\t0\t0\t0\t1\t0\t000000\t000000\t000000\t000000\tIncludes\r"
+                           "N\t2\t0\t-1\r" "0\t81\t10\t20\t19\t19\tA\t\r" "0\t0\t200\t20\t19\t19\tB\t\r" "L\t1\t0\r" "0\t1\t0\r")
+      built = reader.buildModel(net, os.path.join(folder, "net.snm"))
+      print(f"rnetReader: {len(built.nodes)} nodes, {len(built.relations)} relations")
     return problems
   except Exception:
     traceback.print_exc()

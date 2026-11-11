@@ -1,0 +1,246 @@
+'''
+The rnetReader plugin's view and front end: *view.showNet()* puts each node
+where CNet drew it, the size it was (scaled by *view.SCALE*), with its
+relations between them, each label on its line; *view.convert()* makes the
+model and view files, opens the view, and asks before replacing them; the
+saved view opens again as it was. The dialog's model and view follow the
+net file (in the folder they were last made in, if it's given), until
+they're changed by hand.
+
+The windows are never shown for long, and nothing is saved outside a
+temporary folder (as in test_viewSmoke).
+
+Created on Nov 11, 2026
+
+@author: robkremer
+'''
+import builtins
+import logging
+import os
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+from unittest import mock
+import tkinter as tk
+import sn
+from util import terminal
+from util.utils import fixURL
+from sn.model.model import Model
+from sn.plugins import importBundled
+
+NET = "﻿" + "\r".join(l.replace("|", "\t") for l in (
+  "|C|9|FFFFE1||40",
+  "T|2",
+  "2|0|Arial|9|1|0|000000|FFFFFF|000000|008A00|0|0|0||Concept",
+  "0|0|Arial|11|0|20|000000|FFFFFF|000080|000080|0|0|0||Title",
+  "A|2",
+  "1|0|0|0|1|0|000000|000000|000000|000000|Includes",
+  "0|0|0|0|1|1|00A000|00A000|00A000|00A000|Excludes symmetric",
+  "M|1", "693804|FFCD7D|Asserted",
+  "N|4|0|-1",
+  "0|81|10|20|19|19|A|",
+  "0|0|200|20|19|19|B|",
+  "0|0|100|150|19|19||",
+  "1|0|10|200|120|14|A title|",
+  "L|3|0",
+  "0|1|0",
+  "2|0|1",
+  "2|1|0",
+  "G|1",
+  "0 1 2|",
+)) + "\r"
+
+class TestNetView(unittest.TestCase):
+
+  @classmethod
+  def setUpClass(cls):
+    from sn.view.graphics import progress
+    from sn.view.graphics.guiApp import Application
+    cls.rnet = importBundled("rnetReader", "rnet")
+    cls.reader = importBundled("rnetReader", "reader")
+    cls.netView = importBundled("rnetReader", "view")
+    cls.saved = (sys.stdout, sys.stderr, builtins.input, sys.excepthook,
+                 list(logging.getLogger().handlers), terminal._installedIORoutingRegistry,
+                 Application.current, progress.listener)
+    cls.prefsWereDirty = sn.snPrefs.isDirty()
+    from sn.view.graphics import decorators
+    decorators._fonts.clear() # (made for an application an earlier test made, and destroyed)
+    try:
+      cls.app = Application()
+    except tk.TclError as ex:
+      cls.restore()
+      raise unittest.SkipTest(f"no display: {ex}")
+
+  @classmethod
+  def restore(cls):
+    from sn.view.graphics import progress
+    from sn.view.graphics.guiApp import Application
+    (sys.stdout, sys.stderr, builtins.input, sys.excepthook, handlers, terminal._installedIORoutingRegistry,
+     Application.current, progress.listener) = cls.saved
+    logging.getLogger().handlers[:] = handlers
+
+  @classmethod
+  def tearDownClass(cls):
+    from sn.view.graphics import decorators
+    cls.app.destroy()
+    decorators._fonts.clear()
+    cls.restore()
+    Model._initCache()
+    if not cls.prefsWereDirty:
+      sn.snPrefs.setDirty(False)
+
+  def setUp(self):
+    Model._initCache()
+    self.tmp = tempfile.TemporaryDirectory(prefix="snRnet-")
+    self.folder = Path(self.tmp.name).resolve()
+    self.rnetPath = self.folder / "net.rnet"
+    self.rnetPath.write_text(NET, encoding="utf-8")
+    self.views = []
+
+  def tearDown(self):
+    for name in list(self.app.windows):
+      self.app._closeWindow(name, quitIfLast=False, askToSave=False)
+    for v in self.views:
+      if not v._closed:
+        v.detachFromModel()
+        self.app.terminalRegistry.unregisterWindow(v.window)
+      if v.window.winfo_exists():
+        v.window.destroy()
+    self.app.update()
+    Model._initCache()
+    self.tmp.cleanup()
+
+  def shown(self, view) -> dict:
+    from sn.view.graphics.vnodes import VNode
+    return {str(vo.modelObject.name): vo for vo in view.values()
+            if isinstance(vo, VNode) and vo._isConnected() and not vo.isHidden()}
+
+  def relations(self, view) -> list:
+    from sn.view.graphics.vrelations import VRelation
+    return [vo for vo in view.values() if isinstance(vo, VRelation) and vo._isConnected() and not vo.isHidden()]
+
+  def test_showNet(self):
+    'Each node where CNet drew it, its size, kept; the relations between them, each label on its line; no types, no group.'
+    from sn.view.graphics.sngView import SNGView
+    built = self.reader.buildModel(self.rnet.parse(str(self.rnetPath)), str(self.folder / "net.snm"))
+    v = SNGView(fixURL(built.model.url, ".snv", replaceExt=True, mode="w")[0], model=built.model)
+    self.views.append(v)
+    v.window.withdraw()
+    v.context.visibility("system objects", "hide")
+    self.netView.showNet(v, built)
+    shown = self.shown(v)
+    self.assertEqual(set(shown), {"A", "B", "", "A title"})
+    s, m = self.netView.SCALE, self.netView.MARGIN
+    for name, (x, y, w, h) in {"A": (10, 20, 19, 19), "": (100, 150, 19, 19), "A title": (10, 200, 120, 14)}.items():
+      box, cnet = shown[name].boundingBox(), [int(m + x * s), int(m + y * s), int(m + (x + w) * s), int(m + (y + h) * s)]
+      self.assertEqual(box[:2], cnet[:2], name)
+      self.assertTrue(all(c <= b <= c + 2 for b, c in zip(box[2:], cnet[2:])), f"{name}: {box} {cnet}") # (or a little bigger, if its text needs it)
+      self.assertTrue(shown[name].userSized)
+    rels = self.relations(v)
+    self.assertEqual(sorted((r.src.modelObject.name, r.dst.modelObject.name) for r in rels), [("", "A"), ("", "B"), ("A", "B")])
+    for r in rels:
+      (ax, ay), (bx, by), (cx, cy) = r.src.centerPt(), r.dst.centerPt(), r.centerPt()
+      self.assertLess(abs((bx - ax) * (cy - ay) - (by - ay) * (cx - ax)) / max(1.0, ((bx - ax) ** 2 + (by - ay) ** 2) ** 0.5), 3.0) # (on the line)
+
+  def test_convert(self):
+    'The files are made, the view opened; made again, it asks first -- and does nothing if told not to.'
+    model, view = str(self.folder / "out" / "net.snm"), str(self.folder / "out" / "net.snv")
+    with mock.patch.object(self.netView.messagebox, "askokcancel", return_value=True) as ask, \
+         mock.patch("tkinter.Toplevel.deiconify"): # (not shown)
+      made = self.netView.convert(self.app, str(self.rnetPath), model, view)
+      self.assertIsNotNone(made)
+      built, v = made
+      self.assertFalse(ask.called)
+    self.assertTrue(os.path.isfile(model) and os.path.isfile(view))
+    self.assertEqual(len(self.shown(v)), 4)
+    self.assertEqual(len(built.groups), 1)
+    with mock.patch.object(self.netView.messagebox, "askokcancel", return_value=False) as ask:
+      self.assertIsNone(self.netView.convert(self.app, str(self.rnetPath), model, view))
+      self.assertTrue(ask.called)
+
+  def test_reopened(self):
+    'The saved view opens again with the nodes where they were, and the group\'s members.'
+    from sn.model.model import Collection
+    model, view = str(self.folder / "net.snm"), str(self.folder / "net.snv")
+    with mock.patch("tkinter.Toplevel.deiconify"): # (not shown)
+      built, v = self.netView.convert(self.app, str(self.rnetPath), model, view)
+    boxes = {name: vo.boundingBox() for name, vo in self.shown(v).items()}
+    for name in list(self.app.windows):
+      self.app._closeWindow(name, quitIfLast=False, askToSave=False)
+    self.app.update()
+    Model._initCache()
+    with mock.patch("tkinter.Toplevel.deiconify"): # (not shown)
+      window = self.app.openWindow(Path(view).as_uri())
+    self.assertIsNotNone(window)
+    v2 = window.view
+    self.app.update()
+    self.assertEqual({name: vo.boundingBox() for name, vo in self.shown(v2).items()}, boxes)
+    self.assertEqual(len(self.relations(v2)), 3)
+    m = v2.model
+    group, = (o for o in m.values() if isinstance(o, Collection) and o.model is m and o.isIndividual())
+    self.assertEqual(sorted(str(x.name) for x in group.getMembers()), ["", "A", "B"])
+
+class TestDialog(unittest.TestCase):
+
+  @classmethod
+  def setUpClass(cls):
+    cls.netView = importBundled("rnetReader", "view")
+    try:
+      cls.root = tk.Tk()
+    except tk.TclError as ex:
+      raise unittest.SkipTest(f"no display: {ex}")
+    cls.root.withdraw()
+
+  @classmethod
+  def tearDownClass(cls):
+    cls.root.destroy()
+
+  def setUp(self):
+    self.tmp = tempfile.TemporaryDirectory()
+    self.folder = Path(self.tmp.name).resolve()
+
+  def tearDown(self):
+    self.tmp.cleanup()
+
+  def dialog(self, **kw):
+    d = self.netView.ReaderDialog(self.root, **kw) # (any window will do: it's only its parent)
+    d.withdraw()
+    self.addCleanup(lambda: d.winfo_exists() and d.destroy())
+    return d
+
+  def test_follow(self):
+    'The model and view follow the net file -- beside it, or in the output folder -- until changed by hand; emptied, they follow again.'
+    d = self.dialog()
+    self.assertTrue(d.goButton.instate(["disabled"]))
+    net = str(self.folder / "patterns.rnet")
+    d.vars["rnet"].set(net)
+    self.assertEqual((d.vars["model"].get(), d.vars["view"].get()), self.netView.defaultPaths(net))
+    self.assertEqual(d.vars["model"].get(), str(self.folder / "patterns.snm"))
+    self.assertFalse(d.goButton.instate(["disabled"]))
+    mine = str(self.folder / "mine" / "m.snm")
+    d.vars["model"].set(mine)
+    self.assertEqual(d.vars["view"].get(), str(self.folder / "mine" / "m.snv"))
+    d.vars["rnet"].set(str(self.folder / "other.rnet"))
+    self.assertEqual(d.vars["model"].get(), mine)
+    d.vars["model"].set("")
+    self.assertEqual(d.vars["model"].get(), str(self.folder / "other.snm"))
+    out = str(self.folder / "made")
+    d2 = self.dialog(rnetPath=net, outputFolder=out)
+    self.assertEqual(d2.vars["model"].get(), os.path.join(out, "patterns.snm"))
+    self.assertEqual(d2.vars["view"].get(), os.path.join(out, "patterns.snv"))
+
+  def test_go(self):
+    'Go makes them (convert(), stubbed here), says which, and closes.'
+    went, closed = [], []
+    net = str(self.folder / "patterns.rnet")
+    d = self.dialog(rnetPath=net, onGo=lambda *files: went.append(files), onClose=lambda: closed.append(True))
+    with mock.patch.object(self.netView, "convert", return_value=(object(), object())) as convert:
+      d.go()
+    self.assertEqual(convert.call_args.args[1:4], (net, str(self.folder / "patterns.snm"), str(self.folder / "patterns.snv")))
+    self.assertEqual(went, [(net, str(self.folder / "patterns.snm"), str(self.folder / "patterns.snv"))])
+    self.assertEqual(closed, [True])
+    self.assertFalse(d.winfo_exists())
+
+if __name__ == "__main__":
+  unittest.main()

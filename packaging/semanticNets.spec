@@ -16,8 +16,9 @@ sn.model.reasoner.engineInstalled()): with the hardened runtime, that would
 need the com.apple.security.cs.disable-library-validation entitlement. It bundles, at the same relative places sn.resourcePath() looks:
 
   - sn/examples/  the example models (package data), installed on the first launch;
-  - plugins/    the plugins that come with it (pythonParser, XMLreader: see
-                sn.plugins), copied to ~/.sn/plugins when the app starts;
+  - plugins/    the plugins that come with it (pythonParser, XMLreader,
+                rnetReader: see sn.plugins), copied to ~/.sn/plugins when the
+                app starts;
   - help/       the HTML documentation (built by the "doc" target), for the Help menu.
 
 and the metadata of the libraries it includes (for the About box: their

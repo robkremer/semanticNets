@@ -10,3 +10,4 @@ and :doc:`../developer/extending`).
 
    snplugins.XMLreader
    snplugins.pythonParser
+   snplugins.rnetReader
