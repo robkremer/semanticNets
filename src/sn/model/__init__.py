@@ -216,6 +216,12 @@ class TopModel(Model):
       "about the world, which the reasoner leaves out as facts. False for a plain collection (its contents are "
       "facts like any others: eg, a Rep Plus box); true for a context and its subtypes (rule, query, ...).")
     self.CONTEXT[GraphObject.QUOTED] = True
+    self.COLLECTION[GraphObject.TILE_PARTS] = Attribute(False, bool, VAR_DEFAULTED,
+      "Whether its parts (the contexts it holds by an SN subtype of contains, eg: a rule's antecedent and "
+      "consequent) are drawn as its panes, side by side, each titled with what it is -- rather than each as a box "
+      "of its own inside it. True for a rule, definition and requirement.")
+    for t in (self.RULE, self.DEFINITION, self.REQUIREMENT):
+      t[GraphObject.TILE_PARTS] = True
     self.CONTEXT[GraphObject.DISABLED] = Attribute(False, bool, VAR_DEFAULTED,
       "Switch it off: the reasoner ignores a disabled rule, definition, constraint or requirement (and it's "
       "drawn with a red slash through it). Eg: to try a model without it, while experimenting.")
