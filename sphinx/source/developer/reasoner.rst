@@ -345,6 +345,20 @@ plugin's ``forms`` module uses it for Gaines's minimal canonical form (a
 link is redundant if its kernel types still hold), trying the newest links
 first.
 
+Worlds
+------
+
+:py:meth:`~sn.model.reasoner.Reasoner.worlds` reasons over a model once for
+each of a list of suppositions, on any engine: each is a list of facts (as
+*facts()* makes them: eg, ``("attr", (node, key, value))`` with ``("lattr",
+(node, key))`` for an attribute the node doesn't have, or ``("prop",
+(relationType, Sym("symmetric")))``) added to the model's own for that run
+(``_supposed``), as if the model said them. The model isn't changed, and its
+facts are rendered once for all the worlds (``_allFacts``). It returns each
+world's :py:class:`~sn.model.reasoner.Inferences`. The rnetReader plugin's
+``abduction`` module uses it for KNet's abductive inference: a world for
+each explanation of a node, with that explanation marked true.
+
 Constraints
 -----------
 

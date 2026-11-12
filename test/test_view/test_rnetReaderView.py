@@ -285,10 +285,14 @@ class TestNetView(unittest.TestCase):
 
   def formsView(self):
     ''':returns: A view of *FORMS*'s net (withdrawn), and what the reader built.'''
+    return self.netOf(self.FORMS, "forms")
+
+  def netOf(self, text:str, name:str):
+    ''':returns: A view of the net *text* (withdrawn), as the file *name*, and what the reader built.'''
     from sn.view.graphics.sngView import SNGView
-    path = self.folder / "forms.rnet"
-    path.write_text(self.FORMS, encoding="utf-8")
-    built = self.reader.buildModel(self.rnet.parse(str(path)), str(self.folder / "forms.snm"))
+    path = self.folder / f"{name}.rnet"
+    path.write_text(text, encoding="utf-8")
+    built = self.reader.buildModel(self.rnet.parse(str(path)), str(self.folder / f"{name}.snm"))
     v = SNGView(fixURL(built.model.url, ".snv", replaceExt=True, mode="w")[0], model=built.model)
     self.views.append(v)
     v.window.withdraw()
@@ -360,11 +364,23 @@ class TestNetView(unittest.TestCase):
                      ", ".join(f"probe {k}" for k in range(1, 6)))
     self.assertTrue(all(p.isa(importBundled("rnetReader", "forms").probeType(m)) for p in probes))
     self.assertEqual(len(added) - len(probes), 5 * 4) # (each linked to every node)
-    self.assertTrue(all(name in self.shown(v) for name in ("probe 1", "probe 5")))
+    self.assertEqual(sorted(self.shown(v)), ["a", "b", "c", "d"] + [f"probe {k}" for k in range(1, 6)]) # (not their SN type)
+    self.assertEqual(len(self.relations(v)), 4 + 5 * 4) # (nor what each is an instance of)
     v.context.undo()
     self.app.update()
     self.assertEqual(len(m), count)
-    self.assertNotIn("probe 1", self.shown(v))
+    self.assertEqual((sorted(self.shown(v)), len(self.relations(v))), (["a", "b", "c", "d"], 4))
+    v.context.redo()
+    self.app.update()
+    self.assertEqual((len(self.shown(v)), len(self.relations(v))), (9, 24))
+    v.context.undo()
+    self.app.update()
+    v.context.remove(built.nodes[1]) # (b, with its two links: put back, the view shows them as it did -- no SN types)
+    self.app.update()
+    self.assertEqual((sorted(self.shown(v)), len(self.relations(v))), (["a", "c", "d"], 2))
+    v.context.undo()
+    self.app.update()
+    self.assertEqual((sorted(self.shown(v)), len(self.relations(v))), (["a", "b", "c", "d"], 4))
     with mock.patch.object(importBundled("rnetReader", "forms"), "SATURATION_LIMIT", 4), \
          self.assertLogs("snplugins.rnetReader.hooks", "ERROR") as logs:
       saturate = importBundled("rnetReader", "forms").saturate
@@ -408,6 +424,133 @@ class TestNetView(unittest.TestCase):
     self.assertNotIn("other.snm", " ".join(Model.AllDBs)) # (made just now, and let go of)
     self.assertFalse(any(r.model is not built.model and r.model.name != "knet.snm" for n in built.nodes.values()
                          for r in (*n._outgoing, *n._incoming))) # (the merge's links gone)
+
+  @staticmethod
+  def knet(nodes:list[str], links:list[str], marks:dict[str, str]|None=None) -> str:
+    '''
+    :param nodes: The nodes' labels (drawn in rows of five).
+    :param links: The links: "tail|head|link type" (0 includes, 1 excludes).
+    :param marks: The nodes' marks (by label: hex -- 81 asserted true, 82 false).
+    :returns: A net of them.
+    '''
+    return "\ufeff" + "\r".join(l.replace("|", "\t") for l in (
+      "|C|9|FFFFFF||32", "T|1", "2|0|Arial|9|1|0|000000|FFFFFF|000000|008A00|0|0|0||Concept",
+      "A|2", "1|0|0|0|1|0|000000|000000|000000|000000|Includes", "1|1|0|0|1|0|00A000|00A000|00A000|00A000|Excludes",
+      f"N|{len(nodes)}|0|-1",
+      *[f"0|{(marks or {}).get(n, 0)}|{10 + 90 * (k % 5)}|{10 + 60 * (k // 5)}|30|19|{n}|" for k, n in enumerate(nodes)],
+      f"L|{len(links)}|0", *links, "G|0")) + "\r"
+
+  def test_expansion(self):
+    '''
+    A node's Expand and Net menus: an anonymous node below it (shown, without
+    asking its name), the net's protoconnectives expanded (x includes a ∧ b:
+    x includes a and b), and the net factored (I and J each include A, B and
+    C) -- each one command, undone in one go, and each says what it did.
+    '''
+    from sn.hooks import HookContext
+    hooks = importBundled("rnetReader", "hooks")
+    v, built = self.netOf(self.knet(["x", "a ∧ b", "I", "J", "A", "B", "C"],
+                                    ["0|1|0", "2|4|0", "2|5|0", "2|6|0", "3|4|0", "3|5|0", "3|6|0"]), "expand")
+    m, x = built.model, built.nodes[0]
+    for item, fn in (("Expand/Anonymous node below", "addAnonymousBelow"), ("Expand/Anonymous node above", "addAnonymousAbove"),
+                     ("Net/Expand protoconnectives", "expandProtoconnectives"), ("Net/Factor", "factor"),
+                     ("Net/Existence...", "showExistence"), ("Existence/Essentially top", "essentiallyTop"),
+                     ("Existence/Essentially bottom", "essentiallyBottom"), ("Existence/Unspecified", "unspecified"),
+                     ("Mark/Abduce", "abduce")):
+      self.assertTrue(x[f".menu/{item}"].endswith(f":{fn}"), item)
+    count = len(m)
+    context = HookContext(view=v, selection=[])
+    with mock.patch("builtins.print") as said, \
+         mock.patch("sn.view.graphics.viewEditing.applyEditAttrsBox", side_effect=AssertionError("asked a name")):
+      made = hooks.addAnonymousBelow(x, context)
+      self.app.update()
+    self.assertEqual(said.call_args_list[0].args[0], "Anonymous node in expand: made 1 node (anonymous 1) and 1 link:")
+    self.assertEqual(said.call_args_list[1].args[0], "  anonymous 1 Includes x")
+    self.assertIn("anonymous 1", self.shown(v))
+    v.context.undo()
+    self.app.update()
+    self.assertNotIn("anonymous 1", self.shown(v))
+    self.assertEqual(len(m), count)
+    with mock.patch("builtins.print") as said:
+      made = hooks.expandProtoconnectives(x, context)
+      self.app.update()
+    self.assertEqual(said.call_args_list[0].args[0], "Expand protoconnectives in expand: expanded 1 (a ∧ b).")
+    self.assertEqual(sorted(hooks._describe(r) for r in made if hasattr(r, "src") and r.src is not None),
+                     ["x Includes a", "x Includes b"])
+    shown = self.shown(v)
+    self.assertTrue({"a", "b"} <= set(shown) and "a ∧ b" not in shown)
+    v.context.undo()
+    self.app.update()
+    shown = self.shown(v)
+    self.assertTrue("a ∧ b" in shown and not {"a", "b"} & set(shown))
+    links = len(self.relations(v))
+    with mock.patch("builtins.print") as said:
+      made = hooks.factor(x, context)
+      self.app.update()
+    self.assertEqual(said.call_args_list[0].args[0], "Factor expand: I, J -- includes -- A, B, C: 6 links become 5")
+    self.assertEqual(len(self.relations(v)), links - 1)
+    self.assertIn("anonymous 1", self.shown(v))
+    v.context.undo()
+    self.app.update()
+    self.assertEqual(len(self.relations(v)), links)
+    with mock.patch("builtins.print") as said:
+      hooks.factor(x, context)
+    self.app.update()
+
+  def test_existence(self):
+    '''
+    A node's Existence menu specifies what the selected nodes essentially
+    are (undone in one go); Net/Existence... shows the net's nodes'
+    existential status in a window: Socrates, specified essentially bottom,
+    is singular; and man, too, though Socrates includes it.
+    '''
+    from sn.hooks import HookContext
+    hooks = importBundled("rnetReader", "hooks")
+    existence = importBundled("rnetReader", "existence")
+    v, built = self.netOf(self.knet(["Socrates", "man", "mortal"], ["0|1|0", "1|2|0"]), "existence")
+    socrates, man = built.nodes[0], built.nodes[1]
+    shown = self.shown(v)
+    hooks.essentiallyBottom(socrates, HookContext(view=v, selection=[shown["Socrates"], shown["man"]]))
+    self.assertEqual([existence.specified(n) for n in (socrates, man)], ["bottom", "bottom"])
+    w = hooks.showExistence(socrates, HookContext(view=v, selection=[]))
+    self.addCleanup(lambda: w.top.winfo_exists() and w.top.destroy())
+    self.assertEqual(w.top.title(), "Existence: existence")
+    text = w.report()
+    self.assertTrue(text.startswith("Existence in existence\n"), text)
+    self.assertIn("\nSocrates  yes         yes      -            yes       yes\n", text)
+    self.assertIn("man is specified to be essentially bottom, but Socrates includes it.", text)
+    v.context.undo()
+    self.assertEqual([existence.specified(n) for n in (socrates, man)], [None, None])
+    hooks.essentiallyTop(built.nodes[2], HookContext(view=v, selection=[]))
+    self.assertEqual(existence.specified(built.nodes[2]), "top")
+    hooks.unspecified(built.nodes[2], HookContext(view=v, selection=[]))
+    self.assertIsNone(existence.specified(built.nodes[2]))
+
+  def test_abduce(self):
+    '''
+    Mark/Abduce: whatever explains wet (rain, or a sprinkler), it's damp,
+    and not dry -- purple bars, as KNet draws them (its defaults' colour) --
+    said in the terminal; the next "reason" takes them out.
+    '''
+    from sn.hooks import HookContext
+    hooks = importBundled("rnetReader", "hooks")
+    v, built = self.netOf(self.knet(["wet", "rain", "sprinkler", "damp", "dry"],
+                                    ["1|0|0", "2|0|0", "1|3|0", "2|3|0", "0|4|1"]), "abduce")
+    shown = self.shown(v)
+    def bars(name:str) -> list[str]:
+      deco = shown[name].decorators.get("sideBars")
+      return sorted(v.canvas.itemcget(i, "fill") for i in (deco.ids if deco is not None else []))
+    with mock.patch("builtins.print") as said:
+      found = hooks.abduce(built.nodes[0], HookContext(view=v, selection=[]))
+      self.app.update()
+    self.assertEqual(said.call_args_list[0].args[0], found.report())
+    self.assertTrue(found.report().startswith("Abduction from wet in abduce: 2 explanations (rain, sprinkler)"))
+    self.assertEqual(bars("damp"), ["#800080"])
+    self.assertEqual(bars("dry"), ["#800080"])
+    self.assertEqual(bars("rain"), [])
+    v.reason("clingo")
+    self.app.update()
+    self.assertEqual(bars("damp"), [])
 
   def test_convert(self):
     'The files are made, the view opened; made again, it asks first -- and does nothing if told not to.'

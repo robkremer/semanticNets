@@ -172,6 +172,18 @@ class ReasonerSpec(_SpecBase):
     self.assertIn(self.fred, r.related(self.ann, self.sibling))    # sibling is symmetric
     self.assertNotIn(self.fred, r.related(self.ann, self.brother)) # brother isn't
 
+  def test0255worlds(self):
+    # what would follow if brother were symmetric too: supposed, not asserted -- the model's as it was
+    from sn.model.reasoner import Sym
+    supposed = [("prop", (self.brother, Sym("symmetric")))]
+    reasoner = self.ENGINE(self.m)
+    plain, world = reasoner.worlds([[], supposed])
+    self.assertNotIn(self.fred, plain.related(self.ann, self.brother))
+    self.assertIn(self.fred, world.related(self.ann, self.brother))
+    self.assertFalse(dict.__contains__(self.brother, "symmetric"))
+    self.assertNotIn(self.fred, reasoner.run().related(self.ann, self.brother)) # (nothing's still supposed)
+    self.assertEqual(reasoner.worlds([]), [])
+
   def test0260relationInheritance(self):
     r = self.result
     self.assertIn(self.tail, r.related(self.rex, self.has))

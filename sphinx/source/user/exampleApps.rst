@@ -415,11 +415,14 @@ definition        red          by a conjunction or a disjunction (see
                                `Conjunctions and disjunctions`_)
 default           purple       in every preferred case (see `Exploring and
                                defaults`_)
+abduced           purple       whatever explains a node (see `Abduction`_)
 ================  ===========  ==================================================
 
 A node's menu has **Mark** ▸ **True**, **False** and **Clear** (for the
-selected nodes, undone in one go), **Probes...** (see `Probes`_) and
-**Net** (see `Canonical forms, saturation and merges`_);
+selected nodes, undone in one go) and **Abduce** (see `Abduction`_),
+**Probes...** (see `Probes`_), **Net** (see `Canonical forms, saturation and
+merges`_), **Expand** (see `Protoconnectives, anonymous nodes and
+factoring`_) and **Existence** (see `Existence`_);
 **Reason** propagates the marks (reason again after changing them). The marks are two attributes,
 ``markTrue`` and ``markFalse``, whose values say how (eg: ``asserted``): the
 reasoners' are inferred values, and an asserted one always stands. A net's
@@ -555,6 +558,99 @@ did in the window's terminal:
 
 The canonical forms work on every engine (they're ordinary reasoning);
 saturation needs one that finds probes (clingo).
+
+Protoconnectives, anonymous nodes and factoring
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Three ways to redraw a net without changing what it says of its nodes
+(Gaines's sections 2.4, 3.3 and 3.4). Each is one command, undone in one go,
+and says what it made in the window's terminal:
+
+- **Net** ▸ **Expand protoconnectives**: a node whose label groups others'
+  -- "A ∧ B" (or "A & B": a protoconjunction) or "A ∨ B" (or "A | B": a
+  protodisjunction) -- is shorthand: one link drawn to it stands for a link
+  to each of them. It's replaced by its members (the net's nodes with those
+  labels, or new ones) and those links:
+
+  ==========================  ==========================================
+  the link                    stands for
+  ==========================  ==========================================
+  X includes A ∧ B            X includes A, X includes B
+  A ∨ B includes X            A includes X, B includes X
+  X excludes A ∨ B            X excludes A, X excludes B (either way round)
+  X coexcludes A ∧ B          X coexcludes A, X coexcludes B (either way
+                              round)
+  ==========================  ==========================================
+
+  Gaines's paper says only that the labels are collected, so that's this
+  reader's reading of it: an inclusion is of instances (what's an X is an A
+  and a B). A group with any other link (eg: X includes A ∨ B, which says
+  less than a link to either) is kept, and the terminal says why. One
+  marked true is expanded if it's a conjunction (its members are true), and
+  one marked false if it's a disjunction (its members are false). A node
+  that's a structural connective (see `Conjunctions and disjunctions`_) is
+  left alone, whatever its label.
+- **Expand** ▸ **Anonymous node below** and **Anonymous node above**: add a
+  node with no label (an "ideal element") that includes the node, or that
+  the node includes. With its one link, it says nothing about the rest of
+  the net (an ultra-conservative merge): it's a place to hang more on.
+  (Its name is "anonymous 1" and so on: only its label is empty.)
+- **Net** ▸ **Factor**: where some nodes each have the same kind of link to
+  each of some others, put an anonymous node between them to carry the
+  links -- eg, I and J each including A, B and C become I and J including
+  the anonymous node, which includes A, B and C: five links for six. On the
+  net of Gaines's figure 28, 12 links become 10. It factors inclusions,
+  exclusions (the first nodes include the anonymous node, which excludes
+  the others) and coexclusions (the anonymous node includes the first
+  nodes, and coexcludes the others), wherever that saves links, the biggest
+  saving first. The links between the net's own nodes are still inferred
+  (reason to see them).
+
+Existence
+~~~~~~~~~
+
+Gaines distinguishes five senses in which what a node stands for exists
+(his section 3.5). **Net** ▸ **Existence...** shows, in a window, which of
+them each of the net's nodes has:
+
+=============  ===========================================================
+sense          the node
+=============  ===========================================================
+conceptual     is in the net (they all are)
+logical        is consistent: it has no *inconsistent* link
+categorical    is specified to be essentially a top node (a maximally
+               generic entity)
+singular       is specified to be essentially a bottom node (a single
+               entity)
+situated       is a bottom node of this net: nothing in it includes the
+               node, but what's equivalent to it
+=============  ===========================================================
+
+Whether a node is *essentially* top or bottom isn't something a net's links
+can say (another net may put something above it, or below): Gaines has it
+specified from outside the logic. Here that's a node's **Existence** menu
+-- **Essentially top**, **Essentially bottom** and **Unspecified**, for the
+selected nodes -- which sets the node's ``existence`` attribute ("top" or
+"bottom"). Under the table, the window lists where the net disagrees with
+what's specified: an essentially top node that includes something, or an
+essentially bottom node that something includes. It works on every engine.
+
+Abduction
+~~~~~~~~~
+
+**Mark** ▸ **Abduce** is KNet's abductive inference: what must be so if the
+node is true, whatever explains it. The node's explanations are the bottom
+nodes below it: those reached by going down the links that include it (from
+each node that includes it, on to those that include that) through nodes
+with no mark, to nodes that nothing includes. Each is tried in turn: the
+net is reasoned over with that node true. A mark that every one of them
+gives a node that had none is *abduced*, and drawn in purple, as KNet draws
+it. The terminal says what the explanations were, and what was abduced.
+
+As in KNet, an explanation that makes some node both true and false counts
+all the same; and abduced marks are inferences: the next **Reason** takes
+them out. KNet also leaves out explanations by its preferences, which this
+doesn't. It works on every engine.
 
 Menus, tooltips and double-clicks from programs
 -----------------------------------------------

@@ -383,7 +383,11 @@ def isaRule(m, inc, rule) -> None:
   knode["vis/sideBars"] = f"$({HOOKS}:markBars)"
   for item, fn in (("Mark/True", "markTrue"), ("Mark/False", "markFalse"), ("Mark/Clear", "clearMarks"), ("Probes...", "showProbes"),
                    ("Net/Minimal form", "minimalForm"), ("Net/Maximal form", "maximalForm"), ("Net/Saturate", "saturate"),
-                   ("Net/Check merge with...", "checkMerge")):
+                   ("Net/Check merge with...", "checkMerge"), ("Mark/Abduce", "abduce"),
+                   ("Expand/Anonymous node below", "addAnonymousBelow"), ("Expand/Anonymous node above", "addAnonymousAbove"),
+                   ("Net/Expand protoconnectives", "expandProtoconnectives"), ("Net/Factor", "factor"),
+                   ("Net/Existence...", "showExistence"), ("Existence/Essentially top", "essentiallyTop"),
+                   ("Existence/Essentially bottom", "essentiallyBottom"), ("Existence/Unspecified", "unspecified")):
     knode[f".menu/{item}"] = f"{HOOKS}:{fn}"
   probe = Node(m, [knode], name=PROBE)
   probe["note"] = ("A probe of a KNet net (Gaines's bottom node, added from outside: see the rnetReader plugin's "

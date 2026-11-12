@@ -20,7 +20,23 @@ inconsistent), or unmarked:
     as nodes linked to it (see *forms.saturate()*);
   - ``.menu/Net/Check merge with...`` (*checkMerge()*): what merging another
     net (a model, or a Rep Plus net file) into it would do (see
-    *forms.checkMerge()*), in a window (see *showMerge()*).
+    *forms.checkMerge()*), in a window (see *showMerge()*);
+  - ``.menu/Mark/Abduce`` (*abduce()*): KNet's abductive inference from the
+    node: the marks that hold whatever explains it (see *abduction*);
+  - ``.menu/Expand/Anonymous node below``, ``.menu/Expand/Anonymous node
+    above`` (*addAnonymousBelow()*, *addAnonymousAbove()*): Gaines's
+    single-node expansion (see *expansion.addAnonymous()*);
+  - ``.menu/Net/Expand protoconnectives`` (*expandProtoconnectives()*): its
+    nodes whose labels group others' replaced by them (see
+    *expansion.expandProtoconnectives()*);
+  - ``.menu/Net/Factor`` (*factor()*): anonymous nodes interpolated to carry
+    the links some nodes each have to each of some others (see
+    *expansion.factor()*);
+  - ``.menu/Existence/Essentially top``, ``.menu/Existence/Essentially
+    bottom``, ``.menu/Existence/Unspecified`` (*essentiallyTop()*,
+    *essentiallyBottom()*, *unspecified()*): specify what the selected nodes
+    essentially are, and ``.menu/Net/Existence...`` (*showExistence()*): the
+    existential status of the net's nodes, in a window (see *existence*).
 
 A mark is two attributes, *MARK_TRUE* and *MARK_FALSE*, each saying how the
 node got it: "asserted" (by these menu items, or a net's file), or by the
@@ -28,6 +44,7 @@ kernel's rules -- "included" (it's included by something true), "excluded"
 (it excludes something true), "coexcluded" (it coexcludes something false),
 or "irrelevant" (Rep Plus's name: it includes something false). The
 reasoners conclude those (see knet.snm's mark rules); "reason" shows them.
+Or "abduced", by abduction (see *abduce()*): until the next "reason".
 
 Created on Nov 11, 2026
 
@@ -47,10 +64,12 @@ ASSERTED = "asserted"
 "How a mark the user (or a net's file) gives a node got there."
 
 MARK_COLORS = {"asserted": "#693804", "included": "#000000", "irrelevant": "#a9a9a9", "excluded": "#00a000",
-               "coexcluded": "#0000ff", "definition": "#ff0000", "necessary": "#ff0000", "default": "#800080"}
+               "coexcluded": "#0000ff", "definition": "#ff0000", "necessary": "#ff0000", "default": "#800080",
+               "abduced": "#800080"}
 '''Each way a node gets a mark -> its bar's colour: Rep Plus's mark kinds'
 (Gaines's paper's: brown asserted, black and blue true, grey and green
-false). Another (eg: a net's own mark kind) is drawn black.'''
+false; KNet draws what it abduces as defaults). Another (eg: a net's own
+mark kind) is drawn black.'''
 
 SIDES = {MARK_TRUE: "right", MARK_FALSE: "top"}
 "Where each mark's bar goes (see *sn.view.graphics.decorators.SideBars*): true's beside the node, false's over it."
@@ -336,3 +355,164 @@ def _netName(model:Any) -> str:
   from urllib.parse import unquote, urlparse
   url = str(getattr(model, "url", "") or "")
   return os.path.splitext(os.path.basename(unquote(urlparse(url).path)))[0]
+
+def _say(obj:Any, what:str, made:list[Any]) -> None:
+  '''
+  Say, in the view's window's terminal, what a command that makes nodes and
+  links (see *expansion*) made.
+
+  :param what: What it is (eg: "Factor").
+  '''
+  from sn.model.model import Relation
+  from .probes import name
+  net = _netName(obj.model) or str(obj.model.name)
+  nodes = [o for o in made if not isinstance(o, Relation)]
+  links = [o for o in made if isinstance(o, Relation)]
+  print(f"{what} in {net}: made {len(nodes)} node{'' if len(nodes) == 1 else 's'}"
+        f"{' (' + ', '.join(name(n) for n in nodes) + ')' if nodes else ''} and {len(links)} link{'' if len(links) == 1 else 's'}"
+        + (":" if links else "."))
+  for r in links:
+    print(f"  {_describe(r)}")
+
+@hook(appliesTo=_canMark)
+def addAnonymousBelow(obj:Any, context:HookContext) -> list[Any]:
+  '''
+  Add an anonymous node below the node: one that includes it (Gaines's
+  single-node expansion: see *expansion.addAnonymous()*).
+
+  :returns: The node made, and its link.
+  '''
+  from . import expansion
+  made = expansion.addAnonymous(obj, below=True, context=_context(context))
+  _say(obj, "Anonymous node", made)
+  return made
+
+@hook(appliesTo=_canMark)
+def addAnonymousAbove(obj:Any, context:HookContext) -> list[Any]:
+  '''
+  Add an anonymous node above the node: one it includes (see *expansion.addAnonymous()*).
+
+  :returns: The node made, and its link.
+  '''
+  from . import expansion
+  made = expansion.addAnonymous(obj, below=False, context=_context(context))
+  _say(obj, "Anonymous node", made)
+  return made
+
+@hook(appliesTo=_canMark)
+def expandProtoconnectives(obj:Any, context:HookContext) -> list[Any]:
+  '''
+  Expand the protoconnectives of the node's net (its nodes whose labels
+  group others': see *expansion.expandProtoconnectives()*), and say which,
+  and why any can't be.
+
+  :returns: What was made: the member nodes, then the links.
+  '''
+  from . import expansion
+  from .probes import name
+  made, plan = expansion.expandProtoconnectives(obj.model, _context(context))
+  net = _netName(obj.model) or str(obj.model.name)
+  print(f"Expand protoconnectives in {net}: expanded {len(plan.groups)}"
+        + (f" ({', '.join(name(g) for g in plan.groups)})" if plan.groups else "") + ".")
+  for n, why in plan.kept:
+    print(f"  kept {name(n)}: {why}")
+  if plan.groups:
+    _say(obj, "Expand protoconnectives", made)
+  return made
+
+@hook(appliesTo=_canMark)
+def factor(obj:Any, context:HookContext) -> list[Any]:
+  '''
+  Factor the node's net: interpolate anonymous nodes for the links that
+  some nodes each have to each of some others (see *expansion.factor()*).
+
+  :returns: What was made: each anonymous node, then its links.
+  '''
+  from . import expansion
+  from .probes import name
+  made, plan = expansion.factor(obj.model, _context(context))
+  net = _netName(obj.model) or str(obj.model.name)
+  if not plan:
+    print(f"Factor {net}: nothing to factor (no nodes each with a link to each of some others, in fewer links).")
+    return made
+  for f in plan:
+    print(f"Factor {net}: {', '.join(name(n) for n in f.tails)} -- {f.kind} -- {', '.join(name(n) for n in f.heads)}: "
+          f"{len(f.links)} links become {len(f.tails) + len(f.heads)}")
+  _say(obj, "Factor", made)
+  return made
+
+def _specify(obj:Any, context:HookContext, what:str|None) -> None:
+  '''Specify what the selected nodes (see *_targets()*) essentially are (see *existence.specify()*), as one command.'''
+  from . import existence
+  targets = _targets(obj, context)
+  ctx = _context(context)
+  if ctx is None:
+    for mo in targets:
+      existence.specify(mo, what)
+    return
+  from util.commandParser import CompositeCommandMgr
+  with CompositeCommandMgr(ctx):
+    for mo in targets:
+      existence.specify(mo, what, ctx)
+
+@hook(appliesTo=_canMark)
+def essentiallyTop(obj:Any, context:HookContext) -> None:
+  "Specify that the selected nodes are essentially top nodes: categorical existence (see *existence*)."
+  from .existence import TOP
+  _specify(obj, context, TOP)
+
+@hook(appliesTo=_canMark)
+def essentiallyBottom(obj:Any, context:HookContext) -> None:
+  "Specify that the selected nodes are essentially bottom nodes: singular existence (see *existence*)."
+  from .existence import BOTTOM
+  _specify(obj, context, BOTTOM)
+
+@hook(appliesTo=_canMark)
+def unspecified(obj:Any, context:HookContext) -> None:
+  "Take back what the selected nodes are specified to be essentially (see *existence*)."
+  _specify(obj, context, None)
+
+@hook(appliesTo=_canMark)
+def showExistence(obj:Any, context:HookContext) -> Any:
+  '''
+  Show the existential status of the node's net's nodes (see
+  *existence.report()*), in a window of its own.
+
+  :returns: The window's *ReportWindow*.
+  '''
+  from sn.model.reasoner import EngineMissing
+  from util.reportWindow import ReportWindow
+  from . import existence
+  model = obj.model
+  window = ReportWindow(getattr(context.view, "canvas", None), f"Existence: {_netName(model) or model.name}", width=80)
+  try:
+    with window.busy():
+      text = existence.report(model)
+  except (EngineMissing, RuntimeError, ValueError) as ex:
+    text = str(ex)
+  window.show(text)
+  return window
+
+@hook(appliesTo=_canMark)
+def abduce(obj:Any, context:HookContext) -> Any:
+  '''
+  KNet's abductive inference from the node (see *abduction*): the net
+  reasoned over as it is (see *sn.model.reasoner.reason()*), and the marks
+  that are the same whatever explains the node given to the nodes with none
+  (as inferences: the next "reason" takes them out); and what it found said
+  in the view's window's terminal.
+
+  :returns: What it found (an *abduction.Abduction*), or None if it couldn't (said, as an error).
+  '''
+  from sn.model.reasoner import EngineMissing, reason
+  from . import abduction
+  model = obj.model
+  try:
+    reason(model, silent=True)
+    found = abduction.abduce(model, obj)
+  except (EngineMissing, RuntimeError, ValueError) as ex:
+    logger.error(f"Abduce from {obj.name}: {ex}")
+    return None
+  abduction.markAbduced(found)
+  print(found.report())
+  return found

@@ -70,6 +70,7 @@ from util.platformSupport import MAC, shortcut, openFile, setUpLook, setDPIAware
 from util.singleInstance import SingleInstance
 from util.choiceDialog import askChoice
 from util.aboutDialog import installAbout
+from util.tkCommands import uniqueCommandNames
 from util.terminal import terminalRegistry, installGlobalIORouting,\
   TerminalWidget, TerminalRegistry
 from sn.model.model import Model
@@ -114,6 +115,7 @@ class Application(tk.Tk):
   "The application (there's just the one)."
 
   def __init__(self):
+    uniqueCommandNames() # (before any callback's registered: a closed window's timer can't then run another's -- eg, a close handler)
     super().__init__()
     self.withdraw()  # hide before it can ever flash visible
     Application.current = self

@@ -1101,7 +1101,7 @@ class Test(unittest.TestCase):
     self.pump()
     v.context.remove(mo)
     self.pump()
-    v.context.undo() # (the remove: the view shows it again, with a new view object)
+    v.context.undo() # (the remove: it's back in the model -- not in the view, which wasn't showing it)
     self.pump()
     v.context.undo() # (the erase)
     self.pump()
