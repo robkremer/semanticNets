@@ -394,6 +394,38 @@ class TestClingo(ReasonerSpec, unittest.TestCase):
     node("d1")["defaultOrder"] = 1
     self.assertEqual(self._marks(m, names), {"a": {"t": "dflt"}, "b": {"f": "dflt"}, "x": {"f": "dflt"}, "y": {"t": "dflt"}})
 
+  def test0897probes(self):
+    '''
+    Probes (see ClingoReasoner.probes()): the ways the nodes can be marked
+    that the rules allow. d is a or b -- false when both are (it has no
+    other rules here). Consistent probes: every way of marking them true or
+    false but d true with a and b false (then d's both); admissible ones too
+    (no node has a derived mark). With d asserted true: a or b; compatible
+    ones, each that isn't asserted true, false or both (at least what it
+    was), and what the rules then make it. And with c, false, a and b: one
+    of them, not both.
+    '''
+    from sn.model.reasoner import TooManyProbes, CONSISTENT, ADMISSIBLE, COMPATIBLE
+    m, node, link = self._connectives("probed")
+    link("alt", "a", "d"); link("alt", "b", "d")
+    nodes = [node(n) for n in ("a", "b", "d")]
+    def probes(kind, **kw) -> list[tuple[str, ...]]:
+      return sorted(tuple(p[n] for n in nodes) for p in self.ENGINE(m).probes(nodes, "t", "f", kind, **kw))
+    every = [(a, b, d) for a in "FT" for b in "FT" for d in "FT" if (a, b, d) != ("F", "F", "T")]
+    self.assertEqual(probes(CONSISTENT), every)
+    self.assertEqual(probes(ADMISSIBLE), every)
+    node("d", "t")
+    self.assertEqual(probes(CONSISTENT), [("F", "T", "T"), ("T", "F", "T"), ("T", "T", "T")])
+    self.assertEqual(probes(COMPATIBLE), [("F", "T", "T"), ("T", "F", "T"), ("T", "T", "T"), ("T", "TF", "T"),
+                                          ("TF", "T", "T"), ("TF", "TF", "TF")])
+    with self.assertRaises(TooManyProbes) as cm:
+      probes(COMPATIBLE, limit=5)
+    self.assertEqual(cm.exception.limit, 5)
+    with self.assertRaises(ValueError):
+      probes("every")
+    node("c", "f"); link("part", "c", "a"); link("part", "c", "b")
+    self.assertEqual(probes(CONSISTENT), [("F", "T", "T"), ("T", "F", "T")])
+
   def test0890finishFindsTheBaseRulesOnce(self):
     '_finish() leaves out the base rules\' conclusions, finding the base rules once -- not once per conclusion.'
     import sn.model.reasoner as reasoner
@@ -891,6 +923,12 @@ class TestEngines(unittest.TestCase):
     importing, finding = self._notInstalled("nemo")
     with importing, finding:
       self.assertEqual(explainingEngine(), "nemo")
+
+  def test0410probingEngine(self):
+    'Probes are found by an engine that can: clingo.'
+    from sn.model.reasoner import probingEngine, ENGINES
+    self.assertEqual(probingEngine(), "clingo")
+    self.assertEqual([e for e, info in ENGINES.items() if info.probes], ["clingo"])
 
   def test0600lookOutside(self):
     'In an app, an engine it doesn\'t include is looked for in a Python on the computer: the setting\'s, or one found.'

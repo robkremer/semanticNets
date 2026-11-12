@@ -75,7 +75,8 @@ or as concluded. What a node has asserted stands: a rule's conclusion of the
 same mark only says so.
 
 *KNODE*'s nodes show their marks as bars beside them (vis/sideBars: see
-rnetReader.hooks.markBars()), and have menu items to assert and clear them.
+rnetReader.hooks.markBars()), and have menu items to assert and clear them,
+and to show their net's probes (see rnetReader.probes).
 
 The structural connectives (the paper's section 5), as relation types
 (*CONNECTIVES*: see *connectives()*) tagged so that the reasoners draw
@@ -370,7 +371,7 @@ def isaRule(m, inc, rule) -> None:
                    "that excludes animal excludes dog). They show their truth marks as bars (markTrue: beside them; "
                    "markFalse: over them), and their menus mark them."))
   knode["vis/sideBars"] = f"$({HOOKS}:markBars)"
-  for item, fn in (("Mark/True", "markTrue"), ("Mark/False", "markFalse"), ("Mark/Clear", "clearMarks")):
+  for item, fn in (("Mark/True", "markTrue"), ("Mark/False", "markFalse"), ("Mark/Clear", "clearMarks"), ("Probes...", "showProbes")):
     knode[f".menu/{item}"] = f"{HOOKS}:{fn}"
   a, b = Node(m, [m.NODE], name="^a"), Node(m, [m.NODE], name="^b")
   rule("isa", [IsaIndividual(m, a, b), IsaIndividual(m, b, knode), Relation(m, [m.DISTINCT], a, b, individual=True),

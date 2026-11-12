@@ -206,6 +206,12 @@ KNET_NODE_TYPES = ("concept", "context", "disjoint", "construct", "cases", "rule
 '''The node types (their names, in any case) of the nodes KNet reasons about:
 it leaves out the others (eg: titles, notes, grids, frames).'''
 
+KNET_NODE = "knetNode"
+'''The attribute of a node type (an SN subtype of *KNODE*) that says whether
+its nodes are the net's: False for one not in *KNET_NODE_TYPES* (eg: a note's),
+whose nodes KNet doesn't reason about -- so they aren't probed (see
+*probes.netNodes()*).'''
+
 def endMarks(shape:int, bars:int, atSource:bool) -> str:
   '''
   :param shape: The end's head (see *rnet.LinkType.head*): 0 none, 1 an arrowhead, 2 a heavy one, 3 a double one.
@@ -394,6 +400,8 @@ def makeNodeType(m:Model, t:NodeType, file:str, knode:Node|None=None) -> Node:
     if isinstance(outline, str) and outline.startswith("#"):
       n["vis/titlebarColor"] = fade(outline, TITLEBAR_TINT)
   n["vis/label"] = LABEL
+  if not box and (t.name or "").strip().lower() not in KNET_NODE_TYPES:
+    n[KNET_NODE] = False
   setNote(n, f"A node type of {file}: shape {t.shape} (variant {t.variant}), {t.font} {t.size} point, "
              f"flags {t.flags}, colours {', '.join(c or '-' for c in t.colors)}"
              + (f', for "{t.extra}" files' if t.extra else "")

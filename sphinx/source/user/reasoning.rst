@@ -147,7 +147,9 @@ how to install it instead.) ``reason --engine nemo`` picks one for a single run.
 CLIPS, ``'(defrule q (holds ?t ?f ?x) (name ?t "owns") (name ?f "fred") =>
 (assert (ans ?x)))'``; for Prolog, ``'ans(X) :- name(T,"owns"), name(F,"fred"),
 holds(T,F,X).'`` (its goals run in the order they're written, so start with
-what narrows things down most).
+what narrows things down most). Only clingo explores the cases of
+definitions (see :ref:`defining-links`) and finds a KNet net's probes (see
+:doc:`exampleApps`).
 
 What Nemo adds is explanations. An inferred relation's menu has **explain
 (why it holds)**, which prints the steps to the terminal pane: the rules it

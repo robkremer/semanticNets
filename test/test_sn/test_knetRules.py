@@ -11,11 +11,14 @@ knode -- and nothing from links that aren't kernel links (preferences,
 generic links). And Gaines's truth marks: a net's asserted ones, the menu
 items' (see the plugin's *hooks*), and the marks the reasoners propagate from
 them, as KNet does (*TestMarks*). And his structural connectives (*TestConnectives*):
-conjunctions and disjunctions, by their links and their marks.
+conjunctions and disjunctions, by their links and their marks; exploring
+them, and defaults (*TestDefaults*); and a net's probes, and the links they
+say hold (*TestProbes*).
 
 If the environment variable REP_PLUS_DATA names the folder of Rep Plus 2's
 test data (Brian Gaines's), the reasoners must also infer every derived link
-that KNet saved in some of its nets, and mark the nodes it marked (see *TestRepPlusData*).
+that KNet saved in some of its nets, mark the nodes it marked, and find
+the probes it reported (see *TestRepPlusData*).
 
 The nets here are made up, small, in the files' format.
 
@@ -24,7 +27,10 @@ Created on Nov 11, 2026
 @author: robkremer
 '''
 import dataclasses
+import itertools
+import math
 import os
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -189,6 +195,30 @@ DEFAULTS = net(
 '''Exploring (Gaines's normal defaults, KNet's Explore): the cases of a true
 disjunction, and preferences between them -- that conflict (as in KNet's
 "Conflict States": bird can't fly comes first).'''
+
+PROBES = net(
+  "|C|9|FFFFFF||32",
+  "T|2",
+  "2|0|Arial|9|1|0|000000|FFFFFF|000000|008A00|0|0|0||Concept",
+  "0|0|Arial|9|1|0|000000|FFFFE5|000000|000000|0|0|0||Note",
+  "A|3",
+  "1|0|0|0|1|0|000000|000000|000000|000000|Includes",            # 0
+  "1|1|0|0|1|0|00A000|00A000|00A000|00A000|Excludes",            # 1
+  "2|0|0|0|1|0|000000|000000|000000|000000|Conjunct includes",   # 2
+  "M|1", "693804|FFCD7D|Asserted",
+  "N|12|0|-1",
+  *[f"{t}|{mark}|0|0|30|20|{name}|" for t, name, mark in (
+    (0, "a", 0), (0, "b", 0), (0, "c", 0),     # 0-2: a includes b, b includes c (Barbara)
+    (0, "p", 0), (0, "q", 0),                  # 3-4: p excludes q
+    (0, "s", 0), (0, "t", 0),                  # 5-6: s includes t, and excludes it: inconsistent
+    (0, "x", 0), (0, "y", 0), (0, "xy", 0),    # 7-9: xy is x and y
+    (0, "u", 81),                              # 10: asserted true, by itself
+    (1, "a note", 0))],                        # 11: a note: not the net's
+  "L|6|0",
+  "0|1|0", "1|2|0", "3|4|1", "5|6|0 1", "9|7|2", "9|8|2",
+  "G|0",
+)
+"Probes (Gaines, section 5; KNet's Probes and Reconstruct): five parts, one of them inconsistent, and a note."
 
 class TestKernelKinds(unittest.TestCase):
 
@@ -585,6 +615,210 @@ class TestDefaults(unittest.TestCase):
     self.assertEqual(self.marks("apart", sameLabels=False), {11: {"markFalse": "necessary"}, 3: false, 5: true, 6: false,
                                                              0: false, 1: true, 2: true})
 
+class TestProbes(unittest.TestCase):
+  '''
+  The probes of a net (see the plugin's *probes*, and
+  sn.model.clingoReasoner.ClingoReasoner.probes()): its nodes, in parts --
+  the probes of the whole net are each combination of theirs -- each part's
+  consistent, admissible and compatible probes, the links they say hold (the
+  reconstruction), and its report. So far just clingo finds them.
+  '''
+  @classmethod
+  def setUpClass(cls):
+    cls.rnet = importBundled("rnetReader", "rnet")
+    cls.reader = importBundled("rnetReader", "reader")
+    cls.probes = importBundled("rnetReader", "probes")
+
+  def setUp(self):
+    Model._initCache()
+    self.tmp = tempfile.TemporaryDirectory()
+    self.folder = Path(self.tmp.name).resolve()
+    self.built = self.reader.buildModel(self.rnet.parseText(PROBES, "probes.rnet"), str(self.folder / "probes.snm"))
+
+  def tearDown(self):
+    Model._initCache()
+    self.tmp.cleanup()
+
+  def shown(self, kind:str) -> list[list[str]]:
+    ''':returns: The probes of each part of *PROBES*: each one's nodes and their marks, as KNet shows them.'''
+    found = self.probes.findProbes(self.built.model, kind)
+    self.assertEqual(found.kind, kind)
+    return [[" ".join(self.probes.SYMBOLS[p[n]] + self.probes.name(n) for n in part.nodes) for part in [pt] for p in pt.probes]
+            for pt in found.parts]
+
+  def test_nodes(self):
+    'The net\'s nodes: not the note; and its parts, the nodes that are linked.'
+    probes = self.probes
+    nodes = probes.netNodes(self.built.model)
+    self.assertEqual([probes.name(n) for n in nodes], ["a", "b", "c", "p", "q", "s", "t", "u", "x", "xy", "y"])
+    self.assertIs(self.built.nodeTypes[1].get(self.reader.KNET_NODE), False)
+    self.assertEqual([[probes.name(n) for n in p] for p in probes.parts(self.built.model, nodes)],
+                     [["a", "b", "c"], ["p", "q"], ["s", "t"], ["u"], ["x", "xy", "y"]])
+
+  def test_consistent(self):
+    '''
+    Each node true or false, as the rules allow: s is always false (it's
+    inconsistent), u true (it's asserted), and xy true only with x and y.
+    '''
+    self.assertEqual(self.shown("consistent"), [
+      ["−a −b −c", "−a −b |c", "−a |b |c", "|a |b |c"],
+      ["−p −q", "−p |q", "|p −q"],
+      ["−s −t", "−s |t"],
+      ["|u"],
+      ["−x −xy −y", "−x −xy |y", "|x −xy −y", "|x |xy |y"]])
+    self.assertEqual(self.probes.findProbes(self.built.model).count(), 4 * 3 * 2 * 1 * 4)
+
+  def test_admissible(self):
+    '''
+    And the inconsistent node both (and so t), and then false again (t still
+    both) -- not the asserted one.
+    '''
+    shown = self.shown("admissible")
+    self.assertEqual(shown[2], ["−s −t", "−s |t", "−s +t", "+s +t"])
+    self.assertEqual(shown[:2] + shown[3:], self.shown("consistent")[:2] + self.shown("consistent")[3:])
+
+  def test_compatible(self):
+    'Each node that isn\'t asserted true, false or both, and what the rules make the rest: none dropped.'
+    shown = self.shown("compatible")
+    self.assertEqual([len(p) for p in shown], [10, 6, 4, 1, 7])
+    self.assertEqual(shown[1], ["−p −q", "−p |q", "−p +q", "|p −q", "+p −q", "+p +q"])
+    self.assertEqual(shown[4], ["−x −xy −y", "−x −xy |y", "−x −xy +y", "|x −xy −y", "|x |xy |y", "+x −xy −y", "+x +xy +y"])
+
+  def test_reconstruct(self):
+    '''
+    The links the probes say hold: inclusions (Barbara: a includes c too),
+    exclusions, the conjunction's inclusions -- and, across the parts, the
+    inconsistent node includes and excludes every node (and itself), and
+    every node includes and coexcludes the asserted one. Admissible probes
+    have s true in one: so then it doesn't.
+    '''
+    probes = self.probes
+    def links(kind:str) -> dict[str, list[str]]:
+      return {probes.name(n): [f"{op} {probes.name(c)}" for op, c in ls]
+              for n, ls in probes.reconstruct(probes.findProbes(self.built.model, kind)).items()}
+    inc, exc, coexc, incd = probes.INCLUDES, probes.EXCLUDES, probes.COEXCLUDES, probes.INCLUDED
+    got = links("consistent")
+    self.assertEqual(got["a"], [f"{inc} b", f"{inc} c", f"{incd} s", f"{exc} s", f"{inc} u", f"{coexc} u"])
+    self.assertEqual(got["p"], [f"{exc} q", f"{incd} s", f"{exc} s", f"{inc} u", f"{coexc} u"])
+    self.assertEqual(got["xy"], [f"{incd} s", f"{exc} s", f"{inc} u", f"{coexc} u", f"{inc} x", f"{inc} y"])
+    self.assertEqual([l for l in got["s"] if l.endswith(" s")], [f"{exc} s"])
+    self.assertEqual(len(got["s"]), 2 * 10 + 1 + 1) # (and coexcludes u)
+    self.assertEqual([l for l in got["u"] if l.endswith(" u")], [f"{coexc} u"])
+    got = links("admissible")
+    self.assertEqual(got["a"], [f"{inc} b", f"{inc} c", f"{inc} u", f"{coexc} u"])
+    self.assertEqual(got["s"], [f"{exc} s", f"{inc} t", f"{exc} t", f"{inc} u", f"{coexc} u"])
+
+  def test_findsMore(self):
+    '''
+    The reconstruction finds links the kernel's rules don't: what includes a
+    and excludes "a and b" excludes b.
+    '''
+    probes = self.probes
+    Model._initCache()
+    b = self.reader.buildModel(self.rnet.parseText(net(
+      "|C|9|FFFFFF||32",
+      "T|1", "2|0|Arial|9|1|0|000000|FFFFFF|000000|008A00|0|0|0||Concept",
+      "A|3",
+      "1|0|0|0|1|0|000000|000000|000000|000000|Includes",
+      "1|1|0|0|1|0|00A000|00A000|00A000|00A000|Excludes",
+      "2|0|0|0|1|0|000000|000000|000000|000000|Conjunct includes",
+      "N|4|0|-1", "0|0|0|0|30|20|x|", "0|0|0|0|30|20|a|", "0|0|0|0|30|20|b|", "0|0|0|0|30|20|a and b|",
+      "L|4|0", "0|1|0", "0|3|1", "3|1|2", "3|2|2",
+      "G|0"), "more.rnet"), str(self.folder / "more.snm"))
+    x, bb = b.nodes[0], b.nodes[2]
+    kernel = b.kernel[self.reader.EXCLUDES]
+    holds = Reasoner.create(b.model, "clingo").run().holds
+    self.assertFalse(any(t is kernel and s is x and d is bb for t, s, d in holds))
+    links = probes.reconstruct(probes.findProbes(b.model))
+    self.assertEqual([(op, probes.name(c)) for op, c in links[x]],
+                     [(probes.INCLUDES, "a"), (probes.EXCLUDES, "a and b"), (probes.EXCLUDES, "b")])
+
+  def test_report(self):
+    'The report: how many probes, each part\'s, its probe sets, and the reconstruction.'
+    text = self.probes.report(self.probes.findProbes(self.built.model), "probes")
+    self.assertTrue(text.startswith("Consistent probes of probes: 96\n"), text)
+    for line in ("Part 1 of 5: a, b, c", "  3: −a |b |c", "Consistent probe sets (true in, false in)", "  b  {3,4} {1,2}",
+                 "  s  {} {1,2}", "Reconstruction from consistent probes/coprobes", "  b: <-- a, --> c, <-- -|- s, --> -||- u"):
+      self.assertIn(line, text.split("\n"))
+    Model._initCache()
+    empty = self.reader.buildModel(self.rnet.parseText(net("|C|9|FFFFFF||32", "T|0", "A|0", "N|0|0|-1", "L|0|0", "G|0"),
+                                                       "empty.rnet"), str(self.folder / "empty.snm"))
+    self.assertEqual(self.probes.report(self.probes.findProbes(empty.model)), "Consistent probes: 1\n\nThe net has no nodes.")
+
+  def test_kinds(self):
+    'There are three kinds; and a part with too many probes says so.'
+    from sn.model.reasoner import TooManyProbes
+    with self.assertRaises(ValueError):
+      self.probes.findProbes(self.built.model, "every")
+    with self.assertRaises(TooManyProbes):
+      self.probes.findProbes(self.built.model, "compatible", limit=8)
+
+def _plain(name:str) -> str:
+  "*name* as KNet's reports write it: its spaces (and line ends) underscores."
+  return re.sub(r"\s+", "_", name.strip())
+
+def _savedProbes(note:str) -> tuple[str|None, list[dict[str, str]], dict[str, set[tuple[str, str]]]|None]:
+  '''
+  :returns: What a report of KNet's probes, saved in a net's note, says: which
+    kind of probes, the probes (each node's mark: "T", "F" or "TF"), and the
+    reconstruction (each node's links, as *probes.reconstruct()* gives them)
+    -- None if it has none, or one KNet couldn't find ("---"). Its versions
+    write them differently: eg, "−A" or "–A" (false), "|A" or "⃓A" (true),
+    "+A" (both); "A: --> B, -|- C", "A <-- -|- B, <-> D" or "A:  (-->,B)".
+  '''
+  lines = note.split("\n")
+  kind = next((k for k in ("consistent", "admissible", "compatible") if k in lines[0].lower()), None)
+  probes:list[dict[str, str]] = []
+  links:list[str] = []
+  part = None
+  for line in lines:
+    low = line.lower()
+    if not line.strip():
+      part = None
+    elif "reconstruct" in low:
+      part = "links"
+    elif "sets" in low or ("probe" in low and "set" in low.split()):
+      part = "sets"
+    elif "probe" in low:
+      part = "probes"
+    elif part == "probes":
+      marks = {}
+      for token in line.split():
+        if len(token) > 2 and token[1] == "\u20d3": # (a bar, over a character that's a space)
+          token = token[1:]
+        if len(token) < 2:
+          continue
+        if token[0] in "\u2212\u2013\u2296-":         # (minus, en dash, circled minus, hyphen)
+          marks[_plain(token[1:])] = "F"
+        elif token[0] in "|\u29b6\u20d3":            # (bar, circled bar, bar over the space before it)
+          marks[_plain(token[1:])] = "T"
+        elif token[0] == "+":
+          marks[_plain(token[1:])] = "TF"
+      if marks:
+        probes.append(marks)
+    elif part == "links":
+      links.append(line.strip())
+  if not links or any("---" in l for l in links):
+    return kind, probes, None
+  names = sorted({n for p in probes for n in p}, key=len, reverse=True)
+  ret:dict[str, set[tuple[str, str]]] = {}
+  for line in links:
+    head = next(n for n in names if line.startswith(n) and line[len(n):len(n) + 1] in ("", ":", " "))
+    rest = line[len(head):].lstrip(":").strip()
+    if "(" in rest:
+      items = [([op.strip()], to.strip()) for op, to in re.findall(r"\(([^,]+),([^)]+)\)", rest)]
+    else:
+      items = []
+      for item in rest.split(", "):
+        words = item.split()
+        ops = [w for w in words if w.startswith(("-", "<"))]
+        items.append((ops, " ".join(w for w in words if w not in ops)))
+    for ops, to in items:
+      for op in ops:
+        both = {"<->": [("-->", to), ("<--", to)], "-|||-": [("-|-", to), ("-||-", to)]}
+        ret.setdefault(head, set()).update(both.get(op, [(op, to)]))
+  return kind, probes, ret
+
 @unittest.skipUnless(os.environ.get("REP_PLUS_DATA"), "set REP_PLUS_DATA to Rep Plus 2's test data folder to run these")
 class TestRepPlusData(unittest.TestCase):
   '''
@@ -624,6 +858,8 @@ class TestRepPlusData(unittest.TestCase):
   def setUpClass(cls):
     cls.rnet = importBundled("rnetReader", "rnet")
     cls.reader = importBundled("rnetReader", "reader")
+    cls.probes = importBundled("rnetReader", "probes")
+    cls.hooks = importBundled("rnetReader", "hooks")
 
   def setUp(self):
     Model._initCache()
@@ -688,6 +924,115 @@ class TestRepPlusData(unittest.TestCase):
                       for nn in n.nodes if nn.marks and nn.derived and nn.index in b.nodes for c in (nn.truth or "")}
           self.assertTrue(expected)
           self.assertEqual(got, expected)
+
+  PROBE_NETS = ["Nets-CNet-Dev/CNet tests/proper part 1.rnet", "Nets-CNet-Dev/CNet tests/proper part 3.rnet",
+                "Nets-CNet-Dev/Probe:coprobe normal forms.rnet", "Nets-CNet-Dev/reconstruct --> when probes included.rnet",
+                *(f"Nets-CNet-Dev/knets/paper/paper1/probes/{name}.rnet" for name in (
+                  "Barbara Celarent", "compatible all", "def conj inconsistent", "definitional conj", "disjunctions",
+                  "exc from 2 negations", "exc-coprobes", "line inconsistent", "probes-2exclusion", "probes-2inclusion",
+                  "probes-3construct", "probes-3inc-exc", "probes-3indepedent", "probes-4all connectives", "probes-6-3exc",
+                  "probes-con-exemplars", "probes-conjunction", "probes-goldsilver", "probes-negation-weaker",
+                  "probes-negation", "scale5 2", "scale5", "test copy"))]
+  '''Nets with KNet's reports of their probes (and the reconstruction from
+  them) in notes -- each of one panel of the net: the one with the nodes it
+  names, nearest it (or of the whole net).'''
+
+  PROBES_ASIDE = {
+    ("Nets-CNet-Dev/knets/paper/paper1/probes/exc-coprobes.rnet", 0): "saved before the net had 3 and 4",
+    ("Nets-CNet-Dev/knets/paper/paper1/probes/line inconsistent.rnet", 0): "saved before the net had D (as it says)",
+    ("Nets-CNet-Dev/knets/paper/paper1/probes/line inconsistent.rnet", 1): "saved by an earlier KNet",
+    ("Nets-CNet-Dev/knets/paper/paper1/probes/def conj inconsistent.rnet", 1): "saved by an earlier KNet"}
+  '''Reports that aren't of the nets as they are, or as KNet finds their
+  probes now: the earlier KNet's (one of them says it's an experimental
+  build) haven't the probe in which an inconsistent node, made both, is false
+  again (C, with A and B both) -- as proper part 1's has (its ci: B again).'''
+
+  PROBES_ASSERTED = {("Nets-CNet-Dev/knets/paper/paper1/probes/test copy.rnet", 1): ["M"]}
+  "Reports of a net with marks asserted that it doesn't have now (as their titles say: \"With M set true\")."
+
+  def panels(self, n) -> list[list[int]]:
+    '''
+    :returns: The nodes (their places) of each panel of the net *n*: the
+      nodes KNet reasons about that are linked or near each other.
+    '''
+    nodes = [nn.index for nn in n.nodes if nn.kind == "node" and n.nodeTypes[nn.type].name.strip().lower() in self.reader.KNET_NODE_TYPES]
+    parent = {i: i for i in nodes}
+    def find(i:int) -> int:
+      while parent[i] != i:
+        parent[i] = parent[parent[i]]
+        i = parent[i]
+      return i
+    def gap(a, b) -> float:
+      return max(b.x - (a.x + a.w), a.x - (b.x + b.w), b.y - (a.y + a.h), a.y - (b.y + b.h), 0)
+    for i, j in itertools.combinations(nodes, 2):
+      if gap(n.nodes[i], n.nodes[j]) <= 30:
+        parent[find(i)] = find(j)
+    for l in n.links:
+      if l.source in parent and l.destination in parent:
+        parent[find(l.source)] = find(l.destination)
+    ret:dict[int, list[int]] = {}
+    for i in nodes:
+      ret.setdefault(find(i), []).append(i)
+    return list(ret.values())
+
+  def test_probes(self):
+    '''
+    The probes clingo finds, of each panel the nets' notes report KNet's of
+    (see *PROBE_NETS*), and the reconstruction from them, are KNet's -- with
+    the nodes that have the same label as one, and not the nodes with no
+    label (the reports don't name them). Some reports aren't of the nets as
+    they are now (see *PROBES_ASIDE*).
+    '''
+    probes = self.probes
+    checked = 0
+    for path in self.PROBE_NETS:
+      n = self.rnet.parse(os.path.join(os.environ["REP_PLUS_DATA"], path))
+      notes = [nn for nn in n.nodes if nn.kind == "node" and nn.label and "Probe" in nn.label]
+      self.assertTrue(notes, path)
+      panels = self.panels(n)
+      for k, note in enumerate(notes):
+        if (path, k) in self.PROBES_ASIDE:
+          continue
+        with self.subTest(net=path, note=k):
+          kind, expected, links = _savedProbes(note.label)
+          names = {name for p in expected for name in p}
+          def gap(panel) -> float: # (between the note and the panel)
+            x0, x1 = min(n.nodes[i].x for i in panel), max(n.nodes[i].x + n.nodes[i].w for i in panel)
+            y0, y1 = min(n.nodes[i].y for i in panel), max(n.nodes[i].y + n.nodes[i].h for i in panel)
+            return math.hypot(max(x0 - (note.x + note.w), note.x - x1, 0), max(y0 - (note.y + note.h), note.y - y1, 0))
+          labelled = lambda panel: {_plain(n.nodes[i].label) for i in panel if (n.nodes[i].label or "").strip()}
+          panel = min((p for p in panels if labelled(p) == names), key=gap, default=None)
+          if panel is None and labelled(sum(panels, [])) == names: # (the whole net's)
+            panel = sum(panels, [])
+          self.assertIsNotNone(panel, f"no panel with the nodes {sorted(names)}")
+          Model._initCache()
+          n = self.rnet.parse(os.path.join(os.environ["REP_PLUS_DATA"], path))
+          n.nodes = [nn if nn.index in panel else dataclasses.replace(nn, kind="drawing") for nn in n.nodes]
+          b = self.reader.buildModel(n, str(self.folder / f"{os.path.basename(path)}-{k}.snm"))
+          plain = {id(b.nodes[i]): _plain(n.nodes[i].label or "") for i in panel}
+          for i in panel:
+            if plain[id(b.nodes[i])] in self.PROBES_ASSERTED.get((path, k), []):
+              b.nodes[i][self.hooks.MARK_TRUE] = "asserted"
+          found = probes.findProbes(b.model, kind)
+          got = set()
+          for each in itertools.product(*(part.probes for part in found.parts)): # (the whole net's: one of each part's)
+            marks:dict[str, str] = {}
+            for p in each:
+              for node, mark in p.items():
+                if plain[id(node)]:
+                  self.assertEqual(marks.setdefault(plain[id(node)], mark), mark) # (the same label: the same marks)
+                  marks[plain[id(node)]] = mark
+            got.add(frozenset(marks.items()))
+          self.assertEqual(got, {frozenset(p.items()) for p in expected})
+          if links is not None:
+            reconstructed:dict[str, set[tuple[str, str]]] = {}
+            for node, ls in probes.reconstruct(found).items():
+              for op, to in ls:
+                if plain[id(node)] and plain[id(to)] and (plain[id(to)] != plain[id(node)] or op in (probes.EXCLUDES, probes.COEXCLUDES)):
+                  reconstructed.setdefault(plain[id(node)], set()).add((op, plain[id(to)]))
+            self.assertEqual({k: v for k, v in reconstructed.items() if v}, {k: v for k, v in links.items() if v})
+          checked += 1
+    self.assertEqual(checked, 38)
 
   def test_derivedLinks(self):
     for engine in installedEngines():

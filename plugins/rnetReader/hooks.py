@@ -10,7 +10,9 @@ inconsistent), or unmarked:
     *MARK_COLORS*);
   - ``.menu/Mark/True``, ``.menu/Mark/False`` (*markTrue()*, *markFalse()*):
     assert a mark on the selected nodes, and ``.menu/Mark/Clear``
-    (*clearMarks()*): take back the marks asserted on them.
+    (*clearMarks()*): take back the marks asserted on them;
+  - ``.menu/Probes...`` (*showProbes()*): show the probes of the node's net
+    (see *probes*).
 
 A mark is two attributes, *MARK_TRUE* and *MARK_FALSE*, each saying how the
 node got it: "asserted" (by these menu items, or a net's file), or by the
@@ -148,3 +150,22 @@ def _hasAsserted(obj:Any, context:HookContext) -> bool:
 def clearMarks(obj:Any, context:HookContext) -> None:
   "Take back the marks asserted on the selected nodes (those the reasoners concluded go when they no longer follow)."
   _setMarks(obj, context, [], list(SIDES))
+
+@hook(appliesTo=_canMark) # (a node of the net)
+def showProbes(obj:Any, context:HookContext) -> Any:
+  '''
+  Show the probes of the node's net -- KNet's probes, probe sets and
+  reconstruction -- in a window of their own (see *probes.ProbesDialog*).
+
+  :returns: The window's *ProbesDialog*.
+  '''
+  from .probes import ProbesDialog
+  model = obj.model
+  return ProbesDialog(getattr(context.view, "canvas", None), model, title=_netName(model)) # (over the view's window)
+
+def _netName(model:Any) -> str:
+  ''':returns: The name of *model*'s file, without its folder or extension (eg: "patterns").'''
+  import os
+  from urllib.parse import unquote, urlparse
+  url = str(getattr(model, "url", "") or "")
+  return os.path.splitext(os.path.basename(unquote(urlparse(url).path)))[0]

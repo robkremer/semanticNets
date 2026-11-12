@@ -240,6 +240,41 @@ class TestNetView(unittest.TestCase):
     self.app.update()
     self.assertEqual(bars("a0"), [("right", "#693804")])
 
+  def test_probes(self):
+    '''
+    A node's "Probes..." menu item shows its net's probes, probe sets and
+    reconstruction in a window: consistent ones first, then the kind chosen
+    -- and copies them.
+    '''
+    from sn.view.graphics.sngView import SNGView
+    from sn.hooks import HookContext
+    from test_sn.test_knetRules import PROBES
+    hooks = importBundled("rnetReader", "hooks")
+    path = self.folder / "probes.rnet"
+    path.write_text(PROBES, encoding="utf-8")
+    built = self.reader.buildModel(self.rnet.parse(str(path)), str(self.folder / "probes.snm"))
+    v = SNGView(fixURL(built.model.url, ".snv", replaceExt=True, mode="w")[0], model=built.model)
+    self.views.append(v)
+    v.window.withdraw()
+    self.netView.showNet(v, built)
+    self.app.update()
+    node = built.nodes[0]
+    self.assertTrue(node[".menu/Probes..."].endswith(":showProbes"))
+    d = hooks.showProbes(node, HookContext(view=v, selection=[]))
+    self.addCleanup(lambda: d.top.winfo_exists() and d.top.destroy())
+    self.assertEqual(d.top.title(), "Probes: probes")
+    text = lambda: d.text.get("1.0", "end-1c")
+    self.assertTrue(text().startswith("Consistent probes of probes: 96\n"), text())
+    d.kind.set("admissible")
+    d.refresh()
+    self.assertTrue(text().startswith("Admissible probes of probes: 192\n"), text())
+    d.copy()
+    self.assertEqual(d.top.clipboard_get(), text())
+    with mock.patch.object(importBundled("rnetReader", "probes"), "findProbes",
+                           side_effect=__import__("sn.model.reasoner", fromlist=["TooManyProbes"]).TooManyProbes(4096)):
+      d.refresh()
+    self.assertTrue(text().startswith("There are more than 4096 probes."), text())
+
   def test_convert(self):
     'The files are made, the view opened; made again, it asks first -- and does nothing if told not to.'
     model, view = str(self.folder / "out" / "net.snm"), str(self.folder / "out" / "net.snv")

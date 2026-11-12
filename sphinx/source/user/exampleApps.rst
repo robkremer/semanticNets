@@ -418,8 +418,8 @@ default           purple       in every preferred case (see `Exploring and
 ================  ===========  ==================================================
 
 A node's menu has **Mark** ▸ **True**, **False** and **Clear** (for the
-selected nodes, undone in one go); **Reason** propagates the marks (reason
-again after changing them). The marks are two attributes,
+selected nodes, undone in one go), and **Probes...** (see `Probes`_);
+**Reason** propagates the marks (reason again after changing them). The marks are two attributes,
 ``markTrue`` and ``markFalse``, whose values say how (eg: ``asserted``): the
 reasoners' are inferred values, and an asserted one always stands. A net's
 file's asserted marks are asserted ones; the marks KNet propagated (and saved)
@@ -490,8 +490,40 @@ Concessive conditionals, art), the reasoners make the necessary and default
 marks KNet saved. For now only the clingo engine explores: the other
 engines give the marks before it.
 
-Not yet: probes, which find more (eg, that what includes A and excludes "A
-and B" excludes B).
+Probes
+~~~~~~
+
+A probe is a way to mark every node of a net -- true, false or both -- that
+its rules allow, starting from the marks it has (Gaines's probes and
+coprobes). A node's menu has **Probes...**: a window with the probes of the
+node's net, of the kind you choose:
+
+- **Consistent**: each node with no mark is true or false, and no node ends
+  up both that wasn't already.
+- **Admissible**: those, and, for each node with just one mark that it
+  wasn't asserted to have, the probes in which it's both -- and then those
+  in which it has its mark again (so an inconsistent node, false, has
+  probes of its own).
+- **Compatible**: each node that isn't asserted is true, false or both (at
+  least what it was), and the rules mark the rest; none is dropped.
+
+Each node's probe sets are the probes it's true in and those it's false in,
+and from them the window reconstructs the links that hold, written as KNet
+writes them: A ``-->`` B (A includes B) if B is true in every probe A is,
+and A false in every probe B is; A ``<--`` B if B includes A; A ``-|-`` B
+(excludes) if each is false in every probe the other is true in; and A
+``-||-`` B (coexcludes) if each is true in every probe the other is false
+in. The reconstruction finds links the kernel's rules don't: eg, that
+what includes A and excludes "A and B" excludes B.
+
+Nodes that aren't linked have every combination of each other's probes: so
+the window shows the probes of each part of the net (its nodes that are
+linked) by itself, and counts the whole net's. Only the nodes KNet reasons
+about are the net's -- concepts, contexts, constructs and so on, not notes,
+titles or frames -- and **Copy** puts the report on the clipboard. On the
+nets of the paper's probes figures, the probes and reconstructions are the
+ones KNet saved in their notes (all but four, made of an earlier version of
+a net or by an earlier KNet). For now only the clingo engine finds probes.
 
 Menus, tooltips and double-clicks from programs
 -----------------------------------------------

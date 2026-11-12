@@ -365,3 +365,29 @@ rule_attr(R,A,Y,V) :- world_need(C,meet), def_key(C,meet,_,A,Y,_), world_pref(C,
    def_rank(C,join,K). [1@K,C,join,B]
 :~ world_need(C,meet), def_key(C,meet,_,A,Y,_), world_pref(C,meet,A,B), attr(B,Y,_), not world_mark0(B,Y),
    def_rank(C,meet,K). [1@K,C,meet,B]
+
+#program probe_marks.
+% (with the program above: the marks a probe starts from -- see
+% ClingoReasoner.probes(): probe_key(t,TK), probe_key(f,FK) are the
+% attributes that say an object's true or false)
+probe_value(X,K) :- probe_key(_,K), attr(X,K,_).
+#show probe_value/2.
+
+#program probed.
+% Probes (Gaines's): the ways the probe_node/1 objects can be marked that the
+% rules allow, from the marks probe_mark0/2 (what the program alone
+% concluded) -- each answer set one. Consistent: each node that has no mark
+% gets one, true or false, and nothing gets both that hadn't both. Compatible:
+% each node not asserted (probe_asserted/1) is true, false or both, at least
+% what it was, and just what the rules then make it.
+probe_both0(X) :- probe_mark0(X,TK), probe_mark0(X,FK), probe_key(t,TK), probe_key(f,FK).
+probe_marked0(X) :- probe_mark0(X,_).
+1 { probe_set(X,K) : probe_key(_,K) } 1 :- probe_node(X), not probe_marked0(X), probe_kind(consistent).
+:- probe_kind(consistent), probe_key(t,TK), probe_key(f,FK), attr(X,TK,_), attr(X,FK,_), not probe_both0(X).
+{ probe_set(X,K) : probe_key(_,K) } :- probe_node(X), not probe_asserted(X), probe_kind(compatible).
+probe_chosen(X) :- probe_set(X,_).
+:- probe_kind(compatible), probe_node(X), not probe_asserted(X), not probe_chosen(X).
+:- probe_kind(compatible), probe_node(X), not probe_asserted(X), probe_key(_,K), attr(X,K,_), not probe_set(X,K).
+rule_attr(probe,X,K,probe) :- probe_set(X,K).
+probe_out(X,K) :- probe_node(X), probe_key(_,K), attr(X,K,_).
+#show probe_out/2.
