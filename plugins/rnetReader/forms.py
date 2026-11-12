@@ -47,6 +47,7 @@ from __future__ import annotations
 import itertools
 import os
 import tempfile
+from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Any
 from sn.model.model import Model, Node, Relation, GraphObject, IsaIndividual
@@ -412,7 +413,7 @@ def checkMerge(importing:Model, imported:Model, engine:str|None=None) -> MergeCh
   aloneA = _kernelLinks(Reasoner.create(importing, engine).run().holds, kernel, a)
   aloneB = _kernelLinks(Reasoner.create(imported, engine).run().holds, kernel, b)
   folder = tempfile.mkdtemp(prefix="snMerge-")
-  merged = Model(f"file://{os.path.join(folder, 'merge.snm')}")
+  merged = Model(Path(folder, "merge.snm").as_uri())
   try:
     merged.setSuperModels([str(importing.url), str(imported.url)]) # (the models in memory: see PRDb.getDB())
     byName:dict[str, list[Node]] = {}

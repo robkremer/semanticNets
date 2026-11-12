@@ -863,7 +863,7 @@ class TestForms(unittest.TestCase):
     self.assertEqual(len(links), before * 9) # (each, to every node)
     self.assertEqual(links[:9], [f"probe 1 excludes {n}" for n in ("a", "b", "c", "animal", "dog", "plant", "x", "y", "z")])
     with self.assertRaises(ValueError):
-      self.forms.saturate(Model(f"file://{self.folder / 'plain.snm'}"))
+      self.forms.saturate(Model((self.folder / "plain.snm").as_uri()))
 
   def test_merge(self):
     '''
