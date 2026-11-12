@@ -5,8 +5,10 @@ menu's "Rep Plus Net Reader...".
 
   - *rnet*: reads the file;
   - *reader*: makes the model;
-  - *hooks*: a KNet node's truth marks -- their bars, and its menu's items to mark it (and to show its net's probes);
+  - *hooks*: a KNet node's truth marks -- their bars, and its menu's items to mark it (and to show its net's probes,
+    and to work on its net as a whole);
   - *probes*: a net's probes, and the links they say hold;
+  - *forms*: a net as a whole: its canonical forms, saturating it with its probes, and merging nets;
   - *view*: the front end, and the view.
 
 Created on Nov 11, 2026

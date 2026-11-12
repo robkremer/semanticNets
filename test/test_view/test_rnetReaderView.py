@@ -275,6 +275,140 @@ class TestNetView(unittest.TestCase):
       d.refresh()
     self.assertTrue(text().startswith("There are more than 4096 probes."), text())
 
+  FORMS = "﻿" + "\r".join(l.replace("|", "\t") for l in (
+    "|C|9|FFFFFF||32", "T|1", "2|0|Arial|9|1|0|000000|FFFFFF|000000|008A00|0|0|0||Concept",
+    "A|2", "1|0|0|0|1|0|000000|000000|000000|000000|Includes", "1|1|0|0|1|0|00A000|00A000|00A000|00A000|Excludes",
+    "N|4|0|-1", "0|0|10|10|19|19|a|", "0|0|80|10|19|19|b|", "0|0|150|10|19|19|c|", "0|0|220|10|19|19|d|",
+    "L|4|0", "0|1|0", "1|2|0", "0|2|0", "2|3|1", # (a includes b, b includes c, a includes c: redundant; c excludes d)
+    "G|0")) + "\r"
+  "A net for the Net menu's items: one of its links the others imply."
+
+  def formsView(self):
+    ''':returns: A view of *FORMS*'s net (withdrawn), and what the reader built.'''
+    from sn.view.graphics.sngView import SNGView
+    path = self.folder / "forms.rnet"
+    path.write_text(self.FORMS, encoding="utf-8")
+    built = self.reader.buildModel(self.rnet.parse(str(path)), str(self.folder / "forms.snm"))
+    v = SNGView(fixURL(built.model.url, ".snv", replaceExt=True, mode="w")[0], model=built.model)
+    self.views.append(v)
+    v.window.withdraw()
+    self.netView.showNet(v, built)
+    self.app.update()
+    return v, built
+
+  def test_forms(self):
+    '''
+    A node's Net menu: the minimal form takes out the link the others imply
+    (a includes c), and the maximal form asserts it again, with the
+    exclusions the others imply -- each one command, undone in one go -- and
+    each says what it did.
+    '''
+    from sn.hooks import HookContext
+    hooks = importBundled("rnetReader", "hooks")
+    forms = importBundled("rnetReader", "forms")
+    v, built = self.formsView()
+    m, a = built.model, built.nodes[0]
+    for item, fn in (("Minimal form", "minimalForm"), ("Maximal form", "maximalForm"), ("Saturate", "saturate"),
+                     ("Check merge with...", "checkMerge")):
+      self.assertTrue(a[f".menu/Net/{item}"].endswith(f":{fn}"), item)
+    links = lambda: sorted(hooks._describe(r) for r in forms.netLinks(m))
+    before = links()
+    self.assertIn("a Includes c", before)
+    context = HookContext(view=v, selection=[])
+    with mock.patch("builtins.print") as said:
+      gone = hooks.minimalForm(a, context)
+    self.assertEqual([hooks._describe(r) for r in gone], ["a Includes c"])
+    self.assertEqual(said.call_args_list[0].args[0], "Minimal form of forms: took out 1 link:")
+    self.app.update()
+    self.assertEqual(links(), sorted(set(before) - {"a Includes c"}))
+    self.assertEqual(len(self.relations(v)), 3)
+    v.context.undo()
+    self.app.update()
+    self.assertEqual(links(), before)
+    v.context.redo()
+    self.app.update()
+    with mock.patch("builtins.print") as said:
+      added = hooks.maximalForm(a, context)
+    self.assertEqual(sorted(hooks._describe(r) for r in added), ["a excludes d", "a includes c", "b excludes d"])
+    self.assertFalse(any(r.inferred for r in added))
+    self.assertEqual(said.call_args_list[0].args[0], "Maximal form of forms: asserted 3 links:")
+    v.context.undo()
+    self.assertTrue(all(r.inferred for r in added))
+    with mock.patch("builtins.print") as said:
+      self.assertEqual(hooks.minimalForm(a, HookContext(view=v, selection=[])), [])
+    self.assertEqual(said.call_args_list[0].args[0], "Minimal form of forms: took out 0 links.")
+
+  def test_saturate(self):
+    '''
+    Saturate adds the net's admissible probes as nodes, each linked to the
+    nodes true and false in it -- shown in the view, without asking their
+    names -- as one command, undone in one go. Too many: said, and nothing added.
+    '''
+    from sn.hooks import HookContext
+    from sn.model.model import Node
+    hooks = importBundled("rnetReader", "hooks")
+    v, built = self.formsView()
+    m, a = built.model, built.nodes[0]
+    count = len(m)
+    with mock.patch("builtins.print") as said, \
+         mock.patch("sn.view.graphics.viewEditing.applyEditAttrsBox", side_effect=AssertionError("asked a name")):
+      added = hooks.saturate(a, HookContext(view=v, selection=[]))
+      self.app.update()
+    probes = [o for o in added if isinstance(o, Node)]
+    self.assertEqual([p.name for p in probes], [f"probe {k}" for k in range(1, 6)]) # (none true; d; c; b and c; a, b and c)
+    self.assertEqual(said.call_args_list[0].args[0], "Saturated forms: added 5 admissible probes: " +
+                     ", ".join(f"probe {k}" for k in range(1, 6)))
+    self.assertTrue(all(p.isa(importBundled("rnetReader", "forms").probeType(m)) for p in probes))
+    self.assertEqual(len(added) - len(probes), 5 * 4) # (each linked to every node)
+    self.assertTrue(all(name in self.shown(v) for name in ("probe 1", "probe 5")))
+    v.context.undo()
+    self.app.update()
+    self.assertEqual(len(m), count)
+    self.assertNotIn("probe 1", self.shown(v))
+    with mock.patch.object(importBundled("rnetReader", "forms"), "SATURATION_LIMIT", 4), \
+         self.assertLogs("snplugins.rnetReader.hooks", "ERROR") as logs:
+      saturate = importBundled("rnetReader", "forms").saturate
+      with mock.patch.object(importBundled("rnetReader", "forms"), "saturate",
+                             side_effect=lambda model, context=None: saturate(model, context=context, limit=4)):
+        self.assertEqual(hooks.saturate(a, HookContext(view=v, selection=[])), [])
+    self.assertIn("There are more than 4 probes.", logs.output[0])
+    self.assertEqual(len(m), count)
+
+  def test_checkMerge(self):
+    '''
+    "Check merge with..." asks for another net -- a Rep Plus net file, here
+    -- and shows what merging it would do, in a window: a net where c
+    includes a, merged with this one (where a includes c, by way of b),
+    makes the three equivalent: consistent, but not conservative. Asked for
+    none: nothing.
+    '''
+    from sn.hooks import HookContext
+    hooks = importBundled("rnetReader", "hooks")
+    v, built = self.formsView()
+    other = self.folder / "other.rnet"
+    other.write_text("﻿" + "\r".join(l.replace("|", "\t") for l in (
+      "|C|9|FFFFFF||32", "T|1", "2|0|Arial|9|1|0|000000|FFFFFF|000000|008A00|0|0|0||Concept",
+      "A|1", "1|0|0|0|1|0|000000|000000|000000|000000|Includes",
+      "N|3|0|-1", "0|0|10|10|19|19|c|", "0|0|80|10|19|19|a|", "0|0|150|10|19|19|e|",
+      "L|2|0", "0|1|0", "2|0|0", # (c includes a, e includes c)
+      "G|0")) + "\r", encoding="utf-8")
+    context = HookContext(view=v, selection=[])
+    with mock.patch.object(hooks, "askNet", return_value=""):
+      self.assertIsNone(hooks.checkMerge(built.nodes[0], context))
+    with mock.patch.object(hooks, "askNet", return_value=str(other)):
+      w = hooks.checkMerge(built.nodes[0], context)
+    self.addCleanup(lambda: w.top.winfo_exists() and w.top.destroy())
+    self.assertEqual(w.top.title(), "Merge: other into forms")
+    text = w.report()
+    self.assertTrue(text.startswith("Merging other into forms\nNodes they share (by label): a, c\n"), text)
+    self.assertIn("Consistent: yes\n", text)
+    self.assertIn("Conservative: no\n", text)
+    self.assertIn("New links in other:\n  a equivalent c\n", text)
+    self.assertTrue(text.endswith("New links in forms:\n  a equivalent b\n  a equivalent c\n  b equivalent c"), text)
+    self.assertNotIn("other.snm", " ".join(Model.AllDBs)) # (made just now, and let go of)
+    self.assertFalse(any(r.model is not built.model and r.model.name != "knet.snm" for n in built.nodes.values()
+                         for r in (*n._outgoing, *n._incoming))) # (the merge's links gone)
+
   def test_convert(self):
     'The files are made, the view opened; made again, it asks first -- and does nothing if told not to.'
     model, view = str(self.folder / "out" / "net.snm"), str(self.folder / "out" / "net.snv")

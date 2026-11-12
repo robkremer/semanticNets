@@ -13,6 +13,7 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
+   snplugins.rnetReader.forms
    snplugins.rnetReader.hooks
    snplugins.rnetReader.probes
    snplugins.rnetReader.rnet

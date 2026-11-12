@@ -418,7 +418,8 @@ default           purple       in every preferred case (see `Exploring and
 ================  ===========  ==================================================
 
 A node's menu has **Mark** ▸ **True**, **False** and **Clear** (for the
-selected nodes, undone in one go), and **Probes...** (see `Probes`_);
+selected nodes, undone in one go), **Probes...** (see `Probes`_) and
+**Net** (see `Canonical forms, saturation and merges`_);
 **Reason** propagates the marks (reason again after changing them). The marks are two attributes,
 ``markTrue`` and ``markFalse``, whose values say how (eg: ``asserted``): the
 reasoners' are inferred values, and an asserted one always stands. A net's
@@ -524,6 +525,36 @@ titles or frames -- and **Copy** puts the report on the clipboard. On the
 nets of the paper's probes figures, the probes and reconstructions are the
 ones KNet saved in their notes (all but four, made of an earlier version of
 a net or by an earlier KNet). For now only the clingo engine finds probes.
+
+Canonical forms, saturation and merges
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A node's menu also has **Net**, for the node's net as a whole (Gaines's
+section 3). Each change is one command, undone in one go, and says what it
+did in the window's terminal:
+
+- **Minimal form**: take out the net's links that the rest imply -- eg,
+  KNet's derived links, and A includes C beside A includes B and B includes
+  C. Each is tried in turn, newest first, leaving out those found so far:
+  so of a cycle of inclusions, the links drawn first stay, and the minimal
+  form of the maximal form is the net's.
+- **Maximal form**: assert the kernel's links the net implies (eg: the
+  equivalences of a cycle, and what an exclusion is inherited by) -- not
+  one a link of the net already says, nor one of a node to itself.
+- **Saturate**: add the net's admissible probes (see `Probes`_), as nodes
+  of the *probe* SN type, from outside: "probe 1" and so on, each including
+  the nodes true in it and excluding those false in it. A probe isn't one
+  of the net's nodes: the net's probes are the same, saturated. At most 64.
+- **Check merge with...**: choose another net (a model, or a Rep Plus net
+  file), and see, in a window, what merging it into this one would do --
+  the nodes with the same label are one: whether it's consistent (it makes
+  no inconsistent links that neither net had), conservative (it makes no
+  links between the other net's nodes that it didn't have) and
+  ultra-conservative (nor between this net's nodes), with the links it
+  makes. Neither net is changed.
+
+The canonical forms work on every engine (they're ordinary reasoning);
+saturation needs one that finds probes (clingo).
 
 Menus, tooltips and double-clicks from programs
 -----------------------------------------------

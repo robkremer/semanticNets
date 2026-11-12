@@ -235,7 +235,9 @@ class ViewDoList(DoList):
 
     The ids of the objects *c* makes in the view's model are noted: the view
     asks for the names of those (see *SNGView.update()*), not of objects made
-    elsewhere (eg: by a program, or in another window).
+    elsewhere (eg: by a program, or in another window) -- nor of those made
+    by a command whose *asksNames* is False (eg: a program's, that names
+    what it makes: see the rnetReader plugin's *forms.saturate()*).
     '''
     finishTween(self.view)
     if not self.view.isModelEditor() and changesModel(c):
@@ -243,7 +245,8 @@ class ViewDoList(DoList):
     first = self.view.model.nextID # (ids only grow: the objects c makes have those from here)
     ret = super().do(c)
     if self.view.model.nextID > first:
-      self.view.__dict__.setdefault("_madeHere", set()).update(range(first, self.view.model.nextID))
+      if getattr(c, "asksNames", True):
+        self.view.__dict__.setdefault("_madeHere", set()).update(range(first, self.view.model.nextID))
       if c.mutatedData:
         self._lastMade = (c, range(first, self.view.model.nextID))
     if c.mutatedData and 0 <= self.index < len(self.queue) and self.queue[self.index] is c:
