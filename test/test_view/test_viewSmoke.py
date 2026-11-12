@@ -381,6 +381,7 @@ class Test(unittest.TestCase):
     from sn.model.model import Node
     from sn.view.graphics.treeLayout import TreeLayout
     from sn.view.graphics.relationTable import RelationTable
+    from sn.view.graphics.layout import finishTween
     v, m = self.view, self.model
     klass = Node(m, [m.NODE], name="klass")
     inherits = Relation(m, [m.RELATION], klass, klass, name="inherits-from")
@@ -397,12 +398,19 @@ class Test(unittest.TestCase):
     self.assertIn(self.vo("base1"), roots)
     self.assertIn(self.vo("base2"), others)
     for name in ("base2", "base1"): # (in no tree; a root: both stay where they're dropped)
+      finishTween(v) # (where things are going, not where they are on the way: a drop finishes the move first, and
+      self.pump()    # a slow machine's still moving them -- then what's "clear of everything" may not be)
       vo = self.vo(name)
       bb = vo.boundingBox()
       far = max(o.boundingBox()[2] for o in v.values() if o is not None and o._isConnected()) + 500 # (clear of everything)
       v.context.move(vo, far, bb[1], _oldPos=list(bb), _drag=True)
       self.pump()
-      self.assertEqual(vo.boundingBox()[0], far, name)
+      box = vo.boundingBox()
+      near = [(str(getattr(o.modelObject, "name", "")), o.boundingBox()) for o in v.values()
+              if o is not None and o is not vo and o._isConnected() and not o.isHidden()
+              and o.boundingBox()[0] < box[2] + 10 and box[0] - 10 < o.boundingBox()[2]
+              and o.boundingBox()[1] < box[3] + 10 and box[1] - 10 < o.boundingBox()[3]]
+      self.assertEqual(box[0], far, f"{name}: dropped at {far}, {bb[1]}; now {box}; near it: {near}")
     self.assertIn(self.vo("base2")._id, v.localLayout.pins)
     self.assertNotIn(self.vo("base1")._id, v.localLayout.pins) # (a root's kept where it is anyway)
 
