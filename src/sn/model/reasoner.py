@@ -8,52 +8,52 @@ A reasoner engine subclasses :py:class:`Reasoner` (see
 - :py:meth:`Reasoner.facts` exports the model as engine-neutral facts. Their
   vocabulary is the contract every engine reasons over:
 
-  ==========================  ================================================
-  ``obj(O)``                  every GraphObject (including those of super-models)
-  ``individual(O)``           GraphObject.isIndividual()
-  ``kind(O,K)``               K in top, node, relation, isa
-  ``collection(O)``           O is a Collection (also of kind node)
-  ``name(O,S)``               GraphObject.name
-  ``const(K,O)``              well-known objects: top, relation, isa, node, ...
-  ``parent(X,P)``             GraphObject.getParents() (incl. implicit defaults)
-  ``lsrc(R,C)``, ``ldst``     locally set relation endpoints (Relation.localSrc/.localDst)
-  ``domain(T,C)``, ``range``  the signature of relation type T (Relation.domain/.range)
-  ``src(R,S)``, ``dst``       effective endpoints (Relation.src/.dst, inherited)
-  ``link(R,S,D)``             individual, non-isa relation R with both endpoints
-  ``prop(T,P)``               relation type T is tagged with P (reflexive,
-                              irreflexive, symmetric, asymmetric, transitive)
-  ``member(C,M)``             M is a member of box C: a collection (of any Python
-                              class) that doesn't quote what it contains (see
-                              GraphObject.isCollection(), quotesContents())
-  ``attr(O,K,V)``             effective non-"vis/" scalar attributes
-  ``lattr(O,K)``              O has attribute K locally
-  ``card(T,Dir,Min,Max)``     relation type T's cardinality: each source (Dir
-                              *out*) or destination (*in*) has Min..Max others
-                              by T (Max -1: any number). See *CARDINALITY*.
-  ``card_error(T,K,M)``       T's cardinality attribute K can't be read: message M
-  ``pattern(X)``              X describes a pattern (in a rule etc.), not the world
-                              (see GraphObject.isPatternElement())
-  ``var_kind(X,K)``           X is a variable over K: individual, type or any
-                              (see GraphObject.variableKind() and sn.model.names)
-  ``def_part(C,D,I,A,P,Pol)`` node C is defined by its links (see *DEFINING*):
-                              D is *meet* or *join*; its Ith (from 1) defining
-                              link is to A (from A, for a join); P is the
-                              relation it requires; Pol *pos* if P is the
-                              order (*neg* if not)
-  ``def_last(C,D,N,Q,R)``     C has N such links; Q is the order; R the tagged
-                              relation type (the first link's)
-  ``def_marks(C,D,TK,FK,V)``  their truth attributes: true's and false's keys,
-                              and the value concluded
-  ``def_mixed(C,D)``          one of the links' other ends has both (locally)
-  ``def_world(C,D,NV,DV)``    C's links are explored, in worlds (see
-                              *DEFINING*): NV is the value of the marks every
-                              world has, DV the value of those every
-                              preferred world has
-  ``def_prefer(C,D,P)``       ... and their ends are preferred by P (a
-                              relation type: A -P-> B, A yields to B)
-  ``def_rank(C,D,K)``         ... and C's preferences come Kth from last
-                              (the highest K first: see *DEFAULT_ORDER*)
-  ==========================  ================================================
+  ============================  ================================================
+  ``obj(O)``                    every GraphObject (including those of super-models)
+  ``individual(O)``             GraphObject.isIndividual()
+  ``kind(O,K)``                 K in top, node, relation, isa
+  ``collection(O)``             O is a Collection (also of kind node)
+  ``name(O,S)``                 GraphObject.name
+  ``const(K,O)``                well-known objects: top, relation, isa, node, ...
+  ``parent(X,P)``               GraphObject.getParents() (incl. implicit defaults)
+  ``lsrc(R,C)``, ``ldst``       locally set relation endpoints (Relation.localSrc/.localDst)
+  ``domain(T,C)``, ``range``    the signature of relation type T (Relation.domain/.range)
+  ``src(R,S)``, ``dst``         effective endpoints (Relation.src/.dst, inherited)
+  ``link(R,S,D)``               individual, non-isa relation R with both endpoints
+  ``prop(T,P)``                 relation type T is tagged with P (reflexive,
+                                irreflexive, symmetric, asymmetric, transitive)
+  ``member(C,M)``               M is a member of box C: a collection (of any Python
+                                class) that doesn't quote what it contains (see
+                                GraphObject.isCollection(), quotesContents())
+  ``attr(O,K,V)``               effective non-"vis/" scalar attributes
+  ``lattr(O,K)``                O has attribute K locally
+  ``card(T,Dir,Min,Max)``       relation type T's cardinality: each source (Dir
+                                *out*) or destination (*in*) has Min..Max others
+                                by T (Max -1: any number). See *CARDINALITY*.
+  ``card_error(T,K,M)``         T's cardinality attribute K can't be read: message M
+  ``pattern(X)``                X describes a pattern (in a rule etc.), not the world
+                                (see GraphObject.isPatternElement())
+  ``var_kind(X,K)``             X is a variable over K: individual, type or any
+                                (see GraphObject.variableKind() and sn.model.names)
+  ``def_part(C,D,I,A,P,Pol)``   node C is defined by its links (see *DEFINING*):
+                                D is *meet* or *join*; its Ith (from 1) defining
+                                link is to A (from A, for a join); P is the
+                                relation it requires; Pol *pos* if P is the
+                                order (*neg* if not)
+  ``def_last(C,D,N,Q,R)``       C has N such links; Q is the order; R the tagged
+                                relation type (the first link's)
+  ``def_marks(C,D,TK,FK,V)``    their truth attributes: true's and false's keys,
+                                and the value concluded
+  ``def_mixed(C,D)``            one of the links' other ends has both (locally)
+  ``def_world(C,D,NV,DV)``      C's links are explored, in worlds (see
+                                *DEFINING*): NV is the value of the marks every
+                                world has, DV the value of those every
+                                preferred world has
+  ``def_prefer(C,D,P)``         ... and their ends are preferred by P (a
+                                relation type: A -P-> B, A yields to B)
+  ``def_rank(C,D,K)``           ... and C's preferences come Kth from last
+                                (the highest K first: see *DEFAULT_ORDER*)
+  ============================  ================================================
 
 - :py:class:`Inferences` and :py:class:`Violation` are what every engine
   returns, and the violation codes (see *_MESSAGES*) are shared.
@@ -213,6 +213,27 @@ preferences come: those whose value is less first (the value is a number:
 none is 0), and otherwise in the order the nodes are in the models -- as KNet
 takes them in the order they're in the net (the user can sort them).
 '''
+
+CONSISTENT, ADMISSIBLE, COMPATIBLE = "consistent", "admissible", "compatible"
+PROBE_KINDS = (CONSISTENT, ADMISSIBLE, COMPATIBLE)
+'''
+The kinds of Gaines's probes an engine that can find them finds (see
+*probingEngine()*, and *sn.model.clingoReasoner.ClingoReasoner.probes()*):
+KNet's consistent, admissible and compatible probes.
+'''
+
+PROBE_LIMIT = 4096
+"The most probes an engine finds unless it's told otherwise: they can be exponentially many (see *TooManyProbes*)."
+
+class TooManyProbes(Exception):
+  '''
+  There are more probes than the limit: a net's probes can be as many as two
+  to the power of its nodes (every combination of the marks of nodes that
+  aren't linked).
+  '''
+  def __init__(self, limit:int):
+    super().__init__(f"There are more than {limit} probes.")
+    self.limit = limit
 
 def parseCardinality(text:Any) -> tuple[int, int|None]:
   '''
@@ -1442,13 +1463,15 @@ class EngineInfo:
   "The package that provides *module*, as pip names it (eg: \"nemo-python\")."
   explains:bool = False
   "Whether it can say why a conclusion holds (see *sn.model.nemoReasoner.NemoReasoner.explain()*)."
+  probes:bool = False
+  "Whether it can find Gaines's probes (see *probingEngine()*, *sn.model.clingoReasoner.ClingoReasoner.probes()*)."
   bundled:bool = True
   "Whether the apps include it (their self-test checks that it's there: see *sn.__main__.selftest()*)."
   needs:str = ""
   "What must be installed before *package*, if anything (eg: SWI-Prolog, which janus-swi is the Python interface to)."
 
 ENGINES:dict[str, EngineInfo] = {e.name: e for e in (
-  EngineInfo("clingo", "clingo", "clingo"),
+  EngineInfo("clingo", "clingo", "clingo", probes=True),
   EngineInfo("nemo", "nmo_python", "nemo-python", explains=True),
   EngineInfo("clips", "clips", "clipspy", bundled=False),
   EngineInfo("prolog", "janus_swi", "janus-swi", bundled=False, needs="SWI-Prolog (9.1.12 or later, from swi-prolog.org)"),
@@ -1544,6 +1567,17 @@ def explainingEngine() -> str:
   '''
   able = [e for e, info in ENGINES.items() if info.explains] \
        + [e for e, cls in Reasoner.engines.items() if e not in ENGINES and callable(getattr(cls, "explain", None))]
+  default = defaultEngine()
+  return min(able, key=lambda e: (not engineInstalled(e), e != default))
+
+def probingEngine() -> str:
+  '''
+  :returns: The engine to find probes with (see *PROBE_KINDS*): the default
+    one if it can, or else the first installed one that can -- or, if none is
+    installed, the first that can (so *Reasoner.create()* says how to install it).
+  '''
+  able = [e for e, info in ENGINES.items() if info.probes] \
+       + [e for e, cls in Reasoner.engines.items() if e not in ENGINES and callable(getattr(cls, "probes", None))]
   default = defaultEngine()
   return min(able, key=lambda e: (not engineInstalled(e), e != default))
 

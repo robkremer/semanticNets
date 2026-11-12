@@ -39,11 +39,12 @@ from pathlib import Path
 import importlib.resources
 from importlib.resources.abc import Traversable
 import re
+from collections.abc import Sequence
 from typing import Any, override
 import clingo
 from sn.model.model import Model, GraphObject
 from sn.model.reasoner import Reasoner, Inferences, Violation, Sym, Fact, PROPERTIES, Pattern, patternOf, NewObject, inferredNodeFor, \
-  sameClasses, _newObjectKey
+  sameClasses, _newObjectKey, TooManyProbes, PROBE_KINDS, PROBE_LIMIT, CONSISTENT, ADMISSIBLE, COMPATIBLE
 from sn.model.constraints import PRESENT, ValueVar, Not
 from sn.model.names import NameKind
 
@@ -72,6 +73,8 @@ class ClingoReasoner(Reasoner, engine="clingo"):
     "id(GraphObject) -> term number"
     self._objs:list[GraphObject] = []
     "term number -> GraphObject"
+    self._probing:tuple[str, str]|None = None
+    "The facts and rules *probes()* solves with: rendered once, of the model as it is when they're first asked for."
 
   # ── Rendering ────────────────────────────────────────────────────────────
 
@@ -166,6 +169,107 @@ class ClingoReasoner(Reasoner, engine="clingo"):
     if any(pred == "def_prefer" for pred, _ in given):
       ret += [(tag, x, k, first[3]) for x, k in found(self._solve(rules + start, facts, ("explored", "preferred"), best=True)) - necessary]
     return ret
+
+  def _models(self, program:str, facts:str, parts:tuple[str, ...], limit:int) -> list[list[clingo.Symbol]]:
+    '''
+    :param program: More rules (with the rule base).
+    :param facts: The model's facts, rendered (see *_program()*).
+    :param parts: The rule base's other parts to ground with it.
+    :param limit: The most models to find.
+    :returns: Every model's shown atoms.
+    :raises TooManyProbes: If there are more than *limit*.
+    '''
+    ctl = clingo.Control(["--warn=none", "0"])
+    ctl.add("base", [], self.rules.read_text(encoding="utf-8"))
+    ctl.add("base", [], facts)
+    ctl.add("base", [], program)
+    ctl.ground([("base", []), *((part, []) for part in parts)])
+    ret:list[list[clingo.Symbol]] = []
+    with ctl.solve(yield_=True) as handle:
+      for m in handle:
+        if len(ret) == limit:
+          raise TooManyProbes(limit)
+        ret.append(list(m.symbols(shown=True)))
+    return ret
+
+  def probes(self, nodes:Sequence[GraphObject], trueKey:str, falseKey:str, kind:str=CONSISTENT,
+             limit:int=PROBE_LIMIT) -> list[dict[GraphObject, str]]:
+    '''
+    Gaines's probes of *nodes*: the ways they can be marked true and false
+    that the rules allow (as KNet finds them), starting from what the rules
+    conclude of the model as it is -- each as each node's mark: "T", "F" or
+    "TF" (both). *kind* says which (see *PROBE_KINDS*):
+
+      - consistent: each node that has no mark gets one, true or false, and
+        the rules then give no node both marks that hadn't both;
+      - admissible: the consistent ones, and, for each node with just one
+        mark that it wasn't asserted to have, those it has with the other
+        mark too (both), and then with just the mark it had again (so that
+        each such node -- eg, an inconsistent one, marked false -- has
+        probes of its own);
+      - compatible: each node not asserted to have a mark is true, false or
+        both (at least what it was), and what the rules then make it: no
+        probe is incoherent.
+
+    The marks are the attributes *trueKey* and *falseKey* (eg: knet.snm's
+    "markTrue" and "markFalse"). Probes of nodes that aren't linked are
+    every combination of theirs: so ask about each connected part (with
+    the same reasoner: it renders the model once -- so make another if the
+    model changes).
+
+    :param limit: The most probes to find.
+    :raises TooManyProbes: If there are more than *limit*.
+    :raises ValueError: If *kind* isn't one of *PROBE_KINDS*.
+    '''
+    if kind not in PROBE_KINDS:
+      raise ValueError(f'There\'s no "{kind}" kind of probe: the kinds are {", ".join(PROBE_KINDS)}.')
+    if self._probing is None: # (each part of a net is asked about in turn: the model's the same)
+      self._probing = (self._program(self.facts()), self._rulesProgram())
+    facts, rules = self._probing
+    keys = {trueKey: "T", falseKey: "F"}
+    terms = {self._term(n): n for n in nodes}
+    def own(n:GraphObject, key:str) -> bool:
+      a = n.getLocalAttr(key)
+      return a is not None and not getattr(a, "inferred", False) # (not one the reasoner put there)
+    asserted = {t for t, n in terms.items() if any(own(n, k) for k in keys)}
+    given = (f"probe_key(t,{_str(trueKey)}). probe_key(f,{_str(falseKey)}).\n"
+             + "".join(f"probe_node({t})." for t in terms) + "".join(f"probe_asserted({t})." for t in asserted))
+    def marks(extra:str) -> set[tuple[str, str]]:
+      "The marks the rules give everything, with *extra*: (term, key)."
+      return {(str(s.arguments[0]), s.arguments[1].string) for s in self._solve(rules + given + extra, facts, ("probe_marks",)) or ()
+              if s.name == "probe_value"}
+    def found(extra:str, before:set[tuple[str, str]], k:str) -> list[dict[GraphObject, str]]:
+      "The probes from the marks *before* (and *extra*, that gave them)."
+      program = rules + given + extra + "".join(f"probe_mark0({x},{_str(key)})." for x, key in before) + f"probe_kind({k})."
+      ret = []
+      for symbols in self._models(program, facts, ("probed",), limit):
+        got:dict[str, set[str]] = {}
+        for s in symbols:
+          if s.name == "probe_out":
+            got.setdefault(str(s.arguments[0]), set()).add(keys[s.arguments[1].string])
+        ret.append({n: "".join(sorted(got.get(t, ()), reverse=True)) for t, n in terms.items()})
+      return ret
+    before = marks("")
+    if kind == COMPATIBLE:
+      return found("", before, COMPATIBLE)
+    ret = found("", before, CONSISTENT)
+    if kind == ADMISSIBLE:
+      for t in terms:
+        had = [key for x, key in before if x == t]
+        if len(had) != 1 or t in asserted:
+          continue
+        other = falseKey if had[0] == trueKey else trueKey
+        both = f"attr({t},{_str(other)},probe)."
+        after = marks(both)
+        ret += found(both, after, CONSISTENT)
+        again = "".join(f"attr({x},{_str(key)},probe)." for x, key in after if (x, key) != (t, other))
+        ret += found(again, marks(again), CONSISTENT)
+        if len(ret) > limit:
+          break
+    unique = list({tuple(p[n] for n in nodes): p for p in ret}.values())
+    if len(unique) > limit:
+      raise TooManyProbes(limit)
+    return unique
 
   def _value(self, sym:clingo.Symbol) -> Any:
     '''

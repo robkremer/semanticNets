@@ -305,6 +305,31 @@ a ``#program`` part of ``clingoReasoner.lp``:
 The new marks are ``rule_attr`` conclusions of the first ``def_world``'s
 tagged type, as the other connectives' are.
 
+Probes (:py:meth:`~sn.model.clingoReasoner.ClingoReasoner.probes`: KNet's,
+see *PROBE_KINDS*) are clingo's too: each is an answer set, so they're
+enumerated, not intersected. Two more ``#program`` parts, each solved with
+the model's facts and rules and the probe facts (``probe_key``: the true and
+false attributes; ``probe_node``: the nodes to probe; ``probe_asserted``:
+those with an asserted mark):
+
+1. ``probe_marks``: the marks the rules give, ``probe_value`` -- of the model
+   as it is, and with a node given a mark (an ``attr`` fact) for admissible
+   probes.
+2. ``probed``, with those marks as ``probe_mark0`` and ``probe_kind``: for a
+   consistent probe, a choice of one mark (``probe_set``, a ``rule_attr``
+   conclusion) for each node without one, and a constraint that no node
+   gets both marks it hadn't both of; for a compatible one, a choice of
+   marks, at least those it had, for each node not asserted, with no
+   constraint. Each answer set's ``probe_out`` is a probe.
+
+An admissible probe is a consistent one, of the model with a node's
+opposite mark added, or then (from those marks) its own mark again: so
+there's a ``probe_marks`` and a ``probed`` solve for each node with one
+derived mark. The facts and rules are rendered once per reasoner (each
+part of a net is probed in turn), and more than ``limit`` probes raise
+*TooManyProbes*. The rnetReader plugin's ``probes`` module finds a net's
+probes part by part, and reconstructs its links from them.
+
 Constraints
 -----------
 
