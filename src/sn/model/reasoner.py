@@ -107,7 +107,7 @@ import sys
 from pathlib import Path
 import shutil
 import tempfile
-from typing import Any, Callable, ClassVar, Iterable, Iterator, cast
+from typing import Any, Callable, ClassVar, Iterable, Iterator, Sequence, cast
 from contextlib import contextmanager, ExitStack
 from util.observer import Subject
 from util.persistence.pRef import PRDb
@@ -1648,6 +1648,10 @@ class Reasoner(ABC):
     if showSysRules is None:
       showSysRules = bool(sn.snPrefs.get("reasoner/showSysRules", False))
     self.showSysRules:bool = showSysRules
+    self._leftOut:set[int] = set()
+    "The objects (their ids) *facts()* leaves out, as if they weren't in the model (see *redundant()*)."
+    self._allFacts:list[Fact]|None = None
+    "While *redundant()* runs: the model's facts, with none left out (the model's the same for each it tries)."
 
   # ── Engine interface ─────────────────────────────────────────────────────
 
@@ -1714,6 +1718,37 @@ class Reasoner(ABC):
     The violations found by reasoning (see *run()*): all of them, or those about *subject*.
     '''
     return [v for v in self.run().violations if subject is None or v.subject is subject]
+
+  def redundant(self, relations:Sequence[Relation], types:Callable[[Relation], Sequence[GraphObject]]|None=None) \
+      -> list[Relation]:
+    '''
+    The relations that the rest of the model implies: each, in turn, is left
+    out (as if it weren't in the model: see *facts()*) and the model reasoned
+    over, and it's redundant if its types still hold between its ends. One
+    found redundant stays left out while the next are tried -- so the rest
+    still imply them all (eg: of two links the same, one is redundant, not
+    both). Leaving out each redundant one in turn gives a minimal set (Gaines's
+    minimal canonical form): which one, of those that imply each other (eg: a
+    cycle's), depends on their order.
+
+    :param relations: Individual relations of the model, in the order to try them.
+    :param types: The relation types that must hold between a relation's ends
+      for it to be redundant (eg: the kernel types it's a look of): by default,
+      its own.
+    :returns: The redundant ones, in that order.
+    '''
+    ret:list[Relation] = []
+    try:
+      self._allFacts = self.facts() # (once: each try leaves out some of them -- see facts())
+      for r in relations:
+        self._leftOut = {id(x) for x in ret} | {id(r)}
+        want = list(types(r)) if types is not None else [t for t in r.getParents() if isinstance(t, Relation)]
+        held = {(id(t), id(src), id(dst)) for t, src, dst in self.run().holds}
+        if want and all((id(t), id(r.src), id(r.dst)) in held for t in want):
+          ret.append(r)
+    finally:
+      self._leftOut, self._allFacts = set(), None
+    return ret
 
   # ── Model export ─────────────────────────────────────────────────────────
 
@@ -1822,10 +1857,17 @@ class Reasoner(ABC):
     :returns: The model (and its super-models) as engine-neutral facts; see
       the module documentation for the vocabulary. With *showSysRules*, the
       base rules too (see *BASE_RULES*). What a previous "reason" inferred
-      isn't among them (see *withoutInferences()*).
+      isn't among them (see *withoutInferences()*); nor, while *redundant()*
+      tries a relation, the facts about it.
     '''
-    with withoutInferences([*self.dataModels(), *baseRuleModels()]):
-      return self._facts()
+    if self._allFacts is not None: # (see redundant())
+      ret = self._allFacts
+    else:
+      with withoutInferences([*self.dataModels(), *baseRuleModels()]):
+        ret = self._facts()
+    if self._leftOut: # (and the facts about them: eg, its type, or a group's having it as a member)
+      ret = [f for f in ret if not any(id(a) in self._leftOut for a in f[1])]
+    return ret
 
   def _facts(self) -> list[Fact]:
     '''

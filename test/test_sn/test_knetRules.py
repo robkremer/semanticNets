@@ -12,8 +12,9 @@ generic links). And Gaines's truth marks: a net's asserted ones, the menu
 items' (see the plugin's *hooks*), and the marks the reasoners propagate from
 them, as KNet does (*TestMarks*). And his structural connectives (*TestConnectives*):
 conjunctions and disjunctions, by their links and their marks; exploring
-them, and defaults (*TestDefaults*); and a net's probes, and the links they
-say hold (*TestProbes*).
+them, and defaults (*TestDefaults*); a net's probes, and the links they
+say hold (*TestProbes*); and a net as a whole: its canonical forms,
+saturating it with its probes, and merging nets (*TestForms*).
 
 If the environment variable REP_PLUS_DATA names the folder of Rep Plus 2's
 test data (Brian Gaines's), the reasoners must also infer every derived link
@@ -35,7 +36,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from sn.model.model import Model, Node, Relation
-from sn.model.reasoner import Reasoner, installedEngines
+from sn.model.reasoner import Reasoner, TooManyProbes, installedEngines
 from sn.plugins import importBundled
 from test_sn.test_rnetReader import net
 
@@ -752,6 +753,152 @@ class TestProbes(unittest.TestCase):
       self.probes.findProbes(self.built.model, "every")
     with self.assertRaises(TooManyProbes):
       self.probes.findProbes(self.built.model, "compatible", limit=8)
+
+FORMS = net(
+  "|C|9|FFFFFF||32",
+  "T|1",
+  "2|0|Arial|9|1|0|000000|FFFFFF|000000|008A00|0|0|0||Concept",
+  "A|2",
+  "1|0|0|0|1|0|000000|000000|000000|000000|Includes",
+  "1|1|0|0|1|0|00A000|00A000|00A000|00A000|Excludes",
+  "N|9|0|-1",
+  *[f"0|0|0|0|30|20|{name}|" for name in ("a", "b", "c", "dog", "animal", "plant", "x", "y", "z")],
+  "L|10|0",
+  "0|1|0", "1|2|0", "0|2|0",      # a includes b, b includes c -- and a includes c: redundant
+  "3|4|0", "4|5|1", "3|5|1",      # dog includes animal, animal excludes plant -- and dog excludes plant: KNet's derived link
+  "6|7|0", "7|8|0", "8|6|0", "6|8|0", # a cycle, x y z -- and x includes z, which it implies
+  "G|0",
+)
+"Canonical forms (Gaines, section 3.1): links the rest imply, and those they imply that aren't there."
+
+class TestForms(unittest.TestCase):
+  '''
+  A net as a whole (see the plugin's *forms*): its minimal canonical form
+  (without the links the rest imply) and its maximal one (with every kernel
+  link the rest imply asserted) on every installed engine -- the minimal
+  form of the maximal form is the net again; saturating it with its probes
+  (on clingo); and what merging another net into it does.
+  '''
+  @classmethod
+  def setUpClass(cls):
+    cls.rnet = importBundled("rnetReader", "rnet")
+    cls.reader = importBundled("rnetReader", "reader")
+    cls.forms = importBundled("rnetReader", "forms")
+    cls.probes = importBundled("rnetReader", "probes")
+
+  def setUp(self):
+    Model._initCache()
+    self.tmp = tempfile.TemporaryDirectory()
+    self.folder = Path(self.tmp.name).resolve()
+
+  def tearDown(self):
+    Model._initCache()
+    self.tmp.cleanup()
+
+  def build(self, text:str, name:str) -> Model:
+    ''':returns: The model of the net *text*, as the file *name*.'''
+    return self.reader.buildModel(self.rnet.parseText(text, f"{name}.rnet"), str(self.folder / f"{name}.snm")).model
+
+  def links(self, rs) -> list[str]:
+    ''':returns: Relations, as their ends' names and their relation type's: eg, "a Includes b".'''
+    name = self.probes.name
+    return [f"{name(r.src)} {r.getParents()[0].name} {name(r.dst)}" for r in rs]
+
+  def test_netLinks(self):
+    'The net\'s links: its kernel links (not the isa links, nor what a reasoner inferred).'
+    m = self.build(FORMS, "forms")
+    self.assertEqual(self.links(self.forms.netLinks(m)), [
+      "a Includes b", "b Includes c", "a Includes c", "dog Includes animal", "animal Excludes plant", "dog Excludes plant",
+      "x Includes y", "y Includes z", "z Includes x", "x Includes z"])
+    self.assertEqual(self.links(self.forms.netLinks(self.build(PROBES, "probes"))), [
+      "a Includes b", "b Includes c", "p Excludes q", "s Includes t", "t Excludes s"]) # (not the conjunction's definition)
+
+  def test_forms(self):
+    '''
+    On each engine: the minimal form takes out what the rest imply (newest
+    first: so x includes z goes, not one of the cycle's); the maximal form
+    asserts what they do (equivalence for the cycle, and the links taken out);
+    and the minimal form of that is the net's minimal form again.
+    '''
+    for engine in installedEngines():
+      with self.subTest(engine=engine):
+        Model._initCache()
+        m = self.build(FORMS, f"forms-{engine}")
+        self.assertEqual(self.links(self.forms.redundantLinks(m, engine)),
+                         ["a Includes c", "dog Excludes plant", "x Includes z"])
+        gone = self.forms.minimalForm(m, engine=engine)
+        self.assertEqual(len(gone), 3)
+        self.assertFalse(any(r._isConnected() for r in gone))
+        minimal = self.links(self.forms.netLinks(m))
+        self.assertEqual(self.forms.redundantLinks(m, engine), [])
+        added = self.forms.maximalForm(m, engine=engine)
+        self.assertEqual(sorted(self.links(added)), ["a includes c", "dog excludes plant", "x equivalent y",
+                                                     "x equivalent z", "y equivalent z"])
+        self.assertFalse(any(r.inferred for r in added))
+        self.assertEqual(self.forms.maximalLinks(m, engine), [])
+        self.forms.minimalForm(m, engine=engine)
+        self.assertEqual(self.links(self.forms.netLinks(m)), minimal)
+
+  def test_saturate(self):
+    '''
+    Its admissible probes, as nodes of the probe SN type (not the net's: so
+    the net's probes are the same), each including the nodes true in it and
+    excluding those false; too many, none. A model not built on the KNet
+    rules has none.
+    '''
+    m = self.build(FORMS, "forms")
+    probe = self.forms.probeType(m)
+    self.assertEqual(str(probe.name), "probe")
+    before = self.probes.findProbes(m).count()
+    with self.assertRaises(TooManyProbes):
+      self.forms.saturate(m, limit=before - 1)
+    self.assertFalse(any(isinstance(o, Node) and o.isa(probe) for o in m.values() if o is not probe))
+    added = self.forms.saturate(m, limit=before)
+    nodes = [o for o in added if isinstance(o, Node)]
+    self.assertEqual(len(nodes), before)
+    self.assertEqual([str(n.name) for n in nodes[:2]], ["probe 1", "probe 2"])
+    self.assertTrue(all(n.isa(probe) for n in nodes))
+    self.assertEqual(self.probes.findProbes(m).count(), before)
+    links = self.links(o for o in added if isinstance(o, Relation))
+    self.assertEqual(len(links), before * 9) # (each, to every node)
+    self.assertEqual(links[:9], [f"probe 1 excludes {n}" for n in ("a", "b", "c", "animal", "dog", "plant", "x", "y", "z")])
+    with self.assertRaises(ValueError):
+      self.forms.saturate(Model(f"file://{self.folder / 'plain.snm'}"))
+
+  def test_merge(self):
+    '''
+    Merging nets: their nodes with the same label are one. One where c
+    includes a and e includes c: consistent, but the cycle a b c is new in
+    both (not conservative); one where c excludes a makes a, b and c
+    inconsistent (they include and exclude each other); one with a node of
+    its own, linked to one of these, makes no new links in either
+    (ultra-conservative: Gaines's section 3.3). The merge leaves no trace.
+    '''
+    base = net(
+      "|C|9|FFFFFF||32", "T|1", "2|0|Arial|9|1|0|000000|FFFFFF|000000|008A00|0|0|0||Concept",
+      "A|2", "1|0|0|0|1|0|000000|000000|000000|000000|Includes", "1|1|0|0|1|0|00A000|00A000|00A000|00A000|Excludes")
+    def other(name:str, nodes:list[str], links:list[str]) -> Model:
+      return self.build(net(*[l.replace("\t", "|") for l in base.lstrip("﻿").rstrip("\r").split("\r")],
+                            f"N|{len(nodes)}|0|-1", *[f"0|0|0|0|30|20|{n}|" for n in nodes],
+                            f"L|{len(links)}|0", *links, "G|0"), name)
+    m = other("abc", ["a", "b", "c"], ["0|1|0", "1|2|0"]) # (a includes b includes c)
+    count = len(m)
+    check = self.forms.checkMerge(m, other("ca", ["c", "a", "e"], ["0|1|0", "2|0|0"]))
+    self.assertEqual((check.importing, check.imported, check.shared), ("abc", "ca", ["a", "c"]))
+    self.assertEqual((check.consistent, check.conservative, check.ultraConservative), (True, False, False))
+    self.assertEqual(check.inImported, [("equivalent", "a", "c")])
+    self.assertEqual(check.inImporting, [("equivalent", "a", "b"), ("equivalent", "a", "c"), ("equivalent", "b", "c")])
+    self.assertEqual(check.inconsistent, [])
+    self.assertIn("Consistent: yes\nConservative: no\nUltra-conservative: no\n", check.report())
+    check = self.forms.checkMerge(m, other("cxa", ["c", "a"], ["0|1|1"]))
+    self.assertFalse(check.consistent)
+    self.assertIn(("inconsistent", "a", "c"), check.inconsistent)
+    self.assertIn(("inconsistent", "a", "a"), check.inconsistent) # (a includes c, and c excludes it: a's empty)
+    check = self.forms.checkMerge(m, other("new", ["n", "b"], ["0|1|0"])) # (n includes b)
+    self.assertEqual((check.consistent, check.conservative, check.ultraConservative), (True, True, True))
+    self.assertIn("New links in abc:\n  none", check.report())
+    self.assertEqual(len(m), count)
+    self.assertFalse([u for u in Model.AllDBs if "merge" in u])
 
 def _plain(name:str) -> str:
   "*name* as KNet's reports write it: its spaces (and line ends) underscores."

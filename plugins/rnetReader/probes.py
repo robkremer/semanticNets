@@ -241,8 +241,9 @@ def report(found:Probes, title:str="") -> str:
 
 class ProbesDialog:
   '''
-  A window showing the report (see *report()*) of a model's probes: which
-  kind (see *PROBE_KINDS*), the report (which can be copied), and "Close".
+  A window showing the report (see *report()*) of a model's probes (see
+  *util.reportWindow.ReportWindow*: it can be copied), with which kind (see
+  *PROBE_KINDS*) above it.
   '''
   def __init__(self, parent:Any, model:Model, kind:str=CONSISTENT, title:str=""):
     '''
@@ -253,49 +254,28 @@ class ProbesDialog:
     '''
     import tkinter as tk
     from tkinter import ttk
-    from tkinter.scrolledtext import ScrolledText
-    from util.utils import ownDialog
+    from util.reportWindow import ReportWindow
     self.model, self.title = model, title
-    self.top = top = tk.Toplevel(parent)
-    ownDialog(top, parent, keep=False)
-    top.title(f"Probes{': ' + title if title else ''}")
-    frame = ttk.Frame(top, padding=10)
-    frame.pack(fill=tk.BOTH, expand=True)
-    kinds = ttk.Frame(frame)
-    kinds.pack(fill=tk.X)
+    self.window = ReportWindow(parent, f"Probes{': ' + title if title else ''}")
+    self.top, self.text = self.window.top, self.window.text
     self.kind = tk.StringVar(value=kind)
     for k in PROBE_KINDS:
-      ttk.Radiobutton(kinds, text=k.capitalize(), value=k, variable=self.kind, command=self.refresh).pack(side=tk.LEFT, padx=6)
-    self.text = ScrolledText(frame, width=72, height=28, wrap=tk.NONE, font="TkFixedFont")
-    self.text.pack(fill=tk.BOTH, expand=True, pady=(8, 8))
-    bottom = ttk.Frame(frame)
-    bottom.pack(fill=tk.X)
-    ttk.Button(bottom, text="Close", command=top.destroy, default="active").pack(side=tk.RIGHT, padx=6)
-    ttk.Button(bottom, text="Copy", command=self.copy).pack(side=tk.RIGHT, padx=6)
-    top.bind("<Escape>", lambda _e: top.destroy())
+      ttk.Radiobutton(self.window.controls, text=k.capitalize(), value=k, variable=self.kind,
+                      command=self.refresh).pack(side=tk.LEFT, padx=6)
     self.refresh()
-    top.lift()
-    top.focus_force()
 
   def refresh(self) -> None:
     '''Find the probes of the kind chosen, and show their report (or why they can't be found).'''
     from sn.model.reasoner import TooManyProbes, EngineMissing
-    self.top.config(cursor="watch")
-    self.top.update_idletasks()
-    try:
-      text = report(findProbes(self.model, self.kind.get()), self.title)
-    except TooManyProbes as ex:
-      text = f"{ex} Probes of nodes that aren't linked are every combination of theirs: try a smaller net."
-    except EngineMissing as ex:
-      text = str(ex)
-    finally:
-      self.top.config(cursor="")
-    self.text.config(state="normal")
-    self.text.delete("1.0", "end")
-    self.text.insert("1.0", text)
-    self.text.config(state="disabled")
+    with self.window.busy():
+      try:
+        text = report(findProbes(self.model, self.kind.get()), self.title)
+      except TooManyProbes as ex:
+        text = f"{ex} Probes of nodes that aren't linked are every combination of theirs: try a smaller net."
+      except EngineMissing as ex:
+        text = str(ex)
+    self.window.show(text)
 
   def copy(self) -> None:
     '''Put the report on the clipboard.'''
-    self.top.clipboard_clear()
-    self.top.clipboard_append(self.text.get("1.0", "end-1c"))
+    self.window.copy()

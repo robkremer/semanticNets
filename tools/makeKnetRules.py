@@ -76,7 +76,10 @@ same mark only says so.
 
 *KNODE*'s nodes show their marks as bars beside them (vis/sideBars: see
 rnetReader.hooks.markBars()), and have menu items to assert and clear them,
-and to show their net's probes (see rnetReader.probes).
+to show their net's probes (see rnetReader.probes), and to work on the net
+as a whole (see rnetReader.forms): its minimal and maximal canonical forms,
+saturating it with probes (*PROBE*'s nodes), and checking a merge with
+another net.
 
 The structural connectives (the paper's section 5), as relation types
 (*CONNECTIVES*: see *connectives()*) tagged so that the reasoners draw
@@ -154,6 +157,13 @@ CONNECTIVES = (CONJUNCT_INCLUDES, CONJUNCT_EXCLUDES, DISJUNCT_INCLUDES, DISJUNCT
 
 HEAVY_ARROW = "arrow(11,13,6)"
 "A heavy arrowhead (a conjunction's: see *rnetReader.reader.HEAVY_ARROW*)."
+
+PROBE = "probe"
+'''The SN type of the probes a net's saturated with (see *rnetReader.forms.saturate()*, and
+*rnetReader.forms.PROBE*, which must agree): an SN subtype of *KNODE* that isn't the net's.'''
+
+KNET_NODE = "knetNode"
+"Whether a node type's nodes are the net's (see *rnetReader.reader.KNET_NODE*, which must agree)."
 
 HOOKS = "snplugins.rnetReader.hooks"
 "The module of the hooks *KNODE* names (see *rnetReader.hooks*): the plugin's, once it's loaded."
@@ -371,8 +381,16 @@ def isaRule(m, inc, rule) -> None:
                    "that excludes animal excludes dog). They show their truth marks as bars (markTrue: beside them; "
                    "markFalse: over them), and their menus mark them."))
   knode["vis/sideBars"] = f"$({HOOKS}:markBars)"
-  for item, fn in (("Mark/True", "markTrue"), ("Mark/False", "markFalse"), ("Mark/Clear", "clearMarks"), ("Probes...", "showProbes")):
+  for item, fn in (("Mark/True", "markTrue"), ("Mark/False", "markFalse"), ("Mark/Clear", "clearMarks"), ("Probes...", "showProbes"),
+                   ("Net/Minimal form", "minimalForm"), ("Net/Maximal form", "maximalForm"), ("Net/Saturate", "saturate"),
+                   ("Net/Check merge with...", "checkMerge")):
     knode[f".menu/{item}"] = f"{HOOKS}:{fn}"
+  probe = Node(m, [knode], name=PROBE)
+  probe["note"] = ("A probe of a KNet net (Gaines's bottom node, added from outside: see the rnetReader plugin's "
+                   "forms.saturate()): it includes the nodes true in it, and excludes those false in it. It isn't one of "
+                   "the net's nodes (its knetNode is False): it isn't probed itself.") # (its note's kind is knode's)
+  probe[KNET_NODE] = False
+  probe["vis/shape"] = "Oval"
   a, b = Node(m, [m.NODE], name="^a"), Node(m, [m.NODE], name="^b")
   rule("isa", [IsaIndividual(m, a, b), IsaIndividual(m, b, knode), Relation(m, [m.DISTINCT], a, b, individual=True),
                Relation(m, [m.DISTINCT], b, knode, individual=True)],

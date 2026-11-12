@@ -330,6 +330,21 @@ part of a net is probed in turn), and more than ``limit`` probes raise
 *TooManyProbes*. The rnetReader plugin's ``probes`` module finds a net's
 probes part by part, and reconstructs its links from them.
 
+Redundant relations
+-------------------
+
+:py:meth:`~sn.model.reasoner.Reasoner.redundant` finds the relations the
+rest of a model implies, on any engine: for each, in the order given, it's
+left out (``_leftOut``: *facts()* drops every fact that mentions it) and the
+model reasoned over again; it's redundant if the relation types asked for
+(by default its own) still hold between its ends. One found redundant stays
+left out while the rest are tried, so what's left still implies them all --
+of two the same, one goes, not both. The facts are rendered once, for all
+the tries (``_allFacts``): each try only filters them. The rnetReader
+plugin's ``forms`` module uses it for Gaines's minimal canonical form (a
+link is redundant if its kernel types still hold), trying the newest links
+first.
+
 Constraints
 -----------
 
