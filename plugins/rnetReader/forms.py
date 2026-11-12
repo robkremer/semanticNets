@@ -211,20 +211,27 @@ def maximalForm(model:Model, context:Any=None, engine:str|None=None) -> list[Rel
 
 class _AddObjects(ModelCommand):
   '''
-  Add objects to a model: made the first time it's done (by *make*), and
-  put back each time it's redone; taken out when it's undone.
+  Add objects to a model -- made the first time it's done (by *make*), and
+  put back each time it's redone -- and take others out (*remove*); undone,
+  the ones added are taken out, and the others put back.
   '''
   asksNames = False
   "A view doesn't ask the names of what it makes: they're named (see *sn.view.graphics.viewCommands.ViewDoList.do()*)."
+  showsTypes = False
+  "Nor does it show their SN types, with what it makes (as it does with what's drawn in it): a net's view shows just the net."
 
-  def __init__(self, name:str, model:Model, make:Any):
+  def __init__(self, name:str, model:Model, make:Any, remove:list[GraphObject]|None=None):
     '''
     :param name: The command's name (eg: "saturate").
     :param make: Makes the objects, in *model*: it returns them (the relations last).
+    :param remove: Objects of *model* to take out (eg: a node, with its links), after making those.
     '''
     super().__init__(name)
     self.model, self.make = model, make
     self.objects:list[GraphObject]|None = None
+    self.remove:list[GraphObject] = list(remove or [])
+    self.removed:list[GraphObject] = []
+    "Those of *remove* it took out (not one gone already: eg, a link taken out with its end)."
     self.wasDirty:bool = model.isDirty()
 
   def do(self) -> list[GraphObject]:
@@ -236,6 +243,11 @@ class _AddObjects(ModelCommand):
       else:
         for o in self.objects:
           o._reconnect()
+      self.removed = []
+      for o in self.remove:
+        if o._isConnected():
+          o._disconnect()
+          self.removed.append(o)
     self.model.setDirty()
     return self.objects
 
@@ -243,6 +255,9 @@ class _AddObjects(ModelCommand):
     super().undo()
     from util.observer import Subject
     with Subject.ChangeMgr(self.model, later=True):
+      for o in reversed(self.removed):
+        if not o._isConnected():
+          o._reconnect()
       for o in reversed(self.objects or []):
         if o._isConnected():
           o._disconnect()
@@ -251,7 +266,7 @@ class _AddObjects(ModelCommand):
 
   def delete(self) -> None:
     super().delete()
-    self.model, self.make, self.objects = None, None, None # type: ignore[assignment]
+    self.model, self.make, self.objects, self.remove, self.removed = None, None, None, [], [] # type: ignore[assignment]
 
 def probeType(model:Model) -> Node|None:
   ''':returns: *PROBE*, in the KNet rules model *model* is built on, if it's there.'''

@@ -180,5 +180,16 @@ class Test(unittest.TestCase):
     self.update(self.base, *[("new", (o.id, o)) for o in unshown[:5]])
     self.assertTrue(self.vPerson.connected and self.vPerson.batched is None)
 
+  def test0900putBackUnshownStaysUnshown(self):
+    # an object the view wasn't showing when it was deleted isn't shown when it's put back (eg: a node's isa
+    # link, when deleting the node is undone): its "new" says it's put back (see util.persistence.pRef.PRDb._register())
+    sam = Node(self.main, [self.person], individual=True, name="sam")
+    self.update(self.main, ("del", (sam.id,)))
+    self.update(self.main, ("new", (sam.id, sam, True))) # (the stand-in can't make a box: it would raise)
+    self.assertEqual(len(self.view.vos), 2)
+    self.update(self.main, ("del", (self.fred.id,))) # (one it was showing comes back, as ever)
+    self.update(self.main, ("new", (self.fred.id, self.fred, True)))
+    self.assertTrue(self.vFred.connected)
+
 if __name__ == "__main__":
   unittest.main()

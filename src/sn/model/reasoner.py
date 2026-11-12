@@ -1651,7 +1651,9 @@ class Reasoner(ABC):
     self._leftOut:set[int] = set()
     "The objects (their ids) *facts()* leaves out, as if they weren't in the model (see *redundant()*)."
     self._allFacts:list[Fact]|None = None
-    "While *redundant()* runs: the model's facts, with none left out (the model's the same for each it tries)."
+    "While *redundant()* or *worlds()* runs: the model's facts, with none left out (the model's the same for each it tries)."
+    self._supposed:list[Fact] = []
+    "The facts *facts()* adds, as if the model said them (see *worlds()*)."
 
   # ── Engine interface ─────────────────────────────────────────────────────
 
@@ -1748,6 +1750,27 @@ class Reasoner(ABC):
           ret.append(r)
     finally:
       self._leftOut, self._allFacts = set(), None
+    return ret
+
+  def worlds(self, suppositions:Sequence[Sequence[Fact]]) -> list[Inferences]:
+    '''
+    Reason over the model once for each of *suppositions*: as if the model
+    also said those facts (see *facts()*: eg, ``("attr", (node, key,
+    value))`` and ``("lattr", (node, key))`` for an attribute it doesn't
+    have, to see what would follow if it did) -- the model's own facts
+    rendered just once. The model isn't changed.
+
+    :param suppositions: Each world's facts (engine-neutral: see the module documentation).
+    :returns: What the reasoner found in each, in order.
+    '''
+    ret:list[Inferences] = []
+    try:
+      self._allFacts = self.facts() # (once: each world adds to them -- see facts())
+      for facts in suppositions:
+        self._supposed = list(facts)
+        ret.append(self.run())
+    finally:
+      self._supposed, self._allFacts = [], None
     return ret
 
   # ── Model export ─────────────────────────────────────────────────────────
@@ -1858,15 +1881,18 @@ class Reasoner(ABC):
       the module documentation for the vocabulary. With *showSysRules*, the
       base rules too (see *BASE_RULES*). What a previous "reason" inferred
       isn't among them (see *withoutInferences()*); nor, while *redundant()*
-      tries a relation, the facts about it.
+      tries a relation, the facts about it. While *worlds()* reasons over a
+      world, its facts are among them too.
     '''
-    if self._allFacts is not None: # (see redundant())
+    if self._allFacts is not None: # (see redundant() and worlds())
       ret = self._allFacts
     else:
       with withoutInferences([*self.dataModels(), *baseRuleModels()]):
         ret = self._facts()
     if self._leftOut: # (and the facts about them: eg, its type, or a group's having it as a member)
       ret = [f for f in ret if not any(id(a) in self._leftOut for a in f[1])]
+    if self._supposed:
+      ret = ret + self._supposed
     return ret
 
   def _facts(self) -> list[Fact]:

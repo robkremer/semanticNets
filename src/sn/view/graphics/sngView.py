@@ -517,6 +517,8 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
             continue
           if not own: # (an object added to another model isn't shown here till it's asked for)
             continue
+          if len(topicData) > 2 and topicData[2]: # (put back -- eg: a delete undone -- and not shown when it went: nor now: eg, a node's isa link)
+            continue
           
           modelObj = topicData[1]
           if getattr(modelObj, "inferred", False): # (what "reason" concluded: shown when it's done -- see _showInferred())
@@ -543,8 +545,8 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
             # VObject -- constructing another one here would silently produce
             # a second, orphaned VObject for the same model object.
             newObj = self.makeViewObjectForGraphObject(modelObj) or VNode(self, modelObj)
-          elif issubclass(typ, Relation) and self._erasedRelation(modelObj):
-            pass # (see visibility())
+          elif issubclass(typ, Relation) and (self._erasedRelation(modelObj) or self._plainIsa(modelObj, modelID)):
+            pass # (see visibility(); and what a program's command made isn't shown with its SN types)
           elif issubclass(typ, Relation):
             # Same reasoning as the Node case above, but this is where it
             # actually bites: GraphObject.__init__() creates an IsaIndividual

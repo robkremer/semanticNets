@@ -53,6 +53,22 @@ ends, all its topics are sent together. A compound change (eg: making a
 relation and its isa link) is then seen by the views only once it's
 complete.
 
+A view of a model shows what's made in it: a new object, with what it's an
+instance of (its isa link, and so its SN type). Two things keep a picture as
+it was:
+
+- an object that's put back (eg: a delete undone) is shown only if the view
+  was showing it when it went -- its "new" says it's put back (see
+  :py:meth:`util.persistence.pRef.PRDb._register`): so a node comes back
+  without an isa link the view never showed;
+- a command can say that what it makes is shown plainly: if its
+  ``showsTypes`` is False, the view doesn't show what its objects are
+  instances of, unless their SN types are in the view already; and if its
+  ``asksNames`` is False, the view doesn't ask their names (see
+  :py:meth:`sn.view.graphics.viewCommands.ViewDoList.do`). They're for a
+  program's commands: eg, the rnetReader plugin's, which add named nodes to
+  a view of a net that doesn't show SN types.
+
 Commands
 --------
 

@@ -13,8 +13,11 @@ items' (see the plugin's *hooks*), and the marks the reasoners propagate from
 them, as KNet does (*TestMarks*). And his structural connectives (*TestConnectives*):
 conjunctions and disjunctions, by their links and their marks; exploring
 them, and defaults (*TestDefaults*); a net's probes, and the links they
-say hold (*TestProbes*); and a net as a whole: its canonical forms,
-saturating it with its probes, and merging nets (*TestForms*).
+say hold (*TestProbes*); a net as a whole: its canonical forms,
+saturating it with its probes, and merging nets (*TestForms*); and editing
+a net without changing what it says -- expanding protoconnectives,
+anonymous nodes, factoring -- its nodes' existential status, and abduction
+(*TestExpansion*).
 
 If the environment variable REP_PLUS_DATA names the folder of Rep Plus 2's
 test data (Brian Gaines's), the reasoners must also infer every derived link
@@ -965,6 +968,212 @@ def _savedProbes(note:str) -> tuple[str|None, list[dict[str, str]], dict[str, se
         both = {"<->": [("-->", to), ("<--", to)], "-|||-": [("-|-", to), ("-||-", to)]}
         ret.setdefault(head, set()).update(both.get(op, [(op, to)]))
   return kind, probes, ret
+
+HEAD = ("|C|9|FFFFFF||32", "T|1", "2|0|Arial|9|1|0|000000|FFFFFF|000000|008A00|0|0|0||Concept",
+        "A|4", "1|0|0|0|1|0|000000|000000|000000|000000|Includes", "1|1|0|0|1|0|00A000|00A000|00A000|00A000|Excludes",
+        "0|0|0|0|1|2|000000|000000|000000|000000|Coexcludes symmetric", "0|0|0|0|1|3|000000|000000|000000|000000|Negates symmetric")
+"The start of the nets of *TestExpansion*: a Concept node type, and the kernel's link types."
+
+def knet(nodes:list[str], links:list[str], marks:dict[str, str]|None=None) -> str:
+  '''
+  :param nodes: The nodes' labels.
+  :param links: The links: "tail|head|link type" (by their indexes: see *HEAD*).
+  :param marks: The nodes' marks (by label: hex, as in *_panel()*).
+  :returns: A net of them.
+  '''
+  return net(*HEAD, f"N|{len(nodes)}|0|-1", *[f"0|{(marks or {}).get(n, 0)}|0|0|30|20|{n}|" for n in nodes],
+             f"L|{len(links)}|0", *links, "G|0")
+
+class TestExpansion(unittest.TestCase):
+  '''
+  Editing a net without changing what it says (see the plugin's
+  *expansion*): expanding its protoconnectives, anonymous nodes above and
+  below a node, and factoring (Gaines's figure 28); its nodes' existential
+  status (*existence*); and KNet's abductive inference (*abduction*).
+  '''
+  @classmethod
+  def setUpClass(cls):
+    cls.rnet = importBundled("rnetReader", "rnet")
+    cls.reader = importBundled("rnetReader", "reader")
+    cls.forms = importBundled("rnetReader", "forms")
+    cls.probes = importBundled("rnetReader", "probes")
+    cls.expansion = importBundled("rnetReader", "expansion")
+    cls.existence = importBundled("rnetReader", "existence")
+    cls.abduction = importBundled("rnetReader", "abduction")
+
+  def setUp(self):
+    Model._initCache()
+    self.tmp = tempfile.TemporaryDirectory()
+    self.folder = Path(self.tmp.name).resolve()
+
+  def tearDown(self):
+    Model._initCache()
+    self.tmp.cleanup()
+
+  def build(self, text:str, name:str) -> Model:
+    ''':returns: The model of the net *text*, as the file *name*.'''
+    return self.reader.buildModel(self.rnet.parseText(text, f"{name}.rnet"), str(self.folder / f"{name}.snm")).model
+
+  def nodes(self, m:Model) -> dict[str, Node]:
+    ''':returns: *m*'s net's nodes, by name.'''
+    return {self.probes.name(n): n for n in self.probes.netNodes(m)}
+
+  def links(self, rs) -> list[str]:
+    ''':returns: Relations, as their ends' names and their relation type's: eg, "a Includes b".'''
+    name = self.probes.name
+    return [f"{name(r.src)} {r.getParents()[0].name} {name(r.dst)}" for r in rs]
+
+  def test_protoconnective(self):
+    'A label groups others\' with one kind of sign (not both): each label once, on one line.'
+    p = self.expansion.protoconnective
+    self.assertEqual(p("a ∧ b"), ("conjunction", ["a", "b"]))
+    self.assertEqual(p("a & b &  c\nd ∧ a"), ("conjunction", ["a", "b", "c d"]))
+    self.assertEqual(p("a ∨ b | c"), ("disjunction", ["a", "b", "c"]))
+    for label in ("a", "a ∧ b ∨ c", "a ∧", "∨ b", "a & a"):
+      self.assertIsNone(p(label), label)
+
+  def test_expandProtoconnectives(self):
+    '''
+    x includes a ∧ b: x includes a (the net's) and b (made); c ∨ d includes
+    x; y excludes c ∨ d; e & f (marked true) coexcludes z: each member as
+    linked, and marked. g ∨ h negates a: kept (said why), as is a
+    disjunction marked true. What the net says is the same.
+    '''
+    m = self.build(knet(["x", "a ∧ b", "c ∨ d", "a", "e & f", "y", "g ∨ h", "z", "i ∨ j"],
+                        ["0|1|0", "2|0|0", "5|2|1", "4|7|2", "6|3|3"], {"e & f": "81", "i ∨ j": "81"}), "proto")
+    made, plan = self.expansion.expandProtoconnectives(m)
+    self.assertEqual([self.probes.name(n) for n in plan.groups], ["a ∧ b", "c ∨ d", "e & f"])
+    self.assertEqual([(self.probes.name(n), why) for n, why in plan.kept],
+                     [("g ∨ h", "its link g ∨ h Negates symmetric a isn't one of its members' links"),
+                      ("i ∨ j", "a disjunction marked true isn't its members marked so")])
+    self.assertEqual(sorted(self.nodes(m)), ["a", "b", "c", "d", "e", "f", "g ∨ h", "i ∨ j", "x", "y", "z"])
+    self.assertEqual(sorted(self.links(self.forms.netLinks(m))), [
+      "c Includes x", "d Includes x", "e Coexcludes symmetric z", "f Coexcludes symmetric z", "g ∨ h Negates symmetric a",
+      "x Includes a", "x Includes b", "y Excludes c", "y Excludes d"])
+    nodes = self.nodes(m)
+    self.assertEqual([nodes[n].get("markTrue") for n in "ef"], ["asserted", "asserted"])
+    self.assertEqual(self.expansion.expandProtoconnectives(m)[1].groups, []) # (done)
+
+  def test_addAnonymous(self):
+    'An anonymous node below a node includes it; one above, it includes: each with no label, of its SN type.'
+    m = self.build(knet(["x", "y"], ["0|1|0"]), "anon")
+    x = self.nodes(m)["x"]
+    below = self.expansion.addAnonymous(x)
+    above = self.expansion.addAnonymous(x, below=False)
+    self.assertEqual([str(below[0].name), str(above[0].name)], ["anonymous 1", "anonymous 2"])
+    self.assertEqual(self.links([below[1], above[1]]), ["anonymous 1 Includes x", "x Includes anonymous 2"])
+    self.assertEqual(below[0]["vis/label"], "")
+    self.assertTrue(below[0].isa(x.getParents()[0]))
+
+  def test_factor(self):
+    '''
+    Gaines's figure 28: I and J each include A, B and C, and K and L each
+    exclude D, E and F (12 links); factored, an anonymous node each (10
+    links), and on every engine they still hold. Nothing to factor in 2 x 2.
+    '''
+    m = self.build(knet(["I", "J", "A", "B", "C", "K", "L", "D", "E", "F"],
+                        [f"{t}|{h}|0" for t in (0, 1) for h in (2, 3, 4)] + [f"{t}|{h}|1" for t in (5, 6) for h in (7, 8, 9)]),
+                   "factor")
+    before = [(r.src, r.dst, self.forms.kernelOf(r, self.forms._kernel(m))[0]) for r in self.forms.netLinks(m)]
+    self.assertEqual(len(before), 12)
+    made, plan = self.expansion.factor(m)
+    self.assertEqual([(f.kind, [self.probes.name(n) for n in f.tails], [self.probes.name(n) for n in f.heads], f.saving())
+                      for f in plan], [("includes", ["I", "J"], ["A", "B", "C"], 1), ("excludes", ["D", "E", "F"], ["K", "L"], 1)])
+    self.assertEqual(len(self.forms.netLinks(m)), 10)
+    self.assertEqual(sorted(self.links(o for o in made if isinstance(o, Relation))), [
+      "D Includes anonymous 2", "E Includes anonymous 2", "F Includes anonymous 2", "I Includes anonymous 1",
+      "J Includes anonymous 1", "anonymous 1 Includes A", "anonymous 1 Includes B", "anonymous 1 Includes C",
+      "anonymous 2 Excludes K", "anonymous 2 Excludes L"])
+    for engine in installedEngines():
+      with self.subTest(engine=engine):
+        held = {(id(t), id(s), id(d)) for t, s, d in Reasoner.create(m, engine).run().holds}
+        self.assertTrue(all((id(t), id(s), id(d)) in held for s, d, t in before))
+    self.assertEqual(self.expansion.planFactors(self.build(knet(["a", "b", "c", "d"], ["0|2|0", "0|3|0", "1|2|0", "1|3|0"]),
+                                                           "square")), [])
+
+  def test_existence(self):
+    '''
+    On every engine: Socrates (specified essentially bottom) includes man,
+    man animal, animal thing (specified essentially top); p includes q and
+    excludes it (inconsistent); x and y are equivalent (both bottom nodes
+    of the net). man is specified essentially bottom, but Socrates includes it.
+    '''
+    m = self.build(knet(["Socrates", "man", "animal", "thing", "x", "y", "p", "q"],
+                        ["0|1|0", "1|2|0", "2|3|0", "4|5|0", "5|4|0", "6|7|0", "6|7|1"]), "existence")
+    nodes = self.nodes(m)
+    ex = self.existence
+    for n, what in (("Socrates", ex.BOTTOM), ("thing", ex.TOP), ("man", ex.BOTTOM)):
+      ex.specify(nodes[n], what)
+    for engine in installedEngines():
+      with self.subTest(engine=engine):
+        found = {self.probes.name(s.node): s for s in ex.status(m, engine)}
+        senses = {n: [k for k, v in s.senses().items() if v] for n, s in found.items()}
+        self.assertEqual(senses, {
+          "animal": ["conceptual", "logical"], "man": ["conceptual", "logical", "singular"],
+          "p": ["conceptual", "situated"], "q": ["conceptual", "logical"],
+          "Socrates": ["conceptual", "logical", "singular", "situated"], "thing": ["conceptual", "logical", "categorical"],
+          "x": ["conceptual", "logical", "situated"], "y": ["conceptual", "logical", "situated"]})
+        self.assertEqual(found["animal"].above, ["thing"])
+        self.assertEqual(found["animal"].below, ["man", "Socrates"])
+        text = ex.report(m, engine)
+        self.assertIn("man is specified to be essentially bottom, but Socrates includes it.", text)
+        self.assertIn("\nthing     yes         yes      yes          -         -\n", text)
+    ex.specify(nodes["man"], None)
+    self.assertIsNone(ex.specified(nodes["man"]))
+    with self.assertRaises(ValueError):
+      ex.specify(nodes["man"], "middle")
+
+  def test_abduce(self):
+    '''
+    On every engine: what's wet? Drizzle and storms are rain, and rain and
+    sprinklers make it wet; both make it damp, and it isn't dry when it's
+    wet; rain's cloudy, a sprinkler's on, a storm isn't calm. Whatever
+    explains it -- drizzle, a storm or a sprinkler: the bottom nodes below
+    it -- it's damp, and not dry. Abduced from damp: the same explanations.
+    The marks abduced are inferences, gone at the next "reason".
+    '''
+    from sn.model.reasoner import reason
+    m = self.build(knet(["wet", "rain", "sprinkler", "cloudy", "on", "damp", "drizzle", "storm", "calm", "dry"],
+                        ["1|0|0", "2|0|0", "1|3|0", "2|4|0", "1|5|0", "2|5|0", "6|1|0", "7|1|0", "7|8|1", "0|9|1"]), "abduce")
+    nodes = self.nodes(m)
+    for engine in installedEngines():
+      with self.subTest(engine=engine):
+        found = self.abduction.abduce(m, nodes["wet"], engine)
+        self.assertEqual([self.probes.name(n) for n in found.explanations], ["drizzle", "storm", "sprinkler"])
+        self.assertEqual({self.probes.name(found.nodes[x]): tv for x, tv in found.abduced.items()},
+                         {"damp": "T", "dry": "F", "wet": "T"})
+        self.assertEqual(found.report(), "Abduction from wet in abduce: 3 explanations (drizzle, storm, sprinkler)\n"
+                                         "  damp true\n  dry false\n  wet true")
+    self.assertEqual([self.probes.name(n) for n in self.abduction.explanations(m, nodes["damp"], {})],
+                     ["drizzle", "storm", "sprinkler"])
+    self.assertEqual([self.probes.name(n) for n in self.abduction.explanations(m, nodes["drizzle"], {})], ["drizzle"])
+    found = self.abduction.abduce(m, nodes["wet"], "clingo")
+    m.setDirty(False)
+    self.assertEqual([(self.probes.name(n), k) for n, k in self.abduction.markAbduced(found)],
+                     [("damp", "markTrue"), ("dry", "markFalse"), ("wet", "markTrue")])
+    self.assertFalse(m.isDirty()) # (inferences: nothing to save)
+    self.assertTrue(nodes["dry"].getLocalAttr("markFalse").inferred)
+    self.assertEqual(nodes["dry"]["markFalse"], "abduced")
+    reason(m, "clingo", silent=True)
+    self.assertIsNone(nodes["dry"].getLocalAttr("markFalse"))
+
+  def test_abduceMarked(self):
+    '''
+    Sprinklers are off: a sprinkler can't explain it (it's false), so rain
+    does, and it's cloudy too; KNet descends only through nodes with no mark,
+    so with rain asserted false, nothing below it is an explanation either.
+    '''
+    m = self.build(knet(["wet", "rain", "sprinkler", "on", "cloudy", "drizzle"],
+                        ["1|0|0", "2|0|0", "2|3|0", "1|4|0", "5|1|0"], {"on": "82"}), "marked")
+    nodes = self.nodes(m)
+    found = self.abduction.abduce(m, nodes["wet"], "clingo")
+    self.assertEqual([self.probes.name(n) for n in found.explanations], ["drizzle"])
+    self.assertEqual({self.probes.name(found.nodes[x]): tv for x, tv in found.abduced.items()},
+                     {"cloudy": "T", "drizzle": "T", "rain": "T", "wet": "T"})
+    m = self.build(knet(["wet", "rain", "drizzle"], ["1|0|0", "2|1|0"], {"rain": "82"}), "rainless")
+    found = self.abduction.abduce(m, self.nodes(m)["wet"], "clingo")
+    self.assertEqual(found.explanations, [])
+    self.assertEqual(found.report(), "Abduction from wet in rainless: nothing explains it.")
 
 @unittest.skipUnless(os.environ.get("REP_PLUS_DATA"), "set REP_PLUS_DATA to Rep Plus 2's test data folder to run these")
 class TestRepPlusData(unittest.TestCase):

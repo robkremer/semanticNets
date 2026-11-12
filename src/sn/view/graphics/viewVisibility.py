@@ -86,6 +86,19 @@ class VisibilityMixin(ViewBase):
     return any(e is not None and self.findViewObjectForGraphObject(e) is None and self.isFiltered(e, ("erase",))
                for e in (rel.localSrc, rel.localDst))
 
+  def _plainIsa(self, rel:Relation, modelID:int) -> bool:
+    '''
+    Whether a new relation shouldn't be shown: it says what something plainly
+    made is an instance of (it's an isa link made by a command whose
+    *showsTypes* is False: see *sn.view.graphics.viewCommands.ViewDoList.do()*),
+    and it would bring that SN type into the view. (If the SN type is shown
+    already, so is the link.)
+
+    :param modelID: The relation's id in the view's model.
+    '''
+    return isinstance(rel, IsaIndividual) and modelID in self.__dict__.get("_plainMade", ()) \
+           and rel.localDst is not None and self.findViewObjectForGraphObject(rel.localDst) is None
+
   def _exemptIfFiltered(self, vo:VObject) -> None:
     '''
     *vo* was just made (or shown explicitly): if it's in a hidden or erased
