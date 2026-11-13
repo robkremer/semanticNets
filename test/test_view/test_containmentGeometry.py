@@ -23,15 +23,15 @@
 The geometry of context windows' containment (*viewContainment*'s functions,
 which *ContainmentMixin.containmentHomes()* and *_updateContainment()* use):
 which window and pane a point or box belongs in -- nested windows, and a
-rule's divider -- *BOTH_PANES*, and what's dropped into or dragged out of a
-window.
+rule's divider (nothing's astride it) -- and what's dropped into or dragged
+out of a window.
 
 Created on Oct 18, 2026
 
 @author: robkremer
 '''
 import unittest
-from sn.view.graphics.viewContainment import (BOTH_PANES, rectArea, paneAt, windowAt, homeWindow, homePane,
+from sn.view.graphics.viewContainment import (rectArea, rectInside, rectsOverlap, paneAt, windowAt, homeWindow, homePane,
                                               sharedPane, homeRect, containmentMove)
 
 def rule(x1:float, y1:float, x2:float, y2:float, banner:float=20) -> dict[str, list[float]]:
@@ -64,19 +64,29 @@ class TestPanes(unittest.TestCase):
   def test_rectArea(self):
     self.assertEqual(rectArea([10, 20, 30, 70]), 1000)
 
+  def test_rectInside(self):
+    self.assertTrue(rectInside([10, 10, 20, 20], [0, 0, 100, 100]))
+    self.assertTrue(rectInside([0, 0, 100, 100], [0, 0, 100, 100]))        # (edges included)
+    self.assertFalse(rectInside([0, 0, 100, 100], [0, 0, 100, 100], 2))    # (but not with an inset)
+    self.assertFalse(rectInside([190, 50, 210, 70], RULE[1]["antecedent"])) # (astride the divider)
+    self.assertFalse(rectInside([-5, 50, 15, 70], RULE[0]))                 # (astride the window's edge)
+
+  def test_rectsOverlap(self):
+    self.assertTrue(rectsOverlap([0, 0, 10, 10], [5, 5, 15, 15]))
+    self.assertFalse(rectsOverlap([0, 0, 10, 10], [10, 0, 20, 10])) # (touching isn't overlapping)
+
   def test_homeRect(self):
     panes = RULE[1]
     self.assertEqual(homeRect(panes, "consequent"), [200, 20, 400, 300])
-    band = homeRect(panes, BOTH_PANES) # (astride the divider, a third of the window wide)
-    self.assertEqual(band, [200 - 400 / 6, 20, 200 + 400 / 6, 300])
-    self.assertAlmostEqual(band[2] - band[0], 400 / 3)
+    self.assertEqual(homeRect(panes, "antecedent"), [0, 20, 200, 300])
 
   def test_sharedPane(self):
-    self.assertEqual(sharedPane("antecedent", "antecedent"), "antecedent")
-    self.assertEqual(sharedPane("antecedent", BOTH_PANES), "antecedent")
-    self.assertEqual(sharedPane(BOTH_PANES, "consequent"), "consequent")
-    self.assertEqual(sharedPane(BOTH_PANES, BOTH_PANES), BOTH_PANES)
-    self.assertEqual(sharedPane("antecedent", "consequent"), BOTH_PANES)
+    'A relation\'s ends in the same pane: that one; in different ones: the left one (not astride the divider).'
+    panes = RULE[1]
+    self.assertEqual(sharedPane(panes, "antecedent", "antecedent"), "antecedent")
+    self.assertEqual(sharedPane(panes, "consequent", "consequent"), "consequent")
+    self.assertEqual(sharedPane(panes, "antecedent", "consequent"), "antecedent")
+    self.assertEqual(sharedPane(panes, "consequent", "antecedent"), "antecedent")
 
 class TestWhichWindow(unittest.TestCase):
 
@@ -127,13 +137,19 @@ class TestWhichWindow(unittest.TestCase):
     self.assertEqual(homePane(panes, (900, 150), says=none), "consequent")
 
   def test_homePaneUsed(self):
-    'A variable the window\'s contents use, not contained: the side it\'s used on, or astride the divider.'
+    '''
+    A variable the window\'s contents use, not contained: the side it\'s used on -- the left one (the
+    antecedent, where it\'s matched) if both, never astride the divider; by a plain "contains" (in
+    whichever pane its label is), the pane it\'s in, or the nearer.
+    '''
     panes = RULE[1]
     self.assertEqual(homePane(panes, (300, 150), used={"antecedent"}), "antecedent")
     self.assertEqual(homePane(panes, (100, 150), used={"consequent"}), "consequent")
-    self.assertEqual(homePane(panes, (100, 150), used={"antecedent", "consequent"}), BOTH_PANES)
-    self.assertEqual(homePane(panes, (100, 150), used={None}), BOTH_PANES)                # (used by a plain "contains")
-    self.assertEqual(homePane(panes, (100, 150), used={"antecedent", None}), BOTH_PANES)
+    self.assertEqual(homePane(panes, (300, 150), used={"antecedent", "consequent"}), "antecedent")
+    self.assertEqual(homePane(panes, (200, 150), used={"consequent", "antecedent"}), "antecedent")
+    self.assertEqual(homePane(panes, (300, 150), used={None}), "consequent")             # (used by a plain "contains")
+    self.assertEqual(homePane(panes, (100, 150), used={"consequent", None}), "antecedent")
+    self.assertEqual(homePane(panes, (900, 150), used={None}), "consequent")             # (in neither: the nearer)
 
 class TestDropAndDrag(unittest.TestCase):
 

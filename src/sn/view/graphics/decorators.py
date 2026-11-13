@@ -361,6 +361,18 @@ class WrappingText(Text):
       w, h = minW, minW * aspect
     return int(round(w)), int(round(h)), float(wrap)
 
+  def extent(self) -> tuple[float, float]:
+    '''
+    The (width, height), in view units, of its text as last drawn (see
+    *shownText()*): bigger than the owner's box where the text overflows it
+    (see *wrapWidth()*) -- (0, 0) if there's none.
+    '''
+    text = self.shownText()
+    if not text or self.owner.canvas is None:
+      return 0.0, 0.0
+    _, w, h = layoutText(self.owner.canvas, text, self.baseFont())
+    return float(w), float(h)
+
   def preferredSize(self, text:str) -> tuple[int, int]:
     '''
     The (width, height) of the automatically sized box for *text* (see *preferredLayout()*).

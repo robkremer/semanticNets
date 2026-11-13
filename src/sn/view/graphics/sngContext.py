@@ -187,7 +187,7 @@ class SNGContext(UIContext):
       return f'{super().__str__()} {self.obj.name} {self.x} {self.y}'
 
   def resize(self, obj:"VObject", x1:int, y1:int, x2:int, y2:int, #type: ignore[name-defined]
-             userSized:bool=True, oldBB:list[int]|None=None, oldUserSized:bool|None=None):
+             userSized:bool=True, oldBB:list[int]|None=None, oldUserSized:bool|None=None, _followPanes:bool=False):
     '''
     Set the bounding box of a view object (its position and size).
     '''
@@ -195,7 +195,7 @@ class SNGContext(UIContext):
 
   class _Resize(Command):
     def __init__(self, obj:"VObject", x1:int, y1:int, x2:int, y2:int, #type: ignore[name-defined]
-                 userSized:bool=True, oldBB:list[int]|None=None, oldUserSized:bool|None=None):
+                 userSized:bool=True, oldBB:list[int]|None=None, oldUserSized:bool|None=None, _followPanes:bool=False):
       '''
       :param userSized: [default=True] Whether the result counts as sized by
         the user (so it's no longer fitted to its text) -- False for "fit to text".
@@ -203,6 +203,10 @@ class SNGContext(UIContext):
         was already applied live (eg: a handle drag), since by *do()*-time
         the object already has its new box. Captured at *do()* if omitted.
       :param oldUserSized: [Optional] *obj.userSized* before; likewise.
+      :param _followPanes: [default=False] Whether what's in a context
+        window's panes moves across with them (see *SNGView.followPanes()*):
+        a resize by hand. (Not a program's, eg: a window grown for what's
+        being put in it, which places that itself.)
       '''
       super().__init__("resize")
       self.obj:VObject = obj
@@ -210,6 +214,9 @@ class SNGContext(UIContext):
       self.userSized:bool = userSized
       self.oldBB:list[int]|None = list(oldBB) if oldBB is not None else None
       self.oldUserSized:bool|None = oldUserSized
+      self.followPanes:bool = _followPanes
+      self.carried:list[tuple[VObject, list[int], list[int]]]|None = None
+      "(object, its box before, after) for each thing in its panes moved with them: worked out when it's first done."
 
     @override
     def do(self) -> None:
@@ -223,11 +230,18 @@ class SNGContext(UIContext):
       if not self.userSized and hasattr(text, "_fitted"):
         text._fitted = None #type: ignore[union-attr] # fitted to its text from now on
       self.obj.reshape(self.bb)
+      if self.carried is None:
+        self.carried = self.obj.view.followPanes(self.obj, self.oldBB) if self.followPanes and self.obj.isContextWindow() else []
+      else:
+        for vo, _, new in self.carried:
+          vo.moveTo(new[0], new[1], adjustPos=False)
 
     @override
     def undo(self):
       super().undo()
       assert self.oldBB is not None and self.oldUserSized is not None
+      for vo, old, _ in reversed(self.carried or []):
+        vo.moveTo(old[0], old[1], adjustPos=False)
       self.obj.userSized = self.oldUserSized
       self.obj.reshape(self.oldBB)
 
@@ -235,6 +249,7 @@ class SNGContext(UIContext):
     def delete(self):
       super().delete()
       self.obj = None #type: ignore[assignment]
+      self.carried = None
 
     @override
     def __str__(self):

@@ -63,8 +63,10 @@ objects it contains.
 - The **triangle** at the left of the title bar collapses the window to its
   title bar (and expands it again). The contents of a collapsed window are
   hidden.
-- Resize a window by dragging its corner handles, like any other object. Its
-  contents stay put.
+- Resize a window by dragging its corner handles, like any other object. What's
+  in a rule's (definition's, requirement's) panes moves across with them, so
+  the divider never passes over anything; a one-pane window's contents stay
+  put. Whatever the new size leaves outside its pane is put back in it.
 - Dragging the window carries its contents along with it.
 - **Right-click in a pane** for the **new instance of / new subtype of**
   menus, as on the background: what you make goes where you clicked, in that
@@ -107,8 +109,8 @@ Putting things into a window
   *definiendum*, *definiens*, ... relation from the rule: it works at once,
   and is moved into the part the next time the model is read -- see
   :ref:`parts`). This is the way to put an object in *both* of a rule's
-  panes, or to have a context contain something that stays outside its
-  window (its arc is then drawn).
+  panes, or to have a one-pane context (eg: a query) contain something that
+  stays outside its window (its arc is then drawn).
 
 Windows can be nested: an object dropped where windows overlap goes into the
 innermost one. A window goes only into a one-pane window (a plain context, a
@@ -127,10 +129,25 @@ between its ends keeps out of windows that don't contain it. This happens
 when a change is made -- a drop, not while dragging -- and is undone with
 it.
 
-A variable means something only in its pattern, so one that's outside the
-window it belongs in (eg: placed by **show all**, or in a view saved that
-way) is put back in it, in its pane, at the next change -- the window grows
-if there's no room.
+Nothing is left **astride a window's edge**, or the divider between its
+panes, so there's never any doubt which window -- or which side of a rule --
+holds something. At the next change (and when a view is opened), whatever is
+astride one is put wholly in its pane: the pane its containment says (a
+consequent's object stays in the consequent, wherever its centre was), nudged
+in if it's near, or set out in rows if it's far. Its text counts too, where
+it's wider than its box. A one-pane window's object (not a variable) whose
+centre is outside is pushed wholly out instead, still held, with its arc
+drawn. The window grows if there's no room.
+
+What a rule, definition or requirement holds is always inside its window: its
+parts aren't drawn, so neither would their arcs be, and outside nothing would
+say which part holds it. So is a variable, in any window: it means something
+only in its pattern. One that's outside the window it belongs in (eg: placed
+by **show all**, or in a view saved that way) is put back in it. (Dragging
+something out of a window still takes it out of the context: then it's not
+in the rule at all.) A variable a rule uses on both sides, but neither part
+holds (eg: the base rules' ``!a`` and ``!b``), is drawn in the antecedent,
+where it's matched.
 
 The layouts (arranged now, or kept arranged) don't arrange what's in
 windows, and don't put anything on a window: a window that what they arrange
@@ -456,8 +473,8 @@ A requirement is a kind of constraint, with the same attributes (``code``,
 what it reports can only be the condition's variables: the required part's
 own ones have no single value. A requirement with nothing in its required
 pane is reported as a problem itself, as it can't be violated. (A variable
-astride the divider is in both panes: its constraints are tests on what the
-condition matches.)
+both panes use, but neither holds, is drawn in the condition pane: its
+constraints are tests on what the condition matches.)
 
 Unrelated parts of a pattern
 ----------------------------

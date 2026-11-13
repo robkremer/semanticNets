@@ -296,7 +296,7 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
       for was, now in SNGView._modelsReplaced:
         logger.warning(f'"{slf.url}" shows "{now}" in place of "{was}". Save the view to keep it that way.')
       SNGView._modelsReplaced.clear()
-      slf.canvas.after_idle(lambda slf=slf: [slf.applyVisibility(), slf._restoreAnimationState(), slf._restoreLayoutState(), slf._restoreLayoutPanel(), slf._drawAllAfterRead(), slf.canvas.after_idle(slf._pinRelationTypes), slf.resetScrollRegion(), slf._restoreViewport(), slf.setDirty(replaced)]) # type: ignore[misc]
+      slf.canvas.after_idle(lambda slf=slf: [slf.applyVisibility(), slf._restoreAnimationState(), slf._restoreLayoutState(), slf._restoreLayoutPanel(), slf._drawAllAfterRead(), slf.canvas.after_idle(slf._pinRelationTypes), slf.resetScrollRegion(), slf._restoreViewport(), slf.setDirty(slf.tidyWindows() or replaced)]) # type: ignore[misc]
     ret:InstantiationInfo = super().getInstantiationInfo()
     # (its model's URL relative to the view's file if they're side by side -- see PRDb.relativeURL() -- so
     # a view and model copied together stay together; a relative URL is resolved against the view's file on reading)

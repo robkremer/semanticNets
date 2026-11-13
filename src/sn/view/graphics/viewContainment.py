@@ -28,6 +28,7 @@ Created on Oct 18, 2026 (from sngView.py)
 # SOFTWARE.                                                                     #
 #################################################################################
 from __future__ import annotations
+import math
 import sn
 from sn.model.model import GraphObject, Relation
 from typing import Iterable, Callable, Collection, Mapping, Sequence, cast
@@ -44,12 +45,25 @@ logger:sn.SNLogger = sn.getLogger(__name__)
 
 # ---- The geometry of containment: rectangles and centres ([x1, y1, x2, y2] and (x, y), view coords) ----
 
-BOTH_PANES = "both"
-"The pseudo-pane (see *homePane()*) of something a rule or definition uses on both sides: astride the divider."
-
 def rectArea(r:Sequence[float]) -> float:
   ':returns: The area of rectangle *r*.'
   return (r[2] - r[0]) * (r[3] - r[1])
+
+def rectInside(box:Sequence[float], rect:Sequence[float], inset:float=0.0) -> bool:
+  '''
+  :param inset: How far in from *rect*'s edges *box* must be.
+  :returns: Whether *box* is wholly inside *rect* (edges included).
+  '''
+  return rect[0] + inset <= box[0] and rect[1] + inset <= box[1] and box[2] <= rect[2] - inset and box[3] <= rect[3] - inset
+
+PANE_INSET = 2.0
+'''How far (view units) in from its pane's edges something must be to be in
+it (see *ContainmentMixin.keepInPanes()*): not on the window's edge, or the
+divider, where it would look astride it.'''
+
+def rectsOverlap(a:Sequence[float], b:Sequence[float]) -> bool:
+  ':returns: Whether rectangles *a* and *b* overlap (not just touch).'
+  return a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
 
 def paneAt(panes:Mapping[str, Sequence[float]], pt:Sequence[float]) -> str|None:
   '''
@@ -100,50 +114,52 @@ def homePane(panes:Mapping[str, Sequence[float]], center:Sequence[float], *,
   pane its containment says (antecedent, consequent, ...) -- the one it's in,
   if it says both -- or, for a plain "contains", the one it's in (or the
   nearer). If the window's contents only use it (*used*): the side they use
-  it on, or astride the divider (*BOTH_PANES*) if they use it on both (or
-  somewhere not in a pane).
+  it on -- the first (leftmost: eg, a rule's antecedent) if they use it on
+  more than one; or, if one that uses it is held by a plain "contains" (which
+  puts it in whichever pane it's in: None), the pane it's in (or the nearer).
+  Never astride a divider: whatever's in a window is wholly in one of its
+  panes (see *ContainmentMixin.keepInPanes()*).
 
-  :param panes: The window's panes, by name.
+  :param panes: The window's panes, by name, left to right.
   :param center: Its centre.
   :param says: If the window contains it: whether its containment says it's in a pane.
   :param used: If it doesn't: the panes in which the window's contents use it (None: not in a pane).
-  :returns: The pane's name, or *BOTH_PANES*.
+  :returns: The pane's name.
   '''
   if len(panes) == 1:
     return next(iter(panes))
-  if used is not None:
-    return cast(str, next(iter(used))) if len(used) == 1 and None not in used else BOTH_PANES
   here = paneAt(panes, center)
-  said = [p for p in panes if says is not None and says(p)]
-  if said:
-    return here if here is not None and here in said else said[0]
+  if used is not None:
+    named = [p for p in panes if p in used]
+    if named and None not in used:
+      return named[0]
+  else:
+    said = [p for p in panes if says is not None and says(p)]
+    if said:
+      return here if here is not None and here in said else said[0]
   if here is not None:
     return here
   return min(panes, key=lambda p: abs((panes[p][0] + panes[p][2]) / 2 - center[0])) # (the nearer pane)
 
-def sharedPane(a:str, b:str) -> str:
+def sharedPane(panes:Mapping[str, Sequence[float]], a:str, b:str) -> str:
   '''
+  :param panes: A window's panes, by name, left to right.
   :returns: The pane a relation belongs in whose ends belong in panes *a* and
-    *b* of the same window: theirs; or, if they differ, the one that isn't
-    astride the divider (*BOTH_PANES*), or astride it if neither is.
+    *b* of the same window: theirs; or, if they differ, the first (leftmost)
+    of them -- so its label isn't astride the divider.
   '''
-  panes = {a, b}
-  if len(panes) > 1:
-    panes.discard(BOTH_PANES)
-  return panes.pop() if len(panes) == 1 else BOTH_PANES
+  if a == b:
+    return a
+  order = list(panes)
+  return min((a, b), key=lambda p: order.index(p) if p in order else len(order))
 
 def homeRect(panes:Mapping[str, Sequence[float]], pane:str) -> list[float]:
   '''
   :param panes: A window's panes, by name.
-  :param pane: One of them, or *BOTH_PANES* (for a window with two).
-  :returns: The area what belongs in *pane* is kept in: the pane; or, for
-    *BOTH_PANES*, a band astride the divider, a third of the window wide.
+  :param pane: One of them.
+  :returns: The area what belongs in *pane* is kept in: the pane.
   '''
-  if pane != BOTH_PANES:
-    return list(panes[pane])
-  left, right = list(panes.values())[-2:] # (astride the last divider: eg, between a rule's antecedents and its consequent)
-  half = (right[2] - list(panes.values())[0][0]) / 6
-  return [left[2] - half, left[1], left[2] + half, left[3]]
+  return list(panes[pane])
 
 def containmentMove(panes:Mapping[str, Sequence[float]], old:Sequence[float]|None, *, target:bool, contained:bool,
                     windowMove:tuple[Sequence[float], Sequence[float]]|None=None,
@@ -211,9 +227,6 @@ class ContainmentMixin(ViewBase):
     self.__dict__["_contextWindowsCache"] = (version, ret)
     return ret
 
-  BOTH_PANES = BOTH_PANES
-  "The pseudo-pane (see *containmentHomes()*) of something a rule or definition uses on both sides: astride the divider."
-
   def _containmentMaps(self, window:VObject|None=None) -> tuple[dict[int, dict[VObject, list[Relation]]], dict[int, dict[VObject, set[str|None]]]]:
     '''
     What *containmentHomes()* works from, from the model: {id(contained model
@@ -268,13 +281,13 @@ class ContainmentMixin(ViewBase):
     In a rule or definition, the pane is the one its containment says
     (antecedent, consequent, definiendum, definiens) -- the one it's in, if
     it's in both -- or, for a plain "contains", the one it's in (or nearer). A
-    variable used on both sides belongs astride the divider (*BOTH_PANES*).
+    variable used on both sides belongs in the first, the left one (eg: the
+    antecedent, where it's matched): nothing's astride a divider.
 
     And a relation the context doesn't contain, whose two ends both belong in
     the same window, belongs there too (eg: a pattern relation's isa link to
     its type variable, !a -^r-> !b to ^r): in its ends' pane -- or, if they're
-    in different ones, the one that isn't astride the divider, or astride it
-    if neither is.
+    in different ones, the left one.
 
     :param among: Just these view objects (default: all of them).
     :param window: Just what this window contains (and its contents use), as
@@ -304,13 +317,13 @@ class ContainmentMixin(ViewBase):
       if hs is None or hd is None:
         return None
       if hs[0] is hd[0]:
-        return hs[0], sharedPane(hs[1], hd[1])
+        return hs[0], sharedPane(hs[0].panes(), hs[1], hd[1])
       # (one end in a window inside the other's: the innermost window both are in, and the pane each is in --
       # or the window inside it that's carrying it is)
       outer = {id(w): p for w, p in chain(hd)}
       for w, p in chain(hs):
         if id(w) in outer:
-          return w, sharedPane(p, outer[id(w)])
+          return w, sharedPane(w.panes(), p, outer[id(w)])
       return None
     def homeOf(vo:VObject) -> tuple[VObject, str]|None:
       mo = vo.modelObject if vo is not None else None
@@ -328,7 +341,7 @@ class ContainmentMixin(ViewBase):
         return None
       if direct:
         return w, homePane(w.panes(), center, says=lambda p: any(w.paneOfRelation(r) == p for r in cands[w]))
-      return w, homePane(w.panes(), center, used=cands[w]) # (used, not contained: on the side it's used on, or astride the divider)
+      return w, homePane(w.panes(), center, used=cands[w]) # (used, not contained: on the side it's used on -- the left, if both)
     ret:dict[VObject, tuple[VObject, str]] = {}
     for vo in (self.values() if among is None else among):
       if vo is not None and (h := home(vo)) is not None:
@@ -338,11 +351,10 @@ class ContainmentMixin(ViewBase):
   def homeRect(self, w:VObject, pane:str) -> list[float]:
     '''
     The area (view coords) of window *w* that what belongs in its *pane* (see
-    *containmentHomes()*) is kept in: the pane; or, for *BOTH_PANES*, a band
-    astride the divider, a third of the window wide.
+    *containmentHomes()*) is kept in: the pane.
 
     :param w: A context window.
-    :param pane: One of its panes' names, or *BOTH_PANES*.
+    :param pane: One of its panes' names.
     :returns: [x1, y1, x2, y2].
     '''
     return homeRect(w.panes(), pane)
@@ -385,7 +397,7 @@ class ContainmentMixin(ViewBase):
     return [w for w in self.contextWindows() if not w.isHidden()]
 
   def awayFromWindows(self, vo:VObject, box:list[float], homes:dict[VObject, tuple[VObject, str]],
-                      obstacles:list[list[float]]=[], gap:float|None=None) -> tuple[float, float]|None:
+                      obstacles:list[list[float]]=[], gap:float|None=None, also:Iterable[VObject]=()) -> tuple[float, float]|None:
     '''
     How far to move *vo*, were its box *box*, to be clear of every context
     window it doesn't belong in (see *belongsIn()*) -- the least move, keeping
@@ -396,10 +408,13 @@ class ContainmentMixin(ViewBase):
     :param homes: As from *containmentHomes()* (for *vo* and the windows, at least).
     :param obstacles: Boxes not to land on.
     :param gap: The clearance (default: *BUMP_GAP*).
+    :param also: Windows to be clear of although it belongs in them (eg: one
+      it's half out of, that may hold it from outside: see *keepInPanes()*).
     :returns: (dx, dy) -- (0, 0) if it's clear already -- or None if there's no place.
     '''
     windows = self._visibleWindows()
-    keepOut = [list(w.boundingBox()) for w in windows if w is not vo and not self.belongsIn(vo, w, homes)]
+    also = list(also)
+    keepOut = [list(w.boundingBox()) for w in windows if w is not vo and (w in also or not self.belongsIn(vo, w, homes))]
     if not keepOut:
       return 0.0, 0.0
     within = None
@@ -410,15 +425,17 @@ class ContainmentMixin(ViewBase):
         within = r # (it's in its pane: it stays in it)
     return clearOf(box, keepOut, obstacles, within=within, gap=self.BUMP_GAP if gap is None else gap)
 
-  def _intrudes(self, vo:VObject, w:VObject, homes:dict[VObject, tuple[VObject, str]]) -> bool:
+  def _intrudes(self, vo:VObject, w:VObject, homes:dict[VObject, tuple[VObject, str]], box:Sequence[float]|None=None) -> bool:
     '''
-    :returns: Whether *vo* overlaps window *w* without belonging in it (see
-      *belongsIn()*). Of two windows overlapping, neither in the other, the
-      smaller is the one that\'s in the way.
+    :param box: What *vo* covers (see *VObject.drawnBox()*), if the caller has it.
+    :returns: Whether *vo* overlaps window *w* (its text too, where that
+      overflows its shape) without belonging in it (see *belongsIn()*). Of two
+      windows overlapping, neither in the other, the smaller is the one
+      that\'s in the way.
     '''
     if vo is w or self.belongsIn(vo, w, homes):
       return False
-    a, b = vo.boundingBox(), w.boundingBox()
+    a, b = (vo.drawnBox() if box is None else box), w.boundingBox()
     if not (a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]):
       return False
     if not isinstance(vo, VRelation) and vo.isContextWindow():
@@ -449,7 +466,8 @@ class ContainmentMixin(ViewBase):
     rank = lambda o: 0 if isWindow(o) else 2 if isinstance(o, VRelation) else 1
     moves:list[tuple[VObject, list[int], list[int]]] = []
     for vo in sorted(objs, key=rank):
-      if not any(self._intrudes(vo, w, homes) for w in windows):
+      drawn = vo.drawnBox()
+      if not any(self._intrudes(vo, w, homes, drawn) for w in windows):
         continue
       old = list(vo.boundingBox())
       if floats(vo):
@@ -457,9 +475,9 @@ class ContainmentMixin(ViewBase):
       else:
         carried = set(vo.carriedContents()) if isWindow(vo) else set()
         near = expandRect(old, 400)
-        obstacles = [list(o.boundingBox()) for o in objs if o is not vo and o not in carried and not isWindow(o) and not floats(o)
-                     and (b := o.boundingBox())[0] < near[2] and near[0] < b[2] and b[1] < near[3] and near[1] < b[3]]
-        d = self.awayFromWindows(vo, old, homes, obstacles)
+        obstacles = [b for o in objs if o is not vo and o not in carried and not isWindow(o) and not floats(o)
+                     and rectsOverlap(b := o.drawnBox(), near)]
+        d = self.awayFromWindows(vo, drawn, homes, obstacles)
         if d is None or d == (0.0, 0.0):
           continue
         vo.moveTo(old[0] + d[0], old[1] + d[1], adjustPos=False)
@@ -729,15 +747,14 @@ class ContainmentMixin(ViewBase):
       return other is not None and other is not w and other.paneAt(vo.centerPt()) is not None
     homes = {vo: pane for vo, (_, pane) in self.containmentHomes(window=w).items()
              if not floats(vo) and not elsewhere(vo) and (which is None or which(vo))}
-    def inside(box:list[float], rect:list[float]) -> bool:
-      return rect[0] <= box[0] and rect[1] <= box[1] and box[2] <= rect[2] and box[3] <= rect[3]
-    toMove = sorted((vo for vo, pane in homes.items() if not inside(vo.boundingBox(), self.homeRect(w, pane))),
+    toMove = sorted((vo for vo, pane in homes.items() if not rectInside(vo.drawnBox(), self.homeRect(w, pane), PANE_INSET)), # (its text too, where it overflows)
                     key=lambda vo: (vo.boundingBox()[1], vo.boundingBox()[0]))
     if not toMove:
       return None
     # Plan it all first (the commands only run when the composite ends): where each goes, and how
     # big the window must be.
     moving = set(toMove)
+    carried = {c for vo in toMove if not isinstance(vo, VRelation) and vo.isContextWindow() for c in vo.carriedContents()} # (they go with their window)
     labels = [o.boundingBox() for o in self.values() if o is not None and floats(o) and (o.src in moving or o.dst in moving)] # type: ignore[attr-defined]
     gap = (max([margin, *((b[2] - b[0]) + 2 * margin for b in labels)]), # (room between things for the labels between them)
            max([margin, *((b[3] - b[1]) + 2 * margin for b in labels)]))
@@ -747,32 +764,81 @@ class ContainmentMixin(ViewBase):
       return [bb[0] + (r[0] - W[0]) * sx, r[1], bb[0] + (r[2] - W[0]) * sx, r[3] + bb[3] - W[3]]
     obstacles = []
     for o in self.values():
-      if o is None or o is w or o in moving or not o._isConnected() or o.isHidden():
+      if o is None or o is w or o in moving or o in carried or not o._isConnected() or o.isHidden():
         continue
-      if floats(o) and any(e in moving for e in (o.src, o.dst)): # type: ignore[attr-defined]
+      if floats(o) and any(e in moving or e in carried for e in (o.src, o.dst)): # type: ignore[attr-defined]
         continue # (it'll follow its ends)
-      b = list(o.boundingBox())
+      if not self.belongsIn(o, w, allHomes):
+        continue # (it'll be pushed out, if it's in the way: see bumpIntruders())
+      b = o.drawnBox()
       if not isinstance(o, VRelation) and o.isContextWindow() and b[0] <= W[0] and b[1] <= W[1] and W[2] <= b[2] and W[3] <= b[3]:
         continue # (a window w is in)
       obstacles.append(b)
     bb, moves = list(W), []
     for vo in toMove:
-      box = list(vo.boundingBox())
+      box = vo.drawnBox() # (planned by what it covers: its text too)
       while True:
         rect = rectIn(homes[vo], bb)
         inRect = [o for o in obstacles if o[0] < rect[2] and rect[0] < o[2] and o[1] < rect[3] and rect[1] < o[3]]
         out = max(rect[0] - box[0], box[2] - rect[2], rect[1] - box[1], box[3] - rect[3])
         if (d := freeSpotIn(box, rect, inRect, margin=margin, topMargin=topMargin, gap=gap, rows=out > near)) is not None:
           break
-        # No room: grow down by its height -- and wider, if it's too wide for its pane (the panes
-        # share the width).
+        # No room: wider, if it's too wide for its pane (the panes share the width); else grow down by its height.
         short = (box[2] - box[0]) + 2 * margin - (rect[2] - rect[0])
-        bb[2] += short * (bb[2] - bb[0]) / (rect[2] - rect[0]) if short > 0 else 0
-        bb[3] += (box[3] - box[1]) + gap[1] + margin
-      placed = [box[0] + d[0], box[1] + d[1], box[2] + d[0], box[3] + d[1]]
-      obstacles.append(placed)
-      moves.append((vo, box, placed))
+        if short > 0:
+          bb[2] += math.ceil(short * (bb[2] - bb[0]) / (rect[2] - rect[0]))
+        else:
+          bb[3] += (box[3] - box[1]) + gap[1] + margin
+      obstacles.append([box[0] + d[0], box[1] + d[1], box[2] + d[0], box[3] + d[1]])
+      now = [float(v) for v in vo.boundingBox()]
+      moves.append((vo, now, [now[0] + d[0], now[1] + d[1], now[2] + d[0], now[3] + d[1]]))
     return bb, moves
+
+  def holdsOnlyInside(self, w:VObject) -> bool:
+    '''
+    Whether what context window *w* holds must be inside it: a window with
+    more than one pane (eg: a rule's antecedent and consequent), or whose
+    parts are its panes (see *GraphObject.tilesParts()*). What its parts
+    hold can't be shown from outside -- the parts aren't drawn, so neither
+    are their "contains" arcs -- and outside, nothing would say which part
+    holds it. (What a one-pane window holds may be out in the world, its
+    arc drawn: eg, a query's subject.)
+    '''
+    mo = w.modelObject
+    return len(w.panes()) > 1 or (mo is not None and bool(mo.tilesParts()))
+
+  def misplaced(self, homes:dict[VObject, tuple[VObject, str]]|None=None) -> tuple[dict[VObject, list[VObject]], list[tuple[VObject, VObject]]]:
+    '''
+    What's not wholly where it belongs (see *containmentHomes()*): astride the
+    edge of its window, or of its pane (eg: a rule's divider), or outside a
+    window it can't be outside. Each is to be brought wholly into its pane --
+    if it's a variable (it means something only in its pattern), or its window
+    holds only what's inside it (see *holdsOnlyInside()*), or its centre's
+    in the window (where a drop would have put it) -- or else pushed wholly
+    out of the window, its arc drawn. Not floating relation labels (they
+    follow their ends, kept in their panes: see *VRelation.placedLabel()*),
+    nor what's in a hidden or collapsed window.
+
+    :param homes: *containmentHomes()*, if the caller has it.
+    :returns: Each window's objects to bring into their panes; and (object,
+      window) for each to push out of the window it's half in.
+    '''
+    homes = self.containmentHomes() if homes is None else homes
+    bringIn:dict[VObject, list[VObject]] = {}
+    pushOut:list[tuple[VObject, VObject]] = []
+    for vo, (w, pane) in homes.items():
+      mo = vo.modelObject
+      if mo is None or not vo._isConnected() or vo.isHidden() or w.isHidden() or w.collapsed \
+         or (isinstance(vo, VRelation) and vo.floating()):
+        continue
+      box = vo.drawnBox() # (its text too, where it overflows)
+      if rectInside(box, self.homeRect(w, pane), PANE_INSET):
+        continue
+      if (not isinstance(vo, VRelation) and mo.isVariable()) or self.holdsOnlyInside(w) or w.paneAt(vo.centerPt()) is not None:
+        bringIn.setdefault(w, []).append(vo)
+      elif rectsOverlap(box, w.boundingBox()):
+        pushOut.append((vo, w))
+    return bringIn, pushOut
 
   def strayVariables(self, homes:dict[VObject, tuple[VObject, str]]|None=None) -> dict[VObject, list[VObject]]:
     '''
@@ -780,6 +846,7 @@ class ContainmentMixin(ViewBase):
     *containmentHomes()*): a variable means something only in its pattern,
     so one out on the canvas -- eg: put there by "show all", or a layout --
     is never where it's meant to be. Not those of a collapsed or hidden window.
+    (They're among what *keepInPanes()* puts back.)
 
     :param homes: *containmentHomes()*, if the caller has it.
     :returns: Each window's strays.
@@ -794,30 +861,107 @@ class ContainmentMixin(ViewBase):
         ret.setdefault(w, []).append(vo)
     return ret
 
-  def homeStrays(self) -> list[tuple[VObject, list[int], list[int]]]:
+  def keepInPanes(self) -> list[tuple[VObject, list[int], list[int]]]:
     '''
-    Put each variable that's outside the window it belongs in (see
-    *strayVariables()*) back in it: in its pane, at a free spot, as
-    *gatherIntoWindow()* would (growing the window if there's no room). Done
-    after every command (see *ViewDoList*), with *bumpIntruders()*.
+    Leave nothing astride a window's edge or a divider between its panes,
+    nor outside a window it can't be outside (see *misplaced()*): each is
+    put wholly in its pane, at a free spot -- nudged in, if it's near, or
+    else set out in rows, as *gatherIntoWindow()* would (growing the window
+    if there's no room) -- or, if it may be outside and its centre is,
+    pushed wholly out, the least it takes (see *awayFromWindows()*). So
+    there's never any doubt which window, or which side of a rule, holds
+    something. Done after every command (see *ViewDoList*), with
+    *bumpIntruders()*, and when a view's read.
 
     :returns: (object, its box before, after) for each one moved or resized, in order.
     '''
-    homes = self.containmentHomes()
-    strays = self.strayVariables(homes)
     moves:list[tuple[VObject, list[int], list[int]]] = []
-    for w, vos in strays.items():
-      plan = self._gatherPlan(w, which=set(vos).__contains__, homes=homes)
-      if plan is None:
+    placed:set[VObject] = set()
+    pushed:set[VObject] = set()
+    for _ in range(3): # (a window grown for what's put in it moves its dividers, and what it's in may have to make room too)
+      homes = self.containmentHomes()
+      bringIn, pushOut = self.misplaced(homes)
+      if not bringIn and not pushOut:
+        break
+      before = len(moves)
+      for w in sorted(bringIn, key=lambda w: len(self.windowChain(w, homes))): # (the outermost first: a window carries what's in it)
+        plan = self._gatherPlan(w, which=set(bringIn[w]).__contains__, homes=homes)
+        if plan is None:
+          continue
+        bb, planned = plan
+        old = list(w.boundingBox())
+        if bb != old:
+          w.reshape(bb)
+          moves.append((w, old, list(w.boundingBox())))
+        for vo, box, there in planned:
+          vo.moveTo(there[0], there[1], adjustPos=False)
+          moves.append((vo, [int(v) for v in box], list(vo.boundingBox())))
+          placed.add(vo)
+          pushed.discard(vo)
+      for vo, w in pushOut:
+        old = list(vo.boundingBox())
+        near = expandRect(old, 400)
+        obstacles = [b for o in self.values() if o is not None and o is not vo and o is not w and o._isConnected() and not o.isHidden()
+                     and not (isinstance(o, VRelation) and o.floating()) and not (not isinstance(o, VRelation) and o.isContextWindow())
+                     and rectsOverlap(b := o.drawnBox(), near)]
+        d = self.awayFromWindows(vo, vo.drawnBox(), homes, obstacles, also=[w])
+        if d is None or d == (0.0, 0.0):
+          continue
+        vo.moveTo(old[0] + d[0], old[1] + d[1], adjustPos=False)
+        moves.append((vo, old, list(vo.boundingBox())))
+        pushed.add(vo)
+        placed.discard(vo)
+      if len(moves) == before:
+        break
+    if (n := len(placed)):
+      logger.info(f"put {n} object{' wholly in its pane' if n == 1 else 's wholly in their panes'}.")
+    if (n := len(pushed)):
+      logger.info(f"moved {n} object{'' if n == 1 else 's'} wholly out of the window{' it was' if n == 1 else 's they were'} astride.")
+    return moves
+
+  def tidyWindows(self) -> bool:
+    '''
+    Put what the windows hold wholly in their panes (see *keepInPanes()*),
+    and push what's in a window it doesn't belong in out of it (see
+    *bumpIntruders()*): eg, when a view saved before either was done (or
+    by a program) is read. Not undoable.
+
+    :returns: Whether anything moved.
+    '''
+    if not self.contextWindows():
+      return False
+    try:
+      return bool(self.keepInPanes() + self.bumpIntruders())
+    except Exception: # (a view that can't be tidied can still be shown)
+      logger.exception("couldn't put what the windows hold in their panes")
+      return False
+
+  def followPanes(self, w:VObject, old:Sequence[float]) -> list[tuple[VObject, list[int], list[int]]]:
+    '''
+    Context window *w* has been resized by hand, from *old*: if it has more
+    than one pane (eg: a rule), what's in its panes moves across with them,
+    in proportion to its width (the panes share it equally: so each thing
+    keeps its place in its pane, and the divider doesn't pass over it). Up
+    and down, it stays put -- and anything the resize leaves outside its pane
+    is put back in it afterwards (see *keepInPanes()*).
+
+    :param old: Its box before.
+    :returns: (object, its box before, after) for each one moved.
+    '''
+    new = list(w.boundingBox())
+    if len(w.panes()) < 2 or old[2] <= old[0] or (new[0], new[2]) == (old[0], old[2]):
+      return []
+    scale = (new[2] - new[0]) / (old[2] - old[0])
+    moves:list[tuple[VObject, list[int], list[int]]] = []
+    for vo in w.carriedContents():
+      if isinstance(vo, VRelation) and vo.floating(): # (it follows its ends)
         continue
-      bb, planned = plan
-      old = list(w.boundingBox())
-      if bb != old:
-        w.reshape(bb)
-        moves.append((w, old, list(w.boundingBox())))
-      for vo, box, placed in planned:
-        vo.moveTo(placed[0], placed[1], adjustPos=False)
-        moves.append((vo, [int(v) for v in box], list(vo.boundingBox())))
-    if (n := sum(1 for vo, _, _ in moves if vo not in strays)):
-      logger.info(f"put {n} variable{' back in its window' if n == 1 else 's back in their windows'}.")
+      box = list(vo.boundingBox())
+      cx, cy = vo.centerPt()
+      if not (old[0] <= cx <= old[2] and old[1] <= cy <= old[3]): # (it wasn't in the window)
+        continue
+      dx = round(new[0] + (cx - old[0]) * scale - cx)
+      if dx:
+        vo.moveTo(box[0] + dx, box[1], adjustPos=False)
+        moves.append((vo, box, list(vo.boundingBox())))
     return moves

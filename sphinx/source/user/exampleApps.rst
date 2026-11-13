@@ -338,8 +338,10 @@ What's in the net becomes:
   derived*) are made as they are.
 - **Boxes**: a node of an enclosure type is drawn as a window, the size CNet
   drew it, and contains (by *contains* relations) the nodes inside it -- each
-  in the smallest box it's in, so boxes can be nested. As in CNet, dragging
-  a box carries what's in it.
+  in the smallest box it's in (by its centre), so boxes can be nested. A node
+  CNet drew astride a box's edge is moved wholly into the box, or out of it,
+  so it's plain which box holds it (see :doc:`contexts`). As in CNet,
+  dragging a box carries what's in it.
 - **Constructs**: the poles in a *construct* box (the nodes it contains)
   exclude each other, as CNet's construct macro says, unless an includes
   link (or a chain of them) joins them. Each such pair gets a *construct

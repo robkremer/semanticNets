@@ -58,9 +58,10 @@ def _place(vo:VObject, was:list[int], box:list[int]) -> None:
 
 class _BumpIntruders(Command):
   '''
-  Put the variables that have strayed out of their windows back in them
-  (see *SNGView.homeStrays()*), and push what's in a context window it
-  doesn't belong in out of it (see *SNGView.bumpIntruders()*). What to move is worked out when it's first done
+  Put what's astride a window's edge, or a divider between its panes, or has
+  strayed out of a window it can't be outside, wholly in its pane or out of
+  the window (see *SNGView.keepInPanes()*), and push what's in a context
+  window it doesn't belong in out of it (see *SNGView.bumpIntruders()*). What to move is worked out when it's first done
   -- after the commands before it, so a drop into a pane has already made the
   object contained -- and replayed on a redo.
   '''
@@ -79,7 +80,7 @@ class _BumpIntruders(Command):
     super().do()
     assert self.view is not None
     if self.moves is None:
-      self.moves = self.view.homeStrays() + self.view.bumpIntruders()
+      self.moves = self.view.keepInPanes() + self.view.bumpIntruders()
       return
     for vo, old, new in self.moves:
       _place(vo, old, new)
