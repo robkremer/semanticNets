@@ -253,6 +253,7 @@
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.aboutBox.html">sn.view.graphics.aboutBox module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
@@ -318,9 +319,21 @@
 <li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
 </ul>
 </li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.rnetReader.html">snplugins.rnetReader package</a><input aria-label="Toggle navigation of snplugins.rnetReader package" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.abduction.html">snplugins.rnetReader.abduction module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.existence.html">snplugins.rnetReader.existence module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.expansion.html">snplugins.rnetReader.expansion module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.forms.html">snplugins.rnetReader.forms module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.hooks.html">snplugins.rnetReader.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.probes.html">snplugins.rnetReader.probes module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.rnet.html">snplugins.rnetReader.rnet module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.reader.html">snplugins.rnetReader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.view.html">snplugins.rnetReader.view module</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/snSourceCode.html">Semantic Nets Source Code Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/families.html">Families Models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/homeAutomation.html">Home Automation</a></li>
@@ -437,6 +450,12 @@ by default) over the fact vocabulary and the rule base’s output predicates
 <dd><p>term number -&gt; GraphObject</p>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.clingoReasoner.ClingoReasoner._probing">
+<span class="sig-name descname"><span class="pre">_probing</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.model.clingoReasoner.ClingoReasoner._probing" title="Link to this definition">¶</a></dt>
+<dd><p>The facts and rules <em>probes()</em> solves with: rendered once, of the model as it is when they’re first asked for.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.model.clingoReasoner.ClingoReasoner._term">
 <span class="sig-name descname"><span class="pre">_term</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.clingoReasoner.ClingoReasoner._term" title="Link to this definition">¶</a></dt>
@@ -468,18 +487,122 @@ number or string as itself.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.model.clingoReasoner.ClingoReasoner._solve">
-<span class="sig-name descname"><span class="pre">_solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">program</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">facts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.clingoReasoner.ClingoReasoner._solve" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">_solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">program</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">facts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cautious</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">best</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.clingoReasoner.ClingoReasoner._solve" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>facts</strong> (<em>str</em><em> | </em><em>None</em>) – The model’s facts, already rendered (see <em>_program()</em>) – for
 a <em>program</em> that refers to objects by their o(N) terms, which must come
 from the same rendering. Rendered afresh if None.</p></li>
+<li><p><strong>parts</strong> (<em>tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>) – The rule base’s other parts to ground with it (eg:
+“explored”: see <em>_explore()</em>).</p></li>
+<li><p><strong>cautious</strong> (<em>bool</em>) – What every model has (the rule base alone is stratified:
+it has just one), or None if there’s none.</p></li>
+<li><p><strong>best</strong> (<em>bool</em>) – What every optimal model has.</p></li>
 <li><p><strong>program</strong> (<em>str</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>list[<em>Symbol</em>]</p>
+<dd class="field-even"><p>list[<em>Symbol</em>] | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.clingoReasoner.ClingoReasoner._explore">
+<span class="sig-name descname"><span class="pre">_explore</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">facts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">given</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">marks</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.clingoReasoner.ClingoReasoner._explore" title="Link to this definition">¶</a></dt>
+<dd><p>Explore the cases of the defined nodes that say to (see <em>DEFINING</em>:
+<em>necessaryValue</em>): the marks every world has, and with preferences, every
+preferred world.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rules</strong> (<em>str</em>) – The rules program (see <em>_rulesProgram()</em>).</p></li>
+<li><p><strong>facts</strong> (<em>str</em>) – The model’s facts, rendered (see <em>_program()</em>).</p></li>
+<li><p><strong>given</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>str</em><em>, </em><em>tuple</em><em>[</em><em>Any</em><em>, </em><em>...</em><em>]</em><em>]</em><em>]</em>) – … as they were (see <em>facts()</em>).</p></li>
+<li><p><strong>marks</strong> (<em>list</em><em>[</em><em>Symbol</em><em>]</em>) – What the program alone concluded (with its “marks” part):
+world_mark0/2 and world_open0/2.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Rule attributes (rule, object, key, value): each mark (not one
+the program alone concluded) with the first explored definition’s tag
+as its “rule”, and its value.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[tuple[<em>Any</em>, …]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.clingoReasoner.ClingoReasoner._models">
+<span class="sig-name descname"><span class="pre">_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">program</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">facts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.clingoReasoner.ClingoReasoner._models" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>program</strong> (<em>str</em>) – More rules (with the rule base).</p></li>
+<li><p><strong>facts</strong> (<em>str</em>) – The model’s facts, rendered (see <em>_program()</em>).</p></li>
+<li><p><strong>parts</strong> (<em>tuple</em><em>[</em><em>str</em><em>, </em><em>...</em><em>]</em>) – The rule base’s other parts to ground with it.</p></li>
+<li><p><strong>limit</strong> (<em>int</em>) – The most models to find.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Every model’s shown atoms.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[list[<em>Symbol</em>]]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.TooManyProbes" title="sn.model.reasoner.TooManyProbes"><strong>TooManyProbes</strong></a> – If there are more than <em>limit</em>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.clingoReasoner.ClingoReasoner.probes">
+<span class="sig-name descname"><span class="pre">probes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trueKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">falseKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'consistent'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4096</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.clingoReasoner.ClingoReasoner.probes" title="Link to this definition">¶</a></dt>
+<dd><p>Gaines’s probes of <em>nodes</em>: the ways they can be marked true and false
+that the rules allow (as KNet finds them), starting from what the rules
+conclude of the model as it is – each as each node’s mark: “T”, “F” or
+“TF” (both). <em>kind</em> says which (see <em>PROBE_KINDS</em>):</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>consistent: each node that has no mark gets one, true or false, and
+the rules then give no node both marks that hadn’t both;</p></li>
+<li><p>admissible: the consistent ones, and, for each node with just one
+mark that it wasn’t asserted to have, those it has with the other
+mark too (both), and then with just the mark it had again (so that
+each such node – eg, an inconsistent one, marked false – has
+probes of its own);</p></li>
+<li><p>compatible: each node not asserted to have a mark is true, false or
+both (at least what it was), and what the rules then make it: no
+probe is incoherent.</p></li>
+</ul>
+</div></blockquote>
+<p>The marks are the attributes <em>trueKey</em> and <em>falseKey</em> (eg: knet.snm’s
+“markTrue” and “markFalse”). Probes of nodes that aren’t linked are
+every combination of theirs: so ask about each connected part (with
+the same reasoner: it renders the model once – so make another if the
+model changes).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>limit</strong> (<em>int</em>) – The most probes to find.</p></li>
+<li><p><strong>nodes</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>]</em>)</p></li>
+<li><p><strong>trueKey</strong> (<em>str</em>)</p></li>
+<li><p><strong>falseKey</strong> (<em>str</em>)</p></li>
+<li><p><strong>kind</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[dict[<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>, str]]</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><a class="reference internal" href="sn.model.reasoner.html#sn.model.reasoner.TooManyProbes" title="sn.model.reasoner.TooManyProbes"><strong>TooManyProbes</strong></a> – If there are more than <em>limit</em>.</p></li>
+<li><p><strong>ValueError</strong> – If <em>kind</em> isn’t one of <em>PROBE_KINDS</em>.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -769,9 +892,13 @@ mapped back to <em>GraphObjects</em>.</p>
 <li><a class="reference internal" href="#sn.model.clingoReasoner.ClingoReasoner.rules"><code class="docutils literal notranslate"><span class="pre">ClingoReasoner.rules</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.clingoReasoner.ClingoReasoner._ids"><code class="docutils literal notranslate"><span class="pre">ClingoReasoner._ids</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.clingoReasoner.ClingoReasoner._objs"><code class="docutils literal notranslate"><span class="pre">ClingoReasoner._objs</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.clingoReasoner.ClingoReasoner._probing"><code class="docutils literal notranslate"><span class="pre">ClingoReasoner._probing</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.clingoReasoner.ClingoReasoner._term"><code class="docutils literal notranslate"><span class="pre">ClingoReasoner._term()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.clingoReasoner.ClingoReasoner._program"><code class="docutils literal notranslate"><span class="pre">ClingoReasoner._program()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.clingoReasoner.ClingoReasoner._solve"><code class="docutils literal notranslate"><span class="pre">ClingoReasoner._solve()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.clingoReasoner.ClingoReasoner._explore"><code class="docutils literal notranslate"><span class="pre">ClingoReasoner._explore()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.clingoReasoner.ClingoReasoner._models"><code class="docutils literal notranslate"><span class="pre">ClingoReasoner._models()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.clingoReasoner.ClingoReasoner.probes"><code class="docutils literal notranslate"><span class="pre">ClingoReasoner.probes()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.clingoReasoner.ClingoReasoner._value"><code class="docutils literal notranslate"><span class="pre">ClingoReasoner._value()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.clingoReasoner.ClingoReasoner.run"><code class="docutils literal notranslate"><span class="pre">ClingoReasoner.run()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.clingoReasoner.ClingoReasoner._patternBody"><code class="docutils literal notranslate"><span class="pre">ClingoReasoner._patternBody()</span></code></a></li>

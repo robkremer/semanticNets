@@ -253,6 +253,7 @@
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.aboutBox.html">sn.view.graphics.aboutBox module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
@@ -318,9 +319,21 @@
 <li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
 </ul>
 </li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.rnetReader.html">snplugins.rnetReader package</a><input aria-label="Toggle navigation of snplugins.rnetReader package" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.abduction.html">snplugins.rnetReader.abduction module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.existence.html">snplugins.rnetReader.existence module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.expansion.html">snplugins.rnetReader.expansion module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.forms.html">snplugins.rnetReader.forms module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.hooks.html">snplugins.rnetReader.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.probes.html">snplugins.rnetReader.probes module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.rnet.html">snplugins.rnetReader.rnet module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.reader.html">snplugins.rnetReader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.view.html">snplugins.rnetReader.view module</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/snSourceCode.html">Semantic Nets Source Code Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/families.html">Families Models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/homeAutomation.html">Home Automation</a></li>
@@ -373,7 +386,8 @@ without opening a window: it reasons over a copy of the bundled family example
 with each reasoner engine (in the apps, every one they include; else, every
 one installed) and checks the conclusions – and asks one that can explain why
 one holds – and installs the bundled plugins (in a scratch folder), imports
-all their modules, and makes a model with each (see <em>selftestPlugins()</em>) – as
+all their modules, and makes a model with each (see <em>selftestPlugins()</em>), and
+checks the About box has its icon and licences (see <em>selftestAbout()</em>) – as
 the “app” and “pyz” ant targets, and the Build workflow, do after a build.
 It exits with 0 if all’s well, and 1 if not.</p>
 <p><em>Code author: Rob Kremer &lt;<a class="reference external" href="mailto:robkremer&#37;&#52;&#48;me&#46;com">robkremer<span>&#64;</span>me<span>&#46;</span>com</a>&gt;</em></p>
@@ -392,12 +406,32 @@ example are as expected, 1 if not.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="sn.__main__.selftestAbout">
+<span class="sig-prename descclassname"><span class="pre">sn.__main__.</span></span><span class="sig-name descname"><span class="pre">selftestAbout</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.__main__.selftestAbout" title="Link to this definition">¶</a></dt>
+<dd><p>Check the About box has what it shows (see <em>sn.view.graphics.aboutBox</em>):
+its icon and the licences that come with the program (package data); and,
+in the apps, every library they include (each credit with a Python
+distribution, but the engines they use from the computer), with its
+licence’s text – from its metadata, which the build must include (see
+packaging/semanticNets.spec).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>What’s wrong: empty if nothing is.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="sn.__main__.selftestPlugins">
 <span class="sig-prename descclassname"><span class="pre">sn.__main__.</span></span><span class="sig-name descname"><span class="pre">selftestPlugins</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">folder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.__main__.selftestPlugins" title="Link to this definition">¶</a></dt>
 <dd><p>Install the bundled plugins in <em>folder</em> (see <em>sn.plugins.installBundled()</em>),
 import every module in them – catching any standard library module the
 build left out – and make a model with each: XMLreader of its books.xml,
-pythonParser of its own parser.py. (Not registered: there’s no editor.)</p>
+pythonParser of its own parser.py, rnetReader of a small net. (Not
+registered: there’s no editor.)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>folder</strong> (<em>str</em>) – A scratch folder.</p>
@@ -470,6 +504,7 @@ pythonParser of its own parser.py. (Not registered: there’s no editor.)</p>
             <ul>
 <li><a class="reference internal" href="#">sn.__main__ module</a><ul>
 <li><a class="reference internal" href="#sn.__main__.selftest"><code class="docutils literal notranslate"><span class="pre">selftest()</span></code></a></li>
+<li><a class="reference internal" href="#sn.__main__.selftestAbout"><code class="docutils literal notranslate"><span class="pre">selftestAbout()</span></code></a></li>
 <li><a class="reference internal" href="#sn.__main__.selftestPlugins"><code class="docutils literal notranslate"><span class="pre">selftestPlugins()</span></code></a></li>
 </ul>
 </li>

@@ -253,6 +253,7 @@
 </li>
 <li class="toctree-l2 current has-children"><a class="reference internal" href="sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" checked="" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l3 current has-children"><a class="reference internal" href="sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" checked="" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.aboutBox.html">sn.view.graphics.aboutBox module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
@@ -318,9 +319,21 @@
 <li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
 </ul>
 </li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.rnetReader.html">snplugins.rnetReader package</a><input aria-label="Toggle navigation of snplugins.rnetReader package" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.abduction.html">snplugins.rnetReader.abduction module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.existence.html">snplugins.rnetReader.existence module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.expansion.html">snplugins.rnetReader.expansion module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.forms.html">snplugins.rnetReader.forms module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.hooks.html">snplugins.rnetReader.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.probes.html">snplugins.rnetReader.probes module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.rnet.html">snplugins.rnetReader.rnet module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.reader.html">snplugins.rnetReader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.view.html">snplugins.rnetReader.view module</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/snSourceCode.html">Semantic Nets Source Code Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/families.html">Families Models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/homeAutomation.html">Home Automation</a></li>
@@ -370,6 +383,52 @@
 of <em>sn.view.graphics.sngView.SNGView</em> (see <em>viewBase</em>).</p>
 <p>Created on Oct 18, 2026 (from sngView.py)</p>
 <p><em>Code author: Rob Kremer &lt;<a class="reference external" href="mailto:robkremer&#37;&#52;&#48;me&#46;com">robkremer<span>&#64;</span>me<span>&#46;</span>com</a>&gt;</em></p>
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.viewReasoning._hidesImplied">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewReasoning.</span></span><span class="sig-name descname"><span class="pre">_hidesImplied</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rel</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewReasoning._hidesImplied" title="Link to this definition">¶</a></dt>
+<dd><p>Whether <em>rel</em>’s type says to leave it out of a view when it’s implied by what’s shown (“vis/hideImplied”).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>rel</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.viewReasoning._typeDepth">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewReasoning.</span></span><span class="sig-name descname"><span class="pre">_typeDepth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rel</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewReasoning._typeDepth" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>rel</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>How deep <em>rel</em>’s type is in the isa hierarchy (its own types: 1).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.viewReasoning._names">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewReasoning.</span></span><span class="sig-name descname"><span class="pre">_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">objects</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewReasoning._names" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>objects</strong> (<em>list</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>]</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>objects</em>, for a message: eg: “carol”, “carol and bob”, “carol, bob and alice”, or “5 objects”.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="sn.view.graphics.viewReasoning.showEngineMissing">
 <span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewReasoning.</span></span><span class="sig-name descname"><span class="pre">showEngineMissing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">missing</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">purpose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chosen</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">instead</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewReasoning.showEngineMissing" title="Link to this definition">¶</a></dt>
@@ -461,7 +520,7 @@ or the command line (see <em>sn.model.reasoner.reason()</em>) – or None.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.viewReasoning.ReasoningMixin.reason">
-<span class="sig-name descname"><span class="pre">reason</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewReasoning.ReasoningMixin.reason" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">reason</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">about</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewReasoning.ReasoningMixin.reason" title="Link to this definition">¶</a></dt>
 <dd><p>Run the reasoner over this view’s model and print the report to this
 window’s terminal. The results are kept with the model, so this and every
 other view of it show them (see <em>_showReasoning()</em>), as they do when
@@ -471,6 +530,10 @@ other view of it show them (see <em>_showReasoning()</em>), as they do when
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>engine</strong> (<em>str</em><em> | </em><em>None</em>) – The reasoner engine; by default the preference’s (see <em>sn.model.reasoner.defaultEngine()</em>).</p></li>
 <li><p><strong>silent</strong> (<em>bool</em>) – See <em>reasonSilently()</em>.</p></li>
+<li><p><strong>about</strong> (<em>list</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>] </em><em>| </em><em>None</em>) – Objects to reason about (eg: the selection: see
+<em>VObject.reasonAbout()</em>): only what’s inferred about them is added to
+what’s shown, and only their problems to what’s marked; the report is
+about them. By default, the whole model. See <em>sn.model.reasoner.reason()</em>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -481,14 +544,34 @@ other view of it show them (see <em>_showReasoning()</em>), as they do when
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.viewReasoning.ReasoningMixin.reasonSilently">
-<span class="sig-name descname"><span class="pre">reasonSilently</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewReasoning.ReasoningMixin.reasonSilently" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">reasonSilently</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">about</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewReasoning.ReasoningMixin.reasonSilently" title="Link to this definition">¶</a></dt>
 <dd><p>Reason (see <em>reason()</em>) without cluttering the views: what’s inferred
 isn’t added to them (those already shown stay), and only a summary is
 printed – the problems are still marked. Eg: so that queries find what
 the rules conclude (and show those they find: see <em>VObject.answerQuery()</em>).</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>None</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>about</strong> (<em>list</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>] </em><em>| </em><em>None</em>) – Objects to reason about (see <em>reason()</em>); by default, the whole model.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewReasoning.ReasoningMixin.retractReasoning">
+<span class="sig-name descname"><span class="pre">retractReasoning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">about</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewReasoning.ReasoningMixin.retractReasoning" title="Link to this definition">¶</a></dt>
+<dd><p>Take back what the model’s reasoning results say about <em>about</em> (eg: the
+selection: see <em>VObject.retractAbout()</em>), in every view of the model: the
+inferred objects about them go, and their problems aren’t marked. (See
+<em>sn.model.reasoner.retractReasoning()</em>; <em>clearReasoning()</em> takes back everything.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>about</strong> (<em>list</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>]</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -506,17 +589,22 @@ the rules conclude (and show those they find: see <em>VObject.answerQuery()</em>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.viewReasoning.ReasoningMixin._showReasoning">
-<span class="sig-name descname"><span class="pre">_showReasoning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">showInferred</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewReasoning.ReasoningMixin._showReasoning" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">_showReasoning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">showInferred</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewReasoning.ReasoningMixin._showReasoning" title="Link to this definition">¶</a></dt>
 <dd><p>Show the model’s current reasoning results (or their absence): violations
 in the objects’ status reports (their error markers and “show error
 report”), and the inferred objects (see <em>_showInferred()</em>) – unless
 <em>showInferred</em> is False (eg: it was reasoned over silently: see
 <em>reasonSilently()</em>), when only those already shown stay.
-Called when the model reports a “reasoned” or “reasoning cleared” topic.
-Not a change to the view: it’s left as clean (or dirty) as it was.</p>
+Called when the model reports a “reasoned”, “reasoning retracted” or
+“reasoning cleared” topic. Not a change to the view: it’s left as clean
+(or dirty) as it was.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>showInferred</strong> (<em>bool</em>)</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>only</strong> (<em>list</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>] </em><em>| </em><em>None</em>) – If given, show just these of the inferred objects (eg: those
+about the objects reasoned about: see <em>reason()</em>’s <em>about</em>).</p></li>
+<li><p><strong>showInferred</strong> (<em>bool</em>)</p></li>
+</ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
@@ -526,7 +614,7 @@ Not a change to the view: it’s left as clean (or dirty) as it was.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.viewReasoning.ReasoningMixin._showInferred">
-<span class="sig-name descname"><span class="pre">_showInferred</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewReasoning.ReasoningMixin._showInferred" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">_showInferred</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewReasoning.ReasoningMixin._showInferred" title="Link to this definition">¶</a></dt>
 <dd><p>Show what the model’s last “reason” inferred (see <em>GraphObject.inferred</em>),
 for what this view shows: each object a rule concluded exists that’s
 related to something shown (beside it), and each inferred relation (and
@@ -536,8 +624,34 @@ with dashed lines (dotted if inherited). Those no longer inferred go when
 the model removes them. None of this makes the view dirty: they aren’t
 saved with it.</p>
 <dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>only</strong> (<em>list</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>] </em><em>| </em><em>None</em>) – If given, show just these of the inferred objects (and a new
+object’s isa links, with it).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewReasoning.ReasoningMixin._impliedByShown">
+<span class="sig-name descname"><span class="pre">_impliedByShown</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rel</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewReasoning.ReasoningMixin._impliedByShown" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>rel</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether the inferred relation <em>rel</em> says what this view already
+shows, and its type says to leave such out (“vis/hideImplied”): it’s
+from an object to itself, or a relation of its type (or a subtype)
+joins the same two objects here, the same way round – or either way
+round, if either type is symmetric. (Eg: the KNet kernel’s: cycles of
+inclusions would loop every node in them, and every exclusion would
+be drawn twice.)</p>
+</dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>None</p>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
@@ -612,6 +726,9 @@ saved with it.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">sn.view.graphics.viewReasoning module</a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.viewReasoning._hidesImplied"><code class="docutils literal notranslate"><span class="pre">_hidesImplied()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewReasoning._typeDepth"><code class="docutils literal notranslate"><span class="pre">_typeDepth()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewReasoning._names"><code class="docutils literal notranslate"><span class="pre">_names()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewReasoning.showEngineMissing"><code class="docutils literal notranslate"><span class="pre">showEngineMissing()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewReasoning.ReasoningMixin"><code class="docutils literal notranslate"><span class="pre">ReasoningMixin</span></code></a><ul>
 <li><a class="reference internal" href="#sn.view.graphics.viewReasoning.ReasoningMixin._reasoningToolbarShown"><code class="docutils literal notranslate"><span class="pre">ReasoningMixin._reasoningToolbarShown()</span></code></a></li>
@@ -620,9 +737,11 @@ saved with it.</p>
 <li><a class="reference internal" href="#sn.view.graphics.viewReasoning.ReasoningMixin.reasoning"><code class="docutils literal notranslate"><span class="pre">ReasoningMixin.reasoning</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewReasoning.ReasoningMixin.reason"><code class="docutils literal notranslate"><span class="pre">ReasoningMixin.reason()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewReasoning.ReasoningMixin.reasonSilently"><code class="docutils literal notranslate"><span class="pre">ReasoningMixin.reasonSilently()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewReasoning.ReasoningMixin.retractReasoning"><code class="docutils literal notranslate"><span class="pre">ReasoningMixin.retractReasoning()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewReasoning.ReasoningMixin.clearReasoning"><code class="docutils literal notranslate"><span class="pre">ReasoningMixin.clearReasoning()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewReasoning.ReasoningMixin._showReasoning"><code class="docutils literal notranslate"><span class="pre">ReasoningMixin._showReasoning()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewReasoning.ReasoningMixin._showInferred"><code class="docutils literal notranslate"><span class="pre">ReasoningMixin._showInferred()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewReasoning.ReasoningMixin._impliedByShown"><code class="docutils literal notranslate"><span class="pre">ReasoningMixin._impliedByShown()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewReasoning.ReasoningMixin._refreshStatusReports"><code class="docutils literal notranslate"><span class="pre">ReasoningMixin._refreshStatusReports()</span></code></a></li>
 </ul>
 </li>

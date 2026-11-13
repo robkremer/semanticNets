@@ -253,6 +253,7 @@
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../dev/sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.aboutBox.html">sn.view.graphics.aboutBox module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
@@ -318,9 +319,21 @@
 <li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
 </ul>
 </li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.rnetReader.html">snplugins.rnetReader package</a><input aria-label="Toggle navigation of snplugins.rnetReader package" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.abduction.html">snplugins.rnetReader.abduction module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.existence.html">snplugins.rnetReader.existence module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.expansion.html">snplugins.rnetReader.expansion module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.forms.html">snplugins.rnetReader.forms module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.hooks.html">snplugins.rnetReader.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.probes.html">snplugins.rnetReader.probes module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.rnet.html">snplugins.rnetReader.rnet module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.reader.html">snplugins.rnetReader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.view.html">snplugins.rnetReader.view module</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/snSourceCode.html">Semantic Nets Source Code Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/families.html">Families Models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/homeAutomation.html">Home Automation</a></li>
@@ -492,21 +505,27 @@ id (eg: <code class="docutils literal notranslate"><span class="pre">has-parent#
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">reason</span></code></p></td>
 <td><p>reason over the model, and report; <code class="docutils literal notranslate"><span class="pre">reason</span>
 <span class="pre">--silent</span></code>: without adding what’s inferred to the
-views, and report just a summary</p></td>
+views, and report just a summary; <code class="docutils literal notranslate"><span class="pre">reason</span> <span class="pre">carol</span>
+<span class="pre">bob</span></code>: add just what’s about them (see
+<a class="reference internal" href="reasoning.html#reasoning-about"><span class="std std-ref">Reasoning about some objects</span></a>)</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">clear</span> <span class="pre">reasoning</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">retract</span></code></p></td>
+<td><p>take back what the results say about some objects:
+<code class="docutils literal notranslate"><span class="pre">retract</span> <span class="pre">carol</span></code>; without objects, all of it</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">clear</span> <span class="pre">reasoning</span></code></p></td>
 <td><p>forget the last results</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">answer</span> <span class="pre">query</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">answer</span> <span class="pre">query</span></code></p></td>
 <td><p>answer a query (or any context): <code class="docutils literal notranslate"><span class="pre">answer</span> <span class="pre">query</span>
 <span class="pre">?likes-fred</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ask</span> <span class="pre">reasoner</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ask</span> <span class="pre">reasoner</span></code></p></td>
 <td><p>ask the reasoner directly, in its own language (for
 experts: clingo, Nemo, CLIPS or Prolog rules
 concluding <code class="docutils literal notranslate"><span class="pre">ans</span></code>: see <a class="reference internal" href="reasoning.html"><span class="doc">Reasoning</span></a>)</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">explain</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">explain</span></code></p></td>
 <td><p>why a relation holds, step by step (by the Nemo
 engine): <code class="docutils literal notranslate"><span class="pre">explain</span> <span class="pre">ancestorOf</span> <span class="pre">ann</span> <span class="pre">fred</span></code></p></td>
 </tr>

@@ -253,6 +253,7 @@
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../dev/sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.aboutBox.html">sn.view.graphics.aboutBox module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
@@ -318,9 +319,21 @@
 <li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
 </ul>
 </li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.rnetReader.html">snplugins.rnetReader package</a><input aria-label="Toggle navigation of snplugins.rnetReader package" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.abduction.html">snplugins.rnetReader.abduction module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.existence.html">snplugins.rnetReader.existence module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.expansion.html">snplugins.rnetReader.expansion module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.forms.html">snplugins.rnetReader.forms module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.hooks.html">snplugins.rnetReader.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.probes.html">snplugins.rnetReader.probes module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.rnet.html">snplugins.rnetReader.rnet module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.reader.html">snplugins.rnetReader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.view.html">snplugins.rnetReader.view module</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/snSourceCode.html">Semantic Nets Source Code Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/families.html">Families Models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/homeAutomation.html">Home Automation</a></li>
@@ -370,7 +383,7 @@
 no user interface, and can be used (and is tested) on its own.</p>
 <section id="objects">
 <h2>Objects<a class="headerlink" href="#objects" title="Link to this heading">¶</a></h2>
-<div class="graphviz"><object data="../_images/inheritance-588aa972758b19b18b561ca2894ddbd8721402fe.svg" type="image/svg+xml" class="inheritance graphviz">
+<div class="graphviz"><object data="../_images/inheritance-bdced621f326c338181a79bdd9af220128d24370.svg" type="image/svg+xml" class="inheritance graphviz">
 <p class="warning">Inheritance diagram of sn.model.model.Node, sn.model.model.Collection, sn.model.model.IsaIndividual, sn.model.TopModel</p></object></div>
 <dl class="simple">
 <dt><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">GraphObject</span></code></a></dt><dd><p>Anything in a model. It’s a type or an individual
@@ -392,7 +405,15 @@ the ends are its signature (<a class="reference internal" href="../dev/sn.model.
 <dt><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.IsaIndividual" title="sn.model.model.IsaIndividual"><code class="xref py py-class docutils literal notranslate"><span class="pre">IsaIndividual</span></code></a></dt><dd><p>An <em>isa</em> link. These are relations like any other – so they can be
 drawn, selected and deleted – and are what makes an object’s types.</p>
 </dd>
-<dt><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Collection" title="sn.model.model.Collection"><code class="xref py py-class docutils literal notranslate"><span class="pre">Collection</span></code></a></dt><dd><p>A node with members (not currently offered in the GUI).</p>
+<dt><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Collection" title="sn.model.model.Collection"><code class="xref py py-class docutils literal notranslate"><span class="pre">Collection</span></code></a></dt><dd><p>The Python class of an individual made of the SN type <em>collection</em> by the
+command line. What makes something a collection (a box) is its SN type,
+not its Python class: any individual of the SN type <em>collection</em> or one of
+its SN subtypes – <em>context</em>, <em>rule</em>, <em>query</em>, … are subtypes – is one
+(<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.GraphObject.isCollection" title="sn.model.model.GraphObject.isCollection"><code class="xref py py-meth docutils literal notranslate"><span class="pre">isCollection()</span></code></a>), whatever its Python
+class (a rule is a <a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node" title="sn.model.model.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">Node</span></code></a>). Its members are what
+its <em>contains</em> relations lead to (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node.getMembers" title="sn.model.model.Node.getMembers"><code class="xref py py-meth docutils literal notranslate"><span class="pre">getMembers()</span></code></a>,
+<code class="docutils literal notranslate"><span class="pre">addMember()</span></code>, …), and whether they’re quoted (patterns) is its
+<em>quoted</em> attribute (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.GraphObject.quotesContents" title="sn.model.model.GraphObject.quotesContents"><code class="xref py py-meth docutils literal notranslate"><span class="pre">quotesContents()</span></code></a>).</p>
 </dd>
 </dl>
 <p>The graph structure (objects, incoming and outgoing relations) comes from
@@ -445,6 +466,44 @@ attribute is its own, or the one it inherits down its isa links.</p>
 <li><p>how it’s drawn: the <code class="docutils literal notranslate"><span class="pre">vis/</span></code> attributes, read by the view (see
 <a class="reference internal" href="view.html"><span class="doc">The Graphical View</span></a>). These are inherited, so a type sets them for its instances.</p></li>
 </ul>
+</section>
+<section id="parts-what-a-rule-s-graphs-are-in">
+<h2>Parts: what a rule’s graphs are in<a class="headerlink" href="#parts-what-a-rule-s-graphs-are-in" title="Link to this heading">¶</a></h2>
+<p>A rule, definition or requirement holds its graphs in <strong>parts</strong>: plain
+contexts it holds by <em>antecedent</em>, <em>consequent</em>, <em>definiendum</em>,
+<em>definiens</em>, <em>condition</em> or <em>required</em> relations – SN subtypes of
+<em>contains</em> – each holding its graph by plain <em>contains</em>. The relation’s SN
+type says what the part is to its box
+(<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation.partType" title="sn.model.model.Relation.partType"><code class="xref py py-meth docutils literal notranslate"><span class="pre">partType()</span></code></a>); the part itself is just a
+context. A relation is a part relation
+(<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation.isPartRelation" title="sn.model.model.Relation.isPartRelation"><code class="xref py py-meth docutils literal notranslate"><span class="pre">isPartRelation()</span></code></a>) if it’s an individual
+of an SN subtype of <em>contains</em> (not plain <em>contains</em>) and leads to a
+collection that isn’t a variable (a variable over contexts is a pattern’s).</p>
+<p><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node" title="sn.model.model.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">Node</span></code></a> has the API:
+<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node.parts" title="sn.model.model.Node.parts"><code class="xref py py-meth docutils literal notranslate"><span class="pre">parts()</span></code></a> (optionally of one SN type),
+<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node.partRelations" title="sn.model.model.Node.partRelations"><code class="xref py py-meth docutils literal notranslate"><span class="pre">partRelations()</span></code></a>,
+<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node.partFor" title="sn.model.model.Node.partFor"><code class="xref py py-meth docutils literal notranslate"><span class="pre">partFor()</span></code></a> (finds or makes the part of an SN
+type), <a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node.partOwners" title="sn.model.model.Node.partOwners"><code class="xref py py-meth docutils literal notranslate"><span class="pre">partOwners()</span></code></a> and
+<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node.isPart" title="sn.model.model.Node.isPart"><code class="xref py py-meth docutils literal notranslate"><span class="pre">isPart()</span></code></a>, and
+<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node.partTypes" title="sn.model.model.Node.partTypes"><code class="xref py py-meth docutils literal notranslate"><span class="pre">partTypes()</span></code></a>: the SN types of part a box can
+have, from the <em>contains</em> relation types whose source is its SN type (or an
+ancestor of it) – so a new SN subtype of <em>rule</em> gets a new kind of part by
+defining a relation type, not by changing the code. A box’s
+<code class="docutils literal notranslate"><span class="pre">vis/tileParts</span></code> attribute (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.GraphObject.tilesParts" title="sn.model.model.GraphObject.tilesParts"><code class="xref py py-meth docutils literal notranslate"><span class="pre">tilesParts()</span></code></a>:
+true on the SN types <em>rule</em>, <em>definition</em> and <em>requirement</em>) says whether
+views draw its parts as panes.
+<code class="docutils literal notranslate"><span class="pre">Node._validateParts()</span></code> warns (in the status report)
+about a part that’s another box’s too, one that doesn’t quote what it
+holds, and one the box’s SN type doesn’t have.</p>
+<p>Models written before parts (<code class="docutils literal notranslate"><span class="pre">rule</span> <span class="pre">-antecedent-&gt;</span> <span class="pre">?x</span></code>) are converted as
+they’re read (<code class="docutils literal notranslate"><span class="pre">Model._migrateRuleParts</span></code>, calling
+<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Model.convertToParts" title="sn.model.model.Model.convertToParts"><code class="xref py py-meth docutils literal notranslate"><span class="pre">convertToParts()</span></code></a> for each box): each such
+relation’s source becomes the part, and its isa link’s destination
+<em>contains</em> – the same relation object, with its id, so views that show it
+needn’t change. The model is marked dirty, with a warning. Write-locked
+models and the packaged base rules aren’t converted; the reasoner still
+reads the old shape (what a box holds directly counts as in its first part
+of that SN type).</p>
 </section>
 <section id="patterns-variables-contexts-and-constraints">
 <h2>Patterns: variables, contexts and constraints<a class="headerlink" href="#patterns-variables-contexts-and-constraints" title="Link to this heading">¶</a></h2>
@@ -589,6 +648,7 @@ looked for where the original was.</p>
 <li><a class="reference internal" href="#objects">Objects</a></li>
 <li><a class="reference internal" href="#models">Models</a></li>
 <li><a class="reference internal" href="#attributes">Attributes</a></li>
+<li><a class="reference internal" href="#parts-what-a-rule-s-graphs-are-in">Parts: what a rule’s graphs are in</a></li>
 <li><a class="reference internal" href="#patterns-variables-contexts-and-constraints">Patterns: variables, contexts and constraints</a></li>
 <li><a class="reference internal" href="#copying">Copying</a></li>
 <li><a class="reference internal" href="#persistence">Persistence</a><ul>

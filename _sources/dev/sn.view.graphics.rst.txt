@@ -13,6 +13,7 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
+   sn.view.graphics.aboutBox
    sn.view.graphics.animatedLayouts
    sn.view.graphics.animationControls
    sn.view.graphics.balloonLayout

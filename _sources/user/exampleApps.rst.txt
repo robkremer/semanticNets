@@ -6,7 +6,7 @@ model of something -- a file, a program, a database -- and opens a view of it
 in the editor, where you can look round it, arrange it, ask about it and
 reason over it as you would any model. Such a program can be a **plugin**:
 it's loaded when the editor starts, and adds itself to the menu bar -- most
-often to the **Tools** menu. Two come with *Semantic Nets*, as examples:
+often to the **Tools** menu. Three come with *Semantic Nets*:
 
 **Tools | XML Reader...**
   makes a model of an XML file (see `The XML reader`_).
@@ -14,7 +14,11 @@ often to the **Tools** menu. Two come with *Semantic Nets*, as examples:
 **Tools | Python Parser...**
   makes a model of a Python program (see `The Python parser`_).
 
-Both save what they make as an ordinary model and view (``.snm`` and
+**Tools | Rep Plus Net Reader...**
+  makes a model of a net drawn in Brian Gaines's Rep Plus (CNet, KNet) (see
+  `The Rep Plus net reader`_).
+
+They all save what they make as an ordinary model and view (``.snm`` and
 ``.snv``), so you can open them again later from **File | Open...** or the
 model directory, like any other.
 
@@ -263,6 +267,390 @@ Things to try:
   they're related (eg: *inherits-from*).
 - **view | layout | arrange now | hubs**, with all the imports shown: the
   modules most imported, in the middle of their groups.
+
+The Rep Plus net reader
+-----------------------
+
+**Tools | Rep Plus Net Reader...** opens a dialog: the **net file** to read
+(a ``.rnet`` file, made by Rep Plus's CNet or KNet, in any of its versions:
+6 to 9), and the **model** and **view** to make of it -- for *patterns.rnet*,
+*patterns.snm* and *patterns.snv*, in the folder you last made them in (the
+first time, next to the net). Change either, by typing or with
+**Choose...**: until you do, they follow the net file (and the view follows
+the model). **Nodes with the same label are one node** (on unless you turn
+it off) takes them as KNet does: a net may draw a node again, elsewhere, to
+keep its links short (turn it off for a figure that's several copies of a
+net side by side, as some of Gaines's are). **Go** makes them, asking first if they're there already, and
+opens the view: the net as CNet drew it, each node where it was (half as big
+again, as the editor's text is bigger), with its links between them.
+
+What's in the net becomes:
+
+- **Node types**: each of the net's node types (*Concept*, *Title*,
+  *Note*, ...) becomes a type of the same name, with its shape and colours:
+  the second of its four colours is its fill, the third its text's, and the
+  fourth its outline. One that's just its text (a title, a note) has no
+  outline or fill. A grid's node is a file folder. A type with Rep Plus's
+  enclosure shape (*construct*, *frame*, *rules*, *cases*, ...) becomes a
+  subtype of *context* that doesn't quote what it contains (see
+  :doc:`contexts`): its nodes are boxes of facts.
+- **Link types**: each of the net's link types (*Includes*, *Excludes*,
+  *Coexcludes symmetric*, *Prefer*, ...) becomes a relation type of the same
+  name, drawn as CNet draws it, with relation marks (see :doc:`viewing`):
+  its arrowheads (heavy for a conjunction, double for a disjunction), the
+  bars before them (one for an exclusion, two for a coexclusion, three for a
+  negation), and a mark in the middle of a symmetric one -- in its colour,
+  straight, with no label. A dashed one's colour is faded. It's a subtype of
+  the KNet kernel's relation type that its look says it is (see `KNet's
+  kernel`_): an arrow is *includes*, an arrow with one, two or three bars
+  *excludes*, *coexcludes* or *negates* (a heavy or double arrowhead is still
+  an arrow), a line with one, two or three bars across its middle the
+  symmetric ones, and an arrow at each end (or a plain line named so)
+  *equivalent*; a heavy arrowhead (or a double one) a conjunction's
+  link (a disjunction's: see `Conjunctions and disjunctions`_); and a plain
+  line with a ">" in its middle a preference (see `Exploring and
+  defaults`_). Generic links, prohibitions and "Etc" links aren't. One drawn backwards -- its arrow at its tail, eg *Includes
+  reverse* -- is turned round: its arrow is at its destination, and its
+  links go the other way, so it means what it shows.
+- **Nodes**: each node is an individual of its type, named by its label (a
+  node with no label has no name). Pictures and drawings in the net are left
+  out. Nodes with the same label (if the dialog says they're one node) are
+  joined by *same label* links, faded grey equivalences from each copy to
+  the first.
+- **Marks**: a node's mark (true, false, or both) is its ``mark`` attribute
+  (``T``, ``F`` or ``TF``), with the kind of mark (``markKind``: *Asserted*,
+  *Included*, *Excluded*, ...), whether it was derived (``markDerived``), and
+  the number the file has (``marks``). It's drawn as Rep Plus draws it: the
+  node filled with the mark kind's background colour, and its outline in
+  the kind's colour, if the mark says so -- and its label adds the mark (its
+  type's ``vis/label`` is ``$name${mark:+ $mark}``). An asserted mark is
+  also the node's truth mark, which the reasoners propagate (see `Truth
+  marks`_).
+- **Links**: each link is a relation of its type. A line with a second type
+  (CNet draws two lines side by side) is a link and a link back: the second
+  type's relation goes from the link's destination to its source. Any
+  numbers it carries (eg: a weight) are its ``values`` attribute. Derived
+  links (CNet's or KNet's inferences, their types named so: eg *Includes
+  derived*) are made as they are.
+- **Boxes**: a node of an enclosure type is drawn as a window, the size CNet
+  drew it, and contains (by *contains* relations) the nodes inside it -- each
+  in the smallest box it's in, so boxes can be nested. As in CNet, dragging
+  a box carries what's in it.
+- **Constructs**: the poles in a *construct* box (the nodes it contains)
+  exclude each other, as CNet's construct macro says, unless an includes
+  link (or a chain of them) joins them. Each such pair gets a *construct
+  excludes* relation, a subtype of the net's own symmetric exclusion, faded
+  as derived links are: hide them, or take them out, by that type.
+- **Groups** aren't made: in Rep Plus they're only a way to select and drag
+  nodes together, and mean nothing.
+
+The terminal pane says what was made, and anything in the file that didn't
+fit (eg: a link to a node that isn't there).
+
+KNet's kernel
+~~~~~~~~~~~~~
+
+The models the reader makes build on the plugin's *knet.snm* (made by
+``tools/makeKnetRules.py``): the kernel of Brian Gaines's protologic
+(*Universal Logic as a Science of Patterns*, 2015), as relation types and
+rules that every reasoner engine applies. X *includes* Y means whatever is X
+is Y (dog includes animal):
+
+==================  =========================================================
+relation type       means
+==================  =========================================================
+*includes*          whatever is X is Y. Transitive.
+*equivalent*        X and Y include each other (a subtype of *includes*).
+                    Symmetric.
+*excludes*          nothing is both. Symmetric.
+*coexcludes*        everything is one or the other. Symmetric.
+*negates*           X is everything Y isn't (a subtype of *excludes* and
+                    *coexcludes*). Symmetric.
+*inconsistent*      X both includes and excludes Y: X can only be empty (a
+                    subtype of *includes* and *excludes*).
+==================  =========================================================
+
+Its rules are Gaines's inference patterns: whatever includes the tail of an
+exclusion excludes its head; whatever excludes the head of a coexclusion
+includes its tail; a coexclusion is inherited by what its tail includes; an
+exclusion and a coexclusion together are a negation (so two negations of
+one node are equivalent); a cycle of inclusions makes its nodes equivalent;
+and including what it excludes makes a node inconsistent -- a warning, not
+an error: the inconsistency stays where it is. **Reason** (see
+:doc:`reasoning`) draws KNet's conclusions over the net: on the inference
+pattern nets of Gaines's paper, they're the derived links KNet saved.
+
+A view leaves out the inferences that say what it already shows (the kernel
+types' ``vis/hideImplied``: see :doc:`viewing`) -- a node's loop to itself,
+a symmetric one again the other way round, an *includes* beside an
+*equivalent* -- else they'd swamp the picture.
+
+The kernel works in models of your own too: build one on *knet.snm* (see
+:doc:`files`). Between types, an isa link is an inclusion if the types are
+under *knode*: dog isa animal isa knode gives dog *includes* animal, so a
+type that *excludes* animal excludes dog.
+
+Truth marks
+~~~~~~~~~~~
+
+Gaines marks a node true (a vertical bar beside it: there's something it
+stands for) or false (a horizontal bar over it: it's empty), or both
+(Belnap's "both": inconsistent). A KNet node -- an instance of *knode*, as
+the reader's nodes are -- shows its marks as those bars, in Rep Plus's
+colours for how it got them:
+
+================  ===========  ==================================================
+how               colour       why
+================  ===========  ==================================================
+asserted          brown        it's marked so (in the net's file, or by you)
+included          black        true: something true includes it
+coexcluded        blue         true: it coexcludes something false
+excluded          green        false: it excludes something true
+irrelevant        grey         false: it includes something false (Rep Plus's name)
+necessary         red          false because it's inconsistent (it excludes
+                               itself) -- or true because it coexcludes itself;
+                               or so in every case of an open connective (see
+                               `Exploring and defaults`_)
+definition        red          by a conjunction or a disjunction (see
+                               `Conjunctions and disjunctions`_)
+default           purple       in every preferred case (see `Exploring and
+                               defaults`_)
+abduced           purple       whatever explains a node (see `Abduction`_)
+================  ===========  ==================================================
+
+A node's menu has **Mark** ▸ **True**, **False** and **Clear** (for the
+selected nodes, undone in one go) and **Abduce** (see `Abduction`_),
+**Probes...** (see `Probes`_), **Net** (see `Canonical forms, saturation and
+merges`_), **Expand** (see `Protoconnectives, anonymous nodes and
+factoring`_) and **Existence** (see `Existence`_);
+**Reason** propagates the marks (reason again after changing them). The marks are two attributes,
+``markTrue`` and ``markFalse``, whose values say how (eg: ``asserted``): the
+reasoners' are inferred values, and an asserted one always stands. A net's
+file's asserted marks are asserted ones; the marks KNet propagated (and saved)
+are left to the reasoners -- the file's look of them, its fill and outline,
+stays. On KNet's net of the paper's figure, the reasoners mark exactly the
+nodes KNet did.
+
+The bars are a view feature anything can use: a node's ``vis/sideBars`` (see
+:doc:`viewing`).
+
+Conjunctions and disjunctions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Gaines's structural connectives are ordinary links with a clause of their
+own: "for every defining link". A conjunction has heavy arrows to its
+conjuncts (a conjunct includes; one with a bar, a conjunct excludes: "and
+not"), and a disjunction has double arrows from its disjuncts (a disjunct
+includes; one with two bars, a disjunct coexcludes: "or not"). The links are
+what they look like -- a conjunction includes its conjuncts, and each
+disjunct includes the disjunction -- and the clause adds the rest:
+
+- whatever includes every conjunct (and excludes every excluded one)
+  includes the conjunction; and dually, a disjunction includes whatever
+  every disjunct includes (and every coexcluded one coexcludes).
+- a conjunction is true when its conjuncts are (true, or false for an
+  excluded one), and a disjunction false when its disjuncts are false.
+- a false conjunction whose conjuncts but one are true makes that one false;
+  a true disjunction whose disjuncts but one are false makes that one true
+  (disjunctive syllogism) -- but, as in KNet, not if one of them is marked
+  both: that would be reasoning from a contradiction. One that's only false
+  because of a contradiction elsewhere doesn't stop it (Gaines's "principle
+  of explosion" net).
+
+The four link types are *knet.snm*'s *conjunct includes*, *conjunct
+excludes*, *disjunct includes* and *disjunct coexcludes*, SN subtypes of
+the kernel's, which the reader's heavy and double arrowhead link types are
+SN subtypes of (a derived one isn't: it's an inference, not a definition).
+The clause is the reasoners' own (see :ref:`defining-links`), so it works in
+any model, on every engine. On the paper's connective nets, the reasoners
+mark the nodes KNet did, and infer the links CNet derived through them.
+KNet says how it got every mark after the first step "Definition"; here a
+mark the connectives made is *definition*, and one the links made on from
+it is *included*, *excluded* and so on, as before.
+
+Exploring and defaults
+~~~~~~~~~~~~~~~~~~~~~~
+
+A true disjunction none of whose disjuncts is true yet is open: one of them
+must be, but which? Each disjunct that isn't false is a case (and dually,
+each conjunct of a false conjunction that isn't true). The reasoners try
+each case, and drop one that would make a node both true and false (where
+it wasn't already): what holds in every case that's left is *necessary* --
+eg, if every disjunct is part of a false conjunction with Z, Z is false.
+
+A **Prefer** link (a plain line with a ">" in its middle) from A to B, among
+a connective's cases, says A yields to B: in a true disjunction, A is false
+while B may be true; in a false conjunction, A is true while B may be false.
+Preferences are transitive. The reasoners keep the cases that break the
+fewest preferences, and what holds in every one of those is the *default*:
+the "normal defaults" of Gaines's paper (birds fly, but penguins don't).
+When a net's preferences compete, they apply in the order of their
+connectives: a connective's ``defaultOrder`` attribute (a number: lower
+first, none is 0) puts it before the rest, as re-sorting KNet's preferences
+does.
+
+On the paper's default nets (normal defaults, Conflict States, P Q,
+Concessive conditionals, art), the reasoners make the necessary and default
+marks KNet saved. For now only the clingo engine explores: the other
+engines give the marks before it.
+
+Probes
+~~~~~~
+
+A probe is a way to mark every node of a net -- true, false or both -- that
+its rules allow, starting from the marks it has (Gaines's probes and
+coprobes). A node's menu has **Probes...**: a window with the probes of the
+node's net, of the kind you choose:
+
+- **Consistent**: each node with no mark is true or false, and no node ends
+  up both that wasn't already.
+- **Admissible**: those, and, for each node with just one mark that it
+  wasn't asserted to have, the probes in which it's both -- and then those
+  in which it has its mark again (so an inconsistent node, false, has
+  probes of its own).
+- **Compatible**: each node that isn't asserted is true, false or both (at
+  least what it was), and the rules mark the rest; none is dropped.
+
+Each node's probe sets are the probes it's true in and those it's false in,
+and from them the window reconstructs the links that hold, written as KNet
+writes them: A ``-->`` B (A includes B) if B is true in every probe A is,
+and A false in every probe B is; A ``<--`` B if B includes A; A ``-|-`` B
+(excludes) if each is false in every probe the other is true in; and A
+``-||-`` B (coexcludes) if each is true in every probe the other is false
+in. The reconstruction finds links the kernel's rules don't: eg, that
+what includes A and excludes "A and B" excludes B.
+
+Nodes that aren't linked have every combination of each other's probes: so
+the window shows the probes of each part of the net (its nodes that are
+linked) by itself, and counts the whole net's. Only the nodes KNet reasons
+about are the net's -- concepts, contexts, constructs and so on, not notes,
+titles or frames -- and **Copy** puts the report on the clipboard. On the
+nets of the paper's probes figures, the probes and reconstructions are the
+ones KNet saved in their notes (all but four, made of an earlier version of
+a net or by an earlier KNet). For now only the clingo engine finds probes.
+
+Canonical forms, saturation and merges
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A node's menu also has **Net**, for the node's net as a whole (Gaines's
+section 3). Each change is one command, undone in one go, and says what it
+did in the window's terminal:
+
+- **Minimal form**: take out the net's links that the rest imply -- eg,
+  KNet's derived links, and A includes C beside A includes B and B includes
+  C. Each is tried in turn, newest first, leaving out those found so far:
+  so of a cycle of inclusions, the links drawn first stay, and the minimal
+  form of the maximal form is the net's.
+- **Maximal form**: assert the kernel's links the net implies (eg: the
+  equivalences of a cycle, and what an exclusion is inherited by) -- not
+  one a link of the net already says, nor one of a node to itself.
+- **Saturate**: add the net's admissible probes (see `Probes`_), as nodes
+  of the *probe* SN type, from outside: "probe 1" and so on, each including
+  the nodes true in it and excluding those false in it. A probe isn't one
+  of the net's nodes: the net's probes are the same, saturated. At most 64.
+- **Check merge with...**: choose another net (a model, or a Rep Plus net
+  file), and see, in a window, what merging it into this one would do --
+  the nodes with the same label are one: whether it's consistent (it makes
+  no inconsistent links that neither net had), conservative (it makes no
+  links between the other net's nodes that it didn't have) and
+  ultra-conservative (nor between this net's nodes), with the links it
+  makes. Neither net is changed.
+
+The canonical forms work on every engine (they're ordinary reasoning);
+saturation needs one that finds probes (clingo).
+
+Protoconnectives, anonymous nodes and factoring
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Three ways to redraw a net without changing what it says of its nodes
+(Gaines's sections 2.4, 3.3 and 3.4). Each is one command, undone in one go,
+and says what it made in the window's terminal:
+
+- **Net** ▸ **Expand protoconnectives**: a node whose label groups others'
+  -- "A ∧ B" (or "A & B": a protoconjunction) or "A ∨ B" (or "A | B": a
+  protodisjunction) -- is shorthand: one link drawn to it stands for a link
+  to each of them. It's replaced by its members (the net's nodes with those
+  labels, or new ones) and those links:
+
+  ==========================  ==========================================
+  the link                    stands for
+  ==========================  ==========================================
+  X includes A ∧ B            X includes A, X includes B
+  A ∨ B includes X            A includes X, B includes X
+  X excludes A ∨ B            X excludes A, X excludes B (either way round)
+  X coexcludes A ∧ B          X coexcludes A, X coexcludes B (either way
+                              round)
+  ==========================  ==========================================
+
+  Gaines's paper says only that the labels are collected, so that's this
+  reader's reading of it: an inclusion is of instances (what's an X is an A
+  and a B). A group with any other link (eg: X includes A ∨ B, which says
+  less than a link to either) is kept, and the terminal says why. One
+  marked true is expanded if it's a conjunction (its members are true), and
+  one marked false if it's a disjunction (its members are false). A node
+  that's a structural connective (see `Conjunctions and disjunctions`_) is
+  left alone, whatever its label.
+- **Expand** ▸ **Anonymous node below** and **Anonymous node above**: add a
+  node with no label (an "ideal element") that includes the node, or that
+  the node includes. With its one link, it says nothing about the rest of
+  the net (an ultra-conservative merge): it's a place to hang more on.
+  (Its name is "anonymous 1" and so on: only its label is empty.)
+- **Net** ▸ **Factor**: where some nodes each have the same kind of link to
+  each of some others, put an anonymous node between them to carry the
+  links -- eg, I and J each including A, B and C become I and J including
+  the anonymous node, which includes A, B and C: five links for six. On the
+  net of Gaines's figure 28, 12 links become 10. It factors inclusions,
+  exclusions (the first nodes include the anonymous node, which excludes
+  the others) and coexclusions (the anonymous node includes the first
+  nodes, and coexcludes the others), wherever that saves links, the biggest
+  saving first. The links between the net's own nodes are still inferred
+  (reason to see them).
+
+Existence
+~~~~~~~~~
+
+Gaines distinguishes five senses in which what a node stands for exists
+(his section 3.5). **Net** ▸ **Existence...** shows, in a window, which of
+them each of the net's nodes has:
+
+=============  ===========================================================
+sense          the node
+=============  ===========================================================
+conceptual     is in the net (they all are)
+logical        is consistent: it has no *inconsistent* link
+categorical    is specified to be essentially a top node (a maximally
+               generic entity)
+singular       is specified to be essentially a bottom node (a single
+               entity)
+situated       is a bottom node of this net: nothing in it includes the
+               node, but what's equivalent to it
+=============  ===========================================================
+
+Whether a node is *essentially* top or bottom isn't something a net's links
+can say (another net may put something above it, or below): Gaines has it
+specified from outside the logic. Here that's a node's **Existence** menu
+-- **Essentially top**, **Essentially bottom** and **Unspecified**, for the
+selected nodes -- which sets the node's ``existence`` attribute ("top" or
+"bottom"). Under the table, the window lists where the net disagrees with
+what's specified: an essentially top node that includes something, or an
+essentially bottom node that something includes. It works on every engine.
+
+Abduction
+~~~~~~~~~
+
+**Mark** ▸ **Abduce** is KNet's abductive inference: what must be so if the
+node is true, whatever explains it. The node's explanations are the bottom
+nodes below it: those reached by going down the links that include it (from
+each node that includes it, on to those that include that) through nodes
+with no mark, to nodes that nothing includes. Each is tried in turn: the
+net is reasoned over with that node true. A mark that every one of them
+gives a node that had none is *abduced*, and drawn in purple, as KNet draws
+it. The terminal says what the explanations were, and what was abduced.
+
+As in KNet, an explanation that makes some node both true and false counts
+all the same; and abduced marks are inferences: the next **Reason** takes
+them out. KNet also leaves out explanations by its preferences, which this
+doesn't. It works on every engine.
 
 Menus, tooltips and double-clicks from programs
 -----------------------------------------------

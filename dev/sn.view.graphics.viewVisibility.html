@@ -253,6 +253,7 @@
 </li>
 <li class="toctree-l2 current has-children"><a class="reference internal" href="sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" checked="" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l3 current has-children"><a class="reference internal" href="sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" checked="" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.aboutBox.html">sn.view.graphics.aboutBox module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
@@ -318,9 +319,21 @@
 <li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
 </ul>
 </li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.rnetReader.html">snplugins.rnetReader package</a><input aria-label="Toggle navigation of snplugins.rnetReader package" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.abduction.html">snplugins.rnetReader.abduction module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.existence.html">snplugins.rnetReader.existence module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.expansion.html">snplugins.rnetReader.expansion module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.forms.html">snplugins.rnetReader.forms module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.hooks.html">snplugins.rnetReader.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.probes.html">snplugins.rnetReader.probes module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.rnet.html">snplugins.rnetReader.rnet module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.reader.html">snplugins.rnetReader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.view.html">snplugins.rnetReader.view module</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/snSourceCode.html">Semantic Nets Source Code Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/families.html">Families Models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/homeAutomation.html">Home Automation</a></li>
@@ -444,6 +457,27 @@ category itself is shown, as anything made is: see <em>_exemptIfFiltered()</em>.
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewVisibility.VisibilityMixin._plainIsa">
+<span class="sig-name descname"><span class="pre">_plainIsa</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modelID</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewVisibility.VisibilityMixin._plainIsa" title="Link to this definition">¶</a></dt>
+<dd><p>Whether a new relation shouldn’t be shown: it says what something plainly
+made is an instance of (it’s an isa link made by a command whose
+<em>showsTypes</em> is False: see <em>sn.view.graphics.viewCommands.ViewDoList.do()</em>),
+and it would bring that SN type into the view. (If the SN type is shown
+already, so is the link.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>modelID</strong> (<em>int</em>) – The relation’s id in the view’s model.</p></li>
+<li><p><strong>rel</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.viewVisibility.VisibilityMixin._exemptIfFiltered">
 <span class="sig-name descname"><span class="pre">_exemptIfFiltered</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vo</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewVisibility.VisibilityMixin._exemptIfFiltered" title="Link to this definition">¶</a></dt>
 <dd><p><em>vo</em> was just made (or shown explicitly): if it’s in a hidden or erased
@@ -476,7 +510,8 @@ when the category was hidden, and hiding the category again hides this too
 <dd><p>Whether <em>vo</em> shouldn’t be drawn just now: it’s in a hidden category; or
 it’s a relation to or from something hidden (it would lead nowhere), or a
 containment drawn as being inside its window (see <em>VRelation.inWindow()</em>);
-or it’s inside a hidden context’s window.</p>
+or it’s inside a hidden context’s window; or it’s a part its box’s window
+shows as a pane (see <em>VObject.isTiledPart()</em>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>vo</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p>
@@ -827,6 +862,7 @@ out, or puts them back: see <em>SNGView.update()</em>). Nested, only the outermo
 <li><a class="reference internal" href="#sn.view.graphics.viewVisibility.VisibilityMixin"><code class="docutils literal notranslate"><span class="pre">VisibilityMixin</span></code></a><ul>
 <li><a class="reference internal" href="#sn.view.graphics.viewVisibility.VisibilityMixin.isFiltered"><code class="docutils literal notranslate"><span class="pre">VisibilityMixin.isFiltered()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewVisibility.VisibilityMixin._erasedRelation"><code class="docutils literal notranslate"><span class="pre">VisibilityMixin._erasedRelation()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewVisibility.VisibilityMixin._plainIsa"><code class="docutils literal notranslate"><span class="pre">VisibilityMixin._plainIsa()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewVisibility.VisibilityMixin._exemptIfFiltered"><code class="docutils literal notranslate"><span class="pre">VisibilityMixin._exemptIfFiltered()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewVisibility.VisibilityMixin._reportExempt"><code class="docutils literal notranslate"><span class="pre">VisibilityMixin._reportExempt()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewVisibility.VisibilityMixin.shouldHide"><code class="docutils literal notranslate"><span class="pre">VisibilityMixin.shouldHide()</span></code></a></li>

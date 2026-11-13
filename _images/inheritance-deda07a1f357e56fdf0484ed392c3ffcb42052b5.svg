@@ -211,7 +211,7 @@
 
 <ns0:g id="node8" class="node">
 <ns0:title>Collection</ns0:title>
-<ns0:g id="a_node8"><ns0:a ns1:href="../dev/sn.model.model.html#sn.model.model.Collection" ns1:title="Collection" target="_top">
+<ns0:g id="a_node8"><ns0:a ns1:href="../dev/sn.model.model.html#sn.model.model.Collection" ns1:title="An object of the Python class used for individuals made of the SN type" target="_top">
 <ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="724.88,-96 665.38,-96 665.38,-76 724.88,-76 724.88,-96" />
 <ns0:text xml:space="preserve" text-anchor="middle" x="695.12" y="-82.5" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">Collection</ns0:text>
 </ns0:a>

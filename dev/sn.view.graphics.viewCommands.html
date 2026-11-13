@@ -253,6 +253,7 @@
 </li>
 <li class="toctree-l2 current has-children"><a class="reference internal" href="sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" checked="" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l3 current has-children"><a class="reference internal" href="sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" checked="" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.aboutBox.html">sn.view.graphics.aboutBox module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
@@ -318,9 +319,21 @@
 <li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
 </ul>
 </li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.rnetReader.html">snplugins.rnetReader package</a><input aria-label="Toggle navigation of snplugins.rnetReader package" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.abduction.html">snplugins.rnetReader.abduction module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.existence.html">snplugins.rnetReader.existence module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.expansion.html">snplugins.rnetReader.expansion module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.forms.html">snplugins.rnetReader.forms module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.hooks.html">snplugins.rnetReader.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.probes.html">snplugins.rnetReader.probes module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.rnet.html">snplugins.rnetReader.rnet module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.reader.html">snplugins.rnetReader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.view.html">snplugins.rnetReader.view module</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/snSourceCode.html">Semantic Nets Source Code Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/families.html">Families Models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/homeAutomation.html">Home Automation</a></li>
@@ -680,7 +693,12 @@ the view can’t (see <em>SNGView.isModelEditor()</em>).</p>
 </dl>
 <p>The ids of the objects <em>c</em> makes in the view’s model are noted: the view
 asks for the names of those (see <em>SNGView.update()</em>), not of objects made
-elsewhere (eg: by a program, or in another window).</p>
+elsewhere (eg: by a program, or in another window) – nor of those made
+by a command whose <em>asksNames</em> is False (eg: a program’s, that names
+what it makes: see the rnetReader plugin’s <em>forms.saturate()</em>). And those
+made by a command whose <em>showsTypes</em> is False are noted as plainly made:
+the view doesn’t show what they’re instances of, where that would bring
+an SN type into the view (see <em>SNGView._plainIsa()</em>).</p>
 </dd></dl>
 
 <dl class="py method">
@@ -752,33 +770,42 @@ tries it again.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="sn.view.graphics.viewCommands._ContainCreated">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewCommands.</span></span><span class="sig-name descname"><span class="pre">_ContainCreated</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">typ</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creator</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewCommands._ContainCreated" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewCommands.</span></span><span class="sig-name descname"><span class="pre">_ContainCreated</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">typ</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partOf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewCommands._ContainCreated" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.command.html#util.command.Command" title="(in pythonUtils)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Command</span></code></a></p>
-<p>Contains, in <em>context</em>, the relation (or node) that the command <em>creator</em>
-creates – <em>creator</em> being queued earlier in the same composite command, so
-it doesn’t exist yet when this is made. See <em>SNGView._containNewRelation()</em>
-and <em>SNGView.addNewObjectMenus()</em>.</p>
+<p>Contains, in <em>context</em>, <em>target</em> – or the relation (or node) that the
+command <em>creator</em> creates, <em>creator</em> being queued earlier in the same
+composite command, so it doesn’t exist yet when this is made. See
+<em>SNGView._containNewRelation()</em>, <em>SNGView.addNewObjectMenus()</em> and
+<em>SNGView._updateContainment()</em>.</p>
+<p>With <em>partOf</em> (box, part relation type) instead of <em>context</em>, the context
+is the box’s (first) part of that SN type (see <em>Node.parts()</em>: eg, a rule’s
+antecedent), made the first time it’s done if the box has none yet – and
+taken away again by an undo.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>)</p></li>
 <li><p><strong>typ</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a>)</p></li>
-<li><p><strong>context</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p></li>
-<li><p><strong>creator</strong> (<a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.command.html#util.command.Command" title="(in pythonUtils)"><em>Command</em></a>)</p></li>
+<li><p><strong>context</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>creator</strong> (<a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.command.html#util.command.Command" title="(in pythonUtils)"><em>Command</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>target</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>partOf</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>, </em><a class="reference internal" href="sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.viewCommands._ContainCreated.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">typ</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creator</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewCommands._ContainCreated.__init__" title="Link to this definition">¶</a></dt>
-<dd><p>A command to make <em>context</em> contain (by <em>typ</em>) what <em>creator</em> makes, once it’s made.</p>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">typ</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partOf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewCommands._ContainCreated.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>A command to make <em>context</em> (or the part <em>partOf</em> says) contain (by <em>typ</em>) <em>target</em>, or what <em>creator</em> makes, once it’s made.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>)</p></li>
 <li><p><strong>typ</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a>)</p></li>
-<li><p><strong>context</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p></li>
-<li><p><strong>creator</strong> (<a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.command.html#util.command.Command" title="(in pythonUtils)"><em>Command</em></a>)</p></li>
+<li><p><strong>context</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>creator</strong> (<a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.command.html#util.command.Command" title="(in pythonUtils)"><em>Command</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>target</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>partOf</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>, </em><a class="reference internal" href="sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -787,6 +814,11 @@ and <em>SNGView.addNewObjectMenus()</em>.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sn.view.graphics.viewCommands._ContainCreated.relation">
 <span class="sig-name descname"><span class="pre">relation</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><span class="pre">Relation</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.view.graphics.viewCommands._ContainCreated.relation" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewCommands._ContainCreated.madePart">
+<span class="sig-name descname"><span class="pre">madePart</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><span class="pre">GraphObject</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.viewCommands._ContainCreated.madePart" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -824,6 +856,73 @@ twice in a row without an <em>do()</em> in between (a problem in the code logic?
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sn.view.graphics.viewCommands._ContainCreated._abc_impl">
 <span class="sig-name descname"><span class="pre">_abc_impl</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;_abc._abc_data</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#sn.view.graphics.viewCommands._ContainCreated._abc_impl" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sn.view.graphics.viewCommands._Refresh">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewCommands.</span></span><span class="sig-name descname"><span class="pre">_Refresh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">refresh</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewCommands._Refresh" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.command.html#util.command.Command" title="(in pythonUtils)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Command</span></code></a></p>
+<p>Bring what a view has worked out from the model up to date (by calling
+<em>refresh</em>), when it’s done and when it’s undone – in a composite command,
+as soon as the commands before it have done (or undone) their changes,
+rather than when the model’s notifications of them arrive (see
+<em>Model.notifyLater()</em>), after the view has tidied up (see <em>ViewDoList</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>refresh</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>None</em><em>]</em>)</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewCommands._Refresh.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">refresh</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewCommands._Refresh.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Constructor</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>)</p></li>
+<li><p><strong>refresh</strong> (<em>Callable</em><em>[</em><em>[</em><em>]</em><em>, </em><em>None</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewCommands._Refresh.do">
+<span class="sig-name descname"><span class="pre">do</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewCommands._Refresh.do" title="Link to this definition">¶</a></dt>
+<dd><p>The execution of this command. This isn’t really abstract in the you can (should?) call this
+method as the first instruction of your <em>do()</em> method to check that the <em>do()</em> isn’t being called
+twice in a row without an <em>undo()</em> in between (a problem in the code logic?).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Any</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewCommands._Refresh.undo">
+<span class="sig-name descname"><span class="pre">undo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewCommands._Refresh.undo" title="Link to this definition">¶</a></dt>
+<dd><p>The undoing of this command. This isn’t really abstract in the you can (should?) call this
+method as the first instruction of your <em>undo()</em> method to check that the <em>undo()</em> isn’t being called
+twice in a row without an <em>do()</em> in between (a problem in the code logic?).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Any</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.viewCommands._Refresh._abc_impl">
+<span class="sig-name descname"><span class="pre">_abc_impl</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;_abc._abc_data</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#sn.view.graphics.viewCommands._Refresh._abc_impl" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -959,9 +1058,17 @@ be None: eg: a relation type’s, dangling); else None.</p></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewCommands._ContainCreated"><code class="docutils literal notranslate"><span class="pre">_ContainCreated</span></code></a><ul>
 <li><a class="reference internal" href="#sn.view.graphics.viewCommands._ContainCreated.__init__"><code class="docutils literal notranslate"><span class="pre">_ContainCreated.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewCommands._ContainCreated.relation"><code class="docutils literal notranslate"><span class="pre">_ContainCreated.relation</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewCommands._ContainCreated.madePart"><code class="docutils literal notranslate"><span class="pre">_ContainCreated.madePart</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewCommands._ContainCreated.do"><code class="docutils literal notranslate"><span class="pre">_ContainCreated.do()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewCommands._ContainCreated.undo"><code class="docutils literal notranslate"><span class="pre">_ContainCreated.undo()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewCommands._ContainCreated._abc_impl"><code class="docutils literal notranslate"><span class="pre">_ContainCreated._abc_impl</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sn.view.graphics.viewCommands._Refresh"><code class="docutils literal notranslate"><span class="pre">_Refresh</span></code></a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.viewCommands._Refresh.__init__"><code class="docutils literal notranslate"><span class="pre">_Refresh.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewCommands._Refresh.do"><code class="docutils literal notranslate"><span class="pre">_Refresh.do()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewCommands._Refresh.undo"><code class="docutils literal notranslate"><span class="pre">_Refresh.undo()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewCommands._Refresh._abc_impl"><code class="docutils literal notranslate"><span class="pre">_Refresh._abc_impl</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#sn.view.graphics.viewCommands.keptWith"><code class="docutils literal notranslate"><span class="pre">keptWith()</span></code></a></li>

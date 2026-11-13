@@ -1,0 +1,1234 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="snplugins.rnetReader.probes module" href="snplugins.rnetReader.probes.html"><link rel="prev" title="snplugins.rnetReader.forms module" href="snplugins.rnetReader.forms.html">
+        <link rel="prefetch" href="../_static/sn-logo.png" as="image">
+
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>snplugins.rnetReader.hooks module - Semantic Nets 1.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">Semantic Nets 1.1 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">Semantic Nets 1.1 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user/index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user/concepts.html">Concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/gettingStarted.html">Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/tutorial.html">Worked Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/editing.html">Editing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/contexts.html">Contexts: Rules, Definitions, Queries, Constraints and Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/reasoning.html">Reasoning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/viewing.html">Viewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/layouts.html">Arranging a View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/animation.html">Animation Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/files.html">Files and Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/terminal.html">The Terminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/shortcuts.html">Keys and mouse</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/exampleApps.html">Plugins</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developer/index.html">Developer Guide</a><input aria-label="Toggle navigation of Developer Guide" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html">Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/model.html">The Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/reasoner.html">The Reasoner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/view.html">The Graphical View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/layout.html">Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/extending.html">Building on Semantic Nets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/conventions.html">Conventions and Testing</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../dev/sn.html">sn package</a><input aria-label="Toggle navigation of sn package" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.controller.html">sn.controller package</a><input aria-label="Toggle navigation of sn.controller package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.controller.modelInterface.html">sn.controller.modelInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.examples.html">sn.examples package</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.clipsReasoner.html">sn.model.clipsReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.constraints.html">sn.model.constraints module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.copying.html">sn.model.copying module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.directory.html">sn.model.directory module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.model.html">sn.model.model module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.nemoReasoner.html">sn.model.nemoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.prologReasoner.html">sn.model.prologReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.reasoner.html">sn.model.reasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../dev/sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.aboutBox.html">sn.view.graphics.aboutBox module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.chooseModelDialog.html">sn.view.graphics.chooseModelDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.connectors.html">sn.view.graphics.connectors module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.expandDialog.html">sn.view.graphics.expandDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.guiApp.html">sn.view.graphics.guiApp module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.imageExport.html">sn.view.graphics.imageExport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.labels.html">sn.view.graphics.labels module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.layout.html">sn.view.graphics.layout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.layoutDialog.html">sn.view.graphics.layoutDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.layoutPanel.html">sn.view.graphics.layoutPanel module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.progress.html">sn.view.graphics.progress module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.reasoningToolbar.html">sn.view.graphics.reasoningToolbar module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.relationTable.html">sn.view.graphics.relationTable module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.replaceModelDialog.html">sn.view.graphics.replaceModelDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.searchDialog.html">sn.view.graphics.searchDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.shapes.html">sn.view.graphics.shapes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.sngContext.html">sn.view.graphics.sngContext module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.sngView.html">sn.view.graphics.sngView module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.sourceWindow.html">sn.view.graphics.sourceWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.treeLayout.html">sn.view.graphics.treeLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewBase.html">sn.view.graphics.viewBase module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewCommands.html">sn.view.graphics.viewCommands module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewContainment.html">sn.view.graphics.viewContainment module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewEditing.html">sn.view.graphics.viewEditing module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewFiles.html">sn.view.graphics.viewFiles module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewInput.html">sn.view.graphics.viewInput module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewLayouts.html">sn.view.graphics.viewLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewReasoning.html">sn.view.graphics.viewReasoning module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewViewport.html">sn.view.graphics.viewViewport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewVisibility.html">sn.view.graphics.viewVisibility module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.visibilityDialog.html">sn.view.graphics.visibilityDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.vnodes.html">sn.view.graphics.vnodes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.vobjects.html">sn.view.graphics.vobjects module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.vrelations.html">sn.view.graphics.vrelations module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.view.textUserInterface.html">sn.view.textUserInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.__main__.html">sn.__main__ module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.hooks.html">sn.hooks module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.plugins.html">sn.plugins module</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Example Materials</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">The plugins</a><input aria-label="Toggle navigation of The plugins" checked="" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="snplugins.XMLreader.html">snplugins.XMLreader package</a><input aria-label="Toggle navigation of snplugins.XMLreader package" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.XMLreader.reader.html">snplugins.XMLreader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.XMLreader.schema.html">snplugins.XMLreader.schema module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.XMLreader.view.html">snplugins.XMLreader.view module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="snplugins.pythonParser.html">snplugins.pythonParser package</a><input aria-label="Toggle navigation of snplugins.pythonParser package" class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.pythonParser.dialog.html">snplugins.pythonParser.dialog module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.pythonParser.hooks.html">snplugins.pythonParser.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.pythonParser.parser.html">snplugins.pythonParser.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current has-children"><a class="reference internal" href="snplugins.rnetReader.html">snplugins.rnetReader package</a><input aria-label="Toggle navigation of snplugins.rnetReader package" checked="" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="snplugins.rnetReader.abduction.html">snplugins.rnetReader.abduction module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.rnetReader.existence.html">snplugins.rnetReader.existence module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.rnetReader.expansion.html">snplugins.rnetReader.expansion module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.rnetReader.forms.html">snplugins.rnetReader.forms module</a></li>
+<li class="toctree-l3 current current-page"><a class="current reference internal" href="#">snplugins.rnetReader.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.rnetReader.probes.html">snplugins.rnetReader.probes module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.rnetReader.rnet.html">snplugins.rnetReader.rnet module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.rnetReader.reader.html">snplugins.rnetReader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.rnetReader.view.html">snplugins.rnetReader.view module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../modelsDoc/snSourceCode.html">Semantic Nets Source Code Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modelsDoc/families.html">Families Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modelsDoc/homeAutomation.html">Home Automation</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/plugins/snplugins.rnetReader.hooks.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="module-snplugins.rnetReader.hooks">
+<span id="snplugins-rnetreader-hooks-module"></span><h1>snplugins.rnetReader.hooks module<a class="headerlink" href="#module-snplugins.rnetReader.hooks" title="Link to this heading">¶</a></h1>
+<p>The hooks (see <em>sn.hooks</em>) that the KNet kernel model (knet.snm: see
+tools/makeKnetRules.py) names on <em>knode</em>, for Gaines’s truth marks – a node
+is true (T: what it stands for holds), false (F), both (Belnap’s “both”:
+inconsistent), or unmarked:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">vis/sideBars</span></code> (<em>markBars()</em>): a vertical bar beside a node that’s
+marked true, and a horizontal one over a node that’s marked false, as
+Gaines draws them, in the colour of how it got the mark (see
+<em>MARK_COLORS</em>);</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.menu/Mark/True</span></code>, <code class="docutils literal notranslate"><span class="pre">.menu/Mark/False</span></code> (<em>markTrue()</em>, <em>markFalse()</em>):
+assert a mark on the selected nodes, and <code class="docutils literal notranslate"><span class="pre">.menu/Mark/Clear</span></code>
+(<em>clearMarks()</em>): take back the marks asserted on them;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.menu/Probes...</span></code> (<em>showProbes()</em>): show the probes of the node’s net
+(see <em>probes</em>);</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.menu/Net/Minimal</span> <span class="pre">form</span></code>, <code class="docutils literal notranslate"><span class="pre">.menu/Net/Maximal</span> <span class="pre">form</span></code> (<em>minimalForm()</em>,
+<em>maximalForm()</em>): put the node’s net in Gaines’s canonical forms (see
+<em>forms</em>): take out the links the rest imply, or assert those they do;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.menu/Net/Saturate</span></code> (<em>saturate()</em>): add the net’s admissible probes,
+as nodes linked to it (see <em>forms.saturate()</em>);</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.menu/Net/Check</span> <span class="pre">merge</span> <span class="pre">with...</span></code> (<em>checkMerge()</em>): what merging another
+net (a model, or a Rep Plus net file) into it would do (see
+<em>forms.checkMerge()</em>), in a window (see <em>showMerge()</em>);</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.menu/Mark/Abduce</span></code> (<em>abduce()</em>): KNet’s abductive inference from the
+node: the marks that hold whatever explains it (see <em>abduction</em>);</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.menu/Expand/Anonymous</span> <span class="pre">node</span> <span class="pre">below</span></code>, <code class="docutils literal notranslate"><span class="pre">.menu/Expand/Anonymous</span> <span class="pre">node</span>
+<span class="pre">above</span></code> (<em>addAnonymousBelow()</em>, <em>addAnonymousAbove()</em>): Gaines’s
+single-node expansion (see <em>expansion.addAnonymous()</em>);</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.menu/Net/Expand</span> <span class="pre">protoconnectives</span></code> (<em>expandProtoconnectives()</em>): its
+nodes whose labels group others’ replaced by them (see
+<em>expansion.expandProtoconnectives()</em>);</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.menu/Net/Factor</span></code> (<em>factor()</em>): anonymous nodes interpolated to carry
+the links some nodes each have to each of some others (see
+<em>expansion.factor()</em>);</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.menu/Existence/Essentially</span> <span class="pre">top</span></code>, <code class="docutils literal notranslate"><span class="pre">.menu/Existence/Essentially</span>
+<span class="pre">bottom</span></code>, <code class="docutils literal notranslate"><span class="pre">.menu/Existence/Unspecified</span></code> (<em>essentiallyTop()</em>,
+<em>essentiallyBottom()</em>, <em>unspecified()</em>): specify what the selected nodes
+essentially are, and <code class="docutils literal notranslate"><span class="pre">.menu/Net/Existence...</span></code> (<em>showExistence()</em>): the
+existential status of the net’s nodes, in a window (see <em>existence</em>).</p></li>
+</ul>
+</div></blockquote>
+<p>A mark is two attributes, <em>MARK_TRUE</em> and <em>MARK_FALSE</em>, each saying how the
+node got it: “asserted” (by these menu items, or a net’s file), or by the
+kernel’s rules – “included” (it’s included by something true), “excluded”
+(it excludes something true), “coexcluded” (it coexcludes something false),
+or “irrelevant” (Rep Plus’s name: it includes something false). The
+reasoners conclude those (see knet.snm’s mark rules); “reason” shows them.
+Or “abduced”, by abduction (see <em>abduce()</em>): until the next “reason”.</p>
+<p>Created on Nov 11, 2026</p>
+<p><em>Code author: Rob Kremer &lt;<a class="reference external" href="mailto:robkremer&#37;&#52;&#48;me&#46;com">robkremer<span>&#64;</span>me<span>&#46;</span>com</a>&gt;</em></p>
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.MARK_TRUE">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">MARK_TRUE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'markTrue'</span></span><a class="headerlink" href="#snplugins.rnetReader.hooks.MARK_TRUE" title="Link to this definition">¶</a></dt>
+<dd><p>The attributes that mark a node true or false: their values say how it got the mark (see the module doc).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.MARK_FALSE">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">MARK_FALSE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'markFalse'</span></span><a class="headerlink" href="#snplugins.rnetReader.hooks.MARK_FALSE" title="Link to this definition">¶</a></dt>
+<dd><p>The attributes that mark a node true or false: their values say how it got the mark (see the module doc).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.ASSERTED">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">ASSERTED</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'asserted'</span></span><a class="headerlink" href="#snplugins.rnetReader.hooks.ASSERTED" title="Link to this definition">¶</a></dt>
+<dd><p>How a mark the user (or a net’s file) gives a node got there.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.MARK_COLORS">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">MARK_COLORS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'abduced':</span> <span class="pre">'#800080',</span> <span class="pre">'asserted':</span> <span class="pre">'#693804',</span> <span class="pre">'coexcluded':</span> <span class="pre">'#0000ff',</span> <span class="pre">'default':</span> <span class="pre">'#800080',</span> <span class="pre">'definition':</span> <span class="pre">'#ff0000',</span> <span class="pre">'excluded':</span> <span class="pre">'#00a000',</span> <span class="pre">'included':</span> <span class="pre">'#000000',</span> <span class="pre">'irrelevant':</span> <span class="pre">'#a9a9a9',</span> <span class="pre">'necessary':</span> <span class="pre">'#ff0000'}</span></span><a class="headerlink" href="#snplugins.rnetReader.hooks.MARK_COLORS" title="Link to this definition">¶</a></dt>
+<dd><p>Each way a node gets a mark -&gt; its bar’s colour: Rep Plus’s mark kinds’
+(Gaines’s paper’s: brown asserted, black and blue true, grey and green
+false; KNet draws what it abduces as defaults). Another (eg: a net’s own
+mark kind) is drawn black.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.SIDES">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">SIDES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'markFalse':</span> <span class="pre">'top',</span> <span class="pre">'markTrue':</span> <span class="pre">'right'}</span></span><a class="headerlink" href="#snplugins.rnetReader.hooks.SIDES" title="Link to this definition">¶</a></dt>
+<dd><p>Where each mark’s bar goes (see <em>sn.view.graphics.decorators.SideBars</em>): true’s beside the node, false’s over it.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.marks">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">marks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks.marks" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>obj</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>obj</em>’s marks: <em>MARK_TRUE</em> and/or <em>MARK_FALSE</em> -&gt; how it got it.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.markBars">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">markBars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_context</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks.markBars" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>Any</em>)</p></li>
+<li><p><strong>_context</strong> (<a class="reference internal" href="../dev/sn.hooks.html#sn.hooks.HookContext" title="sn.hooks.HookContext"><em>HookContext</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>obj</em>’s marks as side bars (see the module doc): eg,
+“right:#693804” for a node asserted true.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks._markable">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">_markable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mo</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks._markable" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mo</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether a mark can be asserted on the model object <em>mo</em>: a node
+(not one the reasoner made, or a variable).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks._targets">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">_targets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks._targets" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>Any</em>)</p></li>
+<li><p><strong>context</strong> (<a class="reference internal" href="../dev/sn.hooks.html#sn.hooks.HookContext" title="sn.hooks.HookContext"><em>HookContext</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>What a menu item acts on: the selection’s nodes that can be
+marked (see <em>_markable()</em>), or just <em>obj</em>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<em>Any</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks._canMark">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">_canMark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_context</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks._canMark" title="Link to this definition">¶</a></dt>
+<dd><p>The mark menu items’ <em>appliesTo</em>: an individual node that can be marked (see <em>_markable()</em>: a type’s instances are marked, not it).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>Any</em>)</p></li>
+<li><p><strong>_context</strong> (<a class="reference internal" href="../dev/sn.hooks.html#sn.hooks.HookContext" title="sn.hooks.HookContext"><em>HookContext</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks._asserted">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">_asserted</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks._asserted" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>obj</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The marks asserted on <em>obj</em> itself: its own (not inferred) <em>MARK_TRUE</em> and <em>MARK_FALSE</em>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks._setMarks">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">_setMarks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clear</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks._setMarks" title="Link to this definition">¶</a></dt>
+<dd><p>Assert the marks <em>add</em> (as <em>ASSERTED</em>) on the nodes the menu item acts on
+(see <em>_targets()</em>), and take back their asserted marks <em>clear</em>: as one
+command (undone in one go), if there’s a view to do it in.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>Any</em>)</p></li>
+<li><p><strong>context</strong> (<a class="reference internal" href="../dev/sn.hooks.html#sn.hooks.HookContext" title="sn.hooks.HookContext"><em>HookContext</em></a>)</p></li>
+<li><p><strong>add</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>clear</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.markTrue">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">markTrue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks.markTrue" title="Link to this definition">¶</a></dt>
+<dd><p>Mark the selected nodes true (asserted): Gaines’s vertical bar. (A node marked false too is both.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>Any</em>)</p></li>
+<li><p><strong>context</strong> (<a class="reference internal" href="../dev/sn.hooks.html#sn.hooks.HookContext" title="sn.hooks.HookContext"><em>HookContext</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.markFalse">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">markFalse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks.markFalse" title="Link to this definition">¶</a></dt>
+<dd><p>Mark the selected nodes false (asserted): Gaines’s horizontal bar. (A node marked true too is both.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>Any</em>)</p></li>
+<li><p><strong>context</strong> (<a class="reference internal" href="../dev/sn.hooks.html#sn.hooks.HookContext" title="sn.hooks.HookContext"><em>HookContext</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks._hasAsserted">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">_hasAsserted</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks._hasAsserted" title="Link to this definition">¶</a></dt>
+<dd><p><em>clearMarks()</em>’s <em>appliesTo</em>: something it acts on has a mark asserted on it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>Any</em>)</p></li>
+<li><p><strong>context</strong> (<a class="reference internal" href="../dev/sn.hooks.html#sn.hooks.HookContext" title="sn.hooks.HookContext"><em>HookContext</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.clearMarks">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">clearMarks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks.clearMarks" title="Link to this definition">¶</a></dt>
+<dd><p>Take back the marks asserted on the selected nodes (those the reasoners concluded go when they no longer follow).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>Any</em>)</p></li>
+<li><p><strong>context</strong> (<a class="reference internal" href="../dev/sn.hooks.html#sn.hooks.HookContext" title="sn.hooks.HookContext"><em>HookContext</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.showProbes">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">showProbes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks.showProbes" title="Link to this definition">¶</a></dt>
+<dd><p>Show the probes of the node’s net – KNet’s probes, probe sets and
+reconstruction – in a window of their own (see <em>probes.ProbesDialog</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>Any</em>)</p></li>
+<li><p><strong>context</strong> (<a class="reference internal" href="../dev/sn.hooks.html#sn.hooks.HookContext" title="sn.hooks.HookContext"><em>HookContext</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The window’s <em>ProbesDialog</em>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Any</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks._context">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">_context</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks._context" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>context</strong> (<a class="reference internal" href="../dev/sn.hooks.html#sn.hooks.HookContext" title="sn.hooks.HookContext"><em>HookContext</em></a>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The view’s <em>ModelContext</em> (to change the model as one command, undone in one go), if there’s a view.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Any</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks._describe">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">_describe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks._describe" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>r</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A link, as its ends’ names and its relation type’s: eg, “dog Includes animal”.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks._netCommand">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">_netCommand</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">what</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">done</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks._netCommand" title="Link to this definition">¶</a></dt>
+<dd><p>Do <em>do</em> (with the view’s context, if any: see <em>_context()</em>) to the node’s
+net, and say what it did in the view’s window’s terminal (or why it
+couldn’t, as an error).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>what</strong> (<em>str</em>) – What it is (eg: “Minimal form”).</p></li>
+<li><p><strong>do</strong> (<em>Any</em>) – Does it: <em>do(context)</em> returns the links it changed.</p></li>
+<li><p><strong>done</strong> (<em>str</em>) – What it did to them (eg: “took out”).</p></li>
+<li><p><strong>obj</strong> (<em>Any</em>)</p></li>
+<li><p><strong>context</strong> (<a class="reference internal" href="../dev/sn.hooks.html#sn.hooks.HookContext" title="sn.hooks.HookContext"><em>HookContext</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The links.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<em>Any</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.minimalForm">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">minimalForm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks.minimalForm" title="Link to this definition">¶</a></dt>
+<dd><p>Put the node’s net in Gaines’s minimal canonical form: take out its links
+that the rest imply (see <em>forms.minimalForm()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>Any</em>)</p></li>
+<li><p><strong>context</strong> (<a class="reference internal" href="../dev/sn.hooks.html#sn.hooks.HookContext" title="sn.hooks.HookContext"><em>HookContext</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The links taken out.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<em>Any</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.maximalForm">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">maximalForm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks.maximalForm" title="Link to this definition">¶</a></dt>
+<dd><p>Put the node’s net in Gaines’s maximal canonical form: assert the kernel’s
+links that it implies (see <em>forms.maximalForm()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>Any</em>)</p></li>
+<li><p><strong>context</strong> (<a class="reference internal" href="../dev/sn.hooks.html#sn.hooks.HookContext" title="sn.hooks.HookContext"><em>HookContext</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The links asserted.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<em>Any</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.saturate">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">saturate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks.saturate" title="Link to this definition">¶</a></dt>
+<dd><p>Saturate the node’s net: add its admissible probes, as nodes that include
+the nodes true in them and exclude those false (see <em>forms.saturate()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>Any</em>)</p></li>
+<li><p><strong>context</strong> (<a class="reference internal" href="../dev/sn.hooks.html#sn.hooks.HookContext" title="sn.hooks.HookContext"><em>HookContext</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>What was added: the probes, then their links.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<em>Any</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.NET_FILES">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">NET_FILES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('Nets',</span> <span class="pre">'*.snm</span> <span class="pre">*.rnet'),</span> <span class="pre">('Models',</span> <span class="pre">'*.snm'),</span> <span class="pre">('Rep</span> <span class="pre">Plus</span> <span class="pre">nets',</span> <span class="pre">'*.rnet'),</span> <span class="pre">('All</span> <span class="pre">files',</span> <span class="pre">'*')]</span></span><a class="headerlink" href="#snplugins.rnetReader.hooks.NET_FILES" title="Link to this definition">¶</a></dt>
+<dd><p>What <em>checkMerge()</em> asks for: another net, as a model or a Rep Plus net file.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.askNet">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">askNet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks.askNet" title="Link to this definition">¶</a></dt>
+<dd><p>Ask for the net to merge in (see <em>checkMerge()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parent</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Its file’s path, or “” if none was chosen.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.openNet">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">openNet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks.openNet" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>path</strong> (<em>str</em>) – A model (.snm) or a Rep Plus net file (.rnet).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Its model – the one in memory, if it’s open – and, if it was
+made just now from a net file (not saved), the folder it was made in: to
+let go of both once it’s used (see <em>sn.model.model.Model.unload()</em>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[<em>Any</em>, str | None]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.checkMerge">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">checkMerge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks.checkMerge" title="Link to this definition">¶</a></dt>
+<dd><p>Ask for another net (see <em>askNet()</em>), and show what merging it into the
+node’s net would do (see <em>showMerge()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>Any</em>)</p></li>
+<li><p><strong>context</strong> (<a class="reference internal" href="../dev/sn.hooks.html#sn.hooks.HookContext" title="sn.hooks.HookContext"><em>HookContext</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The window’s <em>ReportWindow</em>, or None if no net was chosen (or it
+couldn’t be read: said, as an error).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Any</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.showMerge">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">showMerge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks.showMerge" title="Link to this definition">¶</a></dt>
+<dd><p>Show what merging the net at <em>path</em> into <em>model</em>’s would do (see
+<em>forms.checkMerge()</em>), in a window of its own.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parent</strong> (<em>Any</em>) – The window it’s opened over, if any.</p></li>
+<li><p><strong>model</strong> (<em>Any</em>)</p></li>
+<li><p><strong>path</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The window’s <em>ReportWindow</em>, or None if the net couldn’t be read
+(said, as an error).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Any</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks._netName">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">_netName</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks._netName" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The name of <em>model</em>’s file, without its folder or extension (eg: “patterns”).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks._say">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">_say</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">what</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">made</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks._say" title="Link to this definition">¶</a></dt>
+<dd><p>Say, in the view’s window’s terminal, what a command that makes nodes and
+links (see <em>expansion</em>) made.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>what</strong> (<em>str</em>) – What it is (eg: “Factor”).</p></li>
+<li><p><strong>obj</strong> (<em>Any</em>)</p></li>
+<li><p><strong>made</strong> (<em>list</em><em>[</em><em>Any</em><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.addAnonymousBelow">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">addAnonymousBelow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks.addAnonymousBelow" title="Link to this definition">¶</a></dt>
+<dd><p>Add an anonymous node below the node: one that includes it (Gaines’s
+single-node expansion: see <em>expansion.addAnonymous()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>Any</em>)</p></li>
+<li><p><strong>context</strong> (<a class="reference internal" href="../dev/sn.hooks.html#sn.hooks.HookContext" title="sn.hooks.HookContext"><em>HookContext</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The node made, and its link.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<em>Any</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.addAnonymousAbove">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">addAnonymousAbove</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks.addAnonymousAbove" title="Link to this definition">¶</a></dt>
+<dd><p>Add an anonymous node above the node: one it includes (see <em>expansion.addAnonymous()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>Any</em>)</p></li>
+<li><p><strong>context</strong> (<a class="reference internal" href="../dev/sn.hooks.html#sn.hooks.HookContext" title="sn.hooks.HookContext"><em>HookContext</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The node made, and its link.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<em>Any</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.expandProtoconnectives">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">expandProtoconnectives</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks.expandProtoconnectives" title="Link to this definition">¶</a></dt>
+<dd><p>Expand the protoconnectives of the node’s net (its nodes whose labels
+group others’: see <em>expansion.expandProtoconnectives()</em>), and say which,
+and why any can’t be.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>Any</em>)</p></li>
+<li><p><strong>context</strong> (<a class="reference internal" href="../dev/sn.hooks.html#sn.hooks.HookContext" title="sn.hooks.HookContext"><em>HookContext</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>What was made: the member nodes, then the links.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<em>Any</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.factor">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">factor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks.factor" title="Link to this definition">¶</a></dt>
+<dd><p>Factor the node’s net: interpolate anonymous nodes for the links that
+some nodes each have to each of some others (see <em>expansion.factor()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>Any</em>)</p></li>
+<li><p><strong>context</strong> (<a class="reference internal" href="../dev/sn.hooks.html#sn.hooks.HookContext" title="sn.hooks.HookContext"><em>HookContext</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>What was made: each anonymous node, then its links.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<em>Any</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks._specify">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">_specify</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">what</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks._specify" title="Link to this definition">¶</a></dt>
+<dd><p>Specify what the selected nodes (see <em>_targets()</em>) essentially are (see <em>existence.specify()</em>), as one command.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>Any</em>)</p></li>
+<li><p><strong>context</strong> (<a class="reference internal" href="../dev/sn.hooks.html#sn.hooks.HookContext" title="sn.hooks.HookContext"><em>HookContext</em></a>)</p></li>
+<li><p><strong>what</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.essentiallyTop">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">essentiallyTop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks.essentiallyTop" title="Link to this definition">¶</a></dt>
+<dd><p>Specify that the selected nodes are essentially top nodes: categorical existence (see <em>existence</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>Any</em>)</p></li>
+<li><p><strong>context</strong> (<a class="reference internal" href="../dev/sn.hooks.html#sn.hooks.HookContext" title="sn.hooks.HookContext"><em>HookContext</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.essentiallyBottom">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">essentiallyBottom</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks.essentiallyBottom" title="Link to this definition">¶</a></dt>
+<dd><p>Specify that the selected nodes are essentially bottom nodes: singular existence (see <em>existence</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>Any</em>)</p></li>
+<li><p><strong>context</strong> (<a class="reference internal" href="../dev/sn.hooks.html#sn.hooks.HookContext" title="sn.hooks.HookContext"><em>HookContext</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.unspecified">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">unspecified</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks.unspecified" title="Link to this definition">¶</a></dt>
+<dd><p>Take back what the selected nodes are specified to be essentially (see <em>existence</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>Any</em>)</p></li>
+<li><p><strong>context</strong> (<a class="reference internal" href="../dev/sn.hooks.html#sn.hooks.HookContext" title="sn.hooks.HookContext"><em>HookContext</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.showExistence">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">showExistence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks.showExistence" title="Link to this definition">¶</a></dt>
+<dd><p>Show the existential status of the node’s net’s nodes (see
+<em>existence.report()</em>), in a window of its own.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>Any</em>)</p></li>
+<li><p><strong>context</strong> (<a class="reference internal" href="../dev/sn.hooks.html#sn.hooks.HookContext" title="sn.hooks.HookContext"><em>HookContext</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The window’s <em>ReportWindow</em>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Any</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.hooks.abduce">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">abduce</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.hooks.abduce" title="Link to this definition">¶</a></dt>
+<dd><p>KNet’s abductive inference from the node (see <em>abduction</em>): the net
+reasoned over as it is (see <em>sn.model.reasoner.reason()</em>), and the marks
+that are the same whatever explains the node given to the nodes with none
+(as inferences: the next “reason” takes them out); and what it found said
+in the view’s window’s terminal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>Any</em>)</p></li>
+<li><p><strong>context</strong> (<a class="reference internal" href="../dev/sn.hooks.html#sn.hooks.HookContext" title="sn.hooks.HookContext"><em>HookContext</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>What it found (an <em>abduction.Abduction</em>), or None if it couldn’t (said, as an error).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Any</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="snplugins.rnetReader.probes.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">snplugins.rnetReader.probes module</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="snplugins.rnetReader.forms.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">snplugins.rnetReader.forms module</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2023-2026, Rob Kremer
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">snplugins.rnetReader.hooks module</a><ul>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.MARK_TRUE"><code class="docutils literal notranslate"><span class="pre">MARK_TRUE</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.MARK_FALSE"><code class="docutils literal notranslate"><span class="pre">MARK_FALSE</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.ASSERTED"><code class="docutils literal notranslate"><span class="pre">ASSERTED</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.MARK_COLORS"><code class="docutils literal notranslate"><span class="pre">MARK_COLORS</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.SIDES"><code class="docutils literal notranslate"><span class="pre">SIDES</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.marks"><code class="docutils literal notranslate"><span class="pre">marks()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.markBars"><code class="docutils literal notranslate"><span class="pre">markBars()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks._markable"><code class="docutils literal notranslate"><span class="pre">_markable()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks._targets"><code class="docutils literal notranslate"><span class="pre">_targets()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks._canMark"><code class="docutils literal notranslate"><span class="pre">_canMark()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks._asserted"><code class="docutils literal notranslate"><span class="pre">_asserted()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks._setMarks"><code class="docutils literal notranslate"><span class="pre">_setMarks()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.markTrue"><code class="docutils literal notranslate"><span class="pre">markTrue()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.markFalse"><code class="docutils literal notranslate"><span class="pre">markFalse()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks._hasAsserted"><code class="docutils literal notranslate"><span class="pre">_hasAsserted()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.clearMarks"><code class="docutils literal notranslate"><span class="pre">clearMarks()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.showProbes"><code class="docutils literal notranslate"><span class="pre">showProbes()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks._context"><code class="docutils literal notranslate"><span class="pre">_context()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks._describe"><code class="docutils literal notranslate"><span class="pre">_describe()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks._netCommand"><code class="docutils literal notranslate"><span class="pre">_netCommand()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.minimalForm"><code class="docutils literal notranslate"><span class="pre">minimalForm()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.maximalForm"><code class="docutils literal notranslate"><span class="pre">maximalForm()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.saturate"><code class="docutils literal notranslate"><span class="pre">saturate()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.NET_FILES"><code class="docutils literal notranslate"><span class="pre">NET_FILES</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.askNet"><code class="docutils literal notranslate"><span class="pre">askNet()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.openNet"><code class="docutils literal notranslate"><span class="pre">openNet()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.checkMerge"><code class="docutils literal notranslate"><span class="pre">checkMerge()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.showMerge"><code class="docutils literal notranslate"><span class="pre">showMerge()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks._netName"><code class="docutils literal notranslate"><span class="pre">_netName()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks._say"><code class="docutils literal notranslate"><span class="pre">_say()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.addAnonymousBelow"><code class="docutils literal notranslate"><span class="pre">addAnonymousBelow()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.addAnonymousAbove"><code class="docutils literal notranslate"><span class="pre">addAnonymousAbove()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.expandProtoconnectives"><code class="docutils literal notranslate"><span class="pre">expandProtoconnectives()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.factor"><code class="docutils literal notranslate"><span class="pre">factor()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks._specify"><code class="docutils literal notranslate"><span class="pre">_specify()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.essentiallyTop"><code class="docutils literal notranslate"><span class="pre">essentiallyTop()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.essentiallyBottom"><code class="docutils literal notranslate"><span class="pre">essentiallyBottom()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.unspecified"><code class="docutils literal notranslate"><span class="pre">unspecified()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.showExistence"><code class="docutils literal notranslate"><span class="pre">showExistence()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.hooks.abduce"><code class="docutils literal notranslate"><span class="pre">abduce()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=56dcb7b8"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

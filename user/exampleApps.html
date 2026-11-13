@@ -253,6 +253,7 @@
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../dev/sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.aboutBox.html">sn.view.graphics.aboutBox module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
@@ -318,9 +319,21 @@
 <li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
 </ul>
 </li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.rnetReader.html">snplugins.rnetReader package</a><input aria-label="Toggle navigation of snplugins.rnetReader package" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.abduction.html">snplugins.rnetReader.abduction module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.existence.html">snplugins.rnetReader.existence module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.expansion.html">snplugins.rnetReader.expansion module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.forms.html">snplugins.rnetReader.forms module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.hooks.html">snplugins.rnetReader.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.probes.html">snplugins.rnetReader.probes module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.rnet.html">snplugins.rnetReader.rnet module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.reader.html">snplugins.rnetReader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.view.html">snplugins.rnetReader.view module</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/snSourceCode.html">Semantic Nets Source Code Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/families.html">Families Models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/homeAutomation.html">Home Automation</a></li>
@@ -371,14 +384,17 @@ model of something – a file, a program, a database – and opens a view of it
 in the editor, where you can look round it, arrange it, ask about it and
 reason over it as you would any model. Such a program can be a <strong>plugin</strong>:
 it’s loaded when the editor starts, and adds itself to the menu bar – most
-often to the <strong>Tools</strong> menu. Two come with <em>Semantic Nets</em>, as examples:</p>
+often to the <strong>Tools</strong> menu. Three come with <em>Semantic Nets</em>:</p>
 <dl class="simple">
 <dt><strong>Tools | XML Reader…</strong></dt><dd><p>makes a model of an XML file (see <a class="reference internal" href="#the-xml-reader">The XML reader</a>).</p>
 </dd>
 <dt><strong>Tools | Python Parser…</strong></dt><dd><p>makes a model of a Python program (see <a class="reference internal" href="#the-python-parser">The Python parser</a>).</p>
 </dd>
+<dt><strong>Tools | Rep Plus Net Reader…</strong></dt><dd><p>makes a model of a net drawn in Brian Gaines’s Rep Plus (CNet, KNet) (see
+<a class="reference internal" href="#the-rep-plus-net-reader">The Rep Plus net reader</a>).</p>
+</dd>
 </dl>
-<p>Both save what they make as an ordinary model and view (<code class="docutils literal notranslate"><span class="pre">.snm</span></code> and
+<p>They all save what they make as an ordinary model and view (<code class="docutils literal notranslate"><span class="pre">.snm</span></code> and
 <code class="docutils literal notranslate"><span class="pre">.snv</span></code>), so you can open them again later from <strong>File | Open…</strong> or the
 model directory, like any other.</p>
 <section id="where-plugins-are">
@@ -615,6 +631,452 @@ they’re related (eg: <em>inherits-from</em>).</p></li>
 modules most imported, in the middle of their groups.</p></li>
 </ul>
 </section>
+<section id="the-rep-plus-net-reader">
+<h2>The Rep Plus net reader<a class="headerlink" href="#the-rep-plus-net-reader" title="Link to this heading">¶</a></h2>
+<p><strong>Tools | Rep Plus Net Reader…</strong> opens a dialog: the <strong>net file</strong> to read
+(a <code class="docutils literal notranslate"><span class="pre">.rnet</span></code> file, made by Rep Plus’s CNet or KNet, in any of its versions:
+6 to 9), and the <strong>model</strong> and <strong>view</strong> to make of it – for <em>patterns.rnet</em>,
+<em>patterns.snm</em> and <em>patterns.snv</em>, in the folder you last made them in (the
+first time, next to the net). Change either, by typing or with
+<strong>Choose…</strong>: until you do, they follow the net file (and the view follows
+the model). <strong>Nodes with the same label are one node</strong> (on unless you turn
+it off) takes them as KNet does: a net may draw a node again, elsewhere, to
+keep its links short (turn it off for a figure that’s several copies of a
+net side by side, as some of Gaines’s are). <strong>Go</strong> makes them, asking first if they’re there already, and
+opens the view: the net as CNet drew it, each node where it was (half as big
+again, as the editor’s text is bigger), with its links between them.</p>
+<p>What’s in the net becomes:</p>
+<ul class="simple">
+<li><p><strong>Node types</strong>: each of the net’s node types (<em>Concept</em>, <em>Title</em>,
+<em>Note</em>, …) becomes a type of the same name, with its shape and colours:
+the second of its four colours is its fill, the third its text’s, and the
+fourth its outline. One that’s just its text (a title, a note) has no
+outline or fill. A grid’s node is a file folder. A type with Rep Plus’s
+enclosure shape (<em>construct</em>, <em>frame</em>, <em>rules</em>, <em>cases</em>, …) becomes a
+subtype of <em>context</em> that doesn’t quote what it contains (see
+<a class="reference internal" href="contexts.html"><span class="doc">Contexts: Rules, Definitions, Queries, Constraints and Requirements</span></a>): its nodes are boxes of facts.</p></li>
+<li><p><strong>Link types</strong>: each of the net’s link types (<em>Includes</em>, <em>Excludes</em>,
+<em>Coexcludes symmetric</em>, <em>Prefer</em>, …) becomes a relation type of the same
+name, drawn as CNet draws it, with relation marks (see <a class="reference internal" href="viewing.html"><span class="doc">Viewing</span></a>):
+its arrowheads (heavy for a conjunction, double for a disjunction), the
+bars before them (one for an exclusion, two for a coexclusion, three for a
+negation), and a mark in the middle of a symmetric one – in its colour,
+straight, with no label. A dashed one’s colour is faded. It’s a subtype of
+the KNet kernel’s relation type that its look says it is (see <a class="reference internal" href="#knet-s-kernel">KNet’s
+kernel</a>): an arrow is <em>includes</em>, an arrow with one, two or three bars
+<em>excludes</em>, <em>coexcludes</em> or <em>negates</em> (a heavy or double arrowhead is still
+an arrow), a line with one, two or three bars across its middle the
+symmetric ones, and an arrow at each end (or a plain line named so)
+<em>equivalent</em>; a heavy arrowhead (or a double one) a conjunction’s
+link (a disjunction’s: see <a class="reference internal" href="#conjunctions-and-disjunctions">Conjunctions and disjunctions</a>); and a plain
+line with a “&gt;” in its middle a preference (see <a class="reference internal" href="#exploring-and-defaults">Exploring and
+defaults</a>). Generic links, prohibitions and “Etc” links aren’t. One drawn backwards – its arrow at its tail, eg <em>Includes
+reverse</em> – is turned round: its arrow is at its destination, and its
+links go the other way, so it means what it shows.</p></li>
+<li><p><strong>Nodes</strong>: each node is an individual of its type, named by its label (a
+node with no label has no name). Pictures and drawings in the net are left
+out. Nodes with the same label (if the dialog says they’re one node) are
+joined by <em>same label</em> links, faded grey equivalences from each copy to
+the first.</p></li>
+<li><p><strong>Marks</strong>: a node’s mark (true, false, or both) is its <code class="docutils literal notranslate"><span class="pre">mark</span></code> attribute
+(<code class="docutils literal notranslate"><span class="pre">T</span></code>, <code class="docutils literal notranslate"><span class="pre">F</span></code> or <code class="docutils literal notranslate"><span class="pre">TF</span></code>), with the kind of mark (<code class="docutils literal notranslate"><span class="pre">markKind</span></code>: <em>Asserted</em>,
+<em>Included</em>, <em>Excluded</em>, …), whether it was derived (<code class="docutils literal notranslate"><span class="pre">markDerived</span></code>), and
+the number the file has (<code class="docutils literal notranslate"><span class="pre">marks</span></code>). It’s drawn as Rep Plus draws it: the
+node filled with the mark kind’s background colour, and its outline in
+the kind’s colour, if the mark says so – and its label adds the mark (its
+type’s <code class="docutils literal notranslate"><span class="pre">vis/label</span></code> is <code class="docutils literal notranslate"><span class="pre">$name${mark:+</span> <span class="pre">$mark}</span></code>). An asserted mark is
+also the node’s truth mark, which the reasoners propagate (see <a class="reference internal" href="#truth-marks">Truth
+marks</a>).</p></li>
+<li><p><strong>Links</strong>: each link is a relation of its type. A line with a second type
+(CNet draws two lines side by side) is a link and a link back: the second
+type’s relation goes from the link’s destination to its source. Any
+numbers it carries (eg: a weight) are its <code class="docutils literal notranslate"><span class="pre">values</span></code> attribute. Derived
+links (CNet’s or KNet’s inferences, their types named so: eg <em>Includes
+derived</em>) are made as they are.</p></li>
+<li><p><strong>Boxes</strong>: a node of an enclosure type is drawn as a window, the size CNet
+drew it, and contains (by <em>contains</em> relations) the nodes inside it – each
+in the smallest box it’s in, so boxes can be nested. As in CNet, dragging
+a box carries what’s in it.</p></li>
+<li><p><strong>Constructs</strong>: the poles in a <em>construct</em> box (the nodes it contains)
+exclude each other, as CNet’s construct macro says, unless an includes
+link (or a chain of them) joins them. Each such pair gets a <em>construct
+excludes</em> relation, a subtype of the net’s own symmetric exclusion, faded
+as derived links are: hide them, or take them out, by that type.</p></li>
+<li><p><strong>Groups</strong> aren’t made: in Rep Plus they’re only a way to select and drag
+nodes together, and mean nothing.</p></li>
+</ul>
+<p>The terminal pane says what was made, and anything in the file that didn’t
+fit (eg: a link to a node that isn’t there).</p>
+<section id="knet-s-kernel">
+<h3>KNet’s kernel<a class="headerlink" href="#knet-s-kernel" title="Link to this heading">¶</a></h3>
+<p>The models the reader makes build on the plugin’s <em>knet.snm</em> (made by
+<code class="docutils literal notranslate"><span class="pre">tools/makeKnetRules.py</span></code>): the kernel of Brian Gaines’s protologic
+(<em>Universal Logic as a Science of Patterns</em>, 2015), as relation types and
+rules that every reasoner engine applies. X <em>includes</em> Y means whatever is X
+is Y (dog includes animal):</p>
+<div class="table-wrapper docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>relation type</p></th>
+<th class="head"><p>means</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><em>includes</em></p></td>
+<td><p>whatever is X is Y. Transitive.</p></td>
+</tr>
+<tr class="row-odd"><td><p><em>equivalent</em></p></td>
+<td><p>X and Y include each other (a subtype of <em>includes</em>).
+Symmetric.</p></td>
+</tr>
+<tr class="row-even"><td><p><em>excludes</em></p></td>
+<td><p>nothing is both. Symmetric.</p></td>
+</tr>
+<tr class="row-odd"><td><p><em>coexcludes</em></p></td>
+<td><p>everything is one or the other. Symmetric.</p></td>
+</tr>
+<tr class="row-even"><td><p><em>negates</em></p></td>
+<td><p>X is everything Y isn’t (a subtype of <em>excludes</em> and
+<em>coexcludes</em>). Symmetric.</p></td>
+</tr>
+<tr class="row-odd"><td><p><em>inconsistent</em></p></td>
+<td><p>X both includes and excludes Y: X can only be empty (a
+subtype of <em>includes</em> and <em>excludes</em>).</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Its rules are Gaines’s inference patterns: whatever includes the tail of an
+exclusion excludes its head; whatever excludes the head of a coexclusion
+includes its tail; a coexclusion is inherited by what its tail includes; an
+exclusion and a coexclusion together are a negation (so two negations of
+one node are equivalent); a cycle of inclusions makes its nodes equivalent;
+and including what it excludes makes a node inconsistent – a warning, not
+an error: the inconsistency stays where it is. <strong>Reason</strong> (see
+<a class="reference internal" href="reasoning.html"><span class="doc">Reasoning</span></a>) draws KNet’s conclusions over the net: on the inference
+pattern nets of Gaines’s paper, they’re the derived links KNet saved.</p>
+<p>A view leaves out the inferences that say what it already shows (the kernel
+types’ <code class="docutils literal notranslate"><span class="pre">vis/hideImplied</span></code>: see <a class="reference internal" href="viewing.html"><span class="doc">Viewing</span></a>) – a node’s loop to itself,
+a symmetric one again the other way round, an <em>includes</em> beside an
+<em>equivalent</em> – else they’d swamp the picture.</p>
+<p>The kernel works in models of your own too: build one on <em>knet.snm</em> (see
+<a class="reference internal" href="files.html"><span class="doc">Files and Settings</span></a>). Between types, an isa link is an inclusion if the types are
+under <em>knode</em>: dog isa animal isa knode gives dog <em>includes</em> animal, so a
+type that <em>excludes</em> animal excludes dog.</p>
+</section>
+<section id="truth-marks">
+<h3>Truth marks<a class="headerlink" href="#truth-marks" title="Link to this heading">¶</a></h3>
+<p>Gaines marks a node true (a vertical bar beside it: there’s something it
+stands for) or false (a horizontal bar over it: it’s empty), or both
+(Belnap’s “both”: inconsistent). A KNet node – an instance of <em>knode</em>, as
+the reader’s nodes are – shows its marks as those bars, in Rep Plus’s
+colours for how it got them:</p>
+<div class="table-wrapper docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>how</p></th>
+<th class="head"><p>colour</p></th>
+<th class="head"><p>why</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>asserted</p></td>
+<td><p>brown</p></td>
+<td><p>it’s marked so (in the net’s file, or by you)</p></td>
+</tr>
+<tr class="row-odd"><td><p>included</p></td>
+<td><p>black</p></td>
+<td><p>true: something true includes it</p></td>
+</tr>
+<tr class="row-even"><td><p>coexcluded</p></td>
+<td><p>blue</p></td>
+<td><p>true: it coexcludes something false</p></td>
+</tr>
+<tr class="row-odd"><td><p>excluded</p></td>
+<td><p>green</p></td>
+<td><p>false: it excludes something true</p></td>
+</tr>
+<tr class="row-even"><td><p>irrelevant</p></td>
+<td><p>grey</p></td>
+<td><p>false: it includes something false (Rep Plus’s name)</p></td>
+</tr>
+<tr class="row-odd"><td><p>necessary</p></td>
+<td><p>red</p></td>
+<td><p>false because it’s inconsistent (it excludes
+itself) – or true because it coexcludes itself;
+or so in every case of an open connective (see
+<a class="reference internal" href="#exploring-and-defaults">Exploring and defaults</a>)</p></td>
+</tr>
+<tr class="row-even"><td><p>definition</p></td>
+<td><p>red</p></td>
+<td><p>by a conjunction or a disjunction (see
+<a class="reference internal" href="#conjunctions-and-disjunctions">Conjunctions and disjunctions</a>)</p></td>
+</tr>
+<tr class="row-odd"><td><p>default</p></td>
+<td><p>purple</p></td>
+<td><p>in every preferred case (see <a class="reference internal" href="#exploring-and-defaults">Exploring and
+defaults</a>)</p></td>
+</tr>
+<tr class="row-even"><td><p>abduced</p></td>
+<td><p>purple</p></td>
+<td><p>whatever explains a node (see <a class="reference internal" href="#abduction">Abduction</a>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>A node’s menu has <strong>Mark</strong> ▸ <strong>True</strong>, <strong>False</strong> and <strong>Clear</strong> (for the
+selected nodes, undone in one go) and <strong>Abduce</strong> (see <a class="reference internal" href="#abduction">Abduction</a>),
+<strong>Probes…</strong> (see <a class="reference internal" href="#probes">Probes</a>), <strong>Net</strong> (see <a class="reference internal" href="#canonical-forms-saturation-and-merges">Canonical forms, saturation and
+merges</a>), <strong>Expand</strong> (see <a class="reference internal" href="#protoconnectives-anonymous-nodes-and-factoring">Protoconnectives, anonymous nodes and
+factoring</a>) and <strong>Existence</strong> (see <a class="reference internal" href="#existence">Existence</a>);
+<strong>Reason</strong> propagates the marks (reason again after changing them). The marks are two attributes,
+<code class="docutils literal notranslate"><span class="pre">markTrue</span></code> and <code class="docutils literal notranslate"><span class="pre">markFalse</span></code>, whose values say how (eg: <code class="docutils literal notranslate"><span class="pre">asserted</span></code>): the
+reasoners’ are inferred values, and an asserted one always stands. A net’s
+file’s asserted marks are asserted ones; the marks KNet propagated (and saved)
+are left to the reasoners – the file’s look of them, its fill and outline,
+stays. On KNet’s net of the paper’s figure, the reasoners mark exactly the
+nodes KNet did.</p>
+<p>The bars are a view feature anything can use: a node’s <code class="docutils literal notranslate"><span class="pre">vis/sideBars</span></code> (see
+<a class="reference internal" href="viewing.html"><span class="doc">Viewing</span></a>).</p>
+</section>
+<section id="conjunctions-and-disjunctions">
+<h3>Conjunctions and disjunctions<a class="headerlink" href="#conjunctions-and-disjunctions" title="Link to this heading">¶</a></h3>
+<p>Gaines’s structural connectives are ordinary links with a clause of their
+own: “for every defining link”. A conjunction has heavy arrows to its
+conjuncts (a conjunct includes; one with a bar, a conjunct excludes: “and
+not”), and a disjunction has double arrows from its disjuncts (a disjunct
+includes; one with two bars, a disjunct coexcludes: “or not”). The links are
+what they look like – a conjunction includes its conjuncts, and each
+disjunct includes the disjunction – and the clause adds the rest:</p>
+<ul class="simple">
+<li><p>whatever includes every conjunct (and excludes every excluded one)
+includes the conjunction; and dually, a disjunction includes whatever
+every disjunct includes (and every coexcluded one coexcludes).</p></li>
+<li><p>a conjunction is true when its conjuncts are (true, or false for an
+excluded one), and a disjunction false when its disjuncts are false.</p></li>
+<li><p>a false conjunction whose conjuncts but one are true makes that one false;
+a true disjunction whose disjuncts but one are false makes that one true
+(disjunctive syllogism) – but, as in KNet, not if one of them is marked
+both: that would be reasoning from a contradiction. One that’s only false
+because of a contradiction elsewhere doesn’t stop it (Gaines’s “principle
+of explosion” net).</p></li>
+</ul>
+<p>The four link types are <em>knet.snm</em>’s <em>conjunct includes</em>, <em>conjunct
+excludes</em>, <em>disjunct includes</em> and <em>disjunct coexcludes</em>, SN subtypes of
+the kernel’s, which the reader’s heavy and double arrowhead link types are
+SN subtypes of (a derived one isn’t: it’s an inference, not a definition).
+The clause is the reasoners’ own (see <a class="reference internal" href="concepts.html#defining-links"><span class="std std-ref">Defining links</span></a>), so it works in
+any model, on every engine. On the paper’s connective nets, the reasoners
+mark the nodes KNet did, and infer the links CNet derived through them.
+KNet says how it got every mark after the first step “Definition”; here a
+mark the connectives made is <em>definition</em>, and one the links made on from
+it is <em>included</em>, <em>excluded</em> and so on, as before.</p>
+</section>
+<section id="exploring-and-defaults">
+<h3>Exploring and defaults<a class="headerlink" href="#exploring-and-defaults" title="Link to this heading">¶</a></h3>
+<p>A true disjunction none of whose disjuncts is true yet is open: one of them
+must be, but which? Each disjunct that isn’t false is a case (and dually,
+each conjunct of a false conjunction that isn’t true). The reasoners try
+each case, and drop one that would make a node both true and false (where
+it wasn’t already): what holds in every case that’s left is <em>necessary</em> –
+eg, if every disjunct is part of a false conjunction with Z, Z is false.</p>
+<p>A <strong>Prefer</strong> link (a plain line with a “&gt;” in its middle) from A to B, among
+a connective’s cases, says A yields to B: in a true disjunction, A is false
+while B may be true; in a false conjunction, A is true while B may be false.
+Preferences are transitive. The reasoners keep the cases that break the
+fewest preferences, and what holds in every one of those is the <em>default</em>:
+the “normal defaults” of Gaines’s paper (birds fly, but penguins don’t).
+When a net’s preferences compete, they apply in the order of their
+connectives: a connective’s <code class="docutils literal notranslate"><span class="pre">defaultOrder</span></code> attribute (a number: lower
+first, none is 0) puts it before the rest, as re-sorting KNet’s preferences
+does.</p>
+<p>On the paper’s default nets (normal defaults, Conflict States, P Q,
+Concessive conditionals, art), the reasoners make the necessary and default
+marks KNet saved. For now only the clingo engine explores: the other
+engines give the marks before it.</p>
+</section>
+<section id="probes">
+<h3>Probes<a class="headerlink" href="#probes" title="Link to this heading">¶</a></h3>
+<p>A probe is a way to mark every node of a net – true, false or both – that
+its rules allow, starting from the marks it has (Gaines’s probes and
+coprobes). A node’s menu has <strong>Probes…</strong>: a window with the probes of the
+node’s net, of the kind you choose:</p>
+<ul class="simple">
+<li><p><strong>Consistent</strong>: each node with no mark is true or false, and no node ends
+up both that wasn’t already.</p></li>
+<li><p><strong>Admissible</strong>: those, and, for each node with just one mark that it
+wasn’t asserted to have, the probes in which it’s both – and then those
+in which it has its mark again (so an inconsistent node, false, has
+probes of its own).</p></li>
+<li><p><strong>Compatible</strong>: each node that isn’t asserted is true, false or both (at
+least what it was), and the rules mark the rest; none is dropped.</p></li>
+</ul>
+<p>Each node’s probe sets are the probes it’s true in and those it’s false in,
+and from them the window reconstructs the links that hold, written as KNet
+writes them: A <code class="docutils literal notranslate"><span class="pre">--&gt;</span></code> B (A includes B) if B is true in every probe A is,
+and A false in every probe B is; A <code class="docutils literal notranslate"><span class="pre">&lt;--</span></code> B if B includes A; A <code class="docutils literal notranslate"><span class="pre">-|-</span></code> B
+(excludes) if each is false in every probe the other is true in; and A
+<code class="docutils literal notranslate"><span class="pre">-||-</span></code> B (coexcludes) if each is true in every probe the other is false
+in. The reconstruction finds links the kernel’s rules don’t: eg, that
+what includes A and excludes “A and B” excludes B.</p>
+<p>Nodes that aren’t linked have every combination of each other’s probes: so
+the window shows the probes of each part of the net (its nodes that are
+linked) by itself, and counts the whole net’s. Only the nodes KNet reasons
+about are the net’s – concepts, contexts, constructs and so on, not notes,
+titles or frames – and <strong>Copy</strong> puts the report on the clipboard. On the
+nets of the paper’s probes figures, the probes and reconstructions are the
+ones KNet saved in their notes (all but four, made of an earlier version of
+a net or by an earlier KNet). For now only the clingo engine finds probes.</p>
+</section>
+<section id="canonical-forms-saturation-and-merges">
+<h3>Canonical forms, saturation and merges<a class="headerlink" href="#canonical-forms-saturation-and-merges" title="Link to this heading">¶</a></h3>
+<p>A node’s menu also has <strong>Net</strong>, for the node’s net as a whole (Gaines’s
+section 3). Each change is one command, undone in one go, and says what it
+did in the window’s terminal:</p>
+<ul class="simple">
+<li><p><strong>Minimal form</strong>: take out the net’s links that the rest imply – eg,
+KNet’s derived links, and A includes C beside A includes B and B includes
+C. Each is tried in turn, newest first, leaving out those found so far:
+so of a cycle of inclusions, the links drawn first stay, and the minimal
+form of the maximal form is the net’s.</p></li>
+<li><p><strong>Maximal form</strong>: assert the kernel’s links the net implies (eg: the
+equivalences of a cycle, and what an exclusion is inherited by) – not
+one a link of the net already says, nor one of a node to itself.</p></li>
+<li><p><strong>Saturate</strong>: add the net’s admissible probes (see <a class="reference internal" href="#probes">Probes</a>), as nodes
+of the <em>probe</em> SN type, from outside: “probe 1” and so on, each including
+the nodes true in it and excluding those false in it. A probe isn’t one
+of the net’s nodes: the net’s probes are the same, saturated. At most 64.</p></li>
+<li><p><strong>Check merge with…</strong>: choose another net (a model, or a Rep Plus net
+file), and see, in a window, what merging it into this one would do –
+the nodes with the same label are one: whether it’s consistent (it makes
+no inconsistent links that neither net had), conservative (it makes no
+links between the other net’s nodes that it didn’t have) and
+ultra-conservative (nor between this net’s nodes), with the links it
+makes. Neither net is changed.</p></li>
+</ul>
+<p>The canonical forms work on every engine (they’re ordinary reasoning);
+saturation needs one that finds probes (clingo).</p>
+</section>
+<section id="protoconnectives-anonymous-nodes-and-factoring">
+<h3>Protoconnectives, anonymous nodes and factoring<a class="headerlink" href="#protoconnectives-anonymous-nodes-and-factoring" title="Link to this heading">¶</a></h3>
+<p>Three ways to redraw a net without changing what it says of its nodes
+(Gaines’s sections 2.4, 3.3 and 3.4). Each is one command, undone in one go,
+and says what it made in the window’s terminal:</p>
+<ul>
+<li><p><strong>Net</strong> ▸ <strong>Expand protoconnectives</strong>: a node whose label groups others’
+– “A ∧ B” (or “A &amp; B”: a protoconjunction) or “A ∨ B” (or “A | B”: a
+protodisjunction) – is shorthand: one link drawn to it stands for a link
+to each of them. It’s replaced by its members (the net’s nodes with those
+labels, or new ones) and those links:</p>
+<div class="table-wrapper docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>the link</p></th>
+<th class="head"><p>stands for</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>X includes A ∧ B</p></td>
+<td><p>X includes A, X includes B</p></td>
+</tr>
+<tr class="row-odd"><td><p>A ∨ B includes X</p></td>
+<td><p>A includes X, B includes X</p></td>
+</tr>
+<tr class="row-even"><td><p>X excludes A ∨ B</p></td>
+<td><p>X excludes A, X excludes B (either way round)</p></td>
+</tr>
+<tr class="row-odd"><td><p>X coexcludes A ∧ B</p></td>
+<td><p>X coexcludes A, X coexcludes B (either way
+round)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Gaines’s paper says only that the labels are collected, so that’s this
+reader’s reading of it: an inclusion is of instances (what’s an X is an A
+and a B). A group with any other link (eg: X includes A ∨ B, which says
+less than a link to either) is kept, and the terminal says why. One
+marked true is expanded if it’s a conjunction (its members are true), and
+one marked false if it’s a disjunction (its members are false). A node
+that’s a structural connective (see <a class="reference internal" href="#conjunctions-and-disjunctions">Conjunctions and disjunctions</a>) is
+left alone, whatever its label.</p>
+</li>
+<li><p><strong>Expand</strong> ▸ <strong>Anonymous node below</strong> and <strong>Anonymous node above</strong>: add a
+node with no label (an “ideal element”) that includes the node, or that
+the node includes. With its one link, it says nothing about the rest of
+the net (an ultra-conservative merge): it’s a place to hang more on.
+(Its name is “anonymous 1” and so on: only its label is empty.)</p></li>
+<li><p><strong>Net</strong> ▸ <strong>Factor</strong>: where some nodes each have the same kind of link to
+each of some others, put an anonymous node between them to carry the
+links – eg, I and J each including A, B and C become I and J including
+the anonymous node, which includes A, B and C: five links for six. On the
+net of Gaines’s figure 28, 12 links become 10. It factors inclusions,
+exclusions (the first nodes include the anonymous node, which excludes
+the others) and coexclusions (the anonymous node includes the first
+nodes, and coexcludes the others), wherever that saves links, the biggest
+saving first. The links between the net’s own nodes are still inferred
+(reason to see them).</p></li>
+</ul>
+</section>
+<section id="existence">
+<h3>Existence<a class="headerlink" href="#existence" title="Link to this heading">¶</a></h3>
+<p>Gaines distinguishes five senses in which what a node stands for exists
+(his section 3.5). <strong>Net</strong> ▸ <strong>Existence…</strong> shows, in a window, which of
+them each of the net’s nodes has:</p>
+<div class="table-wrapper docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>sense</p></th>
+<th class="head"><p>the node</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>conceptual</p></td>
+<td><p>is in the net (they all are)</p></td>
+</tr>
+<tr class="row-odd"><td><p>logical</p></td>
+<td><p>is consistent: it has no <em>inconsistent</em> link</p></td>
+</tr>
+<tr class="row-even"><td><p>categorical</p></td>
+<td><p>is specified to be essentially a top node (a maximally
+generic entity)</p></td>
+</tr>
+<tr class="row-odd"><td><p>singular</p></td>
+<td><p>is specified to be essentially a bottom node (a single
+entity)</p></td>
+</tr>
+<tr class="row-even"><td><p>situated</p></td>
+<td><p>is a bottom node of this net: nothing in it includes the
+node, but what’s equivalent to it</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Whether a node is <em>essentially</em> top or bottom isn’t something a net’s links
+can say (another net may put something above it, or below): Gaines has it
+specified from outside the logic. Here that’s a node’s <strong>Existence</strong> menu
+– <strong>Essentially top</strong>, <strong>Essentially bottom</strong> and <strong>Unspecified</strong>, for the
+selected nodes – which sets the node’s <code class="docutils literal notranslate"><span class="pre">existence</span></code> attribute (“top” or
+“bottom”). Under the table, the window lists where the net disagrees with
+what’s specified: an essentially top node that includes something, or an
+essentially bottom node that something includes. It works on every engine.</p>
+</section>
+<section id="abduction">
+<h3>Abduction<a class="headerlink" href="#abduction" title="Link to this heading">¶</a></h3>
+<p><strong>Mark</strong> ▸ <strong>Abduce</strong> is KNet’s abductive inference: what must be so if the
+node is true, whatever explains it. The node’s explanations are the bottom
+nodes below it: those reached by going down the links that include it (from
+each node that includes it, on to those that include that) through nodes
+with no mark, to nodes that nothing includes. Each is tried in turn: the
+net is reasoned over with that node true. A mark that every one of them
+gives a node that had none is <em>abduced</em>, and drawn in purple, as KNet draws
+it. The terminal says what the explanations were, and what was abduced.</p>
+<p>As in KNet, an explanation that makes some node both true and false counts
+all the same; and abduced marks are inferences: the next <strong>Reason</strong> takes
+them out. KNet also leaves out explanations by its preferences, which this
+doesn’t. It works on every engine.</p>
+</section>
+</section>
 <section id="menus-tooltips-and-double-clicks-from-programs">
 <h2>Menus, tooltips and double-clicks from programs<a class="headerlink" href="#menus-tooltips-and-double-clicks-from-programs" title="Link to this heading">¶</a></h2>
 <p>The pythonParser’s menu items, tooltips and double-clicks aren’t built
@@ -688,6 +1150,18 @@ the Developer Guide: <a class="reference internal" href="../developer/extending.
 <li><a class="reference internal" href="#where-plugins-are">Where plugins are</a></li>
 <li><a class="reference internal" href="#the-xml-reader">The XML reader</a></li>
 <li><a class="reference internal" href="#the-python-parser">The Python parser</a></li>
+<li><a class="reference internal" href="#the-rep-plus-net-reader">The Rep Plus net reader</a><ul>
+<li><a class="reference internal" href="#knet-s-kernel">KNet’s kernel</a></li>
+<li><a class="reference internal" href="#truth-marks">Truth marks</a></li>
+<li><a class="reference internal" href="#conjunctions-and-disjunctions">Conjunctions and disjunctions</a></li>
+<li><a class="reference internal" href="#exploring-and-defaults">Exploring and defaults</a></li>
+<li><a class="reference internal" href="#probes">Probes</a></li>
+<li><a class="reference internal" href="#canonical-forms-saturation-and-merges">Canonical forms, saturation and merges</a></li>
+<li><a class="reference internal" href="#protoconnectives-anonymous-nodes-and-factoring">Protoconnectives, anonymous nodes and factoring</a></li>
+<li><a class="reference internal" href="#existence">Existence</a></li>
+<li><a class="reference internal" href="#abduction">Abduction</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#menus-tooltips-and-double-clicks-from-programs">Menus, tooltips and double-clicks from programs</a></li>
 </ul>
 </li>

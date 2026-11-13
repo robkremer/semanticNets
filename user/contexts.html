@@ -253,6 +253,7 @@
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../dev/sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.aboutBox.html">sn.view.graphics.aboutBox module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
@@ -318,9 +319,21 @@
 <li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
 </ul>
 </li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.rnetReader.html">snplugins.rnetReader package</a><input aria-label="Toggle navigation of snplugins.rnetReader package" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.abduction.html">snplugins.rnetReader.abduction module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.existence.html">snplugins.rnetReader.existence module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.expansion.html">snplugins.rnetReader.expansion module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.forms.html">snplugins.rnetReader.forms module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.hooks.html">snplugins.rnetReader.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.probes.html">snplugins.rnetReader.probes module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.rnet.html">snplugins.rnetReader.rnet module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.reader.html">snplugins.rnetReader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.view.html">snplugins.rnetReader.view module</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/snSourceCode.html">Semantic Nets Source Code Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/families.html">Families Models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/homeAutomation.html">Home Automation</a></li>
@@ -404,6 +417,24 @@ contains things.)</p>
 <p>To make one, use <strong>model | new instance of Node</strong> on the background menu and
 choose <em>query</em>, <em>rule</em>, <em>definition</em>, <em>constraint</em> or <em>requirement</em> (or a
 subtype of one of them).</p>
+<section id="collections-boxes-of-facts">
+<h2>Collections: boxes of facts<a class="headerlink" href="#collections-boxes-of-facts" title="Link to this heading">¶</a></h2>
+<p>Every context is a <strong>collection</strong>: the SN type <em>context</em> is a subtype of the
+SN type <em>collection</em>. A collection holds its members by <em>contains</em> relations,
+and is drawn as a window, as a context is. The difference is what the
+contents mean: what a context contains is <strong>quoted</strong> – a pattern, not facts
+– while what a plain collection contains is facts like any others, which
+the reasoner reasons on. A collection is just a box that keeps things
+together (eg: a Rep Plus net’s boxes: see <a class="reference internal" href="exampleApps.html"><span class="doc">Plugins</span></a>).</p>
+<p>Whether a box quotes what it contains is its <strong>quoted</strong> attribute: false on
+the SN type <em>collection</em>, true on <em>context</em> (and so on <em>rule</em>, <em>query</em>,
+…). Your own subtypes can set it either way – eg: a subtype of <em>context</em>
+whose boxes hold facts (as the Rep Plus net reader makes) – and so can a
+single box.</p>
+<p>To make a plain collection, choose <em>collection</em> from <strong>model | new instance
+of Node</strong>. It has one pane, like a query, and any window can go into it
+(eg: a “rules” box holding rules).</p>
+</section>
 <section id="context-windows">
 <h2>Context windows<a class="headerlink" href="#context-windows" title="Link to this heading">¶</a></h2>
 <p>A context is drawn as a <strong>window</strong>: a box with a title bar, holding the
@@ -413,7 +444,8 @@ objects it contains.</p>
 <li><p>A rule’s window is split into two <strong>panes</strong>, <em>antecedent</em> on the left and
 <em>consequent</em> on the right; a definition’s into <em>definiendum</em> and
 <em>definiens</em>; a requirement’s into <em>condition</em> and <em>required</em>. A query, a
-constraint (or a plain context) has a single pane.</p></li>
+constraint (or a plain context) has a single pane. Each pane is one of the
+box’s <strong>parts</strong> (see <a class="reference internal" href="#parts"><span class="std std-ref">Parts: antecedent, consequent, …</span></a>, below).</p></li>
 <li><p>The <strong>triangle</strong> at the left of the title bar collapses the window to its
 title bar (and expands it again). The contents of a collapsed window are
 hidden.</p></li>
@@ -457,15 +489,19 @@ contained in that pane too.
 A contained relation’s label, while it floats (follows its ends), stays in
 its pane, even if one of its ends is moved outside the window. To take the
 relation out of the context, drag its label out.</p></li>
-<li><p>You can also say it explicitly: draw a <em>contains</em> (or <em>antecedent</em>,
-<em>consequent</em>, <em>definiendum</em>, <em>definiens</em>) relation from the window to an
-object. This is the way to put an object in <em>both</em> of a rule’s panes, or to
-have a context contain something that stays outside its window (its arc is
-then drawn).</p></li>
+<li><p>You can also say it explicitly: draw a <em>contains</em> relation from the window
+to an object (or, for one of a rule’s panes, an <em>antecedent</em>, <em>consequent</em>,
+<em>definiendum</em>, <em>definiens</em>, … relation from the rule: it works at once,
+and is moved into the part the next time the model is read – see
+<a class="reference internal" href="#parts"><span class="std std-ref">Parts: antecedent, consequent, …</span></a>). This is the way to put an object in <em>both</em> of a rule’s
+panes, or to have a context contain something that stays outside its
+window (its arc is then drawn).</p></li>
 </ul>
 <p>Windows can be nested: an object dropped where windows overlap goes into the
-innermost one. A window goes only into a plain context, though: one dropped on
-a rule, definition or requirement isn’t put in it, but pushed off it.</p>
+innermost one. A window goes only into a one-pane window (a plain context, a
+query, a constraint or a collection – or a rule, definition or requirement
+showing its parts as boxes), though: one dropped on a rule’s panes isn’t put
+in it, but pushed off it.</p>
 <p>A window holds only what its context contains – and the relations between
 things it holds (eg: a pattern relation’s isa link to its type variable),
 which needn’t be contained themselves. Anything else that ends up in it – a window dropped or expanded over it, an object dropped half on its
@@ -483,6 +519,53 @@ if there’s no room.</p>
 <p>The layouts (arranged now, or kept arranged) don’t arrange what’s in
 windows, and don’t put anything on a window: a window that what they arrange
 would land on is moved aside, the least it takes, carrying its contents.</p>
+</section>
+<section id="parts-antecedent-consequent">
+<span id="parts"></span><h2>Parts: antecedent, consequent, …<a class="headerlink" href="#parts-antecedent-consequent" title="Link to this heading">¶</a></h2>
+<p>A rule’s antecedent and its consequent are each a <strong>part</strong>: a plain context
+of its own, holding its graph by <em>contains</em> relations. The rule holds the
+part by an <em>antecedent</em> or <em>consequent</em> relation (a definition by
+<em>definiendum</em> and <em>definiens</em>, a requirement by <em>condition</em> and <em>required</em>):
+these are SN subtypes of <em>contains</em>, and the relation’s SN type is what says
+what the part is to its box – the part itself is just a context, named for
+what it is (“antecedent”, …). A part is made when it’s first needed: the
+first time you put something in that pane.</p>
+<ul class="simple">
+<li><p><strong>show parts as boxes</strong> (on the window’s menu) draws each part as a window
+of its own, inside its box, where its pane was, carrying what’s in it: it
+can be moved, resized, collapsed and nested like any window, and has its
+own menu. <strong>show parts as panes</strong> puts them back. This is the box’s
+<code class="docutils literal notranslate"><span class="pre">vis/tileParts</span></code> attribute: true on the SN types <em>rule</em>, <em>definition</em> and
+<em>requirement</em>, false on everything else, so your own SN subtypes of them
+start as panes too – and it’s saved with the model, and undone like any
+change.</p></li>
+<li><p>A rule with <strong>more than one antecedent</strong> means “or”: it concludes its
+consequent wherever <em>any</em> of its antecedents matches. Each antecedent has
+a pane of its own (“antecedent”, “antecedent 2”, …). To add one, make a
+context and draw an <em>antecedent</em> relation from the rule to it.</p></li>
+<li><p>A requirement with more than one condition likewise requires what it
+requires wherever any of its conditions matches.</p></li>
+<li><p>A definition with more than one definiens (meaning) is used one way only:
+each meaning gives the term defined, but the term can’t say which meaning
+holds. The reasoner warns about it.</p></li>
+<li><p>A part should belong to just one box, and should quote what it holds: a
+part that’s another box’s too, or that’s a plain collection (whose
+contents are facts), or a part the box’s SN type doesn’t have (eg: a
+rule’s <em>condition</em>) is warned about, in its box’s error report. Such
+things can happen while a rule is being made, so they’re warnings, not
+errors.</p></li>
+<li><p>A SN subtype of <em>rule</em> (say) can have parts of its own: a <em>contains</em>
+relation type whose source is the new SN type (eg: <em>unless</em>, for a rule
+with exceptions) gives it a pane of that name. (What the reasoner makes of
+it is up to you: it reads only antecedents and consequents.)</p></li>
+</ul>
+<p>A model saved before there were parts (its rules held their graphs directly,
+by <em>antecedent</em>, <em>consequent</em>, … relations) is <strong>converted</strong> when it’s
+read: each of those relations becomes a <em>contains</em> relation from the new
+part – the same relation, with the same id, so views of it still show it.
+The terminal says so, and the model is marked as changed: save it to keep
+the new form. (A model you can’t save is left as it is, and still works:
+what a rule holds directly counts as in its part.)</p>
 </section>
 <section id="variables">
 <h2>Variables<a class="headerlink" href="#variables" title="Link to this heading">¶</a></h2>
@@ -857,8 +940,10 @@ shows them as any rule’s (for debugging the base rules).</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Contexts: Rules, Definitions, Queries, Constraints and Requirements</a><ul>
+<li><a class="reference internal" href="#collections-boxes-of-facts">Collections: boxes of facts</a></li>
 <li><a class="reference internal" href="#context-windows">Context windows</a></li>
 <li><a class="reference internal" href="#putting-things-into-a-window">Putting things into a window</a></li>
+<li><a class="reference internal" href="#parts-antecedent-consequent">Parts: antecedent, consequent, …</a></li>
 <li><a class="reference internal" href="#variables">Variables</a></li>
 <li><a class="reference internal" href="#constraints">Constraints</a></li>
 <li><a class="reference internal" href="#rules">Rules</a></li>

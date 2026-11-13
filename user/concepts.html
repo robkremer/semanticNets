@@ -253,6 +253,7 @@
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../dev/sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.aboutBox.html">sn.view.graphics.aboutBox module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
@@ -318,9 +319,21 @@
 <li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
 </ul>
 </li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.rnetReader.html">snplugins.rnetReader package</a><input aria-label="Toggle navigation of snplugins.rnetReader package" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.abduction.html">snplugins.rnetReader.abduction module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.existence.html">snplugins.rnetReader.existence module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.expansion.html">snplugins.rnetReader.expansion module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.forms.html">snplugins.rnetReader.forms module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.hooks.html">snplugins.rnetReader.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.probes.html">snplugins.rnetReader.probes module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.rnet.html">snplugins.rnetReader.rnet module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.reader.html">snplugins.rnetReader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.view.html">snplugins.rnetReader.view module</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/snSourceCode.html">Semantic Nets Source Code Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/families.html">Families Models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/homeAutomation.html">Home Automation</a></li>
@@ -475,6 +488,50 @@ said of mary.</p></li>
 – which needs no “every person has a father” rule.</p></li>
 </ul>
 </section>
+<section id="defining-links">
+<span id="id1"></span><h2>Defining links<a class="headerlink" href="#defining-links" title="Link to this heading">¶</a></h2>
+<p>A relation type can make its links <em>define</em> a node, as a conjunction is
+defined by its conjuncts (Brian Gaines’s structural connectives: see
+<a class="reference internal" href="exampleApps.html"><span class="doc">Plugins</span></a>). Tag it <code class="docutils literal notranslate"><span class="pre">meet</span></code> (the node’s own links define it) or
+<code class="docutils literal notranslate"><span class="pre">join</span></code> (the links to it do), with the name of the relation its links
+require, <em>P</em>; and, if that isn’t it, <code class="docutils literal notranslate"><span class="pre">order</span></code>: the relation the node is
+defined in, <em>Q</em>. Then:</p>
+<ul class="simple">
+<li><p>a node C with <strong>meet</strong> links to A1 … An is their meet: whatever has P
+to every Ai has Q to C. With <em>includes</em> for both: whatever includes every
+conjunct includes the conjunction.</p></li>
+<li><p>a node D with <strong>join</strong> links from A1 … An is their join: D has Q to
+whatever every Ai has P to. Whatever every disjunct includes, the
+disjunction includes.</p></li>
+</ul>
+<p>Each link requires its own type’s P, so one node can mix them: a link whose
+P is the order is positive (its end counts as having Q to itself); any other
+is negative (eg: a conjunct that’s excluded, whose P is <em>excludes</em>: whatever
+includes A and excludes B includes “A and not B”). Unlike the relational
+properties, these tags are inherited: a subtype of a conjunct link is one.</p>
+<p>With truth attributes too – <code class="docutils literal notranslate"><span class="pre">trueMark</span></code> and <code class="docutils literal notranslate"><span class="pre">falseMark</span></code>, the names of
+the attributes that say a node is true or false (both, for Belnap’s
+“both”), and <code class="docutils literal notranslate"><span class="pre">markValue</span></code>, the value concluded (<code class="docutils literal notranslate"><span class="pre">true</span></code> if it hasn’t one)
+– a link holds when its end is true (false, for a negative one) and fails
+when it’s the other. A meet is true when all its links hold, and a join
+false when they all fail; a false meet all of whose links but one hold makes
+that one fail, and a true join all of whose links but one fail makes that
+one hold – unless one of the links’ ends is marked both (only by its own
+marks: not the concluded ones), which would be reasoning from a
+contradiction.</p>
+<p>With <code class="docutils literal notranslate"><span class="pre">necessaryValue</span></code> too, a reasoner explores: a true join none of whose
+links holds yet (a false meet none of whose links fails) has a case for each
+link that might, and a case that would give a node both marks (where it
+hadn’t them already) is impossible. What every possible case concludes is
+concluded, with that value. And with <code class="docutils literal notranslate"><span class="pre">prefer</span></code>, the name of a relation
+among the links’ ends (A <em>prefer</em> B: A yields to B), and <code class="docutils literal notranslate"><span class="pre">defaultValue</span></code>,
+the reasoner keeps the cases that make the fewest preferred ends fail, and
+what every one of those concludes is concluded with the default value (A’s
+link fails while B’s might hold): the defaults. Competing preferences apply
+in the order of the nodes they define: a node’s <code class="docutils literal notranslate"><span class="pre">defaultOrder</span></code> (a number;
+lower first, none is 0), then the model’s order. So far only the clingo
+engine explores.</p>
+</section>
 <section id="naming-relations">
 <h2>Naming relations<a class="headerlink" href="#naming-relations" title="Link to this heading">¶</a></h2>
 <p>A relation’s name has to say which way it reads: does <em>fred -parent-&gt; mary</em>
@@ -578,6 +635,7 @@ can have several views; a view never changes what the model says.</p>
 <li><a class="reference internal" href="#types-and-individuals">Types and individuals</a></li>
 <li><a class="reference internal" href="#relational-properties">Relational properties</a></li>
 <li><a class="reference internal" href="#cardinality">Cardinality</a></li>
+<li><a class="reference internal" href="#defining-links">Defining links</a></li>
 <li><a class="reference internal" href="#naming-relations">Naming relations</a></li>
 <li><a class="reference internal" href="#attributes">Attributes</a></li>
 <li><a class="reference internal" href="#models">Models</a></li>

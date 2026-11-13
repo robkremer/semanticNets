@@ -253,6 +253,7 @@
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.aboutBox.html">sn.view.graphics.aboutBox module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
@@ -318,9 +319,21 @@
 <li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
 </ul>
 </li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.rnetReader.html">snplugins.rnetReader package</a><input aria-label="Toggle navigation of snplugins.rnetReader package" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.abduction.html">snplugins.rnetReader.abduction module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.existence.html">snplugins.rnetReader.existence module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.expansion.html">snplugins.rnetReader.expansion module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.forms.html">snplugins.rnetReader.forms module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.hooks.html">snplugins.rnetReader.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.probes.html">snplugins.rnetReader.probes module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.rnet.html">snplugins.rnetReader.rnet module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.reader.html">snplugins.rnetReader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.view.html">snplugins.rnetReader.view module</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/snSourceCode.html">Semantic Nets Source Code Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/families.html">Families Models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/homeAutomation.html">Home Automation</a></li>
@@ -414,7 +427,9 @@ vocabulary is the contract every engine reasons over:</p>
 irreflexive, symmetric, asymmetric, transitive)</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">member(C,M)</span></code></p></td>
-<td><p>Collection membership</p></td>
+<td><p>M is a member of box C: a collection (of any Python
+class) that doesn’t quote what it contains (see
+GraphObject.isCollection(), quotesContents())</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">attr(O,K,V)</span></code></p></td>
 <td><p>effective non-“vis/” scalar attributes</p></td>
@@ -437,6 +452,38 @@ by T (Max -1: any number). See <em>CARDINALITY</em>.</p></td>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">var_kind(X,K)</span></code></p></td>
 <td><p>X is a variable over K: individual, type or any
 (see GraphObject.variableKind() and sn.model.names)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">def_part(C,D,I,A,P,Pol)</span></code></p></td>
+<td><p>node C is defined by its links (see <em>DEFINING</em>):
+D is <em>meet</em> or <em>join</em>; its Ith (from 1) defining
+link is to A (from A, for a join); P is the
+relation it requires; Pol <em>pos</em> if P is the
+order (<em>neg</em> if not)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">def_last(C,D,N,Q,R)</span></code></p></td>
+<td><p>C has N such links; Q is the order; R the tagged
+relation type (the first link’s)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">def_marks(C,D,TK,FK,V)</span></code></p></td>
+<td><p>their truth attributes: true’s and false’s keys,
+and the value concluded</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">def_mixed(C,D)</span></code></p></td>
+<td><p>one of the links’ other ends has both (locally)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">def_world(C,D,NV,DV)</span></code></p></td>
+<td><p>C’s links are explored, in worlds (see
+<em>DEFINING</em>): NV is the value of the marks every
+world has, DV the value of those every
+preferred world has</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">def_prefer(C,D,P)</span></code></p></td>
+<td><p>… and their ends are preferred by P (a
+relation type: A -P-&gt; B, A yields to B)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">def_rank(C,D,K)</span></code></p></td>
+<td><p>… and C’s preferences come Kth from last
+(the highest K first: see <em>DEFAULT_ORDER</em>)</p></td>
 </tr>
 </tbody>
 </table>
@@ -476,6 +523,123 @@ the objects the rules invent the same object (as each other, or as a named
 one); and exactly one invents one where the model has none.</p>
 </dd></dl>
 
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.model.reasoner.DEFINING">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">DEFINING</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'join':</span> <span class="pre">'in',</span> <span class="pre">'meet':</span> <span class="pre">'out'}</span></span><a class="headerlink" href="#sn.model.reasoner.DEFINING" title="Link to this definition">¶</a></dt>
+<dd><p>The attributes of a relation type that make its links define a node (Gaines’s
+structural connectives: his iterative clause), and which of the node’s links
+they are: its own (<em>out</em>), or those to it (<em>in</em>). Unlike the relational
+properties, they’re inherited by the type’s subtypes (a subtype of a
+conjunct link is one). The value is the name of a relation type, P (the
+relation its links require); and the type can also have:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">order</span></code>: the name of the order relation (Q) the node is defined in (P if
+it hasn’t): taken to be reflexive – everything is ordered before itself.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">trueMark</span></code>, <code class="docutils literal notranslate"><span class="pre">falseMark</span></code>, <code class="docutils literal notranslate"><span class="pre">markValue</span></code>: truth attributes’ keys, and
+the value to conclude (see below).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">necessaryValue</span></code>, <code class="docutils literal notranslate"><span class="pre">defaultValue</span></code>, <code class="docutils literal notranslate"><span class="pre">prefer</span></code>: with the truth
+attributes, explore the node’s cases (see below): the values to conclude
+for what every world has, and for what every preferred world has
+(<em>necessaryValue</em>, if it hasn’t); and the name of the relation type that
+says which of its links’ other ends are preferred.</p></li>
+</ul>
+</div></blockquote>
+<p>A node C with (asserted) <em>meet</em> links to A1..An is their meet: whatever has P
+to each Ai (Pi, each link’s own) has Q to C – eg, with P and Q includes,
+whatever includes every conjunct includes the conjunction. A link whose P is
+Q is positive (C -Q-&gt; Ai: the link is a Q, as a conjunct includes), and its
+Ai counts as having Q to itself; any other is negative (eg: a conjunct
+excludes, whose P is excludes). And dually, a node D with <em>join</em> links from
+A1..An is their join: D has Q to whatever each Ai has Pi to. (A node that has
+no such links isn’t defined: nothing is concluded about it.)</p>
+<p>With truth attributes (<em>trueMark</em>, <em>falseMark</em>: eg, the KNet rules model’s
+markTrue and markFalse), a defining link holds when its other end has
+<em>trueMark</em> (or <em>falseMark</em>, if it’s negative), and fails when it has the
+other; and so (Belnap’s four values: a node may have both):</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>a meet has <em>trueMark</em> (the value <em>markValue</em>) when all its links hold,
+and a join <em>falseMark</em> when all of them fail;</p></li>
+<li><p>a meet that has <em>falseMark</em>, all of whose links but one hold, makes that
+one fail (its end gets the mark that does that); and a join that has
+<em>trueMark</em>, all of whose links but one fail, makes that one hold –
+unless one of its links’ other ends was given both marks (it’s
+inconsistent: as KNet does, that blocks disjunctive syllogism, and its
+dual). That’s the asserted (local) marks: one that both its marks were
+concluded for doesn’t block it (it would take negation through the
+marks’ own propagation).</p></li>
+</ul>
+</div></blockquote>
+<p>(That a link’s failing makes a meet false, and its holding a join true, is
+just what the links themselves are: eg: a conjunct includes is an includes.)</p>
+<p>With <em>necessaryValue</em> too, a true join none of whose links hold (and a false
+meet none of whose links fail) is explored, as KNet’s Explore does: each of
+its links that doesn’t fail (doesn’t hold) is a case – a world in which it
+holds (fails) – and so is each case of the nodes that makes true (false),
+and so on; a world in which a node gets both marks that didn’t have them
+both already is incoherent, and isn’t one. What every world has, the node
+has: with <em>necessaryValue</em> (eg: a join of A and B, each of which includes C,
+makes C true). And with <em>prefer</em>, the links’ ends are preferred (Gaines’s
+preferences, KNet’s normal defaults): in each world, a link whose end yields
+to (has <em>prefer</em> to) one that doesn’t fail fails itself, and (dually) one
+that yields to one that doesn’t hold, in an explored meet, holds – and the
+preferred worlds are those whose preferred ends fail (hold) least, node by
+node, in the order of <em>DEFAULT_ORDER</em>, the first first. What every preferred
+world has, the node has: with <em>defaultValue</em>. (What every world has isn’t
+the default too: it’s necessary.) So far just the clingo engine explores.</p>
+<p>The engines conclude these as the tagged relation type’s: <em>fired</em> and
+<em>rule_attr</em> with it as the “rule”. See <em>Reasoner._definingFacts()</em> for the
+facts they get.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.model.reasoner.DEFAULT_ORDER">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_ORDER</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'defaultOrder'</span></span><a class="headerlink" href="#sn.model.reasoner.DEFAULT_ORDER" title="Link to this definition">¶</a></dt>
+<dd><p>The attribute of a defined node (see <em>DEFINING</em>) that says when its
+preferences come: those whose value is less first (the value is a number:
+none is 0), and otherwise in the order the nodes are in the models – as KNet
+takes them in the order they’re in the net (the user can sort them).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.model.reasoner.PROBE_KINDS">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">PROBE_KINDS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('consistent',</span> <span class="pre">'admissible',</span> <span class="pre">'compatible')</span></span><a class="headerlink" href="#sn.model.reasoner.PROBE_KINDS" title="Link to this definition">¶</a></dt>
+<dd><p>The kinds of Gaines’s probes an engine that can find them finds (see
+<em>probingEngine()</em>, and <em>sn.model.clingoReasoner.ClingoReasoner.probes()</em>):
+KNet’s consistent, admissible and compatible probes.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.model.reasoner.PROBE_LIMIT">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">PROBE_LIMIT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4096</span></span><a class="headerlink" href="#sn.model.reasoner.PROBE_LIMIT" title="Link to this definition">¶</a></dt>
+<dd><p>The most probes an engine finds unless it’s told otherwise: they can be exponentially many (see <em>TooManyProbes</em>).</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="sn.model.reasoner.TooManyProbes">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">TooManyProbes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">limit</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.TooManyProbes" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>There are more probes than the limit: a net’s probes can be as many as two
+to the power of its nodes (every combination of the marks of nodes that
+aren’t linked).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>limit</strong> (<em>int</em>)</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.reasoner.TooManyProbes.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">limit</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.TooManyProbes.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>limit</strong> (<em>int</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="sn.model.reasoner.parseCardinality">
 <span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">parseCardinality</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.parseCardinality" title="Link to this definition">¶</a></dt>
@@ -499,7 +663,7 @@ missing: “1..”) for any number.</p>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="sn.model.reasoner._MESSAGES">
-<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">_MESSAGES</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'asymmetric':</span> <span class="pre">'asymmetric</span> <span class="pre">{0}</span> <span class="pre">relates</span> <span class="pre">{1}</span> <span class="pre">and</span> <span class="pre">{2}</span> <span class="pre">both</span> <span class="pre">ways',</span> <span class="pre">'bad_cardinality':</span> <span class="pre">&quot;{0}:</span> <span class="pre">its</span> <span class="pre">{1}</span> <span class="pre">can't</span> <span class="pre">be</span> <span class="pre">read:</span> <span class="pre">{2}&quot;,</span> <span class="pre">'bad_constraints':</span> <span class="pre">&quot;{0}:</span> <span class="pre">the</span> <span class="pre">constraints</span> <span class="pre">of</span> <span class="pre">{1}</span> <span class="pre">can't</span> <span class="pre">be</span> <span class="pre">read:</span> <span class="pre">{2}&quot;,</span> <span class="pre">'cardinality_max':</span> <span class="pre">'{0}:</span> <span class="pre">{2}</span> <span class="pre">different</span> <span class="pre">objects</span> <span class="pre">by</span> <span class="pre">{1},</span> <span class="pre">but</span> <span class="pre">it</span> <span class="pre">allows</span> <span class="pre">at</span> <span class="pre">most</span> <span class="pre">{3}',</span> <span class="pre">'cardinality_max_in':</span> <span class="pre">'{0}:</span> <span class="pre">{2}</span> <span class="pre">different</span> <span class="pre">objects</span> <span class="pre">have</span> <span class="pre">it</span> <span class="pre">by</span> <span class="pre">{1},</span> <span class="pre">but</span> <span class="pre">it</span> <span class="pre">allows</span> <span class="pre">at</span> <span class="pre">most</span> <span class="pre">{3}',</span> <span class="pre">'cardinality_min':</span> <span class="pre">'{0}:</span> <span class="pre">{2}</span> <span class="pre">by</span> <span class="pre">{1},</span> <span class="pre">but</span> <span class="pre">it</span> <span class="pre">needs</span> <span class="pre">at</span> <span class="pre">least</span> <span class="pre">{3}',</span> <span class="pre">'cardinality_min_in':</span> <span class="pre">'{0}:</span> <span class="pre">{2}</span> <span class="pre">have</span> <span class="pre">it</span> <span class="pre">by</span> <span class="pre">{1},</span> <span class="pre">but</span> <span class="pre">it</span> <span class="pre">needs</span> <span class="pre">at</span> <span class="pre">least</span> <span class="pre">{3}',</span> <span class="pre">'constraint_report':</span> <span class="pre">&quot;constraint</span> <span class="pre">{0}:</span> <span class="pre">{1}</span> <span class="pre">in</span> <span class="pre">its</span> <span class="pre">report</span> <span class="pre">isn't</span> <span class="pre">one</span> <span class="pre">of</span> <span class="pre">its</span> <span class="pre">variables&quot;,</span> <span class="pre">'constraint_severity':</span> <span class="pre">'constraint</span> <span class="pre">{0}:</span> <span class="pre">its</span> <span class="pre">severity</span> <span class="pre">is</span> <span class="pre">{1};</span> <span class="pre">it</span> <span class="pre">should</span> <span class="pre">be</span> <span class="pre">error</span> <span class="pre">or</span> <span class="pre">warning',</span> <span class="pre">'domain':</span> <span class="pre">'{2},</span> <span class="pre">the</span> <span class="pre">source</span> <span class="pre">of</span> <span class="pre">{0},</span> <span class="pre">is</span> <span class="pre">not</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">domain</span> <span class="pre">of</span> <span class="pre">{1}</span> <span class="pre">({3})',</span> <span class="pre">'irreflexive':</span> <span class="pre">'irreflexive</span> <span class="pre">{0}</span> <span class="pre">relates</span> <span class="pre">{1}</span> <span class="pre">to</span> <span class="pre">itself',</span> <span class="pre">'isa_cycle':</span> <span class="pre">'{0}</span> <span class="pre">is</span> <span class="pre">in</span> <span class="pre">an</span> <span class="pre">isa</span> <span class="pre">cycle</span> <span class="pre">through</span> <span class="pre">{1}',</span> <span class="pre">'isa_individual_parent':</span> <span class="pre">'{0}</span> <span class="pre">isa</span> <span class="pre">individual</span> <span class="pre">{1}',</span> <span class="pre">'node_isa_relation':</span> <span class="pre">'node</span> <span class="pre">{0}</span> <span class="pre">isa</span> <span class="pre">{1}',</span> <span class="pre">'pattern_disconnected':</span> <span class="pre">&quot;{0}:</span> <span class="pre">its</span> <span class="pre">{1}</span> <span class="pre">is</span> <span class="pre">in</span> <span class="pre">parts</span> <span class="pre">that</span> <span class="pre">aren't</span> <span class="pre">related</span> <span class="pre">to</span> <span class="pre">each</span> <span class="pre">other</span> <span class="pre">({2}):</span> <span class="pre">every</span> <span class="pre">match</span> <span class="pre">of</span> <span class="pre">one</span> <span class="pre">is</span> <span class="pre">paired</span> <span class="pre">with</span> <span class="pre">every</span> <span class="pre">match</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">others&quot;,</span> <span class="pre">'property_conflict':</span> <span class="pre">'{0}</span> <span class="pre">is</span> <span class="pre">both</span> <span class="pre">{1}</span> <span class="pre">and</span> <span class="pre">{2}',</span> <span class="pre">'range':</span> <span class="pre">'{2},</span> <span class="pre">the</span> <span class="pre">destination</span> <span class="pre">of</span> <span class="pre">{0},</span> <span class="pre">is</span> <span class="pre">not</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">range</span> <span class="pre">of</span> <span class="pre">{1}</span> <span class="pre">({3})',</span> <span class="pre">'redundant_parent':</span> <span class="pre">'{0}</span> <span class="pre">has</span> <span class="pre">redundant</span> <span class="pre">parent</span> <span class="pre">{1}</span> <span class="pre">(already</span> <span class="pre">implied</span> <span class="pre">by</span> <span class="pre">{2})',</span> <span class="pre">'relation_isa_node':</span> <span class="pre">'relation</span> <span class="pre">{0}</span> <span class="pre">isa</span> <span class="pre">{1}',</span> <span class="pre">'requirement_empty':</span> <span class="pre">&quot;requirement</span> <span class="pre">{0}:</span> <span class="pre">nothing</span> <span class="pre">is</span> <span class="pre">required</span> <span class="pre">(its</span> <span class="pre">required</span> <span class="pre">pane</span> <span class="pre">is</span> <span class="pre">empty),</span> <span class="pre">so</span> <span class="pre">it</span> <span class="pre">can't</span> <span class="pre">be</span> <span class="pre">violated&quot;,</span> <span class="pre">'requirement_unanchored':</span> <span class="pre">&quot;requirement</span> <span class="pre">{0}:</span> <span class="pre">{1}</span> <span class="pre">in</span> <span class="pre">its</span> <span class="pre">required</span> <span class="pre">part</span> <span class="pre">isn't</span> <span class="pre">related</span> <span class="pre">to</span> <span class="pre">its</span> <span class="pre">condition:</span> <span class="pre">it</span> <span class="pre">only</span> <span class="pre">checks</span> <span class="pre">that</span> <span class="pre">something</span> <span class="pre">like</span> <span class="pre">it</span> <span class="pre">exists&quot;,</span> <span class="pre">'rule_negated':</span> <span class="pre">&quot;rule</span> <span class="pre">{0}:</span> <span class="pre">{1}</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">consequent</span> <span class="pre">has</span> <span class="pre">a</span> <span class="pre">negated</span> <span class="pre">constraint</span> <span class="pre">({2}):</span> <span class="pre">a</span> <span class="pre">rule</span> <span class="pre">can't</span> <span class="pre">conclude</span> <span class="pre">that</span> <span class="pre">something</span> <span class="pre">isn't</span> <span class="pre">so&quot;,</span> <span class="pre">'rule_open_end':</span> <span class="pre">'rule</span> <span class="pre">{0}:</span> <span class="pre">{1}</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">consequent</span> <span class="pre">has</span> <span class="pre">no</span> <span class="pre">{2}',</span> <span class="pre">'rule_unbound':</span> <span class="pre">&quot;rule</span> <span class="pre">{0}:</span> <span class="pre">{1}</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">consequent</span> <span class="pre">isn't</span> <span class="pre">bound</span> <span class="pre">by</span> <span class="pre">the</span> <span class="pre">antecedent&quot;,</span> <span class="pre">'rule_unsupported':</span> <span class="pre">&quot;rule</span> <span class="pre">{0}:</span> <span class="pre">{1}</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">consequent</span> <span class="pre">isn't</span> <span class="pre">supported</span> <span class="pre">(yet)&quot;,</span> <span class="pre">'unset_endpoint':</span> <span class="pre">&quot;{0}</span> <span class="pre">has</span> <span class="pre">no</span> <span class="pre">local</span> <span class="pre">{1};</span> <span class="pre">it</span> <span class="pre">inherits</span> <span class="pre">its</span> <span class="pre">type's&quot;,</span> <span class="pre">'unused_variable':</span> <span class="pre">&quot;{0}</span> <span class="pre">is</span> <span class="pre">a</span> <span class="pre">variable</span> <span class="pre">(by</span> <span class="pre">its</span> <span class="pre">name),</span> <span class="pre">but</span> <span class="pre">isn't</span> <span class="pre">in</span> <span class="pre">any</span> <span class="pre">query,</span> <span class="pre">rule,</span> <span class="pre">definition,</span> <span class="pre">constraint</span> <span class="pre">or</span> <span class="pre">requirement:</span> <span class="pre">it,</span> <span class="pre">and</span> <span class="pre">its</span> <span class="pre">relations,</span> <span class="pre">are</span> <span class="pre">ignored</span> <span class="pre">--</span> <span class="pre">to</span> <span class="pre">stand</span> <span class="pre">for</span> <span class="pre">someone</span> <span class="pre">unknown,</span> <span class="pre">give</span> <span class="pre">it</span> <span class="pre">an</span> <span class="pre">ordinary</span> <span class="pre">name&quot;,</span> <span class="pre">'variable_kind':</span> <span class="pre">&quot;{0}:</span> <span class="pre">its</span> <span class="pre">name</span> <span class="pre">makes</span> <span class="pre">it</span> <span class="pre">a</span> <span class="pre">variable</span> <span class="pre">over</span> <span class="pre">{1}s,</span> <span class="pre">but</span> <span class="pre">it's</span> <span class="pre">{2}&quot;}</span></span><a class="headerlink" href="#sn.model.reasoner._MESSAGES" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">_MESSAGES</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'asymmetric':</span> <span class="pre">'asymmetric</span> <span class="pre">{0}</span> <span class="pre">relates</span> <span class="pre">{1}</span> <span class="pre">and</span> <span class="pre">{2}</span> <span class="pre">both</span> <span class="pre">ways',</span> <span class="pre">'bad_cardinality':</span> <span class="pre">&quot;{0}:</span> <span class="pre">its</span> <span class="pre">{1}</span> <span class="pre">can't</span> <span class="pre">be</span> <span class="pre">read:</span> <span class="pre">{2}&quot;,</span> <span class="pre">'bad_constraints':</span> <span class="pre">&quot;{0}:</span> <span class="pre">the</span> <span class="pre">constraints</span> <span class="pre">of</span> <span class="pre">{1}</span> <span class="pre">can't</span> <span class="pre">be</span> <span class="pre">read:</span> <span class="pre">{2}&quot;,</span> <span class="pre">'cardinality_max':</span> <span class="pre">'{0}:</span> <span class="pre">{2}</span> <span class="pre">different</span> <span class="pre">objects</span> <span class="pre">by</span> <span class="pre">{1},</span> <span class="pre">but</span> <span class="pre">it</span> <span class="pre">allows</span> <span class="pre">at</span> <span class="pre">most</span> <span class="pre">{3}',</span> <span class="pre">'cardinality_max_in':</span> <span class="pre">'{0}:</span> <span class="pre">{2}</span> <span class="pre">different</span> <span class="pre">objects</span> <span class="pre">have</span> <span class="pre">it</span> <span class="pre">by</span> <span class="pre">{1},</span> <span class="pre">but</span> <span class="pre">it</span> <span class="pre">allows</span> <span class="pre">at</span> <span class="pre">most</span> <span class="pre">{3}',</span> <span class="pre">'cardinality_min':</span> <span class="pre">'{0}:</span> <span class="pre">{2}</span> <span class="pre">by</span> <span class="pre">{1},</span> <span class="pre">but</span> <span class="pre">it</span> <span class="pre">needs</span> <span class="pre">at</span> <span class="pre">least</span> <span class="pre">{3}',</span> <span class="pre">'cardinality_min_in':</span> <span class="pre">'{0}:</span> <span class="pre">{2}</span> <span class="pre">have</span> <span class="pre">it</span> <span class="pre">by</span> <span class="pre">{1},</span> <span class="pre">but</span> <span class="pre">it</span> <span class="pre">needs</span> <span class="pre">at</span> <span class="pre">least</span> <span class="pre">{3}',</span> <span class="pre">'constraint_report':</span> <span class="pre">&quot;constraint</span> <span class="pre">{0}:</span> <span class="pre">{1}</span> <span class="pre">in</span> <span class="pre">its</span> <span class="pre">report</span> <span class="pre">isn't</span> <span class="pre">one</span> <span class="pre">of</span> <span class="pre">its</span> <span class="pre">variables&quot;,</span> <span class="pre">'constraint_severity':</span> <span class="pre">'constraint</span> <span class="pre">{0}:</span> <span class="pre">its</span> <span class="pre">severity</span> <span class="pre">is</span> <span class="pre">{1};</span> <span class="pre">it</span> <span class="pre">should</span> <span class="pre">be</span> <span class="pre">error</span> <span class="pre">or</span> <span class="pre">warning',</span> <span class="pre">'definition_one_way':</span> <span class="pre">&quot;definition</span> <span class="pre">{0}:</span> <span class="pre">it</span> <span class="pre">has</span> <span class="pre">{1}</span> <span class="pre">definiens</span> <span class="pre">parts</span> <span class="pre">(meanings),</span> <span class="pre">so</span> <span class="pre">it's</span> <span class="pre">used</span> <span class="pre">one</span> <span class="pre">way</span> <span class="pre">only:</span> <span class="pre">each</span> <span class="pre">meaning</span> <span class="pre">gives</span> <span class="pre">the</span> <span class="pre">term</span> <span class="pre">defined,</span> <span class="pre">but</span> <span class="pre">the</span> <span class="pre">term</span> <span class="pre">can't</span> <span class="pre">say</span> <span class="pre">which</span> <span class="pre">meaning</span> <span class="pre">holds&quot;,</span> <span class="pre">'domain':</span> <span class="pre">'{2},</span> <span class="pre">the</span> <span class="pre">source</span> <span class="pre">of</span> <span class="pre">{0},</span> <span class="pre">is</span> <span class="pre">not</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">domain</span> <span class="pre">of</span> <span class="pre">{1}</span> <span class="pre">({3})',</span> <span class="pre">'irreflexive':</span> <span class="pre">'irreflexive</span> <span class="pre">{0}</span> <span class="pre">relates</span> <span class="pre">{1}</span> <span class="pre">to</span> <span class="pre">itself',</span> <span class="pre">'isa_cycle':</span> <span class="pre">'{0}</span> <span class="pre">is</span> <span class="pre">in</span> <span class="pre">an</span> <span class="pre">isa</span> <span class="pre">cycle</span> <span class="pre">through</span> <span class="pre">{1}',</span> <span class="pre">'isa_individual_parent':</span> <span class="pre">'{0}</span> <span class="pre">isa</span> <span class="pre">individual</span> <span class="pre">{1}',</span> <span class="pre">'node_isa_relation':</span> <span class="pre">'node</span> <span class="pre">{0}</span> <span class="pre">isa</span> <span class="pre">{1}',</span> <span class="pre">'part_shared':</span> <span class="pre">'{0}:</span> <span class="pre">its</span> <span class="pre">{1}</span> <span class="pre">is</span> <span class="pre">also</span> <span class="pre">a</span> <span class="pre">part</span> <span class="pre">of</span> <span class="pre">{2}:</span> <span class="pre">a</span> <span class="pre">part</span> <span class="pre">should</span> <span class="pre">belong</span> <span class="pre">to</span> <span class="pre">just</span> <span class="pre">one</span> <span class="pre">box',</span> <span class="pre">'part_unquoted':</span> <span class="pre">&quot;{0}:</span> <span class="pre">its</span> <span class="pre">{1}</span> <span class="pre">doesn't</span> <span class="pre">quote</span> <span class="pre">what</span> <span class="pre">it</span> <span class="pre">holds</span> <span class="pre">(it's</span> <span class="pre">a</span> <span class="pre">plain</span> <span class="pre">collection,</span> <span class="pre">not</span> <span class="pre">a</span> <span class="pre">context):</span> <span class="pre">what's</span> <span class="pre">in</span> <span class="pre">it</span> <span class="pre">is</span> <span class="pre">taken</span> <span class="pre">as</span> <span class="pre">facts</span> <span class="pre">too&quot;,</span> <span class="pre">'pattern_disconnected':</span> <span class="pre">&quot;{0}:</span> <span class="pre">its</span> <span class="pre">{1}</span> <span class="pre">is</span> <span class="pre">in</span> <span class="pre">parts</span> <span class="pre">that</span> <span class="pre">aren't</span> <span class="pre">related</span> <span class="pre">to</span> <span class="pre">each</span> <span class="pre">other</span> <span class="pre">({2}):</span> <span class="pre">every</span> <span class="pre">match</span> <span class="pre">of</span> <span class="pre">one</span> <span class="pre">is</span> <span class="pre">paired</span> <span class="pre">with</span> <span class="pre">every</span> <span class="pre">match</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">others&quot;,</span> <span class="pre">'property_conflict':</span> <span class="pre">'{0}</span> <span class="pre">is</span> <span class="pre">both</span> <span class="pre">{1}</span> <span class="pre">and</span> <span class="pre">{2}',</span> <span class="pre">'range':</span> <span class="pre">'{2},</span> <span class="pre">the</span> <span class="pre">destination</span> <span class="pre">of</span> <span class="pre">{0},</span> <span class="pre">is</span> <span class="pre">not</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">range</span> <span class="pre">of</span> <span class="pre">{1}</span> <span class="pre">({3})',</span> <span class="pre">'redundant_parent':</span> <span class="pre">'{0}</span> <span class="pre">has</span> <span class="pre">redundant</span> <span class="pre">parent</span> <span class="pre">{1}</span> <span class="pre">(already</span> <span class="pre">implied</span> <span class="pre">by</span> <span class="pre">{2})',</span> <span class="pre">'relation_isa_node':</span> <span class="pre">'relation</span> <span class="pre">{0}</span> <span class="pre">isa</span> <span class="pre">{1}',</span> <span class="pre">'requirement_empty':</span> <span class="pre">&quot;requirement</span> <span class="pre">{0}:</span> <span class="pre">nothing</span> <span class="pre">is</span> <span class="pre">required</span> <span class="pre">(its</span> <span class="pre">required</span> <span class="pre">pane</span> <span class="pre">is</span> <span class="pre">empty),</span> <span class="pre">so</span> <span class="pre">it</span> <span class="pre">can't</span> <span class="pre">be</span> <span class="pre">violated&quot;,</span> <span class="pre">'requirement_unanchored':</span> <span class="pre">&quot;requirement</span> <span class="pre">{0}:</span> <span class="pre">{1}</span> <span class="pre">in</span> <span class="pre">its</span> <span class="pre">required</span> <span class="pre">part</span> <span class="pre">isn't</span> <span class="pre">related</span> <span class="pre">to</span> <span class="pre">its</span> <span class="pre">condition:</span> <span class="pre">it</span> <span class="pre">only</span> <span class="pre">checks</span> <span class="pre">that</span> <span class="pre">something</span> <span class="pre">like</span> <span class="pre">it</span> <span class="pre">exists&quot;,</span> <span class="pre">'rule_negated':</span> <span class="pre">&quot;rule</span> <span class="pre">{0}:</span> <span class="pre">{1}</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">consequent</span> <span class="pre">has</span> <span class="pre">a</span> <span class="pre">negated</span> <span class="pre">constraint</span> <span class="pre">({2}):</span> <span class="pre">a</span> <span class="pre">rule</span> <span class="pre">can't</span> <span class="pre">conclude</span> <span class="pre">that</span> <span class="pre">something</span> <span class="pre">isn't</span> <span class="pre">so&quot;,</span> <span class="pre">'rule_open_end':</span> <span class="pre">'rule</span> <span class="pre">{0}:</span> <span class="pre">{1}</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">consequent</span> <span class="pre">has</span> <span class="pre">no</span> <span class="pre">{2}',</span> <span class="pre">'rule_unbound':</span> <span class="pre">&quot;rule</span> <span class="pre">{0}:</span> <span class="pre">{1}</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">consequent</span> <span class="pre">isn't</span> <span class="pre">bound</span> <span class="pre">by</span> <span class="pre">the</span> <span class="pre">antecedent&quot;,</span> <span class="pre">'rule_unsupported':</span> <span class="pre">&quot;rule</span> <span class="pre">{0}:</span> <span class="pre">{1}</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">consequent</span> <span class="pre">isn't</span> <span class="pre">supported</span> <span class="pre">(yet)&quot;,</span> <span class="pre">'unset_endpoint':</span> <span class="pre">&quot;{0}</span> <span class="pre">has</span> <span class="pre">no</span> <span class="pre">local</span> <span class="pre">{1};</span> <span class="pre">it</span> <span class="pre">inherits</span> <span class="pre">its</span> <span class="pre">type's&quot;,</span> <span class="pre">'unused_variable':</span> <span class="pre">&quot;{0}</span> <span class="pre">is</span> <span class="pre">a</span> <span class="pre">variable</span> <span class="pre">(by</span> <span class="pre">its</span> <span class="pre">name),</span> <span class="pre">but</span> <span class="pre">isn't</span> <span class="pre">in</span> <span class="pre">any</span> <span class="pre">query,</span> <span class="pre">rule,</span> <span class="pre">definition,</span> <span class="pre">constraint</span> <span class="pre">or</span> <span class="pre">requirement:</span> <span class="pre">it,</span> <span class="pre">and</span> <span class="pre">its</span> <span class="pre">relations,</span> <span class="pre">are</span> <span class="pre">ignored</span> <span class="pre">--</span> <span class="pre">to</span> <span class="pre">stand</span> <span class="pre">for</span> <span class="pre">someone</span> <span class="pre">unknown,</span> <span class="pre">give</span> <span class="pre">it</span> <span class="pre">an</span> <span class="pre">ordinary</span> <span class="pre">name&quot;,</span> <span class="pre">'variable_kind':</span> <span class="pre">&quot;{0}:</span> <span class="pre">its</span> <span class="pre">name</span> <span class="pre">makes</span> <span class="pre">it</span> <span class="pre">a</span> <span class="pre">variable</span> <span class="pre">over</span> <span class="pre">{1}s,</span> <span class="pre">but</span> <span class="pre">it's</span> <span class="pre">{2}&quot;}</span></span><a class="headerlink" href="#sn.model.reasoner._MESSAGES" title="Link to this definition">¶</a></dt>
 <dd><p>Message templates for violation codes: {0} is the subject, {1}… are the args.</p>
 </dd></dl>
 
@@ -741,8 +905,185 @@ own, what it inherits – so a rule’s conclusion that it has isn’t news.</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="sn.model.reasoner.ReasoningScope">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">ReasoningScope</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">everything</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.ReasoningScope" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Which of a model’s reasoning results are shown – put in the model (see
+<em>materialize()</em>), marked on its objects and reported: everything, after a
+whole “reason”; or what’s about the objects reasoned about (see <em>reason()</em>’s
+<em>about</em>), less what’s about those retracted (see <em>retractReasoning()</em>).</p>
+<p>Something is about an object (see <em>Inferences.restricted()</em>) if the object
+takes part in it: a relation’s ends and type, the rules that concluded it, a
+violation’s objects, a new object’s match, types and relations – or, for an
+individual relation, if it’s between the same two objects (eg: reasoning
+about ann -has-parent-&gt; bob shows ann -has-ancestor-&gt; bob, and bob
+-has-child-&gt; ann).</p>
+<p>The last say wins: something about two objects, one reasoned about and the
+other retracted, is shown if the first was reasoned about after the other
+was retracted, and not if it was before. Reasoning about the whole model
+again starts afresh: everything’s shown.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>everything</strong> (<em>bool</em>)</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.reasoner.ReasoningScope.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">everything</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.ReasoningScope.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>everything</strong> (<em>bool</em>) – Whether everything’s shown (as after a whole “reason”); otherwise nothing is, yet.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.reasoner.ReasoningScope._seq">
+<span class="sig-name descname"><span class="pre">_seq</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#sn.model.reasoner.ReasoningScope._seq" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.reasoner.ReasoningScope._everything">
+<span class="sig-name descname"><span class="pre">_everything</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.model.reasoner.ReasoningScope._everything" title="Link to this definition">¶</a></dt>
+<dd><p>When the whole model was last reasoned about (see <em>_seq</em>), or None.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.reasoner.ReasoningScope._stamps">
+<span class="sig-name descname"><span class="pre">_stamps</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><span class="pre">GraphObject</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.model.reasoner.ReasoningScope._stamps" title="Link to this definition">¶</a></dt>
+<dd><p>id(object) -&gt; (when, whether it was reasoned about, not retracted, the object), since <em>_everything</em>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.reasoner.ReasoningScope._relations">
+<span class="sig-name descname"><span class="pre">_relations</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><span class="pre">Relation</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.model.reasoner.ReasoningScope._relations" title="Link to this definition">¶</a></dt>
+<dd><p>The individual relations among <em>_stamps</em>, with their stamps (see <em>_stamped()</em>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.reasoner.ReasoningScope.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.ReasoningScope.copy" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A copy, to change (results restricted to this one keep it: see <em>Inferences.scope</em>).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#sn.model.reasoner.ReasoningScope" title="sn.model.reasoner.ReasoningScope"><em>ReasoningScope</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.reasoner.ReasoningScope.add">
+<span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">objects</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.ReasoningScope.add" title="Link to this definition">¶</a></dt>
+<dd><p>Show what’s about <em>objects</em> (or about anything: everything, if <em>objects</em> is None).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>objects</strong> (<em>Iterable</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>] </em><em>| </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.reasoner.ReasoningScope.remove">
+<span class="sig-name descname"><span class="pre">remove</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">objects</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.ReasoningScope.remove" title="Link to this definition">¶</a></dt>
+<dd><p>Stop showing what’s about <em>objects</em>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>objects</strong> (<em>Iterable</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>]</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.reasoner.ReasoningScope.isEverything">
+<span class="sig-name descname"><span class="pre">isEverything</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.ReasoningScope.isEverything" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Whether everything’s shown: the whole model was reasoned about, and nothing’s been retracted since.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.reasoner.ReasoningScope.objects">
+<span class="sig-name descname"><span class="pre">objects</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shown</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.ReasoningScope.objects" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>shown</strong> (<em>bool</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The objects reasoned about (or, if not <em>shown</em>, retracted) since the whole model was last, oldest first.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.reasoner.ReasoningScope._stamped">
+<span class="sig-name descname"><span class="pre">_stamped</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.ReasoningScope._stamped" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The individual relations reasoned about or retracted, with when, and which.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[tuple[<a class="reference internal" href="sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a>, tuple[int, bool]]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.reasoner.ReasoningScope.shows">
+<span class="sig-name descname"><span class="pre">shows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">objects</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ends</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">among</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.ReasoningScope.shows" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>objects</strong> (<em>Iterable</em><em>[</em><em>Any</em><em>]</em>) – What a conclusion (or violation) is about (see <em>Inferences.restricted()</em>): anything
+that isn’t a <em>GraphObject</em> is ignored.</p></li>
+<li><p><strong>ends</strong> (<em>tuple</em><em>[</em><em>Any</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – For a relation, its ends: it’s about an individual relation between the same two.</p></li>
+<li><p><strong>among</strong> (<em>bool</em>) – Instead of <em>ends</em>: whether it’s about an individual relation whose two (different) ends are
+both among <em>objects</em> (eg: a violation about a, b and their relation type, for a -r-&gt; b).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether it’s shown: by the last say about any of them.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.reasoner.ReasoningScope.describe">
+<span class="sig-name descname"><span class="pre">describe</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.ReasoningScope.describe" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>What’s shown, for a summary: “” (everything), eg: “about carol”, “about carol and bob”,
+“about 4 objects”; or, after a whole “reason”, eg: “all but carol”.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="sn.model.reasoner.Inferences">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">Inferences</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">holds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inferred</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inherited</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classify</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">violations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">isa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fired</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ruleAttrs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ruleIsa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">same</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merged</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">newObjects</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.Inferences" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">Inferences</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">holds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inferred</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inherited</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classify</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">violations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">isa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fired</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ruleAttrs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ruleIsa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">same</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merged</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">newObjects</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">full</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scope</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.Inferences" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>The results of a <a class="reference internal" href="#sn.model.reasoner.Reasoner.run" title="sn.model.reasoner.Reasoner.run"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Reasoner.run()</span></code></a>. Relation triples are
 <code class="docutils literal notranslate"><span class="pre">(relationType,</span> <span class="pre">src,</span> <span class="pre">dst)</span></code>.</p>
@@ -761,6 +1102,8 @@ own, what it inherits – so a rule’s conclusion that it has isn’t news.</p>
 <li><p><strong>same</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em> | </em><a class="reference internal" href="#sn.model.reasoner.NewObject" title="sn.model.reasoner.NewObject"><em>NewObject</em></a><em>, </em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em> | </em><a class="reference internal" href="#sn.model.reasoner.NewObject" title="sn.model.reasoner.NewObject"><em>NewObject</em></a><em>]</em><em>]</em>)</p></li>
 <li><p><strong>merged</strong> (<em>dict</em><em>[</em><a class="reference internal" href="#sn.model.reasoner.NewObject" title="sn.model.reasoner.NewObject"><em>NewObject</em></a><em>, </em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em> | </em><a class="reference internal" href="#sn.model.reasoner.NewObject" title="sn.model.reasoner.NewObject"><em>NewObject</em></a><em>]</em>)</p></li>
 <li><p><strong>newObjects</strong> (<em>list</em><em>[</em><a class="reference internal" href="#sn.model.reasoner.NewObject" title="sn.model.reasoner.NewObject"><em>NewObject</em></a><em>]</em>)</p></li>
+<li><p><strong>full</strong> (<a class="reference internal" href="#sn.model.reasoner.Inferences" title="sn.model.reasoner.Inferences"><em>Inferences</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>scope</strong> (<a class="reference internal" href="#sn.model.reasoner.ReasoningScope" title="sn.model.reasoner.ReasoningScope"><em>ReasoningScope</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -836,6 +1179,52 @@ invented. <em>Reasoner._finish()</em> merges them: see <em>mergeSame()</em>.</p>
 <span class="sig-name descname"><span class="pre">newObjects</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sn.model.reasoner.NewObject" title="sn.model.reasoner.NewObject"><span class="pre">NewObject</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.model.reasoner.Inferences.newObjects" title="Link to this definition">¶</a></dt>
 <dd><p>The objects the rules concluded exist. Relations involving them are only in
 <em>fired</em> (not <em>holds</em>, <em>inferred</em>, …: those are about the model’s objects).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.reasoner.Inferences.full">
+<span class="sig-name descname"><span class="pre">full</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#sn.model.reasoner.Inferences" title="sn.model.reasoner.Inferences"><span class="pre">Inferences</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.model.reasoner.Inferences.full" title="Link to this definition">¶</a></dt>
+<dd><p>If these are restricted to a scope (see <em>restricted()</em>), everything the reasoner found.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.reasoner.Inferences.scope">
+<span class="sig-name descname"><span class="pre">scope</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#sn.model.reasoner.ReasoningScope" title="sn.model.reasoner.ReasoningScope"><span class="pre">ReasoningScope</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.model.reasoner.Inferences.scope" title="Link to this definition">¶</a></dt>
+<dd><p>The scope these are restricted to (see <em>restricted()</em>), or None: everything the reasoner found.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.reasoner.Inferences.restricted">
+<span class="sig-name descname"><span class="pre">restricted</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scope</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.Inferences.restricted" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>scope</strong> (<a class="reference internal" href="#sn.model.reasoner.ReasoningScope" title="sn.model.reasoner.ReasoningScope"><em>ReasoningScope</em></a>) – What to show.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>What <em>scope</em> shows of everything the reasoner found (<em>full</em>, if these are restricted
+already): see <em>ReasoningScope</em> for what each conclusion and violation is about. <em>holds</em> keeps
+every pair that isn’t inferred or inherited, and <em>isa</em> stays whole: they answer queries.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#sn.model.reasoner.Inferences" title="sn.model.reasoner.Inferences"><em>Inferences</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.reasoner.Inferences.about">
+<span class="sig-name descname"><span class="pre">about</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">objects</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.Inferences.about" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>objects</strong> (<em>Iterable</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>]</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>What’s about <em>objects</em>, of everything the reasoner found (see <em>restricted()</em>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#sn.model.reasoner.Inferences" title="sn.model.reasoner.Inferences"><em>Inferences</em></a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -962,7 +1351,7 @@ inherited) and suggested classifications.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.model.reasoner.Inferences.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">holds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inferred</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inherited</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classify</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">violations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">isa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fired</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ruleAttrs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ruleIsa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">same</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merged</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">newObjects</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.Inferences.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">holds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inferred</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inherited</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classify</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">violations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">isa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fired</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ruleAttrs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ruleIsa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">same</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merged</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">newObjects</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">full</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scope</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.Inferences.__init__" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -978,6 +1367,8 @@ inherited) and suggested classifications.</p>
 <li><p><strong>same</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em> | </em><a class="reference internal" href="#sn.model.reasoner.NewObject" title="sn.model.reasoner.NewObject"><em>NewObject</em></a><em>, </em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em> | </em><a class="reference internal" href="#sn.model.reasoner.NewObject" title="sn.model.reasoner.NewObject"><em>NewObject</em></a><em>]</em><em>]</em>)</p></li>
 <li><p><strong>merged</strong> (<em>dict</em><em>[</em><a class="reference internal" href="#sn.model.reasoner.NewObject" title="sn.model.reasoner.NewObject"><em>NewObject</em></a><em>, </em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em> | </em><a class="reference internal" href="#sn.model.reasoner.NewObject" title="sn.model.reasoner.NewObject"><em>NewObject</em></a><em>]</em>)</p></li>
 <li><p><strong>newObjects</strong> (<em>list</em><em>[</em><a class="reference internal" href="#sn.model.reasoner.NewObject" title="sn.model.reasoner.NewObject"><em>NewObject</em></a><em>]</em>)</p></li>
+<li><p><strong>full</strong> (<a class="reference internal" href="#sn.model.reasoner.Inferences" title="sn.model.reasoner.Inferences"><em>Inferences</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>scope</strong> (<a class="reference internal" href="#sn.model.reasoner.ReasoningScope" title="sn.model.reasoner.ReasoningScope"><em>ReasoningScope</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1080,6 +1471,91 @@ If <em>value</em> is a <em>Not</em>, the reverse: it mustn’t have the attribut
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="sn.model.reasoner._holds">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">_holds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner._holds" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>context</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p></li>
+<li><p><strong>parts</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>, </em><em>...</em><em>] </em><em>| </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Which of <em>context</em>’s “contains”-family relations hold what <em>parts</em>
+says (see <em>patternOf()</em>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Callable</em>[[<a class="reference internal" href="sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a>], bool]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.reasoner.heldParts">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">heldParts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.heldParts" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parts</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>, </em><em>...</em><em>] </em><em>| </em><em>None</em>) – As for <em>patternOf()</em>.</p></li>
+<li><p><strong>context</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The parts (see <em>Node.parts()</em>) <em>context</em> holds by those relation
+types, in the order they were added.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.reasoner._alternatives">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">_alternatives</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner._alternatives" title="Link to this definition">¶</a></dt>
+<dd><p>What <em>context</em> holds through <em>parts</em> (see <em>patternOf()</em>), one list for each
+of its parts held by those relation types (see <em>Node.parts()</em>): what the
+part contains. What <em>context</em> holds directly by them – not in a part, as
+in files written before there were parts, or in a plain context (eg: a
+query) – goes with the first part’s (or is the one list, if it has none).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>context</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p></li>
+<li><p><strong>parts</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>, </em><em>...</em><em>] </em><em>| </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The lists: at least one (perhaps empty).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[list[<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.reasoner.patternsOf">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">patternsOf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.patternsOf" title="Link to this definition">¶</a></dt>
+<dd><p>The patterns of <em>context</em>: one for each of its parts held by <em>parts</em> –
+eg: for a rule with two antecedents, one for each (it fires when either
+matches: see <em>ruleSpecsOf()</em>) – or the one, if it has none (eg: a query).
+See <em>patternOf()</em>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>context</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p></li>
+<li><p><strong>parts</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>, </em><em>...</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>outer</strong> (<a class="reference internal" href="#sn.model.reasoner.Pattern" title="sn.model.reasoner.Pattern"><em>Pattern</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[<a class="reference internal" href="#sn.model.reasoner.Pattern" title="sn.model.reasoner.Pattern"><em>Pattern</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="sn.model.reasoner.patternOf">
 <span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">patternOf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.patternOf" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
@@ -1096,8 +1572,12 @@ values here too.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><p>The <em>Pattern</em> of <em>context</em>: everything it contains (through
-<em>parts</em>).</p>
+<dd class="field-even"><p><p>The <em>Pattern</em> of <em>context</em>: everything it holds through <em>parts</em>
+– in the parts it holds by them (see <em>Node.parts()</em>: eg, a rule’s
+antecedent, a context that contains the antecedent’s graph), all of them
+together; and anything it holds by them directly (as in a query, or a
+file written before there were parts). For each one separately, see
+<em>patternsOf()</em>.</p>
 <ul class="simple">
 <li><p>A contained relation must hold, between its (local) ends, for each of its
 types; an end it doesn’t have is “something”.</p></li>
@@ -1113,6 +1593,24 @@ parents (other than the base node/relation types, which say nothing).</p></li>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#sn.model.reasoner.Pattern" title="sn.model.reasoner.Pattern"><em>Pattern</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.reasoner._patternOfElements">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">_patternOfElements</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contained</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outer</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner._patternOfElements" title="Link to this definition">¶</a></dt>
+<dd><p>The <em>Pattern</em> of <em>contained</em>: what <em>context</em> holds (see <em>patternOf()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>context</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p></li>
+<li><p><strong>contained</strong> (<em>list</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>]</em>)</p></li>
+<li><p><strong>outer</strong> (<a class="reference internal" href="#sn.model.reasoner.Pattern" title="sn.model.reasoner.Pattern"><em>Pattern</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#sn.model.reasoner.Pattern" title="sn.model.reasoner.Pattern"><em>Pattern</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1312,15 +1810,17 @@ have its own copies of the antecedent’s variables.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="sn.model.reasoner.ruleOf">
-<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">ruleOf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rule</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.ruleOf" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="sn.model.reasoner.ruleSpecsOf">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">ruleSpecsOf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rule</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.ruleSpecsOf" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>rule</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><p>The <em>RuleSpec</em> of <em>rule</em>: its antecedent is <em>patternOf(rule)</em>; its
-consequent is what it contains through “consequent” relations:</p>
+<dd class="field-even"><p><p>The <em>RuleSpec</em> objects of <em>rule</em>: one for each of its antecedents
+(see <em>patternsOf()</em>: a rule with several fires when any one of them
+matches), each with all of its consequent – what it holds through
+“consequent” relations (in its consequent parts: see <em>Node.parts()</em>):</p>
 <ul class="simple">
 <li><p>A relation concludes a relation, between its (local) ends, for each of
 its types – which may be variables.</p></li>
@@ -1339,6 +1839,22 @@ supported: they’re reported as problems, and the rule isn’t used.</p></li>
 </p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="#sn.model.reasoner.RuleSpec" title="sn.model.reasoner.RuleSpec"><em>RuleSpec</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.reasoner.ruleOf">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">ruleOf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rule</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.ruleOf" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>rule</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The (first, if it has several antecedents) <em>RuleSpec</em> of <em>rule</em>: see <em>ruleSpecsOf()</em>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#sn.model.reasoner.RuleSpec" title="sn.model.reasoner.RuleSpec"><em>RuleSpec</em></a></p>
 </dd>
 </dl>
@@ -1352,7 +1868,7 @@ supported: they’re reported as problems, and the rule isn’t used.</p></li>
 <dd class="field-odd"><p><strong>definition</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><p>The two rules a definition amounts to: its definiens (the meaning)
+<dd class="field-even"><p><p>The rules a definition amounts to: its definiens (the meaning)
 implies its definiendum (the term defined), and its definiendum implies its
 definiens – each part of it. Eg: defining ?X -brother-&gt; ?Y as ?X
 -full-sibling-&gt; ?Y, ?Y {gender: male} concludes brothers from full siblings
@@ -1367,6 +1883,10 @@ concluded;</p></li>
 <li><p>its variables the definiendum doesn’t bind are new objects (eg:
 grandparent defined through an intermediate parent).</p></li>
 </ul>
+<p>A definition with several definiens parts (meanings: see <em>Node.parts()</em>)
+says the term holds when any one of them does: one rule each, and no
+second direction (the term can’t say which meaning holds) – with a
+“definition_one_way” warning.</p>
 </p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -1376,19 +1896,61 @@ grandparent defined through an intermediate parent).</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="sn.model.reasoner._spec">
-<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">_spec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rule</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">consequentType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meaning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner._spec" title="Link to this definition">¶</a></dt>
-<dd><p>The <em>RuleSpec</em> for <em>rule</em>, with the pattern from its <em>parts</em> (see
-<em>patternOf()</em>) as the antecedent and what it contains through
-<em>consequentType</em> as the consequent (see <em>ruleOf()</em>). With <em>meaning</em> (the
-consequent is a definiens: see <em>definitionSpecs()</em>), the consequent’s
-variables’ types are concluded too, and its “distinct”s are left out.</p>
+<dt class="sig sig-object py" id="sn.model.reasoner.partWarnings">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">partWarnings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">owner</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.partWarnings" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>owner</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>What’s wrong with <em>owner</em>’s parts (see <em>Node.parts()</em>), as
+warnings (violation code, args): a part that’s also another box’s
+(“part_shared”), or that doesn’t quote what it holds (“part_unquoted”).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[tuple[str, tuple[<em>Any</em>, …]]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.reasoner._specs">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">_specs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rule</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">consequentType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meaning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkParts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner._specs" title="Link to this definition">¶</a></dt>
+<dd><p>The <em>RuleSpec</em> objects for <em>rule</em>: one for each of the patterns from its
+<em>parts</em> (see <em>patternsOf()</em>) as the antecedent, each with all it holds
+through <em>consequentType</em> as the consequent (see <em>ruleSpecsOf()</em>). With
+<em>checkParts</em>, the first carries <em>partWarnings()</em>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>rule</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p></li>
 <li><p><strong>parts</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>, </em><em>...</em><em>] </em><em>| </em><em>None</em>)</p></li>
 <li><p><strong>consequentType</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p></li>
+<li><p><strong>meaning</strong> (<em>bool</em>)</p></li>
+<li><p><strong>checkParts</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[<a class="reference internal" href="#sn.model.reasoner.RuleSpec" title="sn.model.reasoner.RuleSpec"><em>RuleSpec</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.reasoner._spec">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">_spec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rule</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">consequent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meaning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner._spec" title="Link to this definition">¶</a></dt>
+<dd><p>The <em>RuleSpec</em> for <em>rule</em> with <em>pattern</em> (one of its antecedents: <em>label</em>,
+for warnings) and <em>consequent</em>, what it concludes (see <em>ruleSpecsOf()</em>). With
+<em>meaning</em> (the consequent is a definiens: see <em>definitionSpecs()</em>), the
+consequent’s variables’ types are concluded too, and its “distinct”s are
+left out.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rule</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p></li>
+<li><p><strong>pattern</strong> (<a class="reference internal" href="#sn.model.reasoner.Pattern" title="sn.model.reasoner.Pattern"><em>Pattern</em></a>)</p></li>
+<li><p><strong>label</strong> (<em>str</em>)</p></li>
+<li><p><strong>consequent</strong> (<em>list</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>]</em>)</p></li>
 <li><p><strong>meaning</strong> (<em>bool</em>)</p></li>
 </ul>
 </dd>
@@ -1546,6 +2108,30 @@ variables of its own are “some”: there must be something for each of them.</
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="sn.model.reasoner.constraintSpecsOf">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">constraintSpecsOf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constraint</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.constraintSpecsOf" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>constraint</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The <em>ConstraintSpec</em> objects of <em>constraint</em>: its pattern is what
+it contains (see <em>patternOf()</em>) – for a requirement, its condition, and
+its <em>required</em> what’s in its required part (all of them, if it has
+several) – and the rest is from its attributes (see
+<em>CONSTRAINT_ATTRIBUTES</em>). Eg: a constraint named “irreflexive” containing
+?a -^r-&gt; ?a, with ^r {irreflexive} and report “^r, ?a”, reports each
+irreflexive relation type relating something to itself. One for each of
+its patterns (see <em>patternsOf()</em>): eg, a requirement with two condition
+parts applies when either matches.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="#sn.model.reasoner.ConstraintSpec" title="sn.model.reasoner.ConstraintSpec"><em>ConstraintSpec</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="sn.model.reasoner.constraintOf">
 <span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">constraintOf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constraint</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.constraintOf" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
@@ -1553,15 +2139,27 @@ variables of its own are “some”: there must be something for each of them.</
 <dd class="field-odd"><p><strong>constraint</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The <em>ConstraintSpec</em> of <em>constraint</em>: its pattern is what it
-contains (see <em>patternOf()</em>) – for a requirement, its condition, and its
-<em>required</em> what’s in its required pane – and the rest is from its attributes (see
-<em>CONSTRAINT_ATTRIBUTES</em>). Eg: a constraint named “irreflexive” containing
-?a -^r-&gt; ?a, with ^r {irreflexive} and report “^r, ?a”, reports each
-irreflexive relation type relating something to itself.</p>
+<dd class="field-even"><p>The (first, if it has several patterns) <em>ConstraintSpec</em> of <em>constraint</em>: see <em>constraintSpecsOf()</em>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#sn.model.reasoner.ConstraintSpec" title="sn.model.reasoner.ConstraintSpec"><em>ConstraintSpec</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.reasoner._constraintSpec">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">_constraintSpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constraint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pat</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner._constraintSpec" title="Link to this definition">¶</a></dt>
+<dd><p>The <em>ConstraintSpec</em> of <em>constraint</em> with pattern <em>pat</em> (see <em>constraintSpecsOf()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>constraint</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p></li>
+<li><p><strong>pat</strong> (<a class="reference internal" href="#sn.model.reasoner.Pattern" title="sn.model.reasoner.Pattern"><em>Pattern</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#sn.model.reasoner.ConstraintSpec" title="sn.model.reasoner.ConstraintSpec"><em>ConstraintSpec</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1707,7 +2305,7 @@ made to refer to where it then is. (None while they’re being read: see
 
 <dl class="py class">
 <dt class="sig sig-object py" id="sn.model.reasoner.EngineInfo">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">EngineInfo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">package</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">explains</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bundled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">needs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.EngineInfo" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">EngineInfo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">package</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">explains</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bundled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">needs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.EngineInfo" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>What the program knows about a reasoner engine without importing it: what it
 needs installed, and what it can do. So a missing engine can say how to
@@ -1720,6 +2318,7 @@ that can do what it needs (see <em>explainingEngine()</em>).</p>
 <li><p><strong>module</strong> (<em>str</em>)</p></li>
 <li><p><strong>package</strong> (<em>str</em>)</p></li>
 <li><p><strong>explains</strong> (<em>bool</em>)</p></li>
+<li><p><strong>probes</strong> (<em>bool</em>)</p></li>
 <li><p><strong>bundled</strong> (<em>bool</em>)</p></li>
 <li><p><strong>needs</strong> (<em>str</em>)</p></li>
 </ul>
@@ -1750,6 +2349,12 @@ that can do what it needs (see <em>explainingEngine()</em>).</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.reasoner.EngineInfo.probes">
+<span class="sig-name descname"><span class="pre">probes</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#sn.model.reasoner.EngineInfo.probes" title="Link to this definition">¶</a></dt>
+<dd><p>Whether it can find Gaines’s probes (see <em>probingEngine()</em>, <em>sn.model.clingoReasoner.ClingoReasoner.probes()</em>).</p>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="sn.model.reasoner.EngineInfo.bundled">
 <span class="sig-name descname"><span class="pre">bundled</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></span><a class="headerlink" href="#sn.model.reasoner.EngineInfo.bundled" title="Link to this definition">¶</a></dt>
 <dd><p>Whether the apps include it (their self-test checks that it’s there: see <em>sn.__main__.selftest()</em>).</p>
@@ -1763,7 +2368,7 @@ that can do what it needs (see <em>explainingEngine()</em>).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.model.reasoner.EngineInfo.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">package</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">explains</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bundled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">needs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.EngineInfo.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">package</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">explains</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bundled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">needs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.EngineInfo.__init__" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1771,6 +2376,7 @@ that can do what it needs (see <em>explainingEngine()</em>).</p>
 <li><p><strong>module</strong> (<em>str</em>)</p></li>
 <li><p><strong>package</strong> (<em>str</em>)</p></li>
 <li><p><strong>explains</strong> (<em>bool</em>)</p></li>
+<li><p><strong>probes</strong> (<em>bool</em>)</p></li>
 <li><p><strong>bundled</strong> (<em>bool</em>)</p></li>
 <li><p><strong>needs</strong> (<em>str</em>)</p></li>
 </ul>
@@ -1785,7 +2391,7 @@ that can do what it needs (see <em>explainingEngine()</em>).</p>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="sn.model.reasoner.ENGINES">
-<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">ENGINES</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#sn.model.reasoner.EngineInfo" title="sn.model.reasoner.EngineInfo"><span class="pre">EngineInfo</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'clingo':</span> <span class="pre">EngineInfo(name='clingo',</span> <span class="pre">module='clingo',</span> <span class="pre">package='clingo',</span> <span class="pre">explains=False,</span> <span class="pre">bundled=True,</span> <span class="pre">needs=''),</span> <span class="pre">'clips':</span> <span class="pre">EngineInfo(name='clips',</span> <span class="pre">module='clips',</span> <span class="pre">package='clipspy',</span> <span class="pre">explains=False,</span> <span class="pre">bundled=False,</span> <span class="pre">needs=''),</span> <span class="pre">'nemo':</span> <span class="pre">EngineInfo(name='nemo',</span> <span class="pre">module='nmo_python',</span> <span class="pre">package='nemo-python',</span> <span class="pre">explains=True,</span> <span class="pre">bundled=True,</span> <span class="pre">needs=''),</span> <span class="pre">'prolog':</span> <span class="pre">EngineInfo(name='prolog',</span> <span class="pre">module='janus_swi',</span> <span class="pre">package='janus-swi',</span> <span class="pre">explains=False,</span> <span class="pre">bundled=False,</span> <span class="pre">needs='SWI-Prolog</span> <span class="pre">(9.1.12</span> <span class="pre">or</span> <span class="pre">later,</span> <span class="pre">from</span> <span class="pre">swi-prolog.org)')}</span></span><a class="headerlink" href="#sn.model.reasoner.ENGINES" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">ENGINES</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#sn.model.reasoner.EngineInfo" title="sn.model.reasoner.EngineInfo"><span class="pre">EngineInfo</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'clingo':</span> <span class="pre">EngineInfo(name='clingo',</span> <span class="pre">module='clingo',</span> <span class="pre">package='clingo',</span> <span class="pre">explains=False,</span> <span class="pre">probes=True,</span> <span class="pre">bundled=True,</span> <span class="pre">needs=''),</span> <span class="pre">'clips':</span> <span class="pre">EngineInfo(name='clips',</span> <span class="pre">module='clips',</span> <span class="pre">package='clipspy',</span> <span class="pre">explains=False,</span> <span class="pre">probes=False,</span> <span class="pre">bundled=False,</span> <span class="pre">needs=''),</span> <span class="pre">'nemo':</span> <span class="pre">EngineInfo(name='nemo',</span> <span class="pre">module='nmo_python',</span> <span class="pre">package='nemo-python',</span> <span class="pre">explains=True,</span> <span class="pre">probes=False,</span> <span class="pre">bundled=True,</span> <span class="pre">needs=''),</span> <span class="pre">'prolog':</span> <span class="pre">EngineInfo(name='prolog',</span> <span class="pre">module='janus_swi',</span> <span class="pre">package='janus-swi',</span> <span class="pre">explains=False,</span> <span class="pre">probes=False,</span> <span class="pre">bundled=False,</span> <span class="pre">needs='SWI-Prolog</span> <span class="pre">(9.1.12</span> <span class="pre">or</span> <span class="pre">later,</span> <span class="pre">from</span> <span class="pre">swi-prolog.org)')}</span></span><a class="headerlink" href="#sn.model.reasoner.ENGINES" title="Link to this definition">¶</a></dt>
 <dd><p>The known reasoner engines, by name. A new engine adds itself here, and to the
 “reasoner/engine” preference’s choices (see <em>sn.PREFS</em>), and its install
 instructions to the User Guide (see <em>INSTALL_HELP</em>).</p>
@@ -1928,6 +2534,21 @@ installed, the first that can (so <em>Reasoner.create()</em> says how to install
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.reasoner.probingEngine">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">probingEngine</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.probingEngine" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The engine to find probes with (see <em>PROBE_KINDS</em>): the default
+one if it can, or else the first installed one that can – or, if none is
+installed, the first that can (so <em>Reasoner.create()</em> says how to install it).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="sn.model.reasoner.Reasoner">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">Reasoner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">showSysRules</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.Reasoner" title="Link to this definition">¶</a></dt>
@@ -2017,6 +2638,24 @@ conclusions (rather than plain inferences). By default, as the
 <dt class="sig sig-object py" id="sn.model.reasoner.Reasoner.showSysRules">
 <span class="sig-name descname"><span class="pre">showSysRules</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#sn.model.reasoner.Reasoner.showSysRules" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.reasoner.Reasoner._leftOut">
+<span class="sig-name descname"><span class="pre">_leftOut</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.model.reasoner.Reasoner._leftOut" title="Link to this definition">¶</a></dt>
+<dd><p>The objects (their ids) <em>facts()</em> leaves out, as if they weren’t in the model (see <em>redundant()</em>).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.reasoner.Reasoner._allFacts">
+<span class="sig-name descname"><span class="pre">_allFacts</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sn.model.reasoner.Reasoner._allFacts" title="Link to this definition">¶</a></dt>
+<dd><p>While <em>redundant()</em> or <em>worlds()</em> runs: the model’s facts, with none left out (the model’s the same for each it tries).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.model.reasoner.Reasoner._supposed">
+<span class="sig-name descname"><span class="pre">_supposed</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.model.reasoner.Reasoner._supposed" title="Link to this definition">¶</a></dt>
+<dd><p>The facts <em>facts()</em> adds, as if the model said them (see <em>worlds()</em>).</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.model.reasoner.Reasoner.run">
@@ -2159,6 +2798,56 @@ to <em>GraphObjects</em>.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="sn.model.reasoner.Reasoner.redundant">
+<span class="sig-name descname"><span class="pre">redundant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.Reasoner.redundant" title="Link to this definition">¶</a></dt>
+<dd><p>The relations that the rest of the model implies: each, in turn, is left
+out (as if it weren’t in the model: see <em>facts()</em>) and the model reasoned
+over, and it’s redundant if its types still hold between its ends. One
+found redundant stays left out while the next are tried – so the rest
+still imply them all (eg: of two links the same, one is redundant, not
+both). Leaving out each redundant one in turn gives a minimal set (Gaines’s
+minimal canonical form): which one, of those that imply each other (eg: a
+cycle’s), depends on their order.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>relations</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a><em>]</em>) – Individual relations of the model, in the order to try them.</p></li>
+<li><p><strong>types</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a><em>]</em><em>, </em><em>Sequence</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>]</em><em>] </em><em>| </em><em>None</em>) – The relation types that must hold between a relation’s ends
+for it to be redundant (eg: the kernel types it’s a look of): by default,
+its own.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The redundant ones, in that order.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.reasoner.Reasoner.worlds">
+<span class="sig-name descname"><span class="pre">worlds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suppositions</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.Reasoner.worlds" title="Link to this definition">¶</a></dt>
+<dd><p>Reason over the model once for each of <em>suppositions</em>: as if the model
+also said those facts (see <em>facts()</em>: eg, <code class="docutils literal notranslate"><span class="pre">(&quot;attr&quot;,</span> <span class="pre">(node,</span> <span class="pre">key,</span>
+<span class="pre">value))</span></code> and <code class="docutils literal notranslate"><span class="pre">(&quot;lattr&quot;,</span> <span class="pre">(node,</span> <span class="pre">key))</span></code> for an attribute it doesn’t
+have, to see what would follow if it did) – the model’s own facts
+rendered just once. The model isn’t changed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>suppositions</strong> (<em>Sequence</em><em>[</em><em>Sequence</em><em>[</em><em>tuple</em><em>[</em><em>str</em><em>, </em><em>tuple</em><em>[</em><em>Any</em><em>, </em><em>...</em><em>]</em><em>]</em><em>]</em><em>]</em>) – Each world’s facts (engine-neutral: see the module documentation).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>What the reasoner found in each, in order.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="#sn.model.reasoner.Inferences" title="sn.model.reasoner.Inferences"><em>Inferences</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="sn.model.reasoner.Reasoner.objects">
 <span class="sig-name descname"><span class="pre">objects</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.Reasoner.objects" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
@@ -2275,7 +2964,9 @@ rule conclusions (<em>fired</em>, …): what they conclude is in <em>holds</em>,
 <dd class="field-odd"><p>The model (and its super-models) as engine-neutral facts; see
 the module documentation for the vocabulary. With <em>showSysRules</em>, the
 base rules too (see <em>BASE_RULES</em>). What a previous “reason” inferred
-isn’t among them (see <em>withoutInferences()</em>).</p>
+isn’t among them (see <em>withoutInferences()</em>); nor, while <em>redundant()</em>
+tries a relation, the facts about it. While <em>worlds()</em> reasons over a
+world, its facts are among them too.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>list[tuple[str, tuple[<em>Any</em>, …]]]</p>
@@ -2297,6 +2988,27 @@ isn’t among them (see <em>withoutInferences()</em>).</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="sn.model.reasoner.Reasoner._definingFacts">
+<span class="sig-name descname"><span class="pre">_definingFacts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">objects</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.Reasoner._definingFacts" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>objects</strong> (<em>list</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>]</em>) – The objects the facts are about (see <em>_facts()</em>).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The facts about the nodes their links define (see <em>DEFINING</em>):
+def_part/6, def_last/5, def_marks/5, def_mixed/2, def_world/4,
+def_prefer/3 and def_rank/3 (see the module doc). A node’s defining links are its asserted individual relations
+whose type is (an SN subtype of) one tagged <em>meet</em> (its own) or <em>join</em>
+(those to it), numbered in the order they’re in the models. A tag
+naming no relation type among <em>objects</em> is left out.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[tuple[str, tuple[<em>Any</em>, …]]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="sn.model.reasoner.Reasoner._relationFacts">
 <span class="sig-name descname"><span class="pre">_relationFacts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.Reasoner._relationFacts" title="Link to this definition">¶</a></dt>
 <dd><p>The facts about relation <em>rel</em>: its ends (its own and inherited), and, for an individual relation that
@@ -2311,6 +3023,24 @@ isn’t a pattern, that it relates them (<em>ref</em> refers to an end).</p>
 </dl>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.reasoner.dataModelsOf">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">dataModelsOf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.dataModelsOf" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>model</em> and (transitively) its super-models – but not the base
+rules (see <em>BASE_RULES</em>), unless it’s one of them: what a reasoner over
+<em>model</em> reasons over (see <em>Reasoner.dataModels()</em>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -2345,24 +3075,81 @@ choose from – which a plain value would replace).</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="sn.model.reasoner.reason">
-<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">reason</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.reason" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">reason</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">about</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.reason" title="Link to this definition">¶</a></dt>
 <dd><p>Run the reasoner over <em>model</em> and keep the results on the model (see
 <em>reasoningFor()</em>), where everything using the model – the command line,
 every view – finds the same ones. Observers of the model are told with a
-(“reasoned”, (inferences, silent)) topic. The results aren’t saved with the model,
+(“reasoned”, (inferences, silent, shown)) topic: <em>shown</em> is None, or (when
+reasoning <em>about</em> some objects) the inferred objects about them, for views to
+show (see <em>inferredObjectsFor()</em>). The results aren’t saved with the model,
 and aren’t updated as it’s edited: they’re a snapshot until the next
-<em>reason()</em> or <em>clearReasoning()</em>.</p>
+<em>reason()</em>, <em>retractReasoning()</em> or <em>clearReasoning()</em>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>engine</strong> (<em>str</em><em> | </em><em>None</em>) – The reasoner engine; by default the preference’s (see <em>defaultEngine()</em>).</p></li>
 <li><p><strong>silent</strong> (<em>bool</em>) – True if views shouldn’t show what’s inferred (eg: just so
 that queries find it): they show only the problems (see <em>SNGView._showReasoning()</em>).</p></li>
+<li><p><strong>about</strong> (<em>Iterable</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>] </em><em>| </em><em>None</em>) – Objects to reason about (eg: those selected in a view): the
+reasoner still reasons over the whole model – what holds of an object can
+depend on any of it – but only what’s about these (see <em>ReasoningScope</em>) is
+added to what the model’s results show: to its inferred objects, and the
+violations marked. By default, the whole model: all of it is shown.</p></li>
 <li><p><strong>model</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#sn.model.reasoner.Inferences" title="sn.model.reasoner.Inferences"><em>Inferences</em></a></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>What the model’s results show now (see <em>Inferences.restricted()</em>):
+with <em>about</em>, what’s about them and what was shown before (where it still
+holds); <em>full</em> has everything the reasoner found.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#sn.model.reasoner.Inferences" title="sn.model.reasoner.Inferences"><em>Inferences</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.reasoner.retractReasoning">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">retractReasoning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objects</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.retractReasoning" title="Link to this definition">¶</a></dt>
+<dd><p>Take back what <em>model</em>’s reasoning results (see <em>reason()</em>) say about
+<em>objects</em> (see <em>ReasoningScope</em>): the inferred objects about them go from
+the model (and so from its views), and the violations about them aren’t
+marked. The rest stay, and nothing’s reasoned again. Observers are told with
+a (“reasoning retracted”, (inferences, objects)) topic.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>)</p></li>
+<li><p><strong>objects</strong> (<em>Iterable</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>What the results show now, or None if there are none (nothing to take back).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#sn.model.reasoner.Inferences" title="sn.model.reasoner.Inferences"><em>Inferences</em></a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.reasoner.inferredObjectsFor">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">inferredObjectsFor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inferences</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.inferredObjectsFor" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>) – A model whose results have been put in it (see <em>materialize()</em>).</p></li>
+<li><p><strong>inferences</strong> (<a class="reference internal" href="#sn.model.reasoner.Inferences" title="sn.model.reasoner.Inferences"><em>Inferences</em></a>) – Some of them: eg, what’s about some objects (see <em>Inferences.about()</em>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>model</em>’s inferred objects for <em>inferences</em>’ conclusions: the
+relations and isa links (not a new object’s own isa links, which go with it)
+and the new objects (see <em>GraphObject.inferred</em>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2376,8 +3163,9 @@ that queries find it): they show only the problems (see <em>SNGView._showReasoni
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>What <em>model</em>’s last “reason” found, in a line – eg: “inferred:
-3 relations, 4 new objects; 1 error, 2 warnings” – or “” if it hasn’t
-been reasoned over (or that’s been retracted).</p>
+3 relations, 4 new objects; 1 error, 2 warnings”, or (if only some of it’s
+shown: see <em>ReasoningScope</em>) eg: “about carol: inferred: 1 relation; no
+problems” – or “” if it hasn’t been reasoned over (or that’s been retracted).</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>str</p>
@@ -2414,6 +3202,28 @@ concerned, nothing happened.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Iterator</em>[None]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.model.reasoner._ruleOrder">
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">_ruleOrder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">models</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner._ruleOrder" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>models</strong> (<em>list</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a><em>]</em>) – A model and its super-models (see <em>materialize()</em>).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The place of each of their objects (by id) in them: the model’s
+own first, in the order they’re in it, then each super-model’s – so that
+where rules conclude different values of an attribute for an object, the
+first rule’s is the one it gets, whichever engine reasoned (eg: the KNet
+rules model’s marks: true by inclusion before true by coexclusion). Not
+relation types’: one is the “rule” of what a node’s defining links
+conclude (see <em>DEFINING</em>), which comes after every rule’s.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[int, int]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2572,7 +3382,7 @@ out, and ones to those it hasn’t are made (inferred, as it is).</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="sn.model.reasoner.materialize">
-<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">materialize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inferences</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">models</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.materialize" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sn.model.reasoner.</span></span><span class="sig-name descname"><span class="pre">materialize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inferences</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">models</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.reasoner.materialize" title="Link to this definition">¶</a></dt>
 <dd><p>Bring <em>model</em>’s inferred objects (see <em>GraphObject.inferred</em>) into line with
 <em>inferences</em>:</p>
 <ul class="simple">
@@ -2581,7 +3391,10 @@ link for each one the rules concluded, between objects of the model or
 its super-models (<em>models</em>);</p></li>
 <li><p>a node for each object the rules concluded exists (<em>NewObject</em>), of the
 types they said (or just a node), with the attributes they gave it, and
-the relations they gave it.</p></li>
+the relations they gave it;</p></li>
+<li><p>an inferred attribute for each value the rules concluded for one of the
+model’s objects, unless it has its own – the first rule’s (in the
+models’ order: see <em>_ruleOrder()</em>), if they concluded different ones.</p></li>
 </ul>
 <p>Those already there are kept (the same objects, so the views keep them where
 they are); those no longer inferred are removed. None of this is saved,
@@ -2594,6 +3407,9 @@ dirties the model, or is undone (see <em>Model.inferring()</em>). Each object’
 <li><p><strong>model</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>) – The model reasoned over.</p></li>
 <li><p><strong>inferences</strong> (<a class="reference internal" href="#sn.model.reasoner.Inferences" title="sn.model.reasoner.Inferences"><em>Inferences</em></a>) – What the reasoner concluded.</p></li>
 <li><p><strong>models</strong> (<em>list</em><em>[</em><a class="reference internal" href="sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a><em>]</em>) – <em>model</em> and its super-models.</p></li>
+<li><p><strong>add</strong> (<em>bool</em>) – False to only remove those no longer inferred: none are made,
+and none are changed (eg: to take back some of the results, which may
+be about a model that’s changed since).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2721,6 +3537,14 @@ dirties the model, or is undone (see <em>Model.inferring()</em>). Each object’
 <li><a class="reference internal" href="#">sn.model.reasoner module</a><ul>
 <li><a class="reference internal" href="#sn.model.reasoner.PROPERTIES"><code class="docutils literal notranslate"><span class="pre">PROPERTIES</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.CARDINALITY"><code class="docutils literal notranslate"><span class="pre">CARDINALITY</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.DEFINING"><code class="docutils literal notranslate"><span class="pre">DEFINING</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.DEFAULT_ORDER"><code class="docutils literal notranslate"><span class="pre">DEFAULT_ORDER</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.PROBE_KINDS"><code class="docutils literal notranslate"><span class="pre">PROBE_KINDS</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.PROBE_LIMIT"><code class="docutils literal notranslate"><span class="pre">PROBE_LIMIT</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.TooManyProbes"><code class="docutils literal notranslate"><span class="pre">TooManyProbes</span></code></a><ul>
+<li><a class="reference internal" href="#sn.model.reasoner.TooManyProbes.__init__"><code class="docutils literal notranslate"><span class="pre">TooManyProbes.__init__()</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#sn.model.reasoner.parseCardinality"><code class="docutils literal notranslate"><span class="pre">parseCardinality()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner._MESSAGES"><code class="docutils literal notranslate"><span class="pre">_MESSAGES</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.Sym"><code class="docutils literal notranslate"><span class="pre">Sym</span></code></a></li>
@@ -2748,6 +3572,22 @@ dirties the model, or is undone (see <em>Model.inferring()</em>). Each object’
 </li>
 <li><a class="reference internal" href="#sn.model.reasoner.assertedIsa"><code class="docutils literal notranslate"><span class="pre">assertedIsa()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner._assertedValue"><code class="docutils literal notranslate"><span class="pre">_assertedValue()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.ReasoningScope"><code class="docutils literal notranslate"><span class="pre">ReasoningScope</span></code></a><ul>
+<li><a class="reference internal" href="#sn.model.reasoner.ReasoningScope.__init__"><code class="docutils literal notranslate"><span class="pre">ReasoningScope.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.ReasoningScope._seq"><code class="docutils literal notranslate"><span class="pre">ReasoningScope._seq</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.ReasoningScope._everything"><code class="docutils literal notranslate"><span class="pre">ReasoningScope._everything</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.ReasoningScope._stamps"><code class="docutils literal notranslate"><span class="pre">ReasoningScope._stamps</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.ReasoningScope._relations"><code class="docutils literal notranslate"><span class="pre">ReasoningScope._relations</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.ReasoningScope.copy"><code class="docutils literal notranslate"><span class="pre">ReasoningScope.copy()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.ReasoningScope.add"><code class="docutils literal notranslate"><span class="pre">ReasoningScope.add()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.ReasoningScope.remove"><code class="docutils literal notranslate"><span class="pre">ReasoningScope.remove()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.ReasoningScope.isEverything"><code class="docutils literal notranslate"><span class="pre">ReasoningScope.isEverything()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.ReasoningScope.objects"><code class="docutils literal notranslate"><span class="pre">ReasoningScope.objects()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.ReasoningScope._stamped"><code class="docutils literal notranslate"><span class="pre">ReasoningScope._stamped()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.ReasoningScope.shows"><code class="docutils literal notranslate"><span class="pre">ReasoningScope.shows()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.ReasoningScope.describe"><code class="docutils literal notranslate"><span class="pre">ReasoningScope.describe()</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#sn.model.reasoner.Inferences"><code class="docutils literal notranslate"><span class="pre">Inferences</span></code></a><ul>
 <li><a class="reference internal" href="#sn.model.reasoner.Inferences.holds"><code class="docutils literal notranslate"><span class="pre">Inferences.holds</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.Inferences.inferred"><code class="docutils literal notranslate"><span class="pre">Inferences.inferred</span></code></a></li>
@@ -2761,6 +3601,10 @@ dirties the model, or is undone (see <em>Model.inferring()</em>). Each object’
 <li><a class="reference internal" href="#sn.model.reasoner.Inferences.same"><code class="docutils literal notranslate"><span class="pre">Inferences.same</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.Inferences.merged"><code class="docutils literal notranslate"><span class="pre">Inferences.merged</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.Inferences.newObjects"><code class="docutils literal notranslate"><span class="pre">Inferences.newObjects</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.Inferences.full"><code class="docutils literal notranslate"><span class="pre">Inferences.full</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.Inferences.scope"><code class="docutils literal notranslate"><span class="pre">Inferences.scope</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.Inferences.restricted"><code class="docutils literal notranslate"><span class="pre">Inferences.restricted()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.Inferences.about"><code class="docutils literal notranslate"><span class="pre">Inferences.about()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.Inferences._index"><code class="docutils literal notranslate"><span class="pre">Inferences._index()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.Inferences.related"><code class="docutils literal notranslate"><span class="pre">Inferences.related()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.Inferences.relatedFrom"><code class="docutils literal notranslate"><span class="pre">Inferences.relatedFrom()</span></code></a></li>
@@ -2783,7 +3627,12 @@ dirties the model, or is undone (see <em>Model.inferring()</em>). Each object’
 <li><a class="reference internal" href="#sn.model.reasoner.Pattern.__init__"><code class="docutils literal notranslate"><span class="pre">Pattern.__init__()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#sn.model.reasoner._holds"><code class="docutils literal notranslate"><span class="pre">_holds()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.heldParts"><code class="docutils literal notranslate"><span class="pre">heldParts()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner._alternatives"><code class="docutils literal notranslate"><span class="pre">_alternatives()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.patternsOf"><code class="docutils literal notranslate"><span class="pre">patternsOf()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.patternOf"><code class="docutils literal notranslate"><span class="pre">patternOf()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner._patternOfElements"><code class="docutils literal notranslate"><span class="pre">_patternOfElements()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.variableGroups"><code class="docutils literal notranslate"><span class="pre">variableGroups()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.patternWarnings"><code class="docutils literal notranslate"><span class="pre">patternWarnings()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.reportedAnswers"><code class="docutils literal notranslate"><span class="pre">reportedAnswers()</span></code></a></li>
@@ -2801,8 +3650,11 @@ dirties the model, or is undone (see <em>Model.inferring()</em>). Each object’
 <li><a class="reference internal" href="#sn.model.reasoner.RuleSpec.__init__"><code class="docutils literal notranslate"><span class="pre">RuleSpec.__init__()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#sn.model.reasoner.ruleSpecsOf"><code class="docutils literal notranslate"><span class="pre">ruleSpecsOf()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.ruleOf"><code class="docutils literal notranslate"><span class="pre">ruleOf()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.definitionSpecs"><code class="docutils literal notranslate"><span class="pre">definitionSpecs()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.partWarnings"><code class="docutils literal notranslate"><span class="pre">partWarnings()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner._specs"><code class="docutils literal notranslate"><span class="pre">_specs()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner._spec"><code class="docutils literal notranslate"><span class="pre">_spec()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.rules"><code class="docutils literal notranslate"><span class="pre">rules()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner._contexts"><code class="docutils literal notranslate"><span class="pre">_contexts()</span></code></a></li>
@@ -2820,7 +3672,9 @@ dirties the model, or is undone (see <em>Model.inferring()</em>). Each object’
 </ul>
 </li>
 <li><a class="reference internal" href="#sn.model.reasoner.CONSTRAINT_ATTRIBUTES"><code class="docutils literal notranslate"><span class="pre">CONSTRAINT_ATTRIBUTES</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.constraintSpecsOf"><code class="docutils literal notranslate"><span class="pre">constraintSpecsOf()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.constraintOf"><code class="docutils literal notranslate"><span class="pre">constraintOf()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner._constraintSpec"><code class="docutils literal notranslate"><span class="pre">_constraintSpec()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.constraintSpecs"><code class="docutils literal notranslate"><span class="pre">constraintSpecs()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.ruleSpecs"><code class="docutils literal notranslate"><span class="pre">ruleSpecs()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.BASE_RULES_PLACEHOLDER"><code class="docutils literal notranslate"><span class="pre">BASE_RULES_PLACEHOLDER</span></code></a></li>
@@ -2837,6 +3691,7 @@ dirties the model, or is undone (see <em>Model.inferring()</em>). Each object’
 <li><a class="reference internal" href="#sn.model.reasoner.EngineInfo.module"><code class="docutils literal notranslate"><span class="pre">EngineInfo.module</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.EngineInfo.package"><code class="docutils literal notranslate"><span class="pre">EngineInfo.package</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.EngineInfo.explains"><code class="docutils literal notranslate"><span class="pre">EngineInfo.explains</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.EngineInfo.probes"><code class="docutils literal notranslate"><span class="pre">EngineInfo.probes</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.EngineInfo.bundled"><code class="docutils literal notranslate"><span class="pre">EngineInfo.bundled</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.EngineInfo.needs"><code class="docutils literal notranslate"><span class="pre">EngineInfo.needs</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.EngineInfo.__init__"><code class="docutils literal notranslate"><span class="pre">EngineInfo.__init__()</span></code></a></li>
@@ -2857,6 +3712,7 @@ dirties the model, or is undone (see <em>Model.inferring()</em>). Each object’
 <li><a class="reference internal" href="#sn.model.reasoner._importEngine"><code class="docutils literal notranslate"><span class="pre">_importEngine()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.installedEngines"><code class="docutils literal notranslate"><span class="pre">installedEngines()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.explainingEngine"><code class="docutils literal notranslate"><span class="pre">explainingEngine()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.probingEngine"><code class="docutils literal notranslate"><span class="pre">probingEngine()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.Reasoner"><code class="docutils literal notranslate"><span class="pre">Reasoner</span></code></a><ul>
 <li><a class="reference internal" href="#sn.model.reasoner.Reasoner._abc_impl"><code class="docutils literal notranslate"><span class="pre">Reasoner._abc_impl</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.Reasoner.engines"><code class="docutils literal notranslate"><span class="pre">Reasoner.engines</span></code></a></li>
@@ -2864,6 +3720,9 @@ dirties the model, or is undone (see <em>Model.inferring()</em>). Each object’
 <li><a class="reference internal" href="#sn.model.reasoner.Reasoner.create"><code class="docutils literal notranslate"><span class="pre">Reasoner.create()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.Reasoner.__init__"><code class="docutils literal notranslate"><span class="pre">Reasoner.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.Reasoner.showSysRules"><code class="docutils literal notranslate"><span class="pre">Reasoner.showSysRules</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.Reasoner._leftOut"><code class="docutils literal notranslate"><span class="pre">Reasoner._leftOut</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.Reasoner._allFacts"><code class="docutils literal notranslate"><span class="pre">Reasoner._allFacts</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.Reasoner._supposed"><code class="docutils literal notranslate"><span class="pre">Reasoner._supposed</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.Reasoner.run"><code class="docutils literal notranslate"><span class="pre">Reasoner.run()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.Reasoner.answer"><code class="docutils literal notranslate"><span class="pre">Reasoner.answer()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.Reasoner.query"><code class="docutils literal notranslate"><span class="pre">Reasoner.query()</span></code></a></li>
@@ -2872,6 +3731,8 @@ dirties the model, or is undone (see <em>Model.inferring()</em>). Each object’
 <li><a class="reference internal" href="#sn.model.reasoner.Reasoner.isa"><code class="docutils literal notranslate"><span class="pre">Reasoner.isa()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.Reasoner.instances"><code class="docutils literal notranslate"><span class="pre">Reasoner.instances()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.Reasoner.violations"><code class="docutils literal notranslate"><span class="pre">Reasoner.violations()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.Reasoner.redundant"><code class="docutils literal notranslate"><span class="pre">Reasoner.redundant()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.Reasoner.worlds"><code class="docutils literal notranslate"><span class="pre">Reasoner.worlds()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.Reasoner.objects"><code class="docutils literal notranslate"><span class="pre">Reasoner.objects()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.Reasoner.dataModels"><code class="docutils literal notranslate"><span class="pre">Reasoner.dataModels()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.Reasoner.ruleObjects"><code class="docutils literal notranslate"><span class="pre">Reasoner.ruleObjects()</span></code></a></li>
@@ -2880,15 +3741,20 @@ dirties the model, or is undone (see <em>Model.inferring()</em>). Each object’
 <li><a class="reference internal" href="#sn.model.reasoner.Reasoner._finish"><code class="docutils literal notranslate"><span class="pre">Reasoner._finish()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.Reasoner.facts"><code class="docutils literal notranslate"><span class="pre">Reasoner.facts()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.Reasoner._facts"><code class="docutils literal notranslate"><span class="pre">Reasoner._facts()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.Reasoner._definingFacts"><code class="docutils literal notranslate"><span class="pre">Reasoner._definingFacts()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.Reasoner._relationFacts"><code class="docutils literal notranslate"><span class="pre">Reasoner._relationFacts()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#sn.model.reasoner.dataModelsOf"><code class="docutils literal notranslate"><span class="pre">dataModelsOf()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.defaultEngine"><code class="docutils literal notranslate"><span class="pre">defaultEngine()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.setDefaultEngine"><code class="docutils literal notranslate"><span class="pre">setDefaultEngine()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.reason"><code class="docutils literal notranslate"><span class="pre">reason()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.retractReasoning"><code class="docutils literal notranslate"><span class="pre">retractReasoning()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner.inferredObjectsFor"><code class="docutils literal notranslate"><span class="pre">inferredObjectsFor()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.summary"><code class="docutils literal notranslate"><span class="pre">summary()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.clearReasoning"><code class="docutils literal notranslate"><span class="pre">clearReasoning()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.withoutInferences"><code class="docutils literal notranslate"><span class="pre">withoutInferences()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.reasoner._ruleOrder"><code class="docutils literal notranslate"><span class="pre">_ruleOrder()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner._inferredAttributes"><code class="docutils literal notranslate"><span class="pre">_inferredAttributes()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner._inferredRelations"><code class="docutils literal notranslate"><span class="pre">_inferredRelations()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.reasoner.sameClasses"><code class="docutils literal notranslate"><span class="pre">sameClasses()</span></code></a></li>

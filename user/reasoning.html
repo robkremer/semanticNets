@@ -253,6 +253,7 @@
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../dev/sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.aboutBox.html">sn.view.graphics.aboutBox module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
@@ -318,9 +319,21 @@
 <li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
 </ul>
 </li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.rnetReader.html">snplugins.rnetReader package</a><input aria-label="Toggle navigation of snplugins.rnetReader package" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.abduction.html">snplugins.rnetReader.abduction module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.existence.html">snplugins.rnetReader.existence module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.expansion.html">snplugins.rnetReader.expansion module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.forms.html">snplugins.rnetReader.forms module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.hooks.html">snplugins.rnetReader.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.probes.html">snplugins.rnetReader.probes module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.rnet.html">snplugins.rnetReader.rnet module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.reader.html">snplugins.rnetReader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.view.html">snplugins.rnetReader.view module</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/snSourceCode.html">Semantic Nets Source Code Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/families.html">Families Models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/homeAutomation.html">Home Automation</a></li>
@@ -401,7 +414,9 @@ redundant parents, irreflexive or asymmetric relations broken, relation
 types tagged with conflicting properties, and rules the reasoner can’t use.</p>
 </dd>
 <dt><strong>Inferred relations</strong></dt><dd><p>Relations implied by the relational properties (symmetric, transitive,
-…) of their types.</p>
+…) of their types, and by nodes their links define – and, on the
+clingo engine, what the cases of those definitions conclude (see
+<a class="reference internal" href="concepts.html#defining-links"><span class="std std-ref">Defining links</span></a>).</p>
 </dd>
 <dt><strong>Rule conclusions</strong></dt><dd><p>What the rules and definitions concluded: relations, attribute values,
 types, and new objects (see <a class="reference internal" href="contexts.html"><span class="doc">Contexts: Rules, Definitions, Queries, Constraints and Requirements</span></a>).</p>
@@ -427,7 +442,10 @@ model, saved with it (not in a read-only model). It can be undone;</p></li>
 <li><p>attribute values rules conclude for the model’s own objects (eg: from a
 definition’s constraints) are added as <strong>inferred</strong> attributes: they’re
 used like any other value, but aren’t saved, and an object’s own (given)
-value always wins over one inferred. The attribute editor shows an
+value always wins over one inferred. If rules conclude different values
+of one attribute for an object, it gets the first rule’s (in the order
+they’re in the model, and then its super-models), whichever engine
+reasoned. The attribute editor shows an
 inferred value greyed out, marked <strong>I</strong>, with an <strong>assert</strong> button: press
 it, then <strong>Save Changes</strong>, to make it an ordinary value;</p></li>
 <li><p>objects with violations get a red <strong>E</strong> marker: hover over it for the
@@ -447,6 +465,37 @@ changing the model. Reasoning again keeps the inferred relations that are
 still inferred (where you’ve put them), adds new ones, and removes the
 rest. Typing <code class="docutils literal notranslate"><span class="pre">reason</span></code> (or <code class="docutils literal notranslate"><span class="pre">clear</span> <span class="pre">reasoning</span></code>) in the terminal does the
 same as the button.</p>
+<section id="reasoning-about-some-objects">
+<span id="reasoning-about"></span><h3>Reasoning about some objects<a class="headerlink" href="#reasoning-about-some-objects" title="Link to this heading">¶</a></h3>
+<p>An object’s menu has <strong>reason</strong>, <strong>reason silently</strong> and <strong>retract</strong> too:
+they’re about just that object – or, if it’s selected, everything selected.</p>
+<ul class="simple">
+<li><p><strong>reason</strong> adds (and draws) what the reasoner concludes about it, and marks
+its problems; the report in the terminal pane is about it too. What’s
+about an object is what it takes part in: the relations inferred to or
+from it, the types and attribute values the rules conclude for it, the new
+objects a rule makes for it (with their types and relations), and the
+violations that name it. For a relation, it’s also what’s inferred between
+its two ends (eg: for <em>bob has-sibling alice</em>: <em>alice has-sibling bob</em>);
+for a relation type, the relations of that type; for a rule, what it
+concludes.</p></li>
+<li><p><strong>reason silently</strong> adds the same to the model, without drawing it, and
+marks its problems.</p></li>
+<li><p><strong>retract</strong> takes back what’s about it – even what reasoning about
+something else brought in (eg: a relation to it) – and its problems’
+markers. The rest stays.</p></li>
+</ul>
+<p>The reasoner still reasons over the whole model – what holds of one object
+can depend on any of it: eg: <em>carol has-uncle bob</em> follows from <em>carol
+has-parent alice</em> and <em>alice has-brother bob</em>, which is itself inferred –
+it’s just what’s added that’s chosen. Each one adds to what’s there (where
+it still holds: what’s no longer concluded goes), and the last say wins: an
+object reasoned about after another was retracted gets back what’s between
+them. The reasoning toolbar’s summary says what’s shown: eg, “about carol and
+bob: inferred: 3 relations; 1 warning”. A whole <strong>reason</strong> shows everything
+again; <strong>Retract</strong> (↺) and <strong>clear reasoning</strong> take everything back. In the
+terminal: <code class="docutils literal notranslate"><span class="pre">reason</span> <span class="pre">carol</span> <span class="pre">bob</span></code> (<code class="docutils literal notranslate"><span class="pre">--silent</span></code> too), and <code class="docutils literal notranslate"><span class="pre">retract</span> <span class="pre">carol</span></code>.</p>
+</section>
 </section>
 <section id="engines-and-explanations">
 <h2>Engines and explanations<a class="headerlink" href="#engines-and-explanations" title="Link to this heading">¶</a></h2>
@@ -464,7 +513,9 @@ how to install it instead.) <code class="docutils literal notranslate"><span cla
 CLIPS, <code class="docutils literal notranslate"><span class="pre">'(defrule</span> <span class="pre">q</span> <span class="pre">(holds</span> <span class="pre">?t</span> <span class="pre">?f</span> <span class="pre">?x)</span> <span class="pre">(name</span> <span class="pre">?t</span> <span class="pre">&quot;owns&quot;)</span> <span class="pre">(name</span> <span class="pre">?f</span> <span class="pre">&quot;fred&quot;)</span> <span class="pre">=&gt;</span>
 <span class="pre">(assert</span> <span class="pre">(ans</span> <span class="pre">?x)))'</span></code>; for Prolog, <code class="docutils literal notranslate"><span class="pre">'ans(X)</span> <span class="pre">:-</span> <span class="pre">name(T,&quot;owns&quot;),</span> <span class="pre">name(F,&quot;fred&quot;),</span>
 <span class="pre">holds(T,F,X).'</span></code> (its goals run in the order they’re written, so start with
-what narrows things down most).</p>
+what narrows things down most). Only clingo explores the cases of
+definitions (see <a class="reference internal" href="concepts.html#defining-links"><span class="std std-ref">Defining links</span></a>) and finds a KNet net’s probes (see
+<a class="reference internal" href="exampleApps.html"><span class="doc">Plugins</span></a>).</p>
 <p>What Nemo adds is explanations. An inferred relation’s menu has <strong>explain
 (why it holds)</strong>, which prints the steps to the terminal pane: the rules it
 follows by (yours, and the base rules: eg, <em>transitive</em>), down to what the
@@ -629,7 +680,10 @@ markers.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Reasoning</a><ul>
-<li><a class="reference internal" href="#id1">Reasoning</a></li>
+<li><a class="reference internal" href="#id1">Reasoning</a><ul>
+<li><a class="reference internal" href="#reasoning-about-some-objects">Reasoning about some objects</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#engines-and-explanations">Engines and explanations</a><ul>
 <li><a class="reference internal" href="#installing-an-engine">Installing an engine</a></li>
 </ul>

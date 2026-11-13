@@ -1,0 +1,1390 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="snplugins.rnetReader.view module" href="snplugins.rnetReader.view.html"><link rel="prev" title="snplugins.rnetReader.rnet module" href="snplugins.rnetReader.rnet.html">
+        <link rel="prefetch" href="../_static/sn-logo.png" as="image">
+
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>snplugins.rnetReader.reader module - Semantic Nets 1.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">Semantic Nets 1.1 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">Semantic Nets 1.1 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user/index.html">User Guide</a><input aria-label="Toggle navigation of User Guide" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user/concepts.html">Concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/gettingStarted.html">Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/tutorial.html">Worked Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/editing.html">Editing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/contexts.html">Contexts: Rules, Definitions, Queries, Constraints and Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/reasoning.html">Reasoning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/viewing.html">Viewing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/layouts.html">Arranging a View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/animation.html">Animation Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/files.html">Files and Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/terminal.html">The Terminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/shortcuts.html">Keys and mouse</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user/exampleApps.html">Plugins</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developer/index.html">Developer Guide</a><input aria-label="Toggle navigation of Developer Guide" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html">Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/model.html">The Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/reasoner.html">The Reasoner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/view.html">The Graphical View</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/layout.html">Layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/extending.html">Building on Semantic Nets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/conventions.html">Conventions and Testing</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../dev/sn.html">sn package</a><input aria-label="Toggle navigation of sn package" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.controller.html">sn.controller package</a><input aria-label="Toggle navigation of sn.controller package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.controller.modelInterface.html">sn.controller.modelInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.examples.html">sn.examples package</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.model.html">sn.model package</a><input aria-label="Toggle navigation of sn.model package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.clingoReasoner.html">sn.model.clingoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.clipsReasoner.html">sn.model.clipsReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.constraints.html">sn.model.constraints module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.copying.html">sn.model.copying module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.directory.html">sn.model.directory module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.model.html">sn.model.model module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.modelPrefs.html">sn.model.modelPrefs module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.names.html">sn.model.names module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.nemoReasoner.html">sn.model.nemoReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.prologReasoner.html">sn.model.prologReasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.reasoner.html">sn.model.reasoner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.model.snAttribute.html">sn.model.snAttribute module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../dev/sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.aboutBox.html">sn.view.graphics.aboutBox module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.chooseModelDialog.html">sn.view.graphics.chooseModelDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.connectors.html">sn.view.graphics.connectors module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.decorators.html">sn.view.graphics.decorators module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.directoryWindow.html">sn.view.graphics.directoryWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.expandDialog.html">sn.view.graphics.expandDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.guiApp.html">sn.view.graphics.guiApp module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.imageExport.html">sn.view.graphics.imageExport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.labels.html">sn.view.graphics.labels module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.layout.html">sn.view.graphics.layout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.layoutDialog.html">sn.view.graphics.layoutDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.layoutPanel.html">sn.view.graphics.layoutPanel module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.progress.html">sn.view.graphics.progress module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.reasoningToolbar.html">sn.view.graphics.reasoningToolbar module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.relationTable.html">sn.view.graphics.relationTable module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.replaceModelDialog.html">sn.view.graphics.replaceModelDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.searchDialog.html">sn.view.graphics.searchDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.shapes.html">sn.view.graphics.shapes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.sngContext.html">sn.view.graphics.sngContext module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.sngView.html">sn.view.graphics.sngView module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.sourceWindow.html">sn.view.graphics.sourceWindow module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.treeLayout.html">sn.view.graphics.treeLayout module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewBase.html">sn.view.graphics.viewBase module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewCommands.html">sn.view.graphics.viewCommands module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewContainment.html">sn.view.graphics.viewContainment module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewEditing.html">sn.view.graphics.viewEditing module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewFiles.html">sn.view.graphics.viewFiles module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewInput.html">sn.view.graphics.viewInput module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewLayouts.html">sn.view.graphics.viewLayouts module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewReasoning.html">sn.view.graphics.viewReasoning module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewViewport.html">sn.view.graphics.viewViewport module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.viewVisibility.html">sn.view.graphics.viewVisibility module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.visibilityDialog.html">sn.view.graphics.visibilityDialog module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.vnodes.html">sn.view.graphics.vnodes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.vobjects.html">sn.view.graphics.vobjects module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.vrelations.html">sn.view.graphics.vrelations module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../dev/sn.view.textUserInterface.html">sn.view.textUserInterface module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.__main__.html">sn.__main__ module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.hooks.html">sn.hooks module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dev/sn.plugins.html">sn.plugins module</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Example Materials</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">The plugins</a><input aria-label="Toggle navigation of The plugins" checked="" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="snplugins.XMLreader.html">snplugins.XMLreader package</a><input aria-label="Toggle navigation of snplugins.XMLreader package" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.XMLreader.reader.html">snplugins.XMLreader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.XMLreader.schema.html">snplugins.XMLreader.schema module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.XMLreader.view.html">snplugins.XMLreader.view module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="snplugins.pythonParser.html">snplugins.pythonParser package</a><input aria-label="Toggle navigation of snplugins.pythonParser package" class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.pythonParser.dialog.html">snplugins.pythonParser.dialog module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.pythonParser.hooks.html">snplugins.pythonParser.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.pythonParser.parser.html">snplugins.pythonParser.parser module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current has-children"><a class="reference internal" href="snplugins.rnetReader.html">snplugins.rnetReader package</a><input aria-label="Toggle navigation of snplugins.rnetReader package" checked="" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="snplugins.rnetReader.abduction.html">snplugins.rnetReader.abduction module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.rnetReader.existence.html">snplugins.rnetReader.existence module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.rnetReader.expansion.html">snplugins.rnetReader.expansion module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.rnetReader.forms.html">snplugins.rnetReader.forms module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.rnetReader.hooks.html">snplugins.rnetReader.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.rnetReader.probes.html">snplugins.rnetReader.probes module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.rnetReader.rnet.html">snplugins.rnetReader.rnet module</a></li>
+<li class="toctree-l3 current current-page"><a class="current reference internal" href="#">snplugins.rnetReader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="snplugins.rnetReader.view.html">snplugins.rnetReader.view module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../modelsDoc/snSourceCode.html">Semantic Nets Source Code Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modelsDoc/families.html">Families Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modelsDoc/homeAutomation.html">Home Automation</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/plugins/snplugins.rnetReader.reader.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="module-snplugins.rnetReader.reader">
+<span id="snplugins-rnetreader-reader-module"></span><h1>snplugins.rnetReader.reader module<a class="headerlink" href="#module-snplugins.rnetReader.reader" title="Link to this heading">¶</a></h1>
+<p>Make a Semantic Nets model of a Rep Plus net (see <em>rnet</em>), for <em>view</em> to
+show (see <em>buildModel()</em>), built on <em>ONTOLOGY</em> (the kernel of Gaines’s
+protologic, so that the reasoners draw KNet’s inferences):</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Each node type (section <code class="docutils literal notranslate"><span class="pre">T</span></code>) becomes a node type (an SN subtype of
+<em>KNODE</em>: a KNet node, with its truth marks’ bars and menu items – see
+<em>hooks</em>) of the same name, with its shape and colours (see <em>NODE_SHAPES</em> and
+<em>NODE_COLORS</em>); one that’s just its text (eg: “Title”, “Note”) has no
+outline or fill. A node with no type gets <em>UNTYPED</em>. One with the
+enclosure shape (<em>ENCLOSURE</em>: eg, “construct”, “frame”, “rules”) becomes
+an SN subtype of context instead, that doesn’t quote what it contains (see
+<em>GraphObject.quotesContents()</em>): its nodes are boxes of facts – but one
+of no size (an invisible end of links CNet draws, eg: in a drawing) is a
+<em>POINT</em>, with its type’s name in its “rnetType” attribute.</p></li>
+<li><p>Each link type (section <code class="docutils literal notranslate"><span class="pre">A</span></code>) becomes a relation type of the same name,
+drawn with its arrowheads, bars and middle symbol as relation marks (see
+<em>endMarks()</em> and <em>MID_MARKS</em>), in its colour (see <em>LINK_COLORS</em>), as a
+straight line, with no label: a dashed one’s colours are faded. It’s an
+SN subtype of the kernel relation type its look says it is (see
+<em>kernelKind()</em>: eg, an arrow is includes, an arrow with a bar excludes),
+if any – or of the connective’s, if it has a heavy or a double
+arrowhead (see <em>connectiveKind()</em>: eg, “Conjunct includes”), whose links
+define a conjunction or a disjunction (Gaines’s structural
+connectives) – or of <em>PREFER</em>, if it’s a plain line with a “&gt;” in
+the middle (see <em>preferenceKind()</em>: a preference among a
+connective’s cases, for its defaults). One drawn backwards – its arrow at its tail (eg: “Includes
+reverse”) – is drawn the other way round instead: its arrow at its
+destination, and its links from the file’s destination to its source
+(see <em>isReversed()</em>), so that it means what it shows.</p></li>
+<li><p>Each node (section <code class="docutils literal notranslate"><span class="pre">N</span></code>) becomes an individual of its type, named by its
+label (its line breaks and all; one with no label has no name). Its mark,
+if it has one, becomes attributes – “mark” (T, F or TF: true, false, or
+both), “markKind” (eg: “Asserted”), and “markDerived” (if it was
+inferred, rather than asserted) – with “marks”, the number as the file
+has it (in hexadecimal), and its label says the mark (see <em>LABEL</em>). It’s
+drawn as Rep Plus draws it (see <em>rnet.NetNode</em>): filled with the mark
+kind’s background colour, and its outline in the kind’s colour, if the
+mark says so. An asserted mark is the node’s truth mark, too, which the
+reasoners propagate: <em>hooks.MARK_TRUE</em> and/or <em>hooks.MARK_FALSE</em>, saying
+its kind (eg: “asserted”), shown as Gaines’s bars. (A derived one isn’t:
+it’s what the reasoners conclude again.) Pictures and drawings aren’t
+made (they aren’t concepts).</p></li>
+<li><p>Each link (section <code class="docutils literal notranslate"><span class="pre">L</span></code>) becomes a relation of its type from its source
+to its destination – and one of its second type, if it has one, back
+from its destination to its source (see <em>rnet.Link</em>) – or the other way,
+for a reversed type (as it’s drawn). Any more fields it has (eg: a weight)
+are in its “values” attribute. Derived links (CNet’s or KNet’s
+inferences: see <em>rnet.LinkType.derived</em>) are made as they are: they’re
+what the reasoners infer anyway.</p></li>
+<li><p>Each box (a node of an enclosure type) contains – by “contains”
+relations – the nodes whose centres are inside it, and the smaller boxes
+that are: each in the smallest box it’s in (CNet lists them nowhere: it’s
+where they are).</p></li>
+<li><p>A construct box’s poles (the nodes it contains) exclude each other, as
+CNet’s construct macro says, unless an includes link (or a chain of them)
+joins them: each pair gets a relation of <em>CONSTRUCT_EXCLUDES</em>, an SN
+subtype of the net’s own symmetric exclusion, faded as derived links are
+(see <em>addConstructMeaning()</em>).</p></li>
+<li><p>Nodes with the same label are one node, as KNet takes them (a net can
+draw a node again, elsewhere, to keep its links short): each copy
+after the first gets a relation of <em>SAME_LABEL</em>, an equivalence, to the
+first (see <em>addSameLabels()</em>) – unless <em>buildModel()</em> is told not to
+(a figure of several copies of one net, side by side).</p></li>
+<li><p>Groups (section <code class="docutils literal notranslate"><span class="pre">G</span></code>) aren’t made: in Rep Plus they’re only a way to
+select and drag nodes together, with no meaning (and they’d fight the
+layouts).</p></li>
+</ul>
+</div></blockquote>
+<p>Created on Nov 11, 2026</p>
+<p><em>Code author: Rob Kremer &lt;<a class="reference external" href="mailto:robkremer&#37;&#52;&#48;me&#46;com">robkremer<span>&#64;</span>me<span>&#46;</span>com</a>&gt;</em></p>
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.ONTOLOGY">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">ONTOLOGY</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'/Users/kremer/git/semanticNets/plugins/rnetReader/knet.snm'</span></span><a class="headerlink" href="#snplugins.rnetReader.reader.ONTOLOGY" title="Link to this definition">¶</a></dt>
+<dd><p>The model the models made build on: the kernel of Gaines’s protologic – its
+relation types (<em>KERNEL</em>) and inference patterns, as rules (made by
+tools/makeKnetRules.py, whose doc says what they are).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.KERNEL">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">KERNEL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('includes',</span> <span class="pre">'equivalent',</span> <span class="pre">'excludes',</span> <span class="pre">'coexcludes',</span> <span class="pre">'negates',</span> <span class="pre">'inconsistent')</span></span><a class="headerlink" href="#snplugins.rnetReader.reader.KERNEL" title="Link to this definition">¶</a></dt>
+<dd><p>The kernel relation types’ names, in <em>ONTOLOGY</em>.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.CONNECTIVES">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">CONNECTIVES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{(2,</span> <span class="pre">0):</span> <span class="pre">'conjunct</span> <span class="pre">includes',</span> <span class="pre">(2,</span> <span class="pre">1):</span> <span class="pre">'conjunct</span> <span class="pre">excludes',</span> <span class="pre">(3,</span> <span class="pre">0):</span> <span class="pre">'disjunct</span> <span class="pre">includes',</span> <span class="pre">(3,</span> <span class="pre">2):</span> <span class="pre">'disjunct</span> <span class="pre">coexcludes'}</span></span><a class="headerlink" href="#snplugins.rnetReader.reader.CONNECTIVES" title="Link to this definition">¶</a></dt>
+<dd><p>The structural connectives’ relation types, in <em>ONTOLOGY</em> (SN subtypes of
+the kernel’s: see tools/makeKnetRules.py), by the arrowhead (a heavy one, a
+conjunction’s; a double one, a disjunction’s: <em>rnet.LinkType.head</em>) and its
+bars: see <em>connectiveKind()</em>.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.KNODE">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">KNODE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'knode'</span></span><a class="headerlink" href="#snplugins.rnetReader.reader.KNODE" title="Link to this definition">¶</a></dt>
+<dd><p>The SN type of a KNet net’s nodes, in <em>ONTOLOGY</em>: the net’s node types are its SN subtypes.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.ARROWHEADS">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">ARROWHEADS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(1,</span> <span class="pre">2,</span> <span class="pre">3)</span></span><a class="headerlink" href="#snplugins.rnetReader.reader.ARROWHEADS" title="Link to this definition">¶</a></dt>
+<dd><p>The ends (<em>rnet.LinkType.head</em>, <em>tail</em>) that are arrowheads: plain, heavy
+(a conjunction’s) and double (a disjunction’s) – each an ordinary link, as
+far as the kernel goes (Gaines: their connective’s iterative clause comes on
+top).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.BY_BARS">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">BY_BARS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{0:</span> <span class="pre">'includes',</span> <span class="pre">1:</span> <span class="pre">'excludes',</span> <span class="pre">2:</span> <span class="pre">'coexcludes',</span> <span class="pre">3:</span> <span class="pre">'negates'}</span></span><a class="headerlink" href="#snplugins.rnetReader.reader.BY_BARS" title="Link to this definition">¶</a></dt>
+<dd><p>An arrowhead’s bars (or a line’s middle symbol: <em>rnet.LinkType.mid</em>) -&gt; the kernel relation type it is.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.NOT_KERNEL">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">NOT_KERNEL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('generic',</span> <span class="pre">'etc',</span> <span class="pre">'prefer',</span> <span class="pre">'preferred',</span> <span class="pre">'prohibited',</span> <span class="pre">'forbidden',</span> <span class="pre">'defeasible',</span> <span class="pre">'conjecture',</span> <span class="pre">'possible',</span> <span class="pre">'particular')</span></span><a class="headerlink" href="#snplugins.rnetReader.reader.NOT_KERNEL" title="Link to this definition">¶</a></dt>
+<dd><p>Words in a link type’s name that say it isn’t the kernel link it looks
+like: generic links stand for any of them (Gaines, section 2.7); “Etc” links
+for more of the same, in pictures; preferences and defaults are defeasible;
+the rest are prohibitions and modalities.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.NODE_SHAPES">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">NODE_SHAPES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{0:</span> <span class="pre">'Rectangle',</span> <span class="pre">1:</span> <span class="pre">'Rectangle',</span> <span class="pre">2:</span> <span class="pre">'Oval',</span> <span class="pre">3:</span> <span class="pre">'Rectangle'}</span></span><a class="headerlink" href="#snplugins.rnetReader.reader.NODE_SHAPES" title="Link to this definition">¶</a></dt>
+<dd><p>A node type’s shape (<em>rnet.NodeType.shape</em>) -&gt; its shape here (“vis/shape”). A grid’s (“rgrid”) is a
+FileFolder. An enclosure’s (see <em>ENCLOSURE</em>) is a box, drawn as a window.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.NODE_COLORS">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">NODE_COLORS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'vis/borderColor':</span> <span class="pre">3,</span> <span class="pre">'vis/fillColor':</span> <span class="pre">1,</span> <span class="pre">'vis/textColor':</span> <span class="pre">2}</span></span><a class="headerlink" href="#snplugins.rnetReader.reader.NODE_COLORS" title="Link to this definition">¶</a></dt>
+<dd><p>Where a node type’s colours go (which of its four, from 0): the second is
+the fill and the third the text’s (as CNet’s SVG pictures of its nets show);
+the fourth – or the first: they’re the same in every type in those
+pictures – the outline.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.LINK_COLORS">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">LINK_COLORS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'vis/lineColor':</span> <span class="pre">3}</span></span><a class="headerlink" href="#snplugins.rnetReader.reader.LINK_COLORS" title="Link to this definition">¶</a></dt>
+<dd><p>Where a (version 9) link type’s four colours go: the line’s (and its marks’)
+is taken to be the fourth, as a node’s outline is (eg: “Prefer”, whose last
+two are purple, was purple in the older files’ link types). A link type
+given by its bits (see <em>rnet.LinkType</em>) has two: the line’s, and its marks’.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.ARROW">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">ARROW</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'arrow'</span></span><a class="headerlink" href="#snplugins.rnetReader.reader.ARROW" title="Link to this definition">¶</a></dt>
+<dd><p>An arrowhead (pointing off the end it’s at).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.HEAVY_ARROW">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">HEAVY_ARROW</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'arrow(11,13,6)'</span></span><a class="headerlink" href="#snplugins.rnetReader.reader.HEAVY_ARROW" title="Link to this definition">¶</a></dt>
+<dd><p>A heavy arrowhead (a conjunction’s).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.MID_MARKS">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">MID_MARKS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{1:</span> <span class="pre">'|',</span> <span class="pre">2:</span> <span class="pre">'||',</span> <span class="pre">3:</span> <span class="pre">'|||',</span> <span class="pre">4:</span> <span class="pre">'&#64;',</span> <span class="pre">6:</span> <span class="pre">'&gt;'}</span></span><a class="headerlink" href="#snplugins.rnetReader.reader.MID_MARKS" title="Link to this definition">¶</a></dt>
+<dd><p>A link type’s symbol in the middle (<em>rnet.LinkType.mid</em>) -&gt; its middle marks:
+the symmetric exclusion, coexclusion and negation (as one, two and three
+bars, as their arrows have at the head), prohibited, preferred.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.DERIVED_FADE">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">DERIVED_FADE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.5</span></span><a class="headerlink" href="#snplugins.rnetReader.reader.DERIVED_FADE" title="Link to this definition">¶</a></dt>
+<dd><p>How far a derived link type’s colour is faded toward white (CNet draws them dashed).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.MARK_WIDTH">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">MARK_WIDTH</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="headerlink" href="#snplugins.rnetReader.reader.MARK_WIDTH" title="Link to this definition">¶</a></dt>
+<dd><p>The width of the outline a mark draws (in its kind’s colour) on a node
+whose type has none (as Rep Plus does).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.LABEL">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">LABEL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'$name${mark:+</span> <span class="pre">$mark}'</span></span><a class="headerlink" href="#snplugins.rnetReader.reader.LABEL" title="Link to this definition">¶</a></dt>
+<dd><p>Each node type’s label template: the name, and the mark, if there is one (see the module doc).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.UNTYPED">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">UNTYPED</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'text'</span></span><a class="headerlink" href="#snplugins.rnetReader.reader.UNTYPED" title="Link to this definition">¶</a></dt>
+<dd><p>The node type made for nodes with none (eg: text the program wrote): just its text.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.POINT">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">POINT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'point'</span></span><a class="headerlink" href="#snplugins.rnetReader.reader.POINT" title="Link to this definition">¶</a></dt>
+<dd><p>The node type made for nodes of an enclosure type that have no size: invisible ends of links (eg: in a drawing).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.ENCLOSURE">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">ENCLOSURE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></span><a class="headerlink" href="#snplugins.rnetReader.reader.ENCLOSURE" title="Link to this definition">¶</a></dt>
+<dd><p>A node type’s shape (<em>rnet.NodeType.shape</em>) that’s an enclosure: a box that
+holds the nodes inside it (RepNet manual, sections 3.7 and 6.2). Every node
+type of the test nets named for a box (“collection”, “frame”, “context”,
+“construct”, “cases”, “rules”, “Context:”, “Cluster”) has it.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.TITLEBAR_TINT">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">TITLEBAR_TINT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.8</span></span><a class="headerlink" href="#snplugins.rnetReader.reader.TITLEBAR_TINT" title="Link to this definition">¶</a></dt>
+<dd><p>How far a box’s title bar is faded from its outline colour toward white.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.CONSTRUCT">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">CONSTRUCT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'construct'</span></span><a class="headerlink" href="#snplugins.rnetReader.reader.CONSTRUCT" title="Link to this definition">¶</a></dt>
+<dd><p>The name (any case; it may go on: eg, “Construct:”) of the enclosure type whose boxes are Kelly constructs.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.CONSTRUCT_EXCLUDES">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">CONSTRUCT_EXCLUDES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'construct</span> <span class="pre">excludes'</span></span><a class="headerlink" href="#snplugins.rnetReader.reader.CONSTRUCT_EXCLUDES" title="Link to this definition">¶</a></dt>
+<dd><p>The relation type of the exclusions a construct box’s poles get (see <em>addConstructMeaning()</em>).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.PREFER">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">PREFER</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'prefer'</span></span><a class="headerlink" href="#snplugins.rnetReader.reader.PREFER" title="Link to this definition">¶</a></dt>
+<dd><p>The preferences’ relation type, in <em>ONTOLOGY</em>: links of a line with the
+preference symbol in its middle (<em>rnet.LinkType.mid</em> 6), and no arrowheads,
+are SN subtypes of it (see <em>preferenceKind()</em>).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.SAME_LABEL">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">SAME_LABEL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'same</span> <span class="pre">label'</span></span><a class="headerlink" href="#snplugins.rnetReader.reader.SAME_LABEL" title="Link to this definition">¶</a></dt>
+<dd><p>The relation type of the equivalences between nodes with the same label (see <em>addSameLabels()</em>).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.KNET_NODE_TYPES">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">KNET_NODE_TYPES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('concept',</span> <span class="pre">'context',</span> <span class="pre">'disjoint',</span> <span class="pre">'construct',</span> <span class="pre">'cases',</span> <span class="pre">'rules',</span> <span class="pre">'collection')</span></span><a class="headerlink" href="#snplugins.rnetReader.reader.KNET_NODE_TYPES" title="Link to this definition">¶</a></dt>
+<dd><p>The node types (their names, in any case) of the nodes KNet reasons about:
+it leaves out the others (eg: titles, notes, grids, frames).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.KNET_NODE">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">KNET_NODE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'knetNode'</span></span><a class="headerlink" href="#snplugins.rnetReader.reader.KNET_NODE" title="Link to this definition">¶</a></dt>
+<dd><p>The attribute of a node type (an SN subtype of <em>KNODE</em>) that says whether
+its nodes are the net’s: False for one not in <em>KNET_NODE_TYPES</em> (eg: a note’s),
+whose nodes KNet doesn’t reason about – so they aren’t probed (see
+<em>probes.netNodes()</em>).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.endMarks">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">endMarks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atSource</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader.endMarks" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>shape</strong> (<em>int</em>) – The end’s head (see <em>rnet.LinkType.head</em>): 0 none, 1 an arrowhead, 2 a heavy one, 3 a double one.</p></li>
+<li><p><strong>bars</strong> (<em>int</em>) – How many bars there are behind the head.</p></li>
+<li><p><strong>atSource</strong> (<em>bool</em>) – Whether it’s the source’s end (else the destination’s).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The relation marks for the end (see “vis/terminator1” and “vis/terminator4”).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.kernelKind">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">kernelKind</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader.kernelKind" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>t</strong> (<a class="reference internal" href="snplugins.rnetReader.rnet.html#snplugins.rnetReader.rnet.LinkType" title="snplugins.rnetReader.rnet.LinkType"><em>LinkType</em></a>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The kernel relation type (<em>KERNEL</em>) that links of <em>t</em> are, as its
+look says (Gaines’s notation): an arrow is includes, and one with one,
+two or three bars at its head excludes, coexcludes or negates (a heavy or
+a double arrowhead – a conjunction’s or a disjunction’s – is still an
+arrow); a line with one, two or three bars across its middle (and no
+arrowheads, or one at each end) is the symmetric exclusion, coexclusion or
+negation; an arrow at each end is equivalent, and so is a plain line
+named so. None for anything else – generic links, preferences,
+prohibitions, lines – and for a type whose name says it isn’t (see
+<em>NOT_KERNEL</em>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.connectiveKind">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">connectiveKind</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader.connectiveKind" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>t</strong> (<a class="reference internal" href="snplugins.rnetReader.rnet.html#snplugins.rnetReader.rnet.LinkType" title="snplugins.rnetReader.rnet.LinkType"><em>LinkType</em></a>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The connective relation type (see <em>CONNECTIVES</em>) that links of
+<em>t</em> are: a kernel link (see <em>kernelKind()</em>) with a heavy or a double
+arrowhead at one end (and nothing at the other), with the bars that one
+has (none or one for a conjunction’s, none or two for a disjunction’s) –
+unless it’s derived (KNet’s inferences aren’t definitions). None for
+anything else.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.preferenceKind">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">preferenceKind</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader.preferenceKind" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>t</strong> (<a class="reference internal" href="snplugins.rnetReader.rnet.html#snplugins.rnetReader.rnet.LinkType" title="snplugins.rnetReader.rnet.LinkType"><em>LinkType</em></a>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>PREFER</em>, for a link type that’s a preference: a line with the
+preference symbol in its middle (<em>rnet.LinkType.mid</em> 6), and no
+arrowheads (eg: “Prefer”, and “Prefer derived”: KNet’s transitive closure
+of them, which follows anyway). None for anything else.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.isReversed">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">isReversed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader.isReversed" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>t</strong> (<a class="reference internal" href="snplugins.rnetReader.rnet.html#snplugins.rnetReader.rnet.LinkType" title="snplugins.rnetReader.rnet.LinkType"><em>LinkType</em></a>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether <em>t</em> is drawn backwards: an arrowhead (or a generic one) at
+its tail, and none at its head (eg: “Includes reverse”).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.ontology">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">ontology</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader.ontology" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>m</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>) – A model built on <em>ONTOLOGY</em>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>ONTOLOGY</em>’s model.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.kernelTypes">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">kernelTypes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader.kernelTypes" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>m</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>) – A model built on <em>ONTOLOGY</em>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The kernel relation types (<em>KERNEL</em>), and the connectives’ (<em>CONNECTIVES</em>) and the preferences’ (<em>PREFER</em>), by name.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, <a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.knodeType">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">knodeType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader.knodeType" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>m</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>) – A model built on <em>ONTOLOGY</em>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>KNODE</em>: the SN type of a KNet net’s nodes.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node" title="sn.model.model.Node"><em>Node</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.fade">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">fade</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">color</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amount</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader.fade" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>color</strong> (<em>str</em>) – “#rrggbb”.</p></li>
+<li><p><strong>amount</strong> (<em>float</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>It, faded toward white by <em>amount</em> (0: not at all; 1: white).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.note">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">note</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader.note" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>text</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.attribute.html#util.attribute.Attribute" title="(in pythonUtils)"><em>Attribute</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.setNote">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">setNote</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader.setNote" title="Link to this definition">¶</a></dt>
+<dd><p>Give <em>obj</em> the note <em>text</em>: a new attribute (see <em>note()</em>), unless it
+inherits one (eg: a kernel type’s), whose kind it then has.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p></li>
+<li><p><strong>text</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.Built">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">Built</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">net</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodeTypes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linkTypes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boxes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">members</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">derived</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skipped</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader.Built" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>What <em>buildModel()</em> made of a net.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>net</strong> (<a class="reference internal" href="snplugins.rnetReader.rnet.html#snplugins.rnetReader.rnet.Net" title="snplugins.rnetReader.rnet.Net"><em>Net</em></a>)</p></li>
+<li><p><strong>model</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>)</p></li>
+<li><p><strong>nodeTypes</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node" title="sn.model.model.Node"><em>Node</em></a><em>]</em>)</p></li>
+<li><p><strong>linkTypes</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a><em>]</em>)</p></li>
+<li><p><strong>kernel</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a><em>]</em>)</p></li>
+<li><p><strong>nodes</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node" title="sn.model.model.Node"><em>Node</em></a><em>]</em>)</p></li>
+<li><p><strong>relations</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a><em>, </em><em>int</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>boxes</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node" title="sn.model.model.Node"><em>Node</em></a><em>]</em>)</p></li>
+<li><p><strong>members</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>derived</strong> (<em>list</em><em>[</em><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a><em>]</em>)</p></li>
+<li><p><strong>skipped</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.Built.net">
+<span class="sig-name descname"><span class="pre">net</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="snplugins.rnetReader.rnet.html#snplugins.rnetReader.rnet.Net" title="snplugins.rnetReader.rnet.Net"><span class="pre">Net</span></a></span><a class="headerlink" href="#snplugins.rnetReader.reader.Built.net" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.Built.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">net</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodeTypes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linkTypes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boxes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">members</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">derived</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skipped</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader.Built.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>net</strong> (<a class="reference internal" href="snplugins.rnetReader.rnet.html#snplugins.rnetReader.rnet.Net" title="snplugins.rnetReader.rnet.Net"><em>Net</em></a>)</p></li>
+<li><p><strong>model</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>)</p></li>
+<li><p><strong>nodeTypes</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node" title="sn.model.model.Node"><em>Node</em></a><em>]</em>)</p></li>
+<li><p><strong>linkTypes</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a><em>]</em>)</p></li>
+<li><p><strong>kernel</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a><em>]</em>)</p></li>
+<li><p><strong>nodes</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node" title="sn.model.model.Node"><em>Node</em></a><em>]</em>)</p></li>
+<li><p><strong>relations</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a><em>, </em><em>int</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>boxes</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node" title="sn.model.model.Node"><em>Node</em></a><em>]</em>)</p></li>
+<li><p><strong>members</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>list</em><em>[</em><em>int</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>derived</strong> (<em>list</em><em>[</em><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a><em>]</em>)</p></li>
+<li><p><strong>skipped</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.Built.model">
+<span class="sig-name descname"><span class="pre">model</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><span class="pre">Model</span></a></span><a class="headerlink" href="#snplugins.rnetReader.reader.Built.model" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.Built.nodeTypes">
+<span class="sig-name descname"><span class="pre">nodeTypes</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node" title="sn.model.model.Node"><span class="pre">Node</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#snplugins.rnetReader.reader.Built.nodeTypes" title="Link to this definition">¶</a></dt>
+<dd><p>Each node type’s place in the net -&gt; its type (-1: <em>UNTYPED</em>, -2: <em>POINT</em>, if they were needed).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.Built.linkTypes">
+<span class="sig-name descname"><span class="pre">linkTypes</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><span class="pre">Relation</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#snplugins.rnetReader.reader.Built.linkTypes" title="Link to this definition">¶</a></dt>
+<dd><p>Each link type’s place in the net -&gt; its relation type.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.Built.kernel">
+<span class="sig-name descname"><span class="pre">kernel</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><span class="pre">Relation</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#snplugins.rnetReader.reader.Built.kernel" title="Link to this definition">¶</a></dt>
+<dd><p>The kernel relation types (see <em>KERNEL</em>), and the connectives’ (<em>CONNECTIVES</em>), by name.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.Built.nodes">
+<span class="sig-name descname"><span class="pre">nodes</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node" title="sn.model.model.Node"><span class="pre">Node</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#snplugins.rnetReader.reader.Built.nodes" title="Link to this definition">¶</a></dt>
+<dd><p>Each node’s place in the net -&gt; its individual (not the pictures and drawings).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.Built.relations">
+<span class="sig-name descname"><span class="pre">relations</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><span class="pre">Relation</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#snplugins.rnetReader.reader.Built.relations" title="Link to this definition">¶</a></dt>
+<dd><p>Each relation, and the place in the net of the link it’s of.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.Built.boxes">
+<span class="sig-name descname"><span class="pre">boxes</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node" title="sn.model.model.Node"><span class="pre">Node</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#snplugins.rnetReader.reader.Built.boxes" title="Link to this definition">¶</a></dt>
+<dd><p>Each box’s place in the net -&gt; its individual (a node of an enclosure type: see <em>ENCLOSURE</em>).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.Built.members">
+<span class="sig-name descname"><span class="pre">members</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#snplugins.rnetReader.reader.Built.members" title="Link to this definition">¶</a></dt>
+<dd><p>Each box’s place in the net -&gt; the places of the nodes (and boxes) it contains, in order.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.Built.derived">
+<span class="sig-name descname"><span class="pre">derived</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><span class="pre">Relation</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#snplugins.rnetReader.reader.Built.derived" title="Link to this definition">¶</a></dt>
+<dd><p>The relations added for what the boxes mean (eg: a construct’s poles’ exclusions: see <em>addConstructMeaning()</em>).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.Built.skipped">
+<span class="sig-name descname"><span class="pre">skipped</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#snplugins.rnetReader.reader.Built.skipped" title="Link to this definition">¶</a></dt>
+<dd><p>What wasn’t made, and why.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.Built.report">
+<span class="sig-name descname"><span class="pre">report</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader.Built.report" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>What was made, in a sentence or two.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.makeNodeType">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">makeNodeType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">knode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader.makeNodeType" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>knode</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node" title="sn.model.model.Node"><em>Node</em></a><em> | </em><em>None</em>) – <em>KNODE</em>, if <em>m</em>’s built on <em>ONTOLOGY</em>: the parent of a type that isn’t a box’s.</p></li>
+<li><p><strong>m</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>)</p></li>
+<li><p><strong>t</strong> (<a class="reference internal" href="snplugins.rnetReader.rnet.html#snplugins.rnetReader.rnet.NodeType" title="snplugins.rnetReader.rnet.NodeType"><em>NodeType</em></a>)</p></li>
+<li><p><strong>file</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new node type in <em>m</em> for the net’s node type <em>t</em> (see the module doc).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node" title="sn.model.model.Node"><em>Node</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.makeUntyped">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">makeUntyped</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader.makeUntyped" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>m</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>)</p></li>
+<li><p><strong>file</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new <em>UNTYPED</em> type in <em>m</em>: just its text.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node" title="sn.model.model.Node"><em>Node</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.makePoint">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">makePoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader.makePoint" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>m</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>)</p></li>
+<li><p><strong>file</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new <em>POINT</em> type in <em>m</em>: nothing drawn.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node" title="sn.model.model.Node"><em>Node</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.makeLinkType">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">makeLinkType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader.makeLinkType" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kernel</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a><em>] </em><em>| </em><em>None</em>) – The kernel relation types (see <em>kernelTypes()</em>): it’s an SN
+subtype of the one it is (see <em>connectiveKind()</em>, <em>kernelKind()</em> and
+<em>preferenceKind()</em>), if any.</p></li>
+<li><p><strong>m</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Model" title="sn.model.model.Model"><em>Model</em></a>)</p></li>
+<li><p><strong>t</strong> (<a class="reference internal" href="snplugins.rnetReader.rnet.html#snplugins.rnetReader.rnet.LinkType" title="snplugins.rnetReader.rnet.LinkType"><em>LinkType</em></a>)</p></li>
+<li><p><strong>file</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new relation type in <em>m</em> for the net’s link type <em>t</em> (see the module doc).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.nodeName">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">nodeName</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader.nodeName" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>n</strong> (<a class="reference internal" href="snplugins.rnetReader.rnet.html#snplugins.rnetReader.rnet.NetNode" title="snplugins.rnetReader.rnet.NetNode"><em>NetNode</em></a>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The name for the net’s node <em>n</em>: its label.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.markNode">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">markNode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">net</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader.markNode" title="Link to this definition">¶</a></dt>
+<dd><p>Give <em>node</em> the mark of the net’s node <em>n</em>, if it has one (see the module doc).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>node</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node" title="sn.model.model.Node"><em>Node</em></a>)</p></li>
+<li><p><strong>n</strong> (<a class="reference internal" href="snplugins.rnetReader.rnet.html#snplugins.rnetReader.rnet.NetNode" title="snplugins.rnetReader.rnet.NetNode"><em>NetNode</em></a>)</p></li>
+<li><p><strong>net</strong> (<a class="reference internal" href="snplugins.rnetReader.rnet.html#snplugins.rnetReader.rnet.Net" title="snplugins.rnetReader.rnet.Net"><em>Net</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.buildModel">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">buildModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">net</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modelPath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sameLabels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader.buildModel" title="Link to this definition">¶</a></dt>
+<dd><p>Make a model of <em>net</em> (as the module doc says), as a new model file
+<em>modelPath</em> (not saved: call its <em>save()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>net</strong> (<a class="reference internal" href="snplugins.rnetReader.rnet.html#snplugins.rnetReader.rnet.Net" title="snplugins.rnetReader.rnet.Net"><em>Net</em></a>) – A net (see <em>rnet.parse()</em>).</p></li>
+<li><p><strong>modelPath</strong> (<em>str</em>) – The model’s file: it mustn’t be open (nor, if it’s there, in memory).</p></li>
+<li><p><strong>sameLabels</strong> (<em>bool</em>) – Whether nodes with the same label are the same node, as
+KNet takes them (see <em>addSameLabels()</em>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>What was made.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#snplugins.rnetReader.reader.Built" title="snplugins.rnetReader.reader.Built"><em>Built</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.sameLabel">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">sameLabel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader.sameLabel" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>n</strong> (<a class="reference internal" href="snplugins.rnetReader.rnet.html#snplugins.rnetReader.rnet.NetNode" title="snplugins.rnetReader.rnet.NetNode"><em>NetNode</em></a>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>n</em>’s label as KNet compares them (see <em>addSameLabels()</em>): its
+line breaks spaces, and no spaces at its end.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.addSameLabels">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">addSameLabels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader.addSameLabels" title="Link to this definition">¶</a></dt>
+<dd><p>Make the nodes with the same label (see <em>sameLabel()</em>) equivalent: KNet
+takes them to be one node (eg: a net that shows a node in two places, to
+keep its links short). Each after the first gets a relation of <em>SAME_LABEL</em>
+(an SN subtype of the kernel’s equivalent, faded as derived links are, and
+noted as added by the reader) to the first. Just the nodes KNet reasons
+about (see <em>KNET_NODE_TYPES</em>), and not those with no label. (KNet’s one
+node is a little more than equivalent ones: the defining links of each are
+all one definition – see sn.model.reasoner.DEFINING.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>b</strong> (<a class="reference internal" href="#snplugins.rnetReader.reader.Built" title="snplugins.rnetReader.reader.Built"><em>Built</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader._sameLabelType">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">_sameLabelType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader._sameLabelType" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>b</strong> (<a class="reference internal" href="#snplugins.rnetReader.reader.Built" title="snplugins.rnetReader.reader.Built"><em>Built</em></a>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new <em>SAME_LABEL</em> relation type in <em>b</em>’s model: an SN subtype of
+the kernel’s equivalent, drawn as a faded grey line.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.enclosed">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">enclosed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">net</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boxes</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader.enclosed" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>boxes</strong> (<em>set</em><em>[</em><em>int</em><em>]</em>) – The places in <em>net</em> of its boxes (its nodes of enclosure types).</p></li>
+<li><p><strong>net</strong> (<a class="reference internal" href="snplugins.rnetReader.rnet.html#snplugins.rnetReader.rnet.Net" title="snplugins.rnetReader.rnet.Net"><em>Net</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Each box’s place -&gt; the places of the nodes it holds, in order:
+those whose centres are inside it – the smaller boxes too – each in the
+smallest box it’s in (CNet lists them nowhere: it’s where they are).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[int, list[int]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader._isIncludes">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">_isIncludes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader._isIncludes" title="Link to this definition">¶</a></dt>
+<dd><p>Whether links of <em>t</em> are includes (ordination): a plain arrow, with no bars or other marks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>t</strong> (<a class="reference internal" href="snplugins.rnetReader.rnet.html#snplugins.rnetReader.rnet.LinkType" title="snplugins.rnetReader.rnet.LinkType"><em>LinkType</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader._isSymmetricExclusion">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">_isSymmetricExclusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader._isSymmetricExclusion" title="Link to this definition">¶</a></dt>
+<dd><p>Whether <em>t</em> is the symmetric exclusion: a line with one bar across its middle, and no arrowheads.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>t</strong> (<a class="reference internal" href="snplugins.rnetReader.rnet.html#snplugins.rnetReader.rnet.LinkType" title="snplugins.rnetReader.rnet.LinkType"><em>LinkType</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader.addConstructMeaning">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">addConstructMeaning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader.addConstructMeaning" title="Link to this definition">¶</a></dt>
+<dd><p>Add what CNet’s construct macro means (RepNet manual, section 3.7): the
+poles of a construct box (the nodes it holds: see <em>enclosed()</em>) are linked
+by mutual opposition, unless that conflicts with an ordination link – an
+includes link (see <em>_isIncludes()</em>), or a chain of them, from one pole to
+the other. Each pair that’s opposed, and isn’t linked so already, gets a
+relation of <em>CONSTRUCT_EXCLUDES</em> (an SN subtype of the net’s symmetric
+exclusion, or of a new one if it has none), drawn faded as CNet’s derived
+links are, and noted as added by the reader – so it can be hidden, or
+taken out, by its type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>b</strong> (<a class="reference internal" href="#snplugins.rnetReader.reader.Built" title="snplugins.rnetReader.reader.Built"><em>Built</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="snplugins.rnetReader.reader._constructExcludes">
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.reader.</span></span><span class="sig-name descname"><span class="pre">_constructExcludes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.reader._constructExcludes" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>b</strong> (<a class="reference internal" href="#snplugins.rnetReader.reader.Built" title="snplugins.rnetReader.reader.Built"><em>Built</em></a>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new <em>CONSTRUCT_EXCLUDES</em> relation type in <em>b</em>’s model: an SN
+subtype of the net’s symmetric exclusion (or of a new “Excludes
+symmetric”, if it has none), faded.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="snplugins.rnetReader.view.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">snplugins.rnetReader.view module</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="snplugins.rnetReader.rnet.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">snplugins.rnetReader.rnet module</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2023-2026, Rob Kremer
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">snplugins.rnetReader.reader module</a><ul>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.ONTOLOGY"><code class="docutils literal notranslate"><span class="pre">ONTOLOGY</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.KERNEL"><code class="docutils literal notranslate"><span class="pre">KERNEL</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.CONNECTIVES"><code class="docutils literal notranslate"><span class="pre">CONNECTIVES</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.KNODE"><code class="docutils literal notranslate"><span class="pre">KNODE</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.ARROWHEADS"><code class="docutils literal notranslate"><span class="pre">ARROWHEADS</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.BY_BARS"><code class="docutils literal notranslate"><span class="pre">BY_BARS</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.NOT_KERNEL"><code class="docutils literal notranslate"><span class="pre">NOT_KERNEL</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.NODE_SHAPES"><code class="docutils literal notranslate"><span class="pre">NODE_SHAPES</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.NODE_COLORS"><code class="docutils literal notranslate"><span class="pre">NODE_COLORS</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.LINK_COLORS"><code class="docutils literal notranslate"><span class="pre">LINK_COLORS</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.ARROW"><code class="docutils literal notranslate"><span class="pre">ARROW</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.HEAVY_ARROW"><code class="docutils literal notranslate"><span class="pre">HEAVY_ARROW</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.MID_MARKS"><code class="docutils literal notranslate"><span class="pre">MID_MARKS</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.DERIVED_FADE"><code class="docutils literal notranslate"><span class="pre">DERIVED_FADE</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.MARK_WIDTH"><code class="docutils literal notranslate"><span class="pre">MARK_WIDTH</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.LABEL"><code class="docutils literal notranslate"><span class="pre">LABEL</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.UNTYPED"><code class="docutils literal notranslate"><span class="pre">UNTYPED</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.POINT"><code class="docutils literal notranslate"><span class="pre">POINT</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.ENCLOSURE"><code class="docutils literal notranslate"><span class="pre">ENCLOSURE</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.TITLEBAR_TINT"><code class="docutils literal notranslate"><span class="pre">TITLEBAR_TINT</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.CONSTRUCT"><code class="docutils literal notranslate"><span class="pre">CONSTRUCT</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.CONSTRUCT_EXCLUDES"><code class="docutils literal notranslate"><span class="pre">CONSTRUCT_EXCLUDES</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.PREFER"><code class="docutils literal notranslate"><span class="pre">PREFER</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.SAME_LABEL"><code class="docutils literal notranslate"><span class="pre">SAME_LABEL</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.KNET_NODE_TYPES"><code class="docutils literal notranslate"><span class="pre">KNET_NODE_TYPES</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.KNET_NODE"><code class="docutils literal notranslate"><span class="pre">KNET_NODE</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.endMarks"><code class="docutils literal notranslate"><span class="pre">endMarks()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.kernelKind"><code class="docutils literal notranslate"><span class="pre">kernelKind()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.connectiveKind"><code class="docutils literal notranslate"><span class="pre">connectiveKind()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.preferenceKind"><code class="docutils literal notranslate"><span class="pre">preferenceKind()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.isReversed"><code class="docutils literal notranslate"><span class="pre">isReversed()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.ontology"><code class="docutils literal notranslate"><span class="pre">ontology()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.kernelTypes"><code class="docutils literal notranslate"><span class="pre">kernelTypes()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.knodeType"><code class="docutils literal notranslate"><span class="pre">knodeType()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.fade"><code class="docutils literal notranslate"><span class="pre">fade()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.note"><code class="docutils literal notranslate"><span class="pre">note()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.setNote"><code class="docutils literal notranslate"><span class="pre">setNote()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.Built"><code class="docutils literal notranslate"><span class="pre">Built</span></code></a><ul>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.Built.net"><code class="docutils literal notranslate"><span class="pre">Built.net</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.Built.__init__"><code class="docutils literal notranslate"><span class="pre">Built.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.Built.model"><code class="docutils literal notranslate"><span class="pre">Built.model</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.Built.nodeTypes"><code class="docutils literal notranslate"><span class="pre">Built.nodeTypes</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.Built.linkTypes"><code class="docutils literal notranslate"><span class="pre">Built.linkTypes</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.Built.kernel"><code class="docutils literal notranslate"><span class="pre">Built.kernel</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.Built.nodes"><code class="docutils literal notranslate"><span class="pre">Built.nodes</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.Built.relations"><code class="docutils literal notranslate"><span class="pre">Built.relations</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.Built.boxes"><code class="docutils literal notranslate"><span class="pre">Built.boxes</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.Built.members"><code class="docutils literal notranslate"><span class="pre">Built.members</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.Built.derived"><code class="docutils literal notranslate"><span class="pre">Built.derived</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.Built.skipped"><code class="docutils literal notranslate"><span class="pre">Built.skipped</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.Built.report"><code class="docutils literal notranslate"><span class="pre">Built.report()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.makeNodeType"><code class="docutils literal notranslate"><span class="pre">makeNodeType()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.makeUntyped"><code class="docutils literal notranslate"><span class="pre">makeUntyped()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.makePoint"><code class="docutils literal notranslate"><span class="pre">makePoint()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.makeLinkType"><code class="docutils literal notranslate"><span class="pre">makeLinkType()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.nodeName"><code class="docutils literal notranslate"><span class="pre">nodeName()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.markNode"><code class="docutils literal notranslate"><span class="pre">markNode()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.buildModel"><code class="docutils literal notranslate"><span class="pre">buildModel()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.sameLabel"><code class="docutils literal notranslate"><span class="pre">sameLabel()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.addSameLabels"><code class="docutils literal notranslate"><span class="pre">addSameLabels()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader._sameLabelType"><code class="docutils literal notranslate"><span class="pre">_sameLabelType()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.enclosed"><code class="docutils literal notranslate"><span class="pre">enclosed()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader._isIncludes"><code class="docutils literal notranslate"><span class="pre">_isIncludes()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader._isSymmetricExclusion"><code class="docutils literal notranslate"><span class="pre">_isSymmetricExclusion()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader.addConstructMeaning"><code class="docutils literal notranslate"><span class="pre">addConstructMeaning()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.reader._constructExcludes"><code class="docutils literal notranslate"><span class="pre">_constructExcludes()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=56dcb7b8"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

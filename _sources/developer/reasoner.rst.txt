@@ -181,16 +181,27 @@ Rules and definitions
 ---------------------
 
 :py:func:`~sn.model.reasoner.patternOf` reads a context (or some of its
-panes) into a :py:class:`~sn.model.reasoner.Pattern`: its variables,
-constants, relations, isa links and constraints.
-:py:func:`~sn.model.reasoner.ruleOf` reads a rule into a
-:py:class:`~sn.model.reasoner.RuleSpec`: the antecedent's pattern, and the
-consequent's conclusions -- relations (``heads``), attribute values
-(``assertions``), types (``isas``), and the variables that only the
-consequent has (``new``: objects to create). A definition is two RuleSpecs,
-one each way (:py:func:`~sn.model.reasoner.definitionSpecs`). Problems found
-on the way (eg: a consequent relation with no end) are recorded in the
-spec, and reported instead of compiling the rule.
+parts: see :doc:`model`) into a :py:class:`~sn.model.reasoner.Pattern`: its
+variables, constants, relations, isa links and constraints;
+:py:func:`~sn.model.reasoner.patternsOf` reads it into one pattern per
+alternative (one per antecedent part, say).
+:py:func:`~sn.model.reasoner.ruleSpecsOf` reads a rule into
+:py:class:`~sn.model.reasoner.RuleSpec` objects, one per antecedent part
+(several antecedents are a disjunction): the antecedent's pattern, and the
+consequent's conclusions (all its consequent parts together) -- relations
+(``heads``), attribute values (``assertions``), types (``isas``), and the
+variables that only the consequent has (``new``: objects to create).
+(:py:func:`~sn.model.reasoner.ruleOf` reads it as one, the antecedents
+merged.) A definition is two RuleSpecs, one each way
+(:py:func:`~sn.model.reasoner.definitionSpecs`) -- or, with several
+definiens parts, just the RuleSpecs from each to the definiendum, with a
+``definition_one_way`` warning. A requirement is one
+:py:class:`~sn.model.reasoner.ConstraintSpec` per condition part
+(:py:func:`~sn.model.reasoner.constraintSpecsOf`). Problems found on the
+way (eg: a consequent relation with no end; a part shared by two boxes,
+``part_shared``, or not quoted, ``part_unquoted``) are recorded in the
+spec, and reported instead of compiling the rule (or, for warnings, with
+it).
 
 ``ClingoReasoner._rulesProgram`` then compiles each spec to one clingo rule
 per conclusion, the antecedent as the body (``_patternBody``):
@@ -251,6 +262,102 @@ base (``clingoReasoner.lp``, "Cardinality") gives them their meaning:
 
 The relation triples in the results are sorted into the models' order (see
 *Reasoner._finish()*), so they don't depend on the engine's.
+
+Defining links
+~~~~~~~~~~~~~~
+
+A relation type tagged ``meet`` or ``join`` (:py:data:`~sn.model.reasoner.DEFINING`:
+Gaines's structural connectives) makes its links define a node. Its
+"for every defining link" clause has no negation (which would loop through
+``holds``): :py:meth:`~sn.model.reasoner.Reasoner._definingFacts` numbers
+each node's defining links (``def_part(C, D, I, A, P, Pol)``, ``def_last(C,
+D, N, Q, R)``), and the rule base (``clingoReasoner.lp``, "Nodes defined by
+their links") chains along them: ``def_ok(C, D, X, I)`` says X stands as
+required to links 1..I, so at N, X has the order Q to C (C to X, for a
+join), as a ``fired`` conclusion of the tagged type R. With truth attributes
+(``def_marks``), prefix and suffix chains of the links that hold (or fail)
+give "all of them" and "all but one", as ``rule_attr`` conclusions. A node
+one of whose links' ends has both marks locally (``def_mixed``, a fact)
+blocks "all but one" -- negation of a fact, so the program stays
+stratified. Each engine's rule base has the same rules.
+
+Exploring (``necessaryValue``: ``def_world(C, D, NV, DV)``) needs choice,
+so it's clingo's alone, in three solves of the same ground program
+(:py:meth:`~sn.model.clingoReasoner.ClingoReasoner._explore`), each adding
+a ``#program`` part of ``clingoReasoner.lp``:
+
+1. ``marks``, with the rest: ``world_mark0`` (the marks before exploring)
+   and ``world_open0`` (the open connectives: a true join with no link
+   holding, a false meet with none failing). If there are none, that's all.
+2. ``explored``, solved cautiously (the intersection of the answer sets):
+   one case (``world_pick``) for each open connective still open
+   (``world_need``), among its links that didn't fail; a world that gives a
+   node both marks it hadn't both of is dropped. The marks every world
+   adds are the necessary ones.
+3. ``preferred``, if there are ``def_prefer`` facts: as (2), plus a default
+   rule (A's link fails while B's might hold, for each ``world_pref`` --
+   the prefer relation's ``holds`` among one connective's ends) and a weak
+   constraint per connective, at the priority ``def_rank`` gives it (from
+   *DEFAULT_ORDER*, then the model's order), counting the preferred ends
+   that fail; solved for the optimal answer sets, cautiously. What they
+   add beyond the necessary marks are the defaults.
+
+The new marks are ``rule_attr`` conclusions of the first ``def_world``'s
+tagged type, as the other connectives' are.
+
+Probes (:py:meth:`~sn.model.clingoReasoner.ClingoReasoner.probes`: KNet's,
+see *PROBE_KINDS*) are clingo's too: each is an answer set, so they're
+enumerated, not intersected. Two more ``#program`` parts, each solved with
+the model's facts and rules and the probe facts (``probe_key``: the true and
+false attributes; ``probe_node``: the nodes to probe; ``probe_asserted``:
+those with an asserted mark):
+
+1. ``probe_marks``: the marks the rules give, ``probe_value`` -- of the model
+   as it is, and with a node given a mark (an ``attr`` fact) for admissible
+   probes.
+2. ``probed``, with those marks as ``probe_mark0`` and ``probe_kind``: for a
+   consistent probe, a choice of one mark (``probe_set``, a ``rule_attr``
+   conclusion) for each node without one, and a constraint that no node
+   gets both marks it hadn't both of; for a compatible one, a choice of
+   marks, at least those it had, for each node not asserted, with no
+   constraint. Each answer set's ``probe_out`` is a probe.
+
+An admissible probe is a consistent one, of the model with a node's
+opposite mark added, or then (from those marks) its own mark again: so
+there's a ``probe_marks`` and a ``probed`` solve for each node with one
+derived mark. The facts and rules are rendered once per reasoner (each
+part of a net is probed in turn), and more than ``limit`` probes raise
+*TooManyProbes*. The rnetReader plugin's ``probes`` module finds a net's
+probes part by part, and reconstructs its links from them.
+
+Redundant relations
+-------------------
+
+:py:meth:`~sn.model.reasoner.Reasoner.redundant` finds the relations the
+rest of a model implies, on any engine: for each, in the order given, it's
+left out (``_leftOut``: *facts()* drops every fact that mentions it) and the
+model reasoned over again; it's redundant if the relation types asked for
+(by default its own) still hold between its ends. One found redundant stays
+left out while the rest are tried, so what's left still implies them all --
+of two the same, one goes, not both. The facts are rendered once, for all
+the tries (``_allFacts``): each try only filters them. The rnetReader
+plugin's ``forms`` module uses it for Gaines's minimal canonical form (a
+link is redundant if its kernel types still hold), trying the newest links
+first.
+
+Worlds
+------
+
+:py:meth:`~sn.model.reasoner.Reasoner.worlds` reasons over a model once for
+each of a list of suppositions, on any engine: each is a list of facts (as
+*facts()* makes them: eg, ``("attr", (node, key, value))`` with ``("lattr",
+(node, key))`` for an attribute the node doesn't have, or ``("prop",
+(relationType, Sym("symmetric")))``) added to the model's own for that run
+(``_supposed``), as if the model said them. The model isn't changed, and its
+facts are rendered once for all the worlds (``_allFacts``). It returns each
+world's :py:class:`~sn.model.reasoner.Inferences`. The rnetReader plugin's
+``abduction`` module uses it for KNet's abductive inference: a world for
+each explanation of a node, with that explanation marked true.
 
 Constraints
 -----------

@@ -253,6 +253,7 @@
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../dev/sn.view.html">sn.view package</a><input aria-label="Toggle navigation of sn.view package" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../dev/sn.view.graphics.html">sn.view.graphics package</a><input aria-label="Toggle navigation of sn.view.graphics package" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.aboutBox.html">sn.view.graphics.aboutBox module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animatedLayouts.html">sn.view.graphics.animatedLayouts module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.animationControls.html">sn.view.graphics.animationControls module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../dev/sn.view.graphics.balloonLayout.html">sn.view.graphics.balloonLayout module</a></li>
@@ -318,9 +319,21 @@
 <li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.pythonParser.source.html">snplugins.pythonParser.source module</a></li>
 </ul>
 </li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../plugins/snplugins.rnetReader.html">snplugins.rnetReader package</a><input aria-label="Toggle navigation of snplugins.rnetReader package" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.abduction.html">snplugins.rnetReader.abduction module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.existence.html">snplugins.rnetReader.existence module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.expansion.html">snplugins.rnetReader.expansion module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.forms.html">snplugins.rnetReader.forms module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.hooks.html">snplugins.rnetReader.hooks module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.probes.html">snplugins.rnetReader.probes module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.rnet.html">snplugins.rnetReader.rnet module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.reader.html">snplugins.rnetReader.reader module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plugins/snplugins.rnetReader.view.html">snplugins.rnetReader.view module</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../modelsDoc/index.html">On Line Models</a><input aria-label="Toggle navigation of On Line Models" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/snSourceCode.html">Semantic Nets Source Code Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/families.html">Families Models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modelsDoc/homeAutomation.html">Home Automation</a></li>
@@ -534,16 +547,27 @@ are turned into messages by <code class="docutils literal notranslate"><span cla
 <section id="rules-and-definitions">
 <h2>Rules and definitions<a class="headerlink" href="#rules-and-definitions" title="Link to this heading">¶</a></h2>
 <p><a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.patternOf" title="sn.model.reasoner.patternOf"><code class="xref py py-func docutils literal notranslate"><span class="pre">patternOf()</span></code></a> reads a context (or some of its
-panes) into a <a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.Pattern" title="sn.model.reasoner.Pattern"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pattern</span></code></a>: its variables,
-constants, relations, isa links and constraints.
-<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.ruleOf" title="sn.model.reasoner.ruleOf"><code class="xref py py-func docutils literal notranslate"><span class="pre">ruleOf()</span></code></a> reads a rule into a
-<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.RuleSpec" title="sn.model.reasoner.RuleSpec"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuleSpec</span></code></a>: the antecedent’s pattern, and the
-consequent’s conclusions – relations (<code class="docutils literal notranslate"><span class="pre">heads</span></code>), attribute values
-(<code class="docutils literal notranslate"><span class="pre">assertions</span></code>), types (<code class="docutils literal notranslate"><span class="pre">isas</span></code>), and the variables that only the
-consequent has (<code class="docutils literal notranslate"><span class="pre">new</span></code>: objects to create). A definition is two RuleSpecs,
-one each way (<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.definitionSpecs" title="sn.model.reasoner.definitionSpecs"><code class="xref py py-func docutils literal notranslate"><span class="pre">definitionSpecs()</span></code></a>). Problems found
-on the way (eg: a consequent relation with no end) are recorded in the
-spec, and reported instead of compiling the rule.</p>
+parts: see <a class="reference internal" href="model.html"><span class="doc">The Model</span></a>) into a <a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.Pattern" title="sn.model.reasoner.Pattern"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pattern</span></code></a>: its
+variables, constants, relations, isa links and constraints;
+<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.patternsOf" title="sn.model.reasoner.patternsOf"><code class="xref py py-func docutils literal notranslate"><span class="pre">patternsOf()</span></code></a> reads it into one pattern per
+alternative (one per antecedent part, say).
+<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.ruleSpecsOf" title="sn.model.reasoner.ruleSpecsOf"><code class="xref py py-func docutils literal notranslate"><span class="pre">ruleSpecsOf()</span></code></a> reads a rule into
+<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.RuleSpec" title="sn.model.reasoner.RuleSpec"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuleSpec</span></code></a> objects, one per antecedent part
+(several antecedents are a disjunction): the antecedent’s pattern, and the
+consequent’s conclusions (all its consequent parts together) – relations
+(<code class="docutils literal notranslate"><span class="pre">heads</span></code>), attribute values (<code class="docutils literal notranslate"><span class="pre">assertions</span></code>), types (<code class="docutils literal notranslate"><span class="pre">isas</span></code>), and the
+variables that only the consequent has (<code class="docutils literal notranslate"><span class="pre">new</span></code>: objects to create).
+(<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.ruleOf" title="sn.model.reasoner.ruleOf"><code class="xref py py-func docutils literal notranslate"><span class="pre">ruleOf()</span></code></a> reads it as one, the antecedents
+merged.) A definition is two RuleSpecs, one each way
+(<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.definitionSpecs" title="sn.model.reasoner.definitionSpecs"><code class="xref py py-func docutils literal notranslate"><span class="pre">definitionSpecs()</span></code></a>) – or, with several
+definiens parts, just the RuleSpecs from each to the definiendum, with a
+<code class="docutils literal notranslate"><span class="pre">definition_one_way</span></code> warning. A requirement is one
+<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.ConstraintSpec" title="sn.model.reasoner.ConstraintSpec"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConstraintSpec</span></code></a> per condition part
+(<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.constraintSpecsOf" title="sn.model.reasoner.constraintSpecsOf"><code class="xref py py-func docutils literal notranslate"><span class="pre">constraintSpecsOf()</span></code></a>). Problems found on the
+way (eg: a consequent relation with no end; a part shared by two boxes,
+<code class="docutils literal notranslate"><span class="pre">part_shared</span></code>, or not quoted, <code class="docutils literal notranslate"><span class="pre">part_unquoted</span></code>) are recorded in the
+spec, and reported instead of compiling the rule (or, for warnings, with
+it).</p>
 <p><code class="docutils literal notranslate"><span class="pre">ClingoReasoner._rulesProgram</span></code> then compiles each spec to one clingo rule
 per conclusion, the antecedent as the body (<code class="docutils literal notranslate"><span class="pre">_patternBody</span></code>):</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>fired(Rule, T, S, D)        :- &lt;antecedent&gt;.    % a relation
@@ -600,6 +624,97 @@ ones too, once per merged class.</p></li>
 <p>The relation triples in the results are sorted into the models’ order (see
 <em>Reasoner._finish()</em>), so they don’t depend on the engine’s.</p>
 </section>
+<section id="defining-links">
+<h3>Defining links<a class="headerlink" href="#defining-links" title="Link to this heading">¶</a></h3>
+<p>A relation type tagged <code class="docutils literal notranslate"><span class="pre">meet</span></code> or <code class="docutils literal notranslate"><span class="pre">join</span></code> (<a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.DEFINING" title="sn.model.reasoner.DEFINING"><code class="xref py py-data docutils literal notranslate"><span class="pre">DEFINING</span></code></a>:
+Gaines’s structural connectives) makes its links define a node. Its
+“for every defining link” clause has no negation (which would loop through
+<code class="docutils literal notranslate"><span class="pre">holds</span></code>): <a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.Reasoner._definingFacts" title="sn.model.reasoner.Reasoner._definingFacts"><code class="xref py py-meth docutils literal notranslate"><span class="pre">_definingFacts()</span></code></a> numbers
+each node’s defining links (<code class="docutils literal notranslate"><span class="pre">def_part(C,</span> <span class="pre">D,</span> <span class="pre">I,</span> <span class="pre">A,</span> <span class="pre">P,</span> <span class="pre">Pol)</span></code>, <code class="docutils literal notranslate"><span class="pre">def_last(C,</span>
+<span class="pre">D,</span> <span class="pre">N,</span> <span class="pre">Q,</span> <span class="pre">R)</span></code>), and the rule base (<code class="docutils literal notranslate"><span class="pre">clingoReasoner.lp</span></code>, “Nodes defined by
+their links”) chains along them: <code class="docutils literal notranslate"><span class="pre">def_ok(C,</span> <span class="pre">D,</span> <span class="pre">X,</span> <span class="pre">I)</span></code> says X stands as
+required to links 1..I, so at N, X has the order Q to C (C to X, for a
+join), as a <code class="docutils literal notranslate"><span class="pre">fired</span></code> conclusion of the tagged type R. With truth attributes
+(<code class="docutils literal notranslate"><span class="pre">def_marks</span></code>), prefix and suffix chains of the links that hold (or fail)
+give “all of them” and “all but one”, as <code class="docutils literal notranslate"><span class="pre">rule_attr</span></code> conclusions. A node
+one of whose links’ ends has both marks locally (<code class="docutils literal notranslate"><span class="pre">def_mixed</span></code>, a fact)
+blocks “all but one” – negation of a fact, so the program stays
+stratified. Each engine’s rule base has the same rules.</p>
+<p>Exploring (<code class="docutils literal notranslate"><span class="pre">necessaryValue</span></code>: <code class="docutils literal notranslate"><span class="pre">def_world(C,</span> <span class="pre">D,</span> <span class="pre">NV,</span> <span class="pre">DV)</span></code>) needs choice,
+so it’s clingo’s alone, in three solves of the same ground program
+(<a class="reference internal" href="../dev/sn.model.clingoReasoner.html#sn.model.clingoReasoner.ClingoReasoner._explore" title="sn.model.clingoReasoner.ClingoReasoner._explore"><code class="xref py py-meth docutils literal notranslate"><span class="pre">_explore()</span></code></a>), each adding
+a <code class="docutils literal notranslate"><span class="pre">#program</span></code> part of <code class="docutils literal notranslate"><span class="pre">clingoReasoner.lp</span></code>:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">marks</span></code>, with the rest: <code class="docutils literal notranslate"><span class="pre">world_mark0</span></code> (the marks before exploring)
+and <code class="docutils literal notranslate"><span class="pre">world_open0</span></code> (the open connectives: a true join with no link
+holding, a false meet with none failing). If there are none, that’s all.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">explored</span></code>, solved cautiously (the intersection of the answer sets):
+one case (<code class="docutils literal notranslate"><span class="pre">world_pick</span></code>) for each open connective still open
+(<code class="docutils literal notranslate"><span class="pre">world_need</span></code>), among its links that didn’t fail; a world that gives a
+node both marks it hadn’t both of is dropped. The marks every world
+adds are the necessary ones.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">preferred</span></code>, if there are <code class="docutils literal notranslate"><span class="pre">def_prefer</span></code> facts: as (2), plus a default
+rule (A’s link fails while B’s might hold, for each <code class="docutils literal notranslate"><span class="pre">world_pref</span></code> –
+the prefer relation’s <code class="docutils literal notranslate"><span class="pre">holds</span></code> among one connective’s ends) and a weak
+constraint per connective, at the priority <code class="docutils literal notranslate"><span class="pre">def_rank</span></code> gives it (from
+<em>DEFAULT_ORDER</em>, then the model’s order), counting the preferred ends
+that fail; solved for the optimal answer sets, cautiously. What they
+add beyond the necessary marks are the defaults.</p></li>
+</ol>
+<p>The new marks are <code class="docutils literal notranslate"><span class="pre">rule_attr</span></code> conclusions of the first <code class="docutils literal notranslate"><span class="pre">def_world</span></code>’s
+tagged type, as the other connectives’ are.</p>
+<p>Probes (<a class="reference internal" href="../dev/sn.model.clingoReasoner.html#sn.model.clingoReasoner.ClingoReasoner.probes" title="sn.model.clingoReasoner.ClingoReasoner.probes"><code class="xref py py-meth docutils literal notranslate"><span class="pre">probes()</span></code></a>: KNet’s,
+see <em>PROBE_KINDS</em>) are clingo’s too: each is an answer set, so they’re
+enumerated, not intersected. Two more <code class="docutils literal notranslate"><span class="pre">#program</span></code> parts, each solved with
+the model’s facts and rules and the probe facts (<code class="docutils literal notranslate"><span class="pre">probe_key</span></code>: the true and
+false attributes; <code class="docutils literal notranslate"><span class="pre">probe_node</span></code>: the nodes to probe; <code class="docutils literal notranslate"><span class="pre">probe_asserted</span></code>:
+those with an asserted mark):</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">probe_marks</span></code>: the marks the rules give, <code class="docutils literal notranslate"><span class="pre">probe_value</span></code> – of the model
+as it is, and with a node given a mark (an <code class="docutils literal notranslate"><span class="pre">attr</span></code> fact) for admissible
+probes.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">probed</span></code>, with those marks as <code class="docutils literal notranslate"><span class="pre">probe_mark0</span></code> and <code class="docutils literal notranslate"><span class="pre">probe_kind</span></code>: for a
+consistent probe, a choice of one mark (<code class="docutils literal notranslate"><span class="pre">probe_set</span></code>, a <code class="docutils literal notranslate"><span class="pre">rule_attr</span></code>
+conclusion) for each node without one, and a constraint that no node
+gets both marks it hadn’t both of; for a compatible one, a choice of
+marks, at least those it had, for each node not asserted, with no
+constraint. Each answer set’s <code class="docutils literal notranslate"><span class="pre">probe_out</span></code> is a probe.</p></li>
+</ol>
+<p>An admissible probe is a consistent one, of the model with a node’s
+opposite mark added, or then (from those marks) its own mark again: so
+there’s a <code class="docutils literal notranslate"><span class="pre">probe_marks</span></code> and a <code class="docutils literal notranslate"><span class="pre">probed</span></code> solve for each node with one
+derived mark. The facts and rules are rendered once per reasoner (each
+part of a net is probed in turn), and more than <code class="docutils literal notranslate"><span class="pre">limit</span></code> probes raise
+<em>TooManyProbes</em>. The rnetReader plugin’s <code class="docutils literal notranslate"><span class="pre">probes</span></code> module finds a net’s
+probes part by part, and reconstructs its links from them.</p>
+</section>
+</section>
+<section id="redundant-relations">
+<h2>Redundant relations<a class="headerlink" href="#redundant-relations" title="Link to this heading">¶</a></h2>
+<p><a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.Reasoner.redundant" title="sn.model.reasoner.Reasoner.redundant"><code class="xref py py-meth docutils literal notranslate"><span class="pre">redundant()</span></code></a> finds the relations the
+rest of a model implies, on any engine: for each, in the order given, it’s
+left out (<code class="docutils literal notranslate"><span class="pre">_leftOut</span></code>: <em>facts()</em> drops every fact that mentions it) and the
+model reasoned over again; it’s redundant if the relation types asked for
+(by default its own) still hold between its ends. One found redundant stays
+left out while the rest are tried, so what’s left still implies them all –
+of two the same, one goes, not both. The facts are rendered once, for all
+the tries (<code class="docutils literal notranslate"><span class="pre">_allFacts</span></code>): each try only filters them. The rnetReader
+plugin’s <code class="docutils literal notranslate"><span class="pre">forms</span></code> module uses it for Gaines’s minimal canonical form (a
+link is redundant if its kernel types still hold), trying the newest links
+first.</p>
+</section>
+<section id="worlds">
+<h2>Worlds<a class="headerlink" href="#worlds" title="Link to this heading">¶</a></h2>
+<p><a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.Reasoner.worlds" title="sn.model.reasoner.Reasoner.worlds"><code class="xref py py-meth docutils literal notranslate"><span class="pre">worlds()</span></code></a> reasons over a model once for
+each of a list of suppositions, on any engine: each is a list of facts (as
+<em>facts()</em> makes them: eg, <code class="docutils literal notranslate"><span class="pre">(&quot;attr&quot;,</span> <span class="pre">(node,</span> <span class="pre">key,</span> <span class="pre">value))</span></code> with <code class="docutils literal notranslate"><span class="pre">(&quot;lattr&quot;,</span>
+<span class="pre">(node,</span> <span class="pre">key))</span></code> for an attribute the node doesn’t have, or <code class="docutils literal notranslate"><span class="pre">(&quot;prop&quot;,</span>
+<span class="pre">(relationType,</span> <span class="pre">Sym(&quot;symmetric&quot;)))</span></code>) added to the model’s own for that run
+(<code class="docutils literal notranslate"><span class="pre">_supposed</span></code>), as if the model said them. The model isn’t changed, and its
+facts are rendered once for all the worlds (<code class="docutils literal notranslate"><span class="pre">_allFacts</span></code>). It returns each
+world’s <a class="reference internal" href="../dev/sn.model.reasoner.html#sn.model.reasoner.Inferences" title="sn.model.reasoner.Inferences"><code class="xref py py-class docutils literal notranslate"><span class="pre">Inferences</span></code></a>. The rnetReader plugin’s
+<code class="docutils literal notranslate"><span class="pre">abduction</span></code> module uses it for KNet’s abductive inference: a world for
+each explanation of a node, with that explanation marked true.</p>
 </section>
 <section id="constraints">
 <h2>Constraints<a class="headerlink" href="#constraints" title="Link to this heading">¶</a></h2>
@@ -877,8 +992,11 @@ order they’re written).</p>
 <li><a class="reference internal" href="#rules-and-definitions">Rules and definitions</a><ul>
 <li><a class="reference internal" href="#new-objects">New objects</a></li>
 <li><a class="reference internal" href="#cardinality">Cardinality</a></li>
+<li><a class="reference internal" href="#defining-links">Defining links</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#redundant-relations">Redundant relations</a></li>
+<li><a class="reference internal" href="#worlds">Worlds</a></li>
 <li><a class="reference internal" href="#constraints">Constraints</a></li>
 <li><a class="reference internal" href="#the-base-rules">The base rules</a></li>
 <li><a class="reference internal" href="#variable-names">Variable names</a></li>
