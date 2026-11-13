@@ -38,7 +38,7 @@ from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
 from sn.view.graphics.layout import clearOf, freeSpotIn
 from util.commandParser import CompositeCommandMgr
-from sn.view.graphics.viewCommands import _ContainCreated
+from sn.view.graphics.viewCommands import _ContainCreated, _Refresh
 from sn.view.graphics.viewBase import ViewBase
 
 logger:sn.SNLogger = sn.getLogger(__name__)
@@ -690,9 +690,12 @@ class ContainmentMixin(ViewBase):
           changed = True
     if changed:
       # What the windows contain is remembered from the model (see _containmentMaps()) and read again as soon
-      # as this command's done -- by _BumpIntruders, which puts stray variables back in their windows -- but
-      # the model's notifications of the change, which forget it, come later (see Model.notifyLater()).
+      # as this command's done -- by _BumpIntruders, which puts what's astride a divider wholly in its pane --
+      # but the model's notifications of the change, which forget it, come later (see Model.notifyLater()).
+      # Forgotten now, and again once the changes above are made: the move before them in the composite
+      # (its dynamic layout placing the dropped object) may have read it again, from the model as it was.
       self.structureChanged()
+      self._queue(_Refresh(self.structureChanged))
 
   def gatherIntoWindow(self, w:VObject) -> None:
     '''
