@@ -781,7 +781,10 @@ class ContainmentMixin(ViewBase):
         rect = rectIn(homes[vo], bb)
         inRect = [o for o in obstacles if o[0] < rect[2] and rect[0] < o[2] and o[1] < rect[3] and rect[1] < o[3]]
         out = max(rect[0] - box[0], box[2] - rect[2], rect[1] - box[1], box[3] - rect[3])
-        if (d := freeSpotIn(box, rect, inRect, margin=margin, topMargin=topMargin, gap=gap, rows=out > near)) is not None:
+        rows = out > near
+        # (set out in rows, there's room for the labels between things; nudged in, it's kept as clear of what's
+        # near as it takes not to land on it -- not moved away for its labels, nor the window grown for them)
+        if (d := freeSpotIn(box, rect, inRect, margin=margin, topMargin=topMargin, gap=gap if rows else margin, rows=rows)) is not None:
           break
         # No room: wider, if it's too wide for its pane (the panes share the width); else grow down by its height.
         short = (box[2] - box[0]) + 2 * margin - (rect[2] - rect[0])
@@ -924,7 +927,8 @@ class ContainmentMixin(ViewBase):
     Put what the windows hold wholly in their panes (see *keepInPanes()*),
     and push what's in a window it doesn't belong in out of it (see
     *bumpIntruders()*): eg, when a view saved before either was done (or
-    by a program) is read. Not undoable.
+    by a program) is read. Not undoable. (When a view's read, it's not a
+    change: it's not marked changed for it.)
 
     :returns: Whether anything moved.
     '''

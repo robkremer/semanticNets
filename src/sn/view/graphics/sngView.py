@@ -290,13 +290,15 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
           rel.connect()
       # (a full repaint first: it fits the objects to their text, as any later one would -- by
       # a pixel or so, if the file was saved with other font metrics -- so that isn't a change.
+      # Nor is putting what's astride a window's edge wholly in its pane, or out (see tidyWindows()):
+      # it's done again whenever the view's read, till it's saved so.
       # It's the objects' first drawing too: theirs, queued as they were made, are put off till then.)
       slf.__dict__["_firstDrawsDeferred"] = True
       replaced = bool(SNGView._modelsReplaced) # (it's to be saved naming its new model: see readModel())
       for was, now in SNGView._modelsReplaced:
         logger.warning(f'"{slf.url}" shows "{now}" in place of "{was}". Save the view to keep it that way.')
       SNGView._modelsReplaced.clear()
-      slf.canvas.after_idle(lambda slf=slf: [slf.applyVisibility(), slf._restoreAnimationState(), slf._restoreLayoutState(), slf._restoreLayoutPanel(), slf._drawAllAfterRead(), slf.canvas.after_idle(slf._pinRelationTypes), slf.resetScrollRegion(), slf._restoreViewport(), slf.setDirty(slf.tidyWindows() or replaced)]) # type: ignore[misc]
+      slf.canvas.after_idle(lambda slf=slf: [slf.applyVisibility(), slf._restoreAnimationState(), slf._restoreLayoutState(), slf._restoreLayoutPanel(), slf._drawAllAfterRead(), slf.canvas.after_idle(slf._pinRelationTypes), slf.resetScrollRegion(), slf._restoreViewport(), slf.tidyWindows(), slf.setDirty(replaced)]) # type: ignore[misc]
     ret:InstantiationInfo = super().getInstantiationInfo()
     # (its model's URL relative to the view's file if they're side by side -- see PRDb.relativeURL() -- so
     # a view and model copied together stay together; a relative URL is resolved against the view's file on reading)

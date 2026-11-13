@@ -665,7 +665,10 @@ class EditingMixin(ViewBase):
           self.localLayout(n)
     finally:
       del self.__dict__["_nextGridPoint"]
-    # (on the grid, a rule's variables are wherever they fell: into their windows, and what's not theirs out)
+    # (on the grid, a rule's variables are wherever they fell: into their windows, and what's not theirs out --
+    # each its size: drawn, and fitted to its text, first)
+    if self.canvas is not None:
+      self.canvas.update_idletasks()
     self.keepInPanes()
     self.bumpIntruders()
 
