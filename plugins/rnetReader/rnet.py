@@ -9,29 +9,36 @@ LFs), its fields by tabs. The first line is a header, ``\\tC\\t<version>\\t<back
 colour>...``, and the rest are sections, each a line naming it and how many
 lines it has, and then those lines:
 
-  ``D``  settings: a name and a value on each line (eg: "Date", "NodeType").
-         (Versions 6 and 7 have a "PS:" line instead: "PS:CNet\\tT:All\\t...".)
-  ``T``  the node types: shape, a variant of it, font, size, bold, flags, four
-         colours (see *NodeType*), ..., and the name, last.
-  ``A``  the link types: in versions 7 and 8, and some 9s, four fields --
-         *bits* (an arrowhead at the destination, at the source, a bar, ...),
-         two colours and the name; in version 9, eleven -- the head's shape
-         and bars, the tail's shape and bars, the line's flags, a symbol in the
-         middle, four colours, and the name (see *LinkType*). Version 6 has none:
-         its links' codes are the bits themselves.
-  ``M``  the kinds of mark (see *MarkKind*): two colours and the name.
-  ``N``  the nodes: type, marks (none in version 6), x, y, width, height,
-         label, and (from version 7) one more field. A node whose type is
-         prefixed by "P" or "G" is a picture or a drawing: a drawing's records
-         (rectangles, lines, text...) follow it, in lines of their own.
-  ``L``  the links: source and destination nodes (by their place in ``N``,
-         from 0), the link types (by their place in ``A``): the link's from the
-         source to the destination, and, if there's a second (after a space),
-         the type of a link back, from the destination to the source -- Rep
-         Plus's Link.Type(0) and Type(1), drawn side by side -- and, in some
-         files, more fields (its flags, and a label: eg, a weight).
-  ``G``  the groups (panels: parts of the net that go together): the nodes in
-         each, and in a second field (if any) the groups in it.
+``D``
+    settings: a name and a value on each line (eg: "Date", "NodeType").
+    (Versions 6 and 7 have a "PS:" line instead: ``PS:CNet\\tT:All\\t...``.)
+``T``
+    the node types: shape, a variant of it, font, size, bold, flags, four
+    colours (see *NodeType*), ..., and the name, last.
+``A``
+    the link types: in versions 7 and 8, and some 9s, four fields --
+    *bits* (an arrowhead at the destination, at the source, a bar, ...),
+    two colours and the name; in version 9, eleven -- the head's shape
+    and bars, the tail's shape and bars, the line's flags, a symbol in the
+    middle, four colours, and the name (see *LinkType*). Version 6 has none:
+    its links' codes are the bits themselves.
+``M``
+    the kinds of mark (see *MarkKind*): two colours and the name.
+``N``
+    the nodes: type, marks (none in version 6), x, y, width, height,
+    label, and (from version 7) one more field. A node whose type is
+    prefixed by "P" or "G" is a picture or a drawing: a drawing's records
+    (rectangles, lines, text...) follow it, in lines of their own.
+``L``
+    the links: source and destination nodes (by their place in ``N``,
+    from 0), the link types (by their place in ``A``): the link's from the
+    source to the destination, and, if there's a second (after a space),
+    the type of a link back, from the destination to the source -- Rep
+    Plus's Link.Type(0) and Type(1), drawn side by side -- and, in some
+    files, more fields (its flags, and a label: eg, a weight).
+``G``
+    the groups (panels: parts of the net that go together): the nodes in
+    each, and in a second field (if any) the groups in it.
 
 A type's colours, and a link type's, are 6 hexadecimal digits (RRGGBB), but
 older files leave out leading zeros ("8A00" for 008A00). A label's line breaks
