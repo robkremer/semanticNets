@@ -204,7 +204,7 @@ def makeKnetRules(path:str) -> None:
       r["vis/hideImplied"] = True
     r["vis/terminator4"] = terminator
     r["vis/midMarks"] = mid
-    r["vis/lineType"] = "straight"
+    r["vis/lineType"] = "smooth" # (as the reader's link types are: see rnetReader.reader.LINE_TYPE)
     r["vis/lineColor"] = color
     r["vis/lineFillColor"] = color
     if parents: # (its note's kind is theirs)
