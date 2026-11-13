@@ -18,6 +18,7 @@ Created on Nov 11, 2026
 '''
 import builtins
 import logging
+import math
 import os
 import sys
 import tempfile
@@ -158,6 +159,37 @@ class TestNetView(unittest.TestCase):
     nx, ny = shown["A"].centerPt()
     self.assertAlmostEqual(nx, ax + 50, delta=1); self.assertAlmostEqual(ny, ay + 400, delta=1)
     self.assertTrue(all(box.paneAt(shown[n].centerPt()) is not None for n in ("A", "B")))
+
+  def test_smoothLines(self):
+    'The links are smooth curves: with its label off the line between its ends (eg: kept in a box), an exclusion\'s bar still crosses its line squarely.'
+    from sn.view.graphics.sngView import SNGView
+    built = self.reader.buildModel(self.rnet.parse(str(self.rnetPath)), str(self.folder / "net.snm"))
+    self.assertEqual({t["vis/lineType"] for t in built.linkTypes.values()}, {self.reader.LINE_TYPE})
+    self.assertEqual(self.reader.LINE_TYPE, "smooth")
+    v = SNGView(fixURL(built.model.url, ".snv", replaceExt=True, mode="w")[0], model=built.model)
+    self.views.append(v)
+    v.window.withdraw()
+    v.context.visibility("system objects", "hide")
+    self.netView.showNet(v, built)
+    c = v.canvas
+    exc = next(r for r in self.relations(v) if (r.src.modelObject.name, r.dst.modelObject.name) == ("", "A"))
+    (ax, ay), (bx, by) = exc.src.centerPt(), exc.dst.centerPt()
+    for off in (0, 60, -60): # (on the line between its ends, then off it to either side)
+      n = ((ay - by), (bx - ax)); size = math.hypot(*n)
+      exc.moveToCenterOn((ax + bx) / 2 + n[0] / size * off, (ay + by) / 2 + n[1] / size * off, adjustPos=False)
+      exc.draw()
+      self.app.update()
+      info = exc.connectInfo
+      line = c.coords(info.sourceLineID)
+      self.assertEqual((len(line), c.itemcget(info.sourceLineID, "smooth")), (6, "true")) # (a curve: 3 points, smoothed)
+      bar = [i for i in info.middleIDs if c.type(i) == "line"]
+      self.assertEqual(len(bar), 1, "one bar, in the middle")
+      x0, y0, x1, y1 = c.coords(bar[0])
+      tx, ty = line[4] - line[2], line[5] - line[3] # (the curve's direction where it meets the bar: its last control segment)
+      cos = abs((x1 - x0) * tx + (y1 - y0) * ty) / (math.hypot(x1 - x0, y1 - y0) * math.hypot(tx, ty))
+      self.assertLess(cos, 0.02, f"the bar crosses the line squarely (offset {off})")
+      centre = v.viewToWindow(*exc.centerPt())
+      self.assertLess(math.dist(((x0 + x1) / 2, (y0 + y1) / 2), centre), 1.0) # (on the label, where the curve runs through)
 
   def test_reasoned(self):
     '''

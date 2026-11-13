@@ -16,8 +16,8 @@ protologic, so that the reasoners draw KNet's inferences):
   - Each link type (section ``A``) becomes a relation type of the same name,
     drawn with its arrowheads, bars and middle symbol as relation marks (see
     *endMarks()* and *MID_MARKS*), in its colour (see *LINK_COLORS*), as a
-    straight line, with no label: a dashed one's colours are faded. It's an
-    SN subtype of the kernel relation type its look says it is (see
+    smooth line (see *LINE_TYPE*), with no label: a dashed one's colours are
+    faded. It's an SN subtype of the kernel relation type its look says it is (see
     *kernelKind()*: eg, an arrow is includes, an arrow with a bar excludes),
     if any -- or of the connective's, if it has a heavy or a double
     arrowhead (see *connectiveKind()*: eg, "Conjunct includes"), whose links
@@ -165,6 +165,15 @@ bars, as their arrows have at the head), prohibited, preferred.'''
 
 DERIVED_FADE = 0.5
 "How far a derived link type's colour is faded toward white (CNet draws them dashed)."
+
+LINE_TYPE = "smooth"
+'''How the link types' lines are drawn ("vis/lineType"). CNet draws them
+straight, but here a line runs through its relation's label, which the view
+keeps inside the box its relation is in, or out of one it isn't in (see
+*VRelation.placedLabel()*): off the straight line between its ends, a
+straight line bends sharply there, and the elbow can hide its middle marks
+(eg: an exclusion's bar). A smooth one curves through the label, and the
+marks are drawn across the curve.'''
 
 MARK_WIDTH = 2
 '''The width of the outline a mark draws (in its kind's colour) on a node
@@ -449,7 +458,7 @@ def makeLinkType(m:Model, t:LinkType, file:str, kernel:dict[str, Relation]|None=
     r["vis/terminator4"] = endMarks(t.head, t.headBars, atSource=False)
   r["vis/midMarks"] = MID_MARKS.get(t.mid, "") if t.mid else ""
   r["vis/label"] = ""
-  r["vis/lineType"] = "straight"
+  r["vis/lineType"] = LINE_TYPE
   if t.bits is not None:
     color = t.colors[0] if t.colors and t.colors[0] else "#000000"
   else:
@@ -621,7 +630,7 @@ def _sameLabelType(b:Built) -> Relation:
   ret["vis/terminator4"] = ""
   ret["vis/midMarks"] = ""
   ret["vis/label"] = ""
-  ret["vis/lineType"] = "straight"
+  ret["vis/lineType"] = LINE_TYPE
   ret["vis/lineColor"] = fade("#808080")
   ret["vis/lineFillColor"] = fade("#808080")
   ret["note"] = ("Added by the Rep Plus Net Reader: nodes with the same label are the same node (as KNet takes them), "
@@ -717,7 +726,7 @@ def _constructExcludes(b:Built) -> Relation:
     base["vis/terminator4"] = ""
     base["vis/midMarks"] = MID_MARKS[1]
     base["vis/label"] = ""
-    base["vis/lineType"] = "straight"
+    base["vis/lineType"] = LINE_TYPE
     base["vis/lineColor"] = "#00a000"
     base["vis/lineFillColor"] = "#00a000"
     setNote(base, "The symmetric exclusion (made for the exclusions between construct poles: the net has none).")

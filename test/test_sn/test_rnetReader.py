@@ -262,7 +262,7 @@ class TestBuild(unittest.TestCase):
     self.assertEqual(concept["vis/label"], self.reader.LABEL)
     self.assertEqual(b.nodeTypes[-1].name, self.reader.UNTYPED) # (for the node with none)
     inc, exc, coexc, derived, odd = (b.linkTypes[i] for i in range(5))
-    self.assertEqual((inc["vis/terminator4"], inc["vis/terminator1"], inc["vis/label"], inc["vis/lineType"]), ("arrow", "", "", "straight"))
+    self.assertEqual((inc["vis/terminator4"], inc["vis/terminator1"], inc["vis/label"], inc["vis/lineType"]), ("arrow", "", "", "smooth"))
     self.assertEqual((exc["vis/terminator4"], exc["vis/lineColor"]), ("| arrow", "#00a000"))
     self.assertEqual((coexc["vis/terminator4"], coexc["vis/midMarks"]), ("", "||"))
     self.assertEqual(derived["vis/lineColor"], "#808080") # (black, faded)

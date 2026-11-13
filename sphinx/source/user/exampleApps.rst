@@ -300,7 +300,11 @@ What's in the net becomes:
   its arrowheads (heavy for a conjunction, double for a disjunction), the
   bars before them (one for an exclusion, two for a coexclusion, three for a
   negation), and a mark in the middle of a symmetric one -- in its colour,
-  straight, with no label. A dashed one's colour is faded. It's a subtype of
+  with no label. Its line is smooth, where CNet's are straight: it runs
+  through its relation's label, which is kept inside the box the relation is
+  in (or outside one it isn't), so a straight line would bend sharply there
+  and hide the mark in its middle; a curve runs through it, the mark across
+  it. A dashed one's colour is faded. It's a subtype of
   the KNet kernel's relation type that its look says it is (see `KNet's
   kernel`_): an arrow is *includes*, an arrow with one, two or three bars
   *excludes*, *coexcludes* or *negates* (a heavy or double arrowhead is still
