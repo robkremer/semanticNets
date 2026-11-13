@@ -842,7 +842,7 @@ class Test(unittest.TestCase):
       v._updateContainment(old)
     self.pump()
     self.assertNotEqual(vr.containmentOf(p), [])
-    self.assertIsNotNone(vr.paneAt(vp.centerPt())) # (put back: see homeStrays())
+    self.assertIsNotNone(vr.paneAt(vp.centerPt())) # (put back: see keepInPanes())
 
   def test0770ruleConcludesAType(self):
     # with "types" hidden, a rule that concludes ?x isa person still shows its isa link -- and person
@@ -884,6 +884,172 @@ class Test(unittest.TestCase):
     self.assertNotEqual(rule.boundingBox()[:2], [x - 20, y - 20])
     for vo, pane in inRule.items():
       self.assertIsNotNone(rule.paneAt(vo.centerPt()), vo.modelObject.name)
+
+  # ---- nothing astride a window's edge, or a divider ---------------------------------------
+
+  def wholly(self, vo, w, pane:str) -> bool:
+    'Whether *vo* -- its text too, where it overflows -- is wholly in pane *pane* of window *w*, not on its edge.'
+    from sn.view.graphics.viewContainment import rectInside, PANE_INSET
+    return rectInside(vo.drawnBox(), self.view.homeRect(w, pane), PANE_INSET)
+
+  def change(self) -> None:
+    'Some change (a command): after it, what\'s astride a window\'s edge is put right (see ViewDoList).'
+    alice = self.vo("alice")
+    bb = alice.boundingBox()
+    self.view.context.move(alice, bb[0] + 5, bb[1], _oldPos=list(bb))
+    self.pump()
+
+  def inRule(self, rule, pane:str, name:str):
+    'The view object in pane *pane* of window *rule* of the model object named *name*.'
+    return next(vo for vo, (w, p) in self.view.containmentHomes().items() if w is rule and p == pane and vo.modelObject.name == name)
+
+  def test0780nothingAstrideADivider(self):
+    '''
+    Something astride a rule's divider, or its edge, is put wholly in its own pane at the next change -- the
+    pane the model says, not the one its centre's in: the model isn't changed -- and undone with it.
+    '''
+    v = self.view
+    rule = self.vo("uncle rule")
+    con, ant = self.inRule(rule, "consequent", "?x"), self.inRule(rule, "antecedent", "?y")
+    divider = rule.panes()["antecedent"][2]
+    cb, ab = con.boundingBox(), ant.boundingBox()
+    con.moveTo(divider - (cb[2] - cb[0]) + 4, cb[1], adjustPos=False)   # (mostly in the antecedent: eg, an old view)
+    ant.moveTo(rule.boundingBox()[0] - 6, ab[1], adjustPos=False)       # (astride the window's left edge)
+    self.assertEqual(rule.paneAt(con.centerPt()), "antecedent")
+    self.assertFalse(self.wholly(con, rule, "consequent"))
+    self.assertFalse(self.wholly(ant, rule, "antecedent"))
+    self.change()
+    self.assertTrue(self.wholly(con, rule, "consequent"))
+    self.assertTrue(self.wholly(ant, rule, "antecedent"))
+    self.assertEqual([rule.paneOfRelation(r) for r in rule.containmentOf(con.modelObject)], ["consequent"])
+    self.assertEqual(self.intruders(), [])
+    v.context.undo()
+    self.pump()
+    self.assertFalse(self.wholly(con, rule, "consequent"))
+
+  def test0781droppedOnTheDivider(self):
+    'Dropped astride the divider, it goes in the pane its centre\'s in -- the model too -- and wholly into it.'
+    v = self.view
+    rule = self.vo("uncle rule")
+    con = self.inRule(rule, "consequent", "?z")
+    divider = rule.panes()["antecedent"][2]
+    bb = con.boundingBox()
+    old = {con: con.centerPt()}
+    x = divider - (bb[2] - bb[0]) + 4 # (its centre just left of the divider)
+    con.moveTo(x, bb[1], adjustPos=False) # (as the drag moves it, before it's dropped)
+    with CompositeCommandMgr(v.context):
+      v.context.move(con, x, bb[1], _oldPos=list(bb), _drag=True)
+      v._updateContainment(old)
+    self.pump()
+    self.assertEqual([rule.paneOfRelation(r) for r in rule.containmentOf(con.modelObject)], ["antecedent"])
+    self.assertTrue(self.wholly(con, rule, "antecedent"))
+
+  def test0782ruleKeepsWhatItHoldsInside(self):
+    '''
+    What a rule's part holds is never out of its window (the part isn't drawn, so neither is its arc: nothing
+    would say it's in the rule): out on the canvas (not dragged there), it's brought into its pane.
+    '''
+    v, m = self.view, self.model
+    rule, dave = self.vo("uncle rule"), self.vo("dave")
+    part, typ, _ = rule.paneHolder("consequent")
+    self.assertIsNotNone(part)
+    Relation(m, [typ], part, dave.modelObject, individual=True)
+    self.pump()
+    rb = rule.boundingBox()
+    dave.moveTo(rb[2] + 300, rb[3] + 300, adjustPos=False)
+    self.change()
+    self.assertTrue(self.wholly(dave, rule, "consequent"))
+
+  def test0783oneOrTheOther(self):
+    '''
+    What a one-pane window holds that isn't a variable may be out in the world (its arc drawn), but not
+    astride the window's edge: by its centre, it's put wholly in, or pushed wholly out -- still held.
+    '''
+    from sn.view.graphics.viewContainment import rectsOverlap
+    v, m = self.view, self.model
+    query, dave = self.vo("who likes dave?"), self.vo("dave")
+    Relation(m, [m.CONTAINS], query.modelObject, dave.modelObject, individual=True)
+    self.pump()
+    def astride(dx:float) -> None: # (its centre dx right of the window's left edge)
+      qb, db = query.boundingBox(), dave.boundingBox()
+      dave.moveTo(qb[0] + dx - (db[2] - db[0]) / 2, (qb[1] + qb[3]) / 2, adjustPos=False)
+      self.change()
+    astride(4)
+    self.assertTrue(self.wholly(dave, query, "contains"))
+    astride(-4)
+    self.assertFalse(rectsOverlap(dave.drawnBox(), query.boundingBox()))
+    self.assertNotEqual(query.containmentOf(dave.modelObject), [])
+
+  def test0784resizedRuleCarriesItsPanes(self):
+    '''
+    A rule widened or narrowed by hand carries what's in its panes across with them (the divider doesn't pass
+    over anything): everything stays wholly in its pane. Undone with it.
+    '''
+    v = self.view
+    rule = self.vo("uncle rule")
+    held = {vo: pane for vo, (w, pane) in v.containmentHomes().items() if w is rule and not (hasattr(vo, "floating") and vo.floating())}
+    before = {vo: vo.boundingBox() for vo in held}
+    old = list(rule.boundingBox())
+    for new in ([old[0], old[1], old[2] + 240, old[3]], [old[0] - 100, old[1], old[2] - 20, old[3] + 40]):
+      bb = list(rule.boundingBox())
+      rule.reshape(new) # (as the handle's drag does)
+      v.context.resize(rule, *new, oldBB=bb, oldUserSized=rule.userSized, _followPanes=True)
+      self.pump()
+      for vo, pane in held.items():
+        self.assertTrue(self.wholly(vo, rule, pane), (vo.modelObject.name, pane, new))
+    v.context.undo()
+    v.context.undo()
+    self.pump()
+    self.assertEqual(list(rule.boundingBox()), old)
+    self.assertEqual({vo: vo.boundingBox() for vo in held}, before)
+
+  def test0785sharedVariablesInTheAntecedent(self):
+    'A variable a rule uses on both sides (not held by either) is drawn wholly in the antecedent, not astride the divider.'
+    from sn.model.model import Node
+    v, m = self.view, self.model
+    rule = v.context.new_node("rule", name="symmetric likes", individual=True)
+    self.pump()
+    person = next(o for o in m.values() if o is not None and o.name == "person" and o.isType())
+    likes = next(o for o in m.values() if o is not None and o.name == "likes" and o.isType())
+    p, q = (Node(m, [person], individual=True, name=n) for n in ("?p", "?q"))
+    Relation(m, [m.ANTECEDENT], rule, Relation(m, [likes], p, q, individual=True), individual=True)
+    Relation(m, [m.CONSEQUENT], rule, Relation(m, [likes], q, p, individual=True), individual=True)
+    self.pump()
+    v.showAllModel()
+    self.pump()
+    vr = self.vo("symmetric likes")
+    homes = v.containmentHomes()
+    for x in (p, q):
+      vx = v.findViewObjectForGraphObject(x)
+      self.assertEqual(homes.get(vx), (vr, "antecedent"))
+      self.assertTrue(self.wholly(vx, vr, "antecedent"), x.name)
+
+  def test0786knetRules(self):
+    '''
+    The KNet rules (the Rep Plus net reader's), shown: each consequent's node -- its constraints' text too, which
+    is wider than its box -- wholly in the consequent pane, and nothing astride any window's edge or divider.
+    '''
+    import shutil
+    from sn.view.graphics.sngView import SNGView
+    src = Path(__file__).resolve().parents[2] / "plugins" / "rnetReader" / "knet.snm"
+    shutil.copy(src, self.folder / "knet.snm")
+    m = Model.getDB((self.folder / "knet.snm").as_uri())
+    v = SNGView(fixURL(m.url, ".snv", replaceExt=True, mode="w")[0], model=m)
+    try:
+      v.window.withdraw()
+      v.showAllModel()
+      self.pump(0.5)
+      rule = next(w for w in v.contextWindows() if w.modelObject.name == "true by coexclusion")
+      (_, _, held), = [c for c in rule.paneContents() if c[0] == "consequent"]
+      vo = v.findViewObjectForGraphObject(held)
+      self.assertGreater(vo.drawnBox()[2] - vo.drawnBox()[0], vo.boundingBox()[2] - vo.boundingBox()[0]) # (its text overflows)
+      self.assertTrue(self.wholly(vo, rule, "consequent"))
+      self.assertEqual(v.misplaced(), ({}, []))
+    finally:
+      v.detachFromModel()
+      self.app.terminalRegistry.unregisterWindow(v.window)
+      v.window.destroy()
+      self.pump()
 
   def test0800editing(self):
     v, m = self.view, self.model

@@ -76,7 +76,8 @@ def showNet(view:SNGView, built:Built, scale:float=SCALE, fit:bool=False) -> Non
   the types.)
 
   Nothing is placed meanwhile (see *SNGView.localLayout*): everything's put
-  where it was.
+  where it was -- and then whatever CNet drew astride a box's edge is put
+  wholly in the box, or out of it (by its centre: see *SNGView.tidyWindows()*).
 
   :param view: A view of *built.model*.
   :param built: What *reader.buildModel()* made.
@@ -105,6 +106,7 @@ def showNet(view:SNGView, built:Built, scale:float=SCALE, fit:bool=False) -> Non
     for vr in relations: # (each label on its line, between its ends: not moved off anything it's on)
       vr.reposition(adjustPos=False)
     view.canvas.update()
+    view.tidyWindows()
   finally:
     view.localLayout = localLayout
 

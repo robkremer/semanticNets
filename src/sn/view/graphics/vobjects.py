@@ -673,6 +673,21 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       bb[3] = bb[1] + (self.expandedHeight or self.WINDOW_DEFAULT[1])
     return bb
 
+  def drawnBox(self) -> list[float]:
+    '''
+    What it covers: its bounding box, grown to take in its text where that
+    overflows its shape (a word too wide for a "vis/maxSize" box: see
+    *WrappingText.wrapWidth()*), centred on it. What's kept wholly in a pane,
+    or out of a window, is kept so by this (see *SNGView.keepInPanes()*).
+    '''
+    bb = [float(v) for v in self.boundingBox()]
+    text = self.decorators.get("text") if getattr(self, "decorators", None) else None
+    if isinstance(text, WrappingText) and not self.isContextWindow():
+      tw, th = text.extent()
+      cx, cy = (bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2
+      bb = [min(bb[0], cx - tw / 2), min(bb[1], cy - th / 2), max(bb[2], cx + tw / 2), max(bb[3], cy + th / 2)]
+    return bb
+
   def toggleAt(self, x:float, y:float) -> bool:
     '''
     Whether (x, y) (view coords) is on a context window\'s collapse/expand triangle.
@@ -1418,7 +1433,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       self.resizeInfo = None
       bb = self.boundingBox()
       if bb != oldBB: # commit the whole drag as one undoable command
-        self.view.context.resize(self, bb[0], bb[1], bb[2], bb[3], oldBB=oldBB, oldUserSized=oldUserSized)
+        self.view.context.resize(self, bb[0], bb[1], bb[2], bb[3], oldBB=oldBB, oldUserSized=oldUserSized, _followPanes=True)
       else:           # just a click on a handle
         self.userSized = oldUserSized
       return 'break'

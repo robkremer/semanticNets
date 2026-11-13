@@ -218,8 +218,9 @@ class Snapshot:
     Whether *vo* is a relation's label that's laid out as a body in its context
     window (see *SNGView.containmentHomes()*): one the window contains whose
     place floating between its ends wouldn't say which pane it's in -- an end
-    is elsewhere, eg: on the other side, or astride the divider (as in a rule
-    saying a -r-> b gives b -r-> a) -- or one placed by hand (it doesn't float).
+    is elsewhere, eg: on the other side (as in a rule saying a -r-> b gives
+    b -r-> a, whose a and b are in the antecedent) -- or one placed by hand
+    (it doesn't float).
     (Not a relation that belongs in the window only because its ends do, eg:
     an isa link: it just follows its ends.)
 

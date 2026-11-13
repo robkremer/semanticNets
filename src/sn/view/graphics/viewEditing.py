@@ -619,8 +619,8 @@ class EditingMixin(ViewBase):
     '''
     Show all the model's objects that aren't in the view yet, on a grid -- or,
     if there are more than *SHOW_ALL_MAX*, just its node types (see
-    *showTypes()*), to be expanded as they're wanted. The variables go into
-    the windows they belong in (see *homeStrays()*), and what's landed in a
+    *showTypes()*), to be expanded as they're wanted. What the windows hold
+    goes wholly into its panes (see *keepInPanes()*), and what's landed in a
     window it doesn't belong in is pushed out (see *bumpIntruders()*).
     '''
     most = snPrefs.get('gui/ShowAllMax', storeDefault=self.SHOW_ALL_MAX, storeType=int)
@@ -665,8 +665,11 @@ class EditingMixin(ViewBase):
           self.localLayout(n)
     finally:
       del self.__dict__["_nextGridPoint"]
-    # (on the grid, a rule's variables are wherever they fell: into their windows, and what's not theirs out)
-    self.homeStrays()
+    # (on the grid, a rule's variables are wherever they fell: into their windows, and what's not theirs out --
+    # each its size: drawn, and fitted to its text, first)
+    if self.canvas is not None:
+      self.canvas.update_idletasks()
+    self.keepInPanes()
     self.bumpIntruders()
 
   def showTypes(self, arrange:bool=True) -> list[Node]:
