@@ -7,7 +7,7 @@
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
     <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>snplugins.rnetReader.rnet module - Semantic Nets 1.1 documentation</title>
+        <title>snplugins.rnetReader.rnet module - Semantic Nets 1.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -163,7 +163,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Semantic Nets 1.1 documentation</div></a>
+      <a href="../index.html"><div class="brand">Semantic Nets 1.2 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
     <img class="sidebar-logo" src="../_static/sn-logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Semantic Nets 1.1 documentation</span>
+  <span class="sidebar-brand-text">Semantic Nets 1.2 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -387,37 +387,38 @@ what this finds.</p>
 LFs), its fields by tabs. The first line is a header, <code class="docutils literal notranslate"><span class="pre">\tC\t&lt;version&gt;\t&lt;background</span>
 <span class="pre">colour&gt;...</span></code>, and the rest are sections, each a line naming it and how many
 lines it has, and then those lines:</p>
-<blockquote>
-<div><dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">D</span></code>  settings: a name and a value on each line (eg: “Date”, “NodeType”).</dt><dd><p>(Versions 6 and 7 have a “PS:” line instead: “PS:CNettT:Allt…”.)</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">D</span></code></dt><dd><p>settings: a name and a value on each line (eg: “Date”, “NodeType”).
+(Versions 6 and 7 have a “PS:” line instead: <code class="docutils literal notranslate"><span class="pre">PS:CNet\tT:All\t...</span></code>.)</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">T</span></code>  the node types: shape, a variant of it, font, size, bold, flags, four</dt><dd><p>colours (see <em>NodeType</em>), …, and the name, last.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">T</span></code></dt><dd><p>the node types: shape, a variant of it, font, size, bold, flags, four
+colours (see <em>NodeType</em>), …, and the name, last.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">A</span></code>  the link types: in versions 7 and 8, and some 9s, four fields –</dt><dd><p><em>bits</em> (an arrowhead at the destination, at the source, a bar, …),
+<dt><code class="docutils literal notranslate"><span class="pre">A</span></code></dt><dd><p>the link types: in versions 7 and 8, and some 9s, four fields –
+<em>bits</em> (an arrowhead at the destination, at the source, a bar, …),
 two colours and the name; in version 9, eleven – the head’s shape
 and bars, the tail’s shape and bars, the line’s flags, a symbol in the
 middle, four colours, and the name (see <em>LinkType</em>). Version 6 has none:
 its links’ codes are the bits themselves.</p>
 </dd>
-</dl>
-<p><code class="docutils literal notranslate"><span class="pre">M</span></code>  the kinds of mark (see <em>MarkKind</em>): two colours and the name.
-<code class="docutils literal notranslate"><span class="pre">N</span></code>  the nodes: type, marks (none in version 6), x, y, width, height,</p>
-<blockquote>
-<div><p>label, and (from version 7) one more field. A node whose type is
+<dt><code class="docutils literal notranslate"><span class="pre">M</span></code></dt><dd><p>the kinds of mark (see <em>MarkKind</em>): two colours and the name.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">N</span></code></dt><dd><p>the nodes: type, marks (none in version 6), x, y, width, height,
+label, and (from version 7) one more field. A node whose type is
 prefixed by “P” or “G” is a picture or a drawing: a drawing’s records
 (rectangles, lines, text…) follow it, in lines of their own.</p>
-</div></blockquote>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">L</span></code>  the links: source and destination nodes (by their place in <code class="docutils literal notranslate"><span class="pre">N</span></code>,</dt><dd><p>from 0), the link types (by their place in <code class="docutils literal notranslate"><span class="pre">A</span></code>): the link’s from the
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">L</span></code></dt><dd><p>the links: source and destination nodes (by their place in <code class="docutils literal notranslate"><span class="pre">N</span></code>,
+from 0), the link types (by their place in <code class="docutils literal notranslate"><span class="pre">A</span></code>): the link’s from the
 source to the destination, and, if there’s a second (after a space),
 the type of a link back, from the destination to the source – Rep
 Plus’s Link.Type(0) and Type(1), drawn side by side – and, in some
 files, more fields (its flags, and a label: eg, a weight).</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">G</span></code>  the groups (panels: parts of the net that go together): the nodes in</dt><dd><p>each, and in a second field (if any) the groups in it.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">G</span></code></dt><dd><p>the groups (panels: parts of the net that go together): the nodes in
+each, and in a second field (if any) the groups in it.</p>
 </dd>
 </dl>
-</div></blockquote>
 <p>A type’s colours, and a link type’s, are 6 hexadecimal digits (RRGGBB), but
 older files leave out leading zeros (“8A00” for 008A00). A label’s line breaks
 are U+FFFD characters (as CNet wrote them).</p>
@@ -1494,7 +1495,7 @@ picture), and the groups in it.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=56dcb7b8"></script>
+</div><script src="../_static/documentation_options.js?v=61243dd2"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
