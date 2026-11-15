@@ -4,8 +4,8 @@ tools/makeKnetRules.py) names on *knode*, for Gaines's truth marks -- a node
 is true (T: what it stands for holds), false (F), both (Belnap's "both":
 inconsistent), or unmarked:
 
-  - ``vis/sideBars`` (*markBars()*): a vertical bar beside a node that's
-    marked true, and a horizontal one over a node that's marked false, as
+  - ``vis/sideBars`` (*markBars()*): a vertical bar through a node that's
+    marked true, and a horizontal one through a node that's marked false, as
     Gaines draws them, in the colour of how it got the mark (see
     *MARK_COLORS*);
   - ``.menu/Mark/True``, ``.menu/Mark/False`` (*markTrue()*, *markFalse()*):
@@ -71,8 +71,8 @@ MARK_COLORS = {"asserted": "#693804", "included": "#000000", "irrelevant": "#a9a
 false; KNet draws what it abduces as defaults). Another (eg: a net's own
 mark kind) is drawn black.'''
 
-SIDES = {MARK_TRUE: "right", MARK_FALSE: "top"}
-"Where each mark's bar goes (see *sn.view.graphics.decorators.SideBars*): true's beside the node, false's over it."
+SIDES = {MARK_TRUE: "vertical", MARK_FALSE: "horizontal"}
+"Where each mark's bar goes (see *sn.view.graphics.decorators.SideBars*): through the node's centre, as Gaines draws them -- true's vertical, false's horizontal."
 
 def marks(obj:Any) -> dict[str, str]:
   '''
@@ -92,7 +92,7 @@ def marks(obj:Any) -> dict[str, str]:
 def markBars(obj:Any, _context:HookContext) -> str:
   '''
   :returns: *obj*'s marks as side bars (see the module doc): eg,
-    "right:#693804" for a node asserted true.
+    "vertical:#693804" for a node asserted true.
   '''
   return " ".join(f"{SIDES[key]}:{MARK_COLORS.get(how.lower(), '#000000')}" for key, how in marks(obj).items())
 

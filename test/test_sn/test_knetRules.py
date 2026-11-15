@@ -458,8 +458,8 @@ class TestMarks(unittest.TestCase):
   def test_menu(self):
     '''
     The menu items (see *hooks*) assert a mark, both, and take back the
-    asserted ones; and a node's marks are its bars: true's beside it, false's
-    over it, in the colour of how it got it.
+    asserted ones; and a node's marks are its bars through it: true's
+    vertical, false's horizontal, in the colour of how it got it.
     '''
     from sn.hooks import HookContext, call, reference
     hooks = self.hooks
@@ -472,14 +472,14 @@ class TestMarks(unittest.TestCase):
     self.assertFalse(hooks._hasAsserted(node, ctx))
     call(reference(hooks.markTrue), node, ctx)
     self.assertEqual(hooks.marks(node), {"markTrue": "asserted"})
-    self.assertEqual(hooks.markBars(node, ctx), "right:#693804")
+    self.assertEqual(hooks.markBars(node, ctx), "vertical:#693804")
     call(reference(hooks.markFalse), node, ctx)
     self.assertEqual(hooks.marks(node), {"markTrue": "asserted", "markFalse": "asserted"})
     self.assertTrue(hooks._hasAsserted(node, ctx))
     call(reference(hooks.clearMarks), node, ctx)
     self.assertEqual(hooks.marks(node), {})
     node["markFalse"] = "excluded"
-    self.assertEqual(hooks.markBars(node, ctx), "top:#00a000")
+    self.assertEqual(hooks.markBars(node, ctx), "horizontal:#00a000")
     self.assertFalse(hooks._canMark(b.nodeTypes[0], ctx)) # (a type: its instances are marked)
 
 class TestConnectives(unittest.TestCase):

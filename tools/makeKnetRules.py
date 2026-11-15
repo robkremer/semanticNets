@@ -74,7 +74,7 @@ coexcludes.) A node can be both (Belnap's "both": inconsistent), as asserted
 or as concluded. What a node has asserted stands: a rule's conclusion of the
 same mark only says so.
 
-*KNODE*'s nodes show their marks as bars beside them (vis/sideBars: see
+*KNODE*'s nodes show their marks as bars through them (vis/sideBars: see
 rnetReader.hooks.markBars()), and have menu items to assert and clear them,
 to show their net's probes (see rnetReader.probes), and to work on the net
 as a whole (see rnetReader.forms): its minimal and maximal canonical forms,
@@ -378,8 +378,8 @@ def isaRule(m, inc, rule) -> None:
   knode = Node(m, [m.NODE], name=KNODE)
   knode.setAttr("note", typeNote("A node of a KNet net: its instances are (eg: the reader's nodes), and so are the SN types under "
                    "it, whose isa links are inclusions: eg, dog isa animal isa knode gives dog includes animal (so a type "
-                   "that excludes animal excludes dog). They show their truth marks as bars (markTrue: beside them; "
-                   "markFalse: over them), and their menus mark them."))
+                   "that excludes animal excludes dog). They show their truth marks as bars through them (markTrue: "
+                   "vertical; markFalse: horizontal), and their menus mark them."))
   knode["vis/sideBars"] = f"$({HOOKS}:markBars)"
   for item, fn in (("Mark/True", "markTrue"), ("Mark/False", "markFalse"), ("Mark/Clear", "clearMarks"), ("Probes...", "showProbes"),
                    ("Net/Minimal form", "minimalForm"), ("Net/Maximal form", "maximalForm"), ("Net/Saturate", "saturate"),

@@ -223,11 +223,12 @@ class TestNetView(unittest.TestCase):
 
   def test_marks(self):
     '''
-    A node's truth marks are bars (see the plugin's *hooks.markBars()* and
-    *decorators.SideBars*): asserted true, a brown one beside it; after
-    reasoning, the marks the reasoner concluded too (eg: black beside, for
-    true by inclusion; both bars, for both) -- and they go when the
-    assertion's taken back and it's reasoned again.
+    A node's truth marks are bars through it (see the plugin's
+    *hooks.markBars()* and *decorators.SideBars*), as Gaines draws them:
+    asserted true, a brown vertical one; asserted false, horizontal; after
+    reasoning, the marks the reasoner concluded too (eg: black, for true by
+    inclusion; both bars, for both) -- and they go when the assertion's taken
+    back and it's reasoned again.
     '''
     from sn.view.graphics.sngView import SNGView
     from sn.hooks import HookContext
@@ -243,24 +244,17 @@ class TestNetView(unittest.TestCase):
     self.netView.showNet(v, built)
     self.app.update()
     shown = self.shown(v)
-    def bars(name:str) -> list[tuple[str, str]]: # (each bar's colour, and where: right of the node, or above it)
-      vo = shown[name]
-      deco = vo.decorators.get("sideBars")
-      x1, y1, x2, y2 = v.viewToWindow(vo.boundingBox())
-      ret = []
-      for i in deco.ids if deco is not None else []:
-        bx1, by1, bx2, by2 = v.canvas.coords(i)
-        ret.append(("right" if bx1 >= x2 else "top" if by2 <= y1 else "?", v.canvas.itemcget(i, "fill")))
-      return sorted(ret)
-    self.assertEqual(bars("a0"), [("right", "#693804")])
-    self.assertEqual(bars("a2"), [("right", "#693804"), ("top", "#693804")])
+    def bars(name:str) -> list[tuple[str, str]]: # (each bar's colour, and where: through the node, vertical or horizontal)
+      return sorted((where, color) for where, color, _ in self.bars(v, shown[name]))
+    self.assertEqual(bars("a0"), [("vertical", "#693804")])
+    self.assertEqual(bars("a2"), [("horizontal", "#693804"), ("vertical", "#693804")])
     self.assertEqual(bars("c0"), [])
     v.reason("clingo")
     self.app.update()
-    self.assertEqual(bars("c0"), [("right", "#000000")])                   # (true by inclusion)
-    self.assertEqual(bars("f0"), [("top", "#00a000")] if shown["f0"].modelObject["markFalse"] == "excluded"
-                     else [("top", "#a9a9a9")])                            # (false by exclusion, or by inclusion)
-    self.assertEqual([c for _, c in bars("d2")], ["#0000ff", "#00a000"])  # (both)
+    self.assertEqual(bars("c0"), [("vertical", "#000000")])                # (true by inclusion)
+    self.assertEqual(bars("f0"), [("horizontal", "#00a000")] if shown["f0"].modelObject["markFalse"] == "excluded"
+                     else [("horizontal", "#a9a9a9")])                     # (false by exclusion, or by inclusion)
+    self.assertEqual(bars("d2"), [("horizontal", "#00a000"), ("vertical", "#0000ff")])  # (both)
     hooks.clearMarks(shown["a0"].modelObject, HookContext(view=v, selection=[shown["a0"]]))
     self.app.update()
     self.assertIsNone(shown["a0"].modelObject.getLocalAttr("markTrue"))
@@ -270,7 +264,79 @@ class TestNetView(unittest.TestCase):
     self.assertEqual(bars("c0"), [])
     v.context.undo()
     self.app.update()
-    self.assertEqual(bars("a0"), [("right", "#693804")])
+    self.assertEqual(bars("a0"), [("vertical", "#693804")])
+
+  def bars(self, view, vo) -> list[tuple[str, str, list[float]]]:
+    '''
+    :returns: *vo*'s bars (see *decorators.SideBars*), as drawn: where each
+      is -- "vertical" or "horizontal" through its centre (or its title
+      bar's, for a window), "outside" it, or "?" -- its colour, and its
+      rectangle; each through it checked to be under its text, over its
+      shape.
+    '''
+    c = view.canvas
+    deco = vo.decorators.get("sideBars")
+    x1, y1, x2, y2 = view.viewToWindow(vo.boundingBox())
+    if vo.isContextWindow():
+      y2 = view.viewToWindow([0, vo.boundingBox()[1] + vo.bannerHeight()])[1]
+      label, under = vo.decorators["frame"].ids["title"], vo.decorators["frame"].ids["banner"]
+    else:
+      label, under = vo.decorators["text"].id, vo._shape.id
+    order = c.find_all() # (bottom to top)
+    ret = []
+    for i in deco.ids if deco is not None else []:
+      bx1, by1, bx2, by2 = c.coords(i)
+      inside = x1 <= bx1 < bx2 <= x2 and y1 <= by1 < by2 <= y2
+      if inside and bx2 - bx1 < (x2 - x1) / 4 and by2 - by1 > (y2 - y1) * 0.8:
+        where = "vertical"
+      elif inside and by2 - by1 < (y2 - y1) / 4 and bx2 - bx1 > (x2 - x1) * 0.8:
+        where = "horizontal"
+      else:
+        where = "outside" if bx1 >= x2 or bx2 <= x1 or by1 >= y2 or by2 <= y1 else "?"
+      if where in ("vertical", "horizontal"):
+        self.assertLess(order.index(under), order.index(i), f"{vo.name}: a bar under its shape")
+        self.assertLess(order.index(i), order.index(label), f"{vo.name}: a bar over its text")
+      ret.append((where, c.itemcget(i, "fill"), [bx1, by1, bx2, by2]))
+    return ret
+
+  def test_barsThrough(self):
+    '''
+    A node's bars through its centre (see *decorators.SideBars*): from edge to
+    edge, inside its outline, under its text, thinner than those at its
+    sides; two on one, side by side, centred; a window's through its title
+    bar; and a side's still outside it.
+    '''
+    from sn.view.graphics.sngView import SNGView
+    from sn.view.graphics.decorators import SideBars
+    built = self.reader.buildModel(self.rnet.parse(str(self.rnetPath)), str(self.folder / "net.snm"))
+    v = SNGView(fixURL(built.model.url, ".snv", replaceExt=True, mode="w")[0], model=built.model)
+    self.views.append(v)
+    v.window.withdraw()
+    v.context.visibility("system objects", "hide")
+    self.netView.showNet(v, built)
+    self.app.update()
+    shown = self.shown(v)
+    a, box = shown["A"], shown["a box"]
+    a.modelObject["vis/sideBars"] = "vertical:red vertical:blue horizontal right:green"
+    box.modelObject["vis/sideBars"] = "vertical:#00a000"
+    self.app.update()
+    a.draw(); box.draw()
+    found = self.bars(v, a)
+    self.assertEqual([(where, color) for where, color, _ in found],
+                     [("outside", "green"), ("vertical", "red"), ("vertical", "blue"), ("horizontal", "black")])
+    s, r1, r2, h = [x[2] for x in found]
+    x1, y1, x2, y2 = v.viewToWindow(a.boundingBox())
+    self.assertAlmostEqual((r1[0] + r2[2]) / 2, (x1 + x2) / 2, delta=0.5)   # (the two side by side, centred)
+    self.assertLess(r1[2], r2[0])
+    self.assertAlmostEqual((h[1] + h[3]) / 2, (y1 + y2) / 2, delta=0.5)
+    self.assertLess(r1[2] - r1[0], s[2] - s[0])                              # (thinner than a side's)
+    self.assertAlmostEqual(r1[2] - r1[0], SideBars.THROUGH_WIDTH * v._scale, delta=0.01)
+    self.assertGreater(r1[1], y1); self.assertLess(r1[3], y2)                # (inside its outline)
+    self.assertEqual([(where, color) for where, color, _ in self.bars(v, box)], [("vertical", "#00a000")])
+    a.modelObject["vis/sideBars"] = "middle" # (not a side, nor through it: none, and a warning)
+    self.app.update()
+    a.draw()
+    self.assertEqual(self.bars(v, a), [])
 
   def test_probes(self):
     '''
