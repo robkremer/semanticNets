@@ -99,11 +99,22 @@ Putting things into a window
   pane's role: dropped in a rule's antecedent pane, it's part of the
   antecedent. Dragging it into the other pane switches its role.
 - **Drag it out** of the window to remove it from the context.
-- A **relation** drawn between two objects, whose label lands in a pane, is
-  contained in that pane too.
-  A contained relation's label, while it floats (follows its ends), stays in
-  its pane, even if one of its ends is moved outside the window. To take the
-  relation out of the context, drag its label out.
+- A **relation** goes in the context its two ends are both in -- the
+  innermost one, if they're nested -- wherever its label happens to land.
+  One that crosses a window's border isn't that window's: drawn from
+  something in one window to something in another (or out on the canvas),
+  it's in neither -- it's in the global context, or in the window both
+  windows are in. The exception is a variable, which means something only
+  in its pattern: a relation from a rule's ``?x`` to something outside the
+  rule (eg: ``?x isa person``) is the rule's.
+  In a rule, the relation's label says which part it's in: drag it from the
+  antecedent pane to the consequent pane to make it part of the consequent.
+  Its label never takes it out of the context its ends are in: dragged out
+  of the window, it's put back in it.
+- **Move an end** into or out of a window (or drop a window, with its
+  contents, into another window, or drag it out), and the relation moves to
+  the context its ends are both in now: drag one end of a relation out of
+  its window and the relation is no longer the window's.
 - You can also say it explicitly: draw a *contains* relation from the window
   to an object (or, for one of a rule's panes, an *antecedent*, *consequent*,
   *definiendum*, *definiens*, ... relation from the rule: it works at once,

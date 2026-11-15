@@ -30,7 +30,7 @@ Created on Oct 18, 2026 (from sngView.py)
 from __future__ import annotations
 import math
 import sn
-from sn.model.model import GraphObject, Relation
+from sn.model.model import GraphObject, Node, Relation
 from typing import Iterable, Callable, Collection, Mapping, Sequence, cast
 from util.utils import expandRect
 from util.command import Command
@@ -201,6 +201,45 @@ def containmentMove(panes:Mapping[str, Sequence[float]], old:Sequence[float]|Non
     if paneAt(panes, old) is not None:
       return "out"
   return None
+
+def commonBox[W](a:Sequence[W], b:Sequence[W]) -> W|None:
+  '''
+  :param a: The boxes one thing is in, innermost first (the box it's in, the
+    box that's in, and so on out).
+  :param b: Another's.
+  :returns: The innermost box both are in (the first of *a* that's in *b*),
+    or None if there's none: the global context.
+  '''
+  return next((w for w in a if any(w is x for x in b)), None)
+
+def relationScope[W](src:Sequence[W], dst:Sequence[W], *, srcVariable:bool=False,
+                     dstVariable:bool=False) -> tuple[W|None, W|None]:
+  '''
+  Which box (context) a relation belongs in -- its scope -- by where its two
+  ends are: the innermost box both are in; or, if there's none, the global
+  context. Never where its label happens to be: a relation that crosses a
+  box's border isn't that box's (eg: from something in one box to something
+  in another, or out in the world, is the global context's -- or that of
+  the box both boxes are in).
+
+  But a variable means something only in its box (its pattern: eg, a rule's
+  ?x), so a relation from a variable to something outside the variable's
+  box (eg: ?x isa person, with person out in the world; or ?asker likes
+  dave, in a query) is the variable's box's.
+
+  :param src: The boxes its source is in, innermost first.
+  :param dst: Its destination's.
+  :param srcVariable: Whether its source is a variable.
+  :param dstVariable: Whether its destination is.
+  :returns: (the innermost box both ends are in, or None; and the box of a
+    variable end that's inside that one -- the source's, if both are -- or
+    None). The relation's scope is the second, if there is one, else the first.
+  '''
+  common = commonBox(src, dst)
+  for chain, isVariable in ((src, srcVariable), (dst, dstVariable)):
+    if isVariable and chain and chain[0] is not common:
+      return common, chain[0]
+  return common, None
 
 class ContainmentMixin(ViewBase):
   '''
@@ -585,14 +624,154 @@ class ContainmentMixin(ViewBase):
     else:
       self.context.doList.do(command)
 
+  # ---- A relation's scope: the box its ends are both in (see relationScope()) ----
+
+  def scopeBox(self, w:VObject) -> VObject:
+    '''
+    The box whose scope context window *w* is: *w* -- or, if it shows a part
+    of a box that's drawn as a window too (eg: a rule's antecedent, shown as
+    a box in the rule's window: see "show parts as boxes"), that box's
+    window. A rule's parts are one scope, whether they're its panes or boxes
+    in it: its variables are shared by them (the ?x in its antecedent is the
+    ?x in its consequent), so what's in which part is said by where a
+    relation's label is (see *_scopePane()*), not by its ends.
+    '''
+    seen:list[VObject] = []
+    while w not in seen:
+      seen.append(w)
+      mo = w.modelObject
+      if not isinstance(mo, Node) or not mo.isPart():
+        break
+      owner = next((o for o in (self.findViewObjectForGraphObject(p) for p in mo.partOwners())
+                    if o is not None and o is not w and o in self.contextWindows()), None)
+      if owner is None:
+        break
+      w = owner
+    return w
+
+  def _scopeFamily(self, unit:VObject) -> list[VObject]:
+    '''
+    :returns: Context window *unit* and the windows of its parts drawn as
+      boxes in it (see *scopeBox()*), if it has any.
+    '''
+    mo = unit.modelObject
+    ret = [unit]
+    if isinstance(mo, Node) and mo.isCollection() and not mo.tilesParts():
+      windows = self.contextWindows()
+      ret += [pw for p in mo.parts() if (pw := self.findViewObjectForGraphObject(p)) is not None and pw in windows and pw is not unit]
+    return ret
+
+  def _boxesAround(self, pt:Sequence[float]) -> list[VObject]:
+    '''
+    The context windows (shown and expanded) with a pane at *pt*, innermost
+    first: the boxes something there is in. A window can only be in a plain
+    context (one pane, "contains": see *_updateContainment()*) -- one on a
+    rule, say, is just on it, and will be pushed off (see *bumpIntruders()*)
+    -- so the windows after the first are only plain contexts.
+    '''
+    ws = sorted((w for w in self._visibleWindows() if not w.collapsed and w.paneAt(pt) is not None),
+                key=lambda w: rectArea(w.boundingBox()))
+    return ws[:1] + [w for w in ws[1:] if "contains" in w.panes()]
+
+  def _endBoxes(self, vo:VObject) -> list[tuple[VObject, str|None]]:
+    '''
+    The boxes one end of a relation is in, innermost first, each with the
+    pane it's in (None: whichever its centre's in): by where it is (see
+    *_boxesAround()*) -- or, for a variable, where it belongs (see
+    *containmentHomes()*): a variable dragged out of the rule whose
+    patterns use it isn't out of it (it's put back: see *keepInPanes()*).
+    '''
+    mo = vo.modelObject
+    if mo is not None and mo.isVariable():
+      homes = self.containmentHomes([vo, *self.contextWindows()])
+      if (home := homes.get(vo)) is not None:
+        ret:list[tuple[VObject, str|None]] = [home]
+        for w in self.windowChain(home[0], homes):
+          ret.append((w, None))
+        return ret
+    return [(w, None) for w in self._boxesAround(vo.centerPt())]
+
+  def _relationScope(self, src:VObject, dst:VObject) -> tuple[VObject|None, VObject|None, list[tuple[VObject, list[tuple[VObject, str|None]]]]]:
+    '''
+    The scope of a relation from *src* to *dst* (see *relationScope()*): the
+    innermost box both ends are in, and that of a variable end inside it
+    (each a context window -- a rule's, for its parts: see *scopeBox()* --
+    or None).
+
+    :returns: Those two, and each end with the boxes it's in (see *_endBoxes()*).
+    '''
+    ends = [(e, self._endBoxes(e)) for e in (src, dst)]
+    def units(chain:list[tuple[VObject, str|None]]) -> list[VObject]:
+      return list(dict.fromkeys(self.scopeBox(w) for w, _ in chain))
+    isVar = lambda e: e.modelObject is not None and bool(e.modelObject.isVariable())
+    common, var = relationScope(units(ends[0][1]), units(ends[1][1]), srcVariable=isVar(src), dstVariable=isVar(dst))
+    return common, var, ends
+
+  def _labelPane(self, unit:VObject, pt:Sequence[float]|None) -> tuple[VObject, str]|None:
+    '''
+    :param pt: Where a relation's label is (or will be).
+    :returns: The pane of box *unit* (or the box of one of its parts: see
+      *scopeBox()*) that *pt* is in -- (the context window, its pane) --
+      or None if it's in none of them (or between the boxes of its parts).
+    '''
+    if pt is None:
+      return None
+    family = self._scopeFamily(unit)
+    at = [w for w in family if not w.collapsed and w.paneAt(pt) is not None]
+    if not at:
+      return None
+    w = min(at, key=lambda w: rectArea(w.boundingBox()))
+    if w is unit and len(family) > 1: # (between the boxes of its parts: in one of them, by its ends)
+      return None
+    return w, cast(str, w.paneAt(pt))
+
+  def _scopePane(self, unit:VObject, pt:Sequence[float]|None,
+                 ends:Sequence[tuple[VObject, list[tuple[VObject, str|None]]]]) -> tuple[VObject, str]:
+    '''
+    Where in box *unit* (its scope: see *_relationScope()*) a relation goes:
+    in the pane (or the part's box) its label is in at *pt*, if that's in
+    the box -- eg: a rule's consequent, for a relation between two of its
+    antecedent's variables -- or else the one its ends are in (the first,
+    the leftmost, if they're in different ones: see *sharedPane()*).
+
+    :param ends: Its ends, each with the boxes it's in (see *_endBoxes()*).
+    :returns: (the context window, its pane).
+    '''
+    if (here := self._labelPane(unit, pt)) is not None:
+      return here
+    family = self._scopeFamily(unit)
+    found:list[tuple[VObject, str]] = []
+    for e, chain in ends:
+      for w, pane in chain:
+        if w in family:
+          found.append((w, pane if pane is not None else (w.paneAt(e.centerPt()) or next(iter(w.panes())))))
+          break
+    if len(family) > 1:
+      found = [f for f in found if f[0] is not unit] or found
+    if not found:
+      return unit, next(iter(unit.panes()))
+    if len(found) == 2 and found[0][0] is found[1][0]:
+      w = found[0][0]
+      return w, sharedPane(w.panes(), found[0][1], found[1][1])
+    return found[0]
+
   def _containNewRelation(self, mgr:CompositeCommandMgr, creator:Command, typ:Relation, fromNode:VObject, toNode:VObject) -> None:
     '''
     A relation being made (by the queued command *creator*) from *fromNode* to
-    *toNode* whose label will sit (midway between them) in a context window's
-    pane is contained by it -- eg: one drawn between two things in a rule's
-    antecedent is part of the antecedent.
+    *toNode* goes in the box both its ends are in, the innermost (see
+    *relationScope()*: or, from a variable, in the variable's box) -- in the
+    pane its label will sit in (midway between its ends), if that's in the
+    box, else the pane its ends are in (see *_scopePane()*). Eg: one drawn
+    between two things in a rule's antecedent is part of the antecedent; one
+    from something in a box to something in another box, or outside every
+    box, is in neither: it's the global context's (or that of the box both
+    boxes are in) -- wherever its label lands.
     '''
     if typ.isa(self.model.CONTAINS) or any(e.isContextWindow() for e in (fromNode, toNode) if not isinstance(e, VRelation)):
+      return
+    common, var, ends = self._relationScope(fromNode, toNode)
+    unit = var if var is not None else common
+    if unit is None:
       return
     # where its label will go (see VRelation.gapMidpoint())
     from sn.view.graphics.connectors import _clipToEdgeStraight, _farPointAlong, _sub
@@ -603,9 +782,114 @@ class ContainmentMixin(ViewBase):
       a = _clipToEdgeStraight(fromNode, _farPointAlong(fromNode, _sub(cd, cs)))
       b = _clipToEdgeStraight(toNode, _farPointAlong(toNode, _sub(cs, cd)))
     pt = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
-    w = self._windowAt(pt)
-    if w is not None:
-      mgr._addCommand(self._containCommand(w, cast(str, w.paneAt(pt)), creator=creator))
+    w, pane = self._scopePane(unit, pt, ends)
+    mgr._addCommand(self._containCommand(w, pane, creator=creator))
+
+  def _scopedByEnds(self, vo:VObject) -> bool:
+    '''
+    Whether *vo* is a relation whose box is said by its ends (see
+    *relationScope()*): one with both ends drawn, that takes part in
+    containment (see *_containable()*). (Not one with no destination of its
+    own: its label says where it is.)
+    '''
+    return isinstance(vo, VRelation) and all(isinstance(e, VObject) and e._isConnected() for e in (vo.src, vo.dst)) \
+           and self._containable(vo)
+
+  def _acrossMovedWindows(self, oldCenters:Mapping[VObject, tuple[float,float]|None]) -> list[VRelation]:
+    '''
+    The relations across the border of a context window that's been moved
+    (one end carried with it, at any depth, the other not): eg, from
+    something in a box dropped into another box to something in that one --
+    the innermost box both ends are in may have changed (see
+    *relationScope()*).
+    '''
+    moved = [vo for vo, old in oldCenters.items() if old is not None and not isinstance(vo, VRelation) and vo.isContextWindow()]
+    if not moved:
+      return []
+    homes = self.containmentHomes()
+    carried = set(moved) | {vo for vo in homes if any(w in moved for w in self.windowChain(vo, homes))} # (see VObject.carriedContents())
+    ret:list[VRelation] = []
+    for c in carried:
+      if isinstance(c, VRelation) or c.isContextWindow():
+        continue
+      for r in c.relations:
+        if isinstance(r, VRelation) and r not in oldCenters and r not in ret and self._scopedByEnds(r) \
+           and (r.dst if r.src is c else r.src) not in carried:
+          ret.append(r)
+    return ret
+
+  def _rescope(self, vr:VRelation, oldCenters:Mapping[VObject, tuple[float,float]|None], dragged:bool,
+               windows:Sequence[VObject]) -> bool:
+    '''
+    Bring the containment of relation *vr* -- its label dragged (*dragged*),
+    or an end moved -- into line with its scope (see *relationScope()*): in
+    the innermost box both its ends are in (or none: the global context),
+    in the pane its label's in if it's dragged there (eg: from a rule's
+    antecedent to its consequent). A relation in a variable's box stays in
+    it; but a move never puts one in a box just because a variable end is
+    in it (eg: moving ?x in a rule doesn't put its isa link to person, out
+    in the world, in the rule). A box's containment of it from outside --
+    its label out of the window, its arc drawn: eg, a context's statement
+    about things out in the world -- is left be.
+
+    Call inside a *CompositeCommandMgr* (see *_updateContainment()*).
+
+    :returns: Whether anything changed.
+    '''
+    mo = vr.modelObject
+    assert mo is not None
+    common, var, ends = self._relationScope(cast(VObject, vr.src), cast(VObject, vr.dst))
+    byObj, _ = self._containmentMaps() # (as w.containmentOf(mo), for every window w at once)
+    holding = {w: rels for w, rels in byObj.get(id(mo), {}).items() if w is not vr and w in windows}
+    unitOf = {w: self.scopeBox(w) for w in holding}
+    unit = var if var is not None and any(u is var for u in unitOf.values()) else common
+    keep:set[VObject] = set() # (the windows whose containment of it stays)
+    add:tuple[VObject, str]|None = None
+    if unit is not None:
+      inUnit = [w for w in holding if unitOf[w] is unit]
+      if inUnit and (not dragged or self._labelPane(unit, vr.centerPt()) is None):
+        keep = set(inUnit) # (in its box already: left in its pane -- unless its label's dragged to another)
+      else:
+        tw, tp = self._scopePane(unit, vr.centerPt(), ends)
+        rels = holding.get(tw, [])
+        if any(tw.paneOfRelation(r) in (tp, None) for r in rels) or len(rels) > 1: # (there already -- None: a plain "contains",
+          keep = {tw}                                                           # in whichever pane it's in -- or in more than one pane: left be)
+        else:
+          add = (tw, tp)
+    old = oldCenters.get(vr) if vr in oldCenters else None
+    def wasInside(w:VObject) -> bool: # (its label was in the window: else it's held from outside, its arc drawn)
+      if old is None:
+        return w.paneAt(vr.centerPt()) is not None
+      pt = old
+      if (wOld := oldCenters.get(w)) is not None: # (the window moved too)
+        (bx, by), (ax, ay) = wOld, w.centerPt()
+        pt = (pt[0] + ax - bx, pt[1] + ay - by)
+      return w.paneAt(pt) is not None
+    changed = False
+    for w, rels in holding.items():
+      if w in keep or not wasInside(w):
+        continue
+      for r in rels:
+        self.context.remove(r)
+      changed = True
+    if add is not None:
+      self._queue(self._containCommand(add[0], add[1], target=mo))
+      changed = True
+    return changed
+
+  def belongsByEnds(self, vr:VRelation, w:VObject) -> bool:
+    '''
+    Whether context window *w* holds relation *vr* because its ends say so
+    (see *relationScope()*): its scope is *w*'s box (see *scopeBox()*). So
+    its label belongs inside the window, never out of it with its arc drawn
+    (see *misplaced()*).
+    '''
+    mo = vr.modelObject
+    if mo is None or not self._scopedByEnds(vr) or not w.containmentOf(mo):
+      return False
+    common, var, _ = self._relationScope(cast(VObject, vr.src), cast(VObject, vr.dst))
+    unit = var if var is not None else common
+    return unit is not None and unit is self.scopeBox(w)
 
   def _updateContainment(self, oldCenters:dict[VObject, tuple[float,float]|None],
                          draggedAlong:Iterable[VObject]=()) -> None:
@@ -625,10 +909,14 @@ class ContainmentMixin(ViewBase):
     - A window goes into another only if that's a plain context (one pane,
       "contains"): not into a rule, definition or requirement.
 
-    Relations in *draggedAlong* only moved because an end did, so their
-    labels' positions say little: one is put in a window only if both its
-    ends are in the window, and taken out only if neither end is. (Otherwise
-    moving ?x in a rule would pull in, eg: its isa link to a type outside.)
+    A relation (with both its ends drawn) is in the box its ends are both in
+    (see *relationScope()*), not the one its label's in: dragging its label
+    only moves it from one pane (or part) of that box to another (eg: from a
+    rule's antecedent to its consequent); moving an end into or out of a box
+    -- or the box it's in into or out of another -- moves the relation into
+    the innermost box both its ends are in now (see *_rescope()*). Those in
+    *draggedAlong* only moved because an end did. (A relation with no
+    destination of its own goes by its label: in the window it's dropped in.)
 
     Call inside a *CompositeCommandMgr*, so it's undone with the move.
     '''
@@ -649,9 +937,13 @@ class ContainmentMixin(ViewBase):
         if isinstance(d, Relation) and d.isIndividual() and any(e is mo for e in (d.localSrc, d.localDst, *d.getParents())):
           ret += [vo for vo in self.viewObjectsFor(d) if vo._isConnected()]
       return ret
+    scoped:list[VRelation] = [] # (relations whose ends say where they go)
     for vo, old in oldCenters.items():
       mo = vo.modelObject
       if mo is None or not vo._isConnected() or not self._containable(vo):
+        continue
+      if self._scopedByEnds(vo):
+        scoped.append(cast(VRelation, vo))
         continue
       new = vo.centerPt()
       isWindow = not isinstance(vo, VRelation) and vo.isContextWindow()
@@ -688,6 +980,9 @@ class ContainmentMixin(ViewBase):
           for r in rels:
             self.context.remove(r)
           changed = True
+    for vr in scoped + self._acrossMovedWindows(oldCenters):
+      if self._rescope(vr, oldCenters, dragged=vr in oldCenters and vr not in along, windows=windows):
+        changed = True
     if changed:
       # What the windows contain is remembered from the model (see _containmentMaps()) and read again as soon
       # as this command's done -- by _BumpIntruders, which puts what's astride a divider wholly in its pane --
@@ -820,8 +1115,10 @@ class ContainmentMixin(ViewBase):
     window it can't be outside. Each is to be brought wholly into its pane --
     if it's a variable (it means something only in its pattern), or its window
     holds only what's inside it (see *holdsOnlyInside()*), or its centre's
-    in the window (where a drop would have put it) -- or else pushed wholly
-    out of the window, its arc drawn. Not floating relation labels (they
+    in the window (where a drop would have put it), or it's a relation the
+    window holds because its ends say so (see *belongsByEnds()*: its label
+    dragged out of the box its ends are in) -- or else pushed wholly out of
+    the window, its arc drawn. Not floating relation labels (they
     follow their ends, kept in their panes: see *VRelation.placedLabel()*),
     nor what's in a hidden or collapsed window.
 
@@ -840,7 +1137,8 @@ class ContainmentMixin(ViewBase):
       box = vo.drawnBox() # (its text too, where it overflows)
       if rectInside(box, self.homeRect(w, pane), PANE_INSET):
         continue
-      if (not isinstance(vo, VRelation) and mo.isVariable()) or self.holdsOnlyInside(w) or w.paneAt(vo.centerPt()) is not None:
+      if (not isinstance(vo, VRelation) and mo.isVariable()) or self.holdsOnlyInside(w) or w.paneAt(vo.centerPt()) is not None \
+         or (isinstance(vo, VRelation) and self.belongsByEnds(vo, w)):
         bringIn.setdefault(w, []).append(vo)
       elif rectsOverlap(box, w.boundingBox()):
         pushOut.append((vo, w))
