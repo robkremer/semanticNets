@@ -76,7 +76,7 @@ from sn.model import names
 from sn.model.constraints import WHERE, CONSTRAINTS, CONSTRAINTS_NOTE, splitWhere, mergeConstraints, ConstraintError
 from util.attribute import Attribute, VAR
 from sn.view.graphics.decorators import WrappingText, Selected, Highlight, ContextFrame, MarkerContainer, NOMINAL_ASPECT,\
-  Decorator, ShadowDecorator, DisabledSlash, SideBars
+  Decorator, ShadowDecorator, DisabledSlash, SideBars, CopyHighlight
 
 if TYPE_CHECKING:
   from sn.view.graphics.sngView import SNGView
@@ -425,7 +425,11 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
                             PropertyInfo("expandedHeight", int,
                                          lambda slf: int(getattr(slf, "expandedHeight", None) or 0),
                                          lambda slf, v: setattr(slf, "expandedHeight", int(v) or None), # type: ignore[arg-type]
-                                         optional=True)],
+                                         optional=True),
+                            PropertyInfo("ownLabel", str,
+                                         lambda slf: cast(VObject, slf).ownLabel,
+                                         lambda slf, v: setattr(slf, "ownLabel", None if v is None else str(v)),
+                                         omitIfNone=True)], # (almost always None: left out of the file then)
             finalSetters=[]
             )
 
@@ -437,6 +441,22 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     n = "?" if self.modelObject is None else self.modelObject["name"]
     return str(n)
     
+  @property
+  def ownLabel(self) -> str|None:
+    '''
+    What this one shows as its model object's name, if it isn't that (see
+    *labelText()*): eg, a copy of a Rep Plus net's node "soft lens" in the
+    construct box "lens", which shows "soft" (see *SNGView.canonical()*).
+    None (the usual): the model object's name. Saved with the view.
+    '''
+    return self.__dict__.get("_ownLabel")
+
+  @ownLabel.setter
+  def ownLabel(self, value:str|None) -> None:
+    if value != self.__dict__.get("_ownLabel"):
+      self.__dict__["_ownLabel"] = value
+      self.__dict__.pop("_labelMemo", None)
+
   @property
   def modelObject(self) -> GraphObject|None:
     '''
@@ -589,7 +609,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     What this one's label says: its label template (see *labels*) expanded --
     its "vis/label" attribute if it has one, else the "gui/label" preference
     ("gui/relationLabel" for relations). A template that can't be expanded
-    gives the name, with a warning.
+    gives the name, with a warning. If this one has its own label (see
+    *ownLabel*), that's the name it shows.
     '''
     from sn.view.graphics.labels import expand, labelLookup, DEFAULT_LABEL, TemplateError, hasHookCall
     mo = self.modelObject
@@ -609,16 +630,21 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     # ... and, for a template showing its types ("$type"), their names: a type renamed tells only its own
     # observers and what inherits its name -- not an instance with a name of its own, in a view the type
     # isn't in (SNGView.structureChanged() is bumped for a rename only by an object the view shows).
+    own = self.ownLabel
     key = (self.view.__dict__.get("_structureVersion", 0), template,
-           tuple(p.name for p in mo.getParents()) if "type" in template else None) if not hasHookCall(template) else None
+           tuple(p.name for p in mo.getParents()) if "type" in template else None, own) if not hasHookCall(template) else None
     memo = self.__dict__.get("_labelMemo")
     if key is not None and memo is not None and memo[0] == key:
       return memo[1]
+    lookup = labelLookup(mo)
+    if own is not None:
+      base = lookup
+      lookup = lambda k: own.strip() if k in ("name", "localName") else base(k)
     try:
-      text = expand(template, labelLookup(mo), self.templateCall("vis/label")).strip()
+      text = expand(template, lookup, self.templateCall("vis/label")).strip()
     except TemplateError as ex:
       logger.warning(f'{mo.name}: bad label template: {ex}')
-      text = (mo.name or "").strip()
+      text = (own if own is not None else mo.name or "").strip()
     if key is not None:
       self.__dict__["_labelMemo"] = (key, text)
     return text
@@ -1146,7 +1172,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         actions={"erase view object": lambda: [self._disconnect(), self.view.setDirty(), None][-1]}) #check model object is there.
       if self.modelObject is not None:
         model:GraphObject = self.modelObject
-        for n in self.view.viewObjectsFor(model): # check for other objects referencing this one's model object
+        for n in self.view.viewObjectsFor(model) if self.view.canonical() else (): # check for other objects referencing this one's model object (copies are allowed in a view that isn't canonical)
           if n is not self: # (the message only when it's needed: it's costly, and this is done for every object in the view)
             self.assertToStatusReport(False,
               f'View objects {self} and {n} both reference the same model object {self.modelObject}.', 'E', dict())
@@ -1244,15 +1270,25 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       
   def onEnter(self, event):
     '''
+    The mouse is over it: and in a view that isn't canonical, its other
+    copies glow (see *SNGView.glowCopies()*).
+
     :param event: The Tk event.
     '''
     self.canvas.configure(cursor="hand2")
+    if not self.view.canonical():
+      self.view.glowCopies(self)
     
   def onLeave(self, event):
     '''
+    The mouse has left it: its copies stop glowing (once Tk's done -- the mouse
+    may just have moved onto another of its items: see *SNGView.glowCopies()*).
+
     :param event: The Tk event.
     '''
     self.canvas.configure(cursor="arrow")
+    if not self.view.canonical():
+      self.view.glowCopies(None, self)
     
   def onRightMouse(self, event):
     """
@@ -1726,6 +1762,23 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       self.decorators["highlight"].delete()
     return "highlight" in self.decorators
 
+  def glowAsCopy(self, on:bool|None=None) -> bool:
+    '''
+    :param on: True to give this object the glow of a copy (see
+      *decorators.CopyHighlight*, *SNGView.glowCopies()*), False to remove
+      it, None to just ask.
+    :returns: Whether it has it.
+    '''
+    if self.decorators is None:
+      return False
+    if on is True and "copyHighlight" not in self.decorators and self._isConnected():
+      self.decorators["copyHighlight"] = CopyHighlight(self)
+      if self.canvas is not None and self._shape is not None and self._shape.id is not None: # (drawn: else with the rest of it)
+        self.decorators["copyHighlight"].draw()
+    elif on is False and "copyHighlight" in self.decorators:
+      self.decorators["copyHighlight"].delete()
+    return "copyHighlight" in self.decorators
+
   def answerQuery(self) -> None:
     '''
     Answer the query this context (eg: a query, or a rule's antecedent)
@@ -1874,6 +1927,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
                      command=lambda: self.view.doErase(self.selectionOrSelf()))
     menu.add_command(label="erase everything else" + (" (keep the selection)" if n > 1 else ""),
                      command=lambda: self.view.doEraseOthers(self.selectionOrSelf()))
+    self._addCopyMenuItems(menu)
     mo = self.modelObject
     if mo is not None and not self.isInferred():
       about = self._reasoningTargets()
@@ -1902,6 +1956,24 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       menu.add_command(label="fit to text", command=self.fitToText,
                        state=tk.NORMAL if self.userSized else tk.DISABLED)
          
+  def _addCopyMenuItems(self, menu:tk.Menu) -> None:
+    '''
+    In a view that isn't canonical (see *SNGView.canonical()*), add a node's
+    "show a copy" (another copy of what it shows, beside it: see
+    *SNGContext.another_copy()*) to *menu*, saying how many it has. And, for one
+    with its own label (see *ownLabel*), "show its name here", which takes
+    that away.
+    '''
+    from sn.view.graphics.vnodes import VNode
+    if self.view.canonical() or not isinstance(self, VNode) or self.modelObject is None:
+      return
+    copies = len(self.view.copiesOf(self))
+    menu.add_command(label="show a copy" + (f" (it has {copies})" if copies > 1 else ""),
+                     command=lambda: self.view.context.another_copy(self))
+    if self.ownLabel is not None:
+      menu.add_command(label=f'show its name here ("{self.modelObject.name}", not "{self.ownLabel}")',
+                       command=lambda: self.view.context.own_label(self, None))
+
   def _reasoningTargets(self) -> list[GraphObject]:
     '''
     :returns: What its "reason", "reason silently" and "retract" are about
@@ -2402,6 +2474,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
           self.decorators["selected"].delete()
           assert "selected" not in self.decorators
           self.view.selected.discard(self)
+      if not self.view.canonical(): # (its copies glow while it's selected: see SNGView.glowCopies())
+        self.view.glowCopies()
     return "selected" in self.decorators if self.decorators is not None else None
 
   def selectWithRelations(self, multi:bool=False) -> None:
@@ -2555,7 +2629,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       return True
     if not mo._isConnected():
       return False
-    return not any(o is not self for o in self.view.viewObjectsFor(mo))
+    return not self.view.canonical() or not any(o is not self for o in self.view.viewObjectsFor(mo)) # (copies are allowed in a view that isn't canonical)
 
   def _reconnect(self, **kwargs):
     for ends in (self._incoming, self._outgoing): # (its relations come back with it -- not those that can't: see _canReconnect())

@@ -888,6 +888,9 @@ class Highlight(Decorator):
   PAD = 6
   "How far (screen pixels) the glow extends beyond the owner."
 
+  TAG = "queryHighlight"
+  "The glow's own canvas tag (besides its owner's and \"highlight\")."
+
   def __init__(self, owner, negative:bool=False):
     '''
     :param negative: Marks something negative (eg: "no"), in its own colour.
@@ -897,12 +900,17 @@ class Highlight(Decorator):
     self._oval:bool|None = None
     self.negative = negative
 
+  def color(self) -> str:
+    ":returns: The glow's colour (see *__init__()*)."
+    if self.negative:
+      return snPrefs.get("gui/highlightColorNegative", storeDefault="#f4a3a3", storeType="color") # (their notes: see sn.PREFS)
+    return snPrefs.get("gui/highlightColor", storeDefault="#ffd966", storeType="color")
+
   @override
   def draw(self, fast=False, **kwargs):
     from sn.view.graphics.shapes import Oval
     canvas = self.owner.canvas
-    color = snPrefs.get("gui/highlightColorNegative", storeDefault="#f4a3a3", storeType="color") if self.negative \
-            else snPrefs.get("gui/highlightColor", storeDefault="#ffd966", storeType="color") # (their notes: see sn.PREFS)
+    color = self.color()
     x1, y1, x2, y2 = self.owner.view.viewToWindow(self.owner.boundingBox(fast=fast))
     p = self.PAD
     rect = [x1 - p, y1 - p, x2 + p, y2 + p]
@@ -913,7 +921,7 @@ class Highlight(Decorator):
     opts = dict(fill=color, outline=color)
     if self.id is None:
       create = canvas.create_oval if oval else canvas.create_rectangle
-      self.id = create(rect, state="disabled", tags=[self.owner.tag, "highlight"], **opts)
+      self.id = create(rect, state="disabled", tags=[self.owner.tag, "highlight", self.TAG], **opts)
       self._oval = oval
     else:
       canvas.coords(self.id, rect)
@@ -926,6 +934,24 @@ class Highlight(Decorator):
     if self.id is not None:
       self.owner.canvas.delete(self.id)
       self.id = None
+
+
+class CopyHighlight(Highlight):
+  '''
+  The glow on the other copies of what the mouse is over, or what's selected,
+  in a view that isn't canonical (see *SNGView.glowCopies()*): a *Highlight*
+  in its own colour, the "gui/copyHighlightColor" preference -- and a little
+  narrower, so a query's glow on the same object still shows round it.
+  '''
+  PAD = 4
+  TAG = "copyHighlight"
+
+  def __init__(self, owner):
+    super().__init__(owner)
+
+  @override
+  def color(self) -> str:
+    return snPrefs.get("gui/copyHighlightColor", storeDefault="#9cc9f2", storeType="color")
 
 
 class DisabledSlash(Decorator):

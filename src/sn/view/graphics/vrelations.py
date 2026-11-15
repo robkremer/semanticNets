@@ -34,16 +34,17 @@ Implements the VRelation class.
 ---------------
 """
 
+import math
 import tkinter as tk
 from typing import Any, Optional, Union, \
-  override, Literal, TYPE_CHECKING
+  override, Literal, TYPE_CHECKING, Callable, cast
 from types import NoneType
 
 
 import sn
 from util.utils import midpoint, s_CMD, s_ALT
 from util.persistence.pRef import PReference
-from util.persistence.serialize import InstantiationInfo, ParamInfo
+from util.persistence.serialize import InstantiationInfo, ParamInfo, PropertyInfo
 from util.abstractGraph import AGRelation
 from sn.model.model import GraphObject, Relation, IsaIndividual
 from sn.view.graphics.vobjects import VObject
@@ -55,6 +56,19 @@ if TYPE_CHECKING:
 
 logger:sn.SNLogger = sn.getLogger(__name__)
   
+
+def _gap(a:VObject, b:VObject) -> tuple[float, float]:
+  '''
+  :returns: How far *a* is from *b*, to choose the nearest copy (see
+    *VRelation._copyFor()*): how far *a*'s centre is outside *b*'s box (0 if
+    it's inside: eg, the copy in a box), then from *b*'s centre.
+  '''
+  ax, ay = a.centerPt()
+  bx0, by0, bx1, by1 = b.boundingBox()
+  dx = max(bx0 - ax, 0.0, ax - bx1)
+  dy = max(by0 - ay, 0.0, ay - by1)
+  bx, by = (bx0 + bx1) / 2, (by0 + by1) / 2
+  return (math.hypot(dx, dy), math.hypot(ax - bx, ay - by))
 
 class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconnect()/_reconnect() take AGRelation's keep/kept as kwargs)
   '''
@@ -143,12 +157,43 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
   @override
   def getInstantiationInfo(cls)->InstantiationInfo:
     sup = VObject.getInstantiationInfo()
+    def pinnedID(end:str) -> Callable[[Any], int|None]:
+      return lambda slf: cast(VRelation, slf)._pinnedID(end)
+    def setPinnedID(end:str) -> Callable[[Any, Any], None]:
+      return lambda slf, v: cast(VRelation, slf).__dict__.setdefault("_pinnedIDs", {}).__setitem__(end, int(v)) if v is not None else None
     return InstantiationInfo(
             cls, 
             conArgs=sup.conArgs,
             conKWArgs=sup.conKWArgs+[ParamInfo("floating", bool, lambda slf: slf._floatingAnchor)], #type: ignore[attr-defined]
-            postconSetters=sup.postconSetters,
+            postconSetters=sup.postconSetters + [
+              # (which copy of each end it's drawn to, in a view that isn't canonical, if that end has more than one
+              # -- see _resolveEnd(): the copy's id in the view; left out of the file otherwise)
+              PropertyInfo("srcCopy", int, pinnedID("src"), setPinnedID("src"), omitIfNone=True),
+              PropertyInfo("dstCopy", int, pinnedID("dst"), setPinnedID("dst"), omitIfNone=True)],
             finalSetters=sup.finalSetters)
+
+  def _pinnedID(self, end:str) -> int|None:
+    '''
+    :returns: The id in the view of the copy its *end* ("src" or "dst") is
+      drawn to, if that end's model object has more than one in the view (see
+      *_resolveEnd()*); else None (left out of the file).
+    '''
+    vo = getattr(self, end, None)
+    if vo is None or vo.modelObject is None or self.view.canonical() or len(self.view.copiesOf(vo)) < 2:
+      return None
+    return vo._id
+
+  @property
+  def pinnedEnds(self) -> dict[str, VObject|None]:
+    '''
+    {"src": copy, "dst": copy}: the copy of each end's model object it's drawn
+    to, once chosen (in a view that isn't canonical: see
+    *SNGView.canonical()*, *_resolveEnd()*). Not the model's: a view's own.
+    '''
+    d = self.__dict__.get("_pinnedEnds")
+    if d is None:
+      d = self.__dict__["_pinnedEnds"] = {"src": None, "dst": None}
+    return d
 
   @override
   def makeModelObjectSubtype(self, individual:bool) -> None:
@@ -196,12 +241,57 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     self.inheritedEnds[end] = local is None
     if local is not None:
       if local is mo.model.TOP: # drawn to top only if it's already shown: never pull top into the view
-        return self.view.findViewObjectForGraphObject(local)
-      return self.view.makeViewObjectForGraphObject(local)
+        return self._copyFor(end, local) or self.view.findViewObjectForGraphObject(local)
+      return self._copyFor(end, local) or self.view.makeViewObjectForGraphObject(local)
     inherited = mo.src if end == "src" else mo.dst
     if inherited is None or inherited is mo.model.TOP:
       return None
-    return self.view.makeViewObjectForGraphObject(inherited)
+    return self._copyFor(end, inherited) or self.view.makeViewObjectForGraphObject(inherited)
+
+  def _copyFor(self, end:str, target:GraphObject) -> VObject|None:
+    '''
+    Which copy of *target* (its *end*'s model object) the line is drawn to, in
+    a view that isn't canonical and shows it more than once (see
+    *SNGView.canonical()*): the one chosen for it before (see *pinnedEnds*:
+    eg, read with the view, or an end dragged onto it), if it's still there
+    and still *target*'s; else the nearest to the other end -- one inside the
+    other end, if it's a box (eg: the copy a box's "contains" holds) -- and
+    that's remembered. None if there's no copy (or just one: that's the one).
+    '''
+    if self.view.canonical():
+      return None
+    copies = [o for o in self.view.viewObjectsFor(target) if o._isConnected() and o is not self]
+    if len(copies) < 2:
+      return None
+    pinned = self.pinnedEnds.get(end)
+    if pinned is None:
+      ids = self.__dict__.get("_pinnedIDs", {})
+      if end in ids: # (read with the view: see getInstantiationInfo())
+        pinned = self.view._db.get(ids.pop(end))
+    if pinned is None:
+      hint = self.view.__dict__.get("_endHint") # (just drawn between these copies: see EditingMixin.makeRelation())
+      mo = self.modelObject
+      if hint is not None and mo is not None and hint[0] == (id(mo.localSrc), id(mo.localDst)):
+        pinned = hint[1] if end == "src" else hint[2]
+        if all(self.pinnedEnds.get(e) is not None for e in ("src", "dst") if e != end):
+          self.view.__dict__.pop("_endHint", None) # (both ends taken)
+    if pinned is not None and any(pinned is c for c in copies):
+      self.pinnedEnds[end] = pinned
+      return pinned
+    other = self.dst if end == "src" else self.src
+    if other is None or not other._isConnected():
+      mo = self.modelObject
+      otherTarget = (mo.dst if end == "src" else mo.src) if mo is not None else None
+      others = [o for o in self.view.viewObjectsFor(otherTarget) if o._isConnected() and o is not self] \
+               if isinstance(otherTarget, GraphObject) else []
+    else:
+      others = [other]
+    if not others:
+      ret = copies[0]
+    else:
+      ret = min(copies, key=lambda c: min(_gap(c, o) for o in others))
+    self.pinnedEnds[end] = ret
+    return ret
 
   @property
   def inheritedEnds(self) -> dict[str, bool]:
@@ -467,6 +557,24 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
       return {"dash": ""}
     return {"dash": self.INFERRED_DASH.get(getattr(self.modelObject, "inferredKind", "inferred"), self.INFERRED_DASH["inferred"])}
 
+  @override
+  def _applyHidden(self) -> None:
+    '''
+    As *VObject._applyHidden()*; but a relation that's part of what a shown
+    rule, definition, query or other quoting box says (see
+    *SNGView._inShownPattern()*: eg: a rule's conclusion that ?x isa person)
+    shows its ends too: one hidden by its category (eg: "types") is shown
+    anyway (see *SNGView._exemptIfFiltered()*), or what the box says would be
+    cut short.
+    '''
+    v = self.view
+    if self._isConnected() and self.canvas is not None and v.hides and v._inShownPattern(self):
+      for e in (self.src, self.dst):
+        if isinstance(e, VObject) and e is not self and e._isConnected() and e.modelObject is not None \
+           and not e.categoryExempt and v.isFiltered(e.modelObject, ("hide",)):
+          v._exemptIfFiltered(e)
+    super()._applyHidden()
+
   def inWindow(self) -> bool:
     '''
     True iff this is a context's containment of something drawn inside the
@@ -727,12 +835,20 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
         return False
       child, parent = (mo.localSrc, n.modelObject) if end == "dst" else (n.modelObject, mo.localDst)
       return child is not None and child.parentProblem(parent, except_=mo) is not None
+    now = getattr(self, end)
     def acceptable(n:VObject) -> bool:
+      if now is not None and n is not now and n.modelObject is now.modelObject: # (another copy of the same: see SNGView.canonical())
+        return True
       return n is not self and not n.isInferred() \
              and (not isa or other is None or isinstance(n, VRelation) == isinstance(other, VRelation)) \
              and not (isaParent and (n.modelObject is None or n.modelObject.isIndividual())) \
              and not cycle(n)
     def chosen(_origin:VObject, sel:VObject) -> None:
+      now = getattr(self, end)
+      if now is not None and sel is not now and sel.modelObject is now.modelObject: # (another copy of the same: just the line moves -- see SNGView.canonical())
+        self.view.context.attach_end(self, end, sel)
+        return
+      self.pinnedEnds[end] = sel # (drawn to the copy it was dropped on: see _copyFor())
       if end == "src":
         self.view.context.reconnect(mo, source=sel.modelObject)
       else:

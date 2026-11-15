@@ -29,7 +29,12 @@ protologic, so that the reasoners draw KNet's inferences):
     destination, and its links from the file's destination to its source
     (see *isReversed()*), so that it means what it shows.
   - Each node (section ``N``) becomes an individual of its type, named by its
-    label (its line breaks and all; one with no label has no name). Its mark,
+    label (its line breaks and all; one with no label has no name) -- or,
+    for nodes KNet takes to be one (see *knetNames()*: eg, "soft" in the
+    construct box "lens" and "soft lens" elsewhere), one individual, named
+    as KNet names it ("soft lens"), each node a copy of it in the view
+    (*Built.nodes*; the model's views aren't canonical: see
+    *Model.canonicalViews()*), each copy showing its own label. Its mark,
     if it has one, becomes attributes -- "mark" (T, F or TF: true, false, or
     both), "markKind" (eg: "Asserted"), and "markDerived" (if it was
     inferred, rather than asserted) -- with "marks", the number as the file
@@ -57,11 +62,11 @@ protologic, so that the reasoners draw KNet's inferences):
     joins them: each pair gets a relation of *CONSTRUCT_EXCLUDES*, an SN
     subtype of the net's own symmetric exclusion, faded as derived links are
     (see *addConstructMeaning()*).
-  - Nodes with the same label are one node, as KNet takes them (a net can
-    draw a node again, elsewhere, to keep its links short): each copy
-    after the first gets a relation of *SAME_LABEL*, an equivalence, to the
-    first (see *addSameLabels()*) -- unless *buildModel()* is told not to
-    (a figure of several copies of one net, side by side).
+  - Nodes KNet takes to be the same are one node (see *knetNames()*: a net
+    can draw a node again, elsewhere, to keep its links short; and a box's
+    name is part of the names of what's in it), shown as copies -- unless
+    *buildModel()* is told not to (a figure of several copies of one net,
+    side by side).
   - Groups (section ``G``) aren't made: in Rep Plus they're only a way to
     select and drag nodes together, with no meaning (and they'd fight the
     layouts).
@@ -208,8 +213,15 @@ PREFER = "prefer"
 preference symbol in its middle (*rnet.LinkType.mid* 6), and no arrowheads,
 are SN subtypes of it (see *preferenceKind()*).'''
 
-SAME_LABEL = "same label"
-"The relation type of the equivalences between nodes with the same label (see *addSameLabels()*)."
+KNET_ANONYMOUS = "ε"
+"What KNet names a node with no label (with a number after it: never the same as another's): epsilon."
+
+KNET_BIPOLAR = "—"
+'''An em dash: in a construct box's name (eg: "not astigmatic—astigmatic"),
+it says the poles are named in full already (see *knetNames()*).'''
+
+CONTEXT_TYPE = "context"
+"The name (any case) of the node type whose boxes give what's in them their names (see *knetNames()*)."
 
 KNET_NODE_TYPES = ("concept", "context", "disjoint", "construct", "cases", "rules", "collection")
 '''The node types (their names, in any case) of the nodes KNet reasons about:
@@ -354,9 +366,22 @@ class Built:
   kernel:dict[str, Relation] = field(default_factory=dict)
   "The kernel relation types (see *KERNEL*), and the connectives' (*CONNECTIVES*), by name."
   nodes:dict[int, Node] = field(default_factory=dict)
-  "Each node's place in the net -> its individual (not the pictures and drawings)."
+  '''Each node's place in the net -> its individual (not the pictures and
+  drawings): the same one for the nodes KNet takes to be one (see
+  *knetNames()*), each shown as a copy of it.'''
+  labels:dict[int, str] = field(default_factory=dict)
+  '''The places of the nodes whose labels aren't their individuals' names
+  (eg: "soft", in the construct box "lens": "soft lens") -> their labels:
+  what their copies show (see *VObject.ownLabel*).'''
   relations:list[tuple[Relation, int]] = field(default_factory=list)
   "Each relation, and the place in the net of the link it's of."
+  ends:dict[int, tuple[int, int]] = field(default_factory=dict)
+  '''Each relation's (by id) source and destination as it's drawn: the places
+  in the net of the nodes it's between -- which copies, where an end has more
+  than one.'''
+  kept:list[tuple[int, int]] = field(default_factory=list)
+  '''The places of each box and node that KNet takes to be one (they have the
+  same name) but that are kept apart here: a box can't be a copy of a node.'''
   boxes:dict[int, Node] = field(default_factory=dict)
   "Each box's place in the net -> its individual (a node of an enclosure type: see *ENCLOSURE*)."
   members:dict[int, list[int]] = field(default_factory=dict)
@@ -371,7 +396,9 @@ class Built:
     :returns: What was made, in a sentence or two.
     '''
     contained = sum(len(v) for v in self.members.values())
-    s = (f"{len(self.nodes)} nodes ({len(self.boxes)} of them boxes, holding {contained}) and {len(self.relations)} "
+    distinct = len({id(n) for n in self.nodes.values()})
+    copies = f", {len(self.nodes) - distinct} of them copies of others (KNet's same node)" if distinct < len(self.nodes) else ""
+    s = (f"{len(self.nodes)} nodes{copies} ({len(self.boxes)} of them boxes, holding {contained}) and {len(self.relations)} "
          f"relations, of {len(self.nodeTypes)} node types and {len(self.linkTypes)} relation types")
     kernel = sum(1 for t in self.linkTypes.values() if any(p in self.kernel.values() for p in t.getParents()))
     if kernel:
@@ -381,6 +408,9 @@ class Built:
     marked = sum(1 for n in self.net.nodes if n.marks and n.index in self.nodes)
     if marked:
       s += f"; {marked} nodes have marks"
+    if self.kept:
+      s += (f"; {len(self.kept)} {'box has' if len(self.kept) == 1 else 'boxes have'} a node's name (one node in KNet), "
+            f"but {'is' if len(self.kept) == 1 else 'are'} kept apart from it (a box can't be a copy of a node)")
     if self.skipped:
       s += f". Left out: {'; '.join(self.skipped)}"
     return s + "."
@@ -513,20 +543,25 @@ def markNode(node:Node, n:NetNode, net:Net) -> None:
     if frameless:
       node["vis/borderWidth"] = MARK_WIDTH
 
-def buildModel(net:Net, modelPath:str, sameLabels:bool=True) -> Built:
+def buildModel(net:Net, modelPath:str, merge:bool=True) -> Built:
   '''
   Make a model of *net* (as the module doc says), as a new model file
-  *modelPath* (not saved: call its *save()*).
+  *modelPath* (not saved: call its *save()*). Its views aren't canonical
+  (see *Model.canonicalViews()*): they may show a node more than once.
 
   :param net: A net (see *rnet.parse()*).
   :param modelPath: The model's file: it mustn't be open (nor, if it's there, in memory).
-  :param sameLabels: Whether nodes with the same label are the same node, as
-    KNet takes them (see *addSameLabels()*).
+  :param merge: Whether the nodes KNet takes to be one (see *knetNames()*)
+    are one node, each shown as a copy of it -- else each is a node of its own.
   :returns: What was made.
   '''
   file = os.path.basename(net.path) or "the net"
   m = Model(Path(modelPath).resolve().as_uri())
   m.setSuperModels([ONTOLOGY])
+  m.setCanonicalViews(False)
+  names = knetNames(net) if merge else {}
+  boxTypes = {t.index for t in net.nodeTypes if t.shape == ENCLOSURE}
+  byName:dict[tuple[bool, str], int] = {} # ((a box?, KNet's name in any case) -> the first such node's place)
   b = Built(net, m, kernel=kernelTypes(m))
   knode = knodeType(m)
   for t in net.nodeTypes:
@@ -545,7 +580,24 @@ def buildModel(net:Net, modelPath:str, sameLabels:bool=True) -> Built:
       if key not in b.nodeTypes:
         b.nodeTypes[key] = makePoint(m, file) if point else makeUntyped(m, file)
       t, was = b.nodeTypes[key], t
-    node = Node(m, [t], individual=True, name=nodeName(n))
+    label = nodeName(n)
+    knet = names.get(n.index)
+    if knet is not None and not point:
+      key = (n.type in boxTypes, knet.casefold()) # (KNet's name map is a Xojo Dictionary: it ignores case)
+      first = byName.get(key)
+      if first is not None: # (KNet's same node -- see knetNames(): a copy of it, its mark the first one's, as KNet takes it)
+        b.nodes[n.index] = same = b.nodes[first]
+        if label.rstrip() != str(same.name):
+          b.labels[n.index] = label.rstrip()
+        continue
+      byName[key] = n.index
+      other = byName.get((not key[0], key[1]))
+      if other is not None:
+        b.kept.append((other, n.index) if key[0] else (n.index, other))
+    name = label if knet is None or not label.strip() or " ".join(label.split()) == knet else knet # (KNet's name if it's more than the label: a box's is part of it)
+    node = Node(m, [t], individual=True, name=name)
+    if name != label:
+      b.labels[n.index] = label.rstrip()
     if point:
       node["rnetType"] = str(was.name)
     if n.extra.strip():
@@ -569,6 +621,7 @@ def buildModel(net:Net, modelPath:str, sameLabels:bool=True) -> Built:
       if l.extra:
         r["values"] = " ".join(l.extra)
       b.relations.append((r, l.index))
+      b.ends[id(r)] = (l.destination, l.source) if backwards else (l.source, l.destination)
   if missing:
     b.skipped.append(f"{missing} links to pictures, drawings or nodes that aren't there")
   if net.groups:
@@ -578,63 +631,52 @@ def buildModel(net:Net, modelPath:str, sameLabels:bool=True) -> Built:
   for i, inside in b.members.items():
     for j in inside:
       if j in b.nodes:
-        b.boxes[i].addMember(b.nodes[j])
+        b.boxes[i].addMember(b.nodes[j]) # (just once, for copies of one node)
   addConstructMeaning(b)
-  if sameLabels:
-    addSameLabels(b)
   return b
 
-def sameLabel(n:NetNode) -> str:
+def knetNames(net:Net) -> dict[int, str]:
   '''
-  :returns: *n*'s label as KNet compares them (see *addSameLabels()*): its
-    line breaks spaces, and no spaces at its end.
-  '''
-  return " ".join(n.label.splitlines()).rstrip()
+  The names KNet gives the nodes it reasons about (as Rep Plus's KNet.InitNodes
+  and KContainer do): nodes with the same name -- in any case -- are one node
+  to KNet (CNet makes its KNet with *merge* true). A node's name is its label,
+  its line breaks spaces (and KNet's *KNET_ANONYMOUS*, epsilon, too), with no
+  spaces at its end -- or, if it has none, *KNET_ANONYMOUS* and a number,
+  never the same as another's. Then each box, in the file's order, adds its
+  own name (as it is by then: a space, then the name) to the names of the
+  nodes wholly inside it (at any depth: not just the smallest box they're
+  in): a context box always, a construct box unless its name has an em dash
+  (*KNET_BIPOLAR*: eg, "not astigmatic—astigmatic", whose poles are
+  named in full). So the pole "soft" in the construct box "lens" is "soft
+  lens" -- as the grid the net was made from names it (its construct "lens"
+  has the values soft, hard and no).
 
-def addSameLabels(b:Built) -> None:
+  Just the nodes of KNet's node types (*KNET_NODE_TYPES*, by name, in any
+  case): not titles, notes, grids, frames, and so on.
+
+  :returns: Each such node's place in the net -> its name.
   '''
-  Make the nodes with the same label (see *sameLabel()*) equivalent: KNet
-  takes them to be one node (eg: a net that shows a node in two places, to
-  keep its links short). Each after the first gets a relation of *SAME_LABEL*
-  (an SN subtype of the kernel's equivalent, faded as derived links are, and
-  noted as added by the reader) to the first. Just the nodes KNet reasons
-  about (see *KNET_NODE_TYPES*), and not those with no label. (KNet's one
-  node is a little more than equivalent ones: the defining links of each are
-  all one definition -- see sn.model.reasoner.DEFINING.)
-  '''
-  net = b.net
-  first:dict[str, int] = {}
-  typ:Relation|None = None
+  kinds:dict[int, str] = {}
   for n in net.nodes:
-    if n.kind != "node" or n.index not in b.nodes or not 0 <= n.type < len(net.nodeTypes) \
-       or net.nodeTypes[n.type].name.strip().lower() not in KNET_NODE_TYPES:
-      continue
-    label = sameLabel(n)
-    if not label:
-      continue
-    if label not in first:
-      first[label] = n.index
-      continue
-    if typ is None:
-      typ = _sameLabelType(b)
-    b.derived.append(Relation(b.model, [typ], b.nodes[n.index], b.nodes[first[label]], individual=True))
-
-def _sameLabelType(b:Built) -> Relation:
-  '''
-  :returns: A new *SAME_LABEL* relation type in *b*'s model: an SN subtype of
-    the kernel's equivalent, drawn as a faded grey line.
-  '''
-  kernel = b.kernel.get(EQUIVALENT)
-  ret = Relation(b.model, [kernel if kernel is not None else b.model.RELATION], None, None, name=SAME_LABEL)
-  ret["vis/terminator1"] = ""
-  ret["vis/terminator4"] = ""
-  ret["vis/midMarks"] = ""
-  ret["vis/label"] = ""
-  ret["vis/lineType"] = LINE_TYPE
-  ret["vis/lineColor"] = fade("#808080")
-  ret["vis/lineFillColor"] = fade("#808080")
-  ret["note"] = ("Added by the Rep Plus Net Reader: nodes with the same label are the same node (as KNet takes them), "
-                 "so they're equivalent.")
+    if n.kind == "node" and 0 <= n.type < len(net.nodeTypes):
+      kind = net.nodeTypes[n.type].name.strip().lower()
+      if kind in KNET_NODE_TYPES:
+        kinds[n.index] = kind
+  ret:dict[int, str] = {}
+  anonymous = 0
+  for i in sorted(kinds):
+    name = " ".join(net.nodes[i].label.replace(KNET_ANONYMOUS, " ").splitlines()).rstrip(" ")
+    if not name:
+      anonymous += 1
+      name = f"{KNET_ANONYMOUS}{anonymous}"
+    ret[i] = name
+  for c in sorted(i for i, k in kinds.items() if k != "concept"): # (the containers)
+    if kinds[c] == CONTEXT_TYPE or (kinds[c] == CONSTRUCT and KNET_BIPOLAR not in ret[c]):
+      box = net.nodes[c]
+      for i in ret:
+        n = net.nodes[i]
+        if i != c and n.x > box.x and n.x + n.w < box.x + box.w and n.y > box.y and n.y + n.h < box.y + box.h:
+          ret[i] = f"{ret[i]} {ret[c]}"
   return ret
 
 def enclosed(net:Net, boxes:set[int]) -> dict[int, list[int]]:
@@ -682,14 +724,17 @@ def addConstructMeaning(b:Built) -> None:
                 if any(p.name and str(p.name).strip().lower().startswith(CONSTRUCT) for p in box.getParents())]
   if not constructs:
     return
+  # (by individual, not by place in the net: KNet's same node may be drawn more than once -- see knetNames())
+  node = lambda i: id(b.nodes[i]) if i in b.nodes else -1 - i
   includes:dict[int, set[int]] = {}
   excluded:set[tuple[int, int]] = set()
   for l in net.links:
     kinds = [net.linkTypes[t] for t in l.types if 0 <= t < len(net.linkTypes)]
+    s, d = node(l.source), node(l.destination)
     if any(_isIncludes(t) for t in kinds):
-      includes.setdefault(l.source, set()).add(l.destination)
+      includes.setdefault(s, set()).add(d)
     if any(_isSymmetricExclusion(t) for t in kinds):
-      excluded.add((min(l.source, l.destination), max(l.source, l.destination)))
+      excluded.add((min(s, d), max(s, d)))
   def reaches(a:int, z:int) -> bool:
     seen, todo = {a}, [a]
     while todo:
@@ -701,16 +746,22 @@ def addConstructMeaning(b:Built) -> None:
           todo.append(n)
     return False
   typ:Relation|None = None
+  done:set[tuple[int, int]] = set()
   for i in constructs:
-    poles = [j for j in b.members.get(i, []) if j not in b.boxes]
+    poles = [j for j in b.members.get(i, []) if j not in b.boxes and j in b.nodes]
     for x in range(len(poles)):
       for y in range(x + 1, len(poles)):
         p, q = poles[x], poles[y]
-        if (min(p, q), max(p, q)) in excluded or reaches(p, q) or reaches(q, p):
+        a, z = node(p), node(q)
+        pair = (min(a, z), max(a, z))
+        if a == z or pair in excluded or pair in done or reaches(a, z) or reaches(z, a):
           continue
+        done.add(pair)
         if typ is None:
           typ = _constructExcludes(b)
-        b.derived.append(Relation(m, [typ], b.nodes[p], b.nodes[q], individual=True))
+        r = Relation(m, [typ], b.nodes[p], b.nodes[q], individual=True)
+        b.derived.append(r)
+        b.ends[id(r)] = (p, q) # (between the poles in the box)
 
 def _constructExcludes(b:Built) -> Relation:
   '''

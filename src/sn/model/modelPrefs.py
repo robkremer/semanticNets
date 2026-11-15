@@ -13,6 +13,9 @@ from util.attribute import AttributedObject, Attribute, VAR_DEFAULTED
 SUPER_MODELS = "superModels"
 "The preference listing a model's super-models (see *Model.superModelPaths()*)."
 
+CANONICAL_VIEWS = "canonicalViews"
+"The preference saying whether a view of the model shows each of its objects at most once (see *Model.canonicalViews()*)."
+
 MODEL_PREFS:dict[str, tuple[Any, Any, str]] = {
   # key: (type, default, note)
   SUPER_MODELS: ("list[str]", [],
@@ -20,6 +23,12 @@ MODEL_PREFS:dict[str, tuple[Any, Any, str]] = {
     "reasons over them, and their rules apply), though they aren't changed through it. In order: a name that "
     "could mean objects in more than one is looked up in the first first. Paths are relative to this model's "
     "file. (The system model, sn, always comes first, and isn't listed.)"),
+  CANONICAL_VIEWS: ("bool", True,
+    "Whether its views are canonical: each object in a view stands for a different object of the model. If "
+    "false, a view may show an object more than once -- several copies, each drawn where it's wanted (eg: "
+    "\"show a copy\" on a node's menu), each line drawn to one of them -- as Rep Plus nets do (eg: a pole "
+    "\"soft\" in the construct \"lens\" is the \"soft lens\" elsewhere in the net). Set back to true, each "
+    "view's copies are folded into one."),
 }
 '''
 A model's preferences: key -> (type, default, note), as *sn.PREFS* is the

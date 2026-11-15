@@ -845,8 +845,8 @@ class Test(unittest.TestCase):
     self.assertIsNotNone(vr.paneAt(vp.centerPt())) # (put back: see keepInPanes())
 
   def test0770ruleConcludesAType(self):
-    # with "types" hidden, a rule that concludes ?x isa person doesn't show person, nor its isa link to it: hiding
-    # is the same in a rule as out of it; shown again with the category
+    # with "types" hidden, a rule that concludes ?x isa person still shows its isa link -- and person, so the rule
+    # isn't cut short (what a rule says is shown whatever its category); other types are hidden as usual
     from sn.model.model import Node
     v, m = self.view, self.model
     rule = v.context.new_node("rule", name="persons", individual=True)
@@ -864,14 +864,13 @@ class Test(unittest.TestCase):
     self.assertTrue(self.vo("persons").containmentOf(isa))
     v.context.visibility("types", "hide")
     self.pump(0.4)
-    self.assertTrue(self.vo("person").isHidden())
-    self.assertTrue(vIsa.isHidden())
+    self.assertFalse(vIsa.isHidden())
+    self.assertFalse(self.vo("person").isHidden())
     self.assertFalse(self.vo("?someone").isHidden())
     self.assertFalse(self.vo("persons").isHidden())
-    v.context.visibility("types", "show")
-    self.pump(0.4)
-    self.assertFalse(self.vo("person").isHidden())
-    self.assertFalse(vIsa.isHidden())
+    others = [o for o in v.values() if o is not None and o._isConnected() and o.modelObject is not None
+              and o.modelObject.isType() and o.modelObject.name != "person"]
+    self.assertTrue(others and any(o.isHidden() for o in others)) # (types the rule doesn't mention: hidden as usual)
 
   def test0730layoutsMoveWindowsAside(self):
     'What a layout arranges onto a context window moves the window aside, with its contents: nothing ends up in a window it doesn\'t belong in.'
