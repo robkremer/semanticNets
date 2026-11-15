@@ -971,6 +971,8 @@ class ContainmentMixin(ViewBase):
           self._queue(self._containCommand(w, want, target=mo))
           changed = True
         elif move == "out":
+          if any(c is not vo and w.paneAt(c.centerPt()) is not None for c in self.copiesOf(vo)): # (another copy's still in it: see canonical())
+            continue
           users = usedBy(w, mo)
           if users and not all(u in oldCenters for u in users): # (left behind: it'd mean nothing out here)
             logger.warning(f'"{mo.name}" stays in "{w.modelObject.name}": '

@@ -1640,6 +1640,29 @@ class Model(AbstractGraph[GraphObject, "Relation"], Subject, Dirtyable):
     from sn.model.reasoner import baseRuleModels
     return [cast(Model, GORef.eval("$sn"))] + [m for m in baseRuleModels() if m is not self]
 
+  def canonicalViews(self) -> bool:
+    '''
+    :returns: Whether this model's views are canonical (its *CANONICAL_VIEWS*
+      preference: see *sn.model.modelPrefs*): each object in a view stands for
+      a different one of its objects. If not, a view may show an object more
+      than once (copies: see *SNGView.canonical()*) -- eg: a Rep Plus net's
+      (see the rnetReader plugin).
+    '''
+    from sn.model.modelPrefs import CANONICAL_VIEWS
+    prefs = self.__dict__.get("prefs")
+    return prefs is None or prefs.get(CANONICAL_VIEWS, True) is not False
+
+  def setCanonicalViews(self, canonical:bool) -> None:
+    '''
+    Set whether this model's views are canonical (see *canonicalViews()*).
+    (Open views fold any copies they have into one when it's set back to
+    true: see *SNGView.foldCopies()*.)
+    '''
+    from sn.model.modelPrefs import CANONICAL_VIEWS
+    if canonical != self.canonicalViews():
+      self.prefs[CANONICAL_VIEWS] = bool(canonical)
+      self.setDirty()
+
   def superModelPaths(self) -> list[str]:
     '''
     :returns: This model's super-models (see *PRDb.superDBs*) in order, as

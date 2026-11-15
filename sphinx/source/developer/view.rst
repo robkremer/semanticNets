@@ -22,6 +22,18 @@ view saves is what isn't in the model: which objects are shown, their
 positions and sizes, whether windows are collapsed, the hidden categories,
 the animation settings.
 
+A view is *canonical* (``SNGView.canonical()``) if each GraphObject has at
+most one VObject in it: that's what its model says
+(``Model.canonicalViews()``, the *canonicalViews* model preference), and
+true to start with. In a view that isn't, a node may have copies
+(``SNGView.makeCopy()``, ``copiesOf()``; ``viewObjectsFor()`` returns them
+all): each relation is drawn once, to one copy of each end
+(``VRelation._copyFor()``: the copy it was drawn or dragged to,
+``pinnedEnds``, saved as ``srcCopy``/``dstCopy`` -- or else the nearest to
+its other end), and a copy may show a label of its own (``VObject.ownLabel``).
+``SNGView.foldCopies()`` folds a view's copies back into one, as a view of a
+canonical model that has them is when it's read.
+
 :py:class:`~sn.view.graphics.vobjects.VObject`
   Most of the behaviour: drawing, selection, moving and resizing, menus,
   the attribute editor, markers, context windows, hiding.

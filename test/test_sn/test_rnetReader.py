@@ -314,7 +314,9 @@ class TestBuild(unittest.TestCase):
     client, size = b.nodes[0], b.nodes[1]
     self.assertEqual(sorted(b.boxes), [0, 1])
     self.assertEqual([x.name for x in client.getMembers()], ["size", "thing"])
-    self.assertEqual([x.name for x in size.getMembers()], ["small", "medium", "large", "huge"])
+    # (named as KNet names them: the construct's name added -- see reader.knetNames() -- their copies showing their labels)
+    self.assertEqual([x.name for x in size.getMembers()], ["small size", "medium size", "large size", "huge size"])
+    self.assertEqual({i: b.labels[i] for i in range(2, 6)}, {2: "small", 3: "medium", 4: "large", 5: "huge"})
     self.assertFalse(any(r.isPatternElement() for r, _ in b.relations)) # (a box of facts)
     self.assertIn("2 of them boxes, holding 6", b.report())
     point = b.nodes[8]
@@ -330,7 +332,7 @@ class TestBuild(unittest.TestCase):
     '''
     b = self.build(BOXES, "boxes")
     pairs = sorted(tuple(sorted((str(r.src.name), str(r.dst.name)))) for r in b.derived)
-    self.assertEqual(pairs, [("huge", "small"), ("large", "small")])
+    self.assertEqual(pairs, [("huge size", "small size"), ("large size", "small size")])
     typ = b.derived[0].getParents()[0]
     self.assertEqual(typ.name, self.reader.CONSTRUCT_EXCLUDES)
     self.assertEqual(typ.getParents(), [b.linkTypes[1]])
@@ -350,7 +352,7 @@ class TestBuild(unittest.TestCase):
     m = Model.getDB(boxes.model.url)
     found = {str(o.name): o for o in m.values() if o is not None and o.model is m and o.isCollection()}
     self.assertEqual(sorted(found), ["client", "size"])
-    self.assertEqual([str(x.name) for x in found["size"].getMembers()], ["small", "medium", "large", "huge"])
+    self.assertEqual([str(x.name) for x in found["size"].getMembers()], ["small size", "medium size", "large size", "huge size"])
     self.assertFalse(found["size"].quotesContents())
     m = Model.getDB(url)
     marked = sorted((str(o.name), o["mark"]) for o in m.values() if isinstance(o, Node) and o.model is m and o.get("mark", None))

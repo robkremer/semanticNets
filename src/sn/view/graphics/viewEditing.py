@@ -861,6 +861,9 @@ class EditingMixin(ViewBase):
       if end is not None and end.isInferred():
         logger.error(f'"{end.name}" is inferred: mark it as asserted to relate it.')
         return
+    if not self.canonical() and toNode is not None and fromNode.modelObject is not None and toNode.modelObject is not None:
+      # (drawn to the copies it was drawn between, in a view that shows things more than once: see VRelation._copyFor())
+      self.__dict__["_endHint"] = ((id(fromNode.modelObject), id(toNode.modelObject)), fromNode, toNode)
     try:
       with CompositeCommandMgr(self.context) as mgr: # (one undo, with any containment it lands in)
         self.context.new_relation([typ], individual=True, destination=None if toNode is None else toNode.modelObject,

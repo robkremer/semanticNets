@@ -457,6 +457,136 @@ class SNGContext(UIContext):
       return f'{super().__str__()} {self.objects[0].getPRef().tostring()}'
 
 
+  # This is just a signature -- the behaviour is in class _Another_copy.
+  def another_copy(self, object:VObject, x:int|None=None, y:int|None=None): # pylint: disable=redefined-builtin
+    '''
+    Show a node's model object again, in a view that isn't canonical (see
+    *SNGView.canonical()*): a new copy of it, beside it (or at *x*, *y*).
+
+    :param object: The node (a view object) to copy.
+    :param x: Where the copy's left edge goes (view coords), if not beside it.
+    :param y: Where the copy's top edge goes.
+    '''
+    pass
+
+  class _Another_copy(Command):
+    def __init__(self, object:VObject, x:int|None=None, y:int|None=None): # pylint: disable=redefined-builtin
+      super().__init__("show copy")
+      self.original = object
+      self.at = (x, y) if x is not None and y is not None else None
+      self.copy:VObject|None = None
+
+    @override
+    def do(self):
+      super().do()
+      if self.copy is None:
+        self.copy = self.original.view.makeCopy(self.original, self.at)
+      elif not self.copy._isConnected() and self.copy._canReconnect(): # (redone)
+        self.copy._reconnect()
+
+    @override
+    def undo(self):
+      super().undo()
+      if self.copy is not None and self.copy._isConnected():
+        self.copy._disconnect()
+
+    @override
+    def delete(self):
+      super().delete()
+      self.original = self.copy = None # type: ignore[assignment]
+
+    @override
+    def __str__(self):
+      return f'{super().__str__()} {self.original.getPRef().tostring() if self.original is not None else ""}'
+
+  # This is just a signature -- the behaviour is in class _Own_label.
+  def own_label(self, object:VObject, label:str|None=None): # pylint: disable=redefined-builtin
+    '''
+    Set what a view object shows as its model object's name (see
+    *VObject.ownLabel*): eg, a copy that shows a shorter name where it is.
+
+    :param object: The view object.
+    :param label: What it shows; None: its model object's name.
+    '''
+    pass
+
+  class _Own_label(Command):
+    def __init__(self, object:VObject, label:str|None=None): # pylint: disable=redefined-builtin
+      super().__init__("own label")
+      self.object = object
+      self.label = label
+      self.was:str|None = object.ownLabel
+
+    def _set(self, label:str|None) -> None:
+      vo = self.object
+      vo.ownLabel = label
+      vo.view.setDirty()
+      vo.view.freshPaint()
+      vo.draw()
+
+    @override
+    def do(self):
+      super().do()
+      self._set(self.label)
+
+    @override
+    def undo(self):
+      super().undo()
+      self._set(self.was)
+
+    @override
+    def delete(self):
+      super().delete()
+      self.object = None # type: ignore[assignment]
+
+  # This is just a signature -- the behaviour is in class _Attach_end.
+  def attach_end(self, object:VObject, end:str, to:VObject): # pylint: disable=redefined-builtin
+    '''
+    Draw a relation's end (*end*: "src" or "dst") to another copy of the same
+    model object (see *SNGView.canonical()*): the model isn't changed.
+
+    :param object: The relation (a view object).
+    :param end: "src" or "dst".
+    :param to: The copy it's drawn to now.
+    '''
+    pass
+
+  class _Attach_end(Command):
+    def __init__(self, object:VObject, end:str, to:VObject): # pylint: disable=redefined-builtin
+      super().__init__("attach end")
+      assert isinstance(object, VRelation), object
+      assert end in ("src", "dst"), end
+      self.object, self.end, self.to = object, end, to
+      self.was:VObject|None = getattr(object, end)
+      if to.modelObject is not (self.was.modelObject if self.was is not None else None):
+        raise ValueError(f"{to} doesn't show what the {end} end of {object} is drawn to.")
+
+    def _set(self, vo:VObject|None) -> None:
+      r = self.object
+      if vo is None or not vo._isConnected():
+        return
+      setattr(r, self.end, vo)
+      r.pinnedEnds[self.end] = vo
+      r.view.setDirty()
+      r.view.structureChanged()
+      r.view.freshPaint()
+      r.reposition()
+
+    @override
+    def do(self):
+      super().do()
+      self._set(self.to)
+
+    @override
+    def undo(self):
+      super().undo()
+      self._set(self.was)
+
+    @override
+    def delete(self):
+      super().delete()
+      self.object = self.to = self.was = None # type: ignore[assignment]
+
   @override
   def paste(self, /, model:Model|None=None, x:int|None=None, y:int|None=None):
     '''

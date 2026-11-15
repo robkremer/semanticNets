@@ -30,6 +30,11 @@ they're near it. A super-model that can't be
 found when the model is opened is reported, and kept in the list for when it's
 there again.
 
+A model's *canonicalViews* (also in **Model preferences...**, ticked to
+start with) says whether its views are canonical: each object in a view a
+different object of the model. Untick it and a view may show a node more
+than once, as copies (see :doc:`viewing`).
+
 - **File | Open...** opens a view -- or a model, with a default view of it.
 - **File | Open URL...** does the same for one at a URL, eg: on the web
   (``https://...``). It's checked before it's taken; recent URLs are offered.
@@ -210,6 +215,9 @@ setting                                          controls
                                                  answers, and the query)
 ``gui/highlightColorNegative``                   the colour of a query that has no
                                                  answers
+``gui/copyHighlightColor``                       the colour of the glow on the other
+                                                 copies of what the mouse is over, or
+                                                 what's selected (see :doc:`viewing`)
 ``gui/backgroundColor``                          the canvas's colour
 ``gui/allowEditingSystemObjects``                whether the system model's objects can be
                                                  edited (best left off)

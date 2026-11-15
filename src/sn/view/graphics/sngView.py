@@ -47,6 +47,7 @@ from __future__ import annotations
 from sn import snPrefs
 import sn
 from sn.model.model import Model, Node, Relation, Collection, AllModelCollection, IsaIndividual, GraphObject
+from sn.model.modelPrefs import CANONICAL_VIEWS
 
 from typing import cast, override, Any, Iterable, Callable, Optional
 from util.utils import fixURL, urlExists
@@ -182,10 +183,11 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
     self._eventHandled:Optional[tk.Event] = None
     "Set by a contained VObject/item-level handler (via addEventHandled()) to mark that it already handled a mouse event, so this canvas's own (separately-dispatched) widget-level binding for the same event -- e.g. onRightMouse() -- can skip its generic handling. See isEventHandled()/addEventHandled()/removeEventHandled()."
 
-    self._deletedGraphObjectsCache:dict[tuple[int,int],VObject] = dict[tuple[int,int],VObject]()
+    self._deletedGraphObjectsCache:dict[tuple[int,int],list[VObject]] = dict[tuple[int,int],list[VObject]]()
     """Used by update to store deleted VObjects matching deleted GraphObjects in case they are restored:
     by (the id of) the model and the model object's id in it -- every model numbers its objects from 256,
-    and a view shows its model's super-models' objects too."""
+    and a view shows its model's super-models' objects too. (A list: all its copies, in a view that isn't
+    canonical -- see *canonical()*.)"""
     
     self._drawVersion:int = 0
     self.scrollRegion:tuple = (0, 0, 4000, 3000)
@@ -285,6 +287,12 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
   def getInstantiationInfo(cls) -> InstantiationInfo:
     def finalize(slf:Serializable, _:SerializableType):
       assert isinstance(slf, SNGView), f'Expected SNGView for param 1, got {type(slf)}.'
+      if slf.canonical(): # (its model's said its views are canonical since it was saved with copies: one each now)
+        folded = slf.foldCopies(beforeConnecting=True)
+        if folded:
+          logger.warning(f'"{slf.url}": {folded} {"copy" if folded == 1 else "copies"} of objects it showed more than once '
+                         f'{"was" if folded == 1 else "were"} folded into one: its model\'s views are canonical (see its '
+                         f'"{CANONICAL_VIEWS}" preference).')
       for rel in list(slf.values()):
         if isinstance(rel, VRelation):
           rel.connect()
@@ -473,8 +481,8 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
       if t[0] == "del":
         n += bool(self._viewObjectsForID(subject, t[1][0]))
       elif t[0] == "new":
-        vo = self._deletedGraphObjectsCache.get((id(subject), t[1][0]))
-        n += vo is not None and not vo._isConnected()
+        vos = self._deletedGraphObjectsCache.get((id(subject), t[1][0])) or []
+        n += any(not vo._isConnected() for vo in vos)
       if n >= self.BATCHED_UPDATE_BOXES:
         return True
     return False
@@ -512,10 +520,11 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
           
           # if this is one we've seen before, just restore it (unless that was done already: an
           # object's relations come back with it -- eg: when a paste or a cut is redone)
-          vObject:VObject|None = self._deletedGraphObjectsCache.get((id(subject), modelID))
-          if vObject is not None:
-            if not vObject._isConnected():
-              vObject._reconnect()
+          vObjects:list[VObject]|None = self._deletedGraphObjectsCache.get((id(subject), modelID)) # (its copies too: see canonical())
+          if vObjects:
+            for vObject in vObjects:
+              if not vObject._isConnected():
+                vObject._reconnect()
             continue
           if not own: # (an object added to another model isn't shown here till it's asked for)
             continue
@@ -578,13 +587,14 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
 
         case ["del", topicData]:
           modelID = topicData[0]
-          found = self._viewObjectsForID(subject, modelID)
-          obj:VObject|None = found[0] if found else None
-          if obj is not None:
+          found = self._viewObjectsForID(subject, modelID) # (each copy of it: see canonical())
+          if found:
             dirty = self.isDirty()
-            obj._disconnect()
-            self._deletedGraphObjectsCache[(id(subject), modelID)] = obj
-            if obj.isInferred() and not dirty: # (no longer inferred: not a change to the view -- see _showInferred())
+            for obj in found:
+              if obj._isConnected():
+                obj._disconnect()
+            self._deletedGraphObjectsCache[(id(subject), modelID)] = found
+            if found[0].isInferred() and not dirty: # (no longer inferred: not a change to the view -- see _showInferred())
               self.setDirty(False)
           
         case [topicName, topicData]:
@@ -715,6 +725,145 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
     index = self._viewObjectIndex()
     return [o for o in index.get(id(mObject), ()) if o.modelObject is mObject]
 
+  def canonical(self) -> bool:
+    '''
+    :returns: Whether this view is canonical: each of its objects stands for a
+      different model object -- as its model says (see
+      *Model.canonicalViews()*). If not, it may show a model object more than
+      once: copies (see *makeCopy()*), each drawn where it's wanted, and each
+      relation's line drawn to one copy of each end (see
+      *VRelation._resolveEnd()*). (A view that isn't may have no copies.)
+    '''
+    m = self.__dict__.get("model")
+    return m is None or not isinstance(m, Model) or m.canonicalViews()
+
+  def copiesOf(self, vo:VObject) -> list[VObject]:
+    '''
+    :returns: The view objects in the view that show what *vo* shows (*vo*
+      itself too), in the view's order: more than one only in a view that
+      isn't canonical (see *canonical()*).
+    '''
+    mo = vo.modelObject
+    if mo is None:
+      return [vo]
+    return [o for o in self.viewObjectsFor(mo) if o._isConnected()] or [vo]
+
+  def glowCopies(self, hovered:VObject|None|bool=False, leaving:VObject|None=None) -> set[VObject]:
+    '''
+    Give the other copies (see *copiesOf()*) of what the mouse is over, and
+    of what's selected -- those shown -- a glow of their own colour (see
+    *VObject.glowAsCopy()*), and take it off those it's no longer for: called
+    as the mouse comes and goes (*VObject.onEnter()*, *onLeave()*), and as
+    the selection changes. Nothing glows in a canonical view.
+
+    :param hovered: What the mouse is over now (None: nothing); False: as it
+      was.
+    :param leaving: With *hovered* None, what the mouse just left: it's
+      forgotten once Tk's done with the event (unless the mouse is over it
+      again by then: eg, it went from its shape to its label's text), so its
+      copies don't flicker.
+    :returns: What glows now.
+    '''
+    if hovered is not False:
+      self.__dict__["_copyHoverSerial"] = serial = self.__dict__.get("_copyHoverSerial", 0) + 1
+      if hovered is None and leaving is not None and getattr(self, "canvas", None) is not None:
+        def left() -> None:
+          if self.__dict__.get("_copyHoverSerial") == serial: # (it hasn't come back, or gone elsewhere, since)
+            self.glowCopies(None)
+        self.canvas.after_idle(left)
+        return set(self.__dict__.get("_copyGlows", ()))
+      self.__dict__["_copyHover"] = hovered
+    want:set[VObject] = set()
+    if not self.canonical():
+      hover = self.__dict__.get("_copyHover")
+      for vo in ([hover] if hover is not None else []) + list(self.selected):
+        if vo._isConnected():
+          want.update(c for c in self.copiesOf(vo) if c is not vo and not c.isHidden())
+    had:set[VObject] = self.__dict__.get("_copyGlows", set())
+    for vo in had - want:
+      vo.glowAsCopy(False)
+    for vo in want - had:
+      vo.glowAsCopy(True)
+    self.__dict__["_copyGlows"] = want
+    return want
+
+  COPY_OFFSET = 24
+  "How far right and down (view units) a new copy is put from what it copies (see *makeCopy()*)."
+
+  def makeCopy(self, vo:VObject, at:tuple[float, float]|None=None) -> VObject:
+    '''
+    Show *vo*'s model object again: a new copy of *vo* (a node), the same size
+    and look, with no lines of its own yet (lines are drawn to the nearest
+    copy, or moved onto it: see *VRelation._resolveEnd()*). Only in a view
+    that isn't canonical (see *canonical()*). Not a command: see
+    *SNGContext.another_copy()*.
+
+    :param vo: A node in the view.
+    :param at: Where its top left corner goes (view coords); by default, a
+      little right of and below *vo*'s (see *COPY_OFFSET*).
+    :returns: The copy.
+    :raises ValueError: if the view is canonical, or *vo* isn't a node.
+    '''
+    from sn.view.graphics.vnodes import VNode
+    if self.canonical():
+      raise ValueError(f'"{self.name}" is canonical: it shows each object once (see its model\'s "{CANONICAL_VIEWS}" preference).')
+    mo = vo.modelObject
+    if not isinstance(vo, VNode) or mo is None:
+      raise ValueError(f"Only a node can be copied, not {vo}.")
+    x0, y0, x1, y1 = vo.boundingBox()
+    x, y = at if at is not None else (x0 + self.COPY_OFFSET, y0 + self.COPY_OFFSET)
+    ret = VNode(self, mo, x=int(x), y=int(y), x1=int(x + x1 - x0), y1=int(y + y1 - y0))
+    ret.userSized = vo.userSized
+    if vo.ownLabel is not None:
+      ret.ownLabel = vo.ownLabel
+    self._exemptIfFiltered(ret)
+    self.setDirty()
+    self.glowCopies() # (if what it copies is selected, or under the mouse)
+    return ret
+
+  def foldCopies(self, beforeConnecting:bool=False) -> int:
+    '''
+    Show each model object once (as a canonical view does: see *canonical()*):
+    each one's first copy (in the view's order) stays, and the relations drawn
+    to the others are drawn to it; the other copies (relations' copies too)
+    are erased from the view. Not undoable (it's for a model set back to
+    canonical: see *Model.setCanonicalViews()*, and a view read so).
+
+    :param beforeConnecting: While the view's being read, before its
+      relations are connected to their ends (see *getInstantiationInfo()*):
+      just the copies are taken out; each relation finds its ends afterwards.
+    :returns: How many copies were taken out.
+    '''
+    groups:dict[int, list[VObject]] = {}
+    for vo in self.values():
+      if vo is not None and vo.modelObject is not None and (beforeConnecting or vo._isConnected()):
+        groups.setdefault(id(vo.modelObject), []).append(vo)
+    count = 0
+    rest = [vos for vos in groups.values() if len(vos) > 1]
+    for vos in sorted(rest, key=lambda vos: isinstance(vos[0], VRelation)): # (nodes' first: their lines move to the copy kept)
+      keep = vos[0]
+      for c in vos[1:]:
+        if beforeConnecting:
+          c._disconnect()
+        else:
+          for r in list(c._incoming) + list(c._outgoing):
+            if isinstance(r, VRelation):
+              for end in ("src", "dst"):
+                if getattr(r, end) is c:
+                  setattr(r, end, keep)
+                  r.pinnedEnds[end] = keep
+                  r.view.freshPaint()
+                  r.reposition()
+          if c._isConnected():
+            c._disconnect()
+        count += 1
+    if count and not beforeConnecting:
+      self.setDirty()
+      self.structureChanged()
+    if not beforeConnecting:
+      self.glowCopies() # (none, now)
+    return count
+
   def _viewObjectsForID(self, model:Model, modelID:int) -> list[VObject]:
     '''
     :param model: A model.
@@ -772,6 +921,8 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
     for vobj in vobjs:
       i += 1
       count:list = []
+      if not self.canonical(): # (it may show a model object more than once: copies)
+        break
       for j in range(i, length):
         if vobj.modelObject is vobjs[j].modelObject:
           count.append(vobjs[j])

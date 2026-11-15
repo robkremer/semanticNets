@@ -75,6 +75,10 @@ def showNet(view:SNGView, built:Built, scale:float=SCALE, fit:bool=False) -> Non
   the boxes mean (see *reader.addConstructMeaning()*) are drawn too. (Not
   the types.)
 
+  Nodes KNet takes to be one (see *reader.knetNames()*) are copies of one
+  node (see *SNGView.canonical()*), each where it was, showing its own label
+  (see *VObject.ownLabel*), each link drawn between the copies it joins.
+
   Nothing is placed meanwhile (see *SNGView.localLayout*): everything's put
   where it was -- and then whatever CNet drew astride a box's edge is put
   wholly in the box, or out of it (by its centre: see *SNGView.tidyWindows()*).
@@ -85,14 +89,18 @@ def showNet(view:SNGView, built:Built, scale:float=SCALE, fit:bool=False) -> Non
   '''
   localLayout, view.localLayout = view.localLayout, None # type: ignore[assignment] # (nothing's placed: it's put where it was)
   try:
+    shown:dict[int, VNode] = {} # (each node's place in the net -> its copy)
     for n in built.net.nodes:
       node = built.nodes.get(n.index)
       if node is None:
         continue
       x0, y0 = MARGIN + n.x * scale, MARGIN + n.y * scale
       x1, y1 = x0 + max(n.w, 1) * scale, y0 + max(n.h, 1) * scale
-      vo = view.makeViewObjectForGraphObject(node, atPoint=(x0, y0))
+      first = next((c for c in shown.values() if c.modelObject is node), None)
+      vo = view.makeCopy(first, at=(x0, y0)) if first is not None else view.makeViewObjectForGraphObject(node, atPoint=(x0, y0))
       assert isinstance(vo, VNode)
+      shown[n.index] = vo
+      vo.ownLabel = built.labels.get(n.index) # (not the copied one's)
       if fit:
         vo.boundingBox([int(x0), int(y0), int(x1), int(y1)])
         vo.moveToCenterOn((x0 + x1) / 2, (y0 + y1) / 2, adjustPos=False)
@@ -101,7 +109,15 @@ def showNet(view:SNGView, built:Built, scale:float=SCALE, fit:bool=False) -> Non
         vo.boundingBox([int(x0), int(y0), int(x1), int(y1)])
         vo.moveTo(int(x0), int(y0), adjustPos=False)
     containment = [r for box in built.boxes.values() for r in box._memberRelations()]
-    relations = [view.makeViewObjectForGraphObject(r) for r in [*(r for r, _ in built.relations), *built.derived, *containment]]
+    relations = []
+    for r in [*(r for r, _ in built.relations), *built.derived, *containment]:
+      ends = built.ends.get(id(r))
+      if ends is not None: # (drawn between the copies it's between in the net: see VRelation._copyFor())
+        view.__dict__["_endHint"] = ((id(r.localSrc), id(r.localDst)), shown.get(ends[0]), shown.get(ends[1]))
+      else: # (a box's containment: drawn to the copy in the box, the nearest)
+        view.__dict__.pop("_endHint", None)
+      relations.append(view.makeViewObjectForGraphObject(r))
+    view.__dict__.pop("_endHint", None)
     view.canvas.update() # (what's put off till idle)
     for vr in relations: # (each label on its line, between its ends: not moved off anything it's on)
       vr.reposition(adjustPos=False)
@@ -111,7 +127,7 @@ def showNet(view:SNGView, built:Built, scale:float=SCALE, fit:bool=False) -> Non
     view.localLayout = localLayout
 
 def convert(app:Application, rnetPath:str, modelPath:str, viewPath:str, parent:tk.Misc|None=None,
-            sameLabels:bool=True) -> tuple[Built, SNGView]|None:
+            merge:bool=True) -> tuple[Built, SNGView]|None:
   '''
   Make the model and view of the net *rnetPath*, save them, and open the
   view. If the model or view are there already, it asks first, and replaces
@@ -122,8 +138,8 @@ def convert(app:Application, rnetPath:str, modelPath:str, viewPath:str, parent:t
   :param modelPath: The model's file (".snm").
   :param viewPath: The view's file (".snv").
   :param parent: The window any messages are about (eg: the dialog), if any.
-  :param sameLabels: Whether nodes with the same label are the same node, as
-    KNet takes them (see *reader.addSameLabels()*).
+  :param merge: Whether the nodes KNet takes to be one (see
+    *reader.knetNames()*) are one node, shown as copies.
   :returns: What was made, and the view, if it was.
   '''
   where:dict[str, Any] = {"parent": parent} if parent is not None else {}
@@ -153,7 +169,7 @@ def convert(app:Application, rnetPath:str, modelPath:str, viewPath:str, parent:t
     return None
   for p in existing:
     os.remove(p)
-  built = buildModel(net, modelPath, sameLabels=sameLabels)
+  built = buildModel(net, modelPath, merge=merge)
   built.model.save()
   view = SNGView(fixURL(viewPath, None, replaceExt=None, mode="w")[0], model=built.model, mode="w")
   window = app.openWindow(view)
@@ -172,9 +188,9 @@ class ReaderDialog(tk.Toplevel):
   The front end: the net file to read, and the model and view files to make
   of it (each with "Choose..."), which follow the net file (see
   *defaultPaths()*) -- the view following the model -- until they're changed
-  by hand; whether nodes with the same label are one node (as KNet takes
-  them: on at first); and "Go" (see *convert()*), which, when it's done,
-  closes it.
+  by hand; whether the nodes KNet takes to be one are one node (see
+  *reader.knetNames()*: on at first); and "Go" (see *convert()*), which,
+  when it's done, closes it.
   '''
   def __init__(self, app:Application, rnetPath:str|None=None, folder:str|None=None, outputFolder:str|None=None,
                onChosen:Callable[[str], None]|None=None, onGo:Callable[[str, str, str], None]|None=None,
@@ -209,9 +225,10 @@ class ReaderDialog(tk.Toplevel):
       self.vars[key].trace_add("write", lambda *_a, key=key: self.changed(key))
     ttk.Label(frame, text="A Rep Plus net (CNet, KNet): its node and link types, nodes, links, marks and groups.",
               foreground="gray40", wraplength=520).grid(row=3, column=1, columnspan=2, sticky=tk.W, padx=6)
-    self.sameLabels = tk.BooleanVar(value=True)
-    ttk.Checkbutton(frame, text="Nodes with the same label are one node (as KNet takes them: not for a figure of "
-                    "several copies of a net)", variable=self.sameLabels).grid(row=4, column=1, columnspan=2, sticky=tk.W, **pad)
+    self.merge = tk.BooleanVar(value=True)
+    ttk.Checkbutton(frame, text="Nodes KNet takes to be the same are one node, shown as copies "
+                    "(not for a figure of several copies of a net)",
+                    variable=self.merge).grid(row=4, column=1, columnspan=2, sticky=tk.W, **pad)
     bottom = ttk.Frame(frame)
     bottom.grid(row=5, column=0, columnspan=3, sticky=tk.EW, pady=(10, 0))
     self.goButton = ttk.Button(bottom, text="Go", command=self.go, default="active")
@@ -301,7 +318,7 @@ class ReaderDialog(tk.Toplevel):
     self.configure(cursor="watch")
     self.update_idletasks()
     try:
-      done = convert(self.app, v["rnet"], v["model"], v["view"], parent=self, sameLabels=self.sameLabels.get())
+      done = convert(self.app, v["rnet"], v["model"], v["view"], parent=self, merge=self.merge.get())
     finally:
       if self.winfo_exists():
         self.configure(cursor="")

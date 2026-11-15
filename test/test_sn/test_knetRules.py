@@ -585,11 +585,13 @@ class TestDefaults(unittest.TestCase):
     Model._initCache()
     self.tmp.cleanup()
 
-  def marks(self, name:str, sameLabels:bool=True) -> dict[int, dict[str, str]]:
-    ''':returns: The marks clingo concludes for the nodes of *DEFAULTS*, by their places in it.'''
+  def marks(self, name:str, merge:bool=True) -> dict[int, dict[str, str]]:
+    ''':returns: The marks clingo concludes for the nodes of *DEFAULTS*, by their places in it (KNet's same node's first).'''
     b = self.reader.buildModel(self.rnet.parseText(DEFAULTS, f"{name}.rnet"), str(self.folder / f"{name}.snm"),
-                               sameLabels=sameLabels)
-    places = {id(node): i for i, node in b.nodes.items()}
+                               merge=merge)
+    places:dict[int, int] = {}
+    for i, node in sorted(b.nodes.items()):
+      places.setdefault(id(node), i)
     ret:dict[int, dict[str, str]] = {}
     for _, x, k, v in Reasoner.create(b.model, "clingo").run().ruleAttrs:
       if k in ("markTrue", "markFalse") and id(x) in places and x.getLocalAttr(k) is None:
@@ -597,14 +599,16 @@ class TestDefaults(unittest.TestCase):
     return ret
 
   def test_types(self):
-    '''The Prefer links are the KNet rules model's prefer's, and the nodes with the same label are equivalent.'''
+    '''The Prefer links are the KNet rules model's prefer's, and the nodes with the same label are one node, shown twice.'''
     b = self.reader.buildModel(self.rnet.parseText(DEFAULTS, "types.rnet"), str(self.folder / "types.snm"))
     self.assertEqual([str(p.name) for p in b.linkTypes[3].getParents()], [self.reader.PREFER])
-    same = [(r.src, r.dst) for r in b.derived if str(r.getParents()[0].name) == self.reader.SAME_LABEL]
-    self.assertEqual(same, [(b.nodes[6], b.nodes[2])])
-    self.assertEqual([str(p.name) for p in b.derived[0].getParents()[0].getParents()], [self.reader.EQUIVALENT])
-    b = self.reader.buildModel(self.rnet.parseText(DEFAULTS, "apart.rnet"), str(self.folder / "apart.snm"), sameLabels=False)
-    self.assertEqual(b.derived, [])
+    self.assertIs(b.nodes[6], b.nodes[2])
+    self.assertFalse(b.model.canonicalViews())
+    self.assertFalse([r for r in b.model.values() if isinstance(r, Relation) and not r.isIndividual()
+                      and str(r.name) == "same label"], "no same-label relation type")
+    self.assertIn("1 of them copies of others", b.report())
+    b = self.reader.buildModel(self.rnet.parseText(DEFAULTS, "apart.rnet"), str(self.folder / "apart.snm"), merge=False)
+    self.assertIsNot(b.nodes[6], b.nodes[2])
 
   def test_marks(self):
     '''
@@ -613,10 +617,10 @@ class TestDefaults(unittest.TestCase):
     (which can) is false, and 2 true, by default.
     '''
     false, true = {"markFalse": "default"}, {"markTrue": "default"}
-    self.assertEqual(self.marks("marks"), {11: {"markFalse": "necessary"}, 3: false, 5: true, 2: false, 6: false,
+    self.assertEqual(self.marks("marks"), {11: {"markFalse": "necessary"}, 3: false, 5: true, 2: false, # (6 is 2)
                                            1: false, 0: true})
     # (two "can fly"s: each preference has its way)
-    self.assertEqual(self.marks("apart", sameLabels=False), {11: {"markFalse": "necessary"}, 3: false, 5: true, 6: false,
+    self.assertEqual(self.marks("apart", merge=False), {11: {"markFalse": "necessary"}, 3: false, 5: true, 6: false,
                                                              0: false, 1: true, 2: true})
 
 class TestProbes(unittest.TestCase):
@@ -1180,24 +1184,29 @@ class TestRepPlusData(unittest.TestCase):
   '''
   Built from the nets of some of KNet's figures for Gaines's paper, without
   the derived links KNet saved in them, the reasoners infer every one of
-  those (that's a kernel link: not a preference's or a generic link's).
-  "taxonomy merge" isn't here: some of its derived links join separate nodes
-  that only share a label (its query panels), which says nothing about the rules.
+  those (that's a kernel link: not a preference's or a generic link's) --
+  with the nodes KNet takes to be the same as one (in "taxonomy merge", its
+  derived links join nodes that only share a label: its query panels' copies),
+  but those of a figure of several nets (*FIGURES*) apart.
   And the reasoners mark the nodes KNet marked, from the asserted marks.
   '''
   NETS = ["Nets-CNet-Dev/knets/paper/paper1/coexclusion squares.rnet",
           "Nets-CNet-Dev/knets/paper/paper1/inclusion patterns.rnet",
           "Nets-CNet-Dev/knets/paper/paper1/dynamics.rnet",
           "Nets-CNet-Dev/knets/paper/paper1/states of affairs/platodivision.rnet",
+          "Nets-CNet-Dev/knets/paper/paper1/taxonomy merge.rnet",
           "Nets-CNet-Dev/knets/paper/paper1/Hertz.rnet",
           "Nets-CNet-Dev/knets/paper/structural/induction.rnet",
           "Nets-CNet-Dev/knets/paper/structural/matimpeuler.rnet"]
   "The last three with conjunctions and disjunctions."
 
   FIGURES = {"Nets-CNet-Dev/knets/paper/Inference Process.rnet", "Nets-CNet-Dev/knets/paper/paper1/Syllogisms/conjunction.rnet",
-             "Nets-CNet-Dev/knets/paper/paper1/Syllogisms/disjunction.rnet"}
-  '''Nets that are figures of several copies of a net (or with labels that
-  aren't names): read with the nodes that have the same label apart.'''
+             "Nets-CNet-Dev/knets/paper/paper1/Syllogisms/disjunction.rnet",
+             "Nets-CNet-Dev/knets/paper/structural/matimpeuler.rnet"}
+  '''Nets that are figures of several copies of a net, or of several nets
+  (matimpeuler's panels: A, B, C, ... in each, with KNet's derived links of
+  each panel on its own), or with labels that aren't names: read with the
+  nodes KNet would take to be the same apart.'''
 
   MARK_NETS = ["Logic Paper 2024/mark propagation.rnet", "Nets-CNet-Dev/CNet tests/proper part 1.rnet",
                "Nets-CNet-Dev/knets/paper/Inference Process.rnet",
@@ -1237,7 +1246,7 @@ class TestRepPlusData(unittest.TestCase):
           Model._initCache()
           n = self.rnet.parse(os.path.join(os.environ["REP_PLUS_DATA"], path))
           b = self.reader.buildModel(n, str(self.folder / f"{engine}-{os.path.basename(path)}.snm"),
-                                     sameLabels=path not in self.FIGURES)
+                                     merge=path not in self.FIGURES)
           res = Reasoner.create(b.model, engine).run()
           got = {(id(x), k) for _, x, k, _ in res.ruleAttrs if k in ("markTrue", "markFalse") and x.getLocalAttr(k) is None}
           expected = {(id(b.nodes[nn.index]), "markTrue" if c == "T" else "markFalse")
@@ -1396,7 +1405,8 @@ class TestRepPlusData(unittest.TestCase):
         with self.subTest(engine=engine, net=path):
           Model._initCache()
           n = self.rnet.parse(os.path.join(os.environ["REP_PLUS_DATA"], path))
-          b = self.reader.buildModel(n, str(self.folder / f"{engine}-{os.path.basename(path)}.snm"))
+          b = self.reader.buildModel(n, str(self.folder / f"{engine}-{os.path.basename(path)}.snm"),
+                                     merge=path not in self.FIGURES)
           derived = {id(b.linkTypes[t.index]): t for t in n.linkTypes if t.derived and t.index in b.linkTypes}
           expected = []
           for r, _ in b.relations:

@@ -217,6 +217,9 @@ PREFS:dict[str, tuple[Any, Any, str]] = {
     "The colour of the glow marking highlighted objects (eg: a query's answers, and the query)."),
   "gui/highlightColorNegative": ("color", "#f4a3a3",
     "The colour of the glow marking a query that has no answers (\"no\")."),
+  "gui/copyHighlightColor": ("color", "#9cc9f2",
+    "The colour of the glow marking the other copies of what the mouse is over, or what's selected, in a view "
+    "that may show an object more than once (its model's canonicalViews is off)."),
   "gui/label": (str, DEFAULT_LABEL,
     "The label template for nodes, unless one has a vis/label of its own. " + LABEL_NOTE),
   "gui/relationLabel": (str, DEFAULT_LABEL,
