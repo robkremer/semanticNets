@@ -134,12 +134,13 @@ class VisibilityMixin(ViewBase):
   def shouldHide(self, vo:VObject) -> bool:
     '''
     Whether *vo* shouldn't be drawn just now: it's in a hidden category
-    (wherever it is: in a box, or a rule, too -- what a box holds may be out
-    of a reasoner's sight, but hiding is about what the viewer wants to see);
-    or it's a relation to or from something hidden (it would lead nowhere), or
-    a containment drawn as being inside its window (see
-    *VRelation.inWindow()*); or it's inside a hidden context's window; or it's
-    a part its box's window shows as a pane (see *VObject.isTiledPart()*).
+    (wherever it is: in a plain box too; but not if it's part of what a
+    shown rule, definition, query or other quoting box says: see
+    *_inShownPattern()*); or it's a relation to or from something hidden (it
+    would lead nowhere), or a containment drawn as being inside its window
+    (see *VRelation.inWindow()*); or it's inside a hidden context's window;
+    or it's a part its box's window shows as a pane (see
+    *VObject.isTiledPart()*).
     '''
     mo = vo.modelObject
     if mo is None:
@@ -148,7 +149,7 @@ class VisibilityMixin(ViewBase):
       return True
     if self._inCollapsedWindow(vo):
       return True
-    if self.isFiltered(mo, ("hide",)) and not vo.categoryExempt:
+    if self.isFiltered(mo, ("hide",)) and not vo.categoryExempt and not self._inShownPattern(vo):
       return True
     if isinstance(vo, VRelation):
       if vo.inWindow():
@@ -171,6 +172,30 @@ class VisibilityMixin(ViewBase):
       return True
     _byObj, uses = self._containmentMaps()
     return w in uses.get(id(mo), ())
+
+  def _inShownPattern(self, vo:VObject) -> bool:
+    '''
+    Whether *vo* is part of the content (see *_holds()*) of a shown window
+    whose box quotes what it holds (see *GraphObject.quotesContents()*: a
+    rule, definition, query, constraint or other context, or one of their
+    parts -- the boxes whose contents the reasoner takes as patterns, not
+    facts): it's then shown whatever its category, as hiding part of a
+    pattern would leave it saying something else -- and so are the ends of
+    its relations (see *VRelation._applyHidden()*: eg: the SN type person, for
+    a rule's ?x isa person). What a plain box (a collection, eg: a Rep Plus
+    box) holds is hidden as anything else is.
+    '''
+    mo = vo.modelObject
+    for w in self.contextWindows():
+      box = w.modelObject
+      if w is vo or box is None or w.isHidden() or w.collapsed or not self._holds(w, mo):
+        continue
+      try:
+        if box.quotesContents():
+          return True
+      except Exception: # (eg: a half-built object)
+        continue
+    return False
 
   def _inCollapsedWindow(self, vo:VObject) -> bool:
     '''

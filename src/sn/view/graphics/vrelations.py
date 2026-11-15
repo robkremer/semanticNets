@@ -467,6 +467,24 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
       return {"dash": ""}
     return {"dash": self.INFERRED_DASH.get(getattr(self.modelObject, "inferredKind", "inferred"), self.INFERRED_DASH["inferred"])}
 
+  @override
+  def _applyHidden(self) -> None:
+    '''
+    As *VObject._applyHidden()*; but a relation that's part of what a shown
+    rule, definition, query or other quoting box says (see
+    *SNGView._inShownPattern()*: eg: a rule's conclusion that ?x isa person)
+    shows its ends too: one hidden by its category (eg: "types") is shown
+    anyway (see *SNGView._exemptIfFiltered()*), or what the box says would be
+    cut short.
+    '''
+    v = self.view
+    if self._isConnected() and self.canvas is not None and v.hides and v._inShownPattern(self):
+      for e in (self.src, self.dst):
+        if isinstance(e, VObject) and e is not self and e._isConnected() and e.modelObject is not None \
+           and not e.categoryExempt and v.isFiltered(e.modelObject, ("hide",)):
+          v._exemptIfFiltered(e)
+    super()._applyHidden()
+
   def inWindow(self) -> bool:
     '''
     True iff this is a context's containment of something drawn inside the

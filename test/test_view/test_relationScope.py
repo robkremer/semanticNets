@@ -355,29 +355,31 @@ class Test(unittest.TestCase):
 
   def test0300hiddenInBoxesToo(self):
     '''
-    Hiding a relation SN type's category hides its relations in boxes (and rules) as well as those out in the
-    world; hiding a node SN type's category, its individuals and variables in boxes too. What a box holds may be
-    out of a reasoner's sight, but hiding is the viewer's: it changes nothing in the model. Undone, all shown again.
+    Hiding a relation SN type's category hides its relations in plain boxes (collections) as well as those out in
+    the world; hiding a node SN type's category, its individuals in plain boxes too. But what a rule holds (its
+    relations and variables) is shown whatever its category: hiding part of a pattern would change what it says.
+    Hiding is the viewer's: it changes nothing in the model. Undone, all shown again.
     '''
     v = self.v
-    rels = [self.draw(self.alice, self.bob), self.draw(self.alice, self.carol), self.draw(self.carol, self.erin),
-            self.draw(self.y, self.x)]
-    self.assertEqual([self.holders(r) for r in rels], [[], ["A"], ["A"], ["R/antecedent"]])
+    rels = [self.draw(self.alice, self.bob), self.draw(self.alice, self.carol), self.draw(self.carol, self.erin)]
+    inRule = self.draw(self.y, self.x)
+    self.assertEqual([self.holders(r) for r in rels + [inRule]], [[], ["A"], ["A"], ["R/antecedent"]])
     boxes = [self.A, self.A1, self.B, self.C, self.R]
-    people = [self.alice, self.carol, self.bob, self.erin, self.x, self.y]
+    people = [self.alice, self.carol, self.bob, self.erin]
+    variables = [self.x, self.y]
     count = len(list(self.m.values()))
     for category, hidden in ((v.relationCategory("likes"), rels), (v.nodeCategory("person"), people + rels)):
       v.context.visibility(category, "hide")
       self.pump()
       self.assertEqual([mo.name for mo in hidden if not self.V(mo).isHidden()], [], category)
-      self.assertEqual([mo.name for mo in boxes if self.V(mo).isHidden()], [], category)
+      self.assertEqual([mo.name for mo in boxes + variables + [inRule] if self.V(mo).isHidden()], [], category)
       if category.startswith("relations"):
         self.assertEqual([mo.name for mo in people if self.V(mo).isHidden()], [], category)
       self.assertEqual(len(list(self.m.values())), count)
-      self.assertEqual([self.holders(r) for r in rels], [[], ["A"], ["A"], ["R/antecedent"]])
+      self.assertEqual([self.holders(r) for r in rels + [inRule]], [[], ["A"], ["A"], ["R/antecedent"]])
       v.context.undo()
       self.pump()
-      self.assertEqual([mo.name for mo in people + rels if self.V(mo).isHidden()], [], category)
+      self.assertEqual([mo.name for mo in people + variables + rels if self.V(mo).isHidden()], [], category)
 
 class TestGeometry(unittest.TestCase):
   'The scope rule itself (see *relationScope()*): on lists of boxes, innermost first.'

@@ -81,13 +81,16 @@ out of the view. Unchecking it shows them again. Relations to or from hidden
 objects are hidden too. Either way, **expand** won't bring more of them in.
 The settings are saved with the view.
 
-Hiding works the same inside boxes (rules, queries, definitions and other
-contexts) as outside them: eg: with *relations: likes* hidden, a *likes*
-relation inside a box is hidden too; with *types* hidden, a rule that
-concludes *?x isa person* doesn't show *person*, nor the *isa* link to it.
-(It's only the view: what a box holds may be out of a reasoner's sight, but
-hiding doesn't change what any reasoner sees.) Collapsing a box hides
-everything in it, and what's in the boxes inside it.
+Hiding works the same inside a plain box (a collection, eg: a Rep Plus box)
+as outside it: eg: with *relations: likes* hidden, a *likes* relation inside
+the box is hidden too. But what a shown rule, definition, query, constraint
+or other context holds -- the boxes whose contents the reasoner takes as
+patterns, not facts -- is shown whatever its category, as hiding part of a
+pattern would leave it saying something else: its relations, the variables
+they use, and the ends of those relations (eg: with *types* hidden, a rule
+that concludes *?x isa person* still shows *person*, and the terminal says
+so). Hiding is only the view's: it doesn't change what any reasoner sees.
+Collapsing a box hides everything in it, and what's in the boxes inside it.
 
 Hiding is *soft*: it applies to what's there when you check the category. An
 object you make (or ask for, with **show node**) that's in a hidden category
