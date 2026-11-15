@@ -133,11 +133,13 @@ class VisibilityMixin(ViewBase):
 
   def shouldHide(self, vo:VObject) -> bool:
     '''
-    Whether *vo* shouldn't be drawn just now: it's in a hidden category; or
-    it's a relation to or from something hidden (it would lead nowhere), or a
-    containment drawn as being inside its window (see *VRelation.inWindow()*);
-    or it's inside a hidden context's window; or it's a part its box's window
-    shows as a pane (see *VObject.isTiledPart()*).
+    Whether *vo* shouldn't be drawn just now: it's in a hidden category
+    (wherever it is: in a box, or a rule, too -- what a box holds may be out
+    of a reasoner's sight, but hiding is about what the viewer wants to see);
+    or it's a relation to or from something hidden (it would lead nowhere), or
+    a containment drawn as being inside its window (see
+    *VRelation.inWindow()*); or it's inside a hidden context's window; or it's
+    a part its box's window shows as a pane (see *VObject.isTiledPart()*).
     '''
     mo = vo.modelObject
     if mo is None:
@@ -146,7 +148,7 @@ class VisibilityMixin(ViewBase):
       return True
     if self._inCollapsedWindow(vo):
       return True
-    if self.isFiltered(mo, ("hide",)) and not vo.categoryExempt and not self._inShownContext(vo):
+    if self.isFiltered(mo, ("hide",)) and not vo.categoryExempt:
       return True
     if isinstance(vo, VRelation):
       if vo.inWindow():
@@ -180,15 +182,6 @@ class VisibilityMixin(ViewBase):
     mo = vo.modelObject
     return any(w.collapsed and w is not vo and w.paneAt(vo.centerPt()) is not None and self._holds(w, mo)
                for w in self.contextWindows())
-
-  def _inShownContext(self, vo:VObject) -> bool:
-    '''
-    Whether *vo* is part of a shown context window's content (see *_holds()*:
-    eg: an isa link in a rule's consequent): it's then shown whatever its
-    category -- it's what the rule says, not clutter.
-    '''
-    mo = vo.modelObject
-    return any(not w.isHidden() and not w.collapsed and w is not vo and self._holds(w, mo) for w in self.contextWindows())
 
   def applyVisibility(self) -> None:
     'Bring every object into line with the current *hides* (see *VObject._applyHidden()*).'
