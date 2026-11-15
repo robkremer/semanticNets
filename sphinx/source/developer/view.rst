@@ -148,8 +148,21 @@ after a move, ``SNGView._updateContainment`` compares where each moved
 object was with where it is now, and makes or removes containment relations
 (or switches their type, between panes) to match. It's all done with
 commands in the same composite command as the move, so a move into a window
-and its containment are undone together. A relation drawn whose label lands
-in a pane is contained the same way (``_containNewRelation``).
+and its containment are undone together.
+
+A relation with both ends drawn goes by its ends, not its label
+(:py:func:`~sn.view.graphics.viewContainment.relationScope`): it's in the
+innermost window both ends are in, or in none (the global context) -- or,
+from a variable, in the variable's window. A rule's parts count as one
+window for this (``scopeBox``), whether they're tiled as panes or shown as
+boxes; within the rule, the label's pane says which part
+(``_scopePane``). A relation drawn is contained that way
+(``_containNewRelation``); after a move, ``_rescope`` brings it into line
+for each relation whose label was dragged, or whose end was moved, or that
+crosses the border of a moved window (``_acrossMovedWindows``). A move never
+puts a relation in a window only because a variable end is in it (moving
+``?x`` doesn't put its isa link in its rule), and containment shown by an
+arc (the label outside the window) is left alone.
 
 Containment that position shows isn't drawn: a contains arc to an object
 inside its window is hidden
