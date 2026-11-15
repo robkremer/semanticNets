@@ -248,7 +248,7 @@ class FilesMixin(ViewBase):
     from tkinter import filedialog, messagebox
     from util.attributeEditor import editAttrsBox
     from util.persistence.pRef import PRDb
-    from sn.model.modelPrefs import SUPER_MODELS
+    from sn.model.modelPrefs import SUPER_MODELS, CANONICAL_VIEWS
     model = self.model
     if model is None or not hasattr(model, "prefs"):
       return
@@ -291,6 +291,13 @@ class FilesMixin(ViewBase):
         except Exception as ex:
           logger.exception(f'{model.name}: preference "{key}" couldn\'t be set.')
           messagebox.showerror("Model preferences", f'"{key}" couldn\'t be set:\n\n{ex}', parent=self.window)
+    if CANONICAL_VIEWS in updates and model.canonicalViews(): # (canonical now: no copies in its open views -- see SNGView.foldCopies())
+      for view, _ in list(model._observers):
+        if hasattr(view, "foldCopies") and getattr(view, "model", None) is model:
+          folded = view.foldCopies()
+          if folded:
+            logger.info(f'"{view.name}": {folded} {"copy" if folded == 1 else "copies"} folded into one ({model.name}\'s '
+                        f'views are canonical now).')
 
   def doCloseModel(self) -> None:
     '''

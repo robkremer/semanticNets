@@ -53,7 +53,7 @@ from typing import Any
 from sn.model.model import Model, Node, Relation, GraphObject, IsaIndividual
 from sn.model.reasoner import Reasoner, TooManyProbes, ADMISSIBLE
 from sn.controller.modelInterface import ModelCommand
-from .reader import (KERNEL, INCLUDES, EQUIVALENT, EXCLUDES, COEXCLUDES, NEGATES, INCONSISTENT, CONNECTIVES, SAME_LABEL,
+from .reader import (KERNEL, INCLUDES, EQUIVALENT, EXCLUDES, COEXCLUDES, NEGATES, INCONSISTENT, CONNECTIVES,
                      CONSTRUCT_EXCLUDES, kernelTypes)
 from .probes import netNodes, findProbes, name
 
@@ -86,8 +86,8 @@ def netLinks(model:Model) -> list[Relation]:
     individual relations (not the reasoner's) between its nodes (see
     *probes.netNodes()*) of the kernel's relation types -- not those that
     define a connective (see *reader.CONNECTIVES*: they're definitions), nor
-    those the reader made for what boxes and labels mean (*reader.CONSTRUCT_EXCLUDES*,
-    *reader.SAME_LABEL*). In the model's order.
+    those the reader made for what construct boxes mean (*reader.CONSTRUCT_EXCLUDES*).
+    In the model's order.
   '''
   kernel = _kernel(model)
   nodes = {id(n) for n in netNodes(model)}
@@ -98,7 +98,7 @@ def netLinks(model:Model) -> list[Relation]:
        or getattr(r, "inferred", False) or id(r.src) not in nodes or id(r.dst) not in nodes:
       continue
     names = {str(t.name) for t in r.isa() if isinstance(t, Relation)}
-    if kernelOf(r, kernel) and not names & {SAME_LABEL, CONSTRUCT_EXCLUDES} and not any(r.isa(t) for t in defining):
+    if kernelOf(r, kernel) and CONSTRUCT_EXCLUDES not in names and not any(r.isa(t) for t in defining):
       ret.append(r)
   return ret
 
@@ -417,7 +417,7 @@ def checkMerge(importing:Model, imported:Model, engine:str|None=None) -> MergeCh
   '''
   What merging the net *imported* into *importing* does (Gaines, section
   3.2): the nodes of the two with the same label (see *probes.name()*) are one
-  -- equivalent (the reader's same label relation's SN supertype) -- and the
+  -- equivalent (the kernel's *equivalent*) -- and the
   merge is reasoned over (a model with the two as its super-models, not
   saved), and what it concludes compared with what each net does alone.
 

@@ -42,6 +42,43 @@ What's shown
 All of these are one command each: **Cmd-Z** takes back what they brought in,
 or puts back what they erased.
 
+Copies of an object
+-------------------
+
+A view is *canonical* if each object in it stands for a different object of
+the model: one model object, one place in the view. That's how a model's
+views start. Untick *canonicalViews* in **Edit | Model preferences...** and
+its views may show a node more than once -- eg: to keep the lines to a node
+that's linked to from all over short, as a Rep Plus net does (see the Rep Plus
+net reader in :doc:`exampleApps`). Then:
+
+- **show a copy** (on a node's menu; it says how many it has, if more than
+  one) puts another copy of it beside it. Each copy is the same model
+  object: rename one, or change its attributes, and they all change.
+  **erase from view** takes just that copy out of the view; deleting it
+  from the model deletes it, and all its copies go.
+- With the mouse over a copy, its other copies glow (light blue: the
+  ``gui/copyHighlightColor`` setting, not a query's yellow), so you can see
+  where they are; and they glow while it's selected.
+- A relation is drawn once, to one copy of each of its ends: a new one
+  between the copies you drew it between, and one brought in to the copy
+  nearest its other end. Drag its end onto another copy of the same node
+  (or use **reset src**, **reset dst**) to draw it to that one instead: the
+  model doesn't change. The view remembers which copy each end is drawn to.
+- Each copy is in the box it's drawn in, as any node is: a node with copies
+  inside and outside a box is in it (moving one copy out doesn't take it out
+  while another is still in).
+- A copy may show a label of its own, in place of its node's name (eg: a
+  Rep Plus box's node, its box's name left off): the terminal's ``own
+  label`` command sets it, and **show its name here** (on its menu) puts
+  back the node's name.
+
+Tick *canonicalViews* again and each open view's copies are folded into
+one: the first copy stays, and the relations drawn to the others are drawn
+to it. A view of a canonical model that has copies (eg: one saved before
+the model was changed) has them folded when it's opened, and the terminal
+says so.
+
 Hiding and erasing by category
 ------------------------------
 

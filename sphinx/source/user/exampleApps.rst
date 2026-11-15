@@ -277,10 +277,11 @@ The Rep Plus net reader
 *patterns.snm* and *patterns.snv*, in the folder you last made them in (the
 first time, next to the net). Change either, by typing or with
 **Choose...**: until you do, they follow the net file (and the view follows
-the model). **Nodes with the same label are one node** (on unless you turn
-it off) takes them as KNet does: a net may draw a node again, elsewhere, to
-keep its links short (turn it off for a figure that's several copies of a
-net side by side, as some of Gaines's are). **Go** makes them, asking first if they're there already, and
+the model). **Nodes KNet takes to be the same are one node** (on unless you
+turn it off) takes them as KNet does: a net may draw a node again,
+elsewhere, to keep its links short, and that's one node, drawn twice (turn
+it off for a figure that's several copies of a net side by side, as some of
+Gaines's are). **Go** makes them, asking first if they're there already, and
 opens the view: the net as CNet drew it, each node where it was (half as big
 again, as the editor's text is bigger), with its links between them.
 
@@ -318,9 +319,21 @@ What's in the net becomes:
   links go the other way, so it means what it shows.
 - **Nodes**: each node is an individual of its type, named by its label (a
   node with no label has no name). Pictures and drawings in the net are left
-  out. Nodes with the same label (if the dialog says they're one node) are
-  joined by *same label* links, faded grey equivalences from each copy to
-  the first.
+  out. If the dialog says so, the nodes KNet takes to be the same are one
+  node, shown as copies (the model's views aren't canonical: see
+  :doc:`viewing`), so the reasoners see one node, as KNet does. KNet's rule:
+  a node's name is its label, with its line breaks as spaces, followed by
+  the name of each *Context* box it's in (in the file's order), and of each
+  *Construct* box but one whose name has a "—" (a construct's poles): two
+  nodes with the same name (big and small letters alike) are one. So in a
+  construct *lens*, the pole *soft* is the same node as *soft lens* in the
+  rules beside it: it's named *soft lens*, and its copy in the box shows
+  *soft*. Only the nodes of the node types KNet reasons about are taken so
+  (those named *Concept*, *Context*, *Construct*, *Cases*, *Rules*,
+  *Disjoint* or *Collection*: not titles, notes, frames or grids), and a box
+  is never the same as a node. (Earlier versions of the reader made each copy a node
+  of its own, joined by *same label* links: read the net again for the new
+  form.)
 - **Marks**: a node's mark (true, false, or both) is its ``mark`` attribute
   (``T``, ``F`` or ``TF``), with the kind of mark (``markKind``: *Asserted*,
   *Included*, *Excluded*, ...), whether it was derived (``markDerived``), and

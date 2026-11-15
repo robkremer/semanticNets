@@ -45,7 +45,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from sn.model.model import Model, Node, Relation, IsaIndividual
 from sn.model.reasoner import Reasoner, Inferences
-from .reader import INCLUDES, SAME_LABEL
+from .reader import INCLUDES
 from .forms import _kernel, _netName
 from .probes import netNodes, name
 from .hooks import MARK_TRUE, MARK_FALSE, ASSERTED
@@ -108,19 +108,13 @@ def _marks(res:Inferences, nodes:dict[int, Node], supposed:Node|None=None) -> di
     got[id(supposed)].add("T")
   return {x: "".join(v for v in "TF" if v in s) for x, s in got.items() if s}
 
-def _sameLabel(r:Relation) -> bool:
-  ''':returns: Whether *r* is one of the reader's same-label equivalences (see *reader.addSameLabels()*).'''
-  return any(str(t.name) == SAME_LABEL for t in r.isa() if isinstance(t, Relation))
-
 def explanations(model:Model, node:Node, marks:dict[int, str]) -> list[Node]:
   '''
   KNet's bottom nodes below *node*: going down each link that includes it
   (asserted: of the kernel's includes, or an SN subtype -- eg, an
   equivalence, or a connective's defining inclusion), from the node that
   includes it, if that has no mark (see *marks*), and on; a node no link
-  includes is a bottom node (*node* itself, if none includes it). Nodes with
-  the same label (see *reader.addSameLabels()*) are one node, as they're
-  KNet's.
+  includes is a bottom node (*node* itself, if none includes it).
 
   :param marks: The nodes' marks, by id (see *Abduction.worlds*).
   :returns: The bottom nodes, in the order they're found.
@@ -128,31 +122,20 @@ def explanations(model:Model, node:Node, marks:dict[int, str]) -> list[Node]:
   kernel = _kernel(model)
   inc = kernel.get(INCLUDES)
   nodes = {id(n): n for n in netNodes(model)}
-  same:dict[int, int] = {x: x for x in nodes}
-  def root(x:int) -> int:
-    while same[x] != x:
-      x = same[x]
-    return x
   back:dict[int, list[Node]] = {}
   for r in model.values():
     if not isinstance(r, Relation) or isinstance(r, IsaIndividual) or r.model is not model or not r.isIndividual() \
        or getattr(r, "inferred", False) or id(r.src) not in nodes or id(r.dst) not in nodes or r.src is r.dst:
       continue
-    if _sameLabel(r):
-      same[root(id(r.src))] = root(id(r.dst))
-    elif inc is not None and r.isa(inc):
+    if inc is not None and r.isa(inc):
       back.setdefault(id(r.dst), []).append(r.src)
-  members:dict[int, list[int]] = {}
-  for x in nodes:
-    members.setdefault(root(x), []).append(x)
   ret:list[Node] = []
   seen:set[int] = set()
   def down(n:Node) -> None:
-    g = root(id(n))
-    if g in seen:
+    if id(n) in seen:
       return
-    seen.add(g)
-    srcs = [s for x in members[g] for s in back.get(x, []) if root(id(s)) != g]
+    seen.add(id(n))
+    srcs = [s for s in back.get(id(n), []) if s is not n]
     if not srcs:
       ret.append(n)
     for s in srcs:
