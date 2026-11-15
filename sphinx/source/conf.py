@@ -40,7 +40,7 @@ copyright = '2023-2026, Rob Kremer'
 author = 'Rob Kremer'
 
 # The full version, including alpha/beta/rc tags
-release = '1.2'
+release = '1.2.1'
 
 show_authors = True
 
