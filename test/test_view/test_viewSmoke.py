@@ -845,7 +845,8 @@ class Test(unittest.TestCase):
     self.assertIsNotNone(vr.paneAt(vp.centerPt())) # (put back: see keepInPanes())
 
   def test0770ruleConcludesAType(self):
-    # with "types" hidden, a rule that concludes ?x isa person still shows its isa link -- and person
+    # with "types" hidden, a rule that concludes ?x isa person doesn't show person, nor its isa link to it: hiding
+    # is the same in a rule as out of it; shown again with the category
     from sn.model.model import Node
     v, m = self.view, self.model
     rule = v.context.new_node("rule", name="persons", individual=True)
@@ -859,10 +860,18 @@ class Test(unittest.TestCase):
     self.pump()
     v.gatherIntoWindow(self.vo("persons"))
     self.pump()
+    vIsa = v.findViewObjectForGraphObject(isa)
+    self.assertTrue(self.vo("persons").containmentOf(isa))
     v.context.visibility("types", "hide")
     self.pump(0.4)
-    self.assertFalse(v.findViewObjectForGraphObject(isa).isHidden())
+    self.assertTrue(self.vo("person").isHidden())
+    self.assertTrue(vIsa.isHidden())
+    self.assertFalse(self.vo("?someone").isHidden())
+    self.assertFalse(self.vo("persons").isHidden())
+    v.context.visibility("types", "show")
+    self.pump(0.4)
     self.assertFalse(self.vo("person").isHidden())
+    self.assertFalse(vIsa.isHidden())
 
   def test0730layoutsMoveWindowsAside(self):
     'What a layout arranges onto a context window moves the window aside, with its contents: nothing ends up in a window it doesn\'t belong in.'
