@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="sn.view.graphics.sourceWindow module" href="sn.view.graphics.sourceWindow.html"><link rel="prev" title="sn.view.graphics.sngContext module" href="sn.view.graphics.sngContext.html">
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
-    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.2.0 and Furo 2025.12.19 -->
         <title>sn.view.graphics.sngView module - Semantic Nets 1.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
@@ -493,10 +493,11 @@ places what’s made or dropped, and adjusts things after each command (see
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sn.view.graphics.sngView.SNGView._deletedGraphObjectsCache">
-<span class="sig-name descname"><span class="pre">_deletedGraphObjectsCache</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><span class="pre">VObject</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.sngView.SNGView._deletedGraphObjectsCache" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">_deletedGraphObjectsCache</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><span class="pre">VObject</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.sngView.SNGView._deletedGraphObjectsCache" title="Link to this definition">¶</a></dt>
 <dd><p>Used by update to store deleted VObjects matching deleted GraphObjects in case they are restored:
 by (the id of) the model and the model object’s id in it – every model numbers its objects from 256,
-and a view shows its model’s super-models’ objects too.</p>
+and a view shows its model’s super-models’ objects too. (A list: all its copies, in a view that isn’t
+canonical – see <em>canonical()</em>.)</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -682,11 +683,6 @@ gone; and stop observing the other models whose objects it shows (see
 </dl>
 </dd></dl>
 
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sn.view.graphics.sngView.SNGView._abc_impl">
-<span class="sig-name descname"><span class="pre">_abc_impl</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;_abc._abc_data</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#sn.view.graphics.sngView.SNGView._abc_impl" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.sngView.SNGView._observeModel">
 <span class="sig-name descname"><span class="pre">_observeModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.sngView.SNGView._observeModel" title="Link to this definition">¶</a></dt>
@@ -763,6 +759,11 @@ out, changed ones redrawn.</p>
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.sngView.SNGView._abc_impl">
+<span class="sig-name descname"><span class="pre">_abc_impl</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;_abc._abc_data</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#sn.view.graphics.sngView.SNGView._abc_impl" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.sngView.SNGView.intersectTag">
@@ -845,6 +846,127 @@ needed and kept up to date as objects come and go (see <em>_register()</em>,
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>list[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.sngView.SNGView.canonical">
+<span class="sig-name descname"><span class="pre">canonical</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.sngView.SNGView.canonical" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Whether this view is canonical: each of its objects stands for a
+different model object – as its model says (see
+<em>Model.canonicalViews()</em>). If not, it may show a model object more than
+once: copies (see <em>makeCopy()</em>), each drawn where it’s wanted, and each
+relation’s line drawn to one copy of each end (see
+<em>VRelation._resolveEnd()</em>). (A view that isn’t may have no copies.)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.sngView.SNGView.copiesOf">
+<span class="sig-name descname"><span class="pre">copiesOf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vo</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.sngView.SNGView.copiesOf" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>vo</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The view objects in the view that show what <em>vo</em> shows (<em>vo</em>
+itself too), in the view’s order: more than one only in a view that
+isn’t canonical (see <em>canonical()</em>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.sngView.SNGView.glowCopies">
+<span class="sig-name descname"><span class="pre">glowCopies</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hovered</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">leaving</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.sngView.SNGView.glowCopies" title="Link to this definition">¶</a></dt>
+<dd><p>Give the other copies (see <em>copiesOf()</em>) of what the mouse is over, and
+of what’s selected – those shown – a glow of their own colour (see
+<em>VObject.glowAsCopy()</em>), and take it off those it’s no longer for: called
+as the mouse comes and goes (<em>VObject.onEnter()</em>, <em>onLeave()</em>), and as
+the selection changes. Nothing glows in a canonical view.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hovered</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em> | </em><em>None</em><em> | </em><em>bool</em>) – What the mouse is over now (None: nothing); False: as it
+was.</p></li>
+<li><p><strong>leaving</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em> | </em><em>None</em>) – With <em>hovered</em> None, what the mouse just left: it’s
+forgotten once Tk’s done with the event (unless the mouse is over it
+again by then: eg, it went from its shape to its label’s text), so its
+copies don’t flicker.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>What glows now.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>set[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.sngView.SNGView.COPY_OFFSET">
+<span class="sig-name descname"><span class="pre">COPY_OFFSET</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">24</span></span><a class="headerlink" href="#sn.view.graphics.sngView.SNGView.COPY_OFFSET" title="Link to this definition">¶</a></dt>
+<dd><p>How far right and down (view units) a new copy is put from what it copies (see <em>makeCopy()</em>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.sngView.SNGView.makeCopy">
+<span class="sig-name descname"><span class="pre">makeCopy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">at</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.sngView.SNGView.makeCopy" title="Link to this definition">¶</a></dt>
+<dd><p>Show <em>vo</em>’s model object again: a new copy of <em>vo</em> (a node), the same size
+and look, with no lines of its own yet (lines are drawn to the nearest
+copy, or moved onto it: see <em>VRelation._resolveEnd()</em>). Only in a view
+that isn’t canonical (see <em>canonical()</em>). Not a command: see
+<em>SNGContext.another_copy()</em>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vo</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>) – A node in the view.</p></li>
+<li><p><strong>at</strong> (<em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>) – Where its top left corner goes (view coords); by default, a
+little right of and below <em>vo</em>’s (see <em>COPY_OFFSET</em>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The copy.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – if the view is canonical, or <em>vo</em> isn’t a node.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.sngView.SNGView.foldCopies">
+<span class="sig-name descname"><span class="pre">foldCopies</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beforeConnecting</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.sngView.SNGView.foldCopies" title="Link to this definition">¶</a></dt>
+<dd><p>Show each model object once (as a canonical view does: see <em>canonical()</em>):
+each one’s first copy (in the view’s order) stays, and the relations drawn
+to the others are drawn to it; the other copies (relations’ copies too)
+are erased from the view. Not undoable (it’s for a model set back to
+canonical: see <em>Model.setCanonicalViews()</em>, and a view read so).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>beforeConnecting</strong> (<em>bool</em>) – While the view’s being read, before its
+relations are connected to their ends (see <em>getInstantiationInfo()</em>):
+just the copies are taken out; each relation finds its ends afterwards.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>How many copies were taken out.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1061,16 +1183,22 @@ time the work actually produces output.</p>
 <li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView._register"><code class="docutils literal notranslate"><span class="pre">SNGView._register()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView._unregister"><code class="docutils literal notranslate"><span class="pre">SNGView._unregister()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView.detachFromModel"><code class="docutils literal notranslate"><span class="pre">SNGView.detachFromModel()</span></code></a></li>
-<li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView._abc_impl"><code class="docutils literal notranslate"><span class="pre">SNGView._abc_impl</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView._observeModel"><code class="docutils literal notranslate"><span class="pre">SNGView._observeModel()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView.BATCHED_UPDATE_BOXES"><code class="docutils literal notranslate"><span class="pre">SNGView.BATCHED_UPDATE_BOXES</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView._changesManyBoxes"><code class="docutils literal notranslate"><span class="pre">SNGView._changesManyBoxes()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView.update"><code class="docutils literal notranslate"><span class="pre">SNGView.update()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView.suppressLocalLayout"><code class="docutils literal notranslate"><span class="pre">SNGView.suppressLocalLayout()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView._abc_impl"><code class="docutils literal notranslate"><span class="pre">SNGView._abc_impl</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView.intersectTag"><code class="docutils literal notranslate"><span class="pre">SNGView.intersectTag()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView.makeViewObjectForGraphObject"><code class="docutils literal notranslate"><span class="pre">SNGView.makeViewObjectForGraphObject()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView.findViewObjectForGraphObject"><code class="docutils literal notranslate"><span class="pre">SNGView.findViewObjectForGraphObject()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView.viewObjectsFor"><code class="docutils literal notranslate"><span class="pre">SNGView.viewObjectsFor()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView.canonical"><code class="docutils literal notranslate"><span class="pre">SNGView.canonical()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView.copiesOf"><code class="docutils literal notranslate"><span class="pre">SNGView.copiesOf()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView.glowCopies"><code class="docutils literal notranslate"><span class="pre">SNGView.glowCopies()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView.COPY_OFFSET"><code class="docutils literal notranslate"><span class="pre">SNGView.COPY_OFFSET</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView.makeCopy"><code class="docutils literal notranslate"><span class="pre">SNGView.makeCopy()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView.foldCopies"><code class="docutils literal notranslate"><span class="pre">SNGView.foldCopies()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView._viewObjectsForID"><code class="docutils literal notranslate"><span class="pre">SNGView._viewObjectsForID()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView._indexKeys"><code class="docutils literal notranslate"><span class="pre">SNGView._indexKeys()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.sngView.SNGView._viewObjectIndex"><code class="docutils literal notranslate"><span class="pre">SNGView._viewObjectIndex()</span></code></a></li>

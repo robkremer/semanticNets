@@ -277,10 +277,11 @@ The Rep Plus net reader
 *patterns.snm* and *patterns.snv*, in the folder you last made them in (the
 first time, next to the net). Change either, by typing or with
 **Choose...**: until you do, they follow the net file (and the view follows
-the model). **Nodes with the same label are one node** (on unless you turn
-it off) takes them as KNet does: a net may draw a node again, elsewhere, to
-keep its links short (turn it off for a figure that's several copies of a
-net side by side, as some of Gaines's are). **Go** makes them, asking first if they're there already, and
+the model). **Nodes KNet takes to be the same are one node** (on unless you
+turn it off) takes them as KNet does: a net may draw a node again,
+elsewhere, to keep its links short, and that's one node, drawn twice (turn
+it off for a figure that's several copies of a net side by side, as some of
+Gaines's are). **Go** makes them, asking first if they're there already, and
 opens the view: the net as CNet drew it, each node where it was (half as big
 again, as the editor's text is bigger), with its links between them.
 
@@ -300,7 +301,11 @@ What's in the net becomes:
   its arrowheads (heavy for a conjunction, double for a disjunction), the
   bars before them (one for an exclusion, two for a coexclusion, three for a
   negation), and a mark in the middle of a symmetric one -- in its colour,
-  straight, with no label. A dashed one's colour is faded. It's a subtype of
+  with no label. Its line is smooth, where CNet's are straight: it runs
+  through its relation's label, which is kept inside the box the relation is
+  in (or outside one it isn't), so a straight line would bend sharply there
+  and hide the mark in its middle; a curve runs through it, the mark across
+  it. A dashed one's colour is faded. It's a subtype of
   the KNet kernel's relation type that its look says it is (see `KNet's
   kernel`_): an arrow is *includes*, an arrow with one, two or three bars
   *excludes*, *coexcludes* or *negates* (a heavy or double arrowhead is still
@@ -314,9 +319,21 @@ What's in the net becomes:
   links go the other way, so it means what it shows.
 - **Nodes**: each node is an individual of its type, named by its label (a
   node with no label has no name). Pictures and drawings in the net are left
-  out. Nodes with the same label (if the dialog says they're one node) are
-  joined by *same label* links, faded grey equivalences from each copy to
-  the first.
+  out. If the dialog says so, the nodes KNet takes to be the same are one
+  node, shown as copies (the model's views aren't canonical: see
+  :doc:`viewing`), so the reasoners see one node, as KNet does. KNet's rule:
+  a node's name is its label, with its line breaks as spaces, followed by
+  the name of each *Context* box it's in (in the file's order), and of each
+  *Construct* box but one whose name has a "—" (a construct's poles): two
+  nodes with the same name (big and small letters alike) are one. So in a
+  construct *lens*, the pole *soft* is the same node as *soft lens* in the
+  rules beside it: it's named *soft lens*, and its copy in the box shows
+  *soft*. Only the nodes of the node types KNet reasons about are taken so
+  (those named *Concept*, *Context*, *Construct*, *Cases*, *Rules*,
+  *Disjoint* or *Collection*: not titles, notes, frames or grids), and a box
+  is never the same as a node. (Earlier versions of the reader made each copy a node
+  of its own, joined by *same label* links: read the net again for the new
+  form.)
 - **Marks**: a node's mark (true, false, or both) is its ``mark`` attribute
   (``T``, ``F`` or ``TF``), with the kind of mark (``markKind``: *Asserted*,
   *Included*, *Excluded*, ...), whether it was derived (``markDerived``), and
@@ -334,8 +351,10 @@ What's in the net becomes:
   derived*) are made as they are.
 - **Boxes**: a node of an enclosure type is drawn as a window, the size CNet
   drew it, and contains (by *contains* relations) the nodes inside it -- each
-  in the smallest box it's in, so boxes can be nested. As in CNet, dragging
-  a box carries what's in it.
+  in the smallest box it's in (by its centre), so boxes can be nested. A node
+  CNet drew astride a box's edge is moved wholly into the box, or out of it,
+  so it's plain which box holds it (see :doc:`contexts`). As in CNet,
+  dragging a box carries what's in it.
 - **Constructs**: the poles in a *construct* box (the nodes it contains)
   exclude each other, as CNet's construct macro says, unless an includes
   link (or a chain of them) joins them. Each such pair gets a *construct
@@ -393,8 +412,8 @@ type that *excludes* animal excludes dog.
 Truth marks
 ~~~~~~~~~~~
 
-Gaines marks a node true (a vertical bar beside it: there's something it
-stands for) or false (a horizontal bar over it: it's empty), or both
+Gaines marks a node true (a vertical bar through it: there's something it
+stands for) or false (a horizontal bar through it: it's empty), or both
 (Belnap's "both": inconsistent). A KNet node -- an instance of *knode*, as
 the reader's nodes are -- shows its marks as those bars, in Rep Plus's
 colours for how it got them:

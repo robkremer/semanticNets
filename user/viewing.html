@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Arranging a View" href="layouts.html"><link rel="prev" title="Reasoning" href="reasoning.html">
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
-    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.2.0 and Furo 2025.12.19 -->
         <title>Viewing - Semantic Nets 1.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
@@ -418,6 +418,42 @@ and the windows they’re in.)</p></li>
 <p>All of these are one command each: <strong>Cmd-Z</strong> takes back what they brought in,
 or puts back what they erased.</p>
 </section>
+<section id="copies-of-an-object">
+<h2>Copies of an object<a class="headerlink" href="#copies-of-an-object" title="Link to this heading">¶</a></h2>
+<p>A view is <em>canonical</em> if each object in it stands for a different object of
+the model: one model object, one place in the view. That’s how a model’s
+views start. Untick <em>canonicalViews</em> in <strong>Edit | Model preferences…</strong> and
+its views may show a node more than once – eg: to keep the lines to a node
+that’s linked to from all over short, as a Rep Plus net does (see the Rep Plus
+net reader in <a class="reference internal" href="exampleApps.html"><span class="doc">Plugins</span></a>). Then:</p>
+<ul class="simple">
+<li><p><strong>show a copy</strong> (on a node’s menu; it says how many it has, if more than
+one) puts another copy of it beside it. Each copy is the same model
+object: rename one, or change its attributes, and they all change.
+<strong>erase from view</strong> takes just that copy out of the view; deleting it
+from the model deletes it, and all its copies go.</p></li>
+<li><p>With the mouse over a copy, its other copies glow (light blue: the
+<code class="docutils literal notranslate"><span class="pre">gui/copyHighlightColor</span></code> setting, not a query’s yellow), so you can see
+where they are; and they glow while it’s selected.</p></li>
+<li><p>A relation is drawn once, to one copy of each of its ends: a new one
+between the copies you drew it between, and one brought in to the copy
+nearest its other end. Drag its end onto another copy of the same node
+(or use <strong>reset src</strong>, <strong>reset dst</strong>) to draw it to that one instead: the
+model doesn’t change. The view remembers which copy each end is drawn to.</p></li>
+<li><p>Each copy is in the box it’s drawn in, as any node is: a node with copies
+inside and outside a box is in it (moving one copy out doesn’t take it out
+while another is still in).</p></li>
+<li><p>A copy may show a label of its own, in place of its node’s name (eg: a
+Rep Plus box’s node, its box’s name left off): the terminal’s <code class="docutils literal notranslate"><span class="pre">own</span>
+<span class="pre">label</span></code> command sets it, and <strong>show its name here</strong> (on its menu) puts
+back the node’s name.</p></li>
+</ul>
+<p>Tick <em>canonicalViews</em> again and each open view’s copies are folded into
+one: the first copy stays, and the relations drawn to the others are drawn
+to it. A view of a canonical model that has copies (eg: one saved before
+the model was changed) has them folded when it’s opened, and the terminal
+says so.</p>
+</section>
 <section id="hiding-and-erasing-by-category">
 <h2>Hiding and erasing by category<a class="headerlink" href="#hiding-and-erasing-by-category" title="Link to this heading">¶</a></h2>
 <p><strong>view | hide by category</strong> and <strong>view | erase by category</strong> each list the
@@ -479,11 +515,16 @@ stay in the view, with their positions); in the <strong>erase</strong> menu, tak
 out of the view. Unchecking it shows them again. Relations to or from hidden
 objects are hidden too. Either way, <strong>expand</strong> won’t bring more of them in.
 The settings are saved with the view.</p>
-<p>What a rule (or other context window) shown says is shown whatever its
-category: its relations, and the variables they use – and the ends of those
-relations: eg: with <em>types</em> hidden, a rule that concludes <em>?x isa person</em>
-still shows <em>person</em>, and the terminal says so. Collapsing a window hides
-all of that, and what’s in the windows inside it.</p>
+<p>Hiding works the same inside a plain box (a collection, eg: a Rep Plus box)
+as outside it: eg: with <em>relations: likes</em> hidden, a <em>likes</em> relation inside
+the box is hidden too. But what a shown rule, definition, query, constraint
+or other context holds – the boxes whose contents the reasoner takes as
+patterns, not facts – is shown whatever its category, as hiding part of a
+pattern would leave it saying something else: its relations, the variables
+they use, and the ends of those relations (eg: with <em>types</em> hidden, a rule
+that concludes <em>?x isa person</em> still shows <em>person</em>, and the terminal says
+so). Hiding is only the view’s: it doesn’t change what any reasoner sees.
+Collapsing a box hides everything in it, and what’s in the boxes inside it.</p>
 <p>Hiding is <em>soft</em>: it applies to what’s there when you check the category. An
 object you make (or ask for, with <strong>show node</strong>) that’s in a hidden category
 is shown anyway, and a message in the terminal says so. To hide it too,
@@ -650,9 +691,12 @@ its instances:</p>
 <td><p>its text</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">vis/sideBars</span></code></p></td>
-<td><p>bars along a node’s sides, just outside it: eg
-<code class="docutils literal notranslate"><span class="pre">right:#000000</span> <span class="pre">top:green</span></code> (left, right, top,
-bottom, each with its colour; black if none).
+<td><p>bars along a node’s sides, just outside it, or
+through its centre: eg <code class="docutils literal notranslate"><span class="pre">right:#000000</span>
+<span class="pre">top:green</span></code> (left, right, top, bottom, or
+vertical and horizontal through the centre –
+under its text; a window’s through its title
+bar – each with its colour; black if none).
 A template, as <code class="docutils literal notranslate"><span class="pre">vis/label</span></code> is, so it can say
 what the node’s attributes do: eg, a KNet
 node’s truth marks (see <a class="reference internal" href="exampleApps.html"><span class="doc">Plugins</span></a>)</p></td>
@@ -962,6 +1006,7 @@ short.</p>
             <ul>
 <li><a class="reference internal" href="#">Viewing</a><ul>
 <li><a class="reference internal" href="#what-s-shown">What’s shown</a></li>
+<li><a class="reference internal" href="#copies-of-an-object">Copies of an object</a></li>
 <li><a class="reference internal" href="#hiding-and-erasing-by-category">Hiding and erasing by category</a></li>
 <li><a class="reference internal" href="#arranging">Arranging</a></li>
 <li><a class="reference internal" href="#finding-things">Finding things</a></li>

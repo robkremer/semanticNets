@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="sn.view.graphics.visibilityDialog module" href="sn.view.graphics.visibilityDialog.html"><link rel="prev" title="sn.view.graphics.viewViewport module" href="sn.view.graphics.viewViewport.html">
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
-    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.2.0 and Furo 2025.12.19 -->
         <title>sn.view.graphics.viewVisibility module - Semantic Nets 1.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
@@ -507,11 +507,14 @@ when the category was hidden, and hiding the category again hides this too
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.viewVisibility.VisibilityMixin.shouldHide">
 <span class="sig-name descname"><span class="pre">shouldHide</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vo</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewVisibility.VisibilityMixin.shouldHide" title="Link to this definition">¶</a></dt>
-<dd><p>Whether <em>vo</em> shouldn’t be drawn just now: it’s in a hidden category; or
-it’s a relation to or from something hidden (it would lead nowhere), or a
-containment drawn as being inside its window (see <em>VRelation.inWindow()</em>);
-or it’s inside a hidden context’s window; or it’s a part its box’s window
-shows as a pane (see <em>VObject.isTiledPart()</em>).</p>
+<dd><p>Whether <em>vo</em> shouldn’t be drawn just now: it’s in a hidden category
+(wherever it is: in a plain box too; but not if it’s part of what a
+shown rule, definition, query or other quoting box says: see
+<em>_inShownPattern()</em>); or it’s a relation to or from something hidden (it
+would lead nowhere), or a containment drawn as being inside its window
+(see <em>VRelation.inWindow()</em>); or it’s inside a hidden context’s window;
+or it’s a part its box’s window shows as a pane (see
+<em>VObject.isTiledPart()</em>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>vo</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p>
@@ -545,12 +548,17 @@ it, or it’s a variable that what <em>w</em> contains uses (eg: the base rules�
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="sn.view.graphics.viewVisibility.VisibilityMixin._inCollapsedWindow">
-<span class="sig-name descname"><span class="pre">_inCollapsedWindow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vo</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewVisibility.VisibilityMixin._inCollapsedWindow" title="Link to this definition">¶</a></dt>
-<dd><p>Whether <em>vo</em> is drawn inside a collapsed context window (see
-<em>VObject.setCollapsed()</em>), and so not shown: part of its content (see
-<em>_holds()</em>). (What’s in a window inside it is hidden with that window: see
-<em>shouldHide()</em>.)</p>
+<dt class="sig sig-object py" id="sn.view.graphics.viewVisibility.VisibilityMixin._inShownPattern">
+<span class="sig-name descname"><span class="pre">_inShownPattern</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vo</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewVisibility.VisibilityMixin._inShownPattern" title="Link to this definition">¶</a></dt>
+<dd><p>Whether <em>vo</em> is part of the content (see <em>_holds()</em>) of a shown window
+whose box quotes what it holds (see <em>GraphObject.quotesContents()</em>: a
+rule, definition, query, constraint or other context, or one of their
+parts – the boxes whose contents the reasoner takes as patterns, not
+facts): it’s then shown whatever its category, as hiding part of a
+pattern would leave it saying something else – and so are the ends of
+its relations (see <em>VRelation._applyHidden()</em>: eg: the SN type person, for
+a rule’s ?x isa person). What a plain box (a collection, eg: a Rep Plus
+box) holds is hidden as anything else is.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>vo</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p>
@@ -562,11 +570,12 @@ it, or it’s a variable that what <em>w</em> contains uses (eg: the base rules�
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="sn.view.graphics.viewVisibility.VisibilityMixin._inShownContext">
-<span class="sig-name descname"><span class="pre">_inShownContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vo</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewVisibility.VisibilityMixin._inShownContext" title="Link to this definition">¶</a></dt>
-<dd><p>Whether <em>vo</em> is part of a shown context window’s content (see <em>_holds()</em>:
-eg: an isa link in a rule’s consequent): it’s then shown whatever its
-category – it’s what the rule says, not clutter.</p>
+<dt class="sig sig-object py" id="sn.view.graphics.viewVisibility.VisibilityMixin._inCollapsedWindow">
+<span class="sig-name descname"><span class="pre">_inCollapsedWindow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vo</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewVisibility.VisibilityMixin._inCollapsedWindow" title="Link to this definition">¶</a></dt>
+<dd><p>Whether <em>vo</em> is drawn inside a collapsed context window (see
+<em>VObject.setCollapsed()</em>), and so not shown: part of its content (see
+<em>_holds()</em>). (What’s in a window inside it is hidden with that window: see
+<em>shouldHide()</em>.)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>vo</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p>
@@ -867,8 +876,8 @@ out, or puts them back: see <em>SNGView.update()</em>). Nested, only the outermo
 <li><a class="reference internal" href="#sn.view.graphics.viewVisibility.VisibilityMixin._reportExempt"><code class="docutils literal notranslate"><span class="pre">VisibilityMixin._reportExempt()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewVisibility.VisibilityMixin.shouldHide"><code class="docutils literal notranslate"><span class="pre">VisibilityMixin.shouldHide()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewVisibility.VisibilityMixin._holds"><code class="docutils literal notranslate"><span class="pre">VisibilityMixin._holds()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewVisibility.VisibilityMixin._inShownPattern"><code class="docutils literal notranslate"><span class="pre">VisibilityMixin._inShownPattern()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewVisibility.VisibilityMixin._inCollapsedWindow"><code class="docutils literal notranslate"><span class="pre">VisibilityMixin._inCollapsedWindow()</span></code></a></li>
-<li><a class="reference internal" href="#sn.view.graphics.viewVisibility.VisibilityMixin._inShownContext"><code class="docutils literal notranslate"><span class="pre">VisibilityMixin._inShownContext()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewVisibility.VisibilityMixin.applyVisibility"><code class="docutils literal notranslate"><span class="pre">VisibilityMixin.applyVisibility()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewVisibility.VisibilityMixin._visibilityMenu"><code class="docutils literal notranslate"><span class="pre">VisibilityMixin._visibilityMenu()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewVisibility.VisibilityMixin.relationCategory"><code class="docutils literal notranslate"><span class="pre">VisibilityMixin.relationCategory()</span></code></a></li>

@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="sn.model.reasoner module" href="sn.model.reasoner.html"><link rel="prev" title="sn.model.nemoReasoner module" href="sn.model.nemoReasoner.html">
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
-    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.2.0 and Furo 2025.12.19 -->
         <title>sn.model.prologReasoner module - Semantic Nets 1.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
@@ -553,7 +553,7 @@ are bound (a variable that’s only in a negation is its own).</p>
 (<code class="docutils literal notranslate"><span class="pre">ans</span></code> by default) over the fact vocabulary and the rule base’s results
 (holds/3, isa_star/2, inherited/3, …), as for clingo. Strings are written
 in double quotes. Eg:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">r</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;ans(X) :- name(F,&quot;fred&quot;), name(T,&quot;owns&quot;), holds(T,F,X).&#39;</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">r</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">'ans(X) :- name(F,"fred"), name(T,"owns"), holds(T,F,X).'</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>A query’s clauses run in the order they’re written (start with what binds

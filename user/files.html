@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="The Terminal" href="terminal.html"><link rel="prev" title="Animation Layout" href="animation.html">
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
-    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.2.0 and Furo 2025.12.19 -->
         <title>Files and Settings - Semantic Nets 1.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
@@ -404,6 +404,10 @@ first first), or with the terminal’s <code class="docutils literal notranslate
 they’re near it. A super-model that can’t be
 found when the model is opened is reported, and kept in the list for when it’s
 there again.</p>
+<p>A model’s <em>canonicalViews</em> (also in <strong>Model preferences…</strong>, ticked to
+start with) says whether its views are canonical: each object in a view a
+different object of the model. Untick it and a view may show a node more
+than once, as copies (see <a class="reference internal" href="viewing.html"><span class="doc">Viewing</span></a>).</p>
 <ul class="simple">
 <li><p><strong>File | Open…</strong> opens a view – or a model, with a default view of it.</p></li>
 <li><p><strong>File | Open URL…</strong> does the same for one at a URL, eg: on the web
@@ -622,30 +626,35 @@ answers, and the query)</p></td>
 <td><p>the colour of a query that has no
 answers</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">gui/backgroundColor</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">gui/copyHighlightColor</span></code></p></td>
+<td><p>the colour of the glow on the other
+copies of what the mouse is over, or
+what’s selected (see <a class="reference internal" href="viewing.html"><span class="doc">Viewing</span></a>)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">gui/backgroundColor</span></code></p></td>
 <td><p>the canvas’s colour</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">gui/allowEditingSystemObjects</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">gui/allowEditingSystemObjects</span></code></p></td>
 <td><p>whether the system model’s objects can be
 edited (best left off)</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">gui/optimization/aggressiveLabelPlacement</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">gui/optimization/aggressiveLabelPlacement</span></code></p></td>
 <td><p>how hard to look for a free spot for a
 relation’s label when placing it: 0 (not
 at all) to 10 (furthest; slow in a crowded
 view, as when showing a big model)</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">reasoner/engine</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">reasoner/engine</span></code></p></td>
 <td><p>the reasoner engine: clingo, nemo, clips or
 prolog (see <a class="reference internal" href="reasoning.html"><span class="doc">Reasoning</span></a>)</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">reasoner/python</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">reasoner/python</span></code></p></td>
 <td><p>for the app: a Python 3.14 on the computer
 whose packages it may use, for an engine it
 doesn’t include (blank: it looks for one;
 see <a class="reference internal" href="reasoning.html"><span class="doc">Reasoning</span></a>)</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">loggingLevel</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">loggingLevel</span></code></p></td>
 <td><p>how much detail the program’s messages go
 into</p></td>
 </tr>

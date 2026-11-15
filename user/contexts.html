@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Reasoning" href="reasoning.html"><link rel="prev" title="Editing" href="editing.html">
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
-    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.2.0 and Furo 2025.12.19 -->
         <title>Contexts: Rules, Definitions, Queries, Constraints and Requirements - Semantic Nets 1.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
@@ -449,8 +449,10 @@ box’s <strong>parts</strong> (see <a class="reference internal" href="#parts">
 <li><p>The <strong>triangle</strong> at the left of the title bar collapses the window to its
 title bar (and expands it again). The contents of a collapsed window are
 hidden.</p></li>
-<li><p>Resize a window by dragging its corner handles, like any other object. Its
-contents stay put.</p></li>
+<li><p>Resize a window by dragging its corner handles, like any other object. What’s
+in a rule’s (definition’s, requirement’s) panes moves across with them, so
+the divider never passes over anything; a one-pane window’s contents stay
+put. Whatever the new size leaves outside its pane is put back in it.</p></li>
 <li><p>Dragging the window carries its contents along with it.</p></li>
 <li><p><strong>Right-click in a pane</strong> for the <strong>new instance of / new subtype of</strong>
 menus, as on the background: what you make goes where you clicked, in that
@@ -484,18 +486,29 @@ objects inside it.</p>
 pane’s role: dropped in a rule’s antecedent pane, it’s part of the
 antecedent. Dragging it into the other pane switches its role.</p></li>
 <li><p><strong>Drag it out</strong> of the window to remove it from the context.</p></li>
-<li><p>A <strong>relation</strong> drawn between two objects, whose label lands in a pane, is
-contained in that pane too.
-A contained relation’s label, while it floats (follows its ends), stays in
-its pane, even if one of its ends is moved outside the window. To take the
-relation out of the context, drag its label out.</p></li>
+<li><p>A <strong>relation</strong> goes in the context its two ends are both in – the
+innermost one, if they’re nested – wherever its label happens to land.
+One that crosses a window’s border isn’t that window’s: drawn from
+something in one window to something in another (or out on the canvas),
+it’s in neither – it’s in the global context, or in the window both
+windows are in. The exception is a variable, which means something only
+in its pattern: a relation from a rule’s <code class="docutils literal notranslate"><span class="pre">?x</span></code> to something outside the
+rule (eg: <code class="docutils literal notranslate"><span class="pre">?x</span> <span class="pre">isa</span> <span class="pre">person</span></code>) is the rule’s.
+In a rule, the relation’s label says which part it’s in: drag it from the
+antecedent pane to the consequent pane to make it part of the consequent.
+Its label never takes it out of the context its ends are in: dragged out
+of the window, it’s put back in it.</p></li>
+<li><p><strong>Move an end</strong> into or out of a window (or drop a window, with its
+contents, into another window, or drag it out), and the relation moves to
+the context its ends are both in now: drag one end of a relation out of
+its window and the relation is no longer the window’s.</p></li>
 <li><p>You can also say it explicitly: draw a <em>contains</em> relation from the window
 to an object (or, for one of a rule’s panes, an <em>antecedent</em>, <em>consequent</em>,
 <em>definiendum</em>, <em>definiens</em>, … relation from the rule: it works at once,
 and is moved into the part the next time the model is read – see
 <a class="reference internal" href="#parts"><span class="std std-ref">Parts: antecedent, consequent, …</span></a>). This is the way to put an object in <em>both</em> of a rule’s
-panes, or to have a context contain something that stays outside its
-window (its arc is then drawn).</p></li>
+panes, or to have a one-pane context (eg: a query) contain something that
+stays outside its window (its arc is then drawn).</p></li>
 </ul>
 <p>Windows can be nested: an object dropped where windows overlap goes into the
 innermost one. A window goes only into a one-pane window (a plain context, a
@@ -512,10 +525,24 @@ smaller is pushed off, carrying its contents. A relation’s label that floats
 between its ends keeps out of windows that don’t contain it. This happens
 when a change is made – a drop, not while dragging – and is undone with
 it.</p>
-<p>A variable means something only in its pattern, so one that’s outside the
-window it belongs in (eg: placed by <strong>show all</strong>, or in a view saved that
-way) is put back in it, in its pane, at the next change – the window grows
-if there’s no room.</p>
+<p>Nothing is left <strong>astride a window’s edge</strong>, or the divider between its
+panes, so there’s never any doubt which window – or which side of a rule –
+holds something. At the next change (and when a view is opened), whatever is
+astride one is put wholly in its pane: the pane its containment says (a
+consequent’s object stays in the consequent, wherever its centre was), nudged
+in if it’s near, or set out in rows if it’s far. Its text counts too, where
+it’s wider than its box. A one-pane window’s object (not a variable) whose
+centre is outside is pushed wholly out instead, still held, with its arc
+drawn. The window grows if there’s no room.</p>
+<p>What a rule, definition or requirement holds is always inside its window: its
+parts aren’t drawn, so neither would their arcs be, and outside nothing would
+say which part holds it. So is a variable, in any window: it means something
+only in its pattern. One that’s outside the window it belongs in (eg: placed
+by <strong>show all</strong>, or in a view saved that way) is put back in it. (Dragging
+something out of a window still takes it out of the context: then it’s not
+in the rule at all.) A variable a rule uses on both sides, but neither part
+holds (eg: the base rules’ <code class="docutils literal notranslate"><span class="pre">!a</span></code> and <code class="docutils literal notranslate"><span class="pre">!b</span></code>), is drawn in the antecedent,
+where it’s matched.</p>
 <p>The layouts (arranged now, or kept arranged) don’t arrange what’s in
 windows, and don’t put anything on a window: a window that what they arrange
 would land on is moved aside, the least it takes, carrying its contents.</p>
@@ -849,8 +876,8 @@ rule meets the requirement as well as one in the model.</p>
 what it reports can only be the condition’s variables: the required part’s
 own ones have no single value. A requirement with nothing in its required
 pane is reported as a problem itself, as it can’t be violated. (A variable
-astride the divider is in both panes: its constraints are tests on what the
-condition matches.)</p>
+both panes use, but neither holds, is drawn in the condition pane: its
+constraints are tests on what the condition matches.)</p>
 </section>
 <section id="unrelated-parts-of-a-pattern">
 <h2>Unrelated parts of a pattern<a class="headerlink" href="#unrelated-parts-of-a-pattern" title="Link to this heading">¶</a></h2>

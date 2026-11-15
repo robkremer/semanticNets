@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="sn.view.graphics.directoryWindow module" href="sn.view.graphics.directoryWindow.html"><link rel="prev" title="sn.view.graphics.connectors module" href="sn.view.graphics.connectors.html">
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
-    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.2.0 and Furo 2025.12.19 -->
         <title>sn.view.graphics.decorators module - Semantic Nets 1.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
@@ -747,6 +747,19 @@ least width * <em>NOMINAL_ASPECT</em>), capped at “vis/maxSize”.</p></li>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.decorators.WrappingText.extent">
+<span class="sig-name descname"><span class="pre">extent</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.decorators.WrappingText.extent" title="Link to this definition">¶</a></dt>
+<dd><p>The (width, height), in view units, of its text as last drawn (see
+<em>shownText()</em>): bigger than the owner’s box where the text overflows it
+(see <em>wrapWidth()</em>) – (0, 0) if there’s none.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[float, float]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.decorators.WrappingText.preferredSize">
 <span class="sig-name descname"><span class="pre">preferredSize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.decorators.WrappingText.preferredSize" title="Link to this definition">¶</a></dt>
 <dd><p>The (width, height) of the automatically sized box for <em>text</em> (see <em>preferredLayout()</em>).</p>
@@ -1330,6 +1343,12 @@ no answers), “gui/highlightColorNegative”.</p>
 <dd><p>How far (screen pixels) the glow extends beyond the owner.</p>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.decorators.Highlight.TAG">
+<span class="sig-name descname"><span class="pre">TAG</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'queryHighlight'</span></span><a class="headerlink" href="#sn.view.graphics.decorators.Highlight.TAG" title="Link to this definition">¶</a></dt>
+<dd><p>The glow’s own canvas tag (besides its owner’s and “highlight”).</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.decorators.Highlight.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">owner</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.decorators.Highlight.__init__" title="Link to this definition">¶</a></dt>
@@ -1351,6 +1370,19 @@ no answers), “gui/highlightColorNegative”.</p>
 <dd></dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.decorators.Highlight.color">
+<span class="sig-name descname"><span class="pre">color</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.decorators.Highlight.color" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The glow’s colour (see <em>__init__()</em>).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.decorators.Highlight.draw">
 <span class="sig-name descname"><span class="pre">draw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fast</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.decorators.Highlight.draw" title="Link to this definition">¶</a></dt>
 <dd><p>Draw it (or draw it again), as its owner now is.</p>
@@ -1364,6 +1396,56 @@ no answers), “gui/highlightColorNegative”.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sn.view.graphics.decorators.Highlight._abc_impl">
 <span class="sig-name descname"><span class="pre">_abc_impl</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;_abc._abc_data</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#sn.view.graphics.decorators.Highlight._abc_impl" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sn.view.graphics.decorators.CopyHighlight">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.decorators.</span></span><span class="sig-name descname"><span class="pre">CopyHighlight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">owner</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.decorators.CopyHighlight" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sn.view.graphics.decorators.Highlight" title="sn.view.graphics.decorators.Highlight"><code class="xref py py-class docutils literal notranslate"><span class="pre">Highlight</span></code></a></p>
+<p>The glow on the other copies of what the mouse is over, or what’s selected,
+in a view that isn’t canonical (see <em>SNGView.glowCopies()</em>): a <em>Highlight</em>
+in its own colour, the “gui/copyHighlightColor” preference – and a little
+narrower, so a query’s glow on the same object still shows round it.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.decorators.CopyHighlight.PAD">
+<span class="sig-name descname"><span class="pre">PAD</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></span><a class="headerlink" href="#sn.view.graphics.decorators.CopyHighlight.PAD" title="Link to this definition">¶</a></dt>
+<dd><p>How far (screen pixels) the glow extends beyond the owner.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.decorators.CopyHighlight.TAG">
+<span class="sig-name descname"><span class="pre">TAG</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'copyHighlight'</span></span><a class="headerlink" href="#sn.view.graphics.decorators.CopyHighlight.TAG" title="Link to this definition">¶</a></dt>
+<dd><p>The glow’s own canvas tag (besides its owner’s and “highlight”).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.decorators.CopyHighlight.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">owner</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.decorators.CopyHighlight.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>negative</strong> – Marks something negative (eg: “no”), in its own colour.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.decorators.CopyHighlight.color">
+<span class="sig-name descname"><span class="pre">color</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.decorators.CopyHighlight.color" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The glow’s colour (see <em>__init__()</em>).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.decorators.CopyHighlight._abc_impl">
+<span class="sig-name descname"><span class="pre">_abc_impl</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;_abc._abc_data</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#sn.view.graphics.decorators.CopyHighlight._abc_impl" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -1508,17 +1590,24 @@ shadow item is erased and we return immediately.</p>
 <dd><p>The sides a node’s side bars can be on (see <em>SideBars</em>).</p>
 </dd></dl>
 
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.view.graphics.decorators.THROUGH">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.decorators.</span></span><span class="sig-name descname"><span class="pre">THROUGH</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('vertical',</span> <span class="pre">'horizontal')</span></span><a class="headerlink" href="#sn.view.graphics.decorators.THROUGH" title="Link to this definition">¶</a></dt>
+<dd><p>Where a node’s bars can go through its centre, instead of at a side (see <em>SideBars</em>).</p>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="sn.view.graphics.decorators.parseSideBars">
 <span class="sig-prename descclassname"><span class="pre">sn.view.graphics.decorators.</span></span><span class="sig-name descname"><span class="pre">parseSideBars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.decorators.parseSideBars" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>text</strong> (<em>str</em>) – Side bars (see <em>SideBars</em>): eg: “right:#000000 top:green”,
-“left”. Separated by spaces or commas.</p>
+“vertical:brown”, “left”. Separated by spaces or commas.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>(side, colour) for each bar, in order (”” for no colour: the
-default); and the items that aren’t one (eg: “middle”).</p>
+<dd class="field-even"><p>(where, colour) for each bar, in order – where: one of <em>SIDES</em>
+or <em>THROUGH</em> (”” for no colour: the default); and the items that aren’t
+one (eg: “middle”).</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>tuple[list[tuple[str, str]], list[str]]</p>
@@ -1530,13 +1619,16 @@ default); and the items that aren’t one (eg: “middle”).</p>
 <dt class="sig sig-object py" id="sn.view.graphics.decorators.SideBars">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.decorators.</span></span><span class="sig-name descname"><span class="pre">SideBars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">owner</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.decorators.SideBars" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#sn.view.graphics.decorators.Decorator" title="sn.view.graphics.decorators.Decorator"><code class="xref py py-class docutils literal notranslate"><span class="pre">Decorator</span></code></a></p>
-<p>Bars along the sides of a node, just outside it, as its “vis/sideBars”
-attribute says: a template, as labels are (see <em>labels</em>: so it can show the
-node’s attributes, or what a hook says), whose text lists the sides –
-left, right, top, bottom – each with its colour after a colon, eg:
-“right:#000000 top:green” (black if it has none). Two on one side go one
-outside the other. Eg: Gaines’s truth marks – a vertical bar beside a node
-for true, a horizontal one over it for false (see the rnetReader plugin).
+<p>Bars along the sides of a node, just outside it, or through its centre, as
+its “vis/sideBars” attribute says: a template, as labels are (see
+<em>labels</em>: so it can show the node’s attributes, or what a hook says), whose
+text lists them – the sides left, right, top, bottom, or vertical and
+horizontal (through the centre, from edge to edge: under its text) – each
+with its colour after a colon, eg: “right:#000000 top:green” (black if it
+has none). Two on one side go one outside the other; two through the
+centre the same way, side by side. A window’s (a context’s) go through its
+title bar. Eg: Gaines’s truth marks – a vertical bar through a node for
+true, a horizontal one for false (see the rnetReader plugin).
 Drawn, at the view’s zoom, only while there are any.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sn.view.graphics.decorators.SideBars._abc_impl">
@@ -1546,7 +1638,13 @@ Drawn, at the view’s zoom, only while there are any.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="sn.view.graphics.decorators.SideBars.WIDTH">
 <span class="sig-name descname"><span class="pre">WIDTH</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></span><a class="headerlink" href="#sn.view.graphics.decorators.SideBars.WIDTH" title="Link to this definition">¶</a></dt>
-<dd><p>A bar’s thickness (view units: zoomed).</p>
+<dd><p>A bar’s thickness at a side (view units: zoomed).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sn.view.graphics.decorators.SideBars.THROUGH_WIDTH">
+<span class="sig-name descname"><span class="pre">THROUGH_WIDTH</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2.5</span></span><a class="headerlink" href="#sn.view.graphics.decorators.SideBars.THROUGH_WIDTH" title="Link to this definition">¶</a></dt>
+<dd><p>A bar’s thickness through the centre (view units: zoomed): thinner, as it’s over the node, to hide less of its text.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -1599,7 +1697,7 @@ since canvas stacking is one global list, not per-object (see
 <span class="sig-name descname"><span class="pre">bars</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.decorators.SideBars.bars" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The bars the owner has now: (side, colour) – from its
+<dd class="field-odd"><p>The bars the owner has now: (where, colour) – from its
 “vis/sideBars” (see the class doc).</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1617,6 +1715,24 @@ since canvas stacking is one global list, not per-object (see
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.decorators.SideBars._throughBox">
+<span class="sig-name descname"><span class="pre">_throughBox</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fast</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.decorators.SideBars._throughBox" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fast</strong> (<em>bool</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Where the bars through the centre go (canvas coordinates): the
+owner’s box – a window’s title bar – inside its outline; and the
+canvas item they go under (its text), if there is one.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[list[float], int | None]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1737,6 +1853,7 @@ since canvas stacking is one global list, not per-object (see
 <li><a class="reference internal" href="#sn.view.graphics.decorators.WrappingText.wrapWidth"><code class="docutils literal notranslate"><span class="pre">WrappingText.wrapWidth()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.decorators.WrappingText.longestWord"><code class="docutils literal notranslate"><span class="pre">WrappingText.longestWord()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.decorators.WrappingText.preferredLayout"><code class="docutils literal notranslate"><span class="pre">WrappingText.preferredLayout()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.decorators.WrappingText.extent"><code class="docutils literal notranslate"><span class="pre">WrappingText.extent()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.decorators.WrappingText.preferredSize"><code class="docutils literal notranslate"><span class="pre">WrappingText.preferredSize()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.decorators.WrappingText.lineHeight"><code class="docutils literal notranslate"><span class="pre">WrappingText.lineHeight()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.decorators.WrappingText.preferredBoundingBox"><code class="docutils literal notranslate"><span class="pre">WrappingText.preferredBoundingBox()</span></code></a></li>
@@ -1814,12 +1931,22 @@ since canvas stacking is one global list, not per-object (see
 <li><a class="reference internal" href="#sn.view.graphics.decorators._blend"><code class="docutils literal notranslate"><span class="pre">_blend()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.decorators.Highlight"><code class="docutils literal notranslate"><span class="pre">Highlight</span></code></a><ul>
 <li><a class="reference internal" href="#sn.view.graphics.decorators.Highlight.PAD"><code class="docutils literal notranslate"><span class="pre">Highlight.PAD</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.decorators.Highlight.TAG"><code class="docutils literal notranslate"><span class="pre">Highlight.TAG</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.decorators.Highlight.__init__"><code class="docutils literal notranslate"><span class="pre">Highlight.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.decorators.Highlight.id"><code class="docutils literal notranslate"><span class="pre">Highlight.id</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.decorators.Highlight._oval"><code class="docutils literal notranslate"><span class="pre">Highlight._oval</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.decorators.Highlight.color"><code class="docutils literal notranslate"><span class="pre">Highlight.color()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.decorators.Highlight.draw"><code class="docutils literal notranslate"><span class="pre">Highlight.draw()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.decorators.Highlight.delete"><code class="docutils literal notranslate"><span class="pre">Highlight.delete()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.decorators.Highlight._abc_impl"><code class="docutils literal notranslate"><span class="pre">Highlight._abc_impl</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sn.view.graphics.decorators.CopyHighlight"><code class="docutils literal notranslate"><span class="pre">CopyHighlight</span></code></a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.decorators.CopyHighlight.PAD"><code class="docutils literal notranslate"><span class="pre">CopyHighlight.PAD</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.decorators.CopyHighlight.TAG"><code class="docutils literal notranslate"><span class="pre">CopyHighlight.TAG</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.decorators.CopyHighlight.__init__"><code class="docutils literal notranslate"><span class="pre">CopyHighlight.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.decorators.CopyHighlight.color"><code class="docutils literal notranslate"><span class="pre">CopyHighlight.color()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.decorators.CopyHighlight._abc_impl"><code class="docutils literal notranslate"><span class="pre">CopyHighlight._abc_impl</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#sn.view.graphics.decorators.DisabledSlash"><code class="docutils literal notranslate"><span class="pre">DisabledSlash</span></code></a><ul>
@@ -1844,10 +1971,12 @@ since canvas stacking is one global list, not per-object (see
 </ul>
 </li>
 <li><a class="reference internal" href="#sn.view.graphics.decorators.SIDES"><code class="docutils literal notranslate"><span class="pre">SIDES</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.decorators.THROUGH"><code class="docutils literal notranslate"><span class="pre">THROUGH</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.decorators.parseSideBars"><code class="docutils literal notranslate"><span class="pre">parseSideBars()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.decorators.SideBars"><code class="docutils literal notranslate"><span class="pre">SideBars</span></code></a><ul>
 <li><a class="reference internal" href="#sn.view.graphics.decorators.SideBars._abc_impl"><code class="docutils literal notranslate"><span class="pre">SideBars._abc_impl</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.decorators.SideBars.WIDTH"><code class="docutils literal notranslate"><span class="pre">SideBars.WIDTH</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.decorators.SideBars.THROUGH_WIDTH"><code class="docutils literal notranslate"><span class="pre">SideBars.THROUGH_WIDTH</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.decorators.SideBars.GAP"><code class="docutils literal notranslate"><span class="pre">SideBars.GAP</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.decorators.SideBars.COLOR"><code class="docutils literal notranslate"><span class="pre">SideBars.COLOR</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.decorators.SideBars.__init__"><code class="docutils literal notranslate"><span class="pre">SideBars.__init__()</span></code></a></li>
@@ -1855,6 +1984,7 @@ since canvas stacking is one global list, not per-object (see
 <li><a class="reference internal" href="#sn.view.graphics.decorators.SideBars._bad"><code class="docutils literal notranslate"><span class="pre">SideBars._bad</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.decorators.SideBars.bars"><code class="docutils literal notranslate"><span class="pre">SideBars.bars()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.decorators.SideBars._warn"><code class="docutils literal notranslate"><span class="pre">SideBars._warn()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.decorators.SideBars._throughBox"><code class="docutils literal notranslate"><span class="pre">SideBars._throughBox()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.decorators.SideBars.draw"><code class="docutils literal notranslate"><span class="pre">SideBars.draw()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.decorators.SideBars._erase"><code class="docutils literal notranslate"><span class="pre">SideBars._erase()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.decorators.SideBars.delete"><code class="docutils literal notranslate"><span class="pre">SideBars.delete()</span></code></a></li>

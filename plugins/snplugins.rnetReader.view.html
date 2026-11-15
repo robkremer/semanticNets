@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="On Line Models" href="../modelsDoc/index.html"><link rel="prev" title="snplugins.rnetReader.reader module" href="snplugins.rnetReader.reader.html">
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
-    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.2.0 and Furo 2025.12.19 -->
         <title>snplugins.rnetReader.view module - Semantic Nets 1.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
@@ -431,8 +431,12 @@ size it was, holding what it contains (its “contains” relations are drawn
 only when what they hold is outside it); and the relations added for what
 the boxes mean (see <em>reader.addConstructMeaning()</em>) are drawn too. (Not
 the types.)</p>
+<p>Nodes KNet takes to be one (see <em>reader.knetNames()</em>) are copies of one
+node (see <em>SNGView.canonical()</em>), each where it was, showing its own label
+(see <em>VObject.ownLabel</em>), each link drawn between the copies it joins.</p>
 <p>Nothing is placed meanwhile (see <em>SNGView.localLayout</em>): everything’s put
-where it was.</p>
+where it was – and then whatever CNet drew astride a box’s edge is put
+wholly in the box, or out of it (by its centre: see <em>SNGView.tidyWindows()</em>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -450,7 +454,7 @@ where it was.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="snplugins.rnetReader.view.convert">
-<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.view.</span></span><span class="sig-name descname"><span class="pre">convert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rnetPath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modelPath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viewPath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sameLabels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.view.convert" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.view.</span></span><span class="sig-name descname"><span class="pre">convert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rnetPath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modelPath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viewPath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.view.convert" title="Link to this definition">¶</a></dt>
 <dd><p>Make the model and view of the net <em>rnetPath</em>, save them, and open the
 view. If the model or view are there already, it asks first, and replaces
 them.</p>
@@ -462,8 +466,8 @@ them.</p>
 <li><p><strong>modelPath</strong> (<em>str</em>) – The model’s file (“.snm”).</p></li>
 <li><p><strong>viewPath</strong> (<em>str</em>) – The view’s file (“.snv”).</p></li>
 <li><p><strong>parent</strong> (<em>Misc</em><em> | </em><em>None</em>) – The window any messages are about (eg: the dialog), if any.</p></li>
-<li><p><strong>sameLabels</strong> (<em>bool</em>) – Whether nodes with the same label are the same node, as
-KNet takes them (see <em>reader.addSameLabels()</em>).</p></li>
+<li><p><strong>merge</strong> (<em>bool</em>) – Whether the nodes KNet takes to be one (see
+<em>reader.knetNames()</em>) are one node, shown as copies.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -482,9 +486,9 @@ KNet takes them (see <em>reader.addSameLabels()</em>).</p></li>
 <p>The front end: the net file to read, and the model and view files to make
 of it (each with “Choose…”), which follow the net file (see
 <em>defaultPaths()</em>) – the view following the model – until they’re changed
-by hand; whether nodes with the same label are one node (as KNet takes
-them: on at first); and “Go” (see <em>convert()</em>), which, when it’s done,
-closes it.</p>
+by hand; whether the nodes KNet takes to be one are one node (see
+<em>reader.knetNames()</em>: on at first); and “Go” (see <em>convert()</em>), which,
+when it’s done, closes it.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="sn.view.graphics.viewContainment module" href="sn.view.graphics.viewContainment.html"><link rel="prev" title="sn.view.graphics.viewBase module" href="sn.view.graphics.viewBase.html">
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
-    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.2.0 and Furo 2025.12.19 -->
         <title>sn.view.graphics.viewCommands module - Semantic Nets 1.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
@@ -410,9 +410,10 @@ contents), or, if its size differs, reshaped (a window grown for what’s put in
 <dt class="sig sig-object py" id="sn.view.graphics.viewCommands._BumpIntruders">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewCommands.</span></span><span class="sig-name descname"><span class="pre">_BumpIntruders</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewCommands._BumpIntruders" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://robkremer.github.io/pythonUtils/dev/util.command.html#util.command.Command" title="(in pythonUtils)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Command</span></code></a></p>
-<p>Put the variables that have strayed out of their windows back in them
-(see <em>SNGView.homeStrays()</em>), and push what’s in a context window it
-doesn’t belong in out of it (see <em>SNGView.bumpIntruders()</em>). What to move is worked out when it’s first done
+<p>Put what’s astride a window’s edge, or a divider between its panes, or has
+strayed out of a window it can’t be outside, wholly in its pane or out of
+the window (see <em>SNGView.keepInPanes()</em>), and push what’s in a context
+window it doesn’t belong in out of it (see <em>SNGView.bumpIntruders()</em>). What to move is worked out when it’s first done
 – after the commands before it, so a drop into a pane has already made the
 object contained – and replayed on a redo.</p>
 <dl class="field-list simple">

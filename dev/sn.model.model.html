@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="sn.model.modelPrefs module" href="sn.model.modelPrefs.html"><link rel="prev" title="sn.model.directory module" href="sn.model.directory.html">
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
-    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.2.0 and Furo 2025.12.19 -->
         <title>sn.model.model module - Semantic Nets 1.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
@@ -2088,6 +2088,39 @@ saved with a model by name (“sn:/sn”, “sn:/baseRules”: see
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="sn.model.model.Model.canonicalViews">
+<span class="sig-name descname"><span class="pre">canonicalViews</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.model.Model.canonicalViews" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Whether this model’s views are canonical (its <em>CANONICAL_VIEWS</em>
+preference: see <em>sn.model.modelPrefs</em>): each object in a view stands for
+a different one of its objects. If not, a view may show an object more
+than once (copies: see <em>SNGView.canonical()</em>) – eg: a Rep Plus net’s
+(see the rnetReader plugin).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.model.model.Model.setCanonicalViews">
+<span class="sig-name descname"><span class="pre">setCanonicalViews</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">canonical</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.model.Model.setCanonicalViews" title="Link to this definition">¶</a></dt>
+<dd><p>Set whether this model’s views are canonical (see <em>canonicalViews()</em>).
+(Open views fold any copies they have into one when it’s set back to
+true: see <em>SNGView.foldCopies()</em>.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>canonical</strong> (<em>bool</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="sn.model.model.Model.superModelPaths">
 <span class="sig-name descname"><span class="pre">superModelPaths</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.model.model.Model.superModelPaths" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
@@ -3709,6 +3742,8 @@ told (see <em>AttributedObject.notifySupersChanged()</em>): what they inherit
 <li><a class="reference internal" href="#sn.model.model.Model.serializationHeader"><code class="docutils literal notranslate"><span class="pre">Model.serializationHeader()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.Model.objectCount"><code class="docutils literal notranslate"><span class="pre">Model.objectCount()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.Model.implicitSuperDBs"><code class="docutils literal notranslate"><span class="pre">Model.implicitSuperDBs()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.model.Model.canonicalViews"><code class="docutils literal notranslate"><span class="pre">Model.canonicalViews()</span></code></a></li>
+<li><a class="reference internal" href="#sn.model.model.Model.setCanonicalViews"><code class="docutils literal notranslate"><span class="pre">Model.setCanonicalViews()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.Model.superModelPaths"><code class="docutils literal notranslate"><span class="pre">Model.superModelPaths()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.Model.replacedRef"><code class="docutils literal notranslate"><span class="pre">Model.replacedRef()</span></code></a></li>
 <li><a class="reference internal" href="#sn.model.model.Model.replaceSuperModel"><code class="docutils literal notranslate"><span class="pre">Model.replaceSuperModel()</span></code></a></li>

@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="snplugins.rnetReader.probes module" href="snplugins.rnetReader.probes.html"><link rel="prev" title="snplugins.rnetReader.forms module" href="snplugins.rnetReader.forms.html">
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
-    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.2.0 and Furo 2025.12.19 -->
         <title>snplugins.rnetReader.hooks module - Semantic Nets 1.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
@@ -385,8 +385,8 @@ is true (T: what it stands for holds), false (F), both (Belnap’s “both”:
 inconsistent), or unmarked:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">vis/sideBars</span></code> (<em>markBars()</em>): a vertical bar beside a node that’s
-marked true, and a horizontal one over a node that’s marked false, as
+<li><p><code class="docutils literal notranslate"><span class="pre">vis/sideBars</span></code> (<em>markBars()</em>): a vertical bar through a node that’s
+marked true, and a horizontal one through a node that’s marked false, as
 Gaines draws them, in the colour of how it got the mark (see
 <em>MARK_COLORS</em>);</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">.menu/Mark/True</span></code>, <code class="docutils literal notranslate"><span class="pre">.menu/Mark/False</span></code> (<em>markTrue()</em>, <em>markFalse()</em>):
@@ -458,8 +458,8 @@ mark kind) is drawn black.</p>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="snplugins.rnetReader.hooks.SIDES">
-<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">SIDES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'markFalse':</span> <span class="pre">'top',</span> <span class="pre">'markTrue':</span> <span class="pre">'right'}</span></span><a class="headerlink" href="#snplugins.rnetReader.hooks.SIDES" title="Link to this definition">¶</a></dt>
-<dd><p>Where each mark’s bar goes (see <em>sn.view.graphics.decorators.SideBars</em>): true’s beside the node, false’s over it.</p>
+<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.hooks.</span></span><span class="sig-name descname"><span class="pre">SIDES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'markFalse':</span> <span class="pre">'horizontal',</span> <span class="pre">'markTrue':</span> <span class="pre">'vertical'}</span></span><a class="headerlink" href="#snplugins.rnetReader.hooks.SIDES" title="Link to this definition">¶</a></dt>
+<dd><p>Where each mark’s bar goes (see <em>sn.view.graphics.decorators.SideBars</em>): through the node’s centre, as Gaines draws them – true’s vertical, false’s horizontal.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -490,7 +490,7 @@ mark kind) is drawn black.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>obj</em>’s marks as side bars (see the module doc): eg,
-“right:#693804” for a node asserted true.</p>
+“vertical:#693804” for a node asserted true.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>str</p>

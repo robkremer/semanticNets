@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="snplugins.rnetReader.hooks module" href="snplugins.rnetReader.hooks.html"><link rel="prev" title="snplugins.rnetReader.expansion module" href="snplugins.rnetReader.expansion.html">
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
-    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.2.0 and Furo 2025.12.19 -->
         <title>snplugins.rnetReader.forms module - Semantic Nets 1.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
@@ -462,8 +462,8 @@ negation’s negates, not the excludes and coexcludes it is too.</p>
 individual relations (not the reasoner’s) between its nodes (see
 <em>probes.netNodes()</em>) of the kernel’s relation types – not those that
 define a connective (see <em>reader.CONNECTIVES</em>: they’re definitions), nor
-those the reader made for what boxes and labels mean (<em>reader.CONSTRUCT_EXCLUDES</em>,
-<em>reader.SAME_LABEL</em>). In the model’s order.</p>
+those the reader made for what construct boxes mean (<em>reader.CONSTRUCT_EXCLUDES</em>).
+In the model’s order.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>list[<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a>]</p>
@@ -911,7 +911,7 @@ equivalence, one of a node to itself but an inconsistent one), sorted.</p>
 <span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.forms.</span></span><span class="sig-name descname"><span class="pre">checkMerge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">importing</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">imported</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.forms.checkMerge" title="Link to this definition">¶</a></dt>
 <dd><p>What merging the net <em>imported</em> into <em>importing</em> does (Gaines, section
 3.2): the nodes of the two with the same label (see <em>probes.name()</em>) are one
-– equivalent (the reader’s same label relation’s SN supertype) – and the
+– equivalent (the kernel’s <em>equivalent</em>) – and the
 merge is reasoned over (a model with the two as its super-models, not
 saved), and what it concludes compared with what each net does alone.</p>
 <dl class="field-list simple">

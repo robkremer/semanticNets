@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="sn.view.textUserInterface module" href="sn.view.textUserInterface.html"><link rel="prev" title="sn.view.graphics.vobjects module" href="sn.view.graphics.vobjects.html">
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
-    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.2.0 and Furo 2025.12.19 -->
         <title>sn.view.graphics.vrelations module - Semantic Nets 1.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
@@ -387,6 +387,27 @@
 </div></blockquote>
 <p><em>Code author: Rob Kremer &lt;<a class="reference external" href="mailto:robkremer&#37;&#52;&#48;me&#46;com">robkremer<span>&#64;</span>me<span>&#46;</span>com</a>&gt;</em></p>
 <hr class="docutils" />
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.vrelations._gap">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.vrelations.</span></span><span class="sig-name descname"><span class="pre">_gap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vrelations._gap" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p></li>
+<li><p><strong>b</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>How far <em>a</em> is from <em>b</em>, to choose the nearest copy (see
+<em>VRelation._copyFor()</em>): how far <em>a</em>’s centre is outside <em>b</em>’s box (0 if
+it’s inside: eg, the copy in a box), then from <em>b</em>’s centre.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[float, float]</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="sn.view.graphics.vrelations.VRelation">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.vrelations.</span></span><span class="sig-name descname"><span class="pre">VRelation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modelObject</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">typ</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Oval'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">floating</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_bb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vrelations.VRelation" title="Link to this definition">¶</a></dt>
@@ -465,6 +486,32 @@ both how to write them and read them.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vrelations.VRelation._pinnedID">
+<span class="sig-name descname"><span class="pre">_pinnedID</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">end</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vrelations.VRelation._pinnedID" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>end</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The id in the view of the copy its <em>end</em> (“src” or “dst”) is
+drawn to, if that end’s model object has more than one in the view (see
+<em>_resolveEnd()</em>); else None (left out of the file).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sn.view.graphics.vrelations.VRelation.pinnedEnds">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">pinnedEnds</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><span class="pre">VObject</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sn.view.graphics.vrelations.VRelation.pinnedEnds" title="Link to this definition">¶</a></dt>
+<dd><p>{“src”: copy, “dst”: copy}: the copy of each end’s model object it’s drawn
+to, once chosen (in a view that isn’t canonical: see
+<em>SNGView.canonical()</em>, <em>_resolveEnd()</em>). Not the model’s: a view’s own.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.vrelations.VRelation.makeModelObjectSubtype">
 <span class="sig-name descname"><span class="pre">makeModelObjectSubtype</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">individual</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vrelations.VRelation.makeModelObjectSubtype" title="Link to this definition">¶</a></dt>
 <dd><p>Make a subtype (or, if <em>individual</em>, an instance) of its model object.</p>
@@ -524,6 +571,29 @@ is drawn to top if top is already shown, but never adds it.)</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>end</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.vrelations.VRelation._copyFor">
+<span class="sig-name descname"><span class="pre">_copyFor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">end</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vrelations.VRelation._copyFor" title="Link to this definition">¶</a></dt>
+<dd><p>Which copy of <em>target</em> (its <em>end</em>’s model object) the line is drawn to, in
+a view that isn’t canonical and shows it more than once (see
+<em>SNGView.canonical()</em>): the one chosen for it before (see <em>pinnedEnds</em>:
+eg, read with the view, or an end dragged onto it), if it’s still there
+and still <em>target</em>’s; else the nearest to the other end – one inside the
+other end, if it’s a box (eg: the copy a box’s “contains” holds) – and
+that’s remembered. None if there’s no copy (or just one: that’s the one).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>end</strong> (<em>str</em>)</p></li>
+<li><p><strong>target</strong> (<a class="reference internal" href="sn.model.model.html#sn.model.model.GraphObject" title="sn.model.model.GraphObject"><em>GraphObject</em></a>)</p></li>
+</ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a> | None</p>
@@ -761,10 +831,12 @@ canvas items are reused, eg: when one is marked as asserted).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.vrelations.VRelation._applyHidden">
 <span class="sig-name descname"><span class="pre">_applyHidden</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.vrelations.VRelation._applyHidden" title="Link to this definition">¶</a></dt>
-<dd><p>As <em>VObject._applyHidden()</em>; but a relation that’s part of a shown context
-window’s content (eg: a rule’s conclusion that ?x isa person) shows its
-ends too: one hidden by its category (eg: “types”) is shown anyway (see
-<em>SNGView._exemptIfFiltered()</em>), or what the window says would be cut short.</p>
+<dd><p>As <em>VObject._applyHidden()</em>; but a relation that’s part of what a shown
+rule, definition, query or other quoting box says (see
+<em>SNGView._inShownPattern()</em>: eg: a rule’s conclusion that ?x isa person)
+shows its ends too: one hidden by its category (eg: “types”) is shown
+anyway (see <em>SNGView._exemptIfFiltered()</em>), or what the box says would be
+cut short.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
@@ -1124,15 +1196,19 @@ by <em>VObject.update()</em>.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">sn.view.graphics.vrelations module</a><ul>
+<li><a class="reference internal" href="#sn.view.graphics.vrelations._gap"><code class="docutils literal notranslate"><span class="pre">_gap()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation"><code class="docutils literal notranslate"><span class="pre">VRelation</span></code></a><ul>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.granularity"><code class="docutils literal notranslate"><span class="pre">VRelation.granularity</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.__init__"><code class="docutils literal notranslate"><span class="pre">VRelation.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.getInstantiationInfo"><code class="docutils literal notranslate"><span class="pre">VRelation.getInstantiationInfo()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation._pinnedID"><code class="docutils literal notranslate"><span class="pre">VRelation._pinnedID()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.pinnedEnds"><code class="docutils literal notranslate"><span class="pre">VRelation.pinnedEnds</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.makeModelObjectSubtype"><code class="docutils literal notranslate"><span class="pre">VRelation.makeModelObjectSubtype()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.connect"><code class="docutils literal notranslate"><span class="pre">VRelation.connect()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.INHERITED_FADE"><code class="docutils literal notranslate"><span class="pre">VRelation.INHERITED_FADE</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.STUB_LENGTH"><code class="docutils literal notranslate"><span class="pre">VRelation.STUB_LENGTH</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation._resolveEnd"><code class="docutils literal notranslate"><span class="pre">VRelation._resolveEnd()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation._copyFor"><code class="docutils literal notranslate"><span class="pre">VRelation._copyFor()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation.inheritedEnds"><code class="docutils literal notranslate"><span class="pre">VRelation.inheritedEnds</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation._faded"><code class="docutils literal notranslate"><span class="pre">VRelation._faded()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.vrelations.VRelation._terminators"><code class="docutils literal notranslate"><span class="pre">VRelation._terminators()</span></code></a></li>

@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Layout" href="layout.html"><link rel="prev" title="The Reasoner" href="reasoner.html">
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
-    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.2.0 and Furo 2025.12.19 -->
         <title>The Graphical View - Semantic Nets 1.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
@@ -395,6 +395,17 @@ go; each VObject observes its GraphObject, redrawing when it changes. What a
 view saves is what isn’t in the model: which objects are shown, their
 positions and sizes, whether windows are collapsed, the hidden categories,
 the animation settings.</p>
+<p>A view is <em>canonical</em> (<code class="docutils literal notranslate"><span class="pre">SNGView.canonical()</span></code>) if each GraphObject has at
+most one VObject in it: that’s what its model says
+(<code class="docutils literal notranslate"><span class="pre">Model.canonicalViews()</span></code>, the <em>canonicalViews</em> model preference), and
+true to start with. In a view that isn’t, a node may have copies
+(<code class="docutils literal notranslate"><span class="pre">SNGView.makeCopy()</span></code>, <code class="docutils literal notranslate"><span class="pre">copiesOf()</span></code>; <code class="docutils literal notranslate"><span class="pre">viewObjectsFor()</span></code> returns them
+all): each relation is drawn once, to one copy of each end
+(<code class="docutils literal notranslate"><span class="pre">VRelation._copyFor()</span></code>: the copy it was drawn or dragged to,
+<code class="docutils literal notranslate"><span class="pre">pinnedEnds</span></code>, saved as <code class="docutils literal notranslate"><span class="pre">srcCopy</span></code>/<code class="docutils literal notranslate"><span class="pre">dstCopy</span></code> – or else the nearest to
+its other end), and a copy may show a label of its own (<code class="docutils literal notranslate"><span class="pre">VObject.ownLabel</span></code>).
+<code class="docutils literal notranslate"><span class="pre">SNGView.foldCopies()</span></code> folds a view’s copies back into one, as a view of a
+canonical model that has them is when it’s read.</p>
 <dl class="simple">
 <dt><a class="reference internal" href="../dev/sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">VObject</span></code></a></dt><dd><p>Most of the behaviour: drawing, selection, moving and resizing, menus,
 the attribute editor, markers, context windows, hiding.</p>
@@ -506,8 +517,20 @@ after a move, <code class="docutils literal notranslate"><span class="pre">SNGVi
 object was with where it is now, and makes or removes containment relations
 (or switches their type, between panes) to match. It’s all done with
 commands in the same composite command as the move, so a move into a window
-and its containment are undone together. A relation drawn whose label lands
-in a pane is contained the same way (<code class="docutils literal notranslate"><span class="pre">_containNewRelation</span></code>).</p>
+and its containment are undone together.</p>
+<p>A relation with both ends drawn goes by its ends, not its label
+(<a class="reference internal" href="../dev/sn.view.graphics.viewContainment.html#sn.view.graphics.viewContainment.relationScope" title="sn.view.graphics.viewContainment.relationScope"><code class="xref py py-func docutils literal notranslate"><span class="pre">relationScope()</span></code></a>): it’s in the
+innermost window both ends are in, or in none (the global context) – or,
+from a variable, in the variable’s window. A rule’s parts count as one
+window for this (<code class="docutils literal notranslate"><span class="pre">scopeBox</span></code>), whether they’re tiled as panes or shown as
+boxes; within the rule, the label’s pane says which part
+(<code class="docutils literal notranslate"><span class="pre">_scopePane</span></code>). A relation drawn is contained that way
+(<code class="docutils literal notranslate"><span class="pre">_containNewRelation</span></code>); after a move, <code class="docutils literal notranslate"><span class="pre">_rescope</span></code> brings it into line
+for each relation whose label was dragged, or whose end was moved, or that
+crosses the border of a moved window (<code class="docutils literal notranslate"><span class="pre">_acrossMovedWindows</span></code>). A move never
+puts a relation in a window only because a variable end is in it (moving
+<code class="docutils literal notranslate"><span class="pre">?x</span></code> doesn’t put its isa link in its rule), and containment shown by an
+arc (the label outside the window) is left alone.</p>
 <p>Containment that position shows isn’t drawn: a contains arc to an object
 inside its window is hidden
 (<a class="reference internal" href="../dev/sn.view.graphics.vrelations.html#sn.view.graphics.vrelations.VRelation.inWindow" title="sn.view.graphics.vrelations.VRelation.inWindow"><code class="xref py py-meth docutils literal notranslate"><span class="pre">inWindow()</span></code></a>). Dragging a
@@ -585,7 +608,7 @@ launcher would start a second Eclipse, which finds the workspace in use; this
 sends the running one the file as “path:line”, which it takes apart – give
 your Eclipse app’s own path; the first time, macOS asks whether this may
 control Eclipse):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">osascript</span> <span class="o">-</span><span class="n">e</span> <span class="s2">&quot;on run a&quot;</span> <span class="o">-</span><span class="n">e</span> <span class="s2">&quot;tell application </span><span class="se">\&quot;</span><span class="s2">/Applications/Eclipse.app</span><span class="se">\&quot;</span><span class="s2"> to open (POSIX file (item 1 of a))&quot;</span> <span class="o">-</span><span class="n">e</span> <span class="s2">&quot;end run&quot;</span> <span class="p">{</span><span class="n">path</span><span class="p">}:{</span><span class="n">line</span><span class="p">}</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">osascript</span> <span class="o">-</span><span class="n">e</span> <span class="s2">"on run a"</span> <span class="o">-</span><span class="n">e</span> <span class="s2">"tell application </span><span class="se">\"</span><span class="s2">/Applications/Eclipse.app</span><span class="se">\"</span><span class="s2"> to open (POSIX file (item 1 of a))"</span> <span class="o">-</span><span class="n">e</span> <span class="s2">"end run"</span> <span class="p">{</span><span class="n">path</span><span class="p">}:{</span><span class="n">line</span><span class="p">}</span>
 </pre></div>
 </div>
 </section>

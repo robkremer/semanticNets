@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Developer Guide" href="../developer/index.html"><link rel="prev" title="Keys and mouse" href="shortcuts.html">
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
-    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.2.0 and Furo 2025.12.19 -->
         <title>Plugins - Semantic Nets 1.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
@@ -639,10 +639,11 @@ modules most imported, in the middle of their groups.</p></li>
 <em>patterns.snm</em> and <em>patterns.snv</em>, in the folder you last made them in (the
 first time, next to the net). Change either, by typing or with
 <strong>Choose…</strong>: until you do, they follow the net file (and the view follows
-the model). <strong>Nodes with the same label are one node</strong> (on unless you turn
-it off) takes them as KNet does: a net may draw a node again, elsewhere, to
-keep its links short (turn it off for a figure that’s several copies of a
-net side by side, as some of Gaines’s are). <strong>Go</strong> makes them, asking first if they’re there already, and
+the model). <strong>Nodes KNet takes to be the same are one node</strong> (on unless you
+turn it off) takes them as KNet does: a net may draw a node again,
+elsewhere, to keep its links short, and that’s one node, drawn twice (turn
+it off for a figure that’s several copies of a net side by side, as some of
+Gaines’s are). <strong>Go</strong> makes them, asking first if they’re there already, and
 opens the view: the net as CNet drew it, each node where it was (half as big
 again, as the editor’s text is bigger), with its links between them.</p>
 <p>What’s in the net becomes:</p>
@@ -661,7 +662,11 @@ name, drawn as CNet draws it, with relation marks (see <a class="reference inter
 its arrowheads (heavy for a conjunction, double for a disjunction), the
 bars before them (one for an exclusion, two for a coexclusion, three for a
 negation), and a mark in the middle of a symmetric one – in its colour,
-straight, with no label. A dashed one’s colour is faded. It’s a subtype of
+with no label. Its line is smooth, where CNet’s are straight: it runs
+through its relation’s label, which is kept inside the box the relation is
+in (or outside one it isn’t), so a straight line would bend sharply there
+and hide the mark in its middle; a curve runs through it, the mark across
+it. A dashed one’s colour is faded. It’s a subtype of
 the KNet kernel’s relation type that its look says it is (see <a class="reference internal" href="#knet-s-kernel">KNet’s
 kernel</a>): an arrow is <em>includes</em>, an arrow with one, two or three bars
 <em>excludes</em>, <em>coexcludes</em> or <em>negates</em> (a heavy or double arrowhead is still
@@ -675,9 +680,21 @@ reverse</em> – is turned round: its arrow is at its destination, and its
 links go the other way, so it means what it shows.</p></li>
 <li><p><strong>Nodes</strong>: each node is an individual of its type, named by its label (a
 node with no label has no name). Pictures and drawings in the net are left
-out. Nodes with the same label (if the dialog says they’re one node) are
-joined by <em>same label</em> links, faded grey equivalences from each copy to
-the first.</p></li>
+out. If the dialog says so, the nodes KNet takes to be the same are one
+node, shown as copies (the model’s views aren’t canonical: see
+<a class="reference internal" href="viewing.html"><span class="doc">Viewing</span></a>), so the reasoners see one node, as KNet does. KNet’s rule:
+a node’s name is its label, with its line breaks as spaces, followed by
+the name of each <em>Context</em> box it’s in (in the file’s order), and of each
+<em>Construct</em> box but one whose name has a “—” (a construct’s poles): two
+nodes with the same name (big and small letters alike) are one. So in a
+construct <em>lens</em>, the pole <em>soft</em> is the same node as <em>soft lens</em> in the
+rules beside it: it’s named <em>soft lens</em>, and its copy in the box shows
+<em>soft</em>. Only the nodes of the node types KNet reasons about are taken so
+(those named <em>Concept</em>, <em>Context</em>, <em>Construct</em>, <em>Cases</em>, <em>Rules</em>,
+<em>Disjoint</em> or <em>Collection</em>: not titles, notes, frames or grids), and a box
+is never the same as a node. (Earlier versions of the reader made each copy a node
+of its own, joined by <em>same label</em> links: read the net again for the new
+form.)</p></li>
 <li><p><strong>Marks</strong>: a node’s mark (true, false, or both) is its <code class="docutils literal notranslate"><span class="pre">mark</span></code> attribute
 (<code class="docutils literal notranslate"><span class="pre">T</span></code>, <code class="docutils literal notranslate"><span class="pre">F</span></code> or <code class="docutils literal notranslate"><span class="pre">TF</span></code>), with the kind of mark (<code class="docutils literal notranslate"><span class="pre">markKind</span></code>: <em>Asserted</em>,
 <em>Included</em>, <em>Excluded</em>, …), whether it was derived (<code class="docutils literal notranslate"><span class="pre">markDerived</span></code>), and
@@ -695,8 +712,10 @@ links (CNet’s or KNet’s inferences, their types named so: eg <em>Includes
 derived</em>) are made as they are.</p></li>
 <li><p><strong>Boxes</strong>: a node of an enclosure type is drawn as a window, the size CNet
 drew it, and contains (by <em>contains</em> relations) the nodes inside it – each
-in the smallest box it’s in, so boxes can be nested. As in CNet, dragging
-a box carries what’s in it.</p></li>
+in the smallest box it’s in (by its centre), so boxes can be nested. A node
+CNet drew astride a box’s edge is moved wholly into the box, or out of it,
+so it’s plain which box holds it (see <a class="reference internal" href="contexts.html"><span class="doc">Contexts: Rules, Definitions, Queries, Constraints and Requirements</span></a>). As in CNet,
+dragging a box carries what’s in it.</p></li>
 <li><p><strong>Constructs</strong>: the poles in a <em>construct</em> box (the nodes it contains)
 exclude each other, as CNet’s construct macro says, unless an includes
 link (or a chain of them) joins them. Each such pair gets a <em>construct
@@ -766,8 +785,8 @@ type that <em>excludes</em> animal excludes dog.</p>
 </section>
 <section id="truth-marks">
 <h3>Truth marks<a class="headerlink" href="#truth-marks" title="Link to this heading">¶</a></h3>
-<p>Gaines marks a node true (a vertical bar beside it: there’s something it
-stands for) or false (a horizontal bar over it: it’s empty), or both
+<p>Gaines marks a node true (a vertical bar through it: there’s something it
+stands for) or false (a horizontal bar through it: it’s empty), or both
 (Belnap’s “both”: inconsistent). A KNet node – an instance of <em>knode</em>, as
 the reader’s nodes are – shows its marks as those bars, in Rep Plus’s
 colours for how it got them:</p>

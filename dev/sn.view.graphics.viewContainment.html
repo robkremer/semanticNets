@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="sn.view.graphics.viewEditing module" href="sn.view.graphics.viewEditing.html"><link rel="prev" title="sn.view.graphics.viewCommands module" href="sn.view.graphics.viewCommands.html">
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
-    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.2.0 and Furo 2025.12.19 -->
         <title>sn.view.graphics.viewContainment module - Semantic Nets 1.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
@@ -383,12 +383,6 @@
 <em>sn.view.graphics.sngView.SNGView</em> (see <em>viewBase</em>).</p>
 <p>Created on Oct 18, 2026 (from sngView.py)</p>
 <p><em>Code author: Rob Kremer &lt;<a class="reference external" href="mailto:robkremer&#37;&#52;&#48;me&#46;com">robkremer<span>&#64;</span>me<span>&#46;</span>com</a>&gt;</em></p>
-<dl class="py data">
-<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.BOTH_PANES">
-<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewContainment.</span></span><span class="sig-name descname"><span class="pre">BOTH_PANES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'both'</span></span><a class="headerlink" href="#sn.view.graphics.viewContainment.BOTH_PANES" title="Link to this definition">¶</a></dt>
-<dd><p>The pseudo-pane (see <em>homePane()</em>) of something a rule or definition uses on both sides: astride the divider.</p>
-</dd></dl>
-
 <dl class="py function">
 <dt class="sig sig-object py" id="sn.view.graphics.viewContainment.rectArea">
 <span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewContainment.</span></span><span class="sig-name descname"><span class="pre">rectArea</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.rectArea" title="Link to this definition">¶</a></dt>
@@ -401,6 +395,53 @@
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.rectInside">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewContainment.</span></span><span class="sig-name descname"><span class="pre">rectInside</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">box</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rect</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.rectInside" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inset</strong> (<em>float</em>) – How far in from <em>rect</em>’s edges <em>box</em> must be.</p></li>
+<li><p><strong>box</strong> (<em>Sequence</em><em>[</em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>rect</strong> (<em>Sequence</em><em>[</em><em>float</em><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether <em>box</em> is wholly inside <em>rect</em> (edges included).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.PANE_INSET">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewContainment.</span></span><span class="sig-name descname"><span class="pre">PANE_INSET</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2.0</span></span><a class="headerlink" href="#sn.view.graphics.viewContainment.PANE_INSET" title="Link to this definition">¶</a></dt>
+<dd><p>How far (view units) in from its pane’s edges something must be to be in
+it (see <em>ContainmentMixin.keepInPanes()</em>): not on the window’s edge, or the
+divider, where it would look astride it.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.rectsOverlap">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewContainment.</span></span><span class="sig-name descname"><span class="pre">rectsOverlap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.rectsOverlap" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>Sequence</em><em>[</em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>b</strong> (<em>Sequence</em><em>[</em><em>float</em><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether rectangles <em>a</em> and <em>b</em> overlap (not just touch).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
@@ -478,19 +519,22 @@ window with one pane, that. Else, if the window contains it (<em>says</em>): the
 pane its containment says (antecedent, consequent, …) – the one it’s in,
 if it says both – or, for a plain “contains”, the one it’s in (or the
 nearer). If the window’s contents only use it (<em>used</em>): the side they use
-it on, or astride the divider (<em>BOTH_PANES</em>) if they use it on both (or
-somewhere not in a pane).</p>
+it on – the first (leftmost: eg, a rule’s antecedent) if they use it on
+more than one; or, if one that uses it is held by a plain “contains” (which
+puts it in whichever pane it’s in: None), the pane it’s in (or the nearer).
+Never astride a divider: whatever’s in a window is wholly in one of its
+panes (see <em>ContainmentMixin.keepInPanes()</em>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>panes</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Sequence</em><em>[</em><em>float</em><em>]</em><em>]</em>) – The window’s panes, by name.</p></li>
+<li><p><strong>panes</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Sequence</em><em>[</em><em>float</em><em>]</em><em>]</em>) – The window’s panes, by name, left to right.</p></li>
 <li><p><strong>center</strong> (<em>Sequence</em><em>[</em><em>float</em><em>]</em>) – Its centre.</p></li>
 <li><p><strong>says</strong> (<em>Callable</em><em>[</em><em>[</em><em>str</em><em>]</em><em>, </em><em>bool</em><em>] </em><em>| </em><em>None</em>) – If the window contains it: whether its containment says it’s in a pane.</p></li>
 <li><p><strong>used</strong> (<em>Collection</em><em>[</em><em>str</em><em> | </em><em>None</em><em>] </em><em>| </em><em>None</em>) – If it doesn’t: the panes in which the window’s contents use it (None: not in a pane).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The pane’s name, or <em>BOTH_PANES</em>.</p>
+<dd class="field-even"><p>The pane’s name.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>str</p>
@@ -500,18 +544,19 @@ somewhere not in a pane).</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="sn.view.graphics.viewContainment.sharedPane">
-<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewContainment.</span></span><span class="sig-name descname"><span class="pre">sharedPane</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.sharedPane" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewContainment.</span></span><span class="sig-name descname"><span class="pre">sharedPane</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">panes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.sharedPane" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>panes</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Sequence</em><em>[</em><em>float</em><em>]</em><em>]</em>) – A window’s panes, by name, left to right.</p></li>
 <li><p><strong>a</strong> (<em>str</em>)</p></li>
 <li><p><strong>b</strong> (<em>str</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The pane a relation belongs in whose ends belong in panes <em>a</em> and
-<em>b</em> of the same window: theirs; or, if they differ, the one that isn’t
-astride the divider (<em>BOTH_PANES</em>), or astride it if neither is.</p>
+<em>b</em> of the same window: theirs; or, if they differ, the first (leftmost)
+of them – so its label isn’t astride the divider.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>str</p>
@@ -526,12 +571,11 @@ astride the divider (<em>BOTH_PANES</em>), or astride it if neither is.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>panes</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Sequence</em><em>[</em><em>float</em><em>]</em><em>]</em>) – A window’s panes, by name.</p></li>
-<li><p><strong>pane</strong> (<em>str</em>) – One of them, or <em>BOTH_PANES</em> (for a window with two).</p></li>
+<li><p><strong>pane</strong> (<em>str</em>) – One of them.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The area what belongs in <em>pane</em> is kept in: the pane; or, for
-<em>BOTH_PANES</em>, a band astride the divider, a third of the window wide.</p>
+<dd class="field-even"><p>The area what belongs in <em>pane</em> is kept in: the pane.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>list[float]</p>
@@ -573,6 +617,60 @@ checks it isn’t already), “out” (no longer contained), or None (left be).<
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.commonBox">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewContainment.</span></span><span class="sig-name descname"><span class="pre">commonBox</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.commonBox" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>Sequence</em>) – The boxes one thing is in, innermost first (the box it’s in, the
+box that’s in, and so on out).</p></li>
+<li><p><strong>b</strong> (<em>Sequence</em>) – Another’s.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The innermost box both are in (the first of <em>a</em> that’s in <em>b</em>),
+or None if there’s none: the global context.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>W | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.relationScope">
+<span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewContainment.</span></span><span class="sig-name descname"><span class="pre">relationScope</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dst</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">srcVariable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dstVariable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.relationScope" title="Link to this definition">¶</a></dt>
+<dd><p>Which box (context) a relation belongs in – its scope – by where its two
+ends are: the innermost box both are in; or, if there’s none, the global
+context. Never where its label happens to be: a relation that crosses a
+box’s border isn’t that box’s (eg: from something in one box to something
+in another, or out in the world, is the global context’s – or that of
+the box both boxes are in).</p>
+<p>But a variable means something only in its box (its pattern: eg, a rule’s
+?x), so a relation from a variable to something outside the variable’s
+box (eg: ?x isa person, with person out in the world; or ?asker likes
+dave, in a query) is the variable’s box’s.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>src</strong> (<em>Sequence</em>) – The boxes its source is in, innermost first.</p></li>
+<li><p><strong>dst</strong> (<em>Sequence</em>) – Its destination’s.</p></li>
+<li><p><strong>srcVariable</strong> (<em>bool</em>) – Whether its source is a variable.</p></li>
+<li><p><strong>dstVariable</strong> (<em>bool</em>) – Whether its destination is.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(the innermost box both ends are in, or None; and the box of a
+variable end that’s inside that one – the source’s, if both are – or
+None). The relation’s scope is the second, if there is one, else the first.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[W | None, W | None]</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sn.view.graphics.viewContainment.</span></span><span class="sig-name descname"><span class="pre">ContainmentMixin</span></span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin" title="Link to this definition">¶</a></dt>
@@ -594,12 +692,6 @@ view or model changes (see <em>structureChanged()</em>).</p>
 <dd class="field-odd"><p>list[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>]</p>
 </dd>
 </dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin.BOTH_PANES">
-<span class="sig-name descname"><span class="pre">BOTH_PANES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'both'</span></span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin.BOTH_PANES" title="Link to this definition">¶</a></dt>
-<dd><p>The pseudo-pane (see <em>containmentHomes()</em>) of something a rule or definition uses on both sides: astride the divider.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -639,12 +731,12 @@ window (so nesting can’t go round in circles).</p>
 <p>In a rule or definition, the pane is the one its containment says
 (antecedent, consequent, definiendum, definiens) – the one it’s in, if
 it’s in both – or, for a plain “contains”, the one it’s in (or nearer). A
-variable used on both sides belongs astride the divider (<em>BOTH_PANES</em>).</p>
+variable used on both sides belongs in the first, the left one (eg: the
+antecedent, where it’s matched): nothing’s astride a divider.</p>
 <p>And a relation the context doesn’t contain, whose two ends both belong in
 the same window, belongs there too (eg: a pattern relation’s isa link to
 its type variable, !a -^r-&gt; !b to ^r): in its ends’ pane – or, if they’re
-in different ones, the one that isn’t astride the divider, or astride it
-if neither is.</p>
+in different ones, the left one.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -666,13 +758,12 @@ if it were the only one (default: all the windows).</p></li>
 <dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin.homeRect">
 <span class="sig-name descname"><span class="pre">homeRect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pane</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin.homeRect" title="Link to this definition">¶</a></dt>
 <dd><p>The area (view coords) of window <em>w</em> that what belongs in its <em>pane</em> (see
-<em>containmentHomes()</em>) is kept in: the pane; or, for <em>BOTH_PANES</em>, a band
-astride the divider, a third of the window wide.</p>
+<em>containmentHomes()</em>) is kept in: the pane.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>w</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>) – A context window.</p></li>
-<li><p><strong>pane</strong> (<em>str</em>) – One of its panes’ names, or <em>BOTH_PANES</em>.</p></li>
+<li><p><strong>pane</strong> (<em>str</em>) – One of its panes’ names.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -745,7 +836,7 @@ something (drawn as being inside it).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin.awayFromWindows">
-<span class="sig-name descname"><span class="pre">awayFromWindows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">box</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">homes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obstacles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin.awayFromWindows" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">awayFromWindows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">box</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">homes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obstacles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">also</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin.awayFromWindows" title="Link to this definition">¶</a></dt>
 <dd><p>How far to move <em>vo</em>, were its box <em>box</em>, to be clear of every context
 window it doesn’t belong in (see <em>belongsIn()</em>) – the least move, keeping
 it in its own pane if it’s in it now (see <em>containmentHomes()</em>), and off
@@ -757,6 +848,8 @@ it in its own pane if it’s in it now (see <em>containmentHomes()</em>), and of
 <li><p><strong>homes</strong> (<em>dict</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>tuple</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>str</em><em>]</em><em>]</em>) – As from <em>containmentHomes()</em> (for <em>vo</em> and the windows, at least).</p></li>
 <li><p><strong>obstacles</strong> (<em>list</em><em>[</em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Boxes not to land on.</p></li>
 <li><p><strong>gap</strong> (<em>float</em><em> | </em><em>None</em>) – The clearance (default: <em>BUMP_GAP</em>).</p></li>
+<li><p><strong>also</strong> (<em>Iterable</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>]</em>) – Windows to be clear of although it belongs in them (eg: one
+it’s half out of, that may hold it from outside: see <em>keepInPanes()</em>).</p></li>
 <li><p><strong>vo</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p></li>
 </ul>
 </dd>
@@ -771,19 +864,21 @@ it in its own pane if it’s in it now (see <em>containmentHomes()</em>), and of
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin._intrudes">
-<span class="sig-name descname"><span class="pre">_intrudes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">homes</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin._intrudes" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">_intrudes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">homes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">box</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin._intrudes" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>box</strong> (<em>Sequence</em><em>[</em><em>float</em><em>] </em><em>| </em><em>None</em>) – What <em>vo</em> covers (see <em>VObject.drawnBox()</em>), if the caller has it.</p></li>
 <li><p><strong>vo</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p></li>
 <li><p><strong>w</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p></li>
 <li><p><strong>homes</strong> (<em>dict</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>tuple</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>str</em><em>]</em><em>]</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Whether <em>vo</em> overlaps window <em>w</em> without belonging in it (see
-<em>belongsIn()</em>). Of two windows overlapping, neither in the other, the
-smaller is the one that’s in the way.</p>
+<dd class="field-even"><p>Whether <em>vo</em> overlaps window <em>w</em> (its text too, where that
+overflows its shape) without belonging in it (see <em>belongsIn()</em>). Of two
+windows overlapping, neither in the other, the smaller is the one
+that’s in the way.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
@@ -915,12 +1010,159 @@ the box has no part of that SN type yet.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin.scopeBox">
+<span class="sig-name descname"><span class="pre">scopeBox</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin.scopeBox" title="Link to this definition">¶</a></dt>
+<dd><p>The box whose scope context window <em>w</em> is: <em>w</em> – or, if it shows a part
+of a box that’s drawn as a window too (eg: a rule’s antecedent, shown as
+a box in the rule’s window: see “show parts as boxes”), that box’s
+window. A rule’s parts are one scope, whether they’re its panes or boxes
+in it: its variables are shared by them (the ?x in its antecedent is the
+?x in its consequent), so what’s in which part is said by where a
+relation’s label is (see <em>_scopePane()</em>), not by its ends.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>w</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin._scopeFamily">
+<span class="sig-name descname"><span class="pre">_scopeFamily</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unit</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin._scopeFamily" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>unit</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Context window <em>unit</em> and the windows of its parts drawn as
+boxes in it (see <em>scopeBox()</em>), if it has any.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin._boxesAround">
+<span class="sig-name descname"><span class="pre">_boxesAround</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pt</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin._boxesAround" title="Link to this definition">¶</a></dt>
+<dd><p>The context windows (shown and expanded) with a pane at <em>pt</em>, innermost
+first: the boxes something there is in. A window can only be in a plain
+context (one pane, “contains”: see <em>_updateContainment()</em>) – one on a
+rule, say, is just on it, and will be pushed off (see <em>bumpIntruders()</em>)
+– so the windows after the first are only plain contexts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>pt</strong> (<em>Sequence</em><em>[</em><em>float</em><em>]</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin._endBoxes">
+<span class="sig-name descname"><span class="pre">_endBoxes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vo</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin._endBoxes" title="Link to this definition">¶</a></dt>
+<dd><p>The boxes one end of a relation is in, innermost first, each with the
+pane it’s in (None: whichever its centre’s in): by where it is (see
+<em>_boxesAround()</em>) – or, for a variable, where it belongs (see
+<em>containmentHomes()</em>): a variable dragged out of the rule whose
+patterns use it isn’t out of it (it’s put back: see <em>keepInPanes()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>vo</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[tuple[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, str | None]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin._relationScope">
+<span class="sig-name descname"><span class="pre">_relationScope</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dst</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin._relationScope" title="Link to this definition">¶</a></dt>
+<dd><p>The scope of a relation from <em>src</em> to <em>dst</em> (see <em>relationScope()</em>): the
+innermost box both ends are in, and that of a variable end inside it
+(each a context window – a rule’s, for its parts: see <em>scopeBox()</em> –
+or None).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>src</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p></li>
+<li><p><strong>dst</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Those two, and each end with the boxes it’s in (see <em>_endBoxes()</em>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a> | None, <a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a> | None, list[tuple[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, list[tuple[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, str | None]]]]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin._labelPane">
+<span class="sig-name descname"><span class="pre">_labelPane</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pt</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin._labelPane" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pt</strong> (<em>Sequence</em><em>[</em><em>float</em><em>] </em><em>| </em><em>None</em>) – Where a relation’s label is (or will be).</p></li>
+<li><p><strong>unit</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The pane of box <em>unit</em> (or the box of one of its parts: see
+<em>scopeBox()</em>) that <em>pt</em> is in – (the context window, its pane) –
+or None if it’s in none of them (or between the boxes of its parts).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, str] | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin._scopePane">
+<span class="sig-name descname"><span class="pre">_scopePane</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ends</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin._scopePane" title="Link to this definition">¶</a></dt>
+<dd><p>Where in box <em>unit</em> (its scope: see <em>_relationScope()</em>) a relation goes:
+in the pane (or the part’s box) its label is in at <em>pt</em>, if that’s in
+the box – eg: a rule’s consequent, for a relation between two of its
+antecedent’s variables – or else the one its ends are in (the first,
+the leftmost, if they’re in different ones: see <em>sharedPane()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ends</strong> (<em>Sequence</em><em>[</em><em>tuple</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>list</em><em>[</em><em>tuple</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>str</em><em> | </em><em>None</em><em>]</em><em>]</em><em>]</em><em>]</em>) – Its ends, each with the boxes it’s in (see <em>_endBoxes()</em>).</p></li>
+<li><p><strong>unit</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p></li>
+<li><p><strong>pt</strong> (<em>Sequence</em><em>[</em><em>float</em><em>] </em><em>| </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(the context window, its pane).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin._containNewRelation">
 <span class="sig-name descname"><span class="pre">_containNewRelation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mgr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">typ</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fromNode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">toNode</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin._containNewRelation" title="Link to this definition">¶</a></dt>
 <dd><p>A relation being made (by the queued command <em>creator</em>) from <em>fromNode</em> to
-<em>toNode</em> whose label will sit (midway between them) in a context window’s
-pane is contained by it – eg: one drawn between two things in a rule’s
-antecedent is part of the antecedent.</p>
+<em>toNode</em> goes in the box both its ends are in, the innermost (see
+<em>relationScope()</em>: or, from a variable, in the variable’s box) – in the
+pane its label will sit in (midway between its ends), if that’s in the
+box, else the pane its ends are in (see <em>_scopePane()</em>). Eg: one drawn
+between two things in a rule’s antecedent is part of the antecedent; one
+from something in a box to something in another box, or outside every
+box, is in neither: it’s the global context’s (or that of the box both
+boxes are in) – wherever its label lands.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -933,6 +1175,93 @@ antecedent is part of the antecedent.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin._scopedByEnds">
+<span class="sig-name descname"><span class="pre">_scopedByEnds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vo</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin._scopedByEnds" title="Link to this definition">¶</a></dt>
+<dd><p>Whether <em>vo</em> is a relation whose box is said by its ends (see
+<em>relationScope()</em>): one with both ends drawn, that takes part in
+containment (see <em>_containable()</em>). (Not one with no destination of its
+own: its label says where it is.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>vo</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin._acrossMovedWindows">
+<span class="sig-name descname"><span class="pre">_acrossMovedWindows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">oldCenters</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin._acrossMovedWindows" title="Link to this definition">¶</a></dt>
+<dd><p>The relations across the border of a context window that’s been moved
+(one end carried with it, at any depth, the other not): eg, from
+something in a box dropped into another box to something in that one –
+the innermost box both ends are in may have changed (see
+<em>relationScope()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>oldCenters</strong> (<em>Mapping</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em><em>]</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[<a class="reference internal" href="sn.view.graphics.vrelations.html#sn.view.graphics.vrelations.VRelation" title="sn.view.graphics.vrelations.VRelation"><em>VRelation</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin._rescope">
+<span class="sig-name descname"><span class="pre">_rescope</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oldCenters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dragged</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">windows</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin._rescope" title="Link to this definition">¶</a></dt>
+<dd><p>Bring the containment of relation <em>vr</em> – its label dragged (<em>dragged</em>),
+or an end moved – into line with its scope (see <em>relationScope()</em>): in
+the innermost box both its ends are in (or none: the global context),
+in the pane its label’s in if it’s dragged there (eg: from a rule’s
+antecedent to its consequent). A relation in a variable’s box stays in
+it; but a move never puts one in a box just because a variable end is
+in it (eg: moving ?x in a rule doesn’t put its isa link to person, out
+in the world, in the rule). A box’s containment of it from outside –
+its label out of the window, its arc drawn: eg, a context’s statement
+about things out in the world – is left be.</p>
+<p>Call inside a <em>CompositeCommandMgr</em> (see <em>_updateContainment()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vr</strong> (<a class="reference internal" href="sn.view.graphics.vrelations.html#sn.view.graphics.vrelations.VRelation" title="sn.view.graphics.vrelations.VRelation"><em>VRelation</em></a>)</p></li>
+<li><p><strong>oldCenters</strong> (<em>Mapping</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em><em>]</em>)</p></li>
+<li><p><strong>dragged</strong> (<em>bool</em>)</p></li>
+<li><p><strong>windows</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether anything changed.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin.belongsByEnds">
+<span class="sig-name descname"><span class="pre">belongsByEnds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin.belongsByEnds" title="Link to this definition">¶</a></dt>
+<dd><p>Whether context window <em>w</em> holds relation <em>vr</em> because its ends say so
+(see <em>relationScope()</em>): its scope is <em>w</em>’s box (see <em>scopeBox()</em>). So
+its label belongs inside the window, never out of it with its arc drawn
+(see <em>misplaced()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vr</strong> (<a class="reference internal" href="sn.view.graphics.vrelations.html#sn.view.graphics.vrelations.VRelation" title="sn.view.graphics.vrelations.VRelation"><em>VRelation</em></a>)</p></li>
+<li><p><strong>w</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
@@ -955,10 +1284,14 @@ world”, with its contains arc showing) is left alone.</p></li>
 <li><p>A window goes into another only if that’s a plain context (one pane,
 “contains”): not into a rule, definition or requirement.</p></li>
 </ul>
-<p>Relations in <em>draggedAlong</em> only moved because an end did, so their
-labels’ positions say little: one is put in a window only if both its
-ends are in the window, and taken out only if neither end is. (Otherwise
-moving ?x in a rule would pull in, eg: its isa link to a type outside.)</p>
+<p>A relation (with both its ends drawn) is in the box its ends are both in
+(see <em>relationScope()</em>), not the one its label’s in: dragging its label
+only moves it from one pane (or part) of that box to another (eg: from a
+rule’s antecedent to its consequent); moving an end into or out of a box
+– or the box it’s in into or out of another – moves the relation into
+the innermost box both its ends are in now (see <em>_rescope()</em>). Those in
+<em>draggedAlong</em> only moved because an end did. (A relation with no
+destination of its own goes by its label: in the window it’s dropped in.)</p>
 <p>Call inside a <em>CompositeCommandMgr</em>, so it’s undone with the move.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1020,12 +1353,61 @@ there’s nothing to move.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin.holdsOnlyInside">
+<span class="sig-name descname"><span class="pre">holdsOnlyInside</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin.holdsOnlyInside" title="Link to this definition">¶</a></dt>
+<dd><p>Whether what context window <em>w</em> holds must be inside it: a window with
+more than one pane (eg: a rule’s antecedent and consequent), or whose
+parts are its panes (see <em>GraphObject.tilesParts()</em>). What its parts
+hold can’t be shown from outside – the parts aren’t drawn, so neither
+are their “contains” arcs – and outside, nothing would say which part
+holds it. (What a one-pane window holds may be out in the world, its
+arc drawn: eg, a query’s subject.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>w</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin.misplaced">
+<span class="sig-name descname"><span class="pre">misplaced</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">homes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin.misplaced" title="Link to this definition">¶</a></dt>
+<dd><p>What’s not wholly where it belongs (see <em>containmentHomes()</em>): astride the
+edge of its window, or of its pane (eg: a rule’s divider), or outside a
+window it can’t be outside. Each is to be brought wholly into its pane –
+if it’s a variable (it means something only in its pattern), or its window
+holds only what’s inside it (see <em>holdsOnlyInside()</em>), or its centre’s
+in the window (where a drop would have put it), or it’s a relation the
+window holds because its ends say so (see <em>belongsByEnds()</em>: its label
+dragged out of the box its ends are in) – or else pushed wholly out of
+the window, its arc drawn. Not floating relation labels (they
+follow their ends, kept in their panes: see <em>VRelation.placedLabel()</em>),
+nor what’s in a hidden or collapsed window.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>homes</strong> (<em>dict</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>tuple</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>str</em><em>]</em><em>] </em><em>| </em><em>None</em>) – <em>containmentHomes()</em>, if the caller has it.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Each window’s objects to bring into their panes; and (object,
+window) for each to push out of the window it’s half in.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[dict[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, list[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>]], list[tuple[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, <a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>]]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin.strayVariables">
 <span class="sig-name descname"><span class="pre">strayVariables</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">homes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin.strayVariables" title="Link to this definition">¶</a></dt>
 <dd><p>The variables outside the window they belong in (see
 <em>containmentHomes()</em>): a variable means something only in its pattern,
 so one out on the canvas – eg: put there by “show all”, or a layout –
-is never where it’s meant to be. Not those of a collapsed or hidden window.</p>
+is never where it’s meant to be. Not those of a collapsed or hidden window.
+(They’re among what <em>keepInPanes()</em> puts back.)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>homes</strong> (<em>dict</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>tuple</em><em>[</em><a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a><em>, </em><em>str</em><em>]</em><em>] </em><em>| </em><em>None</em>) – <em>containmentHomes()</em>, if the caller has it.</p>
@@ -1040,18 +1422,66 @@ is never where it’s meant to be. Not those of a collapsed or hidden window.</p
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin.homeStrays">
-<span class="sig-name descname"><span class="pre">homeStrays</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin.homeStrays" title="Link to this definition">¶</a></dt>
-<dd><p>Put each variable that’s outside the window it belongs in (see
-<em>strayVariables()</em>) back in it: in its pane, at a free spot, as
-<em>gatherIntoWindow()</em> would (growing the window if there’s no room). Done
-after every command (see <em>ViewDoList</em>), with <em>bumpIntruders()</em>.</p>
+<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin.keepInPanes">
+<span class="sig-name descname"><span class="pre">keepInPanes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin.keepInPanes" title="Link to this definition">¶</a></dt>
+<dd><p>Leave nothing astride a window’s edge or a divider between its panes,
+nor outside a window it can’t be outside (see <em>misplaced()</em>): each is
+put wholly in its pane, at a free spot – nudged in, if it’s near, or
+else set out in rows, as <em>gatherIntoWindow()</em> would (growing the window
+if there’s no room) – or, if it may be outside and its centre is,
+pushed wholly out, the least it takes (see <em>awayFromWindows()</em>). So
+there’s never any doubt which window, or which side of a rule, holds
+something. Done after every command (see <em>ViewDoList</em>), with
+<em>bumpIntruders()</em>, and when a view’s read.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>(object, its box before, after) for each one moved or resized, in order.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>list[tuple[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, list[int], list[int]]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin.tidyWindows">
+<span class="sig-name descname"><span class="pre">tidyWindows</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin.tidyWindows" title="Link to this definition">¶</a></dt>
+<dd><p>Put what the windows hold wholly in their panes (see <em>keepInPanes()</em>),
+and push what’s in a window it doesn’t belong in out of it (see
+<em>bumpIntruders()</em>): eg, when a view saved before either was done (or
+by a program) is read. Not undoable. (When a view’s read, it’s not a
+change: it’s not marked changed for it.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Whether anything moved.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sn.view.graphics.viewContainment.ContainmentMixin.followPanes">
+<span class="sig-name descname"><span class="pre">followPanes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sn.view.graphics.viewContainment.ContainmentMixin.followPanes" title="Link to this definition">¶</a></dt>
+<dd><p>Context window <em>w</em> has been resized by hand, from <em>old</em>: if it has more
+than one pane (eg: a rule), what’s in its panes moves across with them,
+in proportion to its width (the panes share it equally: so each thing
+keeps its place in its pane, and the divider doesn’t pass over it). Up
+and down, it stays put – and anything the resize leaves outside its pane
+is put back in it afterwards (see <em>keepInPanes()</em>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>old</strong> (<em>Sequence</em><em>[</em><em>float</em><em>]</em>) – Its box before.</p></li>
+<li><p><strong>w</strong> (<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(object, its box before, after) for each one moved.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[tuple[<a class="reference internal" href="sn.view.graphics.vobjects.html#sn.view.graphics.vobjects.VObject" title="sn.view.graphics.vobjects.VObject"><em>VObject</em></a>, list[int], list[int]]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1116,8 +1546,10 @@ after every command (see <em>ViewDoList</em>), with <em>bumpIntruders()</em>.</p
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">sn.view.graphics.viewContainment module</a><ul>
-<li><a class="reference internal" href="#sn.view.graphics.viewContainment.BOTH_PANES"><code class="docutils literal notranslate"><span class="pre">BOTH_PANES</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.rectArea"><code class="docutils literal notranslate"><span class="pre">rectArea()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewContainment.rectInside"><code class="docutils literal notranslate"><span class="pre">rectInside()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewContainment.PANE_INSET"><code class="docutils literal notranslate"><span class="pre">PANE_INSET</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewContainment.rectsOverlap"><code class="docutils literal notranslate"><span class="pre">rectsOverlap()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.paneAt"><code class="docutils literal notranslate"><span class="pre">paneAt()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.windowAt"><code class="docutils literal notranslate"><span class="pre">windowAt()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.homeWindow"><code class="docutils literal notranslate"><span class="pre">homeWindow()</span></code></a></li>
@@ -1125,9 +1557,10 @@ after every command (see <em>ViewDoList</em>), with <em>bumpIntruders()</em>.</p
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.sharedPane"><code class="docutils literal notranslate"><span class="pre">sharedPane()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.homeRect"><code class="docutils literal notranslate"><span class="pre">homeRect()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.containmentMove"><code class="docutils literal notranslate"><span class="pre">containmentMove()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewContainment.commonBox"><code class="docutils literal notranslate"><span class="pre">commonBox()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewContainment.relationScope"><code class="docutils literal notranslate"><span class="pre">relationScope()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin</span></code></a><ul>
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin.contextWindows"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin.contextWindows()</span></code></a></li>
-<li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin.BOTH_PANES"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin.BOTH_PANES</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin._containmentMaps"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin._containmentMaps()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin.containmentHomes"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin.containmentHomes()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin.homeRect"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin.homeRect()</span></code></a></li>
@@ -1144,12 +1577,27 @@ after every command (see <em>ViewDoList</em>), with <em>bumpIntruders()</em>.</p
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin._windowAt"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin._windowAt()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin._containCommand"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin._containCommand()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin._queue"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin._queue()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin.scopeBox"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin.scopeBox()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin._scopeFamily"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin._scopeFamily()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin._boxesAround"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin._boxesAround()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin._endBoxes"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin._endBoxes()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin._relationScope"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin._relationScope()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin._labelPane"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin._labelPane()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin._scopePane"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin._scopePane()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin._containNewRelation"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin._containNewRelation()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin._scopedByEnds"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin._scopedByEnds()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin._acrossMovedWindows"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin._acrossMovedWindows()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin._rescope"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin._rescope()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin.belongsByEnds"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin.belongsByEnds()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin._updateContainment"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin._updateContainment()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin.gatherIntoWindow"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin.gatherIntoWindow()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin._gatherPlan"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin._gatherPlan()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin.holdsOnlyInside"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin.holdsOnlyInside()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin.misplaced"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin.misplaced()</span></code></a></li>
 <li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin.strayVariables"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin.strayVariables()</span></code></a></li>
-<li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin.homeStrays"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin.homeStrays()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin.keepInPanes"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin.keepInPanes()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin.tidyWindows"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin.tidyWindows()</span></code></a></li>
+<li><a class="reference internal" href="#sn.view.graphics.viewContainment.ContainmentMixin.followPanes"><code class="docutils literal notranslate"><span class="pre">ContainmentMixin.followPanes()</span></code></a></li>
 </ul>
 </li>
 </ul>

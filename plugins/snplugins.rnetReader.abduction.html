@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="snplugins.rnetReader.existence module" href="snplugins.rnetReader.existence.html"><link rel="prev" title="snplugins.rnetReader package" href="snplugins.rnetReader.html">
         <link rel="prefetch" href="../_static/sn-logo.png" as="image">
 
-    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <link rel="shortcut icon" href="../_static/sn-favicon.png"><!-- Generated with Sphinx 9.2.0 and Furo 2025.12.19 -->
         <title>snplugins.rnetReader.abduction module - Semantic Nets 1.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
@@ -455,12 +455,6 @@ inference.</p>
 <dd><p>The marks the same in every world (by node id).</p>
 </dd></dl>
 
-<dl class="py attribute">
-<dt class="sig sig-object py" id="snplugins.rnetReader.abduction.Abduction.nodes">
-<span class="sig-name descname"><span class="pre">nodes</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node" title="sn.model.model.Node"><span class="pre">Node</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#snplugins.rnetReader.abduction.Abduction.nodes" title="Link to this definition">¶</a></dt>
-<dd><p>The net’s nodes, by id.</p>
-</dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="snplugins.rnetReader.abduction.Abduction.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">net</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">explanations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">worlds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">abduced</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nodes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.abduction.Abduction.__init__" title="Link to this definition">¶</a></dt>
@@ -479,6 +473,12 @@ inference.</p>
 <dd class="field-even"><p>None</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="snplugins.rnetReader.abduction.Abduction.nodes">
+<span class="sig-name descname"><span class="pre">nodes</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Node" title="sn.model.model.Node"><span class="pre">Node</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#snplugins.rnetReader.abduction.Abduction.nodes" title="Link to this definition">¶</a></dt>
+<dd><p>The net’s nodes, by id.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -550,31 +550,13 @@ the supposition’s – as letters (see <em>Abduction.worlds</em>); none, for on
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="snplugins.rnetReader.abduction._sameLabel">
-<span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.abduction.</span></span><span class="sig-name descname"><span class="pre">_sameLabel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.abduction._sameLabel" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>r</strong> (<a class="reference internal" href="../dev/sn.model.model.html#sn.model.model.Relation" title="sn.model.model.Relation"><em>Relation</em></a>)</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Whether <em>r</em> is one of the reader’s same-label equivalences (see <em>reader.addSameLabels()</em>).</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="snplugins.rnetReader.abduction.explanations">
 <span class="sig-prename descclassname"><span class="pre">snplugins.rnetReader.abduction.</span></span><span class="sig-name descname"><span class="pre">explanations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">marks</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#snplugins.rnetReader.abduction.explanations" title="Link to this definition">¶</a></dt>
 <dd><p>KNet’s bottom nodes below <em>node</em>: going down each link that includes it
 (asserted: of the kernel’s includes, or an SN subtype – eg, an
 equivalence, or a connective’s defining inclusion), from the node that
 includes it, if that has no mark (see <em>marks</em>), and on; a node no link
-includes is a bottom node (<em>node</em> itself, if none includes it). Nodes with
-the same label (see <em>reader.addSameLabels()</em>) are one node, as they’re
-KNet’s.</p>
+includes is a bottom node (<em>node</em> itself, if none includes it).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -700,15 +682,14 @@ the node that mark then). As what’s inferred, it doesn’t change the model
 <li><a class="reference internal" href="#snplugins.rnetReader.abduction.Abduction.explanations"><code class="docutils literal notranslate"><span class="pre">Abduction.explanations</span></code></a></li>
 <li><a class="reference internal" href="#snplugins.rnetReader.abduction.Abduction.worlds"><code class="docutils literal notranslate"><span class="pre">Abduction.worlds</span></code></a></li>
 <li><a class="reference internal" href="#snplugins.rnetReader.abduction.Abduction.abduced"><code class="docutils literal notranslate"><span class="pre">Abduction.abduced</span></code></a></li>
-<li><a class="reference internal" href="#snplugins.rnetReader.abduction.Abduction.nodes"><code class="docutils literal notranslate"><span class="pre">Abduction.nodes</span></code></a></li>
 <li><a class="reference internal" href="#snplugins.rnetReader.abduction.Abduction.__init__"><code class="docutils literal notranslate"><span class="pre">Abduction.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#snplugins.rnetReader.abduction.Abduction.nodes"><code class="docutils literal notranslate"><span class="pre">Abduction.nodes</span></code></a></li>
 <li><a class="reference internal" href="#snplugins.rnetReader.abduction.Abduction.report"><code class="docutils literal notranslate"><span class="pre">Abduction.report()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#snplugins.rnetReader.abduction._says"><code class="docutils literal notranslate"><span class="pre">_says()</span></code></a></li>
 <li><a class="reference internal" href="#snplugins.rnetReader.abduction._given"><code class="docutils literal notranslate"><span class="pre">_given()</span></code></a></li>
 <li><a class="reference internal" href="#snplugins.rnetReader.abduction._marks"><code class="docutils literal notranslate"><span class="pre">_marks()</span></code></a></li>
-<li><a class="reference internal" href="#snplugins.rnetReader.abduction._sameLabel"><code class="docutils literal notranslate"><span class="pre">_sameLabel()</span></code></a></li>
 <li><a class="reference internal" href="#snplugins.rnetReader.abduction.explanations"><code class="docutils literal notranslate"><span class="pre">explanations()</span></code></a></li>
 <li><a class="reference internal" href="#snplugins.rnetReader.abduction.abduce"><code class="docutils literal notranslate"><span class="pre">abduce()</span></code></a></li>
 <li><a class="reference internal" href="#snplugins.rnetReader.abduction.markAbduced"><code class="docutils literal notranslate"><span class="pre">markAbduced()</span></code></a></li>
