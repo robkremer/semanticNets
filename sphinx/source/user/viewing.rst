@@ -196,9 +196,12 @@ attribute                   controls
 ``vis/borderWidth``,
 ``vis/borderSmooth``
 ``vis/textColor``           its text
-``vis/sideBars``            bars along a node's sides, just outside it: eg
-                            ``right:#000000 top:green`` (left, right, top,
-                            bottom, each with its colour; black if none).
+``vis/sideBars``            bars along a node's sides, just outside it, or
+                            through its centre: eg ``right:#000000
+                            top:green`` (left, right, top, bottom, or
+                            vertical and horizontal through the centre --
+                            under its text; a window's through its title
+                            bar -- each with its colour; black if none).
                             A template, as ``vis/label`` is, so it can say
                             what the node's attributes do: eg, a KNet
                             node's truth marks (see :doc:`exampleApps`)

@@ -1078,18 +1078,22 @@ class ShadowDecorator(Decorator):
 SIDES = ("left", "right", "top", "bottom")
 "The sides a node's side bars can be on (see *SideBars*)."
 
+THROUGH = ("vertical", "horizontal")
+"Where a node's bars can go through its centre, instead of at a side (see *SideBars*)."
+
 def parseSideBars(text:str) -> tuple[list[tuple[str, str]], list[str]]:
   '''
   :param text: Side bars (see *SideBars*): eg: "right:#000000 top:green",
-    "left". Separated by spaces or commas.
-  :returns: (side, colour) for each bar, in order ("" for no colour: the
-    default); and the items that aren't one (eg: "middle").
+    "vertical:brown", "left". Separated by spaces or commas.
+  :returns: (where, colour) for each bar, in order -- where: one of *SIDES*
+    or *THROUGH* ("" for no colour: the default); and the items that aren't
+    one (eg: "middle").
   '''
   bars:list[tuple[str, str]] = []
   bad:list[str] = []
   for item in text.replace(",", " ").split():
     side, _, color = item.partition(":")
-    if side.lower() in SIDES:
+    if side.lower() in SIDES + THROUGH:
       bars.append((side.lower(), color.strip()))
     else:
       bad.append(item)
@@ -1097,17 +1101,22 @@ def parseSideBars(text:str) -> tuple[list[tuple[str, str]], list[str]]:
 
 class SideBars(Decorator):
   '''
-  Bars along the sides of a node, just outside it, as its "vis/sideBars"
-  attribute says: a template, as labels are (see *labels*: so it can show the
-  node's attributes, or what a hook says), whose text lists the sides --
-  left, right, top, bottom -- each with its colour after a colon, eg:
-  "right:#000000 top:green" (black if it has none). Two on one side go one
-  outside the other. Eg: Gaines's truth marks -- a vertical bar beside a node
-  for true, a horizontal one over it for false (see the rnetReader plugin).
+  Bars along the sides of a node, just outside it, or through its centre, as
+  its "vis/sideBars" attribute says: a template, as labels are (see
+  *labels*: so it can show the node's attributes, or what a hook says), whose
+  text lists them -- the sides left, right, top, bottom, or vertical and
+  horizontal (through the centre, from edge to edge: under its text) -- each
+  with its colour after a colon, eg: "right:#000000 top:green" (black if it
+  has none). Two on one side go one outside the other; two through the
+  centre the same way, side by side. A window's (a context's) go through its
+  title bar. Eg: Gaines's truth marks -- a vertical bar through a node for
+  true, a horizontal one for false (see the rnetReader plugin).
   Drawn, at the view's zoom, only while there are any.
   '''
   WIDTH = 4
-  "A bar's thickness (view units: zoomed)."
+  "A bar's thickness at a side (view units: zoomed)."
+  THROUGH_WIDTH = 2.5
+  "A bar's thickness through the centre (view units: zoomed): thinner, as it's over the node, to hide less of its text."
   GAP = 3
   "The space between a node and its bars, and between two bars on a side (view units: zoomed)."
   COLOR = "black"
@@ -1120,7 +1129,7 @@ class SideBars(Decorator):
 
   def bars(self) -> list[tuple[str, str]]:
     '''
-    :returns: The bars the owner has now: (side, colour) -- from its
+    :returns: The bars the owner has now: (where, colour) -- from its
       "vis/sideBars" (see the class doc).
     '''
     from sn.view.graphics.labels import expand, labelLookup, TemplateError
@@ -1136,13 +1145,37 @@ class SideBars(Decorator):
       return []
     bars, bad = parseSideBars(text)
     if bad:
-      self._warn(f'{mo.name}: vis/sideBars: {", ".join(bad)} isn\'t a side (left, right, top or bottom, eg: "right:green")')
+      self._warn(f'{mo.name}: vis/sideBars: {", ".join(bad)} isn\'t a side (left, right, top or bottom) or through the centre '
+                 f'(vertical or horizontal): eg, "right:green"')
     return bars
 
   def _warn(self, message:str) -> None:
     if message not in self._bad: # (once each: it's drawn often)
       self._bad.add(message)
       logger.warning(message)
+
+  def _throughBox(self, fast:bool=False) -> tuple[list[float], int|None]:
+    '''
+    :returns: Where the bars through the centre go (canvas coordinates): the
+      owner's box -- a window's title bar -- inside its outline; and the
+      canvas item they go under (its text), if there is one.
+    '''
+    owner, view, canvas = self.owner, self.owner.view, self.owner.canvas
+    x1, y1, x2, y2 = owner.boundingBox(fast=fast)
+    frame = owner.decorators.get("frame")
+    if isinstance(frame, ContextFrame):
+      y2 = y1 + owner.bannerHeight()
+      label = frame.ids.get("title")
+    else:
+      text = owner.decorators.get("text")
+      label = text.id if isinstance(text, Text) else None
+    x1, y1, x2, y2 = view.viewToWindow([x1, y1, x2, y2])
+    shape = getattr(owner, "_shape", None)
+    try: # (the outline's inner edge: half of it's inside the box)
+      inset = float(canvas.itemcget(frame.ids["banner"] if isinstance(frame, ContextFrame) else shape.id, "width")) / 2
+    except Exception:
+      inset = 0.5
+    return [x1 + inset, y1 + inset, x2 - inset, y2 - inset], label
 
   @override
   def draw(self, fast=False, **kwargs):
@@ -1158,15 +1191,29 @@ class SideBars(Decorator):
     w = zoomedWidth(view, self.WIDTH)
     g = self.GAP * float(getattr(view, "_scale", 1.0) or 1.0)
     out = {side: g for side in SIDES} # (how far out the next bar on each side goes)
-    rects = []
+    rects:list[tuple[list[float], str, bool]] = [] # (each bar's rectangle, colour, and whether it's through the centre)
     for side, color in bars:
-      d = out[side]
-      out[side] = d + w + g
-      rects.append(({"left": [x1 - d - w, y1, x1 - d, y2], "right": [x2 + d, y1, x2 + d + w, y2],
-                     "top": [x1, y1 - d - w, x2, y1 - d], "bottom": [x1, y2 + d, x2, y2 + d + w]}[side], color or self.COLOR))
+      if side in SIDES:
+        d = out[side]
+        out[side] = d + w + g
+        rects.append(({"left": [x1 - d - w, y1, x1 - d, y2], "right": [x2 + d, y1, x2 + d + w, y2],
+                       "top": [x1, y1 - d - w, x2, y1 - d], "bottom": [x1, y2 + d, x2, y2 + d + w]}[side], color, False))
+    label = None
+    through = [(side, color) for side, color in bars if side in THROUGH]
+    if through:
+      (tx1, ty1, tx2, ty2), label = self._throughBox(fast)
+      tw = zoomedWidth(view, self.THROUGH_WIDTH)
+      for side in THROUGH: # (several on one: side by side, centred)
+        colors = [color for s, color in through if s == side]
+        c = (tx1 + tx2) / 2 if side == "vertical" else (ty1 + ty2) / 2
+        at = c - (len(colors) * tw + (len(colors) - 1) * g) / 2
+        for color in colors:
+          rects.append(([at, ty1, at + tw, ty2] if side == "vertical" else [tx1, at, tx2, at + tw], color, True))
+          at += tw + g
     while len(self.ids) > len(rects):
       canvas.delete(self.ids.pop())
-    for i, (rect, color) in enumerate(rects):
+    for i, (rect, color, centred) in enumerate(rects):
+      color = color or self.COLOR
       try:
         if i < len(self.ids):
           canvas.coords(self.ids[i], rect)
@@ -1174,6 +1221,8 @@ class SideBars(Decorator):
         else:
           self.ids.append(canvas.create_rectangle(rect, fill=color, outline=color, width=0, state="disabled",
                                                   tags=[self.owner.tag, "sidebar"]))
+        if centred and label is not None: # (under the text: over the shape)
+          canvas.tag_lower(self.ids[i], label)
       except Exception as ex: # (eg: a colour Tk doesn't know)
         self._warn(f'{self.owner.modelObject.name}: vis/sideBars: {type(ex).__name__}: {ex}')
         if i < len(self.ids):

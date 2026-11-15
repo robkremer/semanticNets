@@ -209,7 +209,7 @@ class TopModel(Model):
     self.ISA['vis/aspectRatio']     = 1.0
 
     self.NODE['vis/fillColor']      = "snow"
-    self.NODE['vis/sideBars']       = Attribute("", str, VAR_DEFAULTED, "Bars drawn along the sides of the node in the GUI, just outside it: the sides -- left, right, top, bottom -- each with its colour after a colon, eg: \"right:#000000 top:green\" (black if it has none); two on one side go one outside the other. A template, as vis/label is, so it can show the node's attributes or what a hook says: eg, Gaines's truth marks in a Rep Plus net.")
+    self.NODE['vis/sideBars']       = Attribute("", str, VAR_DEFAULTED, "Bars drawn along the sides of the node in the GUI, just outside it, or through its centre: the sides -- left, right, top, bottom -- or vertical and horizontal (through the centre, edge to edge, under its text; a window's through its title bar), each with its colour after a colon, eg: \"right:#000000 top:green\" (black if it has none); two in one place go side by side. A template, as vis/label is, so it can show the node's attributes or what a hook says: eg, Gaines's truth marks in a Rep Plus net.")
     
     self.COLLECTION['vis/titlebarColor'] = Attribute("grey", "color", VAR_DEFAULTED,
       "The background color of the title bar of a box: a collection or context (eg: a rule).")

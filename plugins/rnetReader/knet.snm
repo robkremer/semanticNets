@@ -4561,7 +4561,7 @@
                 <property key="note">
                   <object type="util.attribute.Attribute">
                     <property key="value">
-                      <object type="str" value="A node of a KNet net: its instances are (eg: the reader's nodes), and so are the SN types under it, whose isa links are inclusions: eg, dog isa animal isa knode gives dog includes animal (so a type that excludes animal excludes dog). They show their truth marks as bars (markTrue: beside them; markFalse: over them), and their menus mark them." />
+                      <object type="str" value="A node of a KNet net: its instances are (eg: the reader's nodes), and so are the SN types under it, whose isa links are inclusions: eg, dog isa animal isa knode gives dog includes animal (so a type that excludes animal excludes dog). They show their truth marks as bars through them (markTrue: vertical; markFalse: horizontal), and their menus mark them." />
                     </property>
                     <property key="type" type="str" value="text" />
                     <property key="restriction" type="str" value="UNRESTRICTED:UNRESTRICTED" />

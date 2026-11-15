@@ -399,8 +399,8 @@ type that *excludes* animal excludes dog.
 Truth marks
 ~~~~~~~~~~~
 
-Gaines marks a node true (a vertical bar beside it: there's something it
-stands for) or false (a horizontal bar over it: it's empty), or both
+Gaines marks a node true (a vertical bar through it: there's something it
+stands for) or false (a horizontal bar through it: it's empty), or both
 (Belnap's "both": inconsistent). A KNet node -- an instance of *knode*, as
 the reader's nodes are -- shows its marks as those bars, in Rep Plus's
 colours for how it got them:
