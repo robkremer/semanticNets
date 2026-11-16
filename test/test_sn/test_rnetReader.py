@@ -407,5 +407,35 @@ class TestBuild(unittest.TestCase):
     self.assertEqual(sum(1 for o in m.values() if isinstance(o, Relation) and o.model is m and o.isIndividual()
                          and not type(o).__name__ == "IsaIndividual"), 6)
 
+class TestKnetView(unittest.TestCase):
+  '''
+  The view of knet.snm that comes with the plugin (knet.snv: made by
+  tools/makeKnetView.py, or laid out by hand) is a view of it, stored as
+  being where it is (wherever the plugin's installed: see
+  sn.plugins.installBundled()), and shows its objects -- not some other
+  version's (eg: after knet.snm's made again, its objects' ids have changed).
+  '''
+  def test_view(self):
+    import xml.etree.ElementTree as ET
+    folder = Path(__file__).resolve().parents[2] / "plugins" / "rnetReader"
+    model, view = ET.parse(folder / "knet.snm").getroot(), ET.parse(folder / "knet.snv").getroot()
+    head = {p.get("key"): p.get("value") for p in view.find("head")}
+    self.assertEqual(head["type"], "sn.view.graphics.sngView.SNGView")
+    self.assertIn(head["model"], ("knet.snm", "file:///SEMANTIC_NETS_PLUGINS/rnetReader/knet.snm"))
+    self.assertTrue(head["url"].endswith("/rnetReader/knet.snv"), head["url"])
+    def objects(root) -> dict[str, ET.Element]:
+      db = next(p for p in root.find("object").findall("property") if p.get("key") == "_db")
+      return {p.get("key"): p.find("object") for p in db.find("object").findall("property")}
+    ids = set(objects(model))
+    shown = [p.get("value") for o in objects(view).values() for p in o.findall("property") if p.get("key") == "modelObject"]
+    local = [s for s in shown if s.startswith("#")]
+    self.assertGreater(len(local), 50) # (not a blank view)
+    self.assertEqual([s for s in local if s[1:] not in ids], [])
+    def name(o:ET.Element) -> str|None: # (its "name" attribute's value)
+      value = o.find(".//property[@key='name']//property[@key='value']")
+      return value.get("value") if value is not None else None
+    names = {name(o) for k, o in objects(model).items() if "#" + k in local}
+    self.assertTrue({"knode", "exclusion", "isa", "inconsistent node"} <= names, names)
+
 if __name__ == "__main__":
   unittest.main()

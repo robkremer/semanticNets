@@ -204,6 +204,64 @@ class Test(unittest.TestCase):
     self.assertEqual((self.installed / "alpha" / "onto.snv").read_text(), f'<property key="model" value="{here}/onto.snm" />\n')
     self.assertEqual((self.installed / "alpha" / "notes.txt").read_text(), "file:///somewhere/else/alpha/onto.snm")
 
+  def test0360usersViews(self):
+    # a view the user's changed (eg: laid out) is theirs: installing the plugin again leaves it; its code is replaced
+    def view(text:str) -> str:
+      return f'<property key="url" value="file:///SEMANTIC_NETS_PLUGINS/alpha/onto.snv" /><layout>{text}</layout>\n'
+    makePlugin(self.bundled, "alpha", files={"onto.snv": view("v1"), "code.py": "X = 1\n", "old.py": "", "notes.txt": ""})
+    (self.bundled / "alpha" / "sub").mkdir()
+    (self.bundled / "alpha" / "sub" / "gone.txt").write_text("")
+    install = lambda: plugins.installBundled(str(self.bundled), str(self.installed))
+    self.assertEqual(install(), ["alpha"])
+    alpha = self.installed / "alpha"
+    here = alpha.as_uri()
+    self.assertEqual((alpha / "onto.snv").read_text(), view("v1").replace("file:///SEMANTIC_NETS_PLUGINS/alpha", here))
+    (alpha / "onto.snv").write_text(view("mine"))
+    (alpha / "mine.snv").write_text("a view the user made there")
+    (alpha / "notes.txt").write_text("the user's notes")
+    self.assertEqual(install(), []) # (nothing's changed: left alone)
+    # a new version: the code's replaced, and what it no longer comes with removed -- but the user's view, the view
+    # they made, and a file it no longer comes with that they've changed are kept
+    (self.bundled / "alpha" / "onto.snv").write_text(view("v2"))
+    (self.bundled / "alpha" / "code.py").write_text("X = 2\n")
+    for f in ("old.py", "notes.txt", "sub/gone.txt"):
+      (self.bundled / "alpha" / f).unlink()
+    (self.bundled / "alpha" / "sub").rmdir()
+    with self.assertLogs(plugins.logger.name, "INFO") as logs:
+      self.assertEqual(install(), ["alpha"])
+    self.assertIn("Kept your own onto.snv, notes.txt there", logs.output[0])
+    self.assertEqual((alpha / "onto.snv").read_text(), view("mine"))
+    self.assertEqual((alpha / "code.py").read_text(), "X = 2\n")
+    self.assertEqual((alpha / "mine.snv").read_text(), "a view the user made there")
+    self.assertEqual((alpha / "notes.txt").read_text(), "the user's notes")
+    self.assertFalse((alpha / "old.py").exists())
+    self.assertFalse((alpha / "sub").exists())
+    self.assertEqual(install(), [])
+    # deleted, to get the one that comes with it: it's put back
+    (alpha / "onto.snv").unlink()
+    self.assertEqual(install(), ["alpha"])
+    self.assertEqual((alpha / "onto.snv").read_text(), view("v2").replace("file:///SEMANTIC_NETS_PLUGINS/alpha", here))
+    # as it was installed: a new one replaces it
+    (self.bundled / "alpha" / "onto.snv").write_text(view("v3"))
+    self.assertEqual(install(), ["alpha"])
+    self.assertIn("v3", (alpha / "onto.snv").read_text())
+    # installed by an older version (a stamp with just the hash): a view that's not as it comes is taken to be the user's
+    (alpha / plugins.STAMP).write_text("an older hash\n")
+    (alpha / "onto.snv").write_text(view("an older one, or the user's"))
+    (alpha / "code.py").write_text("X = 0\n")
+    self.assertEqual(install(), ["alpha"])
+    self.assertIn("the user's", (alpha / "onto.snv").read_text())
+    self.assertEqual((alpha / "code.py").read_text(), "X = 2\n")
+    # one that's as it comes is installed: a later one replaces it
+    (alpha / "onto.snv").unlink()
+    (alpha / plugins.STAMP).write_text("an older hash\n")
+    self.assertEqual(install(), ["alpha"])
+    (self.bundled / "alpha" / "onto.snv").write_text(view("v4"))
+    self.assertEqual(install(), ["alpha"])
+    self.assertIn("v4", (alpha / "onto.snv").read_text())
+    self.assertTrue(plugins.usersFile("examples/a_xml.snv"))
+    self.assertFalse(plugins.usersFile("onto.snm"))
+
   def test0380importBundled(self):
     makePlugin(self.bundled, "alpha", files={"tools.py": "X = 42\n"})
     with mock.patch.object(plugins, "bundledFolder", return_value=str(self.bundled)):

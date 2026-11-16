@@ -262,7 +262,10 @@ Things to know:
   and its models and views (``.snm``, ``.snv``) are made to refer to where
   they now are. It's a copy, not the files in the app, so that what's in it
   -- eg: an ontology models are built on -- stays at the same place when the
-  app's moved or updated.
+  app's moved or updated. Copying a new version over it replaces its code
+  and models, but keeps the user's own: a view they've changed there (eg:
+  laid out), and any file they've added (:py:data:`sn.plugins.USER_FILES`);
+  a file that's missing (eg: a view the user deleted) is put back.
 - **What it can import.** In the packaged app, a plugin has *Semantic
   Nets*, ``util``, and the parts of the standard library the app has: those
   the bundled plugins import are added to it when it's built (see

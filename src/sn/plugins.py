@@ -23,6 +23,8 @@ The plugins that come with the program (*bundledFolder()*: the project's
 folder (see *installBundled()*) when they aren't there, are older, or have
 changed since they were installed (eg: edited in the project) -- copied, not loaded where they are, so that what's in them (eg: an ontology
 models are built on) stays at the same place when the app is moved or updated.
+A view in one that the user's changed there (eg: laid out) is the user's: it's
+kept when the plugin's installed again (see *USER_FILES*).
 
 A plugin that can't be read, imported or registered is logged, and left out:
 it doesn't stop the program, or the other plugins. The "plugins/disabled"
@@ -59,7 +61,6 @@ import hashlib
 import importlib
 import os
 import re
-import shutil
 import sys
 import tomllib
 import types
@@ -188,77 +189,190 @@ def manifests(folder:str|Traversable) -> list[Manifest]:
 
 def installBundled(source:str|Traversable|None=None, target:str|None=None) -> list[str]:
   '''
-  Copy the plugins that come with the program into the plugins folder: those
-  that aren't there, are older there (by their version), or have changed
-  since they were copied there (the same version, but not the same files: eg:
-  edited in the project, between releases -- see *STAMP*) -- replacing them
-  -- but for the files they say not to (see *Manifest.exclude*), and making
-  their models and views refer to where they now are (see *_relocate()*). One
-  that hasn't changed since it was copied is left alone (eg: the user's
-  changes to it are kept).
+  Install the plugins that come with the program in the plugins folder: those
+  that aren't there, are older there (by their version), have changed since
+  they were installed there (the same version, but not the same files: eg:
+  edited in the project, between releases -- see *STAMP*), or are missing a
+  file they come with (eg: a view the user deleted, to get the one that comes
+  with the plugin back) -- but for the files they say not to (see
+  *Manifest.exclude*), and making their models and views refer to where they
+  now are (see *_relocated()*). One that hasn't changed since it was
+  installed is left alone.
+
+  Installing one over what's there replaces the files it comes with, and
+  removes those it came with before but no longer does -- but leaves the
+  user's own: a view (see *USER_FILES*) that isn't as it was installed (eg:
+  laid out, and saved), and any file the user's put there.
 
   :param source: Where the plugins that come with the program are (by default, *bundledFolder()*).
   :param target: The plugins folder (by default, *PLUGINS_FOLDER*).
-  :returns: The plugins copied (their folders' names).
+  :returns: The plugins installed (their folders' names).
   '''
   ret = []
   for m in manifests(source if source is not None else bundledFolder()):
     dest = os.path.join(target if target is not None else PLUGINS_FOLDER, m.id)
-    src = m.source if m.source is not None else Path(m.folder)
-    stamp = _contentHash(m, src)
+    files = _bundledFiles(m, m.source if m.source is not None else Path(m.folder))
+    stamp = _contentHash(files)
+    old, record = _stamp(dest)
     if os.path.isfile(os.path.join(dest, MANIFEST)):
       try:
         there = version(Manifest.read(dest).version)
-        if there > version(m.version) or (there == version(m.version) and _stamp(dest) == stamp):
+        if there > version(m.version) or (there == version(m.version) and old == stamp
+                                          and all(os.path.isfile(_path(dest, rel)) for rel, _f in files)):
           continue
       except PluginError:
         pass # (it's replaced)
     try:
-      if os.path.exists(dest):
-        shutil.rmtree(dest)
-      _copy(m, src, dest)
+      record, kept = _install(m, files, dest, record)
       with open(os.path.join(dest, STAMP), "w", encoding="utf-8") as f:
-        f.write(stamp + "\n")
+        f.write(stamp + "\n" + "".join(f"{h} {rel}\n" for rel, h in record.items()))
     except (OSError, zipfile.BadZipFile):
       logger.error(f'Couldn\'t install the plugin {m.name} in "{dest}".', exc_info=True)
       continue
-    _relocate(dest)
-    logger.info(f'Installed the plugin {m.name} {m.version} in "{dest}".')
+    logger.info(f'Installed the plugin {m.name} {m.version} in "{dest}".'
+                + (f' Kept your own {", ".join(kept)} there.' if kept else ""))
     ret.append(m.id)
   return ret
 
 STAMP = ".bundled"
-'''The file, in an installed plugin's folder, that says what it was copied from
-(see *installBundled()*): a hash of the bundled plugin's files (see
-*_contentHash()*). One installed without it (eg: by an older version) is
-taken to have changed.'''
+'''The file, in an installed plugin's folder, that says what it was installed
+from, and what was installed (see *installBundled()*): a hash of the bundled
+plugin's files (see *_contentHash()*); and a line for each file installed --
+a hash of what was written (see *_hash()*: its models and views as they were
+relocated), and its path in the folder, with "/". One installed without it
+(eg: by an older version) is taken to have changed; one installed with just
+the first line (by an older version), to have its own views, wherever they
+aren't as they come.'''
 
-def _stamp(dest:str) -> str|None:
-  ":returns: The *STAMP* of the plugin installed in *dest*, if it has one."
+USER_FILES = ("*.snv",)
+'''The files in an installed plugin that are the user's once they've changed
+them (patterns of their names): its views -- laid out, as the user wants them
+-- which installing the plugin again (eg: a new version) leaves as they are
+(see *installBundled()*). (Its code and models are always replaced: the
+plugin needs them as they come.) To get one as it comes with the plugin
+again, delete it: it's put back the next time the program starts.'''
+
+def _stamp(dest:str) -> tuple[str|None, dict[str, str]|None]:
+  '''
+  :returns: The *STAMP* of the plugin installed in *dest*: its hash of the
+    bundled plugin, and what was installed (path -> hash of what was written) --
+    or None for each that it hasn't (eg: an older version wrote just the
+    first, and none, nothing).
+  '''
   try:
     with open(os.path.join(dest, STAMP), encoding="utf-8") as f:
-      return f.read().strip()
-  except OSError:
-    return None
+      lines = f.read().splitlines()
+  except (OSError, UnicodeError):
+    return None, None
+  if not lines:
+    return None, None
+  record = {rel: h for h, _, rel in (line.partition(" ") for line in lines[1:]) if rel}
+  return lines[0].strip(), record if len(lines) > 1 else None
 
-def _contentHash(manifest:Manifest, source:Traversable, rel:str="", h:Any=None) -> str:
+def _bundledFiles(manifest:Manifest, source:Traversable, rel:str="") -> list[tuple[str, Traversable]]:
   '''
-  :returns: A hash of the files of the plugin's folder *source* that are
-    installed (see *installed()*): their paths in it, and what's in them.
+  :returns: The files of the plugin's folder *source* (or a folder in it:
+    *rel*) that are installed (see *installed()*): their paths in it, with
+    "/" (eg: "examples/books.xml"), and them -- in the order they're hashed
+    in (see *_contentHash()*): by name, a folder's files where it comes.
   '''
-  top = h is None
-  h = h if h is not None else hashlib.sha256()
+  ret:list[tuple[str, Traversable]] = []
   for child in sorted(source.iterdir(), key=lambda p: p.name):
     path = rel + child.name
     if not installed(manifest, path):
       continue
     if child.is_dir():
-      _contentHash(manifest, child, path + "/", h)
+      ret += _bundledFiles(manifest, child, path + "/")
     else:
-      data = child.read_bytes()
-      h.update(f"{path}\0{len(data)}\0".encode("utf-8"))
-      h.update(data)
-  return h.hexdigest() if top else ""
+      ret.append((path, child))
+  return ret
+
+def _contentHash(files:list[tuple[str, Traversable]]) -> str:
+  '''
+  :param files: A plugin's files that are installed (see *_bundledFiles()*).
+  :returns: A hash of them: their paths, and what's in them.
+  '''
+  h = hashlib.sha256()
+  for path, f in files:
+    data = f.read_bytes()
+    h.update(f"{path}\0{len(data)}\0".encode("utf-8"))
+    h.update(data)
+  return h.hexdigest()
+
+def _hash(data:bytes) -> str:
+  ":returns: A hash of a file's contents (see *STAMP*)."
+  return hashlib.sha256(data).hexdigest()
+
+def _fileHash(path:str) -> str|None:
+  ":returns: A hash of the file *path*'s contents (see *_hash()*), or None if it isn't there."
+  try:
+    with open(path, "rb") as f:
+      return _hash(f.read())
+  except FileNotFoundError:
+    return None
+
+def _path(dest:str, rel:str) -> str:
+  ":returns: The file *rel* (a path with \"/\") in the folder *dest*."
+  return os.path.join(dest, *rel.split("/"))
+
+def usersFile(rel:str) -> bool:
+  '''
+  :param rel: A file in a plugin's folder, as a path in it, with "/" (eg: "knet.snv").
+  :returns: Whether it's of a kind the user may change, and keep (see *USER_FILES*).
+  '''
+  name = rel.rpartition("/")[2]
+  return any(fnmatch.fnmatch(name, p) for p in USER_FILES)
+
+def _install(manifest:Manifest, files:list[tuple[str, Traversable]], dest:str,
+             record:dict[str, str]|None) -> tuple[dict[str, str], list[str]]:
+  '''
+  Install a plugin's *files* (see *_bundledFiles()*) in *dest* (see
+  *installBundled()*): write each that isn't there as it comes (its models
+  and views relocated: see *_relocated()*) -- but for the user's (see
+  *USER_FILES*) that aren't as they were installed (*record*) -- and remove
+  those installed before (in *record*) that it no longer comes with, if
+  they're as they were installed.
+
+  :param record: What was installed there before (see *STAMP*), if that's known.
+  :returns: What's installed there now (path -> hash: see *STAMP*), and the
+    user's files that were kept (paths).
+  '''
+  os.makedirs(dest, exist_ok=True)
+  uri = Path(dest).as_uri() + "/"
+  now:dict[str, str] = {}
+  kept:list[str] = []
+  for rel, f in files:
+    data = f.read_bytes()
+    if rel.endswith((".snm", ".snv")):
+      data = _relocated(data, manifest.id, uri)
+    path = _path(dest, rel)
+    new, there = _hash(data), _fileHash(path)
+    if there is not None and there != new and usersFile(rel) and (record is None or record.get(rel) != there):
+      kept.append(rel) # (the user's: changed since it was installed, or not installed by this -- eg: made by the user)
+      if record is not None and rel in record:
+        now[rel] = record[rel] # (still not as it was installed)
+      continue
+    if there != new:
+      os.makedirs(os.path.dirname(path), exist_ok=True)
+      with open(path, "wb") as fd:
+        fd.write(data)
+    now[rel] = new
+  for rel, h in (record or {}).items(): # (what it came with before, and no longer does)
+    if rel in now or rel in kept:
+      continue
+    path = _path(dest, rel)
+    there = _fileHash(path)
+    if there is None:
+      continue
+    if there != h: # (changed since it was installed: the user's now)
+      kept.append(rel)
+      continue
+    os.remove(path)
+    folder = os.path.dirname(path)
+    while folder != dest and os.path.isdir(folder) and not os.listdir(folder):
+      os.rmdir(folder)
+      folder = os.path.dirname(folder)
+  return now, kept
 
 NOT_INSTALLED = ("__pycache__", "*.pyc", "*.log", ".gitignore", ".DS_Store", STAMP)
 "The files in any plugin's folder not to install (see *installBundled()*): patterns of their names."
@@ -272,47 +386,27 @@ def installed(manifest:Manifest, path:str) -> bool:
   name = path.rpartition("/")[2]
   return not any(fnmatch.fnmatch(name, p) for p in NOT_INSTALLED) and not any(fnmatch.fnmatch(path, p) for p in manifest.exclude)
 
-def _copy(manifest:Manifest, source:Traversable, dest:str, rel:str="") -> None:
+def _relocated(data:bytes, id:str, uri:str) -> bytes:
   '''
-  Copy the plugin's folder *source* (or a folder in it: *rel*) to *dest*: what's
-  to be installed (see *installed()*) -- from a folder, or a zip file.
-  '''
-  os.makedirs(dest, exist_ok=True)
-  for child in source.iterdir():
-    path = rel + child.name
-    if not installed(manifest, path):
-      continue
-    if child.is_dir():
-      _copy(manifest, child, os.path.join(dest, child.name), path + "/")
-    else:
-      with open(os.path.join(dest, child.name), "wb") as f:
-        f.write(child.read_bytes())
+  Make a plugin's model or view (.snm, .snv), being installed, refer to where
+  it now is: to files in a folder of the plugin's name (where it was written:
+  eg: the project's plugins/pythonParser/, or a placeholder, such as
+  file:///SEMANTIC_NETS_PLUGINS/rnetReader/), as to the same files there --
+  so that it isn't taken to have been moved when it's read (as
+  *sn.copyExamples()* does for the example models).
 
-def _relocate(folder:str) -> None:
+  :param data: The file's contents.
+  :param id: The plugin's folder's name.
+  :param uri: The URL of the folder it's installed in, ending in "/".
+  :returns: Them, so changed (or as they were, if they aren't text).
   '''
-  Make the models and views (.snm, .snv) in a plugin's folder, just copied
-  there, refer to where they now are: to files in a folder of the plugin's
-  name (where they were written: eg: the project's plugins/pythonParser/), as
-  to the same files here -- so that they aren't taken to have been moved when
-  they're read (as *sn.copyExamples()* does for the example models).
-
-  :param folder: The plugin's folder, in the plugins folder.
-  '''
-  pattern = re.compile(r'file://[^"\'<>\s]*/' + re.escape(os.path.basename(folder)) + "/")
-  uri = Path(folder).as_uri() + "/"
-  for dirpath, _dirs, files in os.walk(folder):
-    for f in files:
-      if f.endswith((".snm", ".snv")):
-        path = os.path.join(dirpath, f)
-        try:
-          with open(path, encoding="utf-8") as fd:
-            text = fd.read()
-          new = pattern.sub(lambda _m: uri, text)
-          if new != text:
-            with open(path, "w", encoding="utf-8") as fd:
-              fd.write(new)
-        except (OSError, UnicodeError):
-          logger.warning(f'Couldn\'t make "{path}" refer to where it now is.', exc_info=True)
+  try:
+    text = data.decode("utf-8")
+  except UnicodeError:
+    logger.warning(f'Couldn\'t make a file of the plugin {id} refer to where it now is: it isn\'t text.')
+    return data
+  pattern = re.compile(r'file://[^"\'<>\s]*/' + re.escape(id) + "/")
+  return pattern.sub(lambda _m: uri, text).encode("utf-8")
 
 def namespace(folder:str) -> types.ModuleType:
   '''
