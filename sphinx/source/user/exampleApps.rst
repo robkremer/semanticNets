@@ -277,9 +277,9 @@ The Rep Plus net reader
 *patterns.snm* and *patterns.snv*, in the folder you last made them in (the
 first time, next to the net). Change either, by typing or with
 **Choose...**: until you do, they follow the net file (and the view follows
-the model). **Nodes KNet takes to be the same are one node** (on unless you
-turn it off) takes them as KNet does: a net may draw a node again,
-elsewhere, to keep its links short, and that's one node, drawn twice (turn
+the model). **Nodes that are the same are one node** (on unless you turn
+it off) takes them as KNet does: a net may draw a node again, elsewhere, to
+keep its links short, and that's one node, drawn twice (turn
 it off for a figure that's several copies of a net side by side, as some of
 Gaines's are). **Go** makes them, asking first if they're there already, and
 opens the view: the net as CNet drew it, each node where it was (half as big
@@ -319,8 +319,8 @@ What's in the net becomes:
   links go the other way, so it means what it shows.
 - **Nodes**: each node is an individual of its type, named by its label (a
   node with no label has no name). Pictures and drawings in the net are left
-  out. If the dialog says so, the nodes KNet takes to be the same are one
-  node, shown as copies (the model's views aren't canonical: see
+  out. If the dialog says so, the nodes that are the same are one node,
+  shown as copies (the model's views aren't canonical: see
   :doc:`viewing`), so the reasoners see one node, as KNet does. KNet's rule:
   a node's name is its label, with its line breaks as spaces, followed by
   the name of each *Context* box it's in (in the file's order), and of each
@@ -331,9 +331,12 @@ What's in the net becomes:
   *soft*. Only the nodes of the node types KNet reasons about are taken so
   (those named *Concept*, *Context*, *Construct*, *Cases*, *Rules*,
   *Disjoint* or *Collection*: not titles, notes, frames or grids), and a box
-  is never the same as a node. (Earlier versions of the reader made each copy a node
-  of its own, joined by *same label* links: read the net again for the new
-  form.)
+  is never the same as a node. The nodes of CNet's other node types (eg:
+  *All*, *Entity*, *Set*) are the same if they're of the same node type and
+  have the same label (big and small letters alike) -- not titles, notes,
+  grids, or nodes that are just their text (eg: a semantic net's relation
+  nodes). (Earlier versions of the reader made each copy a node of its own,
+  joined by *same label* links: read the net again for the new form.)
 - **Marks**: a node's mark (true, false, or both) is its ``mark`` attribute
   (``T``, ``F`` or ``TF``), with the kind of mark (``markKind``: *Asserted*,
   *Included*, *Excluded*, ...), whether it was derived (``markDerived``), and

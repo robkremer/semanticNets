@@ -64,9 +64,10 @@ protologic, so that the reasoners draw KNet's inferences):
     (see *addConstructMeaning()*).
   - Nodes KNet takes to be the same are one node (see *knetNames()*: a net
     can draw a node again, elsewhere, to keep its links short; and a box's
-    name is part of the names of what's in it), shown as copies -- unless
-    *buildModel()* is told not to (a figure of several copies of one net,
-    side by side).
+    name is part of the names of what's in it), shown as copies -- and so are
+    the nodes of one of CNet's other node types with the same label (see
+    *cnetNames()*: eg, "All") -- unless *buildModel()* is told not to (a
+    figure of several copies of one net, side by side).
   - Groups (section ``G``) aren't made: in Rep Plus they're only a way to
     select and drag nodes together, with no meaning (and they'd fight the
     layouts).
@@ -397,7 +398,7 @@ class Built:
     '''
     contained = sum(len(v) for v in self.members.values())
     distinct = len({id(n) for n in self.nodes.values()})
-    copies = f", {len(self.nodes) - distinct} of them copies of others (KNet's same node)" if distinct < len(self.nodes) else ""
+    copies = f", {len(self.nodes) - distinct} of them copies of others (the same node, as KNet takes it, or of one node type with the same label)" if distinct < len(self.nodes) else ""
     s = (f"{len(self.nodes)} nodes{copies} ({len(self.boxes)} of them boxes, holding {contained}) and {len(self.relations)} "
          f"relations, of {len(self.nodeTypes)} node types and {len(self.linkTypes)} relation types")
     kernel = sum(1 for t in self.linkTypes.values() if any(p in self.kernel.values() for p in t.getParents()))
@@ -551,8 +552,10 @@ def buildModel(net:Net, modelPath:str, merge:bool=True) -> Built:
 
   :param net: A net (see *rnet.parse()*).
   :param modelPath: The model's file: it mustn't be open (nor, if it's there, in memory).
-  :param merge: Whether the nodes KNet takes to be one (see *knetNames()*)
-    are one node, each shown as a copy of it -- else each is a node of its own.
+  :param merge: Whether the nodes KNet takes to be one (see *knetNames()*),
+    and those of one of CNet's node types with the same label (see
+    *cnetNames()*), are one node, each shown as a copy of it -- else each is
+    a node of its own.
   :returns: What was made.
   '''
   file = os.path.basename(net.path) or "the net"
@@ -560,8 +563,9 @@ def buildModel(net:Net, modelPath:str, merge:bool=True) -> Built:
   m.setSuperModels([ONTOLOGY])
   m.setCanonicalViews(False)
   names = knetNames(net) if merge else {}
+  cnet = cnetNames(net) if merge else {}
   boxTypes = {t.index for t in net.nodeTypes if t.shape == ENCLOSURE}
-  byName:dict[tuple[bool, str], int] = {} # ((a box?, KNet's name in any case) -> the first such node's place)
+  byName:dict[tuple, int] = {} # (("knet", a box?, KNet's name in any case), or ("cnet", its node type, its name) -> the first such node's place)
   b = Built(net, m, kernel=kernelTypes(m))
   knode = knodeType(m)
   for t in net.nodeTypes:
@@ -582,18 +586,20 @@ def buildModel(net:Net, modelPath:str, merge:bool=True) -> Built:
       t, was = b.nodeTypes[key], t
     label = nodeName(n)
     knet = names.get(n.index)
-    if knet is not None and not point:
-      key = (n.type in boxTypes, knet.casefold()) # (KNet's name map is a Xojo Dictionary: it ignores case)
+    same = cnet.get(n.index) if knet is None else None
+    if (knet is not None or same is not None) and not point:
+      # (KNet's name map is a Xojo Dictionary: it ignores case)
+      key = ("knet", n.type in boxTypes, knet.casefold()) if knet is not None else ("cnet", n.type, (same or "").casefold())
       first = byName.get(key)
-      if first is not None: # (KNet's same node -- see knetNames(): a copy of it, its mark the first one's, as KNet takes it)
-        b.nodes[n.index] = same = b.nodes[first]
-        if label.rstrip() != str(same.name):
+      if first is not None: # (the same node -- see knetNames(), cnetNames(): a copy of it, its mark the first one's, as KNet takes it)
+        b.nodes[n.index] = node = b.nodes[first]
+        if label.rstrip() != str(node.name):
           b.labels[n.index] = label.rstrip()
         continue
       byName[key] = n.index
-      other = byName.get((not key[0], key[1]))
+      other = byName.get(("knet", not key[1], key[2])) if knet is not None else None
       if other is not None:
-        b.kept.append((other, n.index) if key[0] else (n.index, other))
+        b.kept.append((other, n.index) if key[1] else (n.index, other))
     name = label if knet is None or not label.strip() or " ".join(label.split()) == knet else knet # (KNet's name if it's more than the label: a box's is part of it)
     node = Node(m, [t], individual=True, name=name)
     if name != label:
@@ -677,6 +683,35 @@ def knetNames(net:Net) -> dict[int, str]:
         n = net.nodes[i]
         if i != c and n.x > box.x and n.x + n.w < box.x + box.w and n.y > box.y and n.y + n.h < box.y + box.h:
           ret[i] = f"{ret[i]} {ret[c]}"
+  return ret
+
+CNET_APART = ("title", "note")
+"The node types (their names, in any case) whose nodes are never one node with another (see *cnetNames()*)."
+
+def cnetNames(net:Net) -> dict[int, str]:
+  '''
+  The names of the nodes of CNet's other node types (not KNet's: see
+  *knetNames()*) that are one node if they're the same: nodes of one node
+  type with the same name -- in any case -- are one node (eg, "meaning" drawn
+  twice in a net of CNet's "All" nodes). A node's name is its label, its line
+  breaks spaces, with no spaces at its end. Not the nodes of a node type that's
+  just its text (*rnet.NodeType.frameless*: eg, a relation's node in a
+  semantic net), a box (*ENCLOSURE*), a grid, a title or a note
+  (*CNET_APART*) -- nor a node with no label.
+
+  :returns: Each such node's place in the net -> its name.
+  '''
+  ret:dict[int, str] = {}
+  for n in net.nodes:
+    if n.kind != "node" or not 0 <= n.type < len(net.nodeTypes):
+      continue
+    t = net.nodeTypes[n.type]
+    kind = t.name.strip().lower()
+    if kind in KNET_NODE_TYPES or kind in CNET_APART or t.frameless or t.shape == ENCLOSURE or t.extra == "rgrid":
+      continue
+    name = " ".join((n.label or "").splitlines()).rstrip(" ")
+    if name.strip():
+      ret[n.index] = name
   return ret
 
 def enclosed(net:Net, boxes:set[int]) -> dict[int, list[int]]:
