@@ -31,7 +31,10 @@ Each plugin is a folder in ``~/.sn/plugins/`` (beside the settings: see
 - **The ones that come with it** are put there when the editor starts, if
   they aren't there yet -- or if the editor has a newer version of one (which
   replaces the copy there: so to change one, copy it to a folder of another
-  name first).
+  name first). Its views (``.snv``) are the exception: one you've changed
+  there (eg: laid out, and saved) is yours, and a newer version leaves it as
+  it is. Delete it to get the one that comes with the plugin back: it's put
+  back when the editor next starts.
 - **Adding one**: put its folder there, and start the editor again. (A plugin
   is a folder with a *plugin.toml* in it, saying what it is: how one's made is
   in the Developer Guide, :doc:`../developer/extending`.)
@@ -373,7 +376,8 @@ KNet's kernel
 ~~~~~~~~~~~~~
 
 The models the reader makes build on the plugin's *knet.snm* (made by
-``tools/makeKnetRules.py``): the kernel of Brian Gaines's protologic
+``tools/makeKnetRules.py``; **File | Open super model** from a net's view opens
+it, in its view, *knet.snv*: its rules laid out in rows): the kernel of Brian Gaines's protologic
 (*Universal Logic as a Science of Patterns*, 2015), as relation types and
 rules that every reasoner engine applies. X *includes* Y means whatever is X
 is Y (dog includes animal):

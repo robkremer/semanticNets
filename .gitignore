@@ -34,6 +34,8 @@ src/sn/help/
 !src/sn/model/baseRules.snm
 # --- KNet's kernel rules (plugin data, made by tools/makeKnetRules.py) ---
 !plugins/rnetReader/knet.snm
+# --- and its default view (made by tools/makeKnetView.py, or laid out by hand) ---
+!plugins/rnetReader/knet.snv
 
 # --- Packaging (ant: app, dmg, pyz) ---
 /build/
