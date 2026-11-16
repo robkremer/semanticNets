@@ -2614,6 +2614,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     for r, _ in detached:
       r.view.freshPaint()
       r.draw()
+    if not self.view.canonical():
+      self.view.drawCopies(self) # (one fewer: perhaps no longer marked as having copies)
     
   @override
   def _canReconnect(self) -> bool:
@@ -2649,6 +2651,8 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
         r.view.freshPaint()
         r.draw()
     self._detachedTypeEnds = []
+    if not self.view.canonical():
+      self.view.drawCopies(self) # (marked as having copies, again)
 
   # ---- Debugging support -----------------------------------------------------
   

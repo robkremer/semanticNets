@@ -420,5 +420,65 @@ class Test(unittest.TestCase):
     self.assertEqual(self.glowing(), set())
     self.assertTrue(v.canonical())
 
+  # ---- the copies marker ------------------------------------------------------------
+
+  def marked(self, vo) -> bool:
+    'Whether *vo* has the copies marker, "C", by the canvas (see decorators.copiesMarked()).'
+    canvas = self.v.canvas
+    for m in vo.decorators["markers"].markers:
+      if m.label == "C":
+        return m.id is not None and bool(canvas.find_withtag(m.id)) and canvas.itemcget(m.id, "text") == "C" \
+               and canvas.itemcget(m.id, "state") != "hidden"
+    self.fail(f"{vo} has no copies marker")
+
+  def test1200copiesMarked(self):
+    '''
+    A node shown more than once is marked "C" (each copy), while
+    "gui/showCopyTags" is on; one shown once isn't -- nor anything in a
+    canonical view.
+    '''
+    v = self.v
+    bob, alice = self.V(self.bob), self.V(self.alice)
+    self.assertFalse(self.marked(bob))
+    self.m.setCanonicalViews(False)
+    v.repaint()
+    self.assertFalse(self.marked(bob), "no copies yet")
+    c = self.copy(bob, 150, 400)
+    self.assertTrue(self.marked(bob), "the copy is made: the one it copies is marked too")
+    self.assertTrue(self.marked(c))
+    self.assertFalse(self.marked(alice))
+    tip = next(m for m in c.decorators["markers"].markers if m.label == "C").tooltipFunc()
+    self.assertIn("2 times", tip)
+    v.context.undo() # (the copy's taken away)
+    self.pump()
+    self.assertFalse(self.marked(bob))
+    v.context.redo()
+    self.pump()
+    self.assertTrue(self.marked(bob))
+    self.assertTrue(self.marked(c))
+    v.context.erase(c) # (erased from the view)
+    self.pump()
+    self.assertFalse(self.marked(bob))
+    v.context.undo()
+    self.pump()
+    self.assertTrue(self.marked(bob))
+    from util.attribute import Attribute
+    before, wasDirty = sn.snPrefs.getAttr("gui/showCopyTags"), sn.snPrefs.isDirty()
+    try:
+      sn.snPrefs["gui/showCopyTags"] = Attribute(False, before.type, before.restriction, before.note)
+      v.repaint()
+      self.assertFalse(self.marked(bob), "turned off")
+      self.assertFalse(self.marked(c))
+    finally:
+      sn.snPrefs["gui/showCopyTags"] = before
+      if not wasDirty:
+        sn.snPrefs.setDirty(False)
+    v.repaint()
+    self.assertTrue(self.marked(bob))
+    self.m.setCanonicalViews(True)
+    v.foldCopies()
+    self.pump()
+    self.assertFalse(self.marked(bob), "folded: one copy, unmarked")
+
 if __name__ == "__main__":
   unittest.main()

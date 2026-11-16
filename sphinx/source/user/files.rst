@@ -187,9 +187,10 @@ setting                                          controls
 ``gui/label``                                    the default label template for nodes
                                                  (see :doc:`viewing`)
 ``gui/relationLabel``                            the default label template for relations
-``gui/showSystemTags``,                          whether to show the **S**, **T**, **R** and
-``gui/showTypeTags``,                            **{}** markers
+``gui/showSystemTags``,                          whether to show the **S**, **T**, **R**, **C**
+``gui/showTypeTags``,                            and **{}** markers (see :doc:`viewing`)
 ``gui/showRemoteTags``,
+``gui/showCopyTags``,
 ``gui/showConstraintMarker``
 ``gui/shadowTypes``                              whether types are drawn with a shadow
 ``gui/tooltip``                                  the default tooltip template (see
