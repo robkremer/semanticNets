@@ -75,7 +75,7 @@ def showNet(view:SNGView, built:Built, scale:float=SCALE, fit:bool=False) -> Non
   the boxes mean (see *reader.addConstructMeaning()*) are drawn too. (Not
   the types.)
 
-  Nodes KNet takes to be one (see *reader.knetNames()*) are copies of one
+  Nodes that are one (see *reader.knetNames()*, *reader.cnetNames()*) are copies of one
   node (see *SNGView.canonical()*), each where it was, showing its own label
   (see *VObject.ownLabel*), each link drawn between the copies it joins.
 
@@ -138,8 +138,8 @@ def convert(app:Application, rnetPath:str, modelPath:str, viewPath:str, parent:t
   :param modelPath: The model's file (".snm").
   :param viewPath: The view's file (".snv").
   :param parent: The window any messages are about (eg: the dialog), if any.
-  :param merge: Whether the nodes KNet takes to be one (see
-    *reader.knetNames()*) are one node, shown as copies.
+  :param merge: Whether the nodes that are the same (see
+    *reader.knetNames()*, *reader.cnetNames()*) are one node, shown as copies.
   :returns: What was made, and the view, if it was.
   '''
   where:dict[str, Any] = {"parent": parent} if parent is not None else {}
@@ -226,7 +226,7 @@ class ReaderDialog(tk.Toplevel):
     ttk.Label(frame, text="A Rep Plus net (CNet, KNet): its node and link types, nodes, links, marks and groups.",
               foreground="gray40", wraplength=520).grid(row=3, column=1, columnspan=2, sticky=tk.W, padx=6)
     self.merge = tk.BooleanVar(value=True)
-    ttk.Checkbutton(frame, text="Nodes KNet takes to be the same are one node, shown as copies "
+    ttk.Checkbutton(frame, text="Nodes that are the same are one node, shown as copies "
                     "(not for a figure of several copies of a net)",
                     variable=self.merge).grid(row=4, column=1, columnspan=2, sticky=tk.W, **pad)
     bottom = ttk.Frame(frame)

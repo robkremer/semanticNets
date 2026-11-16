@@ -142,6 +142,31 @@ BOXES = net(
   "2 3 4|",
 )
 
+CNET = net(
+  "|C|9|FFFFFF||32",
+  "T|4",
+  "2|0|Arial|9|1|0|8A00|D8FFFF|6400|8A00|0|0|0||All",
+  "2|0|Arial|9|1|0|8A00|D8FFFF|6400|8A00|0|0|0||Entity",
+  "0|0|Arial|9|1|20|000000|FFFFFF|000000|0000FF|0|0|0||Relation",
+  "0|0|Arial|11|0|20|000000|FFFFFF|000080|000080|0|0|0||Title",
+  "A|1",
+  "1|0|0|0|1|0|000000|000000|000000|000000|includes",
+  "N|10|0",
+  "0|0|10|10|40|20|meaning|",
+  "0|0|10|80|40|20|art object|",
+  "0|0|90|10|40|20|Meaning|",   # (the same node: big and small letters alike)
+  "1|0|90|80|40|20|meaning|",   # (an Entity: not the All)
+  "2|0|150|10|40|20|has part|", # (a relation's node, just its text: never one with another)
+  "2|0|150|80|40|20|has part|",
+  "3|0|10|150|80|20|Gaut|",     # (titles: never one with another)
+  "3|0|90|150|80|20|Gaut|",
+  "0|0|200|10|40|20||",         # (no label: never one with another)
+  "0|0|200|80|40|20||",
+  "L|1|0",
+  "1|2|0",  # art object includes meaning: drawn to its second copy
+)
+"A net of CNet's node types (not KNet's), with nodes drawn twice."
+
 class TestParse(unittest.TestCase):
 
   @classmethod
@@ -340,6 +365,28 @@ class TestBuild(unittest.TestCase):
     self.assertEqual(typ["vis/midMarks"], "|") # (inherited)
     self.assertIn("2 exclusions between construct poles", b.report())
     self.assertEqual(self.build(V9).derived, []) # (no constructs)
+
+  def test_cnetSameNodes(self):
+    '''
+    In a net of CNet's node types, the nodes of one node type with the same
+    label (in any case) are one node, shown as copies -- not those of
+    different node types, a relation's node (just its text), titles, nor
+    nodes with no label; none of them apart, if *merge* is false.
+    '''
+    b = self.build(CNET, "cnet")
+    self.assertIs(b.nodes[2], b.nodes[0])
+    self.assertEqual(str(b.nodes[0].name), "meaning")
+    self.assertEqual(b.labels.get(2), "Meaning") # (its copy shows its own label)
+    self.assertIsNot(b.nodes[3], b.nodes[0])
+    for i, j in ((4, 5), (6, 7), (8, 9)):
+      self.assertIsNot(b.nodes[i], b.nodes[j])
+    self.assertEqual([(str(r.src.name), str(r.dst.name)) for r, _ in b.relations], [("art object", "meaning")])
+    self.assertEqual(b.ends[id(b.relations[0][0])], (1, 2))
+    self.assertIn("1 of them copies of others", b.report())
+    apart = self.reader.buildModel(self.rnet.parseText(CNET, "apart.rnet"), str(self.folder / "apart.snm"), merge=False)
+    self.assertIsNot(apart.nodes[2], apart.nodes[0])
+    self.assertEqual(self.reader.cnetNames(self.rnet.parseText(CNET, "names.rnet")),
+                     {0: "meaning", 1: "art object", 2: "Meaning", 3: "meaning"})
 
   def test_savedAndRead(self):
     'Saved and read again: the boxes keep their members, and the marks are there.'
