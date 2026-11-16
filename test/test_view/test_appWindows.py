@@ -330,6 +330,30 @@ class TestAppWindows(unittest.TestCase):
       self.app.report_callback_exception(KeyError, KeyError("x"), None)
     box.assert_not_called()
 
+  def test0920commandFailsReplaced(self):
+    '''A command that fails once the program's been replaced since it was
+    opened (eg: by a rebuild: "unknown encoding: utf-8-sig", as its codec's
+    module can't be loaded any more -- see util.programFiles): say so, offering
+    to quit (not again straight away: only logged); not the privacy protection.'''
+    from util import programFiles
+    box, opener = self.privacy()
+    box.return_value = f"Quit {sn.NAME}"
+    self.app._replacedExplained = float("-inf")
+    ex = LookupError("unknown encoding: utf-8-sig")
+    with mock.patch.object(programFiles, "changed", return_value=["/Applications/Semantic Nets.app/Contents/Frameworks/base_library.zip"]), \
+         mock.patch.object(self.app, "onQuit") as quit, mock.patch("sys.stderr"), self.assertLogs(level="ERROR"):
+      self.app.report_callback_exception(LookupError, ex, None)
+      self.assertIn(f"{sn.NAME} has been replaced or moved since it was opened", box.call_args[0][2])
+      self.assertIn(f"Quit {sn.NAME} and open it again.", box.call_args[0][2])
+      quit.assert_called_once()
+      box.reset_mock()
+      self.app.report_callback_exception(LookupError, ex, None) # (just said: only logged)
+      box.assert_not_called()
+    with mock.patch.object(programFiles, "changed", return_value=[]), mock.patch("sys.stderr"):
+      self.app.report_callback_exception(LookupError, ex, None) # (not replaced: just the usual report)
+    box.assert_not_called()
+    opener.assert_not_called()
+
 
 if __name__ == "__main__":
   unittest.main()

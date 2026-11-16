@@ -55,6 +55,7 @@ import sys
 import atexit
 import os
 import tempfile
+import time
 from pathlib import Path
 import tkinter as tk
 import tkinter.filedialog as filedialog
@@ -71,6 +72,7 @@ from util.singleInstance import SingleInstance
 from util.choiceDialog import askChoice
 from util.aboutDialog import installAbout
 from util.tkCommands import uniqueCommandNames
+from util import programFiles
 from util.terminal import terminalRegistry, installGlobalIORouting,\
   TerminalWidget, TerminalRegistry
 from sn.model.model import Model
@@ -127,6 +129,8 @@ class Application(tk.Tk):
     self.terminalRegistry = terminalRegistry  # shared across all windows
     self._privacyExplained:dict[str, float] = {}
     "When each folder was last said to be blocked by the Mac's privacy protection (see *explainPrivacy()*)."
+    self._replacedExplained = float("-inf")
+    "When the program was last said to have been replaced since it was opened (see *explainReplaced()*)."
     self.directoryPane:DirectoryPane|None = None
     "The model directory, once it's been shown: it fills this (the main) window (see *showDirectory()*)."
     self._directoryShown = tk.BooleanVar(self, value=False) # (the Window menu's check mark)
@@ -1028,14 +1032,43 @@ class Application(tk.Tk):
   @override
   def report_callback_exception(self, exc:type[BaseException], val:BaseException, tb) -> None: # type: ignore[override]
     """An error in a menu item's, button's, ... command (eg: File | Save
-    view): if the Mac's privacy protection stopped a file being used, say
-    which app to allow (see *explainPrivacy()*) -- as well as reporting it as
-    usual."""
+    view): as well as reporting it as usual, if the program's been replaced
+    since it was opened, which may well be why, say so (see
+    *explainReplaced()*); or if the Mac's privacy protection stopped a file
+    being used, say which app to allow (see *explainPrivacy()*)."""
     super().report_callback_exception(exc, val, tb)
     try:
-      self.explainPrivacy(val, then="Then try again.")
+      if not self.explainReplaced():
+        self.explainPrivacy(val, then="Then try again.")
     except Exception:
       logger.error("While explaining an error", exc_info=True)
+
+  REPLACED_QUIET = 60.0
+  "For how long (seconds) *explainReplaced()* doesn't say it again (eg: for each of a run of errors)."
+
+  def explainReplaced(self) -> bool:
+    """If the program's own files have been replaced since it was opened
+    (see *util.programFiles*) -- eg: a new version installed over it, or
+    the app rebuilt, while it's running -- the parts of it that haven't been
+    used yet can't be loaded, and fail in odd ways (eg: "LookupError: unknown
+    encoding: utf-8-sig"): say so, and offer to quit, so it can be opened
+    again. Said again only after *REPLACED_QUIET*; till then, only logged.
+
+    :returns: Whether they have been replaced.
+    """
+    changed = programFiles.changed()
+    if not changed:
+      return False
+    logger.error(f"{sn.NAME} has been replaced or moved since it was opened: {', '.join(changed)} changed.")
+    now = time.monotonic()
+    if now - self._replacedExplained < self.REPLACED_QUIET:
+      return True
+    self._replacedExplained = now
+    quitNow, later = f"Quit {sn.NAME}", "Not Now"
+    if askChoice(self._dialogParent(), sn.NAME, programFiles.advice(sn.NAME), [quitNow, later], quitNow, later,
+                 icon="warning") == quitNow:
+      self.onQuit() # (offering to save the changes first)
+    return True
 
   def examplesBlocked(self, target:str) -> bool:
     """
