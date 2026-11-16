@@ -57,6 +57,9 @@ net reader in :doc:`exampleApps`). Then:
   object: rename one, or change its attributes, and they all change.
   **erase from view** takes just that copy out of the view; deleting it
   from the model deletes it, and all its copies go.
+- Each copy is marked **C** (see `Markers`_), so you can tell a node that's
+  shown more than once; its tooltip says how many times. The
+  ``gui/showCopyTags`` setting turns the marker off.
 - With the mouse over a copy, its other copies glow (light blue: the
   ``gui/copyHighlightColor`` setting, not a query's yellow), so you can see
   where they are; and they glow while it's selected.
@@ -215,12 +218,14 @@ marker    means
 **S**     a system object
 **T**     a type
 **R**     a remote object: from another model
+**C**     one of a node's copies: the view shows it more than once (see
+          `Copies of an object`_)
 **{}**    a variable with constraints; **{!}** (red) if they can't be read
 ========  ==============================================================
 
-The **S**, **T**, **R** and **{}** markers can be turned off in the settings
-(``gui/showSystemTags``, ``gui/showTypeTags``, ``gui/showRemoteTags``,
-``gui/showConstraintMarker``).
+The **S**, **T**, **R**, **C** and **{}** markers can be turned off in the
+settings (``gui/showSystemTags``, ``gui/showTypeTags``,
+``gui/showRemoteTags``, ``gui/showCopyTags``, ``gui/showConstraintMarker``).
 
 How things are drawn
 --------------------
