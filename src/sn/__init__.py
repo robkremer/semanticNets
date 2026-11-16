@@ -33,7 +33,7 @@ from util.utils import askYesNo
 
 NAME = "Semantic Nets"
 SHORT_NAME = "sn"
-VERSION = "1.2.1"
+VERSION = "1.2.2a"
 "The program's version: written in the files it saves (see *SerializationStrategy.appVersion*)."
 
 SCHEMA = "sn"
@@ -256,6 +256,9 @@ PREFS:dict[str, tuple[Any, Any, str]] = {
     "Mark objects from other models (not the view's own model) with an \"R\" (remote) tag."),
   "gui/showConstraintMarker": (bool, True,
     "Mark each variable that has constraints with a \"{}\" marker."),
+  "gui/showCopyTags": (bool, True,
+    "In a view that may show a node more than once (its model's canonicalViews preference is off), mark each "
+    "node shown more than once with a \"C\" (copies) tag."),
   "gui/allowEditingSystemObjects": (bool, False,
     "Allow editing the system model's objects. They're reset each time the program starts, so changes don't last; "
     "best left off."),
