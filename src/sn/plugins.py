@@ -93,11 +93,16 @@ _FOLDER_NAME = re.compile(r"[A-Za-z_]\w*")
 
 def version(text:str) -> tuple[int, ...]:
   '''
-  :param text: A version: eg: "1.2.10".
-  :returns: It, to compare with another: eg: (1, 2, 10). (A part that isn't a
-    number counts as 0.)
+  :param text: A version: eg: "1.2.10", or one on its way, eg: "1.2.2a".
+  :returns: It, to compare with another: eg: (1, 2, 10). Each part counts by
+    the number it starts with -- "2a" as 2, so "1.2.2a" is (1, 2, 2): a plugin
+    that needs 1.2.1 (or 1.2.2) loads in it -- and one that doesn't start with
+    a number (eg: "x") as 0.
   '''
-  return tuple(int(p) if p.isdigit() else 0 for p in str(text).strip().split("."))
+  return tuple(int(m.group()) if (m := _LEADING_NUMBER.match(p.strip())) else 0 for p in str(text).strip().split("."))
+
+_LEADING_NUMBER = re.compile(r"\d+")
+"The number a version's part starts with (see *version()*)."
 
 class PluginError(Exception):
   "A plugin that can't be read, or loaded: why."

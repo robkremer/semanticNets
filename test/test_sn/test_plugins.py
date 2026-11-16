@@ -105,6 +105,9 @@ class Test(unittest.TestCase):
     self.assertEqual(plugins.version("1.2.10"), (1, 2, 10))
     self.assertLess(plugins.version("1.2"), plugins.version("1.10"))
     self.assertEqual(plugins.version("1.x"), (1, 0))
+    self.assertEqual(plugins.version("1.2.2a"), (1, 2, 2)) # (a version on its way: as sn's own may be)
+    self.assertLessEqual(plugins.version("1.2.1"), plugins.version("1.2.2a"))
+    self.assertEqual(plugins.version("1.10rc1"), (1, 10))
 
   def test0200manifest(self):
     m = plugins.Manifest.read(str(makePlugin(self.installed, "alpha", "2.1")))
