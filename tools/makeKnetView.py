@@ -21,6 +21,12 @@ changed to make other objects, or in another order, make the view again (a
 view laid out by hand may need fixing: test_rnetReader's TestKnetView checks
 that what it shows is there).
 
+Either way, it's locked (Edit | Lock view): laying it out moves things about,
+but can't change knet.snm. In an unlocked view, dragging a relation from one
+part of a rule to another (eg: its antecedent to its consequent) changes what
+the part holds, in the model -- which isn't saved (it's the plugin's), so the
+view, saved, would refer to objects that aren't there when it's read again.
+
 It lays the view out in a temporary folder, as a temporary user (HOME), so it
 never touches your files or preferences.
 
@@ -124,6 +130,7 @@ def layOut(app, path:str, done) -> None:
     app.after(800, save)
   def save() -> None:
     assert v.url.startswith("file://" + os.path.dirname(path)), v.url
+    v.setEditLocked(True)
     v.save()
     done()
   app.after(800, arrange)
@@ -149,7 +156,9 @@ def installFrom(path:str) -> None:
   '''
   Copy a view of knet.snm that's been laid out by hand into plugins/rnetReader/,
   stored as being in *PLACEHOLDER* (as *sn.plugins* relocates it when it's
-  installed: wherever it was saved, in a folder named rnetReader).
+  installed: wherever it was saved, in a folder named rnetReader), and locked.
+  Not if it shows objects that aren't in knet.snm (eg: laid out in an
+  unlocked view, which changed the model, and the model wasn't saved).
 
   :param path: Its file.
   '''
@@ -159,7 +168,16 @@ def installFrom(path:str) -> None:
     sys.exit(f"{path} isn't a view.")
   if not re.search(r'<property key="model" value="(knet\.snm|file://[^"]*/rnetReader/knet\.snm)" />', text):
     sys.exit(f"{path} isn't a view of the rnetReader plugin's knet.snm.")
+  with open(MODEL, encoding="utf-8") as fd:
+    ids = set(re.findall(r'<property key="(\d+)">', fd.read()))
+  missing = sorted(set(re.findall(r'<property key="modelObject" type="str" value="#(\d+)" />', text)) - ids, key=int)
+  if missing:
+    sys.exit(f"{path} shows {len(missing)} objects that aren't in knet.snm (eg: #{missing[0]}): erase them from it first.")
   text = re.sub(r'file://[^"\'<>\s]*/rnetReader/', PLACEHOLDER + "/", text)
+  text, n = re.subn(r'<property key="editLocked" type="str" value="[01]" />',
+                    '<property key="editLocked" type="str" value="1" />', text)
+  if n != 1:
+    sys.exit(f"{path} doesn't say whether it's locked.")
   with open(TARGET, "w", encoding="utf-8") as fd:
     fd.write(text)
   print("wrote", TARGET)

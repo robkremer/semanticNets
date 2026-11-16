@@ -414,6 +414,8 @@ class TestKnetView(unittest.TestCase):
   being where it is (wherever the plugin's installed: see
   sn.plugins.installBundled()), and shows its objects -- not some other
   version's (eg: after knet.snm's made again, its objects' ids have changed).
+  It's locked, so laying it out can't change knet.snm (which isn't saved: the
+  view, saved, would show objects that aren't there).
   '''
   def test_view(self):
     import xml.etree.ElementTree as ET
@@ -436,6 +438,8 @@ class TestKnetView(unittest.TestCase):
       return value.get("value") if value is not None else None
     names = {name(o) for k, o in objects(model).items() if "#" + k in local}
     self.assertTrue({"knode", "exclusion", "isa", "inconsistent node"} <= names, names)
+    locked = [p.get("value") for p in view.find("object").findall("property") if p.get("key") == "editLocked"]
+    self.assertEqual(locked, ["1"])
 
 if __name__ == "__main__":
   unittest.main()
