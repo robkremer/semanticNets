@@ -787,6 +787,28 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
     self.__dict__["_copyGlows"] = want
     return want
 
+  def drawCopies(self, vo:VObject) -> list[VObject]:
+    '''
+    Draw *vo*'s other copies (see *copiesOf()*) again, as they are now --
+    their markers say whether they have copies (see
+    *decorators.copiesMarked()*): called as a copy comes or goes (see
+    *makeCopy()*, *VObject._disconnect()*, *VObject._reconnect()*). Not those
+    that haven't been drawn yet, nor while its model object's being taken out
+    of the model (they go too).
+
+    :returns: Those drawn.
+    '''
+    mo = vo.modelObject
+    if mo is None or not mo._isConnected() or getattr(self, "canvas", None) is None:
+      return []
+    others = [c for c in self.viewObjectsFor(mo) if c is not vo and c._isConnected()
+              and c._shape is not None and c._shape.id is not None]
+    if others:
+      self.freshPaint()
+      for c in others:
+        c.draw()
+    return others
+
   COPY_OFFSET = 24
   "How far right and down (view units) a new copy is put from what it copies (see *makeCopy()*)."
 
@@ -818,6 +840,7 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
       ret.ownLabel = vo.ownLabel
     self._exemptIfFiltered(ret)
     self.setDirty()
+    self.drawCopies(ret) # (they're marked as having copies now)
     self.glowCopies() # (if what it copies is selected, or under the mouse)
     return ret
 
@@ -840,6 +863,7 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
         groups.setdefault(id(vo.modelObject), []).append(vo)
     count = 0
     rest = [vos for vos in groups.values() if len(vos) > 1]
+    kept = [vos[0] for vos in rest]
     for vos in sorted(rest, key=lambda vos: isinstance(vos[0], VRelation)): # (nodes' first: their lines move to the copy kept)
       keep = vos[0]
       for c in vos[1:]:
@@ -860,6 +884,10 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
     if count and not beforeConnecting:
       self.setDirty()
       self.structureChanged()
+      self.freshPaint() # (their copies markers go)
+      for vo in kept:
+        if vo._isConnected() and vo._shape is not None and vo._shape.id is not None:
+          vo.draw()
     if not beforeConnecting:
       self.glowCopies() # (none, now)
     return count

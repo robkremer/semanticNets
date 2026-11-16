@@ -331,6 +331,10 @@ class Application(tk.Tk):
     from sn.view.graphics.aboutBox import showAbout
     showAbout(self) # (over the window in front: see util.utils.dialogOwner())
 
+  MARKER_PREFS = ("gui/showSystemTags", "gui/showTypeTags", "gui/showRemoteTags", "gui/showCopyTags",
+                  "gui/showConstraintMarker")
+  "The settings that say which markers objects have (see *decorators.MarkerContainer*): open views are drawn again when they change."
+
   def openSettings(self) -> None:
     """Show the app-wide Settings dialog: an attribute editor on *sn.snPrefs*,
     applying the changes to it (saved when the program ends: see
@@ -340,8 +344,15 @@ class Application(tk.Tk):
     """
     from sn.model.reasoner import defaultEngine, engineInstalled
     engine = defaultEngine()
+    markers = self.MARKER_PREFS
+    shown = [snPrefs.get(k, None) for k in markers]
     applyEditAttrsBox(self, snPrefs, title="Semantic Nets Preferences", hideColumns=("type", "qualifiers", "note"))
     self._fillRecentMenu() # (in case "gui/recentFiles" changed)
+    if [snPrefs.get(k, None) for k in markers] != shown: # (eg: the copies markers turned off: show it at once)
+      for window in list(self.windows.values()):
+        view = getattr(window, "view", None)
+        if view is not None and getattr(view, "canvas", None) is not None:
+          view.repaint()
     if defaultEngine() != engine:
       from sn.view.graphics.reasoningToolbar import refreshEngines
       refreshEngines() # (the dialog sets the settings directly: their callbacks aren't called)

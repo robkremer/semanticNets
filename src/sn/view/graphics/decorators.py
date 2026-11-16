@@ -616,11 +616,32 @@ class ConstraintMarker(MarkerWithTooltip):
       self.kwargs2.pop("fill", None)
     return super().draw(at)
 
+def copiesMarked(owner) -> bool:
+  '''
+  Whether *owner* has the copies marker, "C": it's one of more than one copy
+  of its model object in a view that isn't canonical (see
+  *SNGView.copiesOf()*), while the "gui/showCopyTags" setting shows them.
+  (Drawn again as copies come and go: see *SNGView.drawCopies()*.)
+  '''
+  view = owner.view
+  return owner.modelObject is not None and not view.canonical() and len(view.copiesOf(owner)) > 1 \
+         and bool(snPrefs.get("gui/showCopyTags", storeDefault=True, storeType=bool)) # (its note: see sn.PREFS)
+
+def copiesTip(owner) -> str:
+  '''
+  The copies marker's tooltip (see *copiesMarked()*): how many copies there are.
+  '''
+  copies = owner.view.copiesOf(owner)
+  hidden = sum(1 for c in copies if c.isHidden())
+  return f'Copies: this view shows it {len(copies)} times{f" ({hidden} hidden)" if hidden else ""}. ' \
+         'With the mouse over it, or while it\'s selected, the others glow.'
+
 class MarkerContainer(Decorator):
 
   def __init__(self, owner):
     '''
-    The markers on *owner*: errors (E), system object (S), type (T), and so on.
+    The markers on *owner*: errors (E), system object (S), type (T), remote
+    (R), copies (C), constraints ({}).
     '''
     Decorator.__init__(self, owner)
     self.markers = [
@@ -636,6 +657,8 @@ class MarkerContainer(Decorator):
         MarkerWithTooltip(owner, "R", "cyan", "gray50", 
                lambda owner=self.owner: owner.modelObject is not None and owner.view.model != owner.modelObject.model and snPrefs.get("gui/showRemoteTags", storeDefault=True),
                lambda owner=self.owner: f'Remote: Object is from another model: {owner.modelObject.model.url}'),
+        MarkerWithTooltip(owner, "C", "white", "steel blue",
+               copiesMarked, lambda owner=self.owner: copiesTip(owner)),
         ConstraintMarker(owner),
         ]
 
