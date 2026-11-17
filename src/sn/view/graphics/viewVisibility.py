@@ -367,6 +367,39 @@ class VisibilityMixin(ViewBase):
           rels.append(r)
     self._showObjects(nodes + rels, "nodes of those types")
 
+  def showRelationType(self, rt:Relation, at:tuple[float, float]|None=None, reveal:bool=True) -> VObject|None:
+    '''
+    "show" > "relation type": show the relation SN type *rt* (eg: one of a
+    super-model's, which "show" > "node" doesn't list) as a node is shown:
+    one undoable command (see *represent()*), even if it's in a hidden
+    category. It's drawn between its domain and range, as a new relation type
+    is (see *VRelation.__init__()*), or -- if they're not shown (eg: they're
+    top) -- at *at* (moved to a free place near there). If it's shown
+    already, nothing changes in the view (but, with *reveal*, see below).
+
+    :param at: Where to put it if it has no ends to go between (view
+      coords: eg, where the menu was asked for); None for wherever the view
+      puts it.
+    :param reveal: Then select it, and scroll to it.
+    :returns: Its view object, or None if it couldn't be shown (eg: it's in
+      a collapsed box).
+    '''
+    vo = self.findViewObjectForGraphObject(rt)
+    made = vo is None
+    if made or vo.isHidden(): # type: ignore[union-attr]
+      self.context.represent([rt])
+      vo = self.findViewObjectForGraphObject(rt)
+    if vo is not None and made and at is not None: # (if both its ends are shown, it's moved between them once it's drawn)
+      vo.moveToCenterOn(at[0], at[1], adjustPos=False)
+    def selectIt() -> None: # (once it's placed)
+      if vo is None or not vo._isConnected() or vo.isHidden():
+        return
+      vo.selected(True)
+      self.scrollToShow(vo.boundingBox())
+    if reveal and self.canvas:
+      self.canvas.after(0, lambda: self.canvas.after_idle(selectIt))
+    return vo
+
   def _showObjects(self, objects:list[GraphObject], what:str) -> None:
     '''
     Show *objects* in the view, as one undoable command (see *represent()*) --

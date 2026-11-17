@@ -35,7 +35,12 @@ which must be between two nodes or two relations.
 
 To change a relation's source or destination, drag its end (the cursor
 changes over it) onto another object; its menu also has **reset src** and
-**reset dst**.
+**reset dst**. To make it a relation type that isn't in the view (eg: one of
+an ontology's), use **set src** or **set dst** beside them: their submenus
+list every relation type the model can use, by model, as **make relation
+to...** does (those that can't be its end, or already are, are greyed out).
+The type is brought into the view with it, and one **Undo** takes both back.
+In a locked view, these are left off the menu, as the other model edits are.
 
 Selecting, moving and resizing
 ------------------------------

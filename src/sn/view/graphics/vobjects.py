@@ -1864,37 +1864,11 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
 
   def _relationTypesMenu(self, parent:tk.Menu) -> tk.Menu:
     '''
-    The "make relation to..." submenu: a submenu of relation types for each
-    ancestor model (the view model's super-models, nearest first) at the top,
-    then the view model's own relation types. Each list is sorted by name.
+    The "make relation to..." submenu: a submenu of relation SN types for
+    each of the view model's super-models (nearest first), then the view
+    model's own (see *SNGView.relationTypesMenu()*).
     '''
-    def relTypes(model) -> list[Relation]:
-      return sorted((r for r in model.values() if isinstance(r, Relation) and r.isType() and not r.isVariable()), # (a pattern's ?r isn't a type to make)
-                    key=lambda r: r.name.lower())
-    def add(menu:tk.Menu, r:Relation) -> None:
-      menu.add_command(label=r.name, command=lambda r=r: self.view.makeRelationFrom(self, r)) # type: ignore[misc]
-    model = self.view.model
-    ancestors:list = []
-    pending = list(model.superDBs)
-    while pending:
-      m = pending.pop(0)
-      if m is not model and m not in ancestors:
-        ancestors.append(m)
-        pending += list(m.superDBs)
-    ret = tk.Menu(parent)
-    for anc in ancestors:
-      types = relTypes(anc)
-      if types:
-        sub = tk.Menu(ret)
-        for r in types:
-          add(sub, r)
-        ret.add_cascade(label=anc.name, menu=sub)
-    own = relTypes(model)
-    if ancestors and own:
-      ret.add_separator()
-    for r in own:
-      add(ret, r)
-    return ret
+    return self.view.relationTypesMenu(parent, lambda r: self.view.makeRelationFrom(self, r))
 
   @abstractmethod
   def makeModelObjectSubtype(self, individual:bool) -> None:
