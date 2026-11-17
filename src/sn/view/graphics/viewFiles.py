@@ -37,7 +37,8 @@ from util.utils import fixURL, urlExists, addToMenuBar, afterMenu, addCheckToMen
 from util.persistence.pRef import PRDb
 from sn.view.graphics.guiApp import Application
 from sn.view.graphics.directoryWindow import noteSaved
-from sn.view.graphics.viewBase import KEY_FIND, KEY_SELECT_ALL, KEY_PASTE, KEY_COPY_IMAGE, KEY_COPY, KEY_ZOOM_NORMAL, KEY_CUT, KEY_ZOOM_IN, KEY_ZOOM_FIT, KEY_ZOOM_OUT
+from sn.view.graphics.viewBase import KEY_FIND, KEY_SELECT_ALL, KEY_PASTE, KEY_COPY_IMAGE, KEY_COPY, KEY_ZOOM_NORMAL, KEY_CUT, KEY_ZOOM_IN, KEY_ZOOM_FIT, KEY_ZOOM_OUT, \
+  KEY_VIEW_CUT, KEY_VIEW_COPY, KEY_VIEW_PASTE
 from pathlib import Path
 from sn.view.graphics.viewBase import ViewBase
 
@@ -291,6 +292,8 @@ class FilesMixin(ViewBase):
         except Exception as ex:
           logger.exception(f'{model.name}: preference "{key}" couldn\'t be set.')
           messagebox.showerror("Model preferences", f'"{key}" couldn\'t be set:\n\n{ex}', parent=self.window)
+    if CANONICAL_VIEWS in updates: # (the Edit menu's "... in view" items come or go: see _viewEditMenuItems())
+      self._refreshMenuBarItems()
     if CANONICAL_VIEWS in updates and model.canonicalViews(): # (canonical now: no copies in its open views -- see SNGView.foldCopies())
       for view, _ in list(model._observers):
         if hasattr(view, "foldCopies") and getattr(view, "model", None) is model:
@@ -332,6 +335,7 @@ class FilesMixin(ViewBase):
     addToMenuBar("Edit|Paste", lambda: self._editAction("paste"), accelerator=KEY_PASTE[1])
     addToMenuBar("Edit|Copy as picture", lambda: self._editAction("copy image"), accelerator=KEY_COPY_IMAGE[1])
     addToMenuBar("Edit|Select All", lambda: self._editAction("select all"), accelerator=KEY_SELECT_ALL[1])
+    self._viewEditMenuItems()
     addToMenuBar("Edit|Find...", self.openSearchDialog, accelerator=KEY_FIND[1], separatorBefore=True)
     addToMenuBar("Edit|Model preferences...", self.doModelPreferences, separatorBefore=True,
                  enabled=self.isModelEditor()) # (greyed out while it can't change the model: see refreshLock())
@@ -351,6 +355,38 @@ class FilesMixin(ViewBase):
     bar = self.__dict__.get("_reasoningToolbar")
     if bar is not None:
       bar.refreshLock()
+
+  VIEW_EDIT_ITEMS = ("Cut in view", "Copy in view", "Paste in view")
+  "The menu bar's Edit items for a view that may show copies (see *_viewEditMenuItems()*)."
+
+  def _viewEditMenuItems(self) -> None:
+    '''
+    Add "Edit | Cut in view", "Copy in view" and "Paste in view" (see
+    *doViewCopy()*, *doViewPaste()*) to the menu bar, if this view may show
+    copies (see *canonical()*); else take them out. Called by
+    *onWindowFocusIn()*, after "Select All": they go there. (If its model's
+    "canonicalViews" preference changes while it has the focus, see
+    *_refreshMenuBarItems()*.)
+    '''
+    if self.canonical():
+      for item in self.VIEW_EDIT_ITEMS:
+        removeFromMenuBar("Edit|" + item)
+      return
+    keys = {"Cut in view": KEY_VIEW_CUT, "Copy in view": KEY_VIEW_COPY, "Paste in view": KEY_VIEW_PASTE}
+    actions = {"Cut in view": "view cut", "Copy in view": "view copy", "Paste in view": "view paste"}
+    for i, item in enumerate(self.VIEW_EDIT_ITEMS):
+      addToMenuBar("Edit|" + item, lambda a=actions[item]: self._editAction(a), accelerator=keys[item][1], separatorBefore=i == 0)
+
+  def _refreshMenuBarItems(self) -> None:
+    '''
+    If this view's menu bar items are shown (it has the focus: see
+    *onWindowFocusIn()*), take them all out and put them back: eg, its
+    model's "canonicalViews" preference has changed, so the view's Edit items
+    do (see *_viewEditMenuItems()*) -- in their places.
+    '''
+    if self.__dict__.get("_menuBarItemsShown"):
+      self.onWindowFocusOut()
+      self.onWindowFocusIn()
 
   def onWindowFocusOut(self) -> None:
     '''
@@ -375,6 +411,8 @@ class FilesMixin(ViewBase):
     removeFromMenuBar("Edit|Paste")
     removeFromMenuBar("Edit|Copy as picture")
     removeFromMenuBar("Edit|Select All")
+    for item in self.VIEW_EDIT_ITEMS:
+      removeFromMenuBar("Edit|" + item)
     removeFromMenuBar("Edit|Find...")
     removeFromMenuBar("Edit|Model preferences...")
     removeFromMenuBar("Edit|Replace super-model...")

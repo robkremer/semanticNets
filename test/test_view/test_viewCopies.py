@@ -37,6 +37,7 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 import tkinter as tk
 
 import sn
@@ -479,6 +480,248 @@ class Test(unittest.TestCase):
     v.foldCopies()
     self.pump()
     self.assertFalse(self.marked(bob), "folded: one copy, unmarked")
+
+  # ---- cut, copy and paste in the view ---------------------------------------------
+
+  FIT = 3
+  '''How far (view units) a new view object may be from where it was put, once it's first drawn: fitted to its
+  text about its centre, then grown down to its least height (see *WrappingText.fitOwner()*).'''
+
+  def connected(self, mo, v=None) -> list:
+    'The view objects (copies) shown for *mo*.'
+    return [o for o in (v or self.v).viewObjectsFor(mo) if o._isConnected()]
+
+  def modelSize(self) -> int:
+    'How many objects the model has.'
+    return len([o for o in self.m.values() if o is not None])
+
+  def test1300copyAndPasteInView(self):
+    """
+    "Copy in view" then "Paste in view": new copies of the selection -- the
+    same model objects -- laid out as they were (beside them), the line between
+    them drawn between the new copies; the model's unchanged. One undo.
+    """
+    from sn.view.graphics import viewCopying
+    self.m.setCanonicalViews(False)
+    v = self.v
+    alice, bob, vr = self.V(self.alice), self.V(self.bob), self.V(self.r)
+    size = self.modelSize()
+    viewCopying.clipboard = None
+    v.doViewCopy(vos=[alice, bob])
+    clip = viewCopying.clipboard
+    self.assertIsNotNone(clip)
+    self.assertEqual([e.modelObject for e in clip.entries], [self.alice, self.bob, self.r], "the line between them comes too")
+    self.assertEqual(len(clip.selected), 2)
+    v.doViewPaste()
+    self.pump()
+    self.assertEqual(self.modelSize(), size, "no new model objects")
+    a2 = [c for c in self.connected(self.alice) if c is not alice]
+    b2 = [c for c in self.connected(self.bob) if c is not bob]
+    r2 = [c for c in self.connected(self.r) if c is not vr]
+    self.assertEqual((len(a2), len(b2), len(r2)), (1, 1, 1))
+    self.assertIs(r2[0].src, a2[0])
+    self.assertIs(r2[0].dst, b2[0])
+    self.assertIs(vr.src, alice, "the old line stays where it was")
+    self.assertIs(vr.dst, bob)
+    ox, oy = a2[0].centerPt()[0] - alice.centerPt()[0], a2[0].centerPt()[1] - alice.centerPt()[1]
+    bx, by = b2[0].centerPt()[0] - bob.centerPt()[0], b2[0].centerPt()[1] - bob.centerPt()[1]
+    self.assertAlmostEqual(bx, ox, delta=self.FIT, msg="moved together")
+    self.assertAlmostEqual(by, oy, delta=self.FIT, msg="moved together")
+    self.assertGreater(abs(ox) + abs(oy), 50, "beside them: they're still there")
+    self.assertEqual(set(v.selected), {a2[0], b2[0]}, "what was asked for is selected")
+    self.assertEqual(v.validate(), 0)
+    v.context.undo()
+    self.pump()
+    self.assertEqual([len(self.connected(o)) for o in (self.alice, self.bob, self.r)], [1, 1, 1])
+    v.context.redo()
+    self.pump()
+    self.assertEqual([len(self.connected(o)) for o in (self.alice, self.bob, self.r)], [2, 2, 2])
+    self.assertIs(r2[0].src, a2[0])
+
+  def test1310pastedLineToTheNearestCopy(self):
+    'A line copied without its other end is drawn from the pasted copy to the nearest copy of that end.'
+    from sn.view.graphics import viewCopying
+    self.m.setCanonicalViews(False)
+    v = self.v
+    alice, bob, vr = self.V(self.alice), self.V(self.bob), self.V(self.r)
+    far = self.copy(bob, 900, 700)
+    v.doViewCopy(vos=[alice, vr])
+    self.assertEqual(len(viewCopying.clipboard.entries), 2)
+    v.context.view_paste(x=850, y=600)
+    self.pump()
+    a2 = [c for c in self.connected(self.alice) if c is not alice][0]
+    r2 = [c for c in self.connected(self.r) if c is not vr][0]
+    self.assertIs(r2.src, a2)
+    self.assertIs(r2.dst, far, "the copy of bob nearest the pasted alice")
+    self.assertIs(vr.dst, bob)
+
+  def test1320cutInViewErasesOnly(self):
+    """
+    "Cut in view" erases the view objects (the model keeps their objects);
+    "Paste in view" puts copies back where they were (nothing's there now).
+    """
+    from sn.view.graphics import viewCopying
+    self.m.setCanonicalViews(False)
+    v = self.v
+    bob = self.V(self.bob)
+    c = self.copy(bob, 150, 400)
+    where = list(c.boundingBox())
+    size = self.modelSize()
+    v.doViewCopy(cut=True, vos=[c])
+    self.pump()
+    self.assertFalse(c._isConnected())
+    self.assertTrue(bob._isConnected())
+    self.assertTrue(self.bob._isConnected())
+    self.assertEqual(self.modelSize(), size)
+    self.assertIs(viewCopying.clipboard.entries[0].modelObject, self.bob)
+    v.doViewPaste()
+    self.pump()
+    back = [x for x in self.connected(self.bob) if x is not bob]
+    self.assertEqual(len(back), 1)
+    for got, want in zip(back[0].boundingBox(), where):
+      self.assertAlmostEqual(got, want, delta=self.FIT, msg="where it was cut from")
+    v.context.undo() # (the paste)
+    v.context.undo() # (the cut)
+    self.pump()
+    self.assertTrue(c._isConnected())
+    self.assertEqual(len(self.connected(self.bob)), 2)
+    self.assertEqual(self.modelSize(), size)
+
+  def test1330aBoxCarriesItsContents(self):
+    'A box copied in the view brings copies of what it carries: in the new box, which holds them as the model says.'
+    self.m.setCanonicalViews(False)
+    v = self.v
+    B, bob = self.V(self.B), self.V(self.bob)
+    v.doViewCopy(vos=[B])
+    v.context.view_paste(x=900, y=500)
+    self.pump()
+    B2 = [c for c in self.connected(self.B) if c is not B]
+    b2 = [c for c in self.connected(self.bob) if c is not bob]
+    self.assertEqual((len(B2), len(b2)), (1, 1))
+    x1, y1, x2, y2 = B2[0].boundingBox()
+    cx, cy = b2[0].centerPt()
+    self.assertTrue(x1 < cx < x2 and y1 < cy < y2, "inside the new box")
+    self.assertEqual(self.holders(self.bob), ["B", "B"], "both boxes hold it")
+    self.drag(B2[0], 1200, 800) # (its contents go with it)
+    cx, cy = b2[0].centerPt()
+    x1, y1, x2, y2 = B2[0].boundingBox()
+    self.assertTrue(x1 < cx < x2 and y1 < cy < y2, "carried")
+    self.assertTrue(self.B.isMember(self.bob), "the model's unchanged")
+    self.assertEqual(v.validate(), 0)
+
+  def test1340savedAndRead(self):
+    'Pasted copies, and which copies their lines are drawn to, are saved with the view.'
+    self.m.setCanonicalViews(False)
+    v = self.v
+    v.doViewCopy(vos=[self.V(self.alice), self.V(self.bob)])
+    v.context.view_paste(x=100, y=600)
+    self.pump()
+    self.m.save()
+    v.save()
+    url = v.url
+    self.close(v)
+    from sn.view.graphics.sngView import SNGView
+    from util.persistence.pRef import PRDb
+    PRDb.AllDBs.pop(url, None)
+    self.v = w = SNGView.getDB(url)
+    if not hasattr(w, "window") or w.window is None:
+      self.app.openWindow(w)
+    self.pump(0.5)
+    rs = self.connected(self.r, w)
+    self.assertEqual(len(rs), 2)
+    self.assertEqual({(r.src.modelObject, r.dst.modelObject) for r in rs}, {(self.alice, self.bob)})
+    self.assertEqual(len({id(r.src) for r in rs}), 2, "each line to its own copies")
+    self.assertEqual(w.validate(), 0)
+
+  def test1350notInCanonicalViews(self):
+    """
+    A canonical view has none of it: no menu items, and the keys (bound in
+    every view) neither copy nor paste -- in the view or the model.
+    """
+    from sn.view.graphics import viewCopying
+    from sn.model import copying
+    v = self.v
+    self.assertTrue(v.canonical())
+    bob = self.V(self.bob)
+    menu = tk.Menu(v.canvas)
+    bob.addViewMenuItems(menu)
+    labels = [menu.entrycget(i, "label") for i in range(menu.index("end") + 1) if menu.type(i) == "command"]
+    self.assertFalse(any("in view" in l for l in labels), labels)
+    bg = v.makeMenu(SimpleNamespace(x=10, y=10))
+    self.assertFalse(any("in view" in l for l in self.menuLabels(bg)))
+    viewCopying.clipboard, copying.clipboard = None, None
+    bob.selected(True)
+    for action in ("view copy", "view cut", "view paste"):
+      v._editAction(action)
+    self.pump()
+    self.assertIsNone(viewCopying.clipboard)
+    self.assertIsNone(copying.clipboard, "not the model's copy either")
+    self.assertTrue(bob._isConnected())
+    self.assertEqual(len(self.connected(self.bob)), 1)
+    with self.assertRaises(ValueError):
+      v.context.view_cut(bob)
+    self.m.setCanonicalViews(False) # (copied in a view that may show copies: but not pasted into one that doesn't)
+    v.doViewCopy(vos=[bob])
+    self.m.setCanonicalViews(True)
+    self.assertIsNotNone(viewCopying.pasteProblem(viewCopying.clipboard, v))
+    with self.assertRaises(ValueError):
+      v.context.view_paste()
+    self.assertEqual(len(self.connected(self.bob)), 1)
+
+  def menuLabels(self, menu) -> list[str]:
+    'The labels of *menu*\'s commands, and of its cascades\' (at any depth).'
+    ret:list[str] = []
+    end = menu.index("end")
+    for i in range(end + 1 if end is not None else 0):
+      if menu.type(i) == "command":
+        ret.append(menu.entrycget(i, "label"))
+      elif menu.type(i) == "cascade":
+        ret += self.menuLabels(menu.nametowidget(menu.entrycget(i, "menu")))
+    return ret
+
+  def test1360menusAndKeys(self):
+    """
+    Not canonical: a node's menu (and a line's) has "cut in view" and "copy
+    in view", the background's "paste here in view", the menu bar's Edit menu
+    all three (gone again when the model's made canonical); and the keys are
+    bound on the canvas.
+    """
+    from util.utils import getMenuBar, getSubMenu
+    from sn.view.graphics import viewCopying
+    from sn.view.graphics.viewBase import KEY_VIEW_CUT, KEY_VIEW_COPY, KEY_VIEW_PASTE
+    v = self.v
+    for key in (KEY_VIEW_CUT, KEY_VIEW_COPY, KEY_VIEW_PASTE):
+      self.assertTrue(v.canvas.bind(key[0]), key)
+    self.m.setCanonicalViews(False)
+    bob = self.V(self.bob)
+    menu = tk.Menu(v.canvas)
+    bob.addViewMenuItems(menu)
+    commands = {menu.entrycget(i, "label"): menu.entrycget(i, "accelerator") for i in range(menu.index("end") + 1) if menu.type(i) == "command"}
+    self.assertEqual(commands.get("cut in view"), KEY_VIEW_CUT[1])
+    self.assertEqual(commands.get("copy in view"), KEY_VIEW_COPY[1])
+    menu = tk.Menu(v.canvas)
+    self.V(self.r).addViewMenuItems(menu)
+    labels = self.menuLabels(menu)
+    self.assertIn("copy in view", labels, "a line's too")
+    self.assertFalse(any(l.startswith("show a copy") for l in labels), "but not \"show a copy\"")
+    viewCopying.clipboard = None
+    bg = v.makeMenu(SimpleNamespace(x=10, y=10))
+    self.assertIn("paste here in view", self.menuLabels(bg))
+    bar = getMenuBar()
+    if bar is None:
+      return
+    v._menuBarItemsShown = True
+    v._refreshMenuBarItems()
+    edit = getSubMenu(bar, "Edit", makeIfNone=None)
+    items = lambda: [edit.entrycget(i, "label") for i in range(edit.index("end") + 1) if edit.type(i) == "command"]
+    now = items()
+    for item in ("Cut in view", "Copy in view", "Paste in view"):
+      self.assertIn(item, now)
+    self.assertEqual(now.index("Cut in view"), now.index("Select All") + 1, "after Select All")
+    self.m.setCanonicalViews(True)
+    v._refreshMenuBarItems()
+    self.assertFalse(any("in view" in l for l in items()), items())
+    v.onWindowFocusOut()
 
 if __name__ == "__main__":
   unittest.main()

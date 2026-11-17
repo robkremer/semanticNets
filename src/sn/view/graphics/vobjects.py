@@ -1932,14 +1932,24 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
          
   def _addCopyMenuItems(self, menu:tk.Menu) -> None:
     '''
-    In a view that isn't canonical (see *SNGView.canonical()*), add a node's
-    "show a copy" (another copy of what it shows, beside it: see
-    *SNGContext.another_copy()*) to *menu*, saying how many it has. And, for one
-    with its own label (see *ownLabel*), "show its name here", which takes
-    that away.
+    In a view that isn't canonical (see *SNGView.canonical()*), add "cut in
+    view" and "copy in view" (the selection, if this is selected: see
+    *SNGView.doViewCopy()*) to *menu*; and a node's "show a copy" (another
+    copy of what it shows, beside it: see *SNGContext.another_copy()*),
+    saying how many it has. And, for one with its own label (see *ownLabel*),
+    "show its name here", which takes that away.
     '''
     from sn.view.graphics.vnodes import VNode
-    if self.view.canonical() or not isinstance(self, VNode) or self.modelObject is None:
+    from sn.view.graphics.viewBase import KEY_VIEW_CUT, KEY_VIEW_COPY
+    if self.view.canonical() or self.modelObject is None:
+      return
+    n = len(self.selectionOrSelf())
+    selected = f" ({n} selected)" if n > 1 else ""
+    menu.add_command(label="cut in view" + selected, accelerator=KEY_VIEW_CUT[1],
+                     command=lambda: self.view.doViewCopy(cut=True, vos=self.selectionOrSelf()))
+    menu.add_command(label="copy in view" + selected, accelerator=KEY_VIEW_COPY[1],
+                     command=lambda: self.view.doViewCopy(vos=self.selectionOrSelf()))
+    if not isinstance(self, VNode):
       return
     copies = len(self.view.copiesOf(self))
     menu.add_command(label="show a copy" + (f" (it has {copies})" if copies > 1 else ""),

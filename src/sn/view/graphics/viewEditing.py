@@ -219,17 +219,163 @@ class EditingMixin(ViewBase):
     except Exception as ex:
       logger.error(f"Can't paste: {ex}")
 
+  def doViewCopy(self, cut:bool=False, vos:list[VObject]|None=None) -> None:
+    '''
+    "Edit | Copy in view": copy what's selected -- or, if nothing is,
+    everything shown -- to the view clipboard (see *viewCopying*), to paste as
+    more copies of the same model objects (see *doViewPaste()*). With *cut*
+    ("Cut in view"), erase it from the view too (undoably): the model's not
+    changed. Only in a view that may show copies (see *canonical()*).
+
+    :param vos: What to copy, instead of what's selected.
+    '''
+    from sn.view.graphics import viewCopying
+    what = "Cut in view" if cut else "Copy in view"
+    if self.canonical():
+      logger.warning(f'"{self.name}" shows each object once (its model\'s "canonicalViews" preference): '
+                     f'"{what}" is for views that may show copies.')
+      return
+    if vos is None:
+      vos = list(self.selected) if self.selected or cut else self._shownObjects()
+    vos = [vo for vo in vos if vo._isConnected() and vo.modelObject is not None]
+    if not vos:
+      logger.warning("Nothing is selected to cut." if cut else "There's nothing to copy.")
+      return
+    try:
+      if cut:
+        msg = self.context.view_cut(vos[0], others=vos[1:])
+      else:
+        msg = self.context.view_copy(vos[0], others=vos[1:])
+    except Exception as ex:
+      logger.error(f"Can't {what[0].lower() + what[1:]}: {ex}")
+      return
+    if msg:
+      print(msg)
+
+  def doViewPaste(self, at:tuple[float, float]|None=None) -> None:
+    '''
+    "Edit | Paste in view": show again what was last cut or copied in a view
+    (see *doViewCopy()*) -- more copies of the same model objects, laid out
+    as they were (see *pasteCopies()*). One undo.
+
+    :param at: Where to put it (view coords: the top left of what's pasted), or
+      None to put it where it was (or beside it, if that's taken).
+    '''
+    try:
+      if at is None:
+        self.context.view_paste()
+      else:
+        self.context.view_paste(x=int(at[0]), y=int(at[1]))
+    except Exception as ex:
+      logger.error(f"Can't paste in the view: {ex}")
+
+  def pasteCopies(self, clip:Any, at:tuple[int, int]|None=None) -> list[VObject|None]:
+    '''
+    Show again what *clip* copied (see *viewCopying.copyViewObjects()*): a new
+    view object for each entry, showing the same model object -- the same
+    size and look (its own label too), moved together (see *_pasteOffset()*)
+    -- each line drawn to the copies of its ends pasted with it, or else to
+    the nearest copy of that end. What's asked to be copied is then selected,
+    so it can be dragged away at once. Not a command: see
+    *SNGContext.view_paste()*.
+
+    :param clip: What to paste (a *viewCopying.ViewClip*).
+    :type clip: viewCopying.ViewClip
+    :param at: Where to put the top left of them all (view coords), or None.
+    :returns: The new view objects, by entry of *clip* (None for an entry that
+      can't be shown here: eg, removed from the model since -- see
+      *viewCopying.pastable()*).
+    :raises ValueError: if it can't be pasted here (see *viewCopying.pasteProblem()*).
+    '''
+    from sn.view.graphics import viewCopying
+    from sn.view.graphics.vnodes import VNode
+    from sn.view.graphics.vrelations import _gap
+    problem = viewCopying.pasteProblem(clip, cast("SNGView", self))
+    if problem is not None:
+      raise ValueError(problem)
+    entries = clip.entries
+    dx, dy = self._pasteOffset([e.bb for e in entries], at)
+    made:list[VObject|None] = [None] * len(entries)
+    view = cast("SNGView", self)
+    for i, e in enumerate(entries):
+      if not viewCopying.pastable(e, view):
+        continue
+      if e.relation and any(end is not None and made[end] is None for end in (e.src, e.dst)): # (an end that couldn't be shown: nor can the line)
+        continue
+      x1, y1, x2, y2 = e.bb[0] + dx, e.bb[1] + dy, e.bb[2] + dx, e.bb[3] + dy
+      if e.relation:
+        vo:VObject = VRelation(view, e.modelObject, x=x1, y=y1, x1=x2, y1=y2, floating=e.floating) # type: ignore[arg-type]
+        assert isinstance(vo, VRelation)
+        for end, other in (("src", e.dst), ("dst", e.src)):
+          index = getattr(e, end)
+          want = made[index] if index is not None else None
+          drawnTo = made[other] if other is not None else None
+          now = getattr(vo, end)
+          if want is None and drawnTo is not None and now is not None and now.modelObject is not None: # (the nearest copy of this end to the other's copy)
+            copies = [c for c in self.viewObjectsFor(now.modelObject) if c._isConnected() and c is not vo]
+            if copies:
+              want = min(copies, key=lambda c: _gap(c, drawnTo)) # type: ignore[arg-type]
+          if want is not None:
+            if now is not want:
+              setattr(vo, end, want)
+            vo.pinnedEnds[end] = want
+      else:
+        vo = VNode(view, e.modelObject, x=x1, y=y1, x1=x2, y1=y2)
+      vo.userSized = e.userSized
+      if e.ownLabel is not None:
+        vo.ownLabel = e.ownLabel
+      if e.collapsed:
+        vo.collapsed, vo.expandedHeight = True, e.expandedHeight # type: ignore[attr-defined]
+      if not e.filtered:
+        self._exemptIfFiltered(vo)
+      made[i] = vo
+    shown = [vo for vo in made if vo is not None]
+    if not shown:
+      return made
+    self.setDirty()
+    self.structureChanged()
+    self.freshPaint()
+    for vo in shown:
+      if isinstance(vo, VRelation):
+        vo.reposition()
+    for vo in shown: # (they're marked as having copies now: see decorators.copiesMarked())
+      self.drawCopies(vo)
+    if len(shown) < len(made):
+      logger.warning(f"{len(made) - len(shown)} of the {len(made)} objects copied couldn't be shown here: "
+                     f"removed from the model since, or not in a model this view's model builds on.")
+    def select() -> None:
+      for s in self.selected.copy():
+        s.selected(False)
+      boxes = []
+      for i in clip.selected:
+        vo = made[i]
+        if vo is not None and vo._isConnected() and not vo.isHidden():
+          vo.selected(True, _multi=True)
+          boxes.append(vo.boundingBox())
+      if boxes:
+        self.scrollToShow([min(b[0] for b in boxes), min(b[1] for b in boxes), max(b[2] for b in boxes), max(b[3] for b in boxes)])
+      self.glowCopies()
+    if self.canvas:
+      self.canvas.after_idle(select)
+    return made
+
   def _editAction(self, action:str) -> None:
     '''
     "Edit | Cut", "Copy", "Paste" or "Select All" in the menu bar: for the
     terminal's text, if that has the keyboard focus, else for the canvas.
-    ("Copy as picture" is always the canvas's: see *doCopyImage()*.)
+    ("Copy as picture" is always the canvas's: see *doCopyImage()*; and so are
+    "Cut in view", "Copy in view" and "Paste in view": see *doViewCopy()*.)
 
-    :param action: "cut", "copy", "paste", "select all" or "copy image".
+    :param action: "cut", "copy", "paste", "select all", "copy image", "view
+      cut", "view copy" or "view paste".
     '''
     w = self.canvas.focus_get()
     if action == "copy image":
       self.doCopyImage()
+    elif action in ("view cut", "view copy"):
+      self.doViewCopy(cut=action == "view cut")
+    elif action == "view paste":
+      self.doViewPaste()
     elif isinstance(w, (tk.Text, tk.Entry)):
       w.event_generate("<<SelectAll>>" if action == "select all" else f"<<{action.capitalize()}>>")
     elif action == "select all":
@@ -250,9 +396,11 @@ class EditingMixin(ViewBase):
 
   def onEditKey(self, event:tk.Event, action:str) -> str:
     '''
-    Cmd-X, Cmd-C, Cmd-V or Cmd-A on the canvas (see *_editAction()*).
+    Cmd-X, Cmd-C, Cmd-V or Cmd-A on the canvas -- or Shift-Cmd-C, or
+    Control-Cmd-X, -C or -V (Ctrl+Alt off the Mac) -- (see *_editAction()*).
 
-    :param action: "cut", "copy", "paste", "select all" or "copy image".
+    :param action: "cut", "copy", "paste", "select all", "copy image", "view
+      cut", "view copy" or "view paste".
     :returns: "break": it's been dealt with.
     '''
     self._editAction(action)
