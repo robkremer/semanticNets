@@ -265,7 +265,12 @@ Things to know:
   app's moved or updated. Copying a new version over it replaces its code
   and models, but keeps the user's own: a view they've changed there (eg:
   laid out), and any file they've added (:py:data:`sn.plugins.USER_FILES`);
-  a file that's missing (eg: a view the user deleted) is put back.
+  a file that's missing (eg: a view the user deleted) is put back. Ship a
+  view of the plugin's own model locked (**Edit | Lock view**): laying it
+  out in an unlocked one can change the model (eg: dragging a relation from
+  a rule's antecedent to its consequent), which isn't saved -- it's the
+  plugin's -- so the view, saved, would show objects that aren't there when
+  it's read again.
 - **What it can import.** In the packaged app, a plugin has *Semantic
   Nets*, ``util``, and the parts of the standard library the app has: those
   the bundled plugins import are added to it when it's built (see

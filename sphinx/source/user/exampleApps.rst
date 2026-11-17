@@ -377,7 +377,8 @@ KNet's kernel
 
 The models the reader makes build on the plugin's *knet.snm* (made by
 ``tools/makeKnetRules.py``; **File | Open super model** from a net's view opens
-it, in its view, *knet.snv*: its rules laid out in rows): the kernel of Brian Gaines's protologic
+it, in its view, *knet.snv*: its rules laid out -- locked, so moving
+things about in it can't change the rules: **Edit | Lock view**): the kernel of Brian Gaines's protologic
 (*Universal Logic as a Science of Patterns*, 2015), as relation types and
 rules that every reasoner engine applies. X *includes* Y means whatever is X
 is Y (dog includes animal):
