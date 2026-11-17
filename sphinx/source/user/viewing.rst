@@ -79,9 +79,31 @@ net reader in :doc:`exampleApps`). Then:
   inside and outside a box is in it (moving one copy out doesn't take it out
   while another is still in).
 - A copy may show a label of its own, in place of its node's name (eg: a
-  Rep Plus box's node, its box's name left off): the terminal's ``own
-  label`` command sets it, and **show its name here** (on its menu) puts
-  back the node's name.
+  Rep Plus box's node, its box's name left off): **label this copy...** (on
+  the menu of a node shown more than once), or the terminal's ``own label``
+  command, sets it; **show its name here** puts back the node's name.
+  (Renaming it in its attributes renames the node, so every copy changes.)
+- **Edit | Copy in view** (**Control-Cmd-C**; **Ctrl+Alt+C** on Windows and
+  Linux), or **copy in view** on an object's menu, copies what's selected --
+  with what any selected box carries, and the lines between them -- in the
+  *view*: **Edit | Paste in view** (**Control-Cmd-V**), or **view | paste
+  here in view**, then shows those same objects again: new copies, laid out
+  as they were (beside them, or where you clicked), each line drawn between
+  the new copies of its ends (or, if an end wasn't copied, to its nearest
+  copy). No model object is made; you can paste into another view of the
+  same model too. **Edit | Cut in view** (**Control-Cmd-X**) copies and
+  erases them from the view, so pasting puts them back. Each is one undo.
+  (**Cmd-X**, **Cmd-C** and **Cmd-V** still cut, copy and paste in the
+  model: see :doc:`editing`.)
+- **select all copies** (on the menu of something shown more than once)
+  selects all its copies; **merge into this copy** erases a node's other
+  copies, drawing their lines to this one instead (a line then drawn twice
+  between the same two copies is drawn once). The model doesn't change.
+- Expanding a copy draws the lines it brings in to that copy. Highlights
+  -- a query's answers, a rule's conclusions -- are on every copy.
+- Removing a copy from the model (**Shift-Delete**, **remove from model**,
+  or **Cmd-X**) removes the node, so all its copies go: the confirmation,
+  or the terminal, says how many.
 
 Tick *canonicalViews* again and each open view's copies are folded into
 one: the first copy stays, and the relations drawn to the others are drawn

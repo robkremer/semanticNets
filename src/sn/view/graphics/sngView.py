@@ -748,6 +748,31 @@ class SNGView(ViewportMixin, ReasoningMixin, LayoutsMixin, FilesMixin, Visibilit
       return [vo]
     return [o for o in self.viewObjectsFor(mo) if o._isConnected()] or [vo]
 
+  def shownCopiesOf(self, mo:GraphObject) -> list[VObject]:
+    '''
+    :param mo: A model object.
+    :returns: The view objects in the view that show *mo* (its copies, in a
+      view that isn't canonical: see *canonical()*), in the view's order --
+      none, if it isn't shown. Eg: to highlight each of them.
+    '''
+    return [o for o in self.viewObjectsFor(mo) if o._isConnected()]
+
+  def selectCopies(self, vos:Iterable[VObject]) -> list[VObject]:
+    '''
+    Select every copy (see *copiesOf()*) of each of *vos* -- those shown --
+    as well as what's selected already: "select all copies" on a menu, eg: to
+    move them, or erase them, together.
+
+    :returns: Those selected now that weren't.
+    '''
+    ret:list[VObject] = []
+    for vo in list(vos):
+      for c in self.copiesOf(vo):
+        if c._isConnected() and not c.isHidden() and not c.selected():
+          c.selected(True, _multi=True)
+          ret.append(c)
+    return ret
+
   def glowCopies(self, hovered:VObject|None|bool=False, leaving:VObject|None=None) -> set[VObject]:
     '''
     Give the other copies (see *copiesOf()*) of what the mouse is over, and

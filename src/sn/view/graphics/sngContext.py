@@ -587,6 +587,226 @@ class SNGContext(UIContext):
       super().delete()
       self.object = self.to = self.was = None # type: ignore[assignment]
 
+  def view_copy(self, object:VObject, others:list[VObject]|None=None) -> str: # pylint: disable=redefined-builtin
+    '''
+    Copy view objects to the view clipboard (see *viewCopying*): to paste as
+    more copies of the same model objects (see *view_paste*), in a view that
+    may show copies (see *SNGView.canonical()*) -- with what a box carries, and
+    the lines between them. Not undoable: it changes nothing.
+
+    :param object: The view object to copy.
+    :param others: More to copy with it.
+    :returns: What was copied.
+    '''
+    from sn.view.graphics import viewCopying
+    clip = viewCopying.copyViewObjects([object] + [o for o in (others or []) if o is not object])
+    viewCopying.clipboard = clip
+    return f"Copied {_describeViewClip(clip)} in the view."
+
+  # This is just a signature -- the behaviour is in class _View_cut.
+  def view_cut(self, object:VObject, others:list[VObject]|None=None): # pylint: disable=redefined-builtin
+    '''
+    Copy view objects to the view clipboard (see *view_copy*), and erase
+    them from the view -- a box with what it carries. The model isn't changed.
+    Undoing it puts them back (the clipboard keeps the copy).
+
+    :param object: The view object to cut.
+    :param others: More to cut with it.
+    '''
+    pass
+
+  class _View_cut(Command):
+    def __init__(self, object:VObject, others:list[VObject]|None=None): # pylint: disable=redefined-builtin
+      super().__init__("view cut")
+      from sn.view.graphics import viewCopying
+      vos = [object] + [o for o in (others or []) if o is not object]
+      if object.view.canonical():
+        raise ValueError(f'"{object.view.name}" shows each object once: "Cut in view" is for views that may show copies.')
+      self.clip:viewCopying.ViewClip = viewCopying.copyViewObjects(vos)
+      self.objects:list[VObject] = viewCopying.closure(vos)
+      self.view:SNGView = object.view
+      self.erased:list[VObject] = []
+
+    @override
+    def do(self) -> str:
+      super().do()
+      from sn.view.graphics import viewCopying
+      viewCopying.clipboard = self.clip
+      self.erased = []
+      view = self.view
+      with view.batchedItemStates():
+        for obj in [vo for vo in self.objects if isinstance(vo, VRelation)] + [vo for vo in self.objects if not isinstance(vo, VRelation)]: # (the lines first: a node takes its lines with it, and they'd come back with it)
+          if obj._isConnected():
+            obj._disconnect()
+            self.erased.append(obj)
+      view.setDirty()
+      view.glowCopies()
+      return f"Cut {_describeViewClip(self.clip)} from the view."
+
+    @override
+    def undo(self):
+      super().undo()
+      with self.view.batchedItemStates():
+        for obj in reversed(self.erased): # (the ends of relations before the relations)
+          if not obj._isConnected() and obj._canReconnect():
+            obj._reconnect()
+      self.view.setDirty()
+
+    @override
+    def delete(self):
+      super().delete()
+      self.objects = self.erased = []
+
+    @override
+    def __str__(self):
+      return f'{super().__str__()} {" ".join(o.getPRef().tostring() for o in self.objects[:1])}'
+
+  # This is just a signature -- the behaviour is in class _View_merge.
+  def view_merge(self, object:VObject): # pylint: disable=redefined-builtin
+    '''
+    Merge the other copies of a node into it, in a view that may show copies
+    (see *SNGView.canonical()*): the lines drawn to them are drawn to it, and
+    they're erased from the view (as are lines that, drawn to it now, are
+    drawn twice between the same two copies). The model isn't changed.
+
+    :param object: The copy (a view object) to keep.
+    '''
+    pass
+
+  class _View_merge(Command):
+    def __init__(self, object:VObject): # pylint: disable=redefined-builtin
+      super().__init__("view merge")
+      view = object.view
+      if view.canonical():
+        raise ValueError(f'"{view.name}" shows each object once: there are no copies to merge.')
+      self.keep:VObject = object
+      self.view:SNGView = view
+      self.others:list[VObject] = [c for c in view.copiesOf(object) if c is not object and c._isConnected()]
+      if not self.others:
+        raise ValueError(f'"{object.name}" has no other copies here to merge into it.')
+      self.moved:list[tuple[VRelation, str, VObject, VObject|None]] = []
+      'The lines drawn to another copy: (line, its end, the copy it was drawn to, the copy it was pinned to).'
+      self.erased:list[VObject] = []
+
+    @override
+    def do(self):
+      super().do()
+      keep, view = self.keep, self.view
+      self.moved, self.erased = [], []
+      with view.batchedItemStates():
+        for c in self.others:
+          if not c._isConnected():
+            continue
+          for r in list(c._incoming) + list(c._outgoing):
+            if isinstance(r, VRelation):
+              for end in ("src", "dst"):
+                if getattr(r, end) is c:
+                  self.moved.append((r, end, c, r.pinnedEnds.get(end)))
+                  setattr(r, end, keep)
+                  r.pinnedEnds[end] = keep
+        for r in dict.fromkeys(m[0] for m in self.moved): # (now drawn twice between the same two: one goes)
+          if r._isConnected() and r.modelObject is not None and \
+             any(o is not r and o.src is r.src and o.dst is r.dst for o in view.shownCopiesOf(r.modelObject)):
+            r._disconnect()
+            self.erased.append(r)
+        for c in self.others:
+          if c._isConnected():
+            c._disconnect()
+            self.erased.append(c)
+      self._redraw([m[0] for m in self.moved])
+
+    def _redraw(self, rels:list[VRelation]) -> None:
+      view = self.view
+      view.setDirty()
+      view.structureChanged()
+      view.freshPaint()
+      for r in dict.fromkeys(rels):
+        if r._isConnected():
+          r.reposition()
+      if self.keep._isConnected():
+        self.keep.draw()
+      view.drawCopies(self.keep)
+      view.glowCopies()
+
+    @override
+    def undo(self):
+      super().undo()
+      with self.view.batchedItemStates():
+        for vo in reversed(self.erased): # (the copies before the lines)
+          if not vo._isConnected() and vo._canReconnect():
+            vo._reconnect()
+        for r, end, was, pinned in reversed(self.moved):
+          if was._isConnected():
+            setattr(r, end, was)
+            r.pinnedEnds[end] = pinned if pinned is not None else was
+      self._redraw([m[0] for m in self.moved])
+
+    @override
+    def delete(self):
+      super().delete()
+      self.others, self.moved, self.erased = [], [], []
+
+    @override
+    def __str__(self):
+      return f'{super().__str__()} {self.keep.getPRef().tostring() if self.keep is not None else ""}'
+
+  # This is just a signature -- the behaviour is in class _View_paste.
+  def view_paste(self, x:int|None=None, y:int|None=None):
+    '''
+    Show again what was last cut or copied in a view (see *view_copy*):
+    more copies of the same model objects -- no new model objects -- laid out
+    as they were (see *SNGView.pasteCopies()*): where they were, or beside
+    them if that's taken -- or with their top left at (*x*, *y*). Only in a
+    view that may show copies (see *SNGView.canonical()*).
+
+    :param x: Where to put them (view coords), with *y*.
+    '''
+    pass
+
+  class _View_paste(Command):
+    def __init__(self, x:int|None=None, y:int|None=None, view:SNGView|None=None):
+      super().__init__("view paste")
+      from sn.view.graphics import viewCopying
+      assert view is not None, "There is no view specified."
+      problem = viewCopying.pasteProblem(viewCopying.clipboard, view)
+      if problem is not None:
+        raise ValueError(problem)
+      assert viewCopying.clipboard is not None
+      self.clip:viewCopying.ViewClip = viewCopying.clipboard
+      self.view:SNGView = view
+      self.at:tuple[int, int]|None = None if x is None or y is None else (int(x), int(y))
+      self.made:list[VObject|None]|None = None
+      'The copies, by clip entry (see *SNGView.pasteCopies()*), once made.'
+
+    @override
+    def do(self) -> list[VObject|None]:
+      super().do()
+      if self.made is None:
+        self.made = self.view.pasteCopies(self.clip, self.at)
+      else: # (redone)
+        with self.view.batchedItemStates():
+          for vo in self.made: # (nodes first: they're the relations' ends)
+            if vo is not None and not vo._isConnected() and vo._canReconnect():
+              vo._reconnect()
+        self.view.setDirty()
+      return self.made
+
+    @override
+    def undo(self):
+      super().undo()
+      assert self.made is not None
+      with self.view.batchedItemStates():
+        for vo in reversed(self.made): # (the lines first)
+          if vo is not None and vo._isConnected():
+            vo._disconnect()
+      self.view.setDirty()
+      self.view.glowCopies()
+
+    @override
+    def delete(self):
+      super().delete()
+      self.made = None
+
   @override
   def paste(self, /, model:Model|None=None, x:int|None=None, y:int|None=None):
     '''
@@ -784,3 +1004,16 @@ class SNGContext(UIContext):
       :returns: A readable string for this object.
       '''
       return Command.__str__(self)
+
+def _describeViewClip(clip:Any) -> str:
+  '''
+  :param clip: A *viewCopying.ViewClip*.
+  :returns: What *clip* holds, for a message: eg: '"bob", "alice" (and 3 more: what they carry, and the lines between them)'.
+  '''
+  def name(i:int) -> str:
+    e = clip.entries[i]
+    return f'"{e.ownLabel if e.ownLabel is not None else e.modelObject.name}"'
+  names = ", ".join(name(i) for i in clip.selected[:4]) + (", ..." if len(clip.selected) > 4 else "")
+  more = len(clip.entries) - len(clip.selected)
+  return names + (f' (and {more} more: what {"it carries" if len(clip.selected) == 1 else "they carry"}, '
+                  f'and the lines between them)' if more > 0 else "")

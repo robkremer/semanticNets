@@ -33,12 +33,12 @@ import sn
 from sn import snPrefs
 from sn.model.model import Model, Relation
 from functools import partial
-from typing import Optional, Callable, Any
+from typing import Optional, Callable, Any, cast
 from util.utils import s_SHIFT, bindRightMouse, s_ALT, flattenPairs, s_CMD, s_CTL, normalizeRect, eventEqual, wheelEvents, wheelSteps
 from util.platformSupport import MAC, shortcut
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.vrelations import VRelation
-from sn.view.graphics.viewBase import KEY_ERASE, KEY_FIND, KEY_ZOOM_IN, KEY_ZOOM_FIT, KEY_ZOOM_NORMAL, KEY_REDO, KEY_COPY_IMAGE, KEY_REMOVE, KEY_VALIDATE, KEY_ZOOM_OUT, KEY_CLEAR_HIGHLIGHTS, KEY_COPY, KEY_PASTE, KEY_REPAINT, KEY_SELECT_ALL, KEY_CUT, KEY_UNDO, VKEY_VALIDATE
+from sn.view.graphics.viewBase import KEY_ERASE, KEY_FIND, KEY_ZOOM_IN, KEY_ZOOM_FIT, KEY_ZOOM_NORMAL, KEY_REDO, KEY_COPY_IMAGE, KEY_REMOVE, KEY_VALIDATE, KEY_ZOOM_OUT, KEY_CLEAR_HIGHLIGHTS, KEY_COPY, KEY_PASTE, KEY_REPAINT, KEY_SELECT_ALL, KEY_CUT, KEY_UNDO, VKEY_VALIDATE, KEY_VIEW_CUT, KEY_VIEW_COPY, KEY_VIEW_PASTE
 from collections import namedtuple
 from sn.view.graphics.viewBase import ViewBase
 from typing import TYPE_CHECKING
@@ -133,6 +133,11 @@ class InputMixin(ViewBase):
     self.canvas.bind(KEY_PASTE[0], lambda e: self.onEditKey(e, "paste"))
     self.canvas.bind(KEY_COPY_IMAGE[0], lambda e: self.onEditKey(e, "copy image"))
     self.canvas.bind(KEY_SELECT_ALL[0], lambda e: self.onEditKey(e, "select all"))
+    # (in the view: more copies of the same model objects -- bound in every view, so in one that shows each object once
+    # these keys say so rather than doing what the plain keys do: see doViewCopy())
+    self.canvas.bind(KEY_VIEW_CUT[0], lambda e: self.onEditKey(e, "view cut"))
+    self.canvas.bind(KEY_VIEW_COPY[0], lambda e: self.onEditKey(e, "view copy"))
+    self.canvas.bind(KEY_VIEW_PASTE[0], lambda e: self.onEditKey(e, "view paste"))
     for key in KEY_ERASE:
       self.canvas.bind(key, lambda e: self.onDeleteKey(e, fromModel=False))
     for key in KEY_REMOVE:
@@ -805,6 +810,12 @@ class InputMixin(ViewBase):
     viewMenu.add_cascade(label="show", menu=showMenu)
     viewMenu.add_cascade(label="hide by category", menu=self._visibilityMenu("hide"))
     viewMenu.add_cascade(label="erase by category", menu=self._visibilityMenu("erase"))
+    if not self.canonical(): # (more copies of what was cut or copied in a view: see doViewPaste())
+      from sn.view.graphics import viewCopying
+      viewMenu.add_separator()
+      viewMenu.add_command(label="paste here in view", accelerator=KEY_VIEW_PASTE[1],
+                           command=lambda: self.doViewPaste(at=(clickAt[0], clickAt[1])),
+                           state=tk.NORMAL if viewCopying.pasteProblem(viewCopying.clipboard, cast("SNGView", self)) is None else tk.DISABLED)
     viewMenu.add_separator()
     viewMenu.add_cascade(label="Zoom", menu=self.makeZoomMenu(viewMenu))
     viewMenu.add_command(label="reset scroll region", command=lambda: self.resetScrollRegion(shrink=True))
