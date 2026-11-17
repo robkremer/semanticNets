@@ -72,6 +72,7 @@ from util.singleInstance import SingleInstance
 from util.choiceDialog import askChoice
 from util.aboutDialog import installAbout
 from util.tkCommands import uniqueCommandNames
+from util.windowStacking import stackingOrder, restack
 from util import programFiles
 from util.terminal import terminalRegistry, installGlobalIORouting,\
   TerminalWidget, TerminalRegistry
@@ -855,34 +856,50 @@ class Application(tk.Tk):
 
   OPEN_WINDOWS_PREF = ".openWindows"
   '''The preference recording the windows open when the app last quit (see
-  *rememberOpenWindows()*). (Its name starts with ".", so the Settings dialog
-  doesn't show it: it isn't for the user to edit.)'''
+  *rememberOpenWindows()*), from the one at the back to the one in front. (Its
+  name starts with ".", so the Settings dialog doesn't show it: it isn't for
+  the user to edit.)'''
+
+  DIRECTORY_STACK_PREF = ".directoryStack"
+  '''How many of the windows open when the app last quit (see
+  *OPEN_WINDOWS_PREF*) were behind the model directory, if it was shown then
+  (see *rememberOpenWindows()*). (Hidden from Settings: see *OPEN_WINDOWS_PREF*.)'''
 
   def rememberOpenWindows(self) -> None:
     '''
     Record the open windows -- each one's view, its model and its size and
     position -- in the preferences, for *reopenWindows()* the next time the app
-    starts. (When packaged as a .app, the app is normally started with no
-    files to open, so this is how it comes back the way it was left.)
+    starts: in the order they're stacked in on the screen, from the one at the
+    back to the one in front (see *util.windowStacking.stackingOrder()*), and
+    where the model directory is among them. (When packaged as a .app, the
+    app is normally started with no files to open, so this is how it comes
+    back the way it was left.)
     '''
     entries = []
-    for window in self.windows.values():
-      view = window.view
-      if view is None:
+    behind = 0 # (how many are behind the model directory)
+    directory = [self] if self.directoryShown() else []
+    for window in stackingOrder(directory + [w for w in self.windows.values() if w.view is not None]):
+      if window is self:
+        behind = len(entries)
         continue
+      view = window.view
       try:
         entries.append({"view": view.url, "model": view.model.url, "geometry": window.geometry()})
       except Exception:
         logger.warning(f'Couldn\'t record window "{window.title()}" for reopening.', exc_info=True)
     snPrefs[self.OPEN_WINDOWS_PREF] = Attribute(entries, list, VAR_DEFAULTED,
-      "The windows open when the app last quit (view, model, size and position), reopened when it next starts.")
-    snPrefs[self.DIRECTORY_PREF] = Attribute(self.geometry() if self.directoryShown() else "", str, VAR_DEFAULTED,
+      "The windows open when the app last quit (view, model, size and position), from the one at the back to the one in front: reopened, stacked so again, when it next starts.")
+    snPrefs[self.DIRECTORY_PREF] = Attribute(self.geometry() if directory else "", str, VAR_DEFAULTED,
       "The model directory's size and position, if it was shown when the app last quit (it's shown again when it next starts).")
+    snPrefs[self.DIRECTORY_STACK_PREF] = Attribute(behind, int, VAR_DEFAULTED,
+      "How many of the windows open when the app last quit were behind the model directory, if it was shown then.")
 
   def reopenWindows(self) -> int:
     '''
     Reopen the windows recorded by *rememberOpenWindows()*, in the same size
-    and position. A view that was never saved opens as its model's default
+    and position, stacked one in front of another as they were (the model
+    directory among them, if it's shown: see *util.windowStacking.restack()*),
+    the one that was in front given the focus. A view that was never saved opens as its model's default
     view; one whose files have gone is skipped (with a message). The views
     open as they were last saved -- unsaved changes, and the undo history,
     are gone.
@@ -890,8 +907,8 @@ class Application(tk.Tk):
     :returns: The number of windows reopened.
     '''
     entries = snPrefs.get(self.OPEN_WINDOWS_PREF, [])
-    count = 0
-    for entry in entries if isinstance(entries, list) else []:
+    opened:list[tuple[int, tk.Wm]] = [] # (each window, and where it was in the stack)
+    for place, entry in enumerate(entries if isinstance(entries, list) else []):
       if not isinstance(entry, dict):
         continue
       viewURL, modelURL = entry.get("view"), entry.get("model")
@@ -901,13 +918,18 @@ class Application(tk.Tk):
         continue
       window = self.openWindow(spec)
       if window is not None:
-        count += 1
+        opened.append((place, window))
         if entry.get("geometry"):
           try:
             window.geometry(entry["geometry"])
           except tk.TclError:
             pass
-    return count
+    if opened: # (stacked as they were when the app quit -- not in the order they were opened in -- the model directory too)
+      behind = snPrefs.get(self.DIRECTORY_STACK_PREF, 0)
+      behind = behind if isinstance(behind, int) else 0
+      directory = [self] if self.directoryShown() else []
+      restack([w for p, w in opened if p < behind] + directory + [w for p, w in opened if p >= behind])
+    return len(opened)
 
   def startUp(self, files:list[str]) -> None:
     '''
