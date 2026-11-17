@@ -31,7 +31,7 @@ from __future__ import annotations
 import tkinter as tk
 import sn
 from sn import snPrefs
-from sn.model.model import Relation
+from sn.model.model import Model, Relation
 from functools import partial
 from typing import Optional, Callable, Any
 from util.utils import s_SHIFT, bindRightMouse, s_ALT, flattenPairs, s_CMD, s_CTL, normalizeRect, eventEqual, wheelEvents, wheelSteps
@@ -48,7 +48,32 @@ if TYPE_CHECKING:
 logger:sn.SNLogger = sn.getLogger(__name__)
 
 SHOW_MENU_MAX = 200
-"The most nodes the background menu's view|show|node lists: a model with more lists its types (see *layout.nodeTypes()*)."
+"The most nodes the background menu's view|show|node lists: a model with more lists its types (see *layout.nodeTypes()*). Also the most relation SN types a menu lists for one model (see *InputMixin.relationTypesMenu()*)."
+
+def relationTypesByModel(model:Model) -> list[tuple[Model, list[Relation]]]:
+  '''
+  :param model: A model.
+  :returns: The relation SN types *model* can use, by the model each is in:
+    its super-models' first, nearest first (as *PRDb.superDBs* lists them:
+    the system's (sn) and the base rules', then the rest, then theirs), then
+    *model*'s own -- each list by name, without a pattern's variables (eg: a
+    rule's ?r, which isn't a type to choose) or inferred ones, and without the
+    models that have none.
+  '''
+  ancestors:list[Model] = []
+  pending = list(model.superDBs)
+  while pending:
+    m = pending.pop(0)
+    if isinstance(m, Model) and m is not model and not any(m is a for a in ancestors):
+      ancestors.append(m)
+      pending += list(m.superDBs)
+  ret:list[tuple[Model, list[Relation]]] = []
+  for m in [*ancestors, model]:
+    types = sorted((r for r in m.values() if isinstance(r, Relation) and r.isType() and not r.isVariable() and not r.inferred),
+                   key=lambda r: str(r.name).lower())
+    if types:
+      ret.append((m, types))
+  return ret
 
 class InputMixin(ViewBase):
   '''
@@ -776,6 +801,7 @@ class InputMixin(ViewBase):
     showMenu.add_command(label="relations...", command=self.showRelationsOfTypes)
     showMenu.add_command(label="nodes...", command=self.showNodesOfTypes)
     showMenu.add_cascade(label="node", menu=makeShowMenu())
+    showMenu.add_cascade(label="relation type", menu=self.relationTypesMenu(showMenu, lambda r: self.showRelationType(r, at=(clickAt[0], clickAt[1]))))
     viewMenu.add_cascade(label="show", menu=showMenu)
     viewMenu.add_cascade(label="hide by category", menu=self._visibilityMenu("hide"))
     viewMenu.add_cascade(label="erase by category", menu=self._visibilityMenu("erase"))
@@ -798,6 +824,39 @@ class InputMixin(ViewBase):
                        state=tk.NORMAL if self.reasoning is not None else tk.DISABLED)
 
     return bgMenu
+
+  def relationTypesMenu(self, parent:tk.Menu, command:Callable[[Relation], Any],
+                        enabled:Callable[[Relation], bool]|None=None) -> tk.Menu:
+    '''
+    A menu of the relation SN types this view's model can use (see
+    *relationTypesByModel()*): a submenu for each of its super-models (eg:
+    sn, an ontology it's built on), then the model's own -- each item calling
+    *command* with its type. For "make relation to..." on a node's menu,
+    "show" > "relation type" on the view's, and "set src" and "set dst" on a
+    relation's.
+
+    :param parent: The menu it goes in.
+    :param command: Called with the type chosen.
+    :param enabled: Which types may be chosen (the rest are greyed out); all, if None.
+    '''
+    def add(menu:tk.Menu, r:Relation) -> None:
+      menu.add_command(label=r.name, command=lambda r=r: command(r), # type: ignore[misc]
+                       state=tk.NORMAL if enabled is None or enabled(r) else tk.DISABLED)
+    ret = tk.Menu(parent)
+    groups = relationTypesByModel(self.model)
+    for m, types in groups:
+      if m is self.model: # (its own: on this menu itself, after the super-models')
+        if len(groups) > 1:
+          ret.add_separator()
+        sub = ret
+      else:
+        sub = tk.Menu(ret)
+        ret.add_cascade(label=m.name, menu=sub)
+      for r in types[:SHOW_MENU_MAX]:
+        add(sub, r)
+      if len(types) > SHOW_MENU_MAX:
+        sub.add_command(label=f"... and {len(types) - SHOW_MENU_MAX} more (find them with Edit | Find...)", state=tk.DISABLED)
+    return ret
 
   def makeZoomMenu(self, superMenu:tk.Menu) -> tk.Menu:
     '''
