@@ -95,6 +95,8 @@ class TestAppWindows(unittest.TestCase):
                  list(logging.getLogger().handlers), terminal._installedIORoutingRegistry,
                  Application.current, progress.listener, SNGView.askForMissingModel)
     cls.prefsWereDirty = sn.snPrefs.isDirty()
+    from sn.view.graphics import decorators
+    decorators._fonts.clear() # (made for an application an earlier test made, and destroyed)
     try:
       cls.app = Application()
     except tk.TclError as ex:
@@ -113,7 +115,9 @@ class TestAppWindows(unittest.TestCase):
 
   @classmethod
   def tearDownClass(cls):
+    from sn.view.graphics import decorators
     cls.app.destroy()
+    decorators._fonts.clear() # (this application's: see setUpClass())
     cls.restore()
     Model._initCache()
     if not cls.prefsWereDirty:
