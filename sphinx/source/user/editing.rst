@@ -105,12 +105,15 @@ selected; **Cmd-X** (**cut**) copies it and deletes it from the model;
 **Cmd-V** (**Edit | Paste**) pastes it, and **model | paste here** pastes it
 where you clicked.
 
-A view can't show an object twice, so copying is done in the *model*: pasting
-makes **new** objects, copies of the ones you copied -- and they show in every
-view of the model, as any new object does. In the window you paste in, they're
-drawn as the originals were: the same sizes and layout, back where they were
-(if that's clear -- eg: they were cut) or else beside them. They're left
-selected, so you can drag them away at once. Paste again for another copy.
+Copying is done in the *model*: pasting makes **new** objects, copies of the
+ones you copied -- and they show in every view of the model, as any new object
+does. In the window you paste in, they're drawn as the originals were: the
+same sizes and layout, back where they were (if that's clear -- eg: they were
+cut) or else beside them -- and, in a view that may show an object more than
+once, as many times as the copies you selected (see "Copies of an object" in
+:doc:`viewing`, which also has **Copy in view** and **Paste in view**: more
+copies of the *same* objects). They're left selected, so you can drag them
+away at once. Paste again for another copy.
 
 What's copied:
 
