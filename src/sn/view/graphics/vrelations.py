@@ -46,6 +46,7 @@ from util.utils import midpoint, s_CMD, s_ALT
 from util.persistence.pRef import PReference
 from util.persistence.serialize import InstantiationInfo, ParamInfo, PropertyInfo
 from util.abstractGraph import AGRelation
+from util.commandParser import CompositeCommandMgr
 from sn.model.model import GraphObject, Relation, IsaIndividual
 from sn.view.graphics.vobjects import VObject
 from sn.view.graphics.connectors import drawSmoothConnector, ConnectorIDs,\
@@ -731,9 +732,91 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     # Never offered for system relations (those in the always-in-memory sn model), or inferred ones.
     if self.modelObject is None or self.modelObject.isSystemObject() or self.isInferred():
       return
-    state:Literal["normal", "disabled"] = tk.NORMAL if self._endpointsEditable() else tk.DISABLED
-    menu.add_command(label="reset src", state=state, command=lambda: self.chooseNewEndpoint("src"))
-    menu.add_command(label="reset dst", state=state, command=lambda: self.chooseNewEndpoint("dst"))
+    editable = self._endpointsEditable()
+    state:Literal["normal", "disabled"] = tk.NORMAL if editable else tk.DISABLED
+    for end in ("src", "dst"):
+      menu.add_command(label=f"reset {end}", state=state, command=lambda end=end: self.chooseNewEndpoint(end)) # type: ignore[misc]
+      menu.add_cascade(label=f"set {end}", **self._setEndMenu(menu, end, editable))
+
+  def _setEndMenu(self, parent:tk.Menu, end:str, editable:bool) -> dict[str, Any]:
+    '''
+    The "set src" or "set dst" submenu: every relation SN type this view's
+    model can use, by model (see *SNGView.relationTypesMenu()*) -- on the map
+    or not -- to make this relation's *end* (see *setEndpoint()*). Those that
+    can't be (see *canEndAt()*), or already are, are greyed out.
+
+    :param end: "src" or "dst".
+    :param editable: Whether its ends may be changed here (see *_endpointsEditable()*).
+    :returns: The cascade's options: its menu and its state (disabled if
+      it's not *editable*, or no type can be chosen).
+    '''
+    mo = self.modelObject
+    assert mo is not None
+    if not editable:
+      return {"menu": tk.Menu(parent), "state": tk.DISABLED}
+    now = mo.localSrc if end == "src" else mo.localDst
+    ok = lambda r: r is not now and self.canEndAt(end, r)
+    from sn.view.graphics.viewInput import relationTypesByModel
+    choices = any(ok(r) for _, types in relationTypesByModel(self.view.model) for r in types)
+    return {"menu": self.view.relationTypesMenu(parent, lambda r: self.setEndpoint(end, r), enabled=ok),
+            "state": tk.NORMAL if choices else tk.DISABLED}
+
+  def canEndAt(self, end:str, target:GraphObject) -> bool:
+    '''
+    :param end: "src" or "dst".
+    :param target: A model object.
+    :returns: Whether *target* may be this relation's *end*: not the relation
+      itself, nor an inferred object; and, for an isa link, which must
+      connect two nodes or two relations, not if the other end is the other
+      kind; its parent (dst) must be a type, since individuals can't have
+      children, and it mustn't make an isa cycle (eg: a type its own type:
+      see *GraphObject.parentProblem()*). (Any other relation may connect
+      nodes and relations in any combination: eg, a rule's antecedent can
+      contain a relation.) See *chooseNewEndpoint()*, *setEndpoint()*.
+    '''
+    mo = self.modelObject
+    if mo is None or target is mo or target.inferred:
+      return False
+    if not isinstance(mo, IsaIndividual):
+      return True
+    other = mo.localDst if end == "src" else mo.localSrc
+    if other is not None and isinstance(target, Relation) != isinstance(other, Relation):
+      return False
+    if end == "dst" and target.isIndividual():
+      return False
+    child, parent = (mo.localSrc, target) if end == "dst" else (target, mo.localDst)
+    return child is None or parent is None or child.parentProblem(parent, except_=mo) is None
+
+  def setEndpoint(self, end:str, target:GraphObject) -> None:
+    '''
+    "set src" or "set dst": make *target* (eg: a relation SN type chosen from
+    the menu) this relation's *end*, in the model -- showing it first, if it
+    isn't shown (see *SNGView.showRelationType()*): out beside that end of
+    this relation's label, if it has no ends of its own to go between. One
+    undoable command: undone, what it showed goes again.
+
+    :param end: "src" or "dst".
+    :param target: The new end: see *canEndAt()*.
+    '''
+    assert end in ("src", "dst")
+    mo = self.modelObject
+    if mo is None or not self.canEndAt(end, target):
+      logger.error(f'"{target.name}" can\'t be the {end} of "{mo.name if mo is not None else self.name}".')
+      return
+    view = self.view
+    shown = view.findViewObjectForGraphObject(target)
+    bb = self.boundingBox()
+    at = (bb[0] - 100 if end == "src" else bb[2] + 100, (bb[1] + bb[3]) / 2)
+    self.pinnedEnds[end] = None # (a copy of what it was: see _copyFor())
+    with CompositeCommandMgr(view.context):
+      if shown is None or shown.isHidden():
+        view.context.represent([target])
+      if end == "src":
+        view.context.reconnect(mo, source=target)
+      else:
+        view.context.reconnect(mo, destination=target)
+    if shown is None and (vo := view.findViewObjectForGraphObject(target)) is not None and vo is not self:
+      vo.moveToCenterOn(at[0], at[1], adjustPos=False) # (moved between its own ends, if they're shown, once it's drawn: see __init__())
 
   TERMINAL_HIT_RADIUS = 10
   "How close (in screen pixels, on each axis) a click must be to a terminal to grab it."
@@ -818,31 +901,20 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
 
     Any object may be chosen -- relations connect nodes and relations in any
     combination (eg: a rule's antecedent can contain a relation) -- except
-    that an isa link must connect two nodes or two relations, its new
-    parent (dst) must be a type, since individuals can't have children, and
-    it mustn't make an isa cycle (eg: a type its own type).
+    as *canEndAt()* says (eg: an isa link must connect two nodes or two
+    relations). ("set src" and "set dst" choose from a menu instead, of
+    every relation SN type, shown or not: see *setEndpoint()*.)
     Dropping the line on empty space clears the end instead (the relation then
     inherits its type's), except for an isa link, which needs both ends.
     '''
     assert end in ("src", "dst")
-    other = self.dst if end == "src" else self.src
-    isa = isinstance(self.modelObject, IsaIndividual)
-    isaParent = end == "dst" and isa
     mo = self.modelObject
     assert mo is not None
-    def cycle(n:VObject) -> bool: # (an isa link from a type to itself, or that makes an isa cycle: see GraphObject.parentProblem())
-      if not isa or mo is None or n.modelObject is None:
-        return False
-      child, parent = (mo.localSrc, n.modelObject) if end == "dst" else (n.modelObject, mo.localDst)
-      return child is not None and child.parentProblem(parent, except_=mo) is not None
     now = getattr(self, end)
     def acceptable(n:VObject) -> bool:
       if now is not None and n is not now and n.modelObject is now.modelObject: # (another copy of the same: see SNGView.canonical())
         return True
-      return n is not self and not n.isInferred() \
-             and (not isa or other is None or isinstance(n, VRelation) == isinstance(other, VRelation)) \
-             and not (isaParent and (n.modelObject is None or n.modelObject.isIndividual())) \
-             and not cycle(n)
+      return n is not self and not n.isInferred() and n.modelObject is not None and self.canEndAt(end, n.modelObject)
     def chosen(_origin:VObject, sel:VObject) -> None:
       now = getattr(self, end)
       if now is not None and sel is not now and sel.modelObject is now.modelObject: # (another copy of the same: just the line moves -- see SNGView.canonical())

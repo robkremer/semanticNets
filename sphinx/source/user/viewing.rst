@@ -17,6 +17,13 @@ What's shown
   untick it -- their relations to what's shown, and to each other.
 - **view | show | node** lists the model's objects that aren't in the view:
   choose one to bring it in.
+- **view | show | relation type** lists every relation type the model can
+  use -- the system model's and any other models' (eg: an ontology it's
+  built on) in submenus of their own, then the model's own -- whether
+  it's in the view or not: choose one to bring it in, drawn between its
+  domain and range (they're brought in too), or, if it has none, where you
+  right-clicked. If it's in the view already, it's selected. **Undo** takes
+  it out again.
 - **expand all** (on an object's menu; it says how many relations the object
   has -- and, if some are in the view already, how many of them are new, or
   *all shown*) brings in everything related to it, 1 to 4 levels out. If
