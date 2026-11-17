@@ -723,5 +723,193 @@ class Test(unittest.TestCase):
     self.assertFalse(any("in view" in l for l in items()), items())
     v.onWindowFocusOut()
 
+  # ---- other operations, with copies ---------------------------------------------------
+
+  def test1400removingSaysWhatCopiesGo(self):
+    'Removing (or cutting) a copy from the model takes every copy: the confirmation says so.'
+    from unittest import mock
+    from tkinter import messagebox
+    self.m.setCanonicalViews(False)
+    v = self.v
+    bob = self.V(self.bob)
+    c = self.copy(bob, 150, 400)
+    self.assertEqual(v._otherCopiesNote([self.bob], [c]), 'the other copy of "bob" in this view goes too')
+    self.assertEqual(v._otherCopiesNote([self.bob], [c, bob]), "", "both chosen")
+    self.assertEqual(v._otherCopiesNote([self.alice], [self.V(self.alice)]), "")
+    with mock.patch.object(messagebox, "askokcancel", return_value=False) as ask:
+      v.doRemove([c], confirm=True)
+    self.assertIn('The other copy of "bob" in this view goes too.', ask.call_args[0][1])
+    self.assertTrue(self.bob._isConnected(), "cancelled")
+    self.m.setCanonicalViews(True)
+    v.foldCopies()
+    self.assertEqual(v._otherCopiesNote([self.bob], [bob]), "", "canonical: no copies")
+
+  def test1410modelCopyKeepsTheCopies(self):
+    '''
+    The model's copy and paste, of a selection with two copies of an object:
+    the new object is shown twice too, where they were (moved together), and
+    each new line is drawn to the copy its original was drawn to.
+    '''
+    self.m.setCanonicalViews(False)
+    v = self.v
+    alice, bob, vr = self.V(self.alice), self.V(self.bob), self.V(self.r)
+    c = self.copy(bob, 150, 400)
+    v.context.attach_end(vr, "dst", c) # (alice -likes-> the copy)
+    self.pump()
+    for vo in (alice, bob, c, vr):
+      vo.selected(True, _multi=True)
+    n = self.modelSize()
+    v.doCopy()
+    v.doPaste()
+    self.pump()
+    self.assertGreater(self.modelSize(), n)
+    bobs = [o for o in self.m.values() if o is not None and o is not self.bob and o.name == "bob"]
+    self.assertEqual(len(bobs), 1)
+    shown = self.connected(bobs[0])
+    self.assertEqual(len(shown), 2, "shown twice, as it was copied")
+    rs = [o for o in self.m.values() if isinstance(o, Relation) and o is not self.r and o.isIndividual() and o.isa(self.likes)]
+    self.assertEqual(len(rs), 1)
+    vr2 = self.V(rs[0])
+    dx = vr2.src.centerPt()[0] - alice.centerPt()[0]
+    dy = vr2.src.centerPt()[1] - alice.centerPt()[1]
+    self.assertAlmostEqual(vr2.dst.centerPt()[0] - c.centerPt()[0], dx, delta=self.FIT, msg="drawn to the copy of the copy")
+    self.assertAlmostEqual(vr2.dst.centerPt()[1] - c.centerPt()[1], dy, delta=self.FIT)
+    other = next(o for o in shown if o is not vr2.dst)
+    self.assertAlmostEqual(other.centerPt()[0] - bob.centerPt()[0], dx, delta=self.FIT, msg="and the other where bob was")
+    self.assertEqual(v.validate(), 0)
+    v.context.undo()
+    self.pump()
+    self.assertFalse(bobs[0]._isConnected())
+
+  def test1420highlightsEveryCopy(self):
+    'A query\'s answers are highlighted in every copy.'
+    from sn.model.model import Node as N
+    self.m.setCanonicalViews(False)
+    v = self.v
+    bob = self.V(self.bob)
+    c = self.copy(bob, 150, 400)
+    q = N(self.m, [self.m.QUERY], individual=True, name="liked?")
+    x = N(self.m, [self.m.NODE], individual=True, name="?x")
+    Relation(self.m, [self.m.CONTAINS], q, Relation(self.m, [self.likes], self.alice, x, individual=True), individual=True)
+    self.pump()
+    vq = v.makeViewObjectForGraphObject(q)
+    self.pump()
+    vq.answerQuery()
+    self.pump()
+    self.assertTrue(bob.highlight())
+    self.assertTrue(c.highlight(), "the copy too")
+
+  def test1430labelThisCopy(self):
+    '"label this copy..." gives just that copy its own label (undoably): the model keeps the name.'
+    from unittest import mock
+    from tkinter import simpledialog
+    self.m.setCanonicalViews(False)
+    v = self.v
+    bob = self.V(self.bob)
+    menu = tk.Menu(v.canvas)
+    bob.addViewMenuItems(menu)
+    self.assertNotIn("label this copy...", self.menuLabels(menu), "no copies yet")
+    c = self.copy(bob, 150, 400)
+    menu = tk.Menu(v.canvas)
+    c.addViewMenuItems(menu)
+    self.assertIn("label this copy...", self.menuLabels(menu))
+    with mock.patch.object(simpledialog, "askstring", return_value="b."):
+      c.askOwnLabel()
+    self.pump()
+    self.assertEqual(c.labelText(), "b.")
+    self.assertEqual(bob.labelText(), "bob")
+    self.assertEqual(self.bob.name, "bob")
+    with mock.patch.object(simpledialog, "askstring", return_value="bob"): # (its name: it shows that again)
+      c.askOwnLabel()
+    self.pump()
+    self.assertIsNone(c.ownLabel)
+    v.context.undo()
+    self.pump()
+    self.assertEqual(c.ownLabel, "b.")
+
+  def test1440selectAllCopies(self):
+    '"select all copies" selects every copy of what\'s chosen.'
+    self.m.setCanonicalViews(False)
+    v = self.v
+    bob = self.V(self.bob)
+    c = self.copy(bob, 150, 400)
+    menu = tk.Menu(v.canvas)
+    c.addViewMenuItems(menu)
+    self.assertIn("select all copies", self.menuLabels(menu))
+    menu = tk.Menu(v.canvas)
+    self.V(self.alice).addViewMenuItems(menu)
+    self.assertNotIn("select all copies", self.menuLabels(menu), "alice has no copies")
+    self.assertEqual(set(v.selectCopies([c])), {bob, c})
+    self.assertEqual(set(v.selected), {bob, c})
+
+  def test1450mergeIntoThisCopy(self):
+    '''
+    "merge into this copy": the lines drawn to the other copies are drawn to
+    it, and they're erased -- and a line that's then drawn twice between the
+    same two copies, once. The model's unchanged. Undoably.
+    '''
+    self.m.setCanonicalViews(False)
+    v = self.v
+    alice, bob, vr = self.V(self.alice), self.V(self.bob), self.V(self.r)
+    v.doViewCopy(vos=[alice, bob])
+    v.context.view_paste(x=100, y=600)
+    self.pump()
+    a2 = next(o for o in self.connected(self.alice) if o is not alice)
+    b2 = next(o for o in self.connected(self.bob) if o is not bob)
+    r2 = next(o for o in self.connected(self.r) if o is not vr)
+    size = self.modelSize()
+    menu = tk.Menu(v.canvas)
+    alice.addViewMenuItems(menu)
+    self.assertTrue(any(l.startswith("merge into this copy") for l in self.menuLabels(menu)))
+    v.context.view_merge(alice)
+    self.pump()
+    self.assertFalse(a2._isConnected())
+    self.assertIs(r2.src, alice, "its line's drawn to the copy kept")
+    self.assertIs(r2.dst, b2)
+    self.assertTrue(r2._isConnected())
+    v.context.view_merge(bob)
+    self.pump()
+    self.assertFalse(b2._isConnected())
+    self.assertFalse(r2._isConnected(), "drawn twice between alice and bob now: once")
+    self.assertTrue(vr._isConnected())
+    self.assertEqual([len(self.connected(o)) for o in (self.alice, self.bob, self.r)], [1, 1, 1])
+    self.assertEqual(self.modelSize(), size)
+    self.assertEqual(v.validate(), 0)
+    v.context.undo()
+    self.pump()
+    self.assertTrue(b2._isConnected())
+    self.assertTrue(r2._isConnected())
+    self.assertIs(r2.dst, b2)
+    self.assertIs(r2.src, alice)
+    v.context.undo()
+    self.pump()
+    self.assertTrue(a2._isConnected())
+    self.assertIs(r2.src, a2)
+    self.assertIs(vr.src, alice)
+    with self.assertRaises(ValueError): # (canonical: nothing to merge)
+      self.m.setCanonicalViews(True)
+      v.foldCopies()
+      v.context.view_merge(alice)
+
+  def test1460expandingACopyDrawsToIt(self):
+    'Expanding a copy shows its new lines drawn to that copy (not the first, or the nearest).'
+    self.m.setCanonicalViews(False)
+    v = self.v
+    alice = self.V(self.alice)
+    carol = Node(self.m, [self.person], individual=True, name="carol")
+    r2 = Relation(self.m, [self.likes], self.alice, carol, individual=True)
+    self.pump()
+    for mo in (r2, carol):
+      for vo in self.connected(mo):
+        v.doErase([vo])
+    self.pump()
+    self.assertEqual(self.connected(carol), [])
+    far = self.copy(alice, 900, 700)
+    far.expand()
+    self.pump()
+    vr2 = self.V(r2)
+    self.assertIs(vr2.src, far)
+    self.assertIs(self.V(self.r).src, alice, "the old line stays")
+
 if __name__ == "__main__":
   unittest.main()

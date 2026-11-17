@@ -21,6 +21,11 @@ Mac                      Windows and Linux        does
 **Cmd-C**                **Ctrl+C**               copy what's selected
 **Cmd-V**                **Ctrl+V**               paste
 **Shift-Cmd-C**          **Shift+Ctrl+C**         copy as picture: the selection, or the whole view
+**Control-Cmd-X**        **Ctrl+Alt+X**           cut in view: copy what's selected, and erase it from the
+                                                  view (the model keeps it). Only where a view may show
+                                                  copies (see :doc:`viewing`)
+**Control-Cmd-C**        **Ctrl+Alt+C**           copy in view: to paste as more copies of the same objects
+**Control-Cmd-V**        **Ctrl+Alt+V**           paste in view: more copies, laid out as they were copied
 **Cmd-A**                **Ctrl+A**               select everything shown
 **Delete**               **Backspace**, **Del**   erase what's selected from the view (the model keeps it)
 **Shift-Delete**         **Shift+Del**            remove what's selected from the model (after asking)
@@ -30,7 +35,9 @@ Mac                      Windows and Linux        does
 =======================  =======================  ===========================================================
 
 (The Mac's **delete** key is the one Tk calls *BackSpace*; **fn-delete**,
-forward delete, works too.) See :doc:`editing`.
+forward delete, works too. On Windows, **Ctrl+Alt** is also **AltGr**: on a
+keyboard layout where **AltGr** with **X**, **C** or **V** types a character
+-- eg: Hungarian -- use the **Edit** menu's items instead.) See :doc:`editing`.
 
 Viewing
 -------

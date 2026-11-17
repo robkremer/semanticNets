@@ -1807,15 +1807,16 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       for v, x in row.items():
         if not isinstance(x, GraphObject) or names.isHiddenName(v.name): # (a hidden variable's value isn't an answer)
           continue
-        # an answer's shown -- even if it's in a hidden or erased category (eg: inferred objects), or wasn't shown at all
-        vo = self.view.findViewObjectForGraphObject(x) or self.view.makeViewObjectForGraphObject(x)
-        if vo is not None:
-          self.view._exemptIfFiltered(vo)
-          vo.highlight(True)
+        # an answer's shown -- even if it's in a hidden or erased category (eg: inferred objects), or wasn't shown at all --
+        # every copy of it (see SNGView.canonical())
+        for vo in self.view.shownCopiesOf(x) or [self.view.makeViewObjectForGraphObject(x)]:
+          if vo is not None:
+            self.view._exemptIfFiltered(vo)
+            vo.highlight(True)
       for r in self._answerRelations(row):
-        rvo = self.view.findViewObjectForGraphObject(r) or self.view.makeViewObjectForGraphObject(r)
-        if rvo is not None:
-          self.view._exemptIfFiltered(rvo)
+        for rvo in self.view.shownCopiesOf(r) or [self.view.makeViewObjectForGraphObject(r)]:
+          if rvo is not None:
+            self.view._exemptIfFiltered(rvo)
     self.highlight(True, negative=not rows) # (which query the highlights answer -- or that it answered "no")
 
   def _answerRelations(self, row:dict[GraphObject, Any]) -> list[Relation]:
@@ -1858,8 +1859,7 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
       print(f'  {v}')
     self.view.clearHighlights()
     for x in reasoning.ruleObjects(self.modelObject):
-      vo = self.view.findViewObjectForGraphObject(x)
-      if vo is not None:
+      for vo in self.view.shownCopiesOf(x): # (every copy: see SNGView.canonical())
         vo.highlight(True)
 
   def _relationTypesMenu(self, parent:tk.Menu) -> tk.Menu:
@@ -1934,10 +1934,13 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     '''
     In a view that isn't canonical (see *SNGView.canonical()*), add "cut in
     view" and "copy in view" (the selection, if this is selected: see
-    *SNGView.doViewCopy()*) to *menu*; and a node's "show a copy" (another
-    copy of what it shows, beside it: see *SNGContext.another_copy()*),
-    saying how many it has. And, for one with its own label (see *ownLabel*),
-    "show its name here", which takes that away.
+    *SNGView.doViewCopy()*) to *menu*, and, if any of that has copies,
+    "select all copies" (see *SNGView.selectCopies()*); and a node's "show a
+    copy" (another copy of what it shows, beside it: see
+    *SNGContext.another_copy()*), saying how many it has -- and, if it has
+    more than one, "label this copy..." (see *askOwnLabel()*) and "merge into
+    this copy" (see *SNGContext.view_merge()*). And, for one with its own
+    label (see *ownLabel*), "show its name here", which takes that away.
     '''
     from sn.view.graphics.vnodes import VNode
     from sn.view.graphics.viewBase import KEY_VIEW_CUT, KEY_VIEW_COPY
@@ -1949,14 +1952,44 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
                      command=lambda: self.view.doViewCopy(cut=True, vos=self.selectionOrSelf()))
     menu.add_command(label="copy in view" + selected, accelerator=KEY_VIEW_COPY[1],
                      command=lambda: self.view.doViewCopy(vos=self.selectionOrSelf()))
+    chosen = self.selectionOrSelf()
+    if any(len(self.view.copiesOf(vo)) > 1 for vo in chosen):
+      menu.add_command(label="select all copies" + selected, command=lambda: self.view.selectCopies(chosen))
     if not isinstance(self, VNode):
       return
     copies = len(self.view.copiesOf(self))
     menu.add_command(label="show a copy" + (f" (it has {copies})" if copies > 1 else ""),
                      command=lambda: self.view.context.another_copy(self))
+    if copies > 1:
+      menu.add_command(label="label this copy...", command=self.askOwnLabel)
+      menu.add_command(label=f"merge into this copy (erase the {'other' if copies == 2 else f'{copies - 1} others'})",
+                       command=lambda: self.view.context.view_merge(self))
     if self.ownLabel is not None:
       menu.add_command(label=f'show its name here ("{self.modelObject.name}", not "{self.ownLabel}")',
                        command=lambda: self.view.context.own_label(self, None))
+
+  def askOwnLabel(self) -> None:
+    '''
+    "label this copy...": ask what this copy shows as its model object's name
+    (see *ownLabel*, *SNGContext.own_label()*) -- just here: its other copies,
+    and the model, keep the name. Left blank, or given the name, it shows the
+    name again.
+    '''
+    from tkinter import simpledialog
+    from util.utils import dialogOwner
+    mo = self.modelObject
+    if mo is None:
+      return
+    text = simpledialog.askstring("Label this copy",
+                                  f'What this copy of "{mo.name}" shows (just here: the name stays "{mo.name}"):',
+                                  initialvalue=self.labelText(), parent=dialogOwner(self.canvas))
+    if text is None: # (cancelled)
+      return
+    label = text.strip() or None
+    if label == mo.name:
+      label = None
+    if label != self.ownLabel:
+      self.view.context.own_label(self, label)
 
   def _reasoningTargets(self) -> list[GraphObject]:
     '''
@@ -2334,10 +2367,20 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     withHidden = bool(getattr(filter, "showsHidden", False))
     rels = self.expandableRelations(filter, withHidden=withHidden)
             
-    # show the ones that aren't shown (with what's at their other ends: see VRelation._resolveEnd())
-    for r in rels:
-      if self.view.findViewObjectForGraphObject(r) is None:
-        self.view.makeViewObjectForGraphObject(r)
+    # show the ones that aren't shown (with what's at their other ends: see VRelation._resolveEnd()) -- drawn to this
+    # copy of its model object, in a view that may show it more than once (see VRelation._copyFor())
+    preferred = self.view.__dict__.setdefault("_preferredCopies", {})
+    was = preferred.get(id(mo))
+    preferred[id(mo)] = self
+    try:
+      for r in rels:
+        if self.view.findViewObjectForGraphObject(r) is None:
+          self.view.makeViewObjectForGraphObject(r)
+    finally:
+      if was is None:
+        preferred.pop(id(mo), None)
+      else:
+        preferred[id(mo)] = was
 
     if withHidden: # (asked for by name: shown, even in a hidden category -- and what they lead to)
       for r in rels:

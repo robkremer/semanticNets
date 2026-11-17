@@ -156,25 +156,60 @@ class EditingMixin(ViewBase):
     ":returns: What's shown: what *selectAll()* selects (not what's hidden)."
     return [vo for vo in self.values() if vo is not None and vo._isConnected() and not vo.isHidden()]
 
-  def _geometryOf(self, objects:Iterable[GraphObject]) -> dict[int, dict[str, Any]]:
+  def _geometryOf(self, objects:Iterable[GraphObject], chosen:Iterable[VObject]=()) -> dict[int, dict[str, Any]]:
     '''
     :param objects: Model objects.
+    :param chosen: The view objects they were chosen by (eg: what's selected),
+      in a view that may show copies (see *canonical()*): the copies of
+      *objects* among those (and what they carry, and the lines between them:
+      see *viewCopying.closure()*) are what's shown again, and how.
     :returns: How this view shows each of *objects* that it shows (by *id()*
       of the object): what *showPasted()* needs to show a copy of it the same
-      way (see *copying.Clip.geometry*).
+      way (see *copying.Clip.geometry*). In a view that may show copies, each
+      chosen copy after the first is under "copies", and a relation's
+      "ends" say which copies of its ends it's drawn to: (src, dst), each the
+      index of a copy of that end -- 0 for the first, 1 for the first of its
+      "copies", ... -- or None.
     '''
-    ret:dict[int, dict[str, Any]] = {}
-    for mo in objects:
-      vo = self.findViewObjectForGraphObject(mo)
-      if vo is None or not vo._isConnected():
-        continue
+    def geometry(vo:VObject, mo:GraphObject) -> dict[str, Any]:
       g:dict[str, Any] = {"bb": [int(v) for v in vo.boundingBox()], "userSized": vo.userSized,
                           "filtered": self.isFiltered(mo) and not vo.categoryExempt} # (hidden by its category: so is the copy)
       if isinstance(vo, VRelation):
         g["floating"] = vo.floating()
       if getattr(vo, "collapsed", False):
         g["collapsed"], g["expandedHeight"] = True, getattr(vo, "expandedHeight", None)
-      ret[id(mo)] = g
+      if vo.ownLabel is not None and not self.canonical():
+        g["ownLabel"] = vo.ownLabel
+      return g
+    ret:dict[int, dict[str, Any]] = {}
+    if self.canonical():
+      for mo in objects:
+        vo = self.findViewObjectForGraphObject(mo)
+        if vo is None or not vo._isConnected():
+          continue
+        ret[id(mo)] = geometry(vo, mo)
+      return ret
+    from sn.view.graphics import viewCopying
+    inChosen = {id(vo) for vo in viewCopying.closure(chosen)}
+    shown:dict[int, list[VObject]] = {} # (each object's copies shown again: the first, then its "copies")
+    for mo in objects:
+      copies = self.shownCopiesOf(mo)
+      picked = [c for c in copies if id(c) in inChosen] or copies[:1]
+      if picked:
+        shown[id(mo)] = picked
+    for mo in objects:
+      picked = shown.get(id(mo))
+      if not picked:
+        continue
+      gs = [geometry(vo, mo) for vo in picked]
+      for vo, g in zip(picked, gs):
+        if isinstance(vo, VRelation):
+          slot = lambda end: next((i for i, c in enumerate(shown.get(id(end.modelObject), ())) if c is end), None) \
+                             if isinstance(end, VObject) and end.modelObject is not None else None
+          g["ends"] = (slot(vo.src), slot(vo.dst))
+      ret[id(mo)] = gs[0]
+      if len(gs) > 1:
+        gs[0]["copies"] = gs[1:]
     return ret
 
   def doCopy(self, cut:bool=False) -> None:
@@ -190,12 +225,16 @@ class EditingMixin(ViewBase):
     if not objs:
       logger.warning("Nothing is selected to cut." if cut else "There's nothing to copy.")
       return
-    geometry = self._geometryOf(copying.closure(objs)) # (now: once it's cut, it's not shown)
+    chosen = list(self.selected) if self.selected or cut else self._shownObjects()
+    geometry = self._geometryOf(copying.closure(objs), chosen) # (now: once it's cut, it's not shown)
+    copies = self._otherCopiesNote(objs, self.selected) if cut else ""
     try:
       msg = self.context.cut(objs) if cut else self.context.copy(objs)
     except Exception as ex:
       logger.error(f"Can't {'cut' if cut else 'copy'}: {ex}")
       return
+    if copies:
+      msg = (msg or "Cut.") + f" ({copies[0].upper() + copies[1:]}: it's cut from the model.)"
     clip = copying.clipboard
     if clip is not None:
       clip.geometry = {i: geometry[id(e.original)] for i, e in enumerate(clip.entries) if id(e.original) in geometry}
@@ -261,6 +300,10 @@ class EditingMixin(ViewBase):
     :param at: Where to put it (view coords: the top left of what's pasted), or
       None to put it where it was (or beside it, if that's taken).
     '''
+    if self.canonical():
+      logger.warning(f'"{self.name}" shows each object once (its model\'s "canonicalViews" preference): '
+                     f'"Paste in view" is for views that may show copies.')
+      return
     try:
       if at is None:
         self.context.view_paste()
@@ -546,10 +589,13 @@ class EditingMixin(ViewBase):
       logger.warning(f'Not removed (inferred, system, or in another model): {", ".join(skipped)}.')
     if not mos:
       return
+    copies = self._otherCopiesNote(mos, vos)
     if confirm:
       what = f'"{mos[0].name}"' if len(mos) == 1 and mos[0].name else f"{len(mos)} objects"
       if not messagebox.askokcancel("Remove from model",
-                                    f'Remove {what} from the model "{self.model.name}" -- and so from every view of it?\n\n(Undo puts {"it" if len(mos) == 1 else "them"} back.)',
+                                    f'Remove {what} from the model "{self.model.name}" -- and so from every view of it?'
+                                    + (f'\n\n{copies[0].upper() + copies[1:]}.' if copies else "")
+                                    + f'\n\n(Undo puts {"it" if len(mos) == 1 else "them"} back.)',
                                     parent=self.canvas.winfo_toplevel()):
         return
     try:
@@ -558,6 +604,34 @@ class EditingMixin(ViewBase):
           self.context.remove(mo)
     except Exception as ex:
       logger.error(f"Can't remove: {ex}")
+      return
+    if copies and not confirm:
+      logger.info(f"Removed from the model: {copies}.")
+
+  def _otherCopiesNote(self, mos:list[GraphObject], vos:Iterable[VObject]) -> str:
+    '''
+    :param mos: Model objects about to be removed from the model (or cut).
+    :param vos: The view objects they were chosen by (eg: what's selected).
+    :returns: In a view that may show copies (see *canonical()*), and shows
+      some of *mos* more than once, what goes with them -- eg: 'the 2 other
+      copies of "bob" in this view go too' -- else "".
+    '''
+    if self.canonical():
+      return ""
+    chosen = {id(vo) for vo in vos}
+    mos = list({id(mo): mo for mo in mos}.values()) # (each once: two copies of one may be chosen)
+    others:dict[int, int] = {}
+    for mo in mos:
+      n = sum(1 for c in self.shownCopiesOf(mo) if id(c) not in chosen)
+      if n:
+        others[id(mo)] = n
+    if not others:
+      return ""
+    count = sum(others.values())
+    names = [f'"{mo.name}"' for mo in mos if id(mo) in others]
+    of = names[0] if len(names) == 1 else f"{len(names)} of them"
+    return (f'the {"other copy" if count == 1 else f"{count} other copies"} of {of} in this view '
+            f'{"goes" if count == 1 else "go"} too')
 
   PASTE_GAP = 40
   "The space (view units) left between pasted objects and what's beside them (see *_pasteOffset()*)."
@@ -606,7 +680,7 @@ class EditingMixin(ViewBase):
     pending = self.__dict__.setdefault("_pasting", {}) # (for update(): see there)
     for mo in made:
       pending[id(mo)] = mo
-    dx, dy = self._pasteOffset([g["bb"] for g in clip.geometry.values()], at)
+    dx, dy = self._pasteOffset([b for g in clip.geometry.values() for b in [g["bb"]] + [c["bb"] for c in g.get("copies", ())]], at)
     shown:dict[int, VObject] = {}
     for i in sorted(range(len(made)), key=lambda i: clip.entries[i].kind != "node"): # (nodes first: they're relations' ends)
       mo, g = made[i], clip.geometry.get(i)
@@ -625,22 +699,87 @@ class EditingMixin(ViewBase):
       vo.userSized = g.get("userSized", False)
       if g.get("collapsed"):
         vo.collapsed, vo.expandedHeight = True, g.get("expandedHeight")
+      if g.get("ownLabel") is not None:
+        vo.ownLabel = g["ownLabel"]
       if not g.get("filtered"):
         self._exemptIfFiltered(vo)
       shown[i] = vo
+    copies = self._showPastedCopies(clip, made, shown, dx, dy) # (in a view that may show copies: as many as were copied)
     def select() -> None:
       for s in self.selected.copy():
         s.selected(False)
       boxes = []
       for i in clip.selected:
-        vo = shown.get(i)
-        if vo is not None and vo._isConnected() and not vo.isHidden():
-          vo.selected(True, _multi=True)
-          boxes.append(vo.boundingBox())
+        for vo in copies.get(i, ()):
+          if vo is not None and vo._isConnected() and not vo.isHidden():
+            vo.selected(True, _multi=True)
+            boxes.append(vo.boundingBox())
       if boxes:
         self.scrollToShow([min(b[0] for b in boxes), min(b[1] for b in boxes), max(b[2] for b in boxes), max(b[3] for b in boxes)])
     if self.canvas:
       self.canvas.after_idle(select)
+
+  def _showPastedCopies(self, clip:Any, made:list[GraphObject], shown:dict[int, VObject], dx:float, dy:float) -> dict[int, list[VObject]]:
+    '''
+    For *showPasted()*, in a view that may show copies (see *canonical()*):
+    show the pasted objects as many times as what they copy was copied (see
+    *_geometryOf()*'s "copies"), each line drawn to the copies of its ends
+    the original was drawn to ("ends").
+
+    :param shown: The view object shown for each entry of *clip* (by index).
+    :param dx: How far the paste's moved (see *_pasteOffset()*), with *dy*.
+    :returns: Each entry's view objects: the one shown, then its copies.
+    '''
+    from sn.view.graphics.vnodes import VNode
+    ret:dict[int, list[VObject]] = {i: [vo] for i, vo in shown.items()}
+    if self.canonical():
+      return ret
+    view = cast("SNGView", self)
+    made_:list[VObject] = []
+    for i in sorted(ret, key=lambda i: clip.entries[i].kind != "node"): # (nodes first: they're relations' ends)
+      mo = made[i]
+      for g in clip.geometry.get(i, {}).get("copies", ()):
+        x1, y1, x2, y2 = g["bb"][0] + dx, g["bb"][1] + dy, g["bb"][2] + dx, g["bb"][3] + dy
+        if isinstance(mo, Relation):
+          vo:VObject = VRelation(view, mo, x=x1, y=y1, x1=x2, y1=y2, floating=g.get("floating"))
+        else:
+          vo = VNode(view, mo, x=x1, y=y1, x1=x2, y1=y2)
+        vo.userSized = g.get("userSized", False)
+        if g.get("collapsed"):
+          vo.collapsed, vo.expandedHeight = True, g.get("expandedHeight") # type: ignore[attr-defined]
+        if g.get("ownLabel") is not None:
+          vo.ownLabel = g["ownLabel"]
+        if not g.get("filtered"):
+          self._exemptIfFiltered(vo)
+        ret[i].append(vo)
+        made_.append(vo)
+    pinned:list[VRelation] = []
+    for i, vos in ret.items():
+      e, g = clip.entries[i], clip.geometry.get(i)
+      if g is None or e.kind == "node":
+        continue
+      for vo, gg in zip(vos, [g, *g.get("copies", ())]):
+        ends = gg.get("ends")
+        if not isinstance(vo, VRelation) or not ends:
+          continue
+        for end, slot, ref in (("src", ends[0], e.src), ("dst", ends[1], e.dst)):
+          if slot is None or not isinstance(ref, int) or slot >= len(ret.get(ref, ())):
+            continue
+          want = ret[ref][slot]
+          if getattr(vo, end) is not want:
+            setattr(vo, end, want)
+          vo.pinnedEnds[end] = want
+          pinned.append(vo)
+    if made_ or pinned:
+      self.setDirty()
+      self.structureChanged()
+      self.freshPaint()
+      for vo in dict.fromkeys(pinned):
+        vo.reposition()
+      for vos in ret.values():
+        if len(vos) > 1:
+          self.drawCopies(vos[0])
+    return ret
 
   def scrollToShow(self, box:list[float], margin:int=20) -> None:
     '''

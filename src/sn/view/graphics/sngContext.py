@@ -661,6 +661,95 @@ class SNGContext(UIContext):
     def __str__(self):
       return f'{super().__str__()} {" ".join(o.getPRef().tostring() for o in self.objects[:1])}'
 
+  # This is just a signature -- the behaviour is in class _View_merge.
+  def view_merge(self, object:VObject): # pylint: disable=redefined-builtin
+    '''
+    Merge the other copies of a node into it, in a view that may show copies
+    (see *SNGView.canonical()*): the lines drawn to them are drawn to it, and
+    they're erased from the view (as are lines that, drawn to it now, are
+    drawn twice between the same two copies). The model isn't changed.
+
+    :param object: The copy (a view object) to keep.
+    '''
+    pass
+
+  class _View_merge(Command):
+    def __init__(self, object:VObject): # pylint: disable=redefined-builtin
+      super().__init__("view merge")
+      view = object.view
+      if view.canonical():
+        raise ValueError(f'"{view.name}" shows each object once: there are no copies to merge.')
+      self.keep:VObject = object
+      self.view:SNGView = view
+      self.others:list[VObject] = [c for c in view.copiesOf(object) if c is not object and c._isConnected()]
+      if not self.others:
+        raise ValueError(f'"{object.name}" has no other copies here to merge into it.')
+      self.moved:list[tuple[VRelation, str, VObject, VObject|None]] = []
+      'The lines drawn to another copy: (line, its end, the copy it was drawn to, the copy it was pinned to).'
+      self.erased:list[VObject] = []
+
+    @override
+    def do(self):
+      super().do()
+      keep, view = self.keep, self.view
+      self.moved, self.erased = [], []
+      with view.batchedItemStates():
+        for c in self.others:
+          if not c._isConnected():
+            continue
+          for r in list(c._incoming) + list(c._outgoing):
+            if isinstance(r, VRelation):
+              for end in ("src", "dst"):
+                if getattr(r, end) is c:
+                  self.moved.append((r, end, c, r.pinnedEnds.get(end)))
+                  setattr(r, end, keep)
+                  r.pinnedEnds[end] = keep
+        for r in dict.fromkeys(m[0] for m in self.moved): # (now drawn twice between the same two: one goes)
+          if r._isConnected() and r.modelObject is not None and \
+             any(o is not r and o.src is r.src and o.dst is r.dst for o in view.shownCopiesOf(r.modelObject)):
+            r._disconnect()
+            self.erased.append(r)
+        for c in self.others:
+          if c._isConnected():
+            c._disconnect()
+            self.erased.append(c)
+      self._redraw([m[0] for m in self.moved])
+
+    def _redraw(self, rels:list[VRelation]) -> None:
+      view = self.view
+      view.setDirty()
+      view.structureChanged()
+      view.freshPaint()
+      for r in dict.fromkeys(rels):
+        if r._isConnected():
+          r.reposition()
+      if self.keep._isConnected():
+        self.keep.draw()
+      view.drawCopies(self.keep)
+      view.glowCopies()
+
+    @override
+    def undo(self):
+      super().undo()
+      with self.view.batchedItemStates():
+        for vo in reversed(self.erased): # (the copies before the lines)
+          if not vo._isConnected() and vo._canReconnect():
+            vo._reconnect()
+        for r, end, was, pinned in reversed(self.moved):
+          if was._isConnected():
+            setattr(r, end, was)
+            r.pinnedEnds[end] = pinned if pinned is not None else was
+      self._redraw([m[0] for m in self.moved])
+
+    @override
+    def delete(self):
+      super().delete()
+      self.others, self.moved, self.erased = [], [], []
+
+    @override
+    def __str__(self):
+      return f'{super().__str__()} {self.keep.getPRef().tostring() if self.keep is not None else ""}'
+
   # This is just a signature -- the behaviour is in class _View_paste.
   def view_paste(self, x:int|None=None, y:int|None=None):
     '''

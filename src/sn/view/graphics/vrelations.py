@@ -257,7 +257,8 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     eg, read with the view, or an end dragged onto it), if it's still there
     and still *target*'s; else the nearest to the other end -- one inside the
     other end, if it's a box (eg: the copy a box's "contains" holds) -- and
-    that's remembered. None if there's no copy (or just one: that's the one).
+    that's remembered -- unless it's being drawn from one of them (see
+    *VObject._expand()*). None if there's no copy (or just one: that's the one).
     '''
     if self.view.canonical():
       return None
@@ -276,6 +277,8 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
         pinned = hint[1] if end == "src" else hint[2]
         if all(self.pinnedEnds.get(e) is not None for e in ("src", "dst") if e != end):
           self.view.__dict__.pop("_endHint", None) # (both ends taken)
+    if pinned is None: # (being drawn from this copy: eg, the one expanded -- see VObject._expand())
+      pinned = self.view.__dict__.get("_preferredCopies", {}).get(id(target))
     if pinned is not None and any(pinned is c for c in copies):
       self.pinnedEnds[end] = pinned
       return pinned
