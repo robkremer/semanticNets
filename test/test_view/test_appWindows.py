@@ -60,6 +60,22 @@ class TestQuit(unittest.TestCase):
       Application.quit(fake) # type: ignore[arg-type]
     self.assertEqual(calls, ["models", "settings", "destroy"])
 
+  def test0150quitAgainWhileAsking(self):
+    '''Application.onQuit() again while it's asking whether to save the
+    changes (eg: Quit chosen again from the menu bar, as the question can't be
+    seen) does nothing more: the questions aren't asked again, each inside the
+    other, leaving them all waiting.'''
+    from sn.view.graphics.guiApp import Application
+    calls:list[str] = []
+    fake = types.SimpleNamespace(_quitting=False, rememberOpenWindows=lambda: calls.append("remember"),
+                                 quit=lambda: calls.append("quit"))
+    fake.closeAllWindows = lambda: (calls.append("views"), Application.onQuit(fake)) # (quit again, while asking about a view)
+    with mock.patch.object(sn, "saveAtExit", lambda: calls.append("models")), \
+         mock.patch.object(sn, "savePrefsIfChanged", lambda: calls.append("settings")), \
+         mock.patch("sys.exit", lambda *a: calls.append("exit")), self.assertLogs(level="INFO"):
+      Application.onQuit(fake) # type: ignore[arg-type]
+    self.assertEqual(calls, ["remember", "views", "models", "settings", "quit", "exit"])
+
   def test0200windowTitle(self):
     'A window is titled with its file\'s name, then its folder.'
     from sn.view.graphics.guiApp import windowTitle

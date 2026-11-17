@@ -116,6 +116,9 @@ class Application(tk.Tk):
   current:Application|None = None
   "The application (there's just the one)."
 
+  _quitting = False
+  "Whether it's quitting (see *onQuit()*): eg, asking whether to save the changes."
+
   def __init__(self):
     uniqueCommandNames() # (before any callback's registered: a closed window's timer can't then run another's -- eg, a close handler)
     super().__init__()
@@ -194,7 +197,7 @@ class Application(tk.Tk):
     docstring for why this belongs here rather than being (re-)registered
     from every window.
     """
-    self.createcommand("tk::mac::Quit", self.onQuit)
+    self.createcommand("tk::mac::Quit", afterMenu(self.onQuit)) # (its questions wait: not from inside the menu's action)
     self.createcommand("::tk::mac::OpenDocument", self.onOpenDocument)
     self.createcommand("::tk::mac::ShowHelp", lambda: self.showHelp("user/index.html")) # (the Help menu's own "<App> Help" item)
 
@@ -246,7 +249,15 @@ class Application(tk.Tk):
     Python's normal interpreter shutdown entirely, so the *atexit*-registered
     *saveAtExit()*/*savePrefsIfChanged()* never run and unsaved models/views are
     silently lost. Call them explicitly here, then tear down.
+
+    Quit again while it's asking whether to save the changes (eg: when the
+    question can't be seen) does nothing more: asking the questions again,
+    each inside the other, would leave them all waiting.
     """
+    if self._quitting:
+      logger.info("Already quitting: answer its questions about saving the changes.")
+      return
+    self._quitting = True
     self.rememberOpenWindows() # (before they're closed: see reopenWindows())
     self.closeAllWindows() # each gets the same save check as closing it by hand
     sn.saveAtExit()
