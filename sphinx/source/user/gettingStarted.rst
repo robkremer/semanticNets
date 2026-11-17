@@ -84,10 +84,10 @@ Open **Semantic Nets** as you would any app, or double-click a model
   those settings. (It does the same for any model or view there, or in
   Desktop or Downloads, that it can't open or save.)
 - **After that**, it reopens the windows that were open when you last quit, at
-  the same size and place -- as they were last saved: changes you chose not to
-  save, and the undo history, are gone -- and the model directory, if it was
-  showing. If there were none, it shows the model directory (see
-  :doc:`files`).
+  the same size and place, one in front of another as they were -- as they were
+  last saved: changes you chose not to save, and the undo history, are gone --
+  and the model directory, if it was showing. If there were none, it shows the
+  model directory (see :doc:`files`).
 
 The **Help** menu has this guide. **About Semantic Nets** (on the Mac, first
 in the **Semantic Nets** menu -- the **Python** menu, when it's run from its

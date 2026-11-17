@@ -211,6 +211,54 @@ class TestAppWindows(unittest.TestCase):
     w, h = (int(v) for v in size(first).split("x"))
     self.assertGreater(w, 300)
 
+  def stacked(self, windows:list, expected:list, seconds:float=3) -> list:
+    'Let the window manager catch up (eg: on Linux, it stacks them when it gets to it): *windows* in their stacking order, once it\'s *expected* (or the time\'s up).'
+    from util.windowStacking import stackingOrder
+    end = time.monotonic() + seconds
+    while True:
+      self.app.update()
+      order = stackingOrder(windows)
+      if order == expected or time.monotonic() > end:
+        return order
+      time.sleep(0.02)
+
+  def test0750reopenedInStackingOrder(self):
+    '''The windows open when the app quit are reopened one in front of
+    another as they were -- the model directory among them -- not in the
+    order they were opened in.'''
+    from sn.view.graphics.guiApp import Application
+    def restore(pref:str, existed:bool, value) -> None:
+      if existed:
+        sn.snPrefs[pref] = value
+      elif pref in sn.snPrefs:
+        del sn.snPrefs[pref]
+    for pref in (Application.OPEN_WINDOWS_PREF, Application.DIRECTORY_PREF, Application.DIRECTORY_STACK_PREF):
+      self.addCleanup(restore, pref, pref in sn.snPrefs, sn.snPrefs.get(pref))
+    paths = [self.folder / "a" / "family.snv", self.folder / "a" / "animals.snv", self.folder / "b" / "family.snv"]
+    for folder in ("a", "b"):
+      sn.copyExamples(str(self.folder / folder))
+    windows = [self.app.openWindow(p.as_uri()) for p in paths]
+    self.assertNotIn(None, windows)
+    self.app.showDirectory()
+    self.pump()
+    for w in (windows[2], self.app, windows[0], windows[1]): # (not as they were opened)
+      w.lift()
+    expected = [windows[2], self.app, windows[0], windows[1]]
+    self.assertEqual(self.stacked([self.app] + windows, expected), expected)
+    self.app.rememberOpenWindows()
+    urls = [view.url for view in (windows[2].view, windows[0].view, windows[1].view)]
+    self.assertEqual([e["view"] for e in sn.snPrefs[Application.OPEN_WINDOWS_PREF]], urls) # (from the back to the front)
+    self.assertEqual(sn.snPrefs[Application.DIRECTORY_STACK_PREF], 1) # (one behind the model directory)
+    for window in windows:
+      self.close(window.view)
+    self.app.windows.clear()
+    Model._initCache()
+    self.app.showDirectory() # (as on start-up: before the windows are reopened)
+    self.assertEqual(self.app.reopenWindows(), 3)
+    reopened = [self.app.windows[url] for url in urls]
+    expected = [reopened[0], self.app, reopened[1], reopened[2]]
+    self.assertEqual(self.stacked([self.app] + reopened, expected), expected)
+
   def test0800examplesOverLockedCopies(self):
     'Copies of the examples that have been made read-only (or locked, on the Mac) are unlocked and replaced.'
     target = self.folder / "ex"
