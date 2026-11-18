@@ -282,6 +282,29 @@ class ViewportMixin(ViewBase):
       if obj._isConnected():
         obj.makeBindings()
 
+  def placeStrayLabels(self) -> int:
+    '''
+    Put each floating relation label (see *VRelation.floating()*) that's
+    inside one of the nodes it joins back between them (see
+    *VRelation.reposition()*): eg, in a view saved before 2026-11-18, when
+    an empty label crept down a little each time its view was read (see
+    *WrappingText._atLeastMinimum()*). Not where it's between a box and
+    something in it, or between ends that overlap: it may belong inside
+    one then. (When a view's read, it's not a change: it's not marked
+    changed for it -- as *tidyWindows()*.)
+
+    :returns: How many were put back.
+    '''
+    count = 0
+    try:
+      for vo in list(self.values()):
+        if isinstance(vo, VRelation) and vo._isConnected() and vo.floating() and vo.strayLabel():
+          vo.reposition(adjustPos=False)
+          count += 1
+    except Exception: # (a view whose labels can't be put back can still be shown)
+      logger.exception("couldn't put the labels inside the nodes they join back between them")
+    return count
+
   def refreshAllCaches(self) -> None:
     '''
     Refresh every object's cache of its model object's visual attributes (see

@@ -40,7 +40,7 @@ Created on Feb 3, 2025
 
 import weakref
 from abc import ABC, abstractmethod
-from math import log
+from math import ceil, log
 import tkinter.font as tkfont
 from typing import override, Callable, Optional, Union, Any
 import sn
@@ -388,13 +388,27 @@ class WrappingText(Text):
 
   def preferredBoundingBox(self) -> list[int]:
     '''
-    The owner\'s bounding box resized, about its centre, to *preferredSize()*.
+    The owner\'s bounding box resized, about its centre, to *preferredSize()*
+    (no smaller than the owner's least size: see *_atLeastMinimum()*).
     '''
     w, h, _ = self.preferredLayout(super().setText())
+    w, h = self._atLeastMinimum(w, h)
     bb = self.owner.boundingBox()
     cx, cy = (bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2
     x, y = int(cx - w / 2), int(cy - h / 2)
     return [x, y, x + w, y + h]
+
+  def _atLeastMinimum(self, w:int, h:int) -> tuple[int, int]:
+    '''
+    (*w*, *h*), grown to the owner's least size: "vis/minSize" wide and
+    *minHeight()* high (eg: one line of text, for an empty label) -- here,
+    so the box is centred at that size. *VObject.boundingBox()* would grow
+    a smaller one from its top edge, moving it down a little (eg: 9 view
+    units for a relation's empty label) every time it's fitted -- each time
+    its view's read, since the fit isn't remembered with it.
+    '''
+    owner = self.owner
+    return max(w, ceil(owner.cache["vis/minSize"])), max(h, ceil(owner.minHeight()))
 
   def fitOwner(self) -> None:
     '''
@@ -414,6 +428,7 @@ class WrappingText(Text):
       return
     self._fitted = sig
     w, h, self._wrap = self.preferredLayout(text)
+    w, h = self._atLeastMinimum(w, h) # (centred at the size it'll be)
     bb = owner.boundingBox()
     cx, cy = (bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2
     x, y = int(cx - w / 2), int(cy - h / 2)

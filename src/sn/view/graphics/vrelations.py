@@ -667,6 +667,25 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     d = view.awayFromWindows(self, [x - w / 2, y - h / 2, x + w / 2, y + h / 2], homes, gap=self.PANE_MARGIN)
     return (x, y) if d is None else (x + d[0], y + d[1])
 
+  def strayLabel(self) -> bool:
+    '''
+    Whether its label is inside one of its ends -- the nodes (or relations)
+    it joins -- where no floating label belongs (see *SNGView.placeStrayLabels()*).
+    Not when an end is a box (see *isContextWindow()*: the other end may be
+    in it), or the ends overlap, or it's to itself: its label may be inside
+    an end then.
+    '''
+    a, b = self.src, self.dst
+    if a is None or b is None or a is b or a is self or b is self:
+      return False
+    if any(e._shape is None or e.isHidden() or e.isContextWindow() for e in (a, b)):
+      return False
+    ca, cb = a.centerPt(), b.centerPt()
+    if a.containsPt(cb) or b.containsPt(ca):
+      return False
+    c = self.centerPt()
+    return a.containsPt(c) or b.containsPt(c)
+
   def gapMidpoint(self, a:VObject, b:VObject) -> tuple[float, float]:
     '''
     Where a floating label between *a* and *b* goes: midway along the visible
