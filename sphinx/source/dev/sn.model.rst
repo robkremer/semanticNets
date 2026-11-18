@@ -18,6 +18,7 @@ Submodules
    sn.model.constraints
    sn.model.copying
    sn.model.directory
+   sn.model.fileCopies
    sn.model.model
    sn.model.modelPrefs
    sn.model.names
