@@ -271,10 +271,13 @@ class Test(unittest.TestCase):
     self.assertIs(self.r.localSrc, self.alice)
     self.assertIs(rel.src, self.V(self.alice))
     self.assertIsNone(self.V(self.relatedTo))
+    self.assertTrue(rel._isConnected(), "the line stays: not taken out with what \"set src\" showed (it's drawn to alice again by then)")
+    self.assertIs(self.V(self.r), rel)
     v.context.redo()
     self.pump()
     self.assertIs(self.r.localSrc, self.relatedTo)
     self.assertIs(rel.src, self.V(self.relatedTo))
+    self.assertTrue(rel._isConnected())
 
   def test0900setDstShown(self):
     '"set dst" > one that\'s shown: just the end changes.'

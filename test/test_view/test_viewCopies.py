@@ -911,5 +911,98 @@ class Test(unittest.TestCase):
     self.assertIs(vr2.src, far)
     self.assertIs(self.V(self.r).src, alice, "the old line stays")
 
+  def linedUp(self) -> list:
+    'Each shown line whose ends don\'t list it (as AGRelation\'s setters keep them): none, if all\'s well.'
+    bad = []
+    for o in self.v.values():
+      if o is None or not hasattr(o, "src") or not o._isConnected():
+        continue
+      for end, ends in ((o.src, "_outgoing"), (o.dst, "_incoming")):
+        if end is not None and not any(x is o for x in getattr(end, ends)):
+          bad.append((o, ends))
+    return bad
+
+  def test1470mergedLineDoesntFollowItsEnds(self):
+    '''
+    A line merged away (drawn twice between the same two copies: see
+    test1450) isn't in the view, but it's kept to be put back: changing its
+    relation's end (as dragging the end of the line that's still shown does)
+    doesn't move it -- nor fail ("delOne() failed": Rob, 2026-11-18). Undone,
+    it's back as it was.
+    '''
+    self.m.setCanonicalViews(False)
+    v = self.v
+    alice, bob, vr = self.V(self.alice), self.V(self.bob), self.V(self.r)
+    carol = Node(self.m, [self.person], individual=True, name="carol")
+    self.pump()
+    vc = self.V(carol)
+    v.doViewCopy(vos=[alice, bob])
+    v.context.view_paste(x=100, y=600)
+    self.pump()
+    b2 = next(o for o in self.connected(self.bob) if o is not bob)
+    r2 = next(o for o in self.connected(self.r) if o is not vr)
+    v.context.view_merge(alice)
+    v.context.view_merge(bob)
+    self.pump()
+    self.assertFalse(r2._isConnected())
+    with self.assertNoLogs(level=logging.ERROR):
+      vr.pinnedEnds["dst"] = vc # (as VRelation.chooseNewEndpoint() does)
+      v.context.reconnect(self.r, destination=carol)
+      self.pump()
+    self.assertIs(vr.dst, vc)
+    self.assertIs(r2.dst, bob, "out of the view: not moved")
+    self.assertEqual(self.linedUp(), [])
+    self.assertEqual(v.validate(), 0)
+    with self.assertNoLogs(level=logging.ERROR):
+      for _ in range(3): # (the reconnect, then the merges)
+        v.context.undo()
+        self.pump()
+    self.assertIs(vr.dst, bob)
+    self.assertTrue(r2._isConnected())
+    self.assertIs(r2.dst, b2)
+    self.assertEqual(self.linedUp(), [])
+    self.assertEqual(v.validate(), 0)
+
+  def test1480erasedLineDrawnToItsEndsWhenPutBack(self):
+    '''
+    A line erased from the view, whose relation's end is changed elsewhere (eg:
+    in the terminal) while it's out: no fault then; and its erase undone, it's
+    drawn to the end as it is now. (Canonical or not.)
+    '''
+    v = self.v
+    vr, bob = self.V(self.r), self.V(self.bob)
+    carol = Node(self.m, [self.person], individual=True, name="carol")
+    self.pump()
+    vc = self.V(carol)
+    v.context.erase(vr)
+    self.pump()
+    self.assertFalse(vr._isConnected())
+    with self.assertNoLogs(level=logging.ERROR):
+      self.r.dst = carol # (not one of the view's commands: its undo doesn't put it back)
+      self.pump()
+      v.context.undo()
+      self.pump()
+    self.assertTrue(vr._isConnected())
+    self.assertIs(vr.dst, vc)
+    self.assertFalse(any(x is vr for x in bob._incoming))
+    self.assertEqual(self.linedUp(), [])
+    self.assertEqual(v.validate(), 0)
+    # (taken out with an end -- carol, erased -- and put back with it: its other end, moved meanwhile, too)
+    alice = self.V(self.alice)
+    v.context.erase(vc)
+    self.pump()
+    self.assertFalse(vr._isConnected())
+    with self.assertNoLogs(level=logging.ERROR):
+      self.r.src = self.bob
+      self.pump()
+      v.context.undo()
+      self.pump()
+    self.assertTrue(vr._isConnected())
+    self.assertIs(vr.dst, vc)
+    self.assertIs(vr.src, bob)
+    self.assertFalse(any(x is vr for x in alice._outgoing))
+    self.assertEqual(self.linedUp(), [])
+    self.assertEqual(v.validate(), 0)
+
 if __name__ == "__main__":
   unittest.main()
