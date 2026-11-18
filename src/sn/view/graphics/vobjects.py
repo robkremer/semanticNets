@@ -2623,6 +2623,14 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     dangling -- a type is still meaningful without this object in view.
     '''
     from sn.view.graphics.vrelations import VRelation
+    moved:list[VRelation] = []
+    for r in list(self._incoming) + list(self._outgoing): # (a line whose relation's end has moved off this already -- eg: "set src" undone, then what it showed erased -- isn't taken out with it: it's drawn to its end now, as it's about to hear -- see VRelation.update())
+      if isinstance(r, VRelation) and r._isConnected() and (rm := r.modelObject) is not None and rm._isConnected():
+        for end in ("src", "dst"):
+          local = rm.localSrc if end == "src" else rm.localDst
+          if getattr(r, end) is self and local is not None and local is not self.modelObject:
+            setattr(r, end, r._resolveEnd(end)) # (AGRelation's setter takes it off our lists)
+            moved.append(r)
     detached:list[tuple[VRelation, str]] = []
     for r in list(self._incoming) + list(self._outgoing):
       if isinstance(r, VRelation) and r._isConnected() and r.modelObject is not None and r.modelObject.isType():
@@ -2641,6 +2649,10 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     for r, _ in detached:
       r.view.freshPaint()
       r.draw()
+    for r in dict.fromkeys(moved):
+      if r._isConnected():
+        r.view.freshPaint()
+        r.reposition()
     if not self.view.canonical():
       self.view.drawCopies(self) # (one fewer: perhaps no longer marked as having copies)
     

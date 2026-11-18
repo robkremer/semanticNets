@@ -965,12 +965,16 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     '''
     if getattr(self.view, "_closed", False): # (sent before the view's window closed: see SNGView.detachFromModel())
       return
-    if any(t[0] in ("mod src", "mod dst", "mod inherited src", "mod inherited dst") for t in topics):
+    connected = self._isConnected()
+    if connected and any(t[0] in ("mod src", "mod dst", "mod inherited src", "mod inherited dst") for t in topics):
       self.view.structureChanged() # (an end moved: what a context window contains may differ -- see VObject.update())
     rest = []
     for topic in topics:
       if topic[0] in ("mod src", "mod dst", "mod inherited src", "mod inherited dst"):
         end = "src" if topic[0].endswith("src") else "dst"
+        if not connected: # (taken out of the view -- eg: erased, or merged into another copy of the line -- but kept to be put back: its ends are drawn to its relation's then -- see _reconnect())
+          self.__dict__.setdefault("_endsMissed", set()).add(end)
+          continue
         vo = self._resolveEnd(end) # (its own end, or inherited, or dangling)
         if end == "src":
           self.src = vo  # AGRelation's setter moves us between the nodes' relation lists
@@ -982,6 +986,38 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
         rest.append(topic)
     if rest:
       super().update(subject, *rest)
+
+  @override
+  def _reconnect(self, **kwargs):
+    '''
+    Put this line back in the view (see *VObject._reconnect()*) -- drawn to
+    its relation's ends as they are now, if they moved while it was out of
+    the view (see *update()*). If it's put back with one of its ends (*kept*),
+    that's after: that end is going through its own lines meanwhile.
+    '''
+    super()._reconnect(**kwargs)
+    if self.__dict__.get("_endsMissed"):
+      if kwargs.get("kept") is None:
+        self._followMissedEnds()
+      else:
+        self.canvas.after_idle(self._followMissedEnds)
+
+  def _followMissedEnds(self) -> None:
+    '''
+    Draw the ends that moved in the model while this line was out of the
+    view (see *update()*) to where they are now.
+    '''
+    if not self._isConnected() or self.modelObject is None or getattr(self.view, "_closed", False): # (taken out again before this came: then when it's put back)
+      return
+    missed = self.__dict__.pop("_endsMissed", set())
+    if not missed:
+      return
+    for end in ("src", "dst"):
+      if end in missed:
+        setattr(self, end, self._resolveEnd(end)) # (AGRelation's setter moves us between the ends' relation lists)
+    self.view.structureChanged()
+    self.view.freshPaint()
+    self.reposition()
 
   def _toggleFloatingAnchor(self, event=None):
     '''
