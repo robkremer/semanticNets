@@ -1004,5 +1004,64 @@ class Test(unittest.TestCase):
     self.assertEqual(self.linedUp(), [])
     self.assertEqual(v.validate(), 0)
 
+  # ---- reading a view again --------------------------------------------------------
+
+  def reread(self):
+    'Save the model and the view, close the view, and read it again (as test0500 does): the view read.'
+    v = self.v
+    self.m.save()
+    v.save()
+    url = v.url
+    self.close(v)
+    from sn.view.graphics.sngView import SNGView
+    from util.persistence.pRef import PRDb
+    PRDb.AllDBs.pop(url, None)
+    self.v = w = SNGView.getDB(url)
+    if not hasattr(w, "window") or w.window is None:
+      self.app.openWindow(w)
+    self.pump(0.5)
+    return w
+
+  def test1500emptyLabelsStayPut(self):
+    '''
+    A relation's empty label (its SN type's "vis/label" is "": eg, a KNet's
+    links) is where it was saved each time its view's read. It used to creep
+    down 9 view units at each read -- fitted to no text about its centre,
+    then grown to a line's height from its top (see WrappingText.fitOwner())
+    -- till lines started inside the nodes they join (Rob, 2026-11-18, Gaut.snv).
+    '''
+    self.m.setCanonicalViews(False)
+    self.likes["vis/label"] = ""
+    self.pump()
+    bob = self.V(self.bob)
+    c = self.copy(bob, 150, 400)
+    self.v.context.attach_end(self.V(self.r), "dst", c)
+    self.pump()
+    vr = self.V(self.r)
+    self.assertEqual(vr.labelText(), "")
+    was = {mo.name: self.V(mo).boundingBox() for mo in (self.r, self.alice, self.bob)}
+    for i in range(3):
+      w = self.reread()
+      self.assertEqual({mo.name: self.V(mo, w).boundingBox() for mo in (self.r, self.alice, self.bob)}, was, f"read {i + 1} time(s)")
+
+  def test1510strayLabelPutBackOnReading(self):
+    '''
+    A floating label inside a node it joins (eg: one that crept there, as
+    above, in a view saved before) is put back between its ends when the
+    view's read -- not a change to the view.
+    '''
+    vr, alice = self.V(self.r), self.V(self.alice)
+    self.assertTrue(vr.floating())
+    self.centre(vr, *alice.centerPt())
+    self.pump()
+    self.assertTrue(alice.containsPt(vr.centerPt()))
+    self.assertTrue(vr.strayLabel())
+    w = self.reread()
+    vr, alice, bob = self.V(self.r, w), self.V(self.alice, w), self.V(self.bob, w)
+    self.assertFalse(vr.strayLabel())
+    self.assertFalse(alice.containsPt(vr.centerPt()))
+    self.assertFalse(bob.containsPt(vr.centerPt()))
+    self.assertFalse(w.isDirty(), "not a change")
+
 if __name__ == "__main__":
   unittest.main()
