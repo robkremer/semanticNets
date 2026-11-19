@@ -802,7 +802,7 @@ class Test(unittest.TestCase):
   def test1430labelThisCopy(self):
     '"label this copy..." gives just that copy its own label (undoably): the model keeps the name.'
     from unittest import mock
-    from tkinter import simpledialog
+    import util.utils
     self.m.setCanonicalViews(False)
     v = self.v
     bob = self.V(self.bob)
@@ -813,13 +813,13 @@ class Test(unittest.TestCase):
     menu = tk.Menu(v.canvas)
     c.addViewMenuItems(menu)
     self.assertIn("label this copy...", self.menuLabels(menu))
-    with mock.patch.object(simpledialog, "askstring", return_value="b."):
+    with mock.patch.object(util.utils, "askString", return_value="b."):
       c.askOwnLabel()
     self.pump()
     self.assertEqual(c.labelText(), "b.")
     self.assertEqual(bob.labelText(), "bob")
     self.assertEqual(self.bob.name, "bob")
-    with mock.patch.object(simpledialog, "askstring", return_value="bob"): # (its name: it shows that again)
+    with mock.patch.object(util.utils, "askString", return_value="bob"): # (its name: it shows that again)
       c.askOwnLabel()
     self.pump()
     self.assertIsNone(c.ownLabel)

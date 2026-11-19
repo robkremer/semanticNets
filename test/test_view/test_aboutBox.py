@@ -98,6 +98,8 @@ class TestCredits(unittest.TestCase):
     with open(os.path.join(os.path.dirname(__file__), "..", "..", "LICENSE"), encoding="utf-8") as f:
       self.assertEqual(aboutBox.licence("semanticNets.txt"), f.read())
     self.assertTrue(aboutBox.resource("icon.png", ).startswith(b"\x89PNG")) #type: ignore[union-attr]
+    for name in ("icon-64.png", "icon-32.png"): # (the windows' smaller ones: see guiApp.Application.setIcon())
+      self.assertTrue(aboutBox.resource(name).startswith(b"\x89PNG"), name) #type: ignore[union-attr]
 
   def test0200everythingAcknowledged(self):
     'Every reasoner engine, and every library the apps include, is a credit, with a web page; and the ones with no licence files in their metadata have their licences named.'
