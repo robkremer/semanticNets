@@ -67,11 +67,11 @@ def selftest() -> int:
 def selftestAbout() -> list[str]:
   '''
   Check the About box has what it shows (see *sn.view.graphics.aboutBox*):
-  its icon and the licences that come with the program (package data); and,
-  in the apps, every library they include (each credit with a Python
-  distribution, but the engines they use from the computer), with its
-  licence's text -- from its metadata, which the build must include (see
-  packaging/semanticNets.spec).
+  its icons (its own, and the windows' smaller ones) and the licences that come
+  with the program (package data); and, in the apps, every library they
+  include (each credit with a Python distribution, but the engines they use
+  from the computer), with its licence's text -- from its metadata, which
+  the build must include (see packaging/semanticNets.spec).
 
   :returns: What's wrong: empty if nothing is.
   '''
@@ -79,6 +79,7 @@ def selftestAbout() -> list[str]:
   from sn.model.reasoner import ENGINES
   from util.aboutDialog import installed, licenceTexts
   missing = [] if aboutBox.resource("icon.png") else ["the About box's icon"]
+  missing += [f"the windows' icon {name}" for name in ("icon-64.png", "icon-32.png") if not aboutBox.resource(name)]
   missing += [f"the licence {name}" for name in ("semanticNets.txt", "python.txt", "tcl-tk.txt", "nemo.txt")
               if not aboutBox.licence(name)]
   if getattr(sys, "frozen", False):

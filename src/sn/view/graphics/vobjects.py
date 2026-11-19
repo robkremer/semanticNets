@@ -1975,14 +1975,12 @@ class VObject(AGObject["SNGView", "VRelation"], Observer, Dirtyable, ErrorReport
     and the model, keep the name. Left blank, or given the name, it shows the
     name again.
     '''
-    from tkinter import simpledialog
-    from util.utils import dialogOwner
+    from util.utils import askString, dialogOwner
     mo = self.modelObject
     if mo is None:
       return
-    text = simpledialog.askstring("Label this copy",
-                                  f'What this copy of "{mo.name}" shows (just here: the name stays "{mo.name}"):',
-                                  initialvalue=self.labelText(), parent=dialogOwner(self.canvas))
+    text = askString("Label this copy", f'What this copy of "{mo.name}" shows (just here: the name stays "{mo.name}"):',
+                     parent=dialogOwner(self.canvas), initialvalue=self.labelText())
     if text is None: # (cancelled)
       return
     label = text.strip() or None

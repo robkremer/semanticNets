@@ -71,6 +71,7 @@ from util.platformSupport import MAC, shortcut, openFile, setUpLook, setDPIAware
 from util.singleInstance import SingleInstance
 from util.choiceDialog import askChoice
 from util.aboutDialog import installAbout
+from util.appIcon import setAppIcon
 from util.tkCommands import uniqueCommandNames
 from util.windowStacking import stackingOrder, restack
 from util import programFiles
@@ -126,6 +127,7 @@ class Application(tk.Tk):
     self.withdraw()  # hide before it can ever flash visible
     Application.current = self
     self.title(sn.NAME)
+    self.setIcon()
     self.defaultChildLocation:tuple[int, int] = (20, 60)
     "Where the next new window goes (see *nextWindowGeometry()*)."
 
@@ -151,6 +153,16 @@ class Application(tk.Tk):
     self.menubar = self._installMenubar()
 
     self.protocol("WM_DELETE_WINDOW", self._onDirectoryClose) # (it's the model directory, when it's shown)
+
+  def setIcon(self) -> None:
+    """Give every window the program's icon (see *util.appIcon.setAppIcon()*):
+    in its title bar on Windows and Linux, and on macOS, when it's run from
+    source, the Dock's and the alerts' (Python's otherwise) -- and, on macOS,
+    in its own alert-like dialogs (see *util.appIcon.alertIcon()*). Before
+    any other window's made: they take it as they're made.
+    """
+    from sn.view.graphics.aboutBox import resource
+    setAppIcon(self, resource("icon.png"), resource("icon-64.png"), resource("icon-32.png"))
 
   def _noOp(self) -> None:
     """Root window has no close button the user can reach, but guard anyway.

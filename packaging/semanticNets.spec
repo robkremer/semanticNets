@@ -57,7 +57,7 @@ datas = [
   (os.path.join(SRC, "sn", "model", "prologReasoner.pl"), os.path.join("sn", "model")), # (SWI-Prolog's: it, and janus-swi, come from the computer -- see util.localPython)
   (os.path.join(SRC, "sn", "model", "baseRules.snm"), os.path.join("sn", "model")),
   (os.path.join(SRC, "sn", "examples"), os.path.join("sn", "examples")),
-  (os.path.join(SRC, "sn", "about"), os.path.join("sn", "about")), # (the About box's icon, and the licences that aren't in the libraries' metadata: see sn.view.graphics.aboutBox)
+  (os.path.join(SRC, "sn", "about"), os.path.join("sn", "about")), # (the About box's and the windows' icons, and the licences that aren't in the libraries' metadata: see sn.view.graphics.aboutBox)
 ]
 
 # The bundled libraries' metadata (and their dependencies'), for the About box:
