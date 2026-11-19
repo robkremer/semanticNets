@@ -71,6 +71,7 @@ from util.platformSupport import MAC, shortcut, openFile, setUpLook, setDPIAware
 from util.singleInstance import SingleInstance
 from util.choiceDialog import askChoice
 from util.aboutDialog import installAbout
+from util.appIcon import setAppIcon
 from util.tkCommands import uniqueCommandNames
 from util.windowStacking import stackingOrder, restack
 from util import programFiles
@@ -126,6 +127,7 @@ class Application(tk.Tk):
     self.withdraw()  # hide before it can ever flash visible
     Application.current = self
     self.title(sn.NAME)
+    self.setIcon()
     self.defaultChildLocation:tuple[int, int] = (20, 60)
     "Where the next new window goes (see *nextWindowGeometry()*)."
 
@@ -151,6 +153,16 @@ class Application(tk.Tk):
     self.menubar = self._installMenubar()
 
     self.protocol("WM_DELETE_WINDOW", self._onDirectoryClose) # (it's the model directory, when it's shown)
+
+  def setIcon(self) -> None:
+    """Give every window the program's icon (see *util.appIcon.setAppIcon()*):
+    in its title bar on Windows and Linux, and on macOS, when it's run from
+    source, the Dock's and the alerts' (Python's otherwise) -- and, on macOS,
+    in its own alert-like dialogs (see *util.appIcon.alertIcon()*). Before
+    any other window's made: they take it as they're made.
+    """
+    from sn.view.graphics.aboutBox import resource
+    setAppIcon(self, resource("icon.png"), resource("icon-64.png"), resource("icon-32.png"))
 
   def _noOp(self) -> None:
     """Root window has no close button the user can reach, but guard anyway.
@@ -721,6 +733,38 @@ class Application(tk.Tk):
       if path:
         pane.directory.update(path)
     pane.refresh()
+
+  def copyModelFiles(self, url:str, parent:tk.Misc|None=None) -> None:
+    '''
+    Copy the model at *url* -- with its views in the model directory's folders,
+    and the models it uses -- to a folder, once the user says where (see
+    *sn.view.graphics.copyDialog.copyOrMove()*). (File | Copy model and views
+    to...)
+
+    :param parent: What the dialogs are over (eg: a window of the model).
+    '''
+    from sn.model.directory import Directory
+    from sn.view.graphics.copyDialog import copyOrMove
+    from sn.view.graphics.directoryWindow import searchPath
+    parent = parent or self._dialogParent()
+    added = noteFolderOf(url) # (its folder searched: its views there are found)
+    pane = self.directoryPane
+    if pane is not None and pane._scanning is None and not added:
+      directory = pane.directory
+    else: # (just the start of each file is read: see Directory.scan())
+      directory = Directory()
+      with progress.task("Looking through the folders..."):
+        list(directory.scan(searchPath()))
+      if pane is not None and added:
+        pane.rescan()
+    model = next((m for m in directory.models() if m.url == url), None)
+    if model is None or not model.path or model.error:
+      messagebox.showinfo(sn.NAME, f'"{_fileName(url)}" can\'t be copied: only a model that\'s a file on this computer '
+                          'can be (save it first, if it\'s new).', parent=parent)
+      return
+    copied = copyOrMove(self, directory, [model], parent=parent)
+    if copied and self.directoryPane is not None:
+      self.directoryPane.selectFiles([c.copy for c in copied])
 
   def openEntry(self, entry:Entry, readOnly:bool=False) -> tk.Toplevel|None:
     '''

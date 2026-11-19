@@ -60,6 +60,8 @@ than once, as copies (see :doc:`viewing`).
 - **File | Save view as...** and **File | Save model as...** save a *copy* in
   another file. The window stays on the original (the terminal pane says so),
   and further changes go to the original: open the copy to work on it.
+- **File | Copy model and views to...** copies the window's model, with its
+  views and the models it uses, to a folder: see `Copying and moving files`_.
 - **File | Close model** closes every window on the window's model (offering
   to save each changed view, and then the model), and forgets the model: open
   it again and it's read afresh from its file. (A model that another open
@@ -84,6 +86,12 @@ other window doesn't quit (closing it then does).
 - **Open Read-only** opens it with its model write-locked: it can't be changed
   or saved (the pencil at the right of the reasoning toolbar is crossed out).
   Not if the model's open already: it's opened as it is then.
+- **Copy To...** copies the selected models and views to a folder -- eg, to
+  put on a web site -- with each model's views and the models they use (eg:
+  their super-models): see `Copying and moving files`_. Select several with
+  Shift-click or Command-click (Ctrl+click elsewhere).
+- **Move To...** moves them: they're copied, as Copy To... does, and the
+  originals are put in the Trash. Nothing that's open is moved: close it first.
 - **Move to Trash** moves a model or view to the Trash (the Finder's **Put
   Back** restores it) -- and, for a model, its views too, if you say so.
   Nothing that's open is moved: close it first.
@@ -108,6 +116,43 @@ again afterwards.)
 
 Copying and moving files
 ------------------------
+
+To copy a model with its views, and the models it uses, as a unit -- eg, to
+put on a web site, or to give to someone -- select it in the model directory
+and click **Copy To...** (or, in one of its windows, **File | Copy model and
+views to...**). Select several models and views to copy them all. A dialog
+lists what goes:
+
+- the models and views you selected;
+- the views of those models (those in the folders the directory searches);
+- the model of each view you selected;
+- the models they use -- their super-models, and any other model their
+  objects refer to -- and the models those use, and so on. (Not the system
+  model and the base rules, which come with the program, nor models on the
+  web: they're referred to where they are.)
+
+Click a file's box to leave it out (or put it back). Choose the folder they go
+to: the files in the folder of the first one you selected (or below it) keep
+their places relative to one another, and the others go in the folder itself.
+If the folder's to be put on a web site, give its address there (**On the web
+at**, eg: ``https://example.org/models/``): it's remembered for that folder.
+
+The copies are made to refer to one another, not to the originals; each says
+where it is (or will be on the web), so it isn't taken to have been copied
+when it's opened, and where it came from. Below the list, the dialog says what
+the copies will still refer to that isn't going: they refer to it where it is,
+so it's found on this computer but not on another, nor on a web site. (That's
+why it's checked here: a copy opened on *this* computer would quietly find a
+missing file where its original was.) Files in folders already there are
+replaced, once you say so; the copies' folder is added to those the directory
+searches, and the copies are selected in it.
+
+**Move To...** is the same, but the originals are put in the Trash once
+they're copied, and the models the moved files use stay where they are unless
+you tick them. Anything that refers to a moved model where it was -- eg, a
+model that uses it, left behind -- finds it where it is now: each move is
+added to the ``model/urlAliases`` setting (see `Models on the web: shared
+ontologies`_). Nothing that's open is moved.
 
 Files refer to one another by **relative** paths when they're in the same
 folder, below it, or up to two folders above it -- so a folder of models and

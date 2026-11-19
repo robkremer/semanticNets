@@ -3,7 +3,7 @@ Draw the app's (placeholder) icon -- a little semantic network: three boxes
 joined by arrows, on a rounded square -- as packaging/sn.icns, and the same
 picture as packaging/sn.ico (Windows) and sn-icon.png (Linux), and as the
 documentation's logo and favicon (sphinx/source/images/sn-*.png), and the
-About box's (src/sn/about/icon.png).
+About box's and the windows' (src/sn/about/icon.png, icon-64.png, icon-32.png).
 
 Run with the build venv's Python (it needs Pillow): see build.xml's "icon"
 target. Replace sn.icns with a designed icon whenever there is one.
@@ -71,7 +71,9 @@ def main() -> None:
   images = os.path.join(HERE, "..", "sphinx", "source", "images") # (the documentation's logo and favicon: see sphinx/source/conf.py)
   draw(128).save(os.path.join(images, "sn-logo.png"))
   draw(64).save(os.path.join(images, "sn-favicon.png"))
-  draw(128).save(os.path.join(HERE, "..", "src", "sn", "about", "icon.png"), optimize=True) # (the About box's: see sn.view.graphics.aboutBox)
+  draw(128).save(os.path.join(HERE, "..", "src", "sn", "about", "icon.png"), optimize=True) # (the About box's, and the windows' -- macOS's app icon when it's run from source: see sn.view.graphics.aboutBox, guiApp.Application.setIcon())
+  draw(64).save(os.path.join(HERE, "..", "src", "sn", "about", "icon-64.png"), optimize=True) # (the one in its alert-like dialogs on macOS: see util.appIcon.alertIcon())
+  draw(32).save(os.path.join(HERE, "..", "src", "sn", "about", "icon-32.png"), optimize=True) # (the windows' small one: their title bars on Windows and Linux)
   shutil.rmtree(tmp)
   print("wrote", out)
 

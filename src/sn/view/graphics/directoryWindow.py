@@ -213,6 +213,13 @@ class DirectoryPane(ttk.Frame):
     self.openButton = button("Open", self.openSelected, "Open the selected view, or the selected model in its default view (or double-click it).")
     self.openReadOnlyButton = button("Open Read-only", lambda: self.openSelected(readOnly=True),
       "Open it with its model write-locked: it can't be changed (nor saved).")
+    self.copyButton = button("Copy To...", lambda: self.copySelected(),
+      "Copy the selected models and views to a folder (eg: to put on a web site) -- with the models' views, and the models "
+      "they use (eg: their super-models): the copies refer to one another, not to the originals. Select several with "
+      "Shift- or Command-click.")
+    self.moveButton = button("Move To...", lambda: self.copySelected(move=True),
+      f"Move the selected models and views to a folder, with the models' views (and, if you tick them, the models they "
+      f"use): copied, as Copy To... does, then the originals put in the {TRASH_NAME}.")
     self.deleteButton = button(f"Move to {TRASH_NAME}", self.deleteSelected,
       f"Move the selected model or view to the {TRASH_NAME} (and, for a model, offer to move its views too).")
     button("Folders...", self.editFolders, "Which folders are searched for models and views (the search path).")
@@ -220,7 +227,7 @@ class DirectoryPane(ttk.Frame):
 
     listFrame = ttk.Frame(self)
     listFrame.pack(fill=tk.BOTH, expand=True)
-    self.tree = ttk.Treeview(listFrame, columns=[c[0] for c in self.COLUMNS], selectmode="browse")
+    self.tree = ttk.Treeview(listFrame, columns=[c[0] for c in self.COLUMNS], selectmode="extended")
     self.tree.heading("#0", text="Model / view")
     self.tree.column("#0", width=220, stretch=True)
     for cid, heading, width in self.COLUMNS:
@@ -346,9 +353,17 @@ class DirectoryPane(ttk.Frame):
     return status, (*tags, "open") if shown else tuple(tags)
 
   def selectedEntry(self) -> Entry|None:
-    ''':returns: The entry selected, if there is one.'''
+    ''':returns: The entry selected, if just one is.'''
     selection = self.tree.selection()
-    return self._rowEntries.get(selection[0]) if selection else None
+    return self._rowEntries.get(selection[0]) if len(selection) == 1 else None
+
+  def selectedEntries(self) -> list[Entry]:
+    ''':returns: The entries selected (see *copySelected()*), in the list's order.'''
+    return [self._rowEntries[iid] for iid in self.tree.selection() if iid in self._rowEntries]
+
+  def _copyable(self, entry:Entry) -> bool:
+    ":returns: Whether *entry* can be copied or moved: a file on this computer."
+    return not entry.error and bool(entry.path) and not entry.remote
 
   def _selectionChanged(self) -> None:
     if self._scanning is not None: # (see _scanSome())
@@ -358,6 +373,15 @@ class DirectoryPane(ttk.Frame):
     for b in (self.openButton, self.openReadOnlyButton):
       b.state(["!disabled"] if openable else ["disabled"])
     self.deleteButton.state(["!disabled"] if openable and entry is not None and entry.path else ["disabled"]) # (not a remote one)
+    entries = self.selectedEntries()
+    for b in (self.copyButton, self.moveButton):
+      b.state(["!disabled"] if any(self._copyable(e) for e in entries) else ["disabled"])
+    if len(entries) > 1:
+      models = sum(1 for e in entries if e.kind == "model")
+      self.infoLabel.configure(text=f"{len(entries)} selected: {models} model{'' if models == 1 else 's'}, "
+                               f"{len(entries) - models} view{'' if len(entries) - models == 1 else 's'} "
+                               "(see Copy To... and Move To...).")
+      return
     if entry is None:
       folders = searchPath()
       self.infoLabel.configure(text=f"{len(self.directory.entries)} models and views in {len(folders)} folder"
@@ -451,6 +475,44 @@ class DirectoryPane(ttk.Frame):
     self.refresh()
     if failed:
       messagebox.showerror(sn.NAME, "\n\n".join(failed), parent=top)
+
+  # ── Copying and moving ────────────────────────────────────────────────────
+
+  def copySelected(self, move:bool=False) -> None:
+    '''
+    Copy (or move) the selected models and views -- with the models' views,
+    and the models they use -- to a folder (see *copyOrMove()*); then select
+    the copies (or the moved files). Nothing that's open is moved.
+    '''
+    from sn.view.graphics.copyDialog import copyOrMove
+    entries = [e for e in self.selectedEntries() if self._copyable(e)]
+    if not entries:
+      return
+    def blocked(item) -> str|None:
+      if not move:
+        return None
+      if self._isOpen(item.entry):
+        return "it's open: close it first"
+      used = self._usedBy(item.entry) if item.entry.kind == "model" else []
+      return f"it's used by {', '.join(used)}, which {'is' if len(used) == 1 else 'are'} open" if used else None
+    copied = copyOrMove(self.app, self.directory, entries, move=move, parent=self.winfo_toplevel(), blocked=blocked)
+    if copied:
+      self.selectFiles([c.copy for c in copied])
+
+  def selectFiles(self, paths:list[str]) -> None:
+    ''':param paths: Files' paths: select their rows (once they're listed: see *rescan()*).'''
+    if self._scanning is not None:
+      self.after(100, lambda: self.selectFiles(paths))
+      return
+    wanted = {os.path.realpath(p) for p in paths}
+    rows = [iid for iid, e in self._rowEntries.items() if e.path and os.path.realpath(e.path) in wanted]
+    if rows:
+      for iid in rows:
+        parent = self.tree.parent(iid)
+        if parent:
+          self.tree.item(parent, open=True)
+      self.tree.selection_set(rows)
+      self.tree.see(rows[0])
 
   def _isOpen(self, entry:Entry) -> bool:
     '''

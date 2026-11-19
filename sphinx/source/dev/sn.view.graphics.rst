@@ -19,6 +19,7 @@ Submodules
    sn.view.graphics.balloonLayout
    sn.view.graphics.chooseModelDialog
    sn.view.graphics.connectors
+   sn.view.graphics.copyDialog
    sn.view.graphics.decorators
    sn.view.graphics.directoryWindow
    sn.view.graphics.expandDialog

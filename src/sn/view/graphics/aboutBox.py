@@ -30,9 +30,10 @@ What it acknowledges is *credits()*: the people, the reasoner engines, the
 libraries and the tools. The licences' texts that don't come with the
 libraries' own metadata (Semantic Nets' own, Python's, Tcl/Tk's and Nemo's)
 are package data, in sn/about/licences/, with the box's icon (sn/about/icon.png,
-drawn by packaging/makeIcon.py); the others are read from the installed
-distributions' metadata, which the packaged apps carry (see
-packaging/semanticNets.spec).
+drawn by packaging/makeIcon.py, which also draws icon-64.png and icon-32.png:
+they're every window's icon too -- see *guiApp.Application.setIcon()*); the
+others are read from the installed distributions' metadata, which the
+packaged apps carry (see packaging/semanticNets.spec).
 
 Created on Nov 9, 2026
 

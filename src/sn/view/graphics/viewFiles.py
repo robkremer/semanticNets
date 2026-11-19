@@ -136,6 +136,15 @@ class FilesMixin(ViewBase):
     if self.model is not None:
       self._saveCopy("model", self.model, ".snm", [("Model files", "*.snm"), ("All files", "*.*")])
 
+  def doCopyModelFiles(self) -> None:
+    '''
+    "File | Copy model and views to...": copy this view's model -- with its
+    views (those in the model directory's folders) and the models it uses --
+    to a folder, eg: to put on a web site (see *Application.copyModelFiles()*).
+    '''
+    if self.model is not None:
+      cast(Application, self.window._root()).copyModelFiles(self.model.url, parent=self.window) # type: ignore[attr-defined]
+
   def doChangeModel(self) -> None:
     '''
     "File | Change model...": show another model in this view -- eg, a copy
@@ -327,6 +336,7 @@ class FilesMixin(ViewBase):
     addToMenuBar("File|Save view as...", self.doSaveViewAs)
     addToMenuBar("File|Save model", self.doSaveModel, enabled=not self.model.writeLocked()) # (see refreshLock())
     addToMenuBar("File|Save model as...", self.doSaveModelAs)
+    addToMenuBar("File|Copy model and views to...", self.doCopyModelFiles)
     addToMenuBar("File|Close model", self.doCloseModel, separatorBefore=True) # (after the saves)
     addToMenuBar("File|Change model...", self.doChangeModel)
     addToMenuBar("File|Open super model", menu=self._superModelsMenu())
@@ -405,6 +415,7 @@ class FilesMixin(ViewBase):
     removeFromMenuBar("File|Save view as...")
     removeFromMenuBar("File|Save model")
     removeFromMenuBar("File|Save model as...")
+    removeFromMenuBar("File|Copy model and views to...")
     removeFromMenuBar("File|Change model...")
     removeFromMenuBar("Edit|Cut")
     removeFromMenuBar("Edit|Copy")
