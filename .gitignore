@@ -36,6 +36,9 @@ src/sn/help/
 !plugins/rnetReader/knet.snm
 # --- and its default view (made by tools/makeKnetView.py, or laid out by hand) ---
 !plugins/rnetReader/knet.snv
+# --- webModels
+!webModels/*/*.snm
+!webModels/*/*.snv
 
 # --- Packaging (ant: app, dmg, pyz) ---
 /build/
