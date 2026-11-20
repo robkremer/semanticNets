@@ -284,8 +284,10 @@ the model). **Nodes that are the same are one node** (on unless you turn
 it off) takes them as KNet does: a net may draw a node again, elsewhere, to
 keep its links short, and that's one node, drawn twice (turn
 it off for a figure that's several copies of a net side by side, as some of
-Gaines's are). **Go** makes them, asking first if they're there already, and
-opens the view: the net as CNet drew it, each node where it was (half as big
+Gaines's are). **KNet rules** says which version of KNet's kernel the model
+builds on (see `KNet's kernel`_): *Gaines's rules*, as the paper has them,
+or *Symmetric exclusion* (the dialog remembers which you chose last). **Go**
+makes them, asking first if they're there already, and opens the view: the net as CNet drew it, each node where it was (half as big
 again, as the editor's text is bigger), with its links between them.
 
 What's in the net becomes:
@@ -375,7 +377,7 @@ fit (eg: a link to a node that isn't there).
 KNet's kernel
 ~~~~~~~~~~~~~
 
-The models the reader makes build on the plugin's *knet.snm* (made by
+The models the reader makes build on the plugin's *knet.snm*, by default (made by
 ``tools/makeKnetRules.py``; **File | Open super model** from a net's view opens
 it, in its view, *knet.snv*: its rules laid out -- locked, so moving
 things about in it can't change the rules: **Edit | Lock view**): the kernel of Brian Gaines's protologic
@@ -407,13 +409,42 @@ an error: the inconsistency stays where it is. **Reason** (see
 :doc:`reasoning`) draws KNet's conclusions over the net: on the inference
 pattern nets of Gaines's paper, they're the derived links KNet saved.
 
+**The symmetric version.** The paper defines exclusion and coexclusion by
+their tails and heads, as above, and then shows that both are symmetric:
+"the directed exclusion link can always be replaced by the undirected one
+with no change in logical interpretation". The reader can build a net's
+model on a version of the kernel that starts from there instead: the
+plugin's *knetSymmetric.snm* (made by ``tools/makeKnetRules.py`` too, with
+its rules laid out in *knetSymmetric.snv*), chosen with the dialog's **KNet
+rules**. In it, *excludes* means that the two nodes exclude each other, and
+*coexcludes* that they coexclude each other: neither has a tail or a head.
+Its rules say so:
+
+- whatever includes either of two nodes that exclude each other excludes
+  the other (the paper's exclusion, reverse exclusion and cycle patterns
+  are all this one);
+- whatever excludes either of two nodes that coexclude each other includes
+  the other;
+- whatever either of two nodes that coexclude each other includes
+  coexcludes the other.
+
+And there's no *inconsistent* relation type, nor its two rules: a node that
+excludes itself is inconsistent, which is what the paper's inconsistent link
+comes to (a node that includes what it excludes excludes itself, by the
+first rule). It's still a warning, and still false, necessarily. The rest --
+negation, equivalence, the marks, the connectives, exploring and defaults --
+is the same, so the two versions conclude the same, but the inconsistent
+links (the probes, canonical forms, merges and existence are the same too:
+where a merge makes a node include what it excludes, the merge check reports
+the paper's inconsistent link).
+
 A view leaves out the inferences that say what it already shows (the kernel
 types' ``vis/hideImplied``: see :doc:`viewing`) -- a node's loop to itself,
 a symmetric one again the other way round, an *includes* beside an
 *equivalent* -- else they'd swamp the picture.
 
-The kernel works in models of your own too: build one on *knet.snm* (see
-:doc:`files`). Between types, an isa link is an inclusion if the types are
+The kernel works in models of your own too: build one on *knet.snm*, or
+*knetSymmetric.snm* (see :doc:`files`). Between types, an isa link is an inclusion if the types are
 under *knode*: dog isa animal isa knode gives dog *includes* animal, so a
 type that *excludes* animal excludes dog.
 

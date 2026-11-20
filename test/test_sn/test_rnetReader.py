@@ -415,16 +415,22 @@ class TestKnetView(unittest.TestCase):
   sn.plugins.installBundled()), and shows its objects -- not some other
   version's (eg: after knet.snm's made again, its objects' ids have changed).
   It's locked, so laying it out can't change knet.snm (which isn't saved: the
-  view, saved, would show objects that aren't there).
+  view, saved, would show objects that aren't there). And likewise the
+  symmetric version's (knetSymmetric.snv, of knetSymmetric.snm).
   '''
   def test_view(self):
+    for name in ("knet", "knetSymmetric"):
+      with self.subTest(name):
+        self.checkView(name)
+
+  def checkView(self, name:str) -> None:
     import xml.etree.ElementTree as ET
     folder = Path(__file__).resolve().parents[2] / "plugins" / "rnetReader"
-    model, view = ET.parse(folder / "knet.snm").getroot(), ET.parse(folder / "knet.snv").getroot()
+    model, view = ET.parse(folder / f"{name}.snm").getroot(), ET.parse(folder / f"{name}.snv").getroot()
     head = {p.get("key"): p.get("value") for p in view.find("head")}
     self.assertEqual(head["type"], "sn.view.graphics.sngView.SNGView")
-    self.assertIn(head["model"], ("knet.snm", "file:///SEMANTIC_NETS_PLUGINS/rnetReader/knet.snm"))
-    self.assertTrue(head["url"].endswith("/rnetReader/knet.snv"), head["url"])
+    self.assertIn(head["model"], (f"{name}.snm", f"file:///SEMANTIC_NETS_PLUGINS/rnetReader/{name}.snm"))
+    self.assertTrue(head["url"].endswith(f"/rnetReader/{name}.snv"), head["url"])
     def objects(root) -> dict[str, ET.Element]:
       db = next(p for p in root.find("object").findall("property") if p.get("key") == "_db")
       return {p.get("key"): p.find("object") for p in db.find("object").findall("property")}
