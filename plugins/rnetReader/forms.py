@@ -382,10 +382,32 @@ class MergeCheck:
       f"New links in {self.importing}:", *links(self.inImporting)])
 
 def _kernelLinks(holds:list[tuple[Any, Any, Any]], kernel:dict[str, Relation], nodes:list[Node]) -> set[tuple[str, int, int]]:
-  ''':returns: The kernel's links that hold between *nodes* (each kernel type's name, and its ends' ids).'''
+  '''
+  :returns: The kernel's links that hold between *nodes* (each kernel type's
+    name, and its ends' ids) -- with Gaines's inconsistent links (see
+    *inconsistentLinks()*), if the kernel has no *INCONSISTENT* (the
+    symmetric rules: *reader.SYMMETRIC_ONTOLOGY*).
+  '''
   names = {id(t): k for k, t in kernel.items()}
   where = {id(n) for n in nodes}
-  return {(names[id(t)], id(s), id(d)) for t, s, d in holds if id(t) in names and id(s) in where and id(d) in where}
+  ret = {(names[id(t)], id(s), id(d)) for t, s, d in holds if id(t) in names and id(s) in where and id(d) in where}
+  if INCONSISTENT not in kernel:
+    ret |= inconsistentLinks(ret)
+  return ret
+
+def inconsistentLinks(links:set[tuple[str, Any, Any]]) -> set[tuple[str, Any, Any]]:
+  '''
+  Gaines's inconsistent links, from the kernel's others: where they'd be,
+  in rules that have them (*reader.ONTOLOGY*'s: its inconsistency and
+  self-inconsistency) -- for rules that don't (*reader.SYMMETRIC_ONTOLOGY*'s,
+  where a node that excludes itself is inconsistent).
+
+  :param links: Kernel links (each kernel type's name, and its ends).
+  :returns: An *INCONSISTENT* link from A to B wherever A includes B and
+    excludes it, and from A to itself wherever A excludes itself.
+  '''
+  return {(INCONSISTENT, s, d) for k, s, d in links
+          if (k == INCLUDES and (EXCLUDES, s, d) in links) or (k == EXCLUDES and s == d)}
 
 def _plain(links:set[tuple[str, int, int]], nodes:dict[int, Node]) -> list[Link]:
   '''

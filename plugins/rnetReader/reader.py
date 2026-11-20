@@ -1,7 +1,8 @@
 '''
 Make a Semantic Nets model of a Rep Plus net (see *rnet*), for *view* to
 show (see *buildModel()*), built on *ONTOLOGY* (the kernel of Gaines's
-protologic, so that the reasoners draw KNet's inferences):
+protologic, so that the reasoners draw KNet's inferences) -- or on
+*SYMMETRIC_ONTOLOGY*, the same kernel with exclusion symmetric from the start:
 
   - Each node type (section ``T``) becomes a node type (an SN subtype of
     *KNODE*: a KNet node, with its truth marks' bars and menu items -- see
@@ -107,14 +108,31 @@ from .rnet import Net, NetNode, NodeType, LinkType
 from .hooks import MARK_TRUE, MARK_FALSE, ASSERTED
 
 ONTOLOGY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "knet.snm")
-'''The model the models made build on: the kernel of Gaines's protologic -- its
-relation types (*KERNEL*) and inference patterns, as rules (made by
-tools/makeKnetRules.py, whose doc says what they are).'''
+'''The model the models made build on, by default: the kernel of Gaines's
+protologic -- its relation types (*KERNEL*) and inference patterns, as rules
+(made by tools/makeKnetRules.py, whose doc says what they are), as the paper
+has them: exclusion and coexclusion by their tails and heads, and their
+symmetry concluded.'''
+
+SYMMETRIC_ONTOLOGY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "knetSymmetric.snm")
+'''The other model they can build on (see *buildModel()*): the same kernel,
+with exclusion and coexclusion symmetric from the start -- no tail or head
+-- so it has fewer rules, and no inconsistent link: a node that excludes
+itself is inconsistent (also made by tools/makeKnetRules.py: see its doc).
+It concludes what *ONTOLOGY* does, but the inconsistent links.'''
+
+DIRECTIONAL, SYMMETRIC = "directional", "symmetric"
+ONTOLOGIES = {DIRECTIONAL: ONTOLOGY, SYMMETRIC: SYMMETRIC_ONTOLOGY}
+"The KNet rules models a model can build on, by their names (see *buildModel()*)."
+
+ONTOLOGY_TITLES = {DIRECTIONAL: "Gaines's rules: exclusion with a tail and a head, its symmetry inferred",
+                   SYMMETRIC: "Symmetric exclusion: no tail or head, fewer rules, no inconsistent links"}
+"What each of *ONTOLOGIES* is, in a few words (eg: for a menu)."
 
 INCLUDES, EQUIVALENT, EXCLUDES, COEXCLUDES, NEGATES, INCONSISTENT = \
   "includes", "equivalent", "excludes", "coexcludes", "negates", "inconsistent"
 KERNEL = (INCLUDES, EQUIVALENT, EXCLUDES, COEXCLUDES, NEGATES, INCONSISTENT)
-"The kernel relation types' names, in *ONTOLOGY*."
+"The kernel relation types' names, in *ONTOLOGY* (all but *INCONSISTENT* in *SYMMETRIC_ONTOLOGY*)."
 
 CONJUNCT_INCLUDES, CONJUNCT_EXCLUDES, DISJUNCT_INCLUDES, DISJUNCT_COEXCLUDES = \
   "conjunct includes", "conjunct excludes", "disjunct includes", "disjunct coexcludes"
@@ -125,7 +143,7 @@ conjunction's; a double one, a disjunction's: *rnet.LinkType.head*) and its
 bars: see *connectiveKind()*.'''
 
 KNODE = "knode"
-"The SN type of a KNet net's nodes, in *ONTOLOGY*: the net's node types are its SN subtypes."
+"The SN type of a KNet net's nodes, in *ONTOLOGY* (and *SYMMETRIC_ONTOLOGY*): the net's node types are its SN subtypes."
 
 ARROWHEADS = (1, 2, 3)
 '''The ends (*rnet.LinkType.head*, *tail*) that are arrowheads: plain, heavy
@@ -305,17 +323,33 @@ def isReversed(t:LinkType) -> bool:
 
 def ontology(m:Model) -> Model:
   '''
-  :param m: A model built on *ONTOLOGY*.
-  :returns: *ONTOLOGY*'s model.
+  :param m: A model built on *ONTOLOGY* (or another of *ONTOLOGIES*).
+  :returns: That model.
+  :raises StopIteration: If it isn't built on one.
   '''
   from util.utils import urlPath
+  files = {os.path.realpath(f) for f in ONTOLOGIES.values()}
   return next(db for db in m.superDBs if isinstance(db, Model) and db.url.startswith("file:")
-              and os.path.realpath(urlPath(db.url) or "") == os.path.realpath(ONTOLOGY))
+              and os.path.realpath(urlPath(db.url) or "") in files)
+
+def ontologyName(m:Model) -> str|None:
+  '''
+  :param m: A model.
+  :returns: The name (in *ONTOLOGIES*) of the KNet rules model it's built on,
+    or None if it isn't built on one.
+  '''
+  from util.utils import urlPath
+  try:
+    path = os.path.realpath(urlPath(ontology(m).url) or "")
+  except StopIteration:
+    return None
+  return next((k for k, f in ONTOLOGIES.items() if os.path.realpath(f) == path), None)
 
 def kernelTypes(m:Model) -> dict[str, Relation]:
   '''
-  :param m: A model built on *ONTOLOGY*.
-  :returns: The kernel relation types (*KERNEL*), and the connectives' (*CONNECTIVES*) and the preferences' (*PREFER*), by name.
+  :param m: A model built on *ONTOLOGY* (or another of *ONTOLOGIES*).
+  :returns: The kernel relation types (*KERNEL*), and the connectives' (*CONNECTIVES*) and the preferences' (*PREFER*), by
+    name: those its KNet rules model has (*SYMMETRIC_ONTOLOGY* has no *INCONSISTENT*).
   '''
   onto = ontology(m)
   names = {*KERNEL, *CONNECTIVES.values(), PREFER}
@@ -324,7 +358,7 @@ def kernelTypes(m:Model) -> dict[str, Relation]:
 
 def knodeType(m:Model) -> Node:
   '''
-  :param m: A model built on *ONTOLOGY*.
+  :param m: A model built on *ONTOLOGY* (or another of *ONTOLOGIES*).
   :returns: *KNODE*: the SN type of a KNet net's nodes.
   '''
   onto = ontology(m)
@@ -418,7 +452,7 @@ class Built:
 
 def makeNodeType(m:Model, t:NodeType, file:str, knode:Node|None=None) -> Node:
   '''
-  :param knode: *KNODE*, if *m*'s built on *ONTOLOGY*: the parent of a type that isn't a box's.
+  :param knode: *KNODE*, if *m*'s built on *ONTOLOGY* (or another of *ONTOLOGIES*): the parent of a type that isn't a box's.
   :returns: A new node type in *m* for the net's node type *t* (see the module doc).
   '''
   box = t.shape == ENCLOSURE
@@ -544,7 +578,7 @@ def markNode(node:Node, n:NetNode, net:Net) -> None:
     if frameless:
       node["vis/borderWidth"] = MARK_WIDTH
 
-def buildModel(net:Net, modelPath:str, merge:bool=True) -> Built:
+def buildModel(net:Net, modelPath:str, merge:bool=True, rules:str=DIRECTIONAL) -> Built:
   '''
   Make a model of *net* (as the module doc says), as a new model file
   *modelPath* (not saved: call its *save()*). Its views aren't canonical
@@ -556,11 +590,16 @@ def buildModel(net:Net, modelPath:str, merge:bool=True) -> Built:
     and those of one of CNet's node types with the same label (see
     *cnetNames()*), are one node, each shown as a copy of it -- else each is
     a node of its own.
+  :param rules: Which KNet rules model it builds on (see *ONTOLOGIES*): *DIRECTIONAL*
+    (*ONTOLOGY*, as the paper has it) or *SYMMETRIC* (*SYMMETRIC_ONTOLOGY*).
   :returns: What was made.
+  :raises ValueError: If *rules* isn't one of *ONTOLOGIES*.
   '''
+  if rules not in ONTOLOGIES:
+    raise ValueError(f"There are no KNet rules called {rules!r}: only {', '.join(map(repr, ONTOLOGIES))}.")
   file = os.path.basename(net.path) or "the net"
   m = Model(Path(modelPath).resolve().as_uri())
-  m.setSuperModels([ONTOLOGY])
+  m.setSuperModels([ONTOLOGIES[rules]])
   m.setCanonicalViews(False)
   names = knetNames(net) if merge else {}
   cnet = cnetNames(net) if merge else {}

@@ -3,8 +3,9 @@ The existential status of a KNet net's nodes: Gaines's five senses in which
 what a node stands for exists (section 3.5) --
 
   - conceptual: it's a node of the net (each is);
-  - logical: it's consistent (it has no inconsistent link: see the kernel's
-    *inconsistent*);
+  - logical: it's consistent (it doesn't exclude itself, as a node with an
+    inconsistent link does: see the kernel's *inconsistent* -- which is all
+    inconsistency is, in the symmetric rules, that have no inconsistent link);
   - categorical: it's specified to be essentially a top node (a maximally
     generic entity);
   - singular: it's specified to be essentially a bottom node (a single
@@ -48,7 +49,7 @@ from dataclasses import dataclass, field
 from typing import Any
 from sn.model.model import Model, Node
 from sn.model.reasoner import Reasoner
-from .reader import INCLUDES, EQUIVALENT, INCONSISTENT
+from .reader import INCLUDES, EQUIVALENT, EXCLUDES, INCONSISTENT
 from .forms import _kernel, _netName
 from .probes import netNodes, name
 
@@ -66,7 +67,7 @@ class Status:
   '''A node's existential status (see *status()*).'''
   node:Node
   consistent:bool
-  "Whether it has no inconsistent link (logical existence)."
+  "Whether it doesn't exclude itself -- has no inconsistent link (logical existence)."
   above:list[str] = field(default_factory=list)
   "The nodes it includes (in the net, and not equivalent to it), by name: none, it's a top node of the net."
   below:list[str] = field(default_factory=list)
@@ -121,7 +122,7 @@ def status(model:Model, engine:str|None=None) -> list[Status]:
   kernel = _kernel(model)
   nodes = netNodes(model)
   ids = {id(n) for n in nodes}
-  inc, equ, bad = kernel.get(INCLUDES), kernel.get(EQUIVALENT), kernel.get(INCONSISTENT)
+  inc, equ, exc, bad = kernel.get(INCLUDES), kernel.get(EQUIVALENT), kernel.get(EXCLUDES), kernel.get(INCONSISTENT)
   includes:dict[int, set[int]] = {}
   equivalent:set[tuple[int, int]] = set()
   inconsistent:set[int] = set()
@@ -132,7 +133,7 @@ def status(model:Model, engine:str|None=None) -> list[Status]:
       includes.setdefault(id(s), set()).add(id(d))
     elif t is equ:
       equivalent |= {(id(s), id(d)), (id(d), id(s))}
-    elif t is bad:
+    elif (t is exc and s is d) or (bad is not None and t is bad): # (the symmetric rules have no inconsistent link)
       inconsistent.add(id(s))
   byId = {id(n): n for n in nodes}
   names = lambda xs: [name(byId[x]) for x in sorted(xs, key=lambda x: nodes.index(byId[x]))]

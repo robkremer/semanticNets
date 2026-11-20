@@ -52,7 +52,8 @@ def register(ctx:Any) -> None:
   *sn.plugins.PluginContext*): its dialog (see *view.ReaderDialog*) asks
   for the net file -- in the folder last read from -- and the model and view
   to make of it: by default in the folder they were last made in (else
-  beside the net), and makes them (see *view.convert()*).
+  beside the net), and the KNet rules to build it on (those last used: see
+  *reader.ONTOLOGIES*), and makes them (see *view.convert()*).
 
   :param ctx: The plugin's context.
   :type ctx: sn.plugins.PluginContext
@@ -66,11 +67,13 @@ def register(ctx:Any) -> None:
     from .view import ReaderDialog # (here: tkinter, the views, ... only once it's used)
     def went(_rnet:str, model:str, _view:str) -> None:
       ctx.setPref("outputFolder", os.path.dirname(os.path.abspath(os.path.expanduser(model))))
+      if _dialog is not None:
+        ctx.setPref("rules", _dialog.rules.get())
     def closed() -> None:
       global _dialog
       _dialog = None
     _dialog = ReaderDialog(ctx.app, folder=ctx.pref("lastFolder", None) or os.path.expanduser("~"),
                            outputFolder=ctx.pref("outputFolder", None) or None,
                            onChosen=lambda path: ctx.setPref("lastFolder", os.path.dirname(path)),
-                           onGo=went, onClose=closed)
+                           onGo=went, onClose=closed, rules=ctx.pref("rules", None) or "directional") # (reader.DIRECTIONAL)
   ctx.addMenuItem("Rep Plus Net Reader...", openDialog)

@@ -8,7 +8,8 @@ reader's models are: see *rnetReader.reader.ONTOLOGY*).
 
   python3.14 tools/makeKnetRules.py
 
-It builds the model in a temporary folder, as a temporary user (HOME), so it
+It makes the symmetric version too (knetSymmetric.snm: see below). It
+builds each model in a temporary folder, as a temporary user (HOME), so it
 never touches your files or preferences; and then copies it into
 plugins/rnetReader/, stored as being in *PLACEHOLDER* (it's read from
 wherever the plugin is: see *rnetReader.reader.ONTOLOGY*).
@@ -123,12 +124,50 @@ patterns above, and nothing else follows from it.
 The variables are "any" (!a): the patterns hold of nodes whether they're
 individuals (as in the reader's models) or types.
 
+The symmetric version -- plugins/rnetReader/knetSymmetric.snm (*SYMMETRIC*),
+made too, from the same code (see *makeKnetRules()*'s *symmetric*): the same
+kernel, with exclusion taken as Gaines's undirected link from the start. The
+paper defines exclusion and coexclusion by their tails and heads (whatever
+includes the tail is excluded from the head; whatever excludes the head
+includes the tail), and gets their symmetry as an inference (section 2.6.1);
+but "the directed exclusion link can always be replaced by the undirected
+one with no change in logical interpretation", and its canonical forms
+(section 3.1) use the undirected one. So here:
+
+- excludes: A and B exclude each other (nothing is both), and coexcludes: A
+  and B coexclude each other (everything is one or the other): neither has a
+  tail or a head (they're still symmetric, and concluded both ways round, in
+  SN: a relation has a source and a destination).
+- exclusion: N includes A, A excludes B => N excludes B: whatever includes
+  either of two nodes that exclude each other excludes the other (the
+  paper's exclusion, reverse exclusion and cycle patterns are this one).
+- coexclusion: N excludes A, A coexcludes B => N includes B: whatever excludes
+  either of two nodes that coexclude each other includes the other.
+- coexclusion inherited: A includes C, A coexcludes B => C coexcludes B.
+- inconsistency is a node that excludes itself -- which is what the paper's
+  inconsistent link comes to ("any node with an inconsistent link is
+  inconsistent with itself"): A includes B and excludes it gives A excludes
+  A, by exclusion (A includes B, B excludes A). So there's no *inconsistent*
+  relation type (the only directed exclusion: from the including node), nor
+  its two rules: the *INCONSISTENT_NODE* warning, and false by
+  inconsistency, are about a node that excludes itself, as they are here.
+  (The plugin's tools find the paper's inconsistent links where they need
+  them -- A includes B and excludes it -- from the kernel's links: see
+  rnetReader.forms.)
+
+The rest -- negation, equivalence, symmetry between types, isa, the marks,
+the connectives, exploring and defaults, the warning -- is as it is here: it
+uses exclusion symmetrically already. So the two conclude the same (but the
+inconsistent links).
+
 .. codeauthor:: Rob Kremer <robkremer@me.com>
 '''
 import os, sys, shutil, tempfile
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 TARGET = os.path.join(ROOT, "plugins", "rnetReader", "knet.snm")
+SYMMETRIC = os.path.join(ROOT, "plugins", "rnetReader", "knetSymmetric.snm")
+"The symmetric version's file (see the module doc)."
 PLACEHOLDER = "file:///SEMANTIC_NETS_PLUGINS/rnetReader"
 "Where the model is stored as being (the folder): it's wherever the plugin is installed."
 
@@ -185,9 +224,11 @@ def setUp() -> str:
   sys.path[:0] = [os.path.join(ROOT, "src"), os.path.abspath(os.path.join(ROOT, "..", "pythonUtils", "src"))]
   return folder
 
-def makeKnetRules(path:str) -> None:
+def makeKnetRules(path:str, symmetric:bool=False) -> None:
   '''
   :param path: Where to save the model.
+  :param symmetric: Whether it's the symmetric version (see the module doc):
+    exclusion and coexclusion with no tail or head, and no inconsistent link.
   '''
   from sn.model.model import Model, Node, Relation
   m = Model(path)
@@ -218,13 +259,20 @@ def makeKnetRules(path:str) -> None:
                 terminator="", symmetric=True)
   equ["vis/terminator1"] = "arrow"
   equ["vis/terminator4"] = "arrow"
-  exc = relType(EXCLUDES, None, "Nothing is both X and Y: whatever includes one is excluded from including the other. Symmetric.",
-                mid="|", color="#008a00", symmetric=True)
-  coe = relType(COEXCLUDES, None, "Everything is X or Y: whatever excludes one includes the other. Symmetric.",
-                mid="||", color="#0000c0", symmetric=True)
+  if symmetric:
+    exc = relType(EXCLUDES, None, "X and Y exclude each other: nothing is both (whatever includes either is excluded from "
+                  "the other). It has no tail or head: it's symmetric.", mid="|", color="#008a00", symmetric=True)
+    coe = relType(COEXCLUDES, None, "X and Y coexclude each other: everything is one or the other (whatever excludes either "
+                  "includes the other). It has no tail or head: it's symmetric.", mid="||", color="#0000c0", symmetric=True)
+  else:
+    exc = relType(EXCLUDES, None, "Nothing is both X and Y: whatever includes one is excluded from including the other. Symmetric.",
+                  mid="|", color="#008a00", symmetric=True)
+    coe = relType(COEXCLUDES, None, "Everything is X or Y: whatever excludes one includes the other. Symmetric.",
+                  mid="||", color="#0000c0", symmetric=True)
   neg = relType(NEGATES, [exc, coe], "X is everything Y isn't (structural negation): X excludes and coexcludes Y. Symmetric.",
                 mid="|||", symmetric=True)
-  inco = relType(INCONSISTENT, [inc, exc], "X both includes and excludes Y (Gaines's inconsistent link): X can only be empty.",
+  inco = None if symmetric else \
+         relType(INCONSISTENT, [inc, exc], "X both includes and excludes Y (Gaines's inconsistent link): X can only be empty.",
                  terminator="| arrow", color="#d00000")
   connectives(m, relType, inc, exc, coe)
   def rel(typ, src, dst):
@@ -252,27 +300,42 @@ def makeKnetRules(path:str) -> None:
     return c
 
   # ---- inferences ---------------------------------------------------------------
-  n, t, h = var("!n"), var("!t"), var("!h")
-  rule("exclusion", [rel(inc, n, t), rel(exc, t, h)], [rel(exc, n, h)],
-       "n includes t, t excludes h => n excludes h: whatever includes the tail of an exclusion is excluded from its head.")
-  n, t, h = var("!n"), var("!t"), var("!h")
-  rule("coexclusion", [rel(exc, n, h), rel(coe, t, h)], [rel(inc, n, t)],
-       "n excludes h, t coexcludes h => n includes t: whatever excludes the head of a coexclusion includes its tail.")
-  t, u, h = var("!t"), var("!u"), var("!h")
-  rule("coexclusion inherited", [rel(inc, t, u), rel(coe, t, h)], [rel(coe, u, h)],
-       "t includes u, t coexcludes h => u coexcludes h: what includes more covers more.")
+  if symmetric: # (no tails or heads: see the module doc)
+    n, a, b = var("!n"), var("!a"), var("!b")
+    rule("exclusion", [rel(inc, n, a), rel(exc, a, b)], [rel(exc, n, b)],
+         "n includes a, a excludes b => n excludes b: whatever includes either of two nodes that exclude each other "
+         "excludes the other.")
+    n, b, a = var("!n"), var("!b"), var("!a") # (in the order of the paper's rule's: n, t, h -- so a view can lay them out alike)
+    rule("coexclusion", [rel(exc, n, a), rel(coe, a, b)], [rel(inc, n, b)],
+         "n excludes a, a coexcludes b => n includes b: whatever excludes either of two nodes that coexclude each other "
+         "includes the other.")
+    a, c, b = var("!a"), var("!c"), var("!b")
+    rule("coexclusion inherited", [rel(inc, a, c), rel(coe, a, b)], [rel(coe, c, b)],
+         "a includes c, a coexcludes b => c coexcludes b: whatever either of two nodes that coexclude each other "
+         "includes coexcludes the other (what includes more covers more).")
+  else:
+    n, t, h = var("!n"), var("!t"), var("!h")
+    rule("exclusion", [rel(inc, n, t), rel(exc, t, h)], [rel(exc, n, h)],
+         "n includes t, t excludes h => n excludes h: whatever includes the tail of an exclusion is excluded from its head.")
+    n, t, h = var("!n"), var("!t"), var("!h")
+    rule("coexclusion", [rel(exc, n, h), rel(coe, t, h)], [rel(inc, n, t)],
+         "n excludes h, t coexcludes h => n includes t: whatever excludes the head of a coexclusion includes its tail.")
+    t, u, h = var("!t"), var("!u"), var("!h")
+    rule("coexclusion inherited", [rel(inc, t, u), rel(coe, t, h)], [rel(coe, u, h)],
+         "t includes u, t coexcludes h => u coexcludes h: what includes more covers more.")
   a, b = var("!a"), var("!b")
   rule("negation", [rel(exc, a, b), rel(coe, a, b)], [rel(neg, a, b)],
        "a excludes b and coexcludes b => a negates b (structural negation).")
   a, b = var("!a"), var("!b")
   rule("equivalence", [rel(inc, a, b), rel(inc, b, a), rel(m.DISTINCT, a, b)], [rel(equ, a, b)],
        "a includes b and b includes a => a equivalent b (a cycle of inclusions).")
-  a, b = var("!a"), var("!b")
-  rule("inconsistency", [rel(inc, a, b), rel(exc, a, b)], [rel(inco, a, b)],
-       "a includes b and excludes b => a inconsistent b (Gaines's inconsistent link).")
-  a = var("!a")
-  rule("self-inconsistency", [rel(exc, a, a)], [rel(inco, a, a)],
-       "a excludes a => a inconsistent a: a node with an inconsistent link has one to itself.")
+  if inco is not None: # (the symmetric version has none: a node that excludes itself is inconsistent)
+    a, b = var("!a"), var("!b")
+    rule("inconsistency", [rel(inc, a, b), rel(exc, a, b)], [rel(inco, a, b)],
+         "a includes b and excludes b => a inconsistent b (Gaines's inconsistent link).")
+    a = var("!a")
+    rule("self-inconsistency", [rel(exc, a, a)], [rel(inco, a, a)],
+         "a excludes a => a inconsistent a: a node with an inconsistent link has one to itself.")
   # The base rules' symmetry is only toward an individual (in SN, dog -r-> plant
   # says every dog is r-related to some plant: see tools/makeBaseRules.py), but
   # between KNet concepts it holds whatever they are (animal excludes plant:
@@ -317,7 +380,8 @@ def makeKnetRules(path:str) -> None:
   a = var("!a")
   constraint(INCONSISTENT_NODE, [rel(exc, a, a)], "!a",
              "A node that excludes itself (it includes and excludes something) is inconsistent: nothing can be it. "
-             "(It's a warning: the inconsistency stays local -- Gaines's paraconsistency.)",
+             + ("(That's what inconsistency is, in the symmetric version: there's no inconsistent link.) " if symmetric else "")
+             + "(It's a warning: the inconsistency stays local -- Gaines's paraconsistency.)",
              "{0} is inconsistent: it includes something it excludes (Rep Plus's E)")
   m.save()
 
@@ -402,30 +466,34 @@ def isaRule(m, inc, rule) -> None:
        "^a isa ^b => ^a includes ^b, for types under knode (not knode itself): every isa link is an inclusion (but "
        "not every inclusion is an isa link).")
 
-def install(folder:str) -> None:
+def install(folder:str, name:str="knet.snm", target:str=TARGET) -> None:
   '''
   Copy the model into plugins/rnetReader/, stored as being in *PLACEHOLDER*
   -- and with the header's record of the program that wrote it neutralized --
   so nothing of this temporary folder is left in it.
 
   :param folder: Where it was made.
+  :param name: Its file's name, there.
+  :param target: Where it goes (*TARGET*, or *SYMMETRIC*).
   '''
   from pathlib import Path
-  with open(os.path.join(folder, "knet.snm"), encoding="utf-8") as fd:
+  with open(os.path.join(folder, name), encoding="utf-8") as fd:
     text = fd.read()
   text = text.replace(Path(folder).as_uri(), PLACEHOLDER).replace(os.path.abspath(sys.argv[0]), "Semantic Nets")
-  assert folder not in text, f"knet.snm still mentions {folder}"
-  with open(TARGET, "w", encoding="utf-8") as fd:
+  assert folder not in text, f"{name} still mentions {folder}"
+  with open(target, "w", encoding="utf-8") as fd:
     fd.write(text)
-  print("wrote", TARGET)
+  print("wrote", target)
 
 def main() -> None:
   folder = setUp()
   import atexit, sn
   atexit.unregister(sn.savePrefsIfChanged) # (nothing of the temporary user to keep)
   atexit.unregister(sn.saveAtExit)
-  makeKnetRules(os.path.join(folder, "knet.snm"))
-  install(folder)
+  for target, symmetric in ((TARGET, False), (SYMMETRIC, True)):
+    name = os.path.basename(target)
+    makeKnetRules(os.path.join(folder, name), symmetric=symmetric)
+    install(folder, name, target)
   shutil.rmtree(folder, ignore_errors=True)
 
 if __name__ == "__main__":
