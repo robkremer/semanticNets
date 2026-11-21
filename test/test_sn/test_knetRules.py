@@ -17,7 +17,9 @@ say hold (*TestProbes*); a net as a whole: its canonical forms,
 saturating it with its probes, and merging nets (*TestForms*); and editing
 a net without changing what it says -- expanding protoconnectives,
 anonymous nodes, factoring -- its nodes' existential status, and abduction
-(*TestExpansion*).
+(*TestExpansion*). And the symmetric version of the KNet rules
+(knetSymmetric.snm), which concludes the same, but the inconsistent links
+(*TestSymmetricRules*).
 
 If the environment variable REP_PLUS_DATA names the folder of Rep Plus 2's
 test data (Brian Gaines's), the reasoners must also infer every derived link
@@ -1179,6 +1181,177 @@ class TestExpansion(unittest.TestCase):
     self.assertEqual(found.explanations, [])
     self.assertEqual(found.report(), "Abduction from wet in rainless: nothing explains it.")
 
+class TestSymmetricRules(unittest.TestCase):
+  '''
+  The symmetric version of the KNet rules (knetSymmetric.snm: see
+  tools/makeKnetRules.py), that the reader can build a model on instead
+  (*reader.buildModel()*'s *rules*): exclusion and coexclusion with no tail
+  or head, and no inconsistent link -- a node that excludes itself is
+  inconsistent. Every installed engine concludes from it what it does from
+  the paper's rules (knet.snm) -- the kernel's links, the marks (through the
+  connectives, and by exploring and by default too), the warnings -- but the
+  inconsistent links, which the plugin's tools find from the rest (see
+  *forms.inconsistentLinks()*): so its probes, canonical forms, merges and
+  existence are the same too.
+  '''
+  NETS = {"kernel": KERNEL, "marks": MARKS, "connectives": CONNECTIVES, "defaults": DEFAULTS, "probes": PROBES, "forms": FORMS}
+
+  @classmethod
+  def setUpClass(cls):
+    cls.rnet = importBundled("rnetReader", "rnet")
+    cls.reader = importBundled("rnetReader", "reader")
+    cls.forms = importBundled("rnetReader", "forms")
+    cls.probes = importBundled("rnetReader", "probes")
+    cls.existence = importBundled("rnetReader", "existence")
+
+  def setUp(self):
+    Model._initCache()
+    self.tmp = tempfile.TemporaryDirectory()
+    self.folder = Path(self.tmp.name).resolve()
+
+  def tearDown(self):
+    Model._initCache()
+    self.tmp.cleanup()
+
+  def build(self, name:str, rules:str, text:str|None=None):
+    ''':returns: What the reader makes of the net *name* (of *NETS*, or *text*), on the KNet rules *rules*.'''
+    return self.reader.buildModel(self.rnet.parseText(text or self.NETS[name], f"{name}-{rules}.rnet"),
+                                  str(self.folder / f"{name}-{rules}.snm"), rules=rules)
+
+  def conclusions(self, b, engine:str) -> tuple[set, set, list]:
+    ''':returns: What *engine* concludes of *b*'s net: its kernel links, marks and warnings, by the nodes' names.'''
+    res = Reasoner.create(b.model, engine).run()
+    kinds = {t: name for name, t in b.kernel.items() if name in self.reader.KERNEL}
+    links = {(kinds[t], str(s.name), str(d.name)) for t, s, d in res.holds
+             if t in kinds and s is not None and d is not None and s.model is b.model and d.model is b.model}
+    marks = {(str(x.name), k, v) for _, x, k, v in res.ruleAttrs
+             if k in ("markTrue", "markFalse") and getattr(x, "model", None) is b.model and x.getLocalAttr(k) is None}
+    warnings = sorted((v.code, v.severity, str(v.subject.name)) for v in res.violations)
+    return links, marks, warnings
+
+  def test_rules(self):
+    '''
+    It's the paper's rules but the inconsistent link and its two rules (and
+    the tails and heads in its rules); excludes and coexcludes are
+    symmetric. The reader builds on it when it's asked to, and says so.
+    '''
+    r = self.reader
+    d, s = self.build("kernel", r.DIRECTIONAL), self.build("kernel", r.SYMMETRIC)
+    self.assertEqual((r.ontologyName(d.model), r.ontologyName(s.model)), (r.DIRECTIONAL, r.SYMMETRIC))
+    self.assertTrue(str(r.ontology(s.model).url).endswith("/knetSymmetric.snm"))
+    self.assertEqual(sorted(s.kernel), sorted({*d.kernel} - {r.INCONSISTENT}))
+    self.assertEqual({str(t.name): [str(p.name) for p in t.getParents()] for t in s.linkTypes.values()},
+                     {str(t.name): [str(p.name) for p in t.getParents()] for t in d.linkTypes.values()})
+    self.assertTrue(s.kernel[r.EXCLUDES].isSymmetric() and s.kernel[r.COEXCLUDES].isSymmetric())
+    def rules(m) -> dict[str, str]:
+      onto = r.ontology(m)
+      return {str(o.name): str(o.get("note", "")) for o in onto.values() if o.model is onto and isinstance(o, Node)
+              and o.isIndividual() and any(str(p.name) in ("rule", "constraint") for p in o.getParents())}
+    dr, sr = rules(d.model), rules(s.model)
+    self.assertEqual(set(dr) - set(sr), {"inconsistency", "self-inconsistency"})
+    self.assertEqual(set(sr) - set(dr), set())
+    self.assertFalse([n for n, note in sr.items() if "tail" in note or "head" in note])
+    self.assertEqual([n for n, note in dr.items() if "tail" in note or "head" in note], ["exclusion", "coexclusion"])
+    self.assertIsNone(r.ontologyName(Model((self.folder / "plain.snm").as_uri())))
+    with self.assertRaises(ValueError):
+      self.build("kernel", "sideways")
+
+  def test_sameConclusions(self):
+    '''
+    On every installed engine, each of the nets here: the same kernel links
+    but the inconsistent ones -- which, found from the rest, are the paper's
+    rules' -- the same marks, and the same warnings. (And but an
+    inconsistent node's inclusion of itself: true of every node, but
+    concluded only by the paper's rules, from the inconsistent link of the
+    node to itself, which is an includes.)
+    '''
+    r = self.reader
+    for engine in installedEngines():
+      for name in self.NETS:
+        with self.subTest(engine=engine, net=name):
+          Model._initCache()
+          dLinks, dMarks, dWarnings = self.conclusions(self.build(name, r.DIRECTIONAL), engine)
+          sLinks, sMarks, sWarnings = self.conclusions(self.build(name, r.SYMMETRIC), engine)
+          inconsistent = {l for l in dLinks if l[0] == r.INCONSISTENT}
+          itself = {(r.INCLUDES, a, a) for _, a, b in inconsistent if a == b}
+          self.assertEqual(sLinks, dLinks - inconsistent - itself)
+          self.assertEqual(self.forms.inconsistentLinks(sLinks), inconsistent)
+          self.assertEqual(sMarks, dMarks)
+          self.assertEqual(sWarnings, dWarnings)
+          if name == "kernel":
+            self.assertIn((r.EXCLUDES, "square circle", "square circle"), sLinks) # (it's inconsistent)
+            self.assertIn((r.INCONSISTENT, "square circle", "round"), inconsistent)
+            self.assertEqual(sWarnings, [("inconsistent node", "warning", "square circle")])
+          if name == "marks":
+            self.assertIn(("s", "markFalse", "necessary"), sMarks) # (s includes t and excludes it)
+
+  def test_tools(self):
+    '''
+    The plugin's tools give the same: the probes, the canonical forms, a
+    merge's inconsistent links, and existence (an inconsistent node isn't
+    logical).
+    '''
+    r, forms, probes, ex = self.reader, self.forms, self.probes, self.existence
+    def shown(m, kind):
+      return [[" ".join(probes.SYMBOLS[p[n]] + probes.name(n) for n in pt.nodes) for p in pt.probes]
+              for pt in probes.findProbes(m, kind).parts]
+    def links(rs):
+      return sorted(f"{probes.name(x.src)} {x.getParents()[0].name} {probes.name(x.dst)}" for x in rs)
+    got = {}
+    for rules in (r.DIRECTIONAL, r.SYMMETRIC):
+      Model._initCache()
+      p, f = self.build("probes", rules).model, self.build("forms", rules).model
+      e = self.build("existence", rules, knet(["p", "q", "x"], ["0|1|0", "0|1|1", "2|0|0"])).model
+      def merged(n:str, text:str):
+        return self.build(n, rules, text).model
+      check = forms.checkMerge(merged("abc", knet(["a", "b", "c"], ["0|1|0", "1|2|0"])), merged("cxa", knet(["c", "a"], ["0|1|1"])))
+      got[rules] = ({k: shown(p, k) for k in ("consistent", "admissible", "compatible")},
+                    {str(n.name): ls for n, ls in sorted(((n, sorted((op, probes.name(to)) for op, to in ls))
+                                                          for n, ls in probes.reconstruct(probes.findProbes(p)).items()),
+                                                         key=lambda x: str(x[0].name))},
+                    links(forms.redundantLinks(f)), links(forms.maximalLinks(f)),
+                    (check.consistent, check.inconsistent),
+                    {probes.name(s.node): s.consistent for s in ex.status(e)})
+    self.assertEqual(got[r.SYMMETRIC], got[r.DIRECTIONAL])
+    self.assertEqual(got[r.SYMMETRIC][4][0], False)
+    self.assertIn(("inconsistent", "a", "c"), got[r.SYMMETRIC][4][1])
+    self.assertEqual(got[r.SYMMETRIC][5], {"p": False, "q": True, "x": False}) # (x includes p: it's inconsistent too)
+
+  def test_openNet(self):
+    '''"Check merge with..." reads a net file on the KNet rules it's told (its net's: see *hooks.showMerge()*).'''
+    r, hooks = self.reader, importBundled("rnetReader", "hooks")
+    path = self.folder / "other.rnet"
+    path.write_text(KERNEL, encoding="utf-8")
+    for rules in (None, r.DIRECTIONAL, r.SYMMETRIC):
+      with self.subTest(rules=rules):
+        m, folder = hooks.openNet(str(path), rules)
+        try:
+          self.assertEqual(r.ontologyName(m), rules or r.DIRECTIONAL)
+        finally:
+          m.unload()
+          import shutil
+          shutil.rmtree(folder, ignore_errors=True)
+
+  def test_types(self):
+    '''Between SN types under knode too: exclusion's symmetric, and isa is inclusion.'''
+    r = self.reader
+    m = Model((self.folder / "types.snm").as_uri())
+    m.setSuperModels([r.SYMMETRIC_ONTOLOGY])
+    kernel = r.kernelTypes(m)
+    knode = r.knodeType(m)
+    animal = Node(m, [knode], name="animal")
+    Node(m, [animal], name="dog")
+    plant = Node(m, [knode], name="plant")
+    Relation(m, [kernel["excludes"]], animal, plant, individual=True)
+    for engine in installedEngines():
+      with self.subTest(engine):
+        res = Reasoner.create(m, engine).run()
+        kinds = {t: name for name, t in kernel.items()}
+        holds = {(kinds[t], str(s.name), str(d.name)) for t, s, d in res.holds if t in kinds and s is not None and d is not None}
+        for fact in [("includes", "dog", "animal"), ("excludes", "plant", "animal"), ("excludes", "dog", "plant"),
+                     ("excludes", "plant", "dog")]:
+          self.assertIn(fact, holds)
+
 @unittest.skipUnless(os.environ.get("REP_PLUS_DATA"), "set REP_PLUS_DATA to Rep Plus 2's test data folder to run these")
 class TestRepPlusData(unittest.TestCase):
   '''
@@ -1189,7 +1362,11 @@ class TestRepPlusData(unittest.TestCase):
   derived links join nodes that only share a label: its query panels' copies),
   but those of a figure of several nets (*FIGURES*) apart.
   And the reasoners mark the nodes KNet marked, from the asserted marks.
+  Each on both KNet rules models: the paper's, and the symmetric one (see
+  *TestSymmetricRules*).
   '''
+  RULES = ("directional", "symmetric")
+  "The KNet rules the nets are built on (see *reader.ONTOLOGIES*)."
   NETS = ["Nets-CNet-Dev/knets/paper/paper1/coexclusion squares.rnet",
           "Nets-CNet-Dev/knets/paper/paper1/inclusion patterns.rnet",
           "Nets-CNet-Dev/knets/paper/paper1/dynamics.rnet",
@@ -1240,13 +1417,13 @@ class TestRepPlusData(unittest.TestCase):
     From the nets' asserted marks, the reasoners mark true and false the
     nodes KNet did (its derived marks), and no others.
     '''
-    for engine in installedEngines():
+    for engine, rules in itertools.product(installedEngines(), self.RULES):
       for path in self.MARK_NETS:
-        with self.subTest(engine=engine, net=path):
+        with self.subTest(engine=engine, rules=rules, net=path):
           Model._initCache()
           n = self.rnet.parse(os.path.join(os.environ["REP_PLUS_DATA"], path))
-          b = self.reader.buildModel(n, str(self.folder / f"{engine}-{os.path.basename(path)}.snm"),
-                                     merge=path not in self.FIGURES)
+          b = self.reader.buildModel(n, str(self.folder / f"{engine}-{rules}-{os.path.basename(path)}.snm"),
+                                     merge=path not in self.FIGURES, rules=rules)
           res = Reasoner.create(b.model, engine).run()
           got = {(id(x), k) for _, x, k, _ in res.ruleAttrs if k in ("markTrue", "markFalse") and x.getLocalAttr(k) is None}
           expected = {(id(b.nodes[nn.index]), "markTrue" if c == "T" else "markFalse")
@@ -1273,14 +1450,14 @@ class TestRepPlusData(unittest.TestCase):
     KNet did (its derived marks, necessary and default ones too), and no
     others -- each panel of a figure by itself.
     '''
-    for path, panels, last in self.DEFAULT_NETS:
+    for (path, panels, last), rules in itertools.product(self.DEFAULT_NETS, self.RULES):
       for panel in panels or [None]:
-        with self.subTest(net=path, panel=panel):
+        with self.subTest(net=path, panel=panel, rules=rules):
           Model._initCache()
           n = self.rnet.parse(os.path.join(os.environ["REP_PLUS_DATA"], path))
           if panel is not None: # (the rest left out: as if they were drawings)
             n.nodes = [nn if panel[0] <= nn.index <= panel[1] else dataclasses.replace(nn, kind="drawing") for nn in n.nodes]
-          b = self.reader.buildModel(n, str(self.folder / f"{os.path.basename(path)}-{panel}.snm"))
+          b = self.reader.buildModel(n, str(self.folder / f"{os.path.basename(path)}-{panel}-{rules}.snm"), rules=rules)
           for i in last:
             b.nodes[i]["defaultOrder"] = 1
           res = Reasoner.create(b.model, "clingo").run()
@@ -1348,6 +1525,12 @@ class TestRepPlusData(unittest.TestCase):
     label (the reports don't name them). Some reports aren't of the nets as
     they are now (see *PROBES_ASIDE*).
     '''
+    for rules in self.RULES:
+      with self.subTest(rules=rules):
+        self.probesOn(rules)
+
+  def probesOn(self, rules:str) -> None:
+    ''':param rules: The KNet rules to build the nets on (see *test_probes()*).'''
     probes = self.probes
     checked = 0
     for path in self.PROBE_NETS:
@@ -1373,7 +1556,7 @@ class TestRepPlusData(unittest.TestCase):
           Model._initCache()
           n = self.rnet.parse(os.path.join(os.environ["REP_PLUS_DATA"], path))
           n.nodes = [nn if nn.index in panel else dataclasses.replace(nn, kind="drawing") for nn in n.nodes]
-          b = self.reader.buildModel(n, str(self.folder / f"{os.path.basename(path)}-{k}.snm"))
+          b = self.reader.buildModel(n, str(self.folder / f"{os.path.basename(path)}-{k}-{rules}.snm"), rules=rules)
           plain = {id(b.nodes[i]): _plain(n.nodes[i].label or "") for i in panel}
           for i in panel:
             if plain[id(b.nodes[i])] in self.PROBES_ASSERTED.get((path, k), []):
@@ -1400,13 +1583,13 @@ class TestRepPlusData(unittest.TestCase):
     self.assertEqual(checked, 38)
 
   def test_derivedLinks(self):
-    for engine in installedEngines():
+    for engine, rules in itertools.product(installedEngines(), self.RULES):
       for path in self.NETS:
-        with self.subTest(engine=engine, net=path):
+        with self.subTest(engine=engine, rules=rules, net=path):
           Model._initCache()
           n = self.rnet.parse(os.path.join(os.environ["REP_PLUS_DATA"], path))
-          b = self.reader.buildModel(n, str(self.folder / f"{engine}-{os.path.basename(path)}.snm"),
-                                     merge=path not in self.FIGURES)
+          b = self.reader.buildModel(n, str(self.folder / f"{engine}-{rules}-{os.path.basename(path)}.snm"),
+                                     merge=path not in self.FIGURES, rules=rules)
           derived = {id(b.linkTypes[t.index]): t for t in n.linkTypes if t.derived and t.index in b.linkTypes}
           expected = []
           for r, _ in b.relations:

@@ -750,5 +750,17 @@ class TestDialog(unittest.TestCase):
     self.assertEqual(closed, [True])
     self.assertFalse(d.winfo_exists())
 
+  def test_rules(self):
+    'Which KNet rules the model builds on: the paper\'s at first (or what it\'s told), passed to convert().'
+    reader = importBundled("rnetReader", "reader")
+    net = str(self.folder / "patterns.rnet")
+    self.assertEqual(self.dialog().rules.get(), reader.DIRECTIONAL)
+    self.assertEqual(self.dialog(rules="sideways").rules.get(), reader.DIRECTIONAL)
+    d = self.dialog(rnetPath=net, rules=reader.SYMMETRIC)
+    self.assertEqual(d.rules.get(), reader.SYMMETRIC)
+    with mock.patch.object(self.netView, "convert", return_value=(object(), object())) as convert:
+      d.go()
+    self.assertEqual(convert.call_args.kwargs["rules"], reader.SYMMETRIC)
+
 if __name__ == "__main__":
   unittest.main()

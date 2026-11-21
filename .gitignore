@@ -32,10 +32,12 @@ src/sn/help/
 !src/sn/examples/*.snv
 # --- The base rules (package data, made by tools/makeBaseRules.py) ---
 !src/sn/model/baseRules.snm
-# --- KNet's kernel rules (plugin data, made by tools/makeKnetRules.py) ---
+# --- KNet's kernel rules (plugin data, made by tools/makeKnetRules.py), and their symmetric version ---
 !plugins/rnetReader/knet.snm
-# --- and its default view (made by tools/makeKnetView.py, or laid out by hand) ---
+!plugins/rnetReader/knetSymmetric.snm
+# --- and their default views (made by tools/makeKnetView.py, or laid out by hand) ---
 !plugins/rnetReader/knet.snv
+!plugins/rnetReader/knetSymmetric.snv
 # --- webModels
 !webModels/*/*.snm
 !webModels/*/*.snv

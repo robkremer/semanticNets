@@ -12,6 +12,13 @@ the reader made, opens it: ~/.sn/plugins/rnetReader/knet.snv):
 
   python3.14 tools/makeKnetView.py --from ~/.sn/plugins/rnetReader/knet.snv
 
+With --symmetric, it's the symmetric version's (knetSymmetric.snv, beside
+knetSymmetric.snm: see makeKnetRules.py) instead: made from knet.snv -- laid
+out as it is (see *deriveSymmetric()*) -- or a view of it laid out by hand:
+
+  python3.14 tools/makeKnetView.py --symmetric
+  python3.14 tools/makeKnetView.py --symmetric --from ~/.sn/plugins/rnetReader/knetSymmetric.snv
+
 Either way it's stored as being in *PLACEHOLDER* (it's read from wherever the
 plugin is installed). The view a user has changed in their installed plugin
 is theirs: a new one that comes with the plugin doesn't replace it (see
@@ -37,6 +44,9 @@ import os, re, sys, shutil, tempfile
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 MODEL = os.path.join(ROOT, "plugins", "rnetReader", "knet.snm")
 TARGET = os.path.join(ROOT, "plugins", "rnetReader", "knet.snv")
+SYMMETRIC_MODEL = os.path.join(ROOT, "plugins", "rnetReader", "knetSymmetric.snm")
+SYMMETRIC_TARGET = os.path.join(ROOT, "plugins", "rnetReader", "knetSymmetric.snv")
+"The symmetric version's model and view (--symmetric)."
 PLACEHOLDER = "file:///SEMANTIC_NETS_PLUGINS/rnetReader"
 "Where the view is stored as being (the folder): it's wherever the plugin is installed (see makeKnetRules.PLACEHOLDER)."
 
@@ -135,67 +145,147 @@ def layOut(app, path:str, done) -> None:
     done()
   app.after(800, arrange)
 
-def install(folder:str) -> None:
+def install(folder:str, modelPath:str=MODEL, target:str=TARGET) -> None:
   '''
   Copy the view into plugins/rnetReader/, stored as being in *PLACEHOLDER*
   -- and with the header's record of the program that wrote it neutralized --
   so nothing of this temporary folder is left in it.
 
   :param folder: Where it was made.
+  :param modelPath: The model it's a view of (*MODEL*, or *SYMMETRIC_MODEL*).
+  :param target: Where it goes (*TARGET*, or *SYMMETRIC_TARGET*).
   '''
   from pathlib import Path
-  with open(os.path.join(folder, "knet.snv"), encoding="utf-8") as fd:
+  name = os.path.basename(target)
+  with open(os.path.join(folder, name), encoding="utf-8") as fd:
     text = fd.read()
   text = text.replace(Path(folder).as_uri(), PLACEHOLDER).replace(os.path.abspath(sys.argv[0]), "Semantic Nets")
-  assert folder not in text, f"knet.snv still mentions {folder}"
-  with open(TARGET, "w", encoding="utf-8") as fd:
+  assert folder not in text, f"{name} still mentions {folder}"
+  with open(target, "w", encoding="utf-8") as fd:
     fd.write(text)
-  print("wrote", TARGET)
+  print("wrote", target)
 
-def installFrom(path:str) -> None:
+def installFrom(path:str, modelPath:str=MODEL, target:str=TARGET) -> None:
   '''
-  Copy a view of knet.snm that's been laid out by hand into plugins/rnetReader/,
-  stored as being in *PLACEHOLDER* (as *sn.plugins* relocates it when it's
-  installed: wherever it was saved, in a folder named rnetReader), and locked.
-  Not if it shows objects that aren't in knet.snm (eg: laid out in an
-  unlocked view, which changed the model, and the model wasn't saved).
+  Copy a view of knet.snm (or *modelPath*) that's been laid out by hand into
+  plugins/rnetReader/, stored as being in *PLACEHOLDER* (as *sn.plugins*
+  relocates it when it's installed: wherever it was saved, in a folder named
+  rnetReader), and locked. Not if it shows objects that aren't in the model
+  (eg: laid out in an unlocked view, which changed the model, and the model
+  wasn't saved).
 
   :param path: Its file.
+  :param modelPath: The model it's a view of (*MODEL*, or *SYMMETRIC_MODEL*).
+  :param target: Where it goes (*TARGET*, or *SYMMETRIC_TARGET*).
   '''
+  modelName = os.path.basename(modelPath)
   with open(os.path.expanduser(path), encoding="utf-8") as fd:
     text = fd.read()
   if not re.search(r'<property key="type" value="sn\.view\.graphics\.sngView\.SNGView" />', text):
     sys.exit(f"{path} isn't a view.")
-  if not re.search(r'<property key="model" value="(knet\.snm|file://[^"]*/rnetReader/knet\.snm)" />', text):
-    sys.exit(f"{path} isn't a view of the rnetReader plugin's knet.snm.")
-  with open(MODEL, encoding="utf-8") as fd:
+  pattern = re.escape(modelName)
+  if not re.search(rf'<property key="model" value="({pattern}|file://[^"]*/rnetReader/{pattern})" />', text):
+    sys.exit(f"{path} isn't a view of the rnetReader plugin's {modelName}.")
+  with open(modelPath, encoding="utf-8") as fd:
     ids = set(re.findall(r'<property key="(\d+)">', fd.read()))
   missing = sorted(set(re.findall(r'<property key="modelObject" type="str" value="#(\d+)" />', text)) - ids, key=int)
   if missing:
-    sys.exit(f"{path} shows {len(missing)} objects that aren't in knet.snm (eg: #{missing[0]}): erase them from it first.")
+    sys.exit(f"{path} shows {len(missing)} objects that aren't in {modelName} (eg: #{missing[0]}): erase them from it first.")
   text = re.sub(r'file://[^"\'<>\s]*/rnetReader/', PLACEHOLDER + "/", text)
   text, n = re.subn(r'<property key="editLocked" type="str" value="[01]" />',
                     '<property key="editLocked" type="str" value="1" />', text)
   if n != 1:
     sys.exit(f"{path} doesn't say whether it's locked.")
-  with open(TARGET, "w", encoding="utf-8") as fd:
+  with open(target, "w", encoding="utf-8") as fd:
     fd.write(text)
-  print("wrote", TARGET)
+  print("wrote", target)
+
+def _modelObjects(path:str) -> list[tuple[str, tuple[str, str|None]]]:
+  '''
+  :param path: A model's file.
+  :returns: Its objects, in the order of their ids: each one's id and what
+    it is (its Python class, and its name).
+  '''
+  import xml.etree.ElementTree as ET
+  root = ET.parse(path).getroot()
+  db = next(p for p in root.find("object").findall("property") if p.get("key") == "_db")
+  ret = []
+  for p in db.find("object").findall("property"):
+    o = p.find("object")
+    name = o.find(".//property[@key='name']//property[@key='value']")
+    ret.append((p.get("key"), (o.get("type"), name.get("value") if name is not None else None)))
+  return sorted(ret, key=lambda x: int(x[0]))
+
+def deriveSymmetric() -> None:
+  '''
+  Make the symmetric version's view (*SYMMETRIC_TARGET*) from knet.snv
+  (*TARGET*): laid out as it is, each of its objects where the same object
+  of knet.snm is -- those that aren't in it (the inconsistent link, its
+  rules) left out. makeKnetRules.py makes the two models' objects in the
+  same order, but those (and with the same names, but the rules' variables:
+  eg, "!t" and "!h", the tail and the head, are "!a" and "!b"), so they're
+  paired up in that order.
+  '''
+  import difflib
+  import xml.etree.ElementTree as ET
+  directional, symmetric = _modelObjects(MODEL), _modelObjects(SYMMETRIC_MODEL)
+  variable = lambda sig: (sig[0], None) if (sig[1] or "")[:1] in "!?^" else sig
+  matcher = difflib.SequenceMatcher(None, [variable(s) for _, s in directional], [variable(s) for _, s in symmetric],
+                                    autojunk=False)
+  ids:dict[str, str] = {}
+  gone:set[str] = set()
+  for op, i1, i2, j1, j2 in matcher.get_opcodes():
+    if op == "equal":
+      ids.update((directional[i][0], symmetric[j][0]) for i, j in zip(range(i1, i2), range(j1, j2)))
+    elif op == "delete":
+      gone.update(directional[i][0] for i in range(i1, i2))
+    else:
+      sys.exit(f"knetSymmetric.snm's objects #{symmetric[j1][0]}..#{symmetric[j2 - 1][0]} aren't knet.snm's: "
+               "lay its view out by hand (or with makeKnetView.py's layout).")
+  tree = ET.parse(TARGET)
+  root = tree.getroot()
+  db = next(p for p in root.find("object").findall("property") if p.get("key") == "_db").find("object")
+  dropped = 0
+  for p in list(db.findall("property")):
+    shown = p.find("object/property[@key='modelObject']")
+    ref = shown.get("value") if shown is not None else ""
+    if not ref.startswith("#"): # (the system's: eg, sn:/sn#6)
+      continue
+    if ref[1:] in ids:
+      shown.set("value", "#" + ids[ref[1:]])
+    elif ref[1:] in gone:
+      db.remove(p)
+      dropped += 1
+    else:
+      sys.exit(f"knet.snv shows {ref}, which isn't in knet.snm.")
+  head = {p.get("key"): p for p in root.find("head")}
+  head["url"].set("value", f"{PLACEHOLDER}/{os.path.basename(SYMMETRIC_TARGET)}")
+  head["model"].set("value", os.path.basename(SYMMETRIC_MODEL))
+  head["objects"].set("value", str(len(db.findall("property"))))
+  ET.indent(tree, space="  ")
+  tree.write(SYMMETRIC_TARGET, encoding="utf-8", xml_declaration=True)
+  print(f"wrote {SYMMETRIC_TARGET}, from {os.path.basename(TARGET)}: {dropped} of its objects left out "
+        f"({len(gone)} of knet.snm's aren't in knetSymmetric.snm)")
 
 def main() -> None:
-  if "--from" in sys.argv[1:]:
-    i = sys.argv.index("--from")
-    if i + 1 >= len(sys.argv):
-      sys.exit("usage: makeKnetView.py [--from <a view of knet.snm>]")
-    installFrom(sys.argv[i + 1])
+  args = sys.argv[1:]
+  modelPath, target = (SYMMETRIC_MODEL, SYMMETRIC_TARGET) if "--symmetric" in args else (MODEL, TARGET)
+  if "--from" in args:
+    i = args.index("--from")
+    if i + 1 >= len(args):
+      sys.exit("usage: makeKnetView.py [--symmetric] [--from <a view of knet.snm, or knetSymmetric.snm>]")
+    installFrom(args[i + 1], modelPath, target)
+    return
+  if "--symmetric" in args:
+    deriveSymmetric()
     return
   folder = setUp()
   import atexit, sn
   from pathlib import Path
   atexit.unregister(sn.savePrefsIfChanged) # (nothing of the temporary user to keep)
   atexit.unregister(sn.saveAtExit)
-  model = os.path.join(folder, "knet.snm")
-  with open(MODEL, encoding="utf-8") as fd: # (as being where it is, so it's not taken to have been moved)
+  model = os.path.join(folder, os.path.basename(modelPath))
+  with open(modelPath, encoding="utf-8") as fd: # (as being where it is, so it's not taken to have been moved)
     text = fd.read().replace(PLACEHOLDER, Path(folder).as_uri())
   with open(model, "w", encoding="utf-8") as fd:
     fd.write(text)
@@ -210,7 +300,7 @@ def main() -> None:
     app.after(400, app.quit)
   layOut(app, model, finished)
   app.run()
-  install(folder)
+  install(folder, modelPath, target)
   shutil.rmtree(folder, ignore_errors=True)
 
 if __name__ == "__main__":

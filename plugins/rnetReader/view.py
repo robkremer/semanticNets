@@ -5,7 +5,8 @@ Nets model and view, and open the view in the editor. (The Tools menu's
 
 It's a dialog (see *ReaderDialog*): the net file, and the model and view to
 make of it -- by default, for "<name>.rnet", "<name>.snm" and "<name>.snv",
-in the folder they were last made in (or else beside the net). "Go" makes them
+in the folder they were last made in (or else beside the net) -- and which
+KNet rules the model builds on (see *reader.ONTOLOGIES*). "Go" makes them
 (see *convert()*) -- asking first if they're there already, and replacing
 them -- and opens the view: the net as CNet drew it (see *showNet()*).
 
@@ -44,7 +45,7 @@ from sn.view.graphics.guiApp import Application
 from sn.view.graphics.sngView import SNGView
 from sn.view.graphics.vnodes import VNode
 from .rnet import parse
-from .reader import Built, buildModel
+from .reader import Built, buildModel, DIRECTIONAL, ONTOLOGIES, ONTOLOGY_TITLES
 
 TITLE = "Rep Plus Net Reader"
 
@@ -127,7 +128,7 @@ def showNet(view:SNGView, built:Built, scale:float=SCALE, fit:bool=False) -> Non
     view.localLayout = localLayout
 
 def convert(app:Application, rnetPath:str, modelPath:str, viewPath:str, parent:tk.Misc|None=None,
-            merge:bool=True) -> tuple[Built, SNGView]|None:
+            merge:bool=True, rules:str=DIRECTIONAL) -> tuple[Built, SNGView]|None:
   '''
   Make the model and view of the net *rnetPath*, save them, and open the
   view. If the model or view are there already, it asks first, and replaces
@@ -140,6 +141,7 @@ def convert(app:Application, rnetPath:str, modelPath:str, viewPath:str, parent:t
   :param parent: The window any messages are about (eg: the dialog), if any.
   :param merge: Whether the nodes that are the same (see
     *reader.knetNames()*, *reader.cnetNames()*) are one node, shown as copies.
+  :param rules: The KNet rules the model builds on (see *reader.ONTOLOGIES*).
   :returns: What was made, and the view, if it was.
   '''
   where:dict[str, Any] = {"parent": parent} if parent is not None else {}
@@ -169,7 +171,7 @@ def convert(app:Application, rnetPath:str, modelPath:str, viewPath:str, parent:t
     return None
   for p in existing:
     os.remove(p)
-  built = buildModel(net, modelPath, merge=merge)
+  built = buildModel(net, modelPath, merge=merge, rules=rules)
   built.model.save()
   view = SNGView(fixURL(viewPath, None, replaceExt=None, mode="w")[0], model=built.model, mode="w")
   window = app.openWindow(view)
@@ -189,20 +191,22 @@ class ReaderDialog(tk.Toplevel):
   of it (each with "Choose..."), which follow the net file (see
   *defaultPaths()*) -- the view following the model -- until they're changed
   by hand; whether the nodes KNet takes to be one are one node (see
-  *reader.knetNames()*: on at first); and "Go" (see *convert()*), which,
+  *reader.knetNames()*: on at first); which KNet rules the model builds on
+  (*rules*: see *reader.ONTOLOGIES*); and "Go" (see *convert()*), which,
   when it's done, closes it.
   '''
   def __init__(self, app:Application, rnetPath:str|None=None, folder:str|None=None, outputFolder:str|None=None,
                onChosen:Callable[[str], None]|None=None, onGo:Callable[[str, str, str], None]|None=None,
-               onClose:Callable[[], None]|None=None):
+               onClose:Callable[[], None]|None=None, rules:str=DIRECTIONAL):
     '''
     :param app: The editor.
     :param rnetPath: The net file to start with, if any.
     :param folder: The folder to choose a net file in, at first.
     :param outputFolder: The folder to make the model and view in, by default (else beside the net).
     :param onChosen: Told the net file chosen with "Choose..." (eg: to start there next time).
-    :param onGo: Told the net, model and view files, once "Go"'s made them.
+    :param onGo: Told the net, model and view files, once "Go"'s made them (*rules* says which rules).
     :param onClose: Called when it's closed: by "Go" (when the view's opened) or "Cancel".
+    :param rules: The KNet rules chosen at first (see *reader.ONTOLOGIES*; one that isn't: the paper's).
     '''
     super().__init__(app)
     ownDialog(self, app, keep=False)
@@ -229,8 +233,15 @@ class ReaderDialog(tk.Toplevel):
     ttk.Checkbutton(frame, text="Nodes that are the same are one node, shown as copies "
                     "(not for a figure of several copies of a net)",
                     variable=self.merge).grid(row=4, column=1, columnspan=2, sticky=tk.W, **pad)
+    self.rules = tk.StringVar(value=rules if rules in ONTOLOGIES else DIRECTIONAL)
+    "Which KNet rules the model builds on (see *reader.ONTOLOGIES*)."
+    ttk.Label(frame, text="KNet rules:").grid(row=5, column=0, sticky=tk.NW, **pad)
+    choices = ttk.Frame(frame)
+    choices.grid(row=5, column=1, columnspan=2, sticky=tk.W, **pad)
+    for key in ONTOLOGIES:
+      ttk.Radiobutton(choices, text=ONTOLOGY_TITLES[key], value=key, variable=self.rules).pack(anchor=tk.W)
     bottom = ttk.Frame(frame)
-    bottom.grid(row=5, column=0, columnspan=3, sticky=tk.EW, pady=(10, 0))
+    bottom.grid(row=6, column=0, columnspan=3, sticky=tk.EW, pady=(10, 0))
     self.goButton = ttk.Button(bottom, text="Go", command=self.go, default="active")
     self.goButton.pack(side=tk.RIGHT, padx=6)
     ttk.Button(bottom, text="Cancel", command=self.cancel).pack(side=tk.RIGHT, padx=6)
@@ -318,7 +329,7 @@ class ReaderDialog(tk.Toplevel):
     self.configure(cursor="watch")
     self.update_idletasks()
     try:
-      done = convert(self.app, v["rnet"], v["model"], v["view"], parent=self, merge=self.merge.get())
+      done = convert(self.app, v["rnet"], v["model"], v["view"], parent=self, merge=self.merge.get(), rules=self.rules.get())
     finally:
       if self.winfo_exists():
         self.configure(cursor="")

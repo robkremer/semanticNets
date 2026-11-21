@@ -282,9 +282,11 @@ def askNet(parent:Any) -> str:
   from tkinter import filedialog
   return filedialog.askopenfilename(parent=parent, title="Check a merge with which net?", filetypes=NET_FILES) or ""
 
-def openNet(path:str) -> tuple[Any, str|None]:
+def openNet(path:str, rules:str|None=None) -> tuple[Any, str|None]:
   '''
   :param path: A model (.snm) or a Rep Plus net file (.rnet).
+  :param rules: The KNet rules a net file's model is built on (see
+    *reader.ONTOLOGIES*): by default, the paper's (*reader.DIRECTIONAL*).
   :returns: Its model -- the one in memory, if it's open -- and, if it was
     made just now from a net file (not saved), the folder it was made in: to
     let go of both once it's used (see *sn.model.model.Model.unload()*).
@@ -296,7 +298,8 @@ def openNet(path:str) -> tuple[Any, str|None]:
   if path.lower().endswith(".rnet"):
     from . import rnet, reader
     folder = tempfile.mkdtemp(prefix="snNet-")
-    return reader.buildModel(rnet.parse(path), os.path.join(folder, Path(path).stem + ".snm")).model, folder
+    return reader.buildModel(rnet.parse(path), os.path.join(folder, Path(path).stem + ".snm"),
+                             rules=rules or reader.DIRECTIONAL).model, folder
   return Model.getDB(Path(path).resolve().as_uri()), None
 
 @hook(appliesTo=_canMark)
@@ -327,9 +330,9 @@ def showMerge(parent:Any, model:Any, path:str) -> Any:
   import shutil
   from sn.model.reasoner import EngineMissing
   from util.reportWindow import ReportWindow
-  from . import forms
+  from . import forms, reader
   try:
-    other, folder = openNet(path)
+    other, folder = openNet(path, reader.ontologyName(model)) # (a net file: on the same rules as *model*'s net)
   except Exception as ex:
     logger.error(f'Couldn\'t read "{path}" to check merging it: {ex}')
     return None
