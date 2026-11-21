@@ -16,7 +16,6 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 BACKGROUND = (255, 212, 38, 255) # a bright yellow
-BORDER = (120, 72, 0, 255)       # a deep amber, round the edge
 ORANGE = (255, 122, 0, 255)
 WHITE = (255, 255, 255, 255)
 INK = (30, 30, 30, 255)          # the boxes' outlines, and the plain relation
@@ -27,7 +26,7 @@ def draw(size:int) -> Image.Image:
   img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
   d = ImageDraw.Draw(img)
   m = 90 # (the macOS icon grid's margin round the rounded square)
-  d.rounded_rectangle([m, m, S - m, S - m], radius=185, fill=BACKGROUND, outline=BORDER, width=16)
+  d.rounded_rectangle([m, m, S - m, S - m], radius=185, fill=BACKGROUND) # (no outline: it looked black at small sizes)
   # three big boxes, reaching nearly to the edges: top and left orange, right white
   w, h = 300, 190
   boxes = {"a": ((512, 252), ORANGE), "b": ((272, 734), ORANGE), "c": ((752, 734), WHITE)}
