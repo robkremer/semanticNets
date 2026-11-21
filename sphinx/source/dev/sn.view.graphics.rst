@@ -42,6 +42,7 @@ Submodules
    sn.view.graphics.viewBase
    sn.view.graphics.viewCommands
    sn.view.graphics.viewContainment
+   sn.view.graphics.viewCopying
    sn.view.graphics.viewEditing
    sn.view.graphics.viewFiles
    sn.view.graphics.viewInput
