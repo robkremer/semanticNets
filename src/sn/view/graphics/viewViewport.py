@@ -305,6 +305,40 @@ class ViewportMixin(ViewBase):
       logger.exception("couldn't put the labels inside the nodes they join back between them")
     return count
 
+  def spreadParallelLabels(self) -> int:
+    '''
+    Spread out the floating labels (see *VRelation.floating()*) of relations
+    between the same two things that are on top of one another, so their
+    lines are drawn apart (see *VRelation.betweenEnds()*): eg, in a view saved
+    before 2026-11-22, when a node refitted to its text as its view was read
+    (by a pixel or so, with other font metrics) put all its lines' labels
+    back midway between their ends -- the lines between the same two things
+    one on top of another. Each such set is put back between its ends, as it
+    would be now. (When a view's read, it's not a change: it's not marked
+    changed for it -- as *placeStrayLabels()*.)
+
+    :returns: How many labels were moved.
+    '''
+    def overlap(a:list, b:list) -> bool:
+      return (a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]) or \
+             (a[0] + a[2] == b[0] + b[2] and a[1] + a[3] == b[1] + b[3]) # (or centred together: eg, with no size)
+    count = 0
+    try:
+      done:set[int] = set()
+      for vo in list(self.values()):
+        if not isinstance(vo, VRelation) or id(vo) in done or not vo._isConnected() or not vo.floating() or vo.isHidden():
+          continue
+        group = vo.parallels()
+        done.update(id(r) for r in group)
+        boxes = [r.boundingBox() for r in group]
+        if any(overlap(a, b) for i, a in enumerate(boxes) for b in boxes[i + 1:]):
+          for r, was in zip(group, boxes):
+            r.reposition(adjustPos=False)
+            count += r.boundingBox() != was
+    except Exception: # (a view whose labels can't be spread out can still be shown)
+      logger.exception("couldn't spread out the labels of the relations between the same two things")
+    return count
+
   def refreshAllCaches(self) -> None:
     '''
     Refresh every object's cache of its model object's visual attributes (see
