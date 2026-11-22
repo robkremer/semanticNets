@@ -42,7 +42,7 @@ from types import NoneType
 
 
 import sn
-from util.utils import midpoint, s_CMD, s_ALT
+from util.utils import midpoint, s_CMD, s_ALT, boxBreadth, spreadOffsets
 from util.persistence.pRef import PReference
 from util.persistence.serialize import InstantiationInfo, ParamInfo, PropertyInfo
 from util.abstractGraph import AGRelation
@@ -618,7 +618,7 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
       w = self.boundingBox()[2] - self.boundingBox()[0]
       self.moveToCenterOn(*self.placedLabel(bb[2] + 30 + w / 2, (bb[1] + bb[3]) / 2 + 22 * k), adjustPos=adjustPos)
     elif self.src is not None and self.dst is not None:
-      self.moveToCenterOn(*self.placedLabel(*self.gapMidpoint(self.src, self.dst)), adjustPos=adjustPos)
+      self.moveToCenterOn(*self.placedLabel(*self.betweenEnds()), adjustPos=adjustPos)
     elif self.src is None and self.dst is None:
       if adjustPos:
         self.adjustPos(aggressive=aggressive)
@@ -699,6 +699,64 @@ class VRelation(VObject, AGRelation): # type: ignore[misc] # (VObject's _disconn
     if a is b or ca == cb or a.containsPt(cb) or b.containsPt(ca):
       return midpoint(ca, cb)
     return midpoint(self.findIntersection(cb, a), self.findIntersection(ca, b))
+
+  PARALLEL_GAP = 8.0
+  '''The clear space (view units) kept between the floating labels of relations
+  that join the same two things (see *betweenEnds()*).'''
+
+  def parallels(self) -> list[VRelation]:
+    '''
+    The relations whose floating labels share this one's place between its
+    ends (see *betweenEnds()*): those -- it among them -- that join the same
+    two things it does, either way round, and are drawn floating; in a lasting
+    order: by when each was put in the view (its id in it), so one put in
+    later goes after them all. Not one that isn't drawn (see *isHidden()*: eg,
+    a containment shown by its window), nor one pinned somewhere (see
+    *floating()*). Just it, if it's to itself or misses an end.
+    '''
+    a, b = self.src, self.dst
+    if not isinstance(a, VObject) or not isinstance(b, VObject) or a is b:
+      return [self]
+    near = a if len(a._incoming) + len(a._outgoing) <= len(b._incoming) + len(b._outgoing) else b # (the end with fewer lines: the other may be a hub with thousands)
+    ends = {id(a), id(b)}
+    found:dict[int, VRelation] = {id(self): self}
+    for r in near.relations:
+      if isinstance(r, VRelation) and r is not self and {id(r.src), id(r.dst)} == ends \
+         and r._isConnected() and r.floating() and not r.isHidden():
+        found[id(r)] = r
+    return sorted(found.values(), key=lambda r: r._id)
+
+  def betweenEnds(self) -> tuple[float, float]:
+    '''
+    Where its floating label goes between its two ends: midway (see
+    *gapMidpoint()*) -- or, if other relations' floating labels would be there
+    too (see *parallels()*), beside theirs, across the line between the ends:
+    the first midway, the rest by turns on one side and the other (see
+    *spreadOffsets()*), so their lines are drawn apart, not one on top of
+    another. Each goes to the same place whenever it's put between its ends
+    -- whether the view's dynamic layout looks for a free place for it or not
+    (eg: while an end's dragged, or when a node's refitted to its text as its
+    view's read).
+
+    :returns: The centre for the label (before *placedLabel()*).
+    '''
+    a, b = self.src, self.dst
+    assert isinstance(a, VObject) and isinstance(b, VObject)
+    group = self.parallels()
+    if len(group) < 2:
+      return self.gapMidpoint(a, b)
+    if b._id < a._id: # (the same way round for them all, whichever way each runs)
+      a, b = b, a
+    x, y = self.gapMidpoint(a, b)
+    (ax, ay), (bx, by) = a.centerPt(), b.centerPt()
+    across = (by - ay, ax - bx) if (ax, ay) != (bx, by) else (0, -1)
+    d = math.hypot(*across)
+    ux, uy = across[0] / d, across[1] / d
+    def size(r:VRelation) -> tuple[float, float]:
+      bb = r.boundingBox()
+      return (bb[2] - bb[0], bb[3] - bb[1])
+    k = spreadOffsets([boxBreadth(size(r), across) for r in group], self.PARALLEL_GAP)[group.index(self)]
+    return x + ux * k, y + uy * k
 
   def findEndPoints(self, frm:VObject, to:VObject):
     '''
