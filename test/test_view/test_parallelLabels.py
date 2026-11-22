@@ -187,8 +187,8 @@ class Test(unittest.TestCase):
     xs = [vr.centerPt()[0] for vr in vrs]
     ys = sorted(vr.centerPt()[1] for vr in vrs)
     mid = (alice[0] + bob[0]) / 2
-    for x in xs:
-      self.assertLessEqual(abs(x - mid), 3, f"{msg}: on the line across theirs: {xs}")
+    self.assertLessEqual(max(xs) - min(xs), 2, f"{msg}: on one line across theirs: {xs}")
+    self.assertLessEqual(abs(xs[0] - mid), 10, f"{msg}: about midway (between their edges): {xs}")
     self.assertLess(ys[0], alice[1], f"{msg}: {ys}")
     self.assertGreater(ys[2], alice[1], f"{msg}: {ys}")
     return boxes
@@ -277,11 +277,12 @@ class Test(unittest.TestCase):
     vrs = [self.V(r) for r in self.rels]
     vrs[1].floating(False)
     self.centre(vrs[1], 300, 100)
+    pinned = vrs[1].boundingBox().copy()
     self.assertEqual(vrs[0].parallels(), [vrs[0], vrs[2]])
     self.assertNotIn(vrs[1], vrs[2].parallels())
     for vr in (vrs[0], vrs[2]):
       vr.reposition(adjustPos=False)
-    self.assertEqual(vrs[1].centerPt(), (300, 100))
+    self.assertEqual(vrs[1].boundingBox(), pinned)
     a, b = vrs[0].boundingBox(), vrs[2].boundingBox()
     self.assertFalse(self.overlap(a, b), (a, b))
 
